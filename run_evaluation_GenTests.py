@@ -38,18 +38,47 @@ from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
 from swebench.swebench.harness.utils import load_swebench_dataset, str2bool
 
 def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
-    # TODO: Refactor this to yield PASS TO FAIL tests
     """
-    Get ground truth tests for the given dataset and split.
+    Get ground truth tests and their corresponding patches from the FAIL_TO_PASS section.
+    
+    Args:
+        dataset_name (str): Name of the dataset
+        instance_ids (list): List of instance IDs to process
+        split (str): Dataset split to use
+        
+    Returns:
+        list: List of dictionaries containing instance IDs, patches, and failing test information
     """
     dataset = load_swebench_dataset(dataset_name, split)
-    return [
-        {
+    results = []
+    
+    for datum in dataset:
+        if datum[KEY_INSTANCE_ID] not in instance_ids:
+            continue
+            
+        # Parse the FAIL_TO_PASS string into a list of test paths
+        fail_to_pass_tests = []
+        if datum.get("FAIL_TO_PASS"):
+            # The FAIL_TO_PASS field is a string representation of a list
+            # Convert it to a Python list by evaluating the string
+            try:
+                fail_to_pass_tests = eval(datum["FAIL_TO_PASS"])
+            except:
+                print(f"Failed to parse FAIL_TO_PASS for {datum[KEY_INSTANCE_ID]}")
+                continue
+        
+        result = {
             KEY_INSTANCE_ID: datum[KEY_INSTANCE_ID],
+            "repo": datum["repo"],
+            "base_commit": datum["base_commit"],
             "model_patch": datum["patch"],
-            "model_name_or_path": "gold",
-        } for datum in dataset
-    ]
+            "test_patch": datum["test_patch"],
+            "fail_to_pass_tests": fail_to_pass_tests,
+            "model_name_or_path": "gold"
+        }
+        results.append(result)
+    
+    return results
 
 def main(
         dataset_name: str,
