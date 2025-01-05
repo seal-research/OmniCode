@@ -34,7 +34,8 @@ from swebench.swebench.harness.docker_build import (
     setup_logger,
 )
 from swebench.swebench.harness.grading import get_eval_report
-from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
+#from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
+from CodeArena_test_spec import make_test_spec, TestSpec
 from swebench.swebench.harness.utils import load_swebench_dataset, str2bool
 
 def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
@@ -324,14 +325,6 @@ def run_instance(
             container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
         )
         logger.info(f"Git diff before:\n{git_diff_output_before}")
-
-        # Get git diff before running eval script
-        git_diff_output_before = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-        logger.info(f"Git diff before:\n{git_diff_output_before}")
-
-
 
         eval_file = Path(log_dir / "eval.sh")
         eval_file.write_text(test_spec.eval_script)
