@@ -249,10 +249,11 @@ def run_instance(
         logger.info(f"Container for {instance_id} started: {container.id}")
 
         # Copy model prediction as patch file to container
+        # Applying Model patch - Ground Truth Solution 
         patch_file = Path(log_dir / "patch.diff")
         patch_file.write_text(pred["model_patch"] or "")
         logger.info(
-            f"Intermediate patch for {instance_id} written to {patch_file}, now applying to container..."
+            f"Model patch for {instance_id} written to {patch_file}, now applying to container..."
         )
         copy_to_container(container, patch_file, Path("/tmp/patch.diff"))
 
@@ -283,11 +284,54 @@ def run_instance(
         else:
             logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
 
+        ## Modification: Apply test patch diff (currently ground truth, can be adapted to test candidate)
+        patch_test_file = Path(log_dir / "patch_test.diff")
+        patch_test_file.write_text(pred["test_patch"] or "")
+        logger.info(
+            f"Ground Truth Test patch for {instance_id} written to {patch_test_file}, now applying to container..."
+        )
+        copy_to_container(container, patch_test_file, Path("/tmp/patch_test.diff"))
+
+        # Attempt to apply patch to container
+        val = container.exec_run(
+            "git apply --allow-empty -v /tmp/patch_test.diff",
+            workdir="/testbed",
+            user="root",
+        )
+        if val.exit_code != 0:
+            logger.info(f"Failed to apply patch to container, trying again...")
+            
+            # try "patch --batch --fuzz=5 -p1 -i {patch_path}" to try again
+            val = container.exec_run(
+                "patch --batch --fuzz=5 -p1 -i /tmp/patch_test.diff",
+                workdir="/testbed",
+                user="root",
+            )
+            if val.exit_code != 0:
+                logger.info(f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}")
+                raise EvaluationError(
+                    instance_id,
+                    f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}",
+                    logger,
+                )
+            else:
+                logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
+        else:
+            logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
+
         # Get git diff before running eval script
         git_diff_output_before = (
             container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
         )
         logger.info(f"Git diff before:\n{git_diff_output_before}")
+
+        # Get git diff before running eval script
+        git_diff_output_before = (
+            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        )
+        logger.info(f"Git diff before:\n{git_diff_output_before}")
+
+
 
         eval_file = Path(log_dir / "eval.sh")
         eval_file.write_text(test_spec.eval_script)
