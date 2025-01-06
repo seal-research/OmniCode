@@ -321,7 +321,7 @@ def make_test_spec(instance: SWEbenchInstance) -> TestSpec:
         repo=repo,
         env_script_list=env_script_list,
         repo_script_list=repo_script_list,
-        eval_script_list=eval_script_list,
+        eval_script_list=eval_script_list, # Contains Test Directives
         version=version,
         arch=arch,
         FAIL_TO_PASS=fail_to_pass,
