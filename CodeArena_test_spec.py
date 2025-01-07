@@ -280,6 +280,51 @@ def make_eval_script_list(instance, specs, env_name, repo_directory, base_commit
     ]
     return eval_commands
 
+def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, base_commit, issue_patch, test_patch):
+    """
+    Applies the given issue patch (gold or bad) and runs the candidate tests.
+    """
+    HEREDOC_DELIMITER = "EOF_114329324912"
+    test_files = re.findall(DIFF_MODIFIED_FILE_REGEX, test_patch)
+    # Reset all files *except* test files to the state they should be in before the patch.
+    reset_command = f"git stash push -- {' '.join(test_files)} && git checkout {base_commit} -- . && git stash pop"
+
+    apply_issue_patch_command = (
+        f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{issue_patch}\n{HEREDOC_DELIMITER}"
+    )
+    test_command = " ".join(
+        [
+            MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]["test_cmd"],
+            *get_test_directives(instance),
+        ]
+    )
+    eval_commands = [
+        "source /opt/miniconda3/bin/activate",
+        f"conda activate {env_name}",
+        f"cd {repo_directory}",
+    ]
+    if "eval_commands" in specs:
+        eval_commands += specs["eval_commands"]
+    eval_commands += [
+        f"git config --global --add safe.directory {repo_directory}",  # for nonroot user
+        f"cd {repo_directory}",
+        # This is just informational, so we have a record
+        "git status",
+        "git show",
+        f"git diff {base_commit}",
+        "source /opt/miniconda3/bin/activate",
+        f"conda activate {env_name}",
+    ]
+    if "install" in specs:
+        eval_commands.append(specs["install"])
+    eval_commands += [
+        reset_command,
+        apply_issue_patch_command,
+        test_command,
+        reset_command,  # Revert issue patch after done, leave the repo in the same state as before (maintaining test patch)
+    ]
+    return eval_commands
+
 
 def make_test_spec(instance: SWEbenchInstance) -> TestSpec:
     if isinstance(instance, TestSpec):
@@ -291,6 +336,8 @@ def make_test_spec(instance: SWEbenchInstance) -> TestSpec:
     problem_statement = instance["problem_statement"]
     hints_text = instance["hints_text"]  # Unused
     test_patch = instance["test_patch"]
+    gold_issue_patch = instance["gold_patch"]
+    bad_issue_patch = instance["bad_patch"]
 
     def _from_json_or_obj(key: str) -> Any:
         """If key points to string, load with json"""
@@ -310,6 +357,11 @@ def make_test_spec(instance: SWEbenchInstance) -> TestSpec:
     eval_script_list = make_eval_script_list(
         instance, specs, env_name, repo_directory, base_commit, test_patch
     )
+    # Inverted Evaluation scripts keep the (candidate) test files consistent and apply (and revert after evaluation) the given issue patch
+    inverted_eval_script_list_gold = make_inverted_eval_script_list(
+        instance, specs, env_name, repo_directory, base_commit, gold_issue_patch, test_patch)
+    inverted_eval_script_list_bad = make_inverted_eval_script_list(
+        instance, specs, env_name, repo_directory, base_commit, bad_issue_patch, test_patch)
     if platform.machine() in {"aarch64", "arm64"}:
         # use arm64 unless explicitly specified
         arch = "arm64" if instance_id not in USE_X86 else "x86_64"

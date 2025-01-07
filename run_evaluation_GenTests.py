@@ -530,10 +530,10 @@ def evaluate_should_pass(
         timeout: int | None = None,
     ):
     """
-    Run a single instance with the candidate test patch and the gold patch.
+    Run a single instance with the candidate test patch and the gold issue patch.
 
     Args:
-        test_spec (TestSpec): TestSpec instance using candidate patch
+        test_spec (TestSpec): TestSpec instance using candidate test patch
         pred (dict): Prediction w/ model_name_or_path, model_patch, instance_id (model patch = gold patch)
         rm_image (bool): Whether to remove the image after running
         force_rebuild (bool): Whether to force rebuild the image
@@ -574,7 +574,7 @@ def evaluate_should_pass(
         logger.info(f"Container for {instance_id} started: {container.id}")
 
         # Copy model prediction as patch file to container
-        # Applying Model patch - Ground Truth Solution 
+        # Applying Model patch - Gold Issue Solution 
         patch_file = Path(log_dir / "patch.diff")
         patch_file.write_text(pred["model_patch"] or "")
         logger.info(
@@ -609,41 +609,6 @@ def evaluate_should_pass(
         else:
             logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
 
-        ## Modification: Apply test patch diff (currently ground truth, can be adapted to test candidate)
-        patch_test_file = Path(log_dir / "patch_test.diff")
-        patch_test_file.write_text(pred["test_patch"] or "")
-        logger.info(
-            f"Ground Truth Test patch for {instance_id} written to {patch_test_file}, now applying to container..."
-        )
-        copy_to_container(container, patch_test_file, Path("/tmp/patch_test.diff"))
-
-        # Attempt to apply patch to container
-        val = container.exec_run(
-            "git apply --allow-empty -v /tmp/patch_test.diff",
-            workdir="/testbed",
-            user="root",
-        )
-        if val.exit_code != 0:
-            logger.info(f"Failed to apply patch to container, trying again...")
-            
-            # try "patch --batch --fuzz=5 -p1 -i {patch_path}" to try again
-            val = container.exec_run(
-                "patch --batch --fuzz=5 -p1 -i /tmp/patch_test.diff",
-                workdir="/testbed",
-                user="root",
-            )
-            if val.exit_code != 0:
-                logger.info(f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}")
-                raise EvaluationError(
-                    instance_id,
-                    f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}",
-                    logger,
-                )
-            else:
-                logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
-        else:
-            logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
-
         # Get git diff before running eval script
         git_diff_output_before = (
             container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
@@ -651,7 +616,7 @@ def evaluate_should_pass(
         logger.info(f"Git diff before:\n{git_diff_output_before}")
 
         eval_file = Path(log_dir / "eval.sh")
-        eval_file.write_text(test_spec.eval_script)
+        eval_file.write_text(test_spec.eval_script) # This evaluation script should contain the *candidate* test patch not ground truth
         logger.info(
             f"Eval script for {instance_id} written to {eval_file}; copying to container..."
         )
