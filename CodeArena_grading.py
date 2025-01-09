@@ -349,6 +349,7 @@ def get_eval_tests_report_TestGeneration(
     )
     return results
 
+# TODO: Adjust to to evaluate both evaluation paths of bad and gold patch. Adjust P2P and F2P, flip evaluation for bad patch
 def get_eval_report_test_generation(
     test_spec: TestSpec,
     prediction: dict[str, str],
