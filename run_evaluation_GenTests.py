@@ -33,7 +33,7 @@ from swebench.swebench.harness.docker_build import (
     close_logger,
     setup_logger,
 )
-from swebench.swebench.harness.grading import get_eval_report
+from swebench.swebench.harness.grading import get_eval_report_test_generation
 #from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
 from CodeArena_test_spec import make_test_spec, TestSpec
 from swebench.swebench.harness.utils import load_swebench_dataset, str2bool
@@ -251,11 +251,11 @@ def run_instance(
         logger.info(f"Container for {instance_id} started: {container.id}")
 
         # Copy model prediction as patch file to container
-        # Applying Model patch - Ground Truth Solution 
+        # Applying Candidate Test Patch
         patch_file = Path(log_dir / "patch.diff")
-        patch_file.write_text(pred["gold_patch"] or "")
+        patch_file.write_text(pred["test_patch"] or "")
         logger.info(
-            f"Gold patch for {instance_id} written to {patch_file}, now applying to container..."
+            f"Candidate Test Patch for {instance_id} written to {patch_file}, now applying to container..."
         )
         copy_to_container(container, patch_file, Path("/tmp/patch.diff"))
 
@@ -287,26 +287,27 @@ def run_instance(
             logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
 
 
-        # Get git diff before running eval script
+        # Get git diff before running gold eval script
         git_diff_output_before = (
             container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
         )
         logger.info(f"Git diff before:\n{git_diff_output_before}")
 
-        eval_file = Path(log_dir / "eval.sh")
-        eval_file.write_text(test_spec.eval_script)
+        # Use inverted evaluation Gold script
+        eval_file = Path(log_dir / "gold_eval.sh")
+        eval_file.write_text(test_spec.inverted_eval_script_gold)
         logger.info(
-            f"Eval script for {instance_id} written to {eval_file}; copying to container..."
+            f"Eval script for Gold Evaluation of {instance_id} written to {eval_file}; copying to container..."
         )
-        copy_to_container(container, eval_file, Path("/eval.sh"))
+        copy_to_container(container, eval_file, Path("/gold_eval.sh"))
 
-        # Run eval script, write output to logs. Gold is expected to pass test - no change needed
-        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /eval.sh", timeout)
-        test_output_path = log_dir / "test_output.txt"
+        # Run eval script, write output to logs.
+        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
+        test_output_path = log_dir / "gold_test_output.txt"
         logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
         with open(test_output_path, "w") as f:
             f.write(test_output)
-            logger.info(f"Test output for {instance_id} written to {test_output_path}")
+            logger.info(f"Test output using gold patch for {instance_id} written to {test_output_path}")
             if timed_out:
                 f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
                 raise EvaluationError(
@@ -325,75 +326,35 @@ def run_instance(
         if git_diff_output_after != git_diff_output_before:
             logger.info(f"Git diff changed after running eval script")
 
-        # Reset the container state to apply bad patch
+        # Reset the container state -not needed when using inverse evaluation scripts
         # Reset changes if needed
-        reset_val = container.exec_run(
-            "git apply --reverse --allow-empty -v /tmp/patch.diff",
-            workdir="/testbed",
-            user="root",
-        )
-        if reset_val.exit_code == 0:
-            logger.info(f"Successfully reset patch changes for {instance_id}")
-        else:
-            logger.warning(
-                f"Failed to reset patch for {instance_id}:\n{reset_val.output.decode('utf-8')}"
-            )
-
-        patch_file = Path(log_dir / "bad_patch.diff")
-        patch_file.write_text(pred["bad_patch"] or "")
-        logger.info(
-            f"Bad patch for {instance_id} written to {patch_file}, now applying to container..."
-        )
-        copy_to_container(container, patch_file, Path("/tmp/bad_patch.diff"))
-
-        # Attempt to apply bad patch to container
-        val = container.exec_run(
-            "git apply --allow-empty -v /tmp/bad_patch.diff",
-            workdir="/testbed",
-            user="root",
-        )
-        if val.exit_code != 0:
-            logger.info(f"Failed to apply patch to container, trying again...")
-            
-            # try "patch --batch --fuzz=5 -p1 -i {patch_path}" to try again
-            val = container.exec_run(
-                "patch --batch --fuzz=5 -p1 -i /tmp/bad_patch.diff",
-                workdir="/testbed",
-                user="root",
-            )
-            if val.exit_code != 0:
-                logger.info(f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}")
-                raise EvaluationError(
-                    instance_id,
-                    f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}",
-                    logger,
-                )
-            else:
-                logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
-        else:
-            logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
-
-        # Get git diff before running eval script
-        git_diff_output_before = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-        logger.info(f"Git diff before (bad Patch):\n{git_diff_output_before}")
+        #reset_val = container.exec_run(
+        #    "git apply --reverse --allow-empty -v /tmp/patch.diff",
+        #    workdir="/testbed",
+        #    user="root",
+        #)
+        #if reset_val.exit_code == 0:
+        #    logger.info(f"Successfully reset patch changes for {instance_id}")
+        #else:
+        #    logger.warning(
+        #        f"Failed to reset patch for {instance_id}:\n{reset_val.output.decode('utf-8')}"
+        #    )
 
         # Evaluation procedure does not change for bad patch
-        #eval_file = Path(log_dir / "eval_bad.sh")
-        #eval_file.write_text(test_spec.eval_script)
-        #logger.info(
-        #    f"Eval script for {instance_id} written to {eval_file}; copying to container..."
-        #)
-        #copy_to_container(container, eval_file, Path("/eval.sh"))
+        eval_file = Path(log_dir / "bad_eval.sh")
+        eval_file.write_text(test_spec.inverted_eval_script_bad)
+        logger.info(
+            f"Eval script for Bad Evaluation of {instance_id} written to {eval_file}; copying to container..."
+        )
+        copy_to_container(container, eval_file, Path("/bad_eval.sh"))
 
         # Run eval script after applying bad patch, write output to logs. Bad Patch should fail test
-        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /eval.sh", timeout)
-        test_output_path = log_dir / "test_output.txt"
+        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /bad_eval.sh", timeout)
+        test_output_path = log_dir / "bad_test_output.txt"
         logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
         with open(test_output_path, "w") as f:
             f.write(test_output)
-            logger.info(f"Test output for {instance_id} written to {test_output_path}")
+            logger.info(f"Test output using bad patch for {instance_id} written to {test_output_path}")
             if timed_out:
                 f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
                 raise EvaluationError(
@@ -412,9 +373,10 @@ def run_instance(
         if git_diff_output_after != git_diff_output_before:
             logger.info(f"Git diff changed after running eval script")
 
-        # Get report from test output #TODO: Adjust grading for the bad patch (e.g flip the labels for F2P - keep maintenance)
-        logger.info(f"Grading answer for {instance_id}...")
-        report = get_eval_report(
+        # Get report from test output #TODO: Ensure correct and complete evaluation (potentially include assertion)
+        # Adjust grading for the bad patch (e.g flip the labels for F2P - keep maintenance)
+        logger.info(f"Grading test performance using gold patch for {instance_id}...")
+        report = get_eval_report_test_generation(
             test_spec=test_spec,
             prediction=pred,
             log_path=test_output_path,
@@ -475,7 +437,7 @@ def run_instances(
         timeout (int): Timeout for running tests
     """
     client = docker.from_env()
-    test_specs = list(map(make_test_spec, instances))
+    test_specs = list(map(make_test_spec, instances)) # will include inverted evaluation script for gold and bad patch
 
     # print number of existing instance images
     instance_image_ids = {x.instance_image_key for x in test_specs}

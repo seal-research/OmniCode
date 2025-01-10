@@ -41,10 +41,10 @@ class TestSpec:
     version: str
     repo_script_list: list[str]
     eval_script_list: list[str]
+    gold_inverted_eval_script_list : list[str]
+    bad_inverted_eval_script_list : list[str]
     env_script_list: list[str]
     arch: str
-    FAIL_TO_PASS: list[str]
-    PASS_TO_PASS: list[str]
 
     @property
     def setup_env_script(self):
@@ -53,6 +53,16 @@ class TestSpec:
     @property
     def eval_script(self):
         return "\n".join(["#!/bin/bash", "set -uxo pipefail"] + self.eval_script_list) + "\n"
+        # Don't exit early because we need to revert tests at the end
+
+    @property
+    def inverted_eval_script_gold(self):
+        return "\n".join(["#!/bin/bash", "set -uxo pipefail"] + self.gold_inverted_eval_script_list) + "\n"
+        # Don't exit early because we need to revert tests at the end
+
+    @property
+    def inverted_eval_script_bad(self):
+        return "\n".join(["#!/bin/bash", "set -uxo pipefail"] + self.bad_inverted_eval_script_list) + "\n"
         # Don't exit early because we need to revert tests at the end
 
     @property
@@ -345,9 +355,6 @@ def make_test_spec(instance: SWEbenchInstance) -> TestSpec:
             return json.loads(instance[key])
         return instance[key]
 
-    pass_to_pass = _from_json_or_obj(PASS_TO_PASS)
-    fail_to_pass = _from_json_or_obj(FAIL_TO_PASS)
-
     env_name = "testbed"
     repo_directory = f"/{env_name}"
     specs = MAP_REPO_VERSION_TO_SPECS[repo][version]
@@ -374,8 +381,8 @@ def make_test_spec(instance: SWEbenchInstance) -> TestSpec:
         env_script_list=env_script_list,
         repo_script_list=repo_script_list,
         eval_script_list=eval_script_list, # Contains Test Directives
+        gold_inverted_eval_script_list=inverted_eval_script_list_gold,
+        inverted_eval_script_list_bad=inverted_eval_script_list_bad,
         version=version,
         arch=arch,
-        FAIL_TO_PASS=fail_to_pass,
-        PASS_TO_PASS=pass_to_pass,
     )
