@@ -305,9 +305,9 @@ def run_instance(
         test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
         test_output_path_gold = log_dir / "gold_test_output.txt"
         logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
-        with open(test_output_path, "w") as f:
+        with open(test_output_path_gold, "w") as f:
             f.write(test_output)
-            logger.info(f"Test output using gold patch for {instance_id} written to {test_output_path}")
+            logger.info(f"Test output using gold patch for {instance_id} written to {test_output_path_gold}")
             if timed_out:
                 f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
                 raise EvaluationError(
@@ -352,7 +352,7 @@ def run_instance(
         test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /bad_eval.sh", timeout)
         test_output_path_bad = log_dir / "bad_test_output.txt"
         logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
-        with open(test_output_path, "w") as f:
+        with open(test_output_path_bad, "w") as f:
             f.write(test_output)
             logger.info(f"Test output using bad patch for {instance_id} written to {test_output_path}")
             if timed_out:
@@ -373,9 +373,8 @@ def run_instance(
         if git_diff_output_after != git_diff_output_before:
             logger.info(f"Git diff changed after running eval script")
 
-        # Get report from test output for Gold #TODO: Ensure correct and complete evaluation (potentially include assertion)
-        # Adjust grading for the bad patch (e.g flip the labels for F2P - keep maintenance)
-        logger.info(f"Grading test performance using gold patch for {instance_id}...")
+        # Get report from test output for Gold
+        logger.info(f"Grading test performance for {instance_id}...")
         report = get_eval_report_test_generation(
             test_spec=test_spec,
             prediction=pred,
