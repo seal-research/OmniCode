@@ -56,17 +56,6 @@ def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
     for datum in dataset:
         if datum[KEY_INSTANCE_ID] not in instance_ids:
             continue
-            
-        # Parse the FAIL_TO_PASS string into a list of test paths
-        fail_to_pass_tests = []
-        if datum.get("FAIL_TO_PASS"):
-            # The FAIL_TO_PASS field is a string representation of a list
-            # Convert it to a Python list by evaluating the string
-            try:
-                fail_to_pass_tests = eval(datum["FAIL_TO_PASS"])
-            except:
-                print(f"Failed to parse FAIL_TO_PASS for {datum[KEY_INSTANCE_ID]}")
-                continue
         
         result = {
             KEY_INSTANCE_ID: datum[KEY_INSTANCE_ID],
@@ -74,8 +63,8 @@ def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
             "base_commit": datum["base_commit"],
             "gold_patch": datum["patch"],
             "bad_patch" : datum["bad_patch"],
-            "test_patch": datum["test_patch"], # can be gold or model candidate
-            "fail_to_pass_tests": fail_to_pass_tests,
+            "candidate_test_patch": datum["candidate_test_patch"], # can be gold or model candidate
+            "gold_test_patch" : datum["test_patch"], #unused
             "model_name_or_path": "gold"
         }
         results.append(result)
@@ -253,7 +242,7 @@ def run_instance(
         # Copy model prediction as patch file to container
         # Applying Candidate Test Patch
         patch_file = Path(log_dir / "patch.diff")
-        patch_file.write_text(pred["test_patch"] or "")
+        patch_file.write_text(pred["candidate_test_patch"] or "")
         logger.info(
             f"Candidate Test Patch for {instance_id} written to {patch_file}, now applying to container..."
         )

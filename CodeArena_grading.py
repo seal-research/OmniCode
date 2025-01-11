@@ -433,6 +433,7 @@ def get_eval_report_test_generation(
         else:
             for key in report_bad:
                 combined_bad_report[key].append(report_bad[key])
+    # Combine Results into a joint dictionary (EXPECTED_PASS and EXPECTED_FAIL)
     report = {**report_gold, **combined_bad_report}
 
     if evaluate_report_TestGeneration(report) == TestedStatus.SUCCESS:

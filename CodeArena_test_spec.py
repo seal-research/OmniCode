@@ -345,7 +345,7 @@ def make_test_spec(instance: SWEbenchInstance) -> TestSpec:
     base_commit = instance["base_commit"]
     problem_statement = instance["problem_statement"]
     hints_text = instance["hints_text"]  # Unused
-    test_patch = instance["test_patch"]
+    test_patch = instance["candidate_test_patch"]
     gold_issue_patch = instance["gold_patch"]
     bad_issue_patch = instance["bad_patch"]
 
