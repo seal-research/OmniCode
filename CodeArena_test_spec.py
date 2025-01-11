@@ -254,9 +254,10 @@ def make_eval_script_list(instance, specs, env_name, repo_directory, base_commit
     test_files = re.findall(DIFF_MODIFIED_FILE_REGEX, test_patch)
     # Reset test files to the state they should be in before the patch.
     reset_tests_command = f"git checkout {base_commit} {' '.join(test_files)}"
-    apply_test_patch_command = (
-        f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{test_patch}\n{HEREDOC_DELIMITER}"
-    )
+    if(type(test_patch) == str): # check for empty bad patches. In this case do not apply change (defaults to base commit as bad sample)
+        apply_test_patch_command = (
+            f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{test_patch}\n{HEREDOC_DELIMITER}"
+        )
     test_command = " ".join(
         [
             MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]["test_cmd"],
