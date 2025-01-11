@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any
+from enum import Enum
 
 from swebench.harness.constants import (
     APPLY_PATCH_FAIL,
@@ -18,6 +19,15 @@ from swebench.harness.constants import (
 from swebench.harness.test_spec import TestSpec
 from swebench.harness.log_parsers import MAP_REPO_TO_PARSER
 
+class TestedStatus(Enum):
+    FAIL = "GOLD_FAIL_BAD_FAIL"
+    PARTIAL_GOLD = "GOLD_PARTIAL_BAD_FAIL"
+    PARTIAL_BAD = "GOLD_FAIL_BAD_PARTIAL"
+    SUCCESS_GOLD = "GOLD_SUCCESS_BAD_FAIL"
+    SUCCESS_BAD = "GOLD_FAIL_BAD_SUCCESS"
+    SUCCESS_GOLD_PARTIAL_BAD = "GOLD_SUCCESS_BAD_PARTIAL"
+    PARTIAL_GOLD_SUCCESS_BAD = "GOLD_PARTIAL_BAD_SUCCESS"
+    SUCCESS = "GOLD_SUCCESS_BAD_SUCCESS"
 
 # MARK: Utility functions
 def test_passed(case: str, sm: dict[str, str]) -> bool:
@@ -205,6 +215,48 @@ def get_resolution_status(report: dict[str, dict[str, Any]]) -> str:
     else:
         return ResolvedStatus.NO.value
     
+def evaluate_report_TestGeneration(report: dict[str, dict[str, Any]]) -> str:
+        # Extract values from the report
+    expected_pass = report.get("EXPECTED_PASS", {})
+    expected_fail = report.get("EXPECTED_FAIL", {})
+
+    # Calculate success and failure counts for both pass (GOLD) and fail (bad patch) categories
+    pass_success = len(expected_pass.get("success", []))
+    pass_failure = len(expected_pass.get("failure", []))
+    
+    fail_success = len(expected_fail.get("success", []))
+    fail_failure = len(expected_fail.get("failure", []))
+
+    # Evaluate the combination of pass and fail categories
+    
+    if pass_success > 0 and pass_failure == 0:
+        if fail_success > 0 and fail_failure == 0:
+            return TestedStatus.SUCCESS_GOLD.value  # Full success in pass (GOLD) and fail (bad)
+        elif fail_success > 0 and fail_failure > 0:
+            return TestedStatus.SUCCESS_GOLD_PARTIAL_BAD.value  # Full success in pass (GOLD) and partial in fail
+        else:
+            return TestedStatus.SUCCESS_GOLD.value  # Only success in pass (GOLD)
+
+    elif pass_success > 0 and pass_failure > 0:
+        if fail_success > 0 and fail_failure == 0:
+            return TestedStatus.PARTIAL_GOLD_SUCCESS_BAD.value  # Partial success in pass (GOLD) and full success in fail (bad patch)
+        elif fail_success > 0 and fail_failure > 0:
+            return TestedStatus.PARTIAL_GOLD.value  # Partial success in both pass (GOLD) and fail (bad patch)
+        else:
+            return TestedStatus.PARTIAL_GOLD.value  # Partial success in pass (GOLD)
+
+    elif pass_success == 0 and pass_failure > 0:
+        if fail_success > 0 and fail_failure == 0:
+            return TestedStatus.SUCCESS_BAD.value  # Failure in pass (GOLD) and full success in fail (bad patch)
+        elif fail_success > 0 and fail_failure > 0:
+            return TestedStatus.PARTIAL_BAD.value  # Failure in pass (GOLD) and partial success in fail
+        else:
+            return TestedStatus.FAIL.value  # Failure in pass (GOLD)
+
+    return "Unknown"  # Default case if none of the conditions are met
+
+
+    
 
 def get_eval_report(
     test_spec: TestSpec,
@@ -279,81 +331,45 @@ def get_eval_tests_report_TestGeneration(
     Returns:
         report (dict): report of metrics
 
-    Metric Definitions (Gold Result Pair + Eval Result):
-    - Fail-Pass (F2P) + P: Success (Resolution)
-    - Pass-Pass (P2P) + P: Success (Maintenance)
-    - Fail-Pass (F2P) + F: Failure
-    - Pass-Pass (P2P) + F: Failure
     """
     # TODO: Adjust metric calculation based on new metrics
     # Calculate resolution metrics
-    f2p_success = []
-    f2p_failure = []
-    for test_case in gold_results[FAIL_TO_PASS]:
+    successes = []
+    failures = []
+    for test_case in gold_results: # Hopefully iterates over all.
         if test_passed(test_case, eval_sm):
             # Assume silent success for now (test case not in eval_sm)
-            f2p_success.append(test_case)
+            if(is_gold_patch):
+                successes.append(test_case)
+            else:
+                failures.append(test_case)
         elif test_failed(test_case, eval_sm):
-            f2p_failure.append(test_case)
-
-    # Calculate maintenance metrics
-    p2p_success = []
-    p2p_failure = []
-    for test_case in gold_results[PASS_TO_PASS]:
-        if test_passed(test_case, eval_sm):
-            p2p_success.append(test_case)
-        elif test_failed(test_case, eval_sm):
-            p2p_failure.append(test_case)
-
-    results = {
-        FAIL_TO_PASS: {
-            "success": f2p_success,
-            "failure": f2p_failure,
-        },
-        PASS_TO_PASS: {
-            "success": p2p_success,
-            "failure": p2p_failure,
-        },
-    }
-
-    f2f_success = []
-    f2f_failure = []
-    p2f_success = []
-    p2f_failure = []
-    if calculate_to_fail:
-        # Calculate "extra credit" metrics
-        for test_case in gold_results[FAIL_TO_FAIL]:
-            if test_passed(test_case, eval_sm):
-                f2f_success.append(test_case)
-            elif test_failed(test_case, eval_sm):
-                f2f_failure.append(test_case)
-
-        # Calculate not considered metrics
-        for test_case in gold_results[PASS_TO_FAIL]:
-            if test_passed(test_case, eval_sm):
-                p2f_success.append(test_case)
-            elif test_failed(test_case, eval_sm):
-                p2f_failure.append(test_case)
-
-    results.update(
-        {
-            FAIL_TO_FAIL: {
-                "success": f2f_success,
-                "failure": f2f_failure,
-            },
-            PASS_TO_FAIL: {
-                "success": p2f_success,
-                "failure": p2f_failure,
+            if(is_gold_patch):
+                failures.append(test_case)
+            else:
+                successes.append(test_case)
+    if(is_gold_patch):
+        results = {
+            "EXPECTED_PASS": {
+                "success": successes,
+                "failure": failures,
             },
         }
-    )
+    else:
+        results = {
+            "EXPECTED_FAIL": {
+                "success": successes,
+                "failure": failures,
+            }
+        }
+
     return results
 
 # TODO: Adjust to to evaluate both evaluation paths of bad and gold patch. Adjust P2P and F2P, flip evaluation for bad patch
 def get_eval_report_test_generation(
     test_spec: TestSpec,
     prediction: dict[str, str],
-    log_path: str,
+    log_paths: list[str],
     include_tests_status: bool,
 ) -> dict[str, Any]:
     """
@@ -363,7 +379,7 @@ def get_eval_report_test_generation(
     Args:
         test_spec (dict): test spec containing keys "instance_id", "FAIL_TO_PASS", and "PASS_TO_PASS"
         prediction (dict): prediction containing keys "instance_id", "model_name_or_path", and "model_patch"
-        log_path (str): path to evaluation log
+        log_paths (str): path to evaluation logs, first is expected to be gold patch, second (and following) bad
         include_tests_status (bool): whether to include the status of each test in the returned report
     Returns:
         report (dict): report of metrics
@@ -375,32 +391,52 @@ def get_eval_report_test_generation(
         "patch_is_None": False,
         "patch_exists": False,
         "patch_successfully_applied": False,
-        "resolved": False,
+        "Test_Correct": False,
     }
 
     # Check if the model patch exists
     if prediction["model_patch"] is None:
         report_map[instance_id]["patch_is_None"] = True
-        return report_map
-    report_map[instance_id]["patch_exists"] = True
+    else:
+        report_map[instance_id]["patch_exists"] = True
 
-    # Get evaluation logs
-    eval_sm, found = get_logs_eval(log_path)
+        # Get evaluation logs for gold patch
+        eval_sm_gold, found_gold = get_logs_eval(log_paths[0])
 
-    if not found:
-        return report_map
-    report_map[instance_id]["patch_successfully_applied"] = True
+        if not found_gold:
+            return report_map
+        report_map[instance_id]["gold_patch_successfully_applied"] = True
 
-    # TODO: Re-Evaluate the meaning of F2P for Test Generation [Probably just insert candidate test patch files]
-    eval_ref = {
-        KEY_INSTANCE_ID: test_spec.instance_id,
-        FAIL_TO_PASS: test_spec.FAIL_TO_PASS,
-        PASS_TO_PASS: test_spec.PASS_TO_PASS,
-    }
+        eval_ref = {
+            KEY_INSTANCE_ID: test_spec.instance_id,
+        }
 
-    report = get_eval_tests_report(eval_sm, eval_ref)
-    if get_resolution_status(report) == ResolvedStatus.FULL.value:
-        report_map[instance_id]["resolved"] = True
+        report_gold = get_eval_tests_report_TestGeneration(eval_sm_gold, eval_ref, is_gold_patch=True)
+
+    # Get evaluation logs for bad patch
+    for index, path in enumerate(log_paths[1:]):
+        combined_bad_report = {}
+        eval_sm_bad, found_bad = get_logs_eval(path)
+
+        if not found_bad:
+            continue
+        report_map[instance_id][f"bad_patch_{index}_successfully_applied"] = True
+
+        eval_ref = {
+            KEY_INSTANCE_ID: test_spec.instance_id,
+        }
+
+        report_bad = get_eval_tests_report_TestGeneration(eval_sm_bad, eval_ref, is_gold_patch=False)
+
+        if len(combined_bad_report) == 0:
+            combined_bad_report = {key: [report_bad[key]] for key in report_bad}
+        else:
+            for key in report_bad:
+                combined_bad_report[key].append(report_bad[key])
+    report = {**report_gold, **combined_bad_report}
+
+    if evaluate_report_TestGeneration(report) == TestedStatus.SUCCESS:
+        report_map[instance_id]["Tested"] = True
 
     if include_tests_status:
         report_map[instance_id]["tests_status"] = report  # type: ignore

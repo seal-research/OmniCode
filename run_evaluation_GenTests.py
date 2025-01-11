@@ -303,7 +303,7 @@ def run_instance(
 
         # Run eval script, write output to logs.
         test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
-        test_output_path = log_dir / "gold_test_output.txt"
+        test_output_path_gold = log_dir / "gold_test_output.txt"
         logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
         with open(test_output_path, "w") as f:
             f.write(test_output)
@@ -350,7 +350,7 @@ def run_instance(
 
         # Run eval script after applying bad patch, write output to logs. Bad Patch should fail test
         test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /bad_eval.sh", timeout)
-        test_output_path = log_dir / "bad_test_output.txt"
+        test_output_path_bad = log_dir / "bad_test_output.txt"
         logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
         with open(test_output_path, "w") as f:
             f.write(test_output)
@@ -373,18 +373,18 @@ def run_instance(
         if git_diff_output_after != git_diff_output_before:
             logger.info(f"Git diff changed after running eval script")
 
-        # Get report from test output #TODO: Ensure correct and complete evaluation (potentially include assertion)
+        # Get report from test output for Gold #TODO: Ensure correct and complete evaluation (potentially include assertion)
         # Adjust grading for the bad patch (e.g flip the labels for F2P - keep maintenance)
         logger.info(f"Grading test performance using gold patch for {instance_id}...")
         report = get_eval_report_test_generation(
             test_spec=test_spec,
             prediction=pred,
-            log_path=test_output_path,
+            log_path=[test_output_path_gold, test_output_path_bad],
             include_tests_status=True,
         )
         logger.info(
             f"report: {report}\n"
-            f"Result for {instance_id}: resolved: {report[instance_id]['resolved']}"
+            f"Result for {instance_id}: Tested: {report[instance_id]['tested']}"
         )
 
         # Write report to report.json
@@ -481,171 +481,6 @@ def run_instances(
                     traceback.print_exc()
                     continue
     print("All instances run.")
-
-def evaluate_should_pass(
-        test_spec: TestSpec,
-        pred: dict,
-        rm_image: bool,
-        force_rebuild: bool,
-        client: docker.DockerClient,
-        run_id: str,
-        timeout: int | None = None,
-    ):
-    """
-    Run a single instance with the candidate test patch and the gold issue patch.
-
-    Args:
-        test_spec (TestSpec): TestSpec instance using candidate test patch
-        pred (dict): Prediction w/ model_name_or_path, model_patch, instance_id (model patch = gold patch)
-        rm_image (bool): Whether to remove the image after running
-        force_rebuild (bool): Whether to force rebuild the image
-        client (docker.DockerClient): Docker client
-        run_id (str): Run ID
-        timeout (int): Timeout for running tests
-    """
-    # Set up logging directory
-    instance_id = test_spec.instance_id
-    model_name_or_path = pred.get("model_name_or_path", "None").replace("/", "__")
-    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / instance_id
-    log_dir.mkdir(parents=True, exist_ok=True)
-
-    # Link the image build dir in the log dir
-    build_dir = INSTANCE_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
-    image_build_link = log_dir / "image_build_dir"
-    if not image_build_link.exists():
-        try:
-            # link the image build dir in the log dir
-            image_build_link.symlink_to(build_dir.absolute(), target_is_directory=True)
-        except:
-            # some error, idk why
-            pass
-    log_file = log_dir / "run_instance.log"
-
-    # Set up report file + logger
-    report_path = log_dir / "report.json"
-    if report_path.exists():
-        return instance_id, json.loads(report_path.read_text())
-    logger = setup_logger(instance_id, log_file)
-
-    # Run the instance
-    container = None
-    try:
-        # Build + start instance container (instance image should already be built)
-        container = build_container(test_spec, client, run_id, logger, rm_image, force_rebuild)
-        container.start()
-        logger.info(f"Container for {instance_id} started: {container.id}")
-
-        # Copy model prediction as patch file to container
-        # Applying Model patch - Gold Issue Solution 
-        patch_file = Path(log_dir / "patch.diff")
-        patch_file.write_text(pred["model_patch"] or "")
-        logger.info(
-            f"Model patch for {instance_id} written to {patch_file}, now applying to container..."
-        )
-        copy_to_container(container, patch_file, Path("/tmp/patch.diff"))
-
-        # Attempt to apply patch to container
-        val = container.exec_run(
-            "git apply --allow-empty -v /tmp/patch.diff",
-            workdir="/testbed",
-            user="root",
-        )
-        if val.exit_code != 0:
-            logger.info(f"Failed to apply patch to container, trying again...")
-            
-            # try "patch --batch --fuzz=5 -p1 -i {patch_path}" to try again
-            val = container.exec_run(
-                "patch --batch --fuzz=5 -p1 -i /tmp/patch.diff",
-                workdir="/testbed",
-                user="root",
-            )
-            if val.exit_code != 0:
-                logger.info(f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}")
-                raise EvaluationError(
-                    instance_id,
-                    f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}",
-                    logger,
-                )
-            else:
-                logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
-        else:
-            logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
-
-        # Get git diff before running eval script
-        git_diff_output_before = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-        logger.info(f"Git diff before:\n{git_diff_output_before}")
-
-        eval_file = Path(log_dir / "eval.sh")
-        eval_file.write_text(test_spec.eval_script) # This evaluation script should contain the *candidate* test patch not ground truth
-        logger.info(
-            f"Eval script for {instance_id} written to {eval_file}; copying to container..."
-        )
-        copy_to_container(container, eval_file, Path("/eval.sh"))
-
-        # Run eval script, write output to logs
-        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /eval.sh", timeout)
-        test_output_path = log_dir / "test_output.txt"
-        logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
-        with open(test_output_path, "w") as f:
-            f.write(test_output)
-            logger.info(f"Test output for {instance_id} written to {test_output_path}")
-            if timed_out:
-                f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
-                raise EvaluationError(
-                    instance_id,
-                    f"Test timed out after {timeout} seconds.",
-                    logger,
-                )
-
-        # Get git diff after running eval script
-        git_diff_output_after = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-
-        # Check if git diff changed after running eval script
-        logger.info(f"Git diff after:\n{git_diff_output_after}")
-        if git_diff_output_after != git_diff_output_before:
-            logger.info(f"Git diff changed after running eval script")
-
-        # Get report from test output
-        logger.info(f"Grading answer for {instance_id}...")
-        report = get_eval_report(
-            test_spec=test_spec,
-            prediction=pred,
-            log_path=test_output_path,
-            include_tests_status=True,
-        )
-        logger.info(
-            f"report: {report}\n"
-            f"Result for {instance_id}: resolved: {report[instance_id]['resolved']}"
-        )
-
-        # Write report to report.json
-        with open(report_path, "w") as f:
-            f.write(json.dumps(report, indent=4))
-        return instance_id, report
-    except EvaluationError as e:
-        error_msg = traceback.format_exc()
-        logger.info(error_msg)
-        print(e)
-    except BuildImageError as e:
-        error_msg = traceback.format_exc()
-        logger.info(error_msg)
-        print(e)
-    except Exception as e:
-        error_msg = (f"Error in evaluating model for {instance_id}: {e}\n"
-                     f"{traceback.format_exc()}\n"
-                     f"Check ({logger.log_file}) for more information.")
-        logger.error(error_msg)
-    finally:
-        # Remove instance container + image, close logger
-        cleanup_container(client, container, logger)
-        if rm_image:
-            remove_image(client, test_spec.instance_image_key, logger)
-        close_logger(logger)
-    return
 
 
 
