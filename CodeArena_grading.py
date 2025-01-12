@@ -408,9 +408,9 @@ def get_eval_report_test_generation(
     report = {**report_gold, **combined_bad_report}
 
     if evaluate_report_TestGeneration(report) == TestedStatus.SUCCESS:
-        report_map[instance_id]["Tested"] = True
+        report_map[instance_id]["Test_Accept"] = True
     else: 
-        report_map[instance_id]["Tested"] = False
+        report_map[instance_id]["Test_Accept"] = False
 
     if include_tests_status:
         report_map[instance_id]["tests_status"] = report  # type: ignore

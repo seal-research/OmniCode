@@ -97,7 +97,7 @@ def get_dataset_from_preds(
     generated_tests_path: str = "generated_tests.jsonl"
 ):
     """
-    Return only instances that have predictions and are in the dataset.
+    Return only instances that have predictions and are in the dataset as a list of dicts.
     If instance_ids is provided, only return instances with those IDs.
     If exclude_completed is True, only return instances that have not been run yet.
     """
@@ -108,11 +108,14 @@ def get_dataset_from_preds(
     dataset_ids = set(merged_df['instance_id'])
 
     if instance_ids:
-        # Filter to only include requested instance_ids
+        # Ensure only requested instance_ids are considered
         missing_preds = set(instance_ids) - dataset_ids
         if missing_preds:
             print(f"Warning: Missing predictions for {len(missing_preds)} instance IDs.")
-
+        
+        # Filter merged_df to only include requested instance_ids
+        merged_df = merged_df[merged_df['instance_id'].isin(instance_ids)]
+    
     # Check which instance IDs have already been run
     completed_ids = set()
     for _, instance in merged_df.iterrows():
@@ -135,7 +138,10 @@ def get_dataset_from_preds(
     # Filter dataset to only instances with predictions and non-empty patches
     merged_df = merged_df[merged_df['instance_id'].isin(dataset_ids)]
 
-    return merged_df
+    # Convert the DataFrame to a list of dictionaries
+    return merged_df.to_dict(orient="records")
+
+
 
 def make_run_report(
         predictions: dict,
@@ -175,7 +181,8 @@ def make_run_report(
             incomplete_ids.add(instance_id)
             continue
         prediction = predictions[instance_id]
-        if prediction.get("candidate_test_patch", None) in ["", None]:
+        # TODO: Make this look nicer. External predictions do not conform to candidate_test_patch format
+        if prediction.get("candidate_test_patch", None) in ["", None] and prediction.get("model_patch", None) in ["", None]:
             empty_patch_ids.add(instance_id)
             continue
         report_file = (
@@ -189,7 +196,7 @@ def make_run_report(
             # If report file exists, then the instance has been run
             completed_ids.add(instance_id)
             report = json.loads(report_file.read_text())
-            if report[instance_id]["Tested"]:
+            if report[instance_id]["Test_Accept"]:
                 # Record if the instance was resolved
                 successful_ids.add(instance_id)
             else:
@@ -292,7 +299,7 @@ def main(
 
     # get dataset from predictions
     if(not predictions_path == 'gold'):
-        dataset = get_dataset_from_preds(dataset_name, split, instance_ids, predictions, run_id)
+        dataset = get_dataset_from_preds(dataset_name, split, instance_ids, run_id=run_id, generated_tests_path=predictions_path)
     else:
         dataset = get_gold_predictions(dataset_name, instance_ids, split)
     full_dataset = load_swebench_dataset(dataset_name, split, instance_ids, full=True)
@@ -365,7 +372,10 @@ def run_instance(
         # Copy model prediction as patch file to container
         # Applying Candidate Test Patch
         patch_file = Path(log_dir / "patch.diff")
-        patch_file.write_text(pred["candidate_test_patch"] or "")
+        if("candidate_test_patch" in pred):
+            patch_file.write_text(pred["candidate_test_patch"] or "")
+        else:
+            patch_file.write_text(pred["model_patch"] or "")
         logger.info(
             f"Candidate Test Patch for {instance_id} written to {patch_file}, now applying to container..."
         )
@@ -495,7 +505,7 @@ def run_instance(
         )
         logger.info(
             f"report: {report}\n"
-            f"Result for {instance_id}: Tested: {report[instance_id]['Tested']}"
+            f"Result for {instance_id}: Test Accepted: {report[instance_id]['Test_Accept']}"
         )
 
         # Write report to report.json
@@ -568,7 +578,8 @@ def run_instances(
                 executor.submit(
                     run_instance,
                     test_spec,
-                    predictions[test_spec.instance_id],
+                    # TODO: Either optimize this lookup or find a more elegant way to pass corrected predictions
+                    next((item for item in instances if item["instance_id"] == test_spec.instance_id), None),
                     should_remove(
                         test_spec.instance_image_key,
                         cache_level,
