@@ -30,9 +30,13 @@ Welcome to **CodeArena**! This repository allows you to evaluate performance on 
 
 ### Contained Tasks
 
+<div align="center">
+
 |                | Python (Tasks) | Java (Tasks) | C++ (Tasks) |
 |----------------|----------------|--------------|-------------|
 | Test Generation | ✅ (10)         | ✖️ (0)        | ✖️ (0)       |
 | Code Review     | ✖️ (0)         | ✖️ (0)        | ✖️ (0)       |
+
+</div>
 
    
