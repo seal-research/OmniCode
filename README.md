@@ -27,4 +27,12 @@ Welcome to **CodeArena**! This repository allows you to evaluate performance on 
     --max_workers 1 \
     --run_id BadPatchTest \
     --instance_ids astropy__astropy-13033
+
+### Contained Tasks
+
+|                | Python (Tasks) | Java (Tasks) | C++ (Tasks) |
+|----------------|----------------|--------------|-------------|
+| Test Generation | ✅ (0)         | ✖️ (0)        | ✖️ (0)       |
+| Code Review     | ✖️ (0)         | ✖️ (0)        | ✖️ (0)       |
+
    
