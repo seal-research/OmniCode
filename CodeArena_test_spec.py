@@ -8,8 +8,9 @@ import re
 from dataclasses import dataclass
 from typing import Any, Union, cast
 
+from CodeArenaInstance import CodeArenaInstance
+
 from swebench.harness.constants import (
-    SWEbenchInstance,
     KEY_INSTANCE_ID,
     FAIL_TO_PASS,
     PASS_TO_PASS,
@@ -24,8 +25,11 @@ from swebench.harness.dockerfiles import (
 )
 from swebench.harness.utils import (
     get_requirements,
-    get_environment_yml,
-    get_test_directives,
+    get_environment_yml
+)
+
+from utils import (
+    get_test_directives
 )
 
 DIFF_MODIFIED_FILE_REGEX = r"--- a/(.*)"
@@ -118,13 +122,13 @@ class TestSpec:
             raise ValueError(f"Invalid architecture: {self.arch}")
 
 
-def get_test_specs_from_dataset(dataset: Union[list[SWEbenchInstance], list[TestSpec]]) -> list[TestSpec]:
+def get_test_specs_from_dataset(dataset: Union[list[CodeArenaInstance], list[TestSpec]]) -> list[TestSpec]:
     """
     Idempotent function that converts a list of SWEbenchInstance objects to a list of TestSpec objects.
     """
     if isinstance(dataset[0], TestSpec):
         return cast(list[TestSpec], dataset)
-    return list(map(make_test_spec, cast(list[SWEbenchInstance], dataset)))
+    return list(map(make_test_spec, cast(list[CodeArenaInstance], dataset)))
 
 
 def make_repo_script_list(specs, repo, repo_directory, base_commit, env_name):
@@ -178,7 +182,7 @@ def replace_uninstallable_packages_requirements_txt(requirement_str: str) -> str
     return "\n".join(requirements_replaced) + "\n"
 
 
-def make_env_script_list(instance: SWEbenchInstance, specs: dict, env_name: str) -> list[str]:
+def make_env_script_list(instance: CodeArenaInstance, specs: dict, env_name: str) -> list[str]:
     """
     Creates the list of commands to set up the conda environment for testing.
     This is the setup script for the environment image.
@@ -337,15 +341,13 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     return eval_commands
 
 
-def make_test_spec(instance: SWEbenchInstance) -> TestSpec:
+def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
     if isinstance(instance, TestSpec):
         return instance
     instance_id = instance[KEY_INSTANCE_ID]
     repo = instance["repo"]
     version = instance["version"]
     base_commit = instance["base_commit"]
-    problem_statement = instance["problem_statement"]
-    hints_text = instance["hints_text"]  # Unused
     test_patch = instance["candidate_test_patch"]
     gold_issue_patch = instance["gold_patch"]
     bad_issue_patch = instance["bad_patch"]
@@ -383,7 +385,7 @@ def make_test_spec(instance: SWEbenchInstance) -> TestSpec:
         repo_script_list=repo_script_list,
         eval_script_list=eval_script_list, # Contains Test Directives
         gold_inverted_eval_script_list=inverted_eval_script_list_gold,
-        inverted_eval_script_list_bad=inverted_eval_script_list_bad,
+        bad_inverted_eval_script_list=inverted_eval_script_list_bad,
         version=version,
         arch=arch,
     )

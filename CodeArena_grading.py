@@ -16,17 +16,14 @@ from swebench.harness.constants import (
     ResolvedStatus,
     TestStatus,
 )
+from utils import merge_and_unpack
 from swebench.harness.test_spec import TestSpec
 from swebench.harness.log_parsers import MAP_REPO_TO_PARSER
 
 class TestedStatus(Enum):
     FAIL = "GOLD_FAIL_BAD_FAIL"
-    PARTIAL_GOLD = "GOLD_PARTIAL_BAD_FAIL"
-    PARTIAL_BAD = "GOLD_FAIL_BAD_PARTIAL"
     SUCCESS_GOLD = "GOLD_SUCCESS_BAD_FAIL"
     SUCCESS_BAD = "GOLD_FAIL_BAD_SUCCESS"
-    SUCCESS_GOLD_PARTIAL_BAD = "GOLD_SUCCESS_BAD_PARTIAL"
-    PARTIAL_GOLD_SUCCESS_BAD = "GOLD_PARTIAL_BAD_SUCCESS"
     SUCCESS = "GOLD_SUCCESS_BAD_SUCCESS"
 
 # MARK: Utility functions
@@ -74,7 +71,8 @@ def get_logs_eval(log_fp: str) -> tuple[dict[str, str], bool]:
                     ]
                 ]
             )
-            or "applied patch" not in content.lower()
+            # TODO: find a workaround for this
+            #or "applied patch" not in content.lower() --> Base commit is used to simulate bad patch for now
         ):
             # Eval patch was not applied successfully
             return {}, False
@@ -224,36 +222,22 @@ def evaluate_report_TestGeneration(report: dict[str, dict[str, Any]]) -> str:
     pass_success = len(expected_pass.get("success", []))
     pass_failure = len(expected_pass.get("failure", []))
     
+    expected_fail = merge_and_unpack(expected=expected_fail)
     fail_success = len(expected_fail.get("success", []))
     fail_failure = len(expected_fail.get("failure", []))
 
     # Evaluate the combination of pass and fail categories
-    
+    # TODO: Re-Evaluate this, is it reasonable to assume full test file will pass for Gold? 
     if pass_success > 0 and pass_failure == 0:
-        if fail_success > 0 and fail_failure == 0:
-            return TestedStatus.SUCCESS_GOLD.value  # Full success in pass (GOLD) and fail (bad)
-        elif fail_success > 0 and fail_failure > 0:
-            return TestedStatus.SUCCESS_GOLD_PARTIAL_BAD.value  # Full success in pass (GOLD) and partial in fail
+        if fail_success > 0 and fail_failure >= 0:
+            return TestedStatus.SUCCESS  # Full success in pass (GOLD) and fail (bad)
         else:
-            return TestedStatus.SUCCESS_GOLD.value  # Only success in pass (GOLD)
-
-    elif pass_success > 0 and pass_failure > 0:
-        if fail_success > 0 and fail_failure == 0:
-            return TestedStatus.PARTIAL_GOLD_SUCCESS_BAD.value  # Partial success in pass (GOLD) and full success in fail (bad patch)
-        elif fail_success > 0 and fail_failure > 0:
-            return TestedStatus.PARTIAL_GOLD.value  # Partial success in both pass (GOLD) and fail (bad patch)
+            return TestedStatus.SUCCESS_GOLD  # Only success in pass (GOLD)
+    else:
+        if fail_success > 0:
+            return TestedStatus.SUCCESS_BAD  # Partial success in pass (GOLD) and full success in fail (bad patch)
         else:
-            return TestedStatus.PARTIAL_GOLD.value  # Partial success in pass (GOLD)
-
-    elif pass_success == 0 and pass_failure > 0:
-        if fail_success > 0 and fail_failure == 0:
-            return TestedStatus.SUCCESS_BAD.value  # Failure in pass (GOLD) and full success in fail (bad patch)
-        elif fail_success > 0 and fail_failure > 0:
-            return TestedStatus.PARTIAL_BAD.value  # Failure in pass (GOLD) and partial success in fail
-        else:
-            return TestedStatus.FAIL.value  # Failure in pass (GOLD)
-
-    return "Unknown"  # Default case if none of the conditions are met
+            return TestedStatus.FAIL  # Partial success in pass (GOLD)
 
 
     
@@ -316,7 +300,6 @@ def get_eval_report(
 
 def get_eval_tests_report_TestGeneration(
     eval_sm: dict[str, str],
-    gold_results: dict[str, str],
     is_gold_patch: bool = False,
     calculate_to_fail: bool = False,
 ) -> dict[str, dict[str, list[str]]]:
@@ -325,18 +308,16 @@ def get_eval_tests_report_TestGeneration(
 
     Args:
         eval_sm (dict): evaluation status map
-        gold_results (dict): gold results
         is_gold_patch (bool): whether applied issue patch is gold
         calculate_to_fail (bool): whether to calculate metrics for "x to fail" tests
     Returns:
         report (dict): report of metrics
 
     """
-    # TODO: Adjust metric calculation based on new metrics
-    # Calculate resolution metrics
+
     successes = []
     failures = []
-    for test_case in gold_results: # Hopefully iterates over all.
+    for test_case in eval_sm: # Hopefully iterates over all.
         if test_passed(test_case, eval_sm):
             # Assume silent success for now (test case not in eval_sm)
             if(is_gold_patch):
@@ -365,7 +346,6 @@ def get_eval_tests_report_TestGeneration(
 
     return results
 
-# TODO: Adjust to to evaluate both evaluation paths of bad and gold patch. Adjust P2P and F2P, flip evaluation for bad patch
 def get_eval_report_test_generation(
     test_spec: TestSpec,
     prediction: dict[str, str],
@@ -390,12 +370,11 @@ def get_eval_report_test_generation(
     report_map[instance_id] = {
         "patch_is_None": False,
         "patch_exists": False,
-        "patch_successfully_applied": False,
-        "Test_Correct": False,
+        "gold_patch_successfully_applied": False,
     }
 
     # Check if the model patch exists
-    if prediction["model_patch"] is None:
+    if prediction["candidate_test_patch"] is None:
         report_map[instance_id]["patch_is_None"] = True
     else:
         report_map[instance_id]["patch_exists"] = True
@@ -407,11 +386,7 @@ def get_eval_report_test_generation(
             return report_map
         report_map[instance_id]["gold_patch_successfully_applied"] = True
 
-        eval_ref = {
-            KEY_INSTANCE_ID: test_spec.instance_id,
-        }
-
-        report_gold = get_eval_tests_report_TestGeneration(eval_sm_gold, eval_ref, is_gold_patch=True)
+        report_gold = get_eval_tests_report_TestGeneration(eval_sm_gold, is_gold_patch=True)
 
     # Get evaluation logs for bad patch
     for index, path in enumerate(log_paths[1:]):
@@ -422,11 +397,7 @@ def get_eval_report_test_generation(
             continue
         report_map[instance_id][f"bad_patch_{index}_successfully_applied"] = True
 
-        eval_ref = {
-            KEY_INSTANCE_ID: test_spec.instance_id,
-        }
-
-        report_bad = get_eval_tests_report_TestGeneration(eval_sm_bad, eval_ref, is_gold_patch=False)
+        report_bad = get_eval_tests_report_TestGeneration(eval_sm_bad, is_gold_patch=False)
 
         if len(combined_bad_report) == 0:
             combined_bad_report = {key: [report_bad[key]] for key in report_bad}
@@ -438,6 +409,8 @@ def get_eval_report_test_generation(
 
     if evaluate_report_TestGeneration(report) == TestedStatus.SUCCESS:
         report_map[instance_id]["Tested"] = True
+    else: 
+        report_map[instance_id]["Tested"] = False
 
     if include_tests_status:
         report_map[instance_id]["tests_status"] = report  # type: ignore
