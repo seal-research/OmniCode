@@ -1,11 +1,13 @@
 from pathlib import Path
 import json
 import logging
+import math
 import tempfile
 
 from datasets import load_dataset, load_from_disk
 from tqdm import tqdm
 from jinja2 import Template
+import pandas as pd
 
 from sweagent.run.run import main as sweagent_main
 from sweagent.run.run_single import RunSingle, RunSingleConfig
@@ -126,11 +128,28 @@ def main(
     model_name: str,
 ):
     if input_tasks_path.exists():
-        dataset = load_from_disk(dataset_path=input_tasks_path)
+        if input_tasks_path.suffix.endswith("json"):
+            dataset = json.loads(input_tasks_path.read_text())
+        elif input_tasks_path.suffix.endswith("jsonl"):
+            dataset = [json.loads(i) for i in input_tasks_path.read_text().splitlines()]
+        elif input_tasks_path.suffix.endswith("csv"):
+            dataset = pd.read_csv(input_tasks_path).to_dict('records')
+        else:
+            raise RuntimeError(f"Data type ({input_tasks_path.suffix}) not supported")
+
     else:
         dataset = load_dataset(str(input_tasks_path))
 
-    dataset = dataset['test']
+    if isinstance(dataset, dict):
+        dataset = dataset['test']
+
+    if not (isinstance(dataset, list) and all(isinstance(d, dict) for d in dataset)):
+        raise RuntimeError(f"Data folllows incorrect format")
+
+    dataset = [
+        d for d in dataset
+        if ("bad_patch" not in d or (isinstance(d['bad_patch'], str) and d['bad_patch'].strip() != ''))
+    ]
 
     existing_ids = set()
     
