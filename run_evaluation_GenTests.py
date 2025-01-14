@@ -251,14 +251,14 @@ def make_run_report(
         "unremoved_images": list(sorted(unremoved_images)),
         "schema_version": 2,
     }
-    report_file = Path(
-        list(predictions.values())[0]["model_name_or_path"].replace("/", "__")
-        + f".{run_id}"
-        + ".json"
-    )
-    with open(report_file, "w") as f:
-        print(json.dumps(report, indent=4), file=f)
-    print(f"Report written to {report_file}")
+    #report_file = Path(
+    #    list(predictions.values())[0]["model_name_or_path"].replace("/", "__")
+    #    + f".{run_id}"
+    #    + ".json"
+    #)
+    #with open(report_file, "w") as f:
+    #    print(json.dumps(report, indent=4), file=f)
+    #print(f"Report written to {report_file}")
     return report_file
 
 def main(
