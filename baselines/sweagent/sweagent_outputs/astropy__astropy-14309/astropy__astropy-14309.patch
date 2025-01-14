@@ -1,0 +1,35 @@
+
+diff --git a/astropy/io/registry/tests/test_registries.py b/astropy/io/registry/tests/test_registries.py
+index 188d7a7..4472e21 100644
+--- a/astropy/io/registry/tests/test_registries.py
++++ b/astropy/io/registry/tests/test_registries.py
+@@ -1139,3 +1139,10 @@ class TestSubclass:
+         assert t["a"].unit == u.m
+         assert t["a"].format == "{:13.4f}"
+         assert t["a"].description == "hello"
++def test_identify_format_index_error():
++    from astropy.io.registry import identify_format
++    from astropy.table import Table
++
++    # This should raise an IndexError
++    with pytest.raises(IndexError, match="tuple index out of range"):
++        identify_format("write", Table, "bububu.ecsv", None, [], {})
+\ No newline at end of file
+diff --git a/run_test.py b/run_test.py
+new file mode 100644
+index 0000000..bc8c4e6
+--- /dev/null
++++ b/run_test.py
+@@ -0,0 +1,11 @@
++
++from astropy.io.registry.tests.test_registries import test_identify_format_index_error
++
++if __name__ == "__main__":
++    try:
++        test_identify_format_index_error()
++        print("Test passed: IndexError was raised as expected.")
++    except AssertionError as e:
++        print(f"Test failed: {e}")
++    except Exception as e:
++        print(f"An unexpected exception occurred: {e}")
+\ No newline at end of file

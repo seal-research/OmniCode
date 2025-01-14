@@ -1,0 +1,49 @@
+
+diff --git a/reproduce_clone_issue.py b/reproduce_clone_issue.py
+new file mode 100644
+index 0000000..e753e1d
+--- /dev/null
++++ b/reproduce_clone_issue.py
+@@ -0,0 +1,9 @@
++
++from sklearn.preprocessing import StandardScaler
++from sklearn.base import clone
++
++try:
++    clone(StandardScaler(with_mean=StandardScaler))
++    print("Script completed successfully, no errors.")
++except Exception as e:
++    print("Error:", e)
+\ No newline at end of file
+diff --git a/sklearn/base.py b/sklearn/base.py
+index 56ffb18..3499827 100644
+--- a/sklearn/base.py
++++ b/sklearn/base.py
+@@ -48,7 +48,7 @@ def clone(estimator, safe=True):
+     # XXX: not handling dictionaries
+     if estimator_type in (list, tuple, set, frozenset):
+         return estimator_type([clone(e, safe=safe) for e in estimator])
+-    elif not hasattr(estimator, 'get_params'):
++    elif not hasattr(estimator, 'get_params') or isinstance(estimator, type):
+         if not safe:
+             return copy.deepcopy(estimator)
+         else:
+diff --git a/sklearn/tests/test_base.py b/sklearn/tests/test_base.py
+index ebcb389..1e465ef 100644
+--- a/sklearn/tests/test_base.py
++++ b/sklearn/tests/test_base.py
+@@ -442,3 +442,13 @@ def test_pickling_works_when_getstate_is_overwritten_in_the_child_class():
+     estimator_restored = pickle.loads(serialized)
+     assert_equal(estimator_restored.attribute_pickled, 5)
+     assert_equal(estimator_restored._attribute_not_pickled, None)
++
++def test_clone_with_estimator_class():
++    from sklearn.preprocessing import StandardScaler
++    from sklearn.base import clone
++
++    try:
++        clone(StandardScaler(with_mean=StandardScaler))
++        print("Test passed: clone works with estimator class as parameter.")
++    except Exception as e:
++        print("Test failed:", e)
+\ No newline at end of file

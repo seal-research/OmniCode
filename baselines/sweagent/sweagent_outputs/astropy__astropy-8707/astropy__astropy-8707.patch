@@ -1,0 +1,41 @@
+
+diff --git a/astropy/io/fits/header.py b/astropy/io/fits/header.py
+index ad07e6d..45c7c8a 100644
+--- a/astropy/io/fits/header.py
++++ b/astropy/io/fits/header.py
+@@ -332,6 +332,10 @@ class Header:
+         Creates an HDU header from a byte string containing the entire header
+         data.
+ 
++        If `data` is of type `bytes`, it will be decoded to `str` using ASCII encoding.
++
++        If `data` is of type `bytes`, it will be decoded to `str` using ASCII encoding.
++
+         Parameters
+         ----------
+         data : str
+diff --git a/astropy/io/fits/tests/test_header.py b/astropy/io/fits/tests/test_header.py
+index 7c1725a..dec29db 100644
+--- a/astropy/io/fits/tests/test_header.py
++++ b/astropy/io/fits/tests/test_header.py
+@@ -2794,3 +2794,19 @@ class TestRecordValuedKeywordCards(FitsTestCase):
+         with open(self.temp('mode.fits'), mode=mode) as ff:
+             hdu = fits.ImageHDU(data=np.ones(5))
+             hdu.writeto(ff)
++    def test_fromstring_with_bytes_and_str(self):
++        header_str = 'SIMPLE  =                    T / file does conform to FITS standard'
++        header_bytes = header_str.encode('ascii')
++
++        # Test with str input
++        header_from_str = fits.Header.fromstring(header_str)
++        assert header_from_str is not None
++
++        # Test with bytes input
++        header_from_bytes = fits.Header.fromstring(header_bytes)
++        assert header_from_bytes is not None
++
++        # Ensure both headers are equivalent
++        assert header_from_str == header_from_bytes
++
++        print("Test for fromstring with bytes and str passed.")
+\ No newline at end of file

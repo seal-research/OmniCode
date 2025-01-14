@@ -1,0 +1,32 @@
+
+diff --git a/astropy/units/tests/test_units.py b/astropy/units/tests/test_units.py
+index 000c12d..aa307be 100644
+--- a/astropy/units/tests/test_units.py
++++ b/astropy/units/tests/test_units.py
+@@ -800,3 +800,8 @@ def test_unit_summary_prefixes():
+             assert prefixes == 'No'
+         elif unit.name == 'vox':
+             assert prefixes == 'Yes'
++def test_unrecognized_unit_equality_with_none():
++    # Test that comparing an UnrecognizedUnit with None does not raise an error
++    x = u.Unit('asdf', parse_strict='silent')
++    assert not (x == None)  # Should be False
++    assert x != None
+\ No newline at end of file
+diff --git a/test_unit_equality.py b/test_unit_equality.py
+new file mode 100644
+index 0000000..753b9b4
+--- /dev/null
++++ b/test_unit_equality.py
+@@ -0,0 +1,10 @@
++
++from astropy.units import Unit
++
++x = Unit('asdf', parse_strict='silent')
++
++try:
++    result = (x == None)  # Should be False
++    print("Comparison result:", result)
++except TypeError as e:
++    print("Error:", e)
+\ No newline at end of file

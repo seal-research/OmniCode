@@ -1,0 +1,78 @@
+
+diff --git a/astropy/io/ascii/tests/test_cds.py b/astropy/io/ascii/tests/test_cds.py
+index 0f5523c..fc10c35 100644
+--- a/astropy/io/ascii/tests/test_cds.py
++++ b/astropy/io/ascii/tests/test_cds.py
+@@ -85,6 +85,35 @@ def test_roundtrip_mrt_table():
+     assert lines == exp_output
+ 
+ 
++def test_cds_units_parsing():
++    """
++    Test to ensure that composite units are correctly parsed from MRT files.
++    """
++    mrt_data = """
++    Title:
++    Authors:
++    Table:
++    =================================================================================
++    Byte-by-byte Description of file: tab.txt
++    --------------------------------------------------------------------------------
++       Bytes Format Units           Label      Explanations
++    --------------------------------------------------------------------------------
++       1- 10 A10    ---            ID         ID
++      12- 21 F10.5  10+3J/m/s/kpc2    SBCONT     Cont surface brightness
++      23- 32 F10.5  10-7J/s/kpc2     SBLINE     Line surface brightness
++    --------------------------------------------------------------------------------
++    ID0001     70.99200   38.51040      
++    ID0001     13.05120   28.19240      
++    ID0001     3.83610    10.98370      
++    ID0001     1.99101    6.78822       
++    ID0001     1.31142    5.01932      
++    """
++    
++    table = ascii.read(mrt_data, format='ascii.cds')
++    assert table['SBCONT'].unit == u.Unit('10+3J/m/s/kpc2')
++    assert table['SBLINE'].unit == u.Unit('10-7J/s/kpc2')
++
++
+ def test_write_byte_by_byte_units():
+     t = ascii.read(test_dat)
+     col_units = [None, u.C, u.kg, u.m / u.s, u.year]
+diff --git a/reproduce_mrt_issue.py b/reproduce_mrt_issue.py
+new file mode 100644
+index 0000000..fa7a6ec
+--- /dev/null
++++ b/reproduce_mrt_issue.py
+@@ -0,0 +1,5 @@
++
++from astropy.table import Table
++
++dat = Table.read('tab.txt', format='ascii.cds')
++print(dat)
+\ No newline at end of file
+diff --git a/tab.txt b/tab.txt
+new file mode 100644
+index 0000000..a7e9d61
+--- /dev/null
++++ b/tab.txt
+@@ -0,0 +1,18 @@
++
++Title:
++Authors:
++Table:
++================================================================================
++Byte-by-byte Description of file: tab.txt
++--------------------------------------------------------------------------------
++   Bytes Format Units           Label      Explanations
++--------------------------------------------------------------------------------
++   1- 10 A10    ---            ID         ID
++  12- 21 F10.5  10+3J/m/s/kpc2    SBCONT     Cont surface brightness
++  23- 32 F10.5  10-7J/s/kpc2 SBLINE     Line surface brightness
++--------------------------------------------------------------------------------
++ID0001     70.99200   38.51040      
++ID0001     13.05120   28.19240      
++ID0001     3.83610    10.98370      
++ID0001     1.99101    6.78822       
++ID0001     1.31142    5.01932      
+\ No newline at end of file

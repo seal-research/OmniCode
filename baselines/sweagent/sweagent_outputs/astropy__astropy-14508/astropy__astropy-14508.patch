@@ -1,0 +1,77 @@
+
+diff --git a/astropy/io/fits/card.py b/astropy/io/fits/card.py
+index 118bfce..0a2bc74 100644
+--- a/astropy/io/fits/card.py
++++ b/astropy/io/fits/card.py
+@@ -1299,7 +1299,9 @@ def _format_value(value):
+ 
+ def _format_float(value):
+     """Format a floating number to make sure it gets the decimal point."""
+-    value_str = f"{value:.16G}"
++    value_str = str(value)
++    if len(value_str) > 20:
++        value_str = f"{value:.16G}"
+     if "." not in value_str and "E" not in value_str:
+         value_str += ".0"
+     elif "E" in value_str:
+diff --git a/create_test_fits.py b/create_test_fits.py
+new file mode 100644
+index 0000000..ac7f9b6
+--- /dev/null
++++ b/create_test_fits.py
+@@ -0,0 +1,12 @@
++
++from astropy.io import fits
++import numpy as np
++
++# Create a primary HDU with a minimal header
++hdu = fits.PrimaryHDU(data=np.zeros((10, 10)))
++
++# Add the specific card to the header
++hdu.header['HIERARCH ESO IFM CL RADIUS'] = (0.009125, '[m] radius arround actuator to avoid')
++
++# Write the FITS file
++hdu.writeto('test.fits', overwrite=True)
+\ No newline at end of file
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000..3fd506a
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,13 @@
++
++from astropy.io import fits
++
++# Assuming 'test.fits' is available in the current directory
++hdr = fits.getheader('test.fits')
++c = hdr.cards['ESO IFM CL RADIUS']
++
++print(repr(c))
++print(str(c))
++
++new_c = fits.Card(f'HIERARCH {c.keyword}', c.value, c.comment)
++print(repr(new_c))
++print(str(new_c))
+\ No newline at end of file
+diff --git a/test_card.py b/test_card.py
+new file mode 100644
+index 0000000..10188db
+--- /dev/null
++++ b/test_card.py
+@@ -0,0 +1,15 @@
++
++import unittest
++from astropy.io import fits
++
++class TestFitsCard(unittest.TestCase):
++    def test_float_representation(self):
++        # Create a card with the specific float value and comment
++        card = fits.Card('HIERARCH ESO IFM CL RADIUS', 0.009125, '[m] radius arround actuator to avoid')
++        
++        # Check the string representation
++        expected_str = 'HIERARCH ESO IFM CL RADIUS = 0.009125 / [m] radius arround actuator to avoid    '
++        self.assertEqual(str(card), expected_str)
++
++if __name__ == '__main__':
++    unittest.main()
+\ No newline at end of file
