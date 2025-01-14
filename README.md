@@ -59,7 +59,7 @@ The `codearena` command allows you to run multiple code evaluation benchmarks, s
    python codearena.py \
     --TestGeneration --CodeReview \
     --dataset_name princeton-nlp/SWE-bench_Verified \
-    --predictions_path predictions.json \
+    --predictions_path predictions_tg.json predictions_cr.json \
     --max_workers 2 \
     --run_id MyRun
 ```
