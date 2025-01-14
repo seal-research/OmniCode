@@ -2,7 +2,7 @@
 
 Welcome to **CodeArena**! This repository allows you to evaluate performance on various Software Development Activities for different models and datasets. Below, you'll find the commands to test your setup and evaluate the results. CodeArena requires you to have docker set up and running prior to executing Evaluation.
 
-### SETUP
+### Setup
 CodeArena is currently set up to work with a specific swebench version which can be installed using 
 
 `pip install git+https://github.com/swe-bench/SWE-bench@e0b9bf9#egg=swebench`
@@ -32,6 +32,25 @@ CodeArena is currently set up to work with a specific swebench version which can
     --max_workers 1 \
     --run_id BadPatchTest \
     --instance_ids astropy__astropy-13033
+
+### CodeArena Evaluation
+
+To run the full CodeArena benchmark you can pass the corresponding flags to the evaluation commands.
+
+### CodeArena Benchmark Command
+
+The `codearena` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration` and `CodeReview`. You can specify flags to choose which benchmarks to execute. The command also supports running both benchmarks simultaneously and has an option for `CodeMigration` (currently not supported).
+
+### Example 1: Run `TestGeneration` with `instance_ids`
+```bash
+python codearena.py \
+    --TestGeneration \
+    --dataset_name princeton-nlp/SWE-bench_Verified \
+    --predictions_path predictions.json \
+    --max_workers 1 \
+    --run_id BadPatchTest \
+    --instance_ids astropy__astropy-13033
+
 
 ### Contained Tasks
 
