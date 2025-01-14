@@ -92,7 +92,8 @@ def load_CodeArena_prediction_dataset(generated_tests_path: str, out_csv_path: s
             # Fix the `model_patch` if it starts with `---`
             if entry.get('model_patch', '').startswith('---'):
                 entry['model_patch'] = entry['model_patch'].replace('---', 'diff --git', 1)
-                print(f"Fixed model_patch for instance_id: {entry['instance_id']}")
+                #TODO: Potentially comment this back in
+                #print(f"Fixed model_patch for instance_id: {entry['instance_id']}")
             generated_tests.append(entry)
 
     # Convert SWE-Bench Verified and Generated Tests to Pandas DataFrames
