@@ -14,7 +14,7 @@ def main():
     )
     parser.add_argument("--max_workers", type=int, default=1, help="Number of maximum workers to use")
     parser.add_argument("--run_id", required=True, help="Run ID for the evaluation")
-    parser.add_argument("--instance_ids", nargs="*", help="Optional instance IDs (for TestGeneration only)")
+    parser.add_argument("--instance_ids", nargs="*", help="Optional instance IDs (supported for TestGeneration and CodeReview)")
 
     # Add flags for selecting the benchmark
     parser.add_argument("--TestGeneration", action="store_true", help="Run the TestGeneration benchmark")
@@ -70,6 +70,9 @@ def main():
             f"--max_workers {args.max_workers} "
             f"--run_id {args.run_id}"
         )
+        # Add instance IDs if provided
+        if args.instance_ids:
+            command += f" --instance_ids {' '.join(args.instance_ids)}"
         print(f"Executing CodeReview command:\n{command}")
         os.system(command)
 
