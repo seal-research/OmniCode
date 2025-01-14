@@ -20,7 +20,7 @@ from sweagent.agent.problem_statement import TextProblemStatement, FileProblemSt
 CUR_DIR = Path(__file__).parent
 DOTENV_PATH = CUR_DIR / '.env'
 
-PROMPT_TEMPLATE = Template((CUR_DIR / "sweagent_testgen_template.j2").read_text())
+PROMPT_TEMPLATE = Template((CUR_DIR / "sweagent_review_fix_template.j2").read_text())
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -99,7 +99,9 @@ def run_sweagent_single(
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
         fp.write(
             PROMPT_TEMPLATE.render(
-                issue=instance['problem_statement']
+                issue=instance['problem_statement'],
+                proposed_fix=instance['bad_patch'],
+                review=instance['Review'],
             )
         )
         fp.close()
@@ -148,7 +150,7 @@ def main(
 
     dataset = [
         d for d in dataset
-        if ("bad_patch" not in d or (isinstance(d['bad_patch'], str) and d['bad_patch'].strip() != ''))
+        if "Review" in d and isinstance(d['Review'], str) and d['Review'].strip() != ''
     ]
 
     existing_ids = set()
