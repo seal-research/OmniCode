@@ -1,0 +1,58 @@
+
+diff --git a/astropy/io/ascii/tests/test_qdp.py b/astropy/io/ascii/tests/test_qdp.py
+index ef24e6f..981871e 100644
+--- a/astropy/io/ascii/tests/test_qdp.py
++++ b/astropy/io/ascii/tests/test_qdp.py
+@@ -43,6 +43,27 @@ def test_get_tables_from_qdp_file(tmp_path):
+     assert np.isclose(table2["MJD_nerr"][0], -2.37847222222222e-05)
+ 
+ 
++def test_lowercase_commands(tmp_path):
++    # Create a QDP file with lowercase commands
++    qdp_content = """
++    read serr 1 2
++    1 0.5 1 0.5
++    """
++
++    path = tmp_path / "lowercase_test.qdp"
++    with open(path, "w") as f:
++        f.write(qdp_content)
++
++    # Attempt to read the QDP file
++    try:
++        table = ascii.read(path, format='ascii.qdp')
++        assert len(table) == 1
++        assert table['col1'][0] == 1
++        assert table['col2'][0] == 0.5
++        assert table['col3'][0] == 1
++        assert table['col4'][0] == 0.5
++    except Exception as e:
++        pytest.fail(f"Reading lowercase QDP commands failed: {e}")
+ def test_roundtrip(tmp_path):
+     example_qdp = """
+     ! Swift/XRT hardness ratio of trigger: XXXX, name: BUBU X-2
+diff --git a/reproduce_issue.py b/reproduce_issue.py
+new file mode 100644
+index 0000000..007f67c
+--- /dev/null
++++ b/reproduce_issue.py
+@@ -0,0 +1,8 @@
++
++from astropy.table import Table
++
++try:
++    table = Table.read('test.qdp', format='ascii.qdp')
++    print("Script completed successfully, no errors.")
++except Exception as e:
++    print(f"Error: {e}")
+\ No newline at end of file
+diff --git a/test.qdp b/test.qdp
+new file mode 100644
+index 0000000..e98e5bc
+--- /dev/null
++++ b/test.qdp
+@@ -0,0 +1,3 @@
++
++read serr 1 2
++1 0.5 1 0.5
+\ No newline at end of file

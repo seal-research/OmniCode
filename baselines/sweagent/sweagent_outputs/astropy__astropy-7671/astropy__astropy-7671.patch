@@ -1,0 +1,18 @@
+
+diff --git a/astropy/tests/tests/test_minversion.py b/astropy/tests/tests/test_minversion.py
+new file mode 100644
+index 0000000..d121bf0
+--- /dev/null
++++ b/astropy/tests/tests/test_minversion.py
+@@ -0,0 +1,10 @@
++
++from astropy.utils import minversion
++import pytest
++
++def test_minversion_failure():
++    with pytest.raises(TypeError):
++        assert not minversion('numpy', '1.14dev')
++
++if __name__ == "__main__":
++    pytest.main()
+\ No newline at end of file

@@ -1,0 +1,45 @@
+
+diff --git a/astropy/io/ascii/tests/test_html.py b/astropy/io/ascii/tests/test_html.py
+index 0515efa..f8150c9 100644
+--- a/astropy/io/ascii/tests/test_html.py
++++ b/astropy/io/ascii/tests/test_html.py
+@@ -728,3 +728,38 @@ def test_read_html_unicode():
+                 '</table>']
+     dat = Table.read(table_in, format='ascii.html')
+     assert np.all(dat['col1'] == ['Δ', 'Δ'])
++@pytest.mark.skipif('not HAS_BS4')
++def test_html_format_respected():
++    """
++    Test that the formats argument is respected when writing tables to HTML.
++    """
++    t = Table([(1.23875234858e-24, 3.2348748432e-15), (2, 4)], names=('a', 'b'))
++    buffer_output = StringIO()
++    t.write(buffer_output, format='html', formats={'a': lambda x: f"{x:.2e}"})
++
++    expected_output = '''<html>
++ <head>
++  <meta charset="utf-8"/>
++  <meta content="text/html;charset=UTF-8" http-equiv="Content-type"/>
++ </head>
++ <body>
++  <table>
++   <thead>
++    <tr>
++     <th>a</th>
++     <th>b</th>
++    </tr>
++   </thead>
++   <tr>
++    <td>1.24e-24</td>
++    <td>2</td>
++   </tr>
++   <tr>
++    <td>3.23e-15</td>
++    <td>4</td>
++   </tr>
++  </table>
++ </body>
++</html>'''
++
++    assert buffer_output.getvalue().strip() == expected_output.strip()
+\ No newline at end of file

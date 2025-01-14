@@ -1,0 +1,52 @@
+
+diff --git a/astropy/timeseries/core.py b/astropy/timeseries/core.py
+index c279f35..cde2b4a 100644
+--- a/astropy/timeseries/core.py
++++ b/astropy/timeseries/core.py
+@@ -54,6 +54,14 @@ class BaseTimeSeries(QTable):
+     # are all present, we toggle this to False
+     _required_columns_relax = False
+ 
++    def as_scalar_or_list_str(obj):
++        if isinstance(obj, list) and len(obj) == 1:
++            return f"'{obj[0]}'"
++        elif not hasattr(obj, "__len__"):
++            return f"'{obj}'"
++        else:
++            return str(obj)
++
+     def _check_required_columns(self):
+ 
+         if not self._required_columns_enabled:
+@@ -76,9 +84,9 @@ class BaseTimeSeries(QTable):
+ 
+             elif self.colnames[:len(required_columns)] != required_columns:
+ 
+-                raise ValueError("{} object is invalid - expected '{}' "
+-                                 "as the first column{} but found '{}'"
+-                                 .format(self.__class__.__name__, required_columns[0], plural, self.colnames[0]))
++                raise ValueError("{} object is invalid - expected {} "
++                                 "as the first column{} but found {}"
++                                 .format(self.__class__.__name__, self.as_scalar_or_list_str(required_columns), plural, self.as_scalar_or_list_str(self.colnames[:len(required_columns)])))
+ 
+             if (self._required_columns_relax
+                     and self._required_columns == self.colnames[:len(self._required_columns)]):
+diff --git a/test_timeseries.py b/test_timeseries.py
+new file mode 100644
+index 0000000..d68280b
+--- /dev/null
++++ b/test_timeseries.py
+@@ -0,0 +1,12 @@
++
++import numpy as np
++from astropy.time import Time
++from astropy.timeseries import TimeSeries
++
++try:
++    time = Time(np.arange(100000, 100003), format='jd')
++    ts = TimeSeries(time=time, data={'flux': [99.9, 99.8, 99.7]})
++    ts._required_columns = ['time', 'flux']
++    ts.remove_column('flux')
++except ValueError as e:
++    print(e)
+\ No newline at end of file

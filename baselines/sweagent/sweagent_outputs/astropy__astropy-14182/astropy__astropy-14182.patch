@@ -1,0 +1,37 @@
+
+diff --git a/astropy/table/tests/test_table.py b/astropy/table/tests/test_table.py
+index dda2609..2e2625c 100644
+--- a/astropy/table/tests/test_table.py
++++ b/astropy/table/tests/test_table.py
+@@ -3223,6 +3223,13 @@ def test_read_write_tilde_path(path_type, home_is_tmpdir):
+     assert not os.path.exists(test_file)
+ 
+ 
++def test_rst_header_rows():
++    tbl = QTable({'wave': [350, 950]*u.nm, 'response': [0.7, 1.2]*u.count})
++    output = StringIO()
++    tbl.write(output, format="ascii.rst", header_rows=["name", "unit"])
++    expected_output = """===== ========\n wave response\n===== ========\n350.0      0.7\n950.0      1.2\n===== ========\n"""
++    assert output.getvalue() == expected_output
++
+ def test_add_list_order():
+     t = Table()
+     names = list(map(str, range(20)))
+diff --git a/test_rst_header.py b/test_rst_header.py
+new file mode 100644
+index 0000000..1884013
+--- /dev/null
++++ b/test_rst_header.py
+@@ -0,0 +1,11 @@
++
++from astropy.table import QTable
++import astropy.units as u
++import sys
++
++tbl = QTable({'wave': [350, 950]*u.nm, 'response': [0.7, 1.2]*u.count})
++
++# This should work without errors
++tbl.write(sys.stdout, format="ascii.rst", header_rows=["name", "unit"])
++
++print("Script completed successfully, no errors.")
+\ No newline at end of file
