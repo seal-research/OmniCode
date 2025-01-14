@@ -41,15 +41,28 @@ To run the full CodeArena benchmark you can pass the corresponding flags to the 
 
 The `codearena` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration` and `CodeReview`. You can specify flags to choose which benchmarks to execute. The command also supports running both benchmarks simultaneously and has an option for `CodeMigration` (currently not supported).
 
-### Example 1: Run `TestGeneration` with `instance_ids`
+### Example 1: Run `TestGeneration` with a single given value for `instance_ids`
+
 ```bash
-python codearena.py \
+   python codearena.py \
     --TestGeneration \
     --dataset_name princeton-nlp/SWE-bench_Verified \
     --predictions_path predictions.json \
     --max_workers 1 \
     --run_id BadPatchTest \
-    --instance_ids astropy__astropy-13033
+    --instance_ids astropy__astropy-13033´
+```
+
+### Example 2: Run both `TestGeneration` and `CodeReview` on the whole dataset (by passing no instance_ids)
+
+```bash
+   python codearena.py \
+    --TestGeneration --CodeReview \
+    --dataset_name princeton-nlp/SWE-bench_Verified \
+    --predictions_path predictions.json \
+    --max_workers 2 \
+    --run_id MyRun
+```
 
 
 ### Contained Tasks
