@@ -124,7 +124,7 @@ def get_dataset_from_preds(
             RUN_EVALUATION_LOG_DIR
             / run_id
             / prediction["model_name_or_path"].replace("/", "__")
-            / prediction['instance_id']
+            / (prediction['instance_id']+"_testGeneration")
             / "report.json"
         )
         if report_file.exists():
@@ -189,7 +189,7 @@ def make_run_report(
             RUN_EVALUATION_LOG_DIR
             / run_id
             / prediction["model_name_or_path"].replace("/", "__")
-            / prediction[KEY_INSTANCE_ID]
+            / (prediction[KEY_INSTANCE_ID]+"_testGeneration")
             / "report.json"
         )
         if report_file.exists():
@@ -340,7 +340,7 @@ def run_instance(
     # Set up logging directory
     instance_id = test_spec.instance_id
     model_name_or_path = pred.get("model_name_or_path", "None").replace("/", "__")
-    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / instance_id
+    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / (instance_id+"_testGeneration")
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # Link the image build dir in the log dir
