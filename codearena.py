@@ -58,7 +58,7 @@ def main():
         # Add instance IDs if provided
         if args.instance_ids:
             command += f" --instance_ids {' '.join(args.instance_ids)}"
-        print(f"Executing TestGeneration command:\n{command}")
+        print(f"Executing TestGeneration...")
         os.system(command)
 
     # Handle CodeReview
@@ -73,7 +73,7 @@ def main():
         # Add instance IDs if provided
         if args.instance_ids:
             command += f" --instance_ids {' '.join(args.instance_ids)}"
-        print(f"Executing CodeReview command:\n{command}")
+        print(f"Executing CodeReview...")
         os.system(command)
 
     # Handle CodeMigration
@@ -85,8 +85,7 @@ def main():
             f"--max_workers {args.max_workers} "
             f"--run_id {args.run_id}"
         )
-        print(f"Executing CodeMigration command:\n{command}")
-        os.system(command)
+        print(f"Code Migration is not yet supported!")
 
 if __name__ == "__main__":
     main()
