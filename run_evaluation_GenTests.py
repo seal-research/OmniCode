@@ -223,9 +223,9 @@ def make_run_report(
     print(f"Instances submitted: {len(set(predictions.keys()) & dataset_ids)}")
     print(f"Instances completed: {len(completed_ids)}")
     print(f"Instances incomplete: {len(incomplete_ids)}")
-    print(f"Instances resolved: {len(successful_ids)}")
-    print(f"Instances unresolved: {len(unsuccessful_ids)}")
-    print(f"Instances with empty patches: {len(empty_patch_ids)}")
+    print(f"Test Case Accepted: {len(successful_ids)}")
+    print(f"Test Case Rejected: {len(unsuccessful_ids)}")
+    print(f"Instances with empty test patches: {len(empty_patch_ids)}")
     print(f"Instances with errors: {len(error_ids)}")
     print(f"Unstopped containers: {len(unstopped_containers)}")
     print(f"Unremoved images: {len(unremoved_images)}")
@@ -235,8 +235,8 @@ def make_run_report(
         "total_instances": len(full_dataset),
         "submitted_instances": len(predictions),
         "completed_instances": len(completed_ids),
-        "resolved_instances": len(successful_ids),
-        "unresolved_instances": len(unsuccessful_ids),
+        "Test Case Accepted": len(successful_ids),
+        "Test Case Rejected": len(unsuccessful_ids),
         "empty_patch_instances": len(empty_patch_ids),
         "error_instances": len(error_ids),
         "unstopped_instances": len(unstopped_containers),
@@ -244,8 +244,8 @@ def make_run_report(
         "incomplete_ids": list(sorted(incomplete_ids)),
         "empty_patch_ids": list(sorted(empty_patch_ids)),
         "submitted_ids": list(sorted(predictions.keys())),
-        "resolved_ids": list(sorted(successful_ids)),
-        "unresolved_ids": list(sorted(unsuccessful_ids)),
+        "tests_accepted": list(sorted(successful_ids)),
+        "tests_rejected": list(sorted(unsuccessful_ids)),
         "error_ids": list(sorted(error_ids)),
         "unstopped_containers": list(sorted(unstopped_containers)),
         "unremoved_images": list(sorted(unremoved_images)),

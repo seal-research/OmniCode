@@ -109,7 +109,7 @@ def get_eval_tests_report(
     - Fail-Fail (F2F) + P: Success (Extra Credit)
     - Pass-Fail (P2F) + P: Not considered
     """
-    # Calculate resolution metrics
+    # Calculate resolution metrics 
     f2p_success = []
     f2p_failure = []
     for test_case in gold_results[FAIL_TO_PASS]:
@@ -315,6 +315,7 @@ def get_eval_tests_report_TestGeneration(
 
     """
 
+    # TODO: When supported, account for F2F metrics (e.g disregard for evaluation further down)
     successes = []
     failures = []
     for test_case in eval_sm: # Hopefully iterates over all.
