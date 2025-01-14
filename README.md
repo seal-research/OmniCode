@@ -72,7 +72,7 @@ The `codearena` command allows you to run multiple code evaluation benchmarks, s
 |                | Python (Tasks) | Java (Tasks) | C++ (Tasks) |
 |----------------|----------------|--------------|-------------|
 | Test Generation | ✅ (15)         | ✖️ (0)        | ✖️ (0)       |
-| Code Review     | ✅ (3)         | ✖️ (0)        | ✖️ (0)       |
+| Code Review     | ✅ (8)         | ✖️ (0)        | ✖️ (0)       |
 | Code Migration  | ✖️ (0)         | ✖️ (0)        | ✖️ (0)       |
 
 
