@@ -2,9 +2,14 @@
 
 Welcome to **CodeArena**! This repository allows you to evaluate performance on various Software Development Activities for different models and datasets. Below, you'll find the commands to test your setup and evaluate the results. CodeArena requires you to have docker set up and running prior to executing Evaluation.
 
-> **Note**: If you omit the `--instance_ids` parameter, the evaluation will run on the full dataset. However, keep in mind that this may take a significant amount of time, especially for larger datasets.
+### SETUP
+CodeArena is currently set up to work with a specific swebench version which can be installed using 
+
+`pip install git+https://github.com/swe-bench/SWE-bench@e0b9bf9#egg=swebench`
 
 ### Command to Test Setup for Test Generation
+
+> **Note**: If you omit the `--instance_ids` parameter, the evaluation will run on the full dataset. However, keep in mind that this may take a significant amount of time, especially for larger datasets.
 
 1. **Validate on a Specific Instance ID using standard Baseline:**
 
