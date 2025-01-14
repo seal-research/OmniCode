@@ -76,11 +76,21 @@ def merge_and_unpack(expected):
     merged = {key: list(set(value)) for key, value in merged.items()}  # Remove duplicates if needed
     return merged
 
-def load_CodeArena_prediction_dataset(generated_tests_path: str, out_csv_path: str, instance_ids: list, save: bool = False):
+def load_CodeArena_prediction_dataset(
+    generated_tests_path: str, 
+    codearena_instances: str, 
+    instance_ids: list, 
+    save: bool = False
+):
     """
     Process and merge the SWE-Bench Verified dataset with generated tests and bad patches.
     This function will fix the `model_patch` diffs, merge the datasets, and check for missing predictions.
     """
+    import json
+    import os
+    import pandas as pd
+    from datasets import load_dataset
+
     # Load SWE-Bench Verified dataset from Hugging Face
     swe_bench_verified = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
 
@@ -92,8 +102,6 @@ def load_CodeArena_prediction_dataset(generated_tests_path: str, out_csv_path: s
             # Fix the `model_patch` if it starts with `---`
             if entry.get('model_patch', '').startswith('---'):
                 entry['model_patch'] = entry['model_patch'].replace('---', 'diff --git', 1)
-                #TODO: Potentially comment this back in
-                #print(f"Fixed model_patch for instance_id: {entry['instance_id']}")
             generated_tests.append(entry)
 
     # Convert SWE-Bench Verified and Generated Tests to Pandas DataFrames
@@ -122,16 +130,22 @@ def load_CodeArena_prediction_dataset(generated_tests_path: str, out_csv_path: s
     # Rename `model_patch` to `candidate_test_patch`
     merged_df.rename(columns={'model_patch': 'candidate_test_patch'}, inplace=True)
 
-    # Load the additional CSV file with bad patches
-    out_df = pd.read_csv(out_csv_path)
+    # Load the additional CodeArena Instances JSONL file
+    codearena_instances_data = []
+    with open(codearena_instances, 'r') as f:
+        for line in f:
+            codearena_instances_data.append(json.loads(line.strip()))
+    codearena_instances_df = pd.DataFrame(codearena_instances_data)
 
     # Filter rows where `bad_patch` is not empty
-    out_df_filtered = out_df[out_df['bad_patch'].notna() & out_df['bad_patch'].str.strip().ne("")]
+    codearena_instances_filtered = codearena_instances_df[
+        codearena_instances_df['bad_patch'].notna() & codearena_instances_df['bad_patch'].str.strip().ne("")
+    ]
 
     # Merge the filtered data with the current merged DataFrame on `instance_id`
     merged_df = pd.merge(
         merged_df,
-        out_df_filtered[['instance_id', 'bad_patch', 'bad_patch_author', 'Review', 'Review_Author']],
+        codearena_instances_filtered[['instance_id', 'bad_patch', 'bad_patch_author', 'Review', 'Review_Author']],
         on='instance_id',
         how='left'
     )
@@ -144,7 +158,7 @@ def load_CodeArena_prediction_dataset(generated_tests_path: str, out_csv_path: s
     else:
         raise ValueError("`model_name_or_path` is missing from the generated tests dataset.")
 
-    # Save the final merged dataset as CSV
+    # Save the final merged dataset as a CSV
     if save: 
         output_dir = "TestGeneration_Datasets/"
         output_csv_path = f"{output_dir}swe_bench_merged_{sanitized_model_name}.csv"
@@ -155,6 +169,7 @@ def load_CodeArena_prediction_dataset(generated_tests_path: str, out_csv_path: s
 
         print(f"Output saved as CSV: {output_csv_path}")
     return merged_df
+
 
 def get_test_directives(instance: CodeArenaInstance) -> list:
     """

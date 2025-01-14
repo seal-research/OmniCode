@@ -93,7 +93,7 @@ def get_dataset_from_preds(
     instance_ids: list,
     run_id: str,
     exclude_completed: bool = True,
-    out_csv_path: str = "bad_patches.csv",
+    codearena_instances: str = "data/codearena_instances.jsonl",
     generated_tests_path: str = "generated_tests.jsonl"
 ):
     """
@@ -102,7 +102,7 @@ def get_dataset_from_preds(
     If exclude_completed is True, only return instances that have not been run yet.
     """
     # Process the SWE-Bench dataset and merge with generated tests and bad patches
-    merged_df = load_CodeArena_prediction_dataset(generated_tests_path, out_csv_path, instance_ids)
+    merged_df = load_CodeArena_prediction_dataset(generated_tests_path, codearena_instances, instance_ids)
 
     # Now extract the merged instances from the DataFrame into the dataset
     dataset_ids = set(merged_df['instance_id'])
