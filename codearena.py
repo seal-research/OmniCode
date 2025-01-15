@@ -108,7 +108,7 @@ def main():
             dataset_name=args.dataset_name,
         split="test",  # Assuming split is always 'test', can be parameterized
         instance_ids=args.instance_ids,
-        predictions_path=args.predictions_map["TestGeneration"],
+        predictions_path=predictions_map["TestGeneration"],
         max_workers=args.max_workers,
         force_rebuild=args.force_rebuild,
         cache_level=args.cache_level,
