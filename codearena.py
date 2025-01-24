@@ -1,23 +1,31 @@
 import argparse
-import os
-from run_evaluation_GenTests import main as GenTestMain
-from swebench.harness.utils import str2bool
-from swebench.harness.run_evaluation import main as CodeReviewMain
+from pathlib import Path
+import importlib
 
+from run_evaluation_GenTests import main as GenTestMain
+import swebench
+from swebench.harness.utils import str2bool
+from swebench.harness.run_evaluation import main as RegularEval
+
+
+CUR_DIR = Path(__file__).parent
+REPO_DATA_PATH = CUR_DIR / "data/codearena_repo_data.py"
+REPO_DATA = eval(REPO_DATA_PATH.read_text())
 
 def execute_command(func, **kwargs):
     """Wrapper to execute a function safely and catch errors."""
-    try:
-        func(**kwargs)
-    except Exception as e:
-        print(f"Error while executing: {func.__name__}. Error: {e}")
+    func(**kwargs)
+    # try:
+    #     func(**kwargs)
+    # except Exception as e:
+    #     print(f"Error while executing: {func.__name__}. Error: {e}")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Run CodeArena Benchmarks")
 
     # Add arguments for common parameters
-    parser.add_argument("--dataset_name", required=True, help="Name of the dataset")
+    parser.add_argument("--dataset_name", default="data/codearena_instances.jsonl", help="Name of the dataset")
     parser.add_argument(
         "--predictions_path",
         nargs="+",
@@ -31,7 +39,7 @@ def main():
     parser.add_argument(
         "--instance_ids",
         nargs="*",
-        help="Optional instance IDs (supported for TestGeneration and CodeReview)",
+        help="Optional instance IDs",
     )
     parser.add_argument(
         "--open_file_limit",
@@ -62,6 +70,9 @@ def main():
 
     # Add flags for selecting the benchmark
     parser.add_argument(
+        "--BugFixing", action="store_true", help="Run the regular BugFixing benchmark"
+    )
+    parser.add_argument(
         "--TestGeneration", action="store_true", help="Run the TestGeneration benchmark"
     )
     parser.add_argument(
@@ -75,6 +86,8 @@ def main():
 
     # Collect the active flags
     active_flags = []
+    if args.BugFixing:
+        active_flags.append("BugFixing")
     if args.TestGeneration:
         active_flags.append("TestGeneration")
     if args.CodeReview:
@@ -85,7 +98,7 @@ def main():
     # Ensure at least one flag is provided
     if not active_flags:
         print(
-            "Error: You must specify at least one of --TestGeneration, --CodeReview, or --CodeMigration."
+            "Error: You must specify at least one of --BugFixing --TestGeneration, --CodeReview, or --CodeMigration."
         )
         return
 
@@ -99,6 +112,32 @@ def main():
 
     # Map the predictions paths to the flags
     predictions_map = dict(zip(active_flags, args.predictions_path))
+
+    # Update constants in swebench
+    for instance_repo in REPO_DATA:
+        swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
+        swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
+        swebench.harness.constants.MAP_REPO_VERSION_TO_SPECS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
+    importlib.reload(swebench)
+
+
+    # Handle BugFixing
+    if "BugFixing" in active_flags:
+        print("Executing BugFixing...")
+        execute_command(
+            RegularEval,
+            dataset_name=args.dataset_name,
+            split="test",  # Assuming split is always 'test', can be parameterized
+            instance_ids=args.instance_ids,
+            predictions_path=predictions_map["BugFixing"],
+            max_workers=args.max_workers,
+            force_rebuild=args.force_rebuild,
+            cache_level=args.cache_level,
+            clean=args.clean,
+            open_file_limit=args.open_file_limit,
+            run_id=args.run_id,
+            timeout=args.timeout
+        )
 
     # Handle TestGeneration
     if "TestGeneration" in active_flags:
@@ -122,7 +161,7 @@ def main():
     if "CodeReview" in active_flags:
         print("Executing CodeReview...")
         execute_command(
-            CodeReviewMain,
+            RegularEval,
             dataset_name=args.dataset_name,
             split="test",  # Assuming split is always 'test', can be parameterized
             instance_ids=args.instance_ids,
