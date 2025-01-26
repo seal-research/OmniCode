@@ -40,6 +40,12 @@ The `codearena` command allows you to run multiple code evaluation benchmarks, s
     --run_id MyRun
 ```
 
+### Visualisation and Data annotation
+
+The GUI based tools require the `streamlit` python package which can be installed via `pip install streamlit`
+The `viz.py` script can be run with `streamlit run viz.py` and allows for inspection of the contents of each instance as well as adding data annotations for each instance.
+The `add_data.py` script can be run with `streamlit run add_data.py` and allows for onboarding of instances from additional repositories, where the user may need to interactively provide the dependency and setup metadata for the new repositories.
+
 ### Supported Tasks
 
 #### Test Generation
