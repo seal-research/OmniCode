@@ -302,6 +302,7 @@ def get_eval_tests_report_TestGeneration(
     eval_sm: dict[str, str],
     is_gold_patch: bool = False,
     calculate_to_fail: bool = False,
+    fail_to_fail: list[str] = []
 ) -> dict[str, dict[str, list[str]]]:
     """
     Create a report based on failure/pass change given a gold or bad patch using candidate test.
@@ -326,7 +327,7 @@ def get_eval_tests_report_TestGeneration(
             else:
                 failures.append(test_case)
         elif test_failed(test_case, eval_sm):
-            if(is_gold_patch):
+            if(is_gold_patch) and not test_case in fail_to_fail:
                 failures.append(test_case)
             else:
                 successes.append(test_case)
@@ -352,6 +353,7 @@ def get_eval_report_test_generation(
     prediction: dict[str, str],
     log_paths: list[str],
     include_tests_status: bool,
+    fail_to_fail_tests: list[str] = []
 ) -> dict[str, Any]:
     """
     Generate a report of model evaluation results from a prediction, task instance,
@@ -417,3 +419,29 @@ def get_eval_report_test_generation(
         report_map[instance_id]["tests_status"] = report  # type: ignore
     
     return report_map
+
+def get_fail_to_fail(
+        gold_log_path: str
+) -> list[str]:
+    """
+    Gets the failed test case names from the current evaluation log.
+    
+    Args:
+      gold_log_path (str) : Path to the gold patch evaluation log.
+    Returns:
+      fail_to_fail_tests (list[str]) : Names of F2F tests.
+
+    """
+    
+    fail_to_fail_tests = []
+    
+    eval_sm_gold, found_gold = get_logs_eval(gold_log_path)
+
+    if not found_gold:
+            return []
+
+    for test_case in eval_sm_gold: # Hopefully iterates over all.
+        if test_failed(test_case, eval_sm_gold):
+                fail_to_fail_tests.append(test_case)
+
+    return fail_to_fail_tests
