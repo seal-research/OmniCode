@@ -171,3 +171,25 @@ cython_debug/
 .pypirc
 
 .DS_Store
+
+# Cursor specific
+.cursor/
+.cursorrules
+
+# Virtual Environment
+venv/
+ENV/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
