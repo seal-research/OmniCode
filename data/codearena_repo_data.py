@@ -1,17 +1,15 @@
 {
-"fastapi/fastapi": {
-    "MAP_REPO_TO_VERSION_PATHS": ["fastapi/__init__.py"],
-    "MAP_REPO_TO_VERSION_PATTERNS":  ["__version__ = ['\"](.*)['\"]", "VERSION = \\((.*)\\)"],
+"home-assistant/core": {
+    "MAP_REPO_TO_VERSION_PATHS": ["homeassistant/const.py"],
+    "MAP_REPO_TO_VERSION_PATTERNS": ["__version__ = ['\"](.*)['\"]", "core-(\\d+\\.\\d+\\.\\d+(?:(?:a|b|dev)\\d+)?)", "(\\d+\\.\\d+\\.\\d+(?:(?:a|b|dev)\\d+)?)"],
     "MAP_REPO_VERSION_TO_SPECS": {
-            k: {
-            "python": "3.7",
-            "install": "pip install -e '.[all, dev, test]'",
-            "pip_packages": [
-                "'flask<2.3.0'"
-            ],
-            "test_cmd": "pytest -rA --tb=long", 
+        k: {
+            "python": "3.13.0",
+            "install": "pip install -e .",
+            "pip_packages": ["pytest==7.4.3"],
+            "test_cmd": "pytest {test_file}", 
         }
-        for k in ['0.55', '0.56', '0.87']
+        for k in ['2025.11']
     }
-},
+}
 }
