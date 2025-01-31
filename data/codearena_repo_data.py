@@ -7,7 +7,7 @@
             "python": "3.13.0",
             "install": "pip install -e .",
             "pip_packages": ["pytest==7.4.3"],
-            "test_cmd": "pytest {test_file}", 
+            "test_cmd": "pytest -rA --tb=long", 
         }
         for k in ['2025.11']
     }
