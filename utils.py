@@ -3,13 +3,14 @@ from datasets import Dataset, load_dataset
 from typing import cast
 import json
 from pathlib import Path
-from constants import KEY_INSTANCE_ID
+# from constants import KEY_INSTANCE_ID
 import pandas as pd
 import os
 import re
 from collections import defaultdict
 from swebench.harness.constants import (
-    NON_TEST_EXTS
+    NON_TEST_EXTS,
+    KEY_INSTANCE_ID
 )
 
 def load_swebench_dataset(name="princeton-nlp/SWE-bench", split="test", instance_ids=None, full: bool = False) -> list[CodeArenaInstance]:
