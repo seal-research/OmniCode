@@ -33,7 +33,7 @@ from docker_build import (
     close_logger,
     setup_logger,
 )
-from CodeArena_grading import get_eval_report_test_generation
+from CodeArena_grading import get_eval_report_test_generation, get_fail_to_fail
 #from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
 from CodeArena_test_spec import make_test_spec, TestSpec
 from swebench.harness.utils import str2bool
@@ -369,6 +369,54 @@ def run_instance(
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
 
+        # TODO: Before candidate test patch is applied, determine F2F tests.
+        ######################################################################
+
+        # Get git diff before running gold eval script
+        git_diff_output_before = (
+            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        )
+        logger.info(f"Git diff before:\n{git_diff_output_before}")
+
+        # Use inverted evaluation Gold script
+        eval_file = Path(log_dir / "gold_eval.sh")
+        eval_file.write_text(test_spec.inverted_eval_script_gold)
+        logger.info(
+            f"Eval script for Gold Evaluation of {instance_id} written to {eval_file}; copying to container..."
+        )
+        copy_to_container(container, eval_file, Path("/gold_eval.sh"))
+
+        # Run eval script, write output to logs.
+        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
+        test_output_path_f2f = log_dir / "f2f_check.txt"
+        logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
+        with open(test_output_path_f2f, "w") as f:
+            f.write(test_output)
+            logger.info(f"Test output using gold patch for {instance_id} written to {test_output_path_f2f}")
+            if timed_out:
+                f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
+                raise EvaluationError(
+                    instance_id,
+                    f"Test timed out after {timeout} seconds.",
+                    logger,
+                )
+
+        # Get git diff after running eval script
+        git_diff_output_after = (
+            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        )
+
+        fail_to_fail = get_fail_to_fail(test_output_path_f2f)
+
+
+
+        # Check if git diff changed after running eval script
+        logger.info(f"Git diff after:\n{git_diff_output_after}")
+        if git_diff_output_after != git_diff_output_before:
+            logger.info(f"Git diff changed after running eval script")
+
+        ###########################################################################################
+
         # Copy model prediction as patch file to container
         # Applying Candidate Test Patch
         patch_file = Path(log_dir / "patch.diff")
@@ -414,14 +462,6 @@ def run_instance(
             container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
         )
         logger.info(f"Git diff before:\n{git_diff_output_before}")
-
-        # Use inverted evaluation Gold script
-        eval_file = Path(log_dir / "gold_eval.sh")
-        eval_file.write_text(test_spec.inverted_eval_script_gold)
-        logger.info(
-            f"Eval script for Gold Evaluation of {instance_id} written to {eval_file}; copying to container..."
-        )
-        copy_to_container(container, eval_file, Path("/gold_eval.sh"))
 
         # Run eval script, write output to logs.
         test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
@@ -502,6 +542,7 @@ def run_instance(
             prediction=pred,
             log_paths=[test_output_path_gold, test_output_path_bad],
             include_tests_status=True,
+            fail_to_fail_tests=fail_to_fail
         )
         logger.info(
             f"report: {report}\n"
