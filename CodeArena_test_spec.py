@@ -340,6 +340,80 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     ]
     return eval_commands
 
+def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output_path, env_name):
+    """
+    Generates commands that apply the given patch, run pylint on modified files, 
+    extract the score, and write the feedback to a specified path.
+    
+    :param repo_directory: The path to the repository directory
+    :param base_commit: The base commit to revert to before applying the patch
+    :param patch: The patch (in string format) to apply
+    :param pylint_output_path: The file path to write the pylint feedback to
+    :param env_name: The environment name for activating conda
+    :return: List of commands to apply the patch, run pylint, and save feedback
+    """
+    HEREDOC_DELIMITER = "EOF_114329324912"
+
+    reset_command = f"git stash push --include-untracked && git checkout {base_commit} -- . && git stash pop"
+    
+    apply_patch_command = f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{patch}\n{HEREDOC_DELIMITER}"
+
+    pylint_command = f"""
+    # Get the list of modified Python files
+    modified_files=$(git diff --name-only)
+
+    # Filter out Python files from the modified list
+    python_files=$(echo "$modified_files" | grep '.py$')
+
+    # If no Python files were modified, exit
+    if [ -z "$python_files" ]; then
+        echo "No Python files modified by the patch."
+        exit 0
+    fi
+
+    # Initialize an empty JSON file for pylint feedback
+    echo "{{}}" > {pylint_output_path}
+
+    # Run pylint on each modified Python file
+    for file in $python_files; do
+        pylint_output=$(pylint $file --output-format=json)
+
+        # Extract the pylint score (average of all issues)
+        score=0
+        issue_count=0
+        for issue in $(echo "$pylint_output" | jq -c '.[]'); do
+            issue_score=$(echo "$issue" | jq '.score')
+            score=$(echo "$score + $issue_score" | bc)
+            issue_count=$((issue_count + 1))
+        done
+
+        if [ "$issue_count" -gt 0 ]; then
+            avg_score=$(echo "$score / $issue_count" | bc -l)
+        else
+            avg_score=0
+        fi
+
+        # Write the feedback into the JSON file
+        jq --arg file "$file" --argjson score "$avg_score" --argjson feedback "$pylint_output" \
+            '. + {{($file): {{"score": $score, "feedback": $feedback}}}}' \
+            {pylint_output_path} > temp.json && mv temp.json {pylint_output_path}
+    done
+    """
+
+    eval_commands = [
+        "source /opt/miniconda3/bin/activate",
+        f"conda activate {env_name}",
+        f"cd {repo_directory}",
+        "git config --global --add safe.directory {repo_directory}",  # for nonroot user
+        reset_command,
+        apply_patch_command,
+        pylint_command,
+        reset_command,  # Revert patch after done, leave the repo in the same state as before
+    ]
+    
+    return eval_commands
+
+
 
 def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
     if isinstance(instance, TestSpec):
