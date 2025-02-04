@@ -25,7 +25,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run CodeArena Benchmarks")
 
     # Add arguments for common parameters
-    parser.add_argument("--dataset_name", default="data/codearena_instances.jsonl", help="Name of the dataset")
+    parser.add_argument("--dataset_name", default="data/codearena_instances.json", help="Name of the dataset")
     parser.add_argument(
         "--predictions_path",
         nargs="+",
