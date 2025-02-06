@@ -25,7 +25,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run CodeArena Benchmarks")
 
     # Add arguments for common parameters
-    parser.add_argument("--dataset_name", default="data/codearena_instances.jsonl", help="Name of the dataset")
+    parser.add_argument("--dataset_name", default="data/codearena_instances.json", help="Name of the dataset")
     parser.add_argument(
         "--predictions_path",
         nargs="+",
@@ -118,6 +118,14 @@ def main():
         swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
         swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
         swebench.harness.constants.MAP_REPO_VERSION_TO_SPECS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
+
+        from swebench.harness.log_parsers import parse_log_pytest, parse_log_pytest_options, parse_log_pytest_v2
+        if "MAP_REPO_TO_PARSER" in REPO_DATA[instance_repo]:
+            repo_log_parser = eval(REPO_DATA[instance_repo]["MAP_REPO_TO_PARSER"])
+        else:
+            repo_log_parser = parse_log_pytest
+        swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
+    
     importlib.reload(swebench)
 
 

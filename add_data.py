@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import importlib
+import copy
 
 from unidiff import PatchSet
 import streamlit as st
@@ -14,14 +15,14 @@ def get_modified_files(patch_str: str) -> list[str]:
     return [f.path for f in patchset.modified_files]
 
 
-DATA_PATH = Path("data/codearena_instances.jsonl")
+DATA_PATH = Path("data/codearena_instances.json")
 REPO_DATA_PATH = Path("data/codearena_repo_data.py")
 
 
 def main():
     st.title("CodeArena Data Loader")
     
-    data = [json.loads(l) for l in DATA_PATH.read_text().splitlines()]
+    data = json.loads(DATA_PATH.read_text())
 
     # Editable field for REPO_DATA
     st.subheader("REPO_DATA")
@@ -51,22 +52,18 @@ def main():
 
         file_path = st.text_input("Path to instances data:")
 
-        if st.button("Process instances"):
+        if st.button("Check instances"):
             if file_path:
                 input_data = [json.loads(l) for l in Path(file_path).read_text().splitlines()]
                 
-                # process each instance, add to data and save to disk
-                processed_instances = []
-                clean = True
+                repo_data_unspecified, checked_instances = set(), []
                 
                 for instance in input_data:
-
                     instance_repo = instance['repo']
 
                     if instance_repo not in REPO_DATA:
-                        st.error(f"REPO_DATA not specified for {instance_repo}")
-                        clean = False
-                        break
+                        repo_data_unspecified.add(instance_repo)
+                        continue
 
                     swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
                     swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
@@ -79,43 +76,82 @@ def main():
                         path_repo=None,
                     )
 
-                    if instance_version not in REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]:
-                        st.error(f"SPECS not found for version {instance_version} of repo {instance_repo} in REPO_DATA")
-                        clean = False
-                        break
+                    specs_available = instance_version in REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
+                    checked_instances.append({
+                        "instance": instance,
+                        "version": instance_version,
+                        "specs_available": specs_available,
+                    })
 
-                    instance["version"] = instance_version
-                    instance["PASS_TO_PASS"] = []                
-                    instance["FAIL_TO_PASS"] = get_modified_files(instance['test_patch'])
+                if len(repo_data_unspecified) == 0:
+                    st.success(f"REPO_DATA specified for all repositories")
+                else:
+                    st.error(f"REPO_DATA not specified for the following repositories:\n{'\n'.join(repo_data_unspecified)}")
 
-                    # Add to the processed instances list
-                    processed_instances.append(instance)
+
+                st.dataframe([
+                    {
+                        "instance_id": d['instance']['instance_id'],
+                        "specs_available": d['specs_available'],
+                        "link": f"https://github.com/{d['instance']['repo']}/tree/{d['instance']['base_commit']}",
+                        "version": d['version'],
+                        "base_commit": d['instance']['base_commit'],
+                    }
+                    for d in checked_instances
+                ])
                 
-                if clean:
-
-                    st.success("Instances processed successfully")
-                    data.extend(processed_instances)
-
-                    with open(DATA_PATH, 'w') as f:
-                        for instance in data:
-                            f.write(json.dumps(instance) + '\n')
-
-                    st.success(f"Added {len(processed_instances)} instances successfully")
-
-
             else:
                 st.warning("Please enter a valid file path.")
 
 
-        # if st.button("Save to CodeArena"):
+        if st.button("Check and save data"):
+            if file_path:
+                input_data = [json.loads(l) for l in Path(file_path).read_text().splitlines()]
+                
+                repo_data_unspecified, checked_instances = set(), []
+                
+                for instance in input_data:
+                    instance_repo = instance['repo']
 
-        #     print("Adding data")
-        #     with open(DATA_PATH, 'w') as f:
-        #         for instance in data:
-        #             f.write(json.dumps(instance) + '\n')
+                    if instance_repo not in REPO_DATA:
+                        repo_data_unspecified.add(instance_repo)
+                        continue
 
-        #     print(f"Added {len(processed_instances)} instances successfully")
-        #     st.stop()
+                    swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
+                    swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
+
+                    importlib.reload(swebench)
+
+                    instance_version = swebench.versioning.get_versions.get_version(
+                        instance=instance,
+                        is_build=False,
+                        path_repo=None,
+                    )
+
+                    specs_available = instance_version in REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
+                    checked_instances.append({
+                        "instance": instance,
+                        "version": instance_version,
+                        "specs_available": specs_available,
+                    })
+
+
+                    processed_instances = []
+                    for ci in checked_instances:
+                        if ci["specs_available"]:
+                            instance = copy.deepcopy(ci['instance'])
+                            instance["version"] = ci['version']
+                            instance["PASS_TO_PASS"] = []                
+                            instance["FAIL_TO_PASS"] = get_modified_files(instance['test_patch'])
+                            processed_instances.append(instance)
+
+                    data.extend(processed_instances)
+
+                    DATA_PATH.write_text(json.dumps(data, indent=4))
+                    st.success(f"Added {len(processed_instances)} instances successfully to {DATA_PATH}")
+
+            else:
+                st.warning("Please enter a valid file path.")
 
 
 def patch_constants(module_to_patch, repo_data):
