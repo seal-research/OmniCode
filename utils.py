@@ -21,7 +21,12 @@ def load_swebench_dataset(name="princeton-nlp/SWE-bench", split="test", instance
         instance_ids = set(instance_ids)
     # Load from local .json/.jsonl file
     if name.endswith(".json") or name.endswith(".jsonl"):
-        dataset = [json.loads(line) for line in Path(name).read_text().splitlines() if line.strip()]
+        dataset = []
+        with open(name, "r", encoding="utf-8") as f:
+            for line in f:
+                entry = json.loads(line) if name.endswith(".jsonl") else json.load(f)
+                dataset.append(entry)
+
         dataset_ids = {instance[KEY_INSTANCE_ID] for instance in dataset}
     else:
         # Load from Hugging Face Datasets
@@ -77,24 +82,37 @@ def merge_and_unpack(expected):
     return merged
 
 def load_CodeArena_prediction_dataset(
-    generated_tests_path: str, 
+    generated_tests_path: str,
     codearena_instances: str, 
     instance_ids: list, 
+    custom_dataset_path: str = "data/codearena_instances.jsonl",
     save: bool = False
 ):
     """
-    Process and merge the SWE-Bench Verified dataset with generated tests and bad patches.
+    Process and merge a custom dataset with generated tests and bad patches.
     This function will fix the `model_patch` diffs, merge the datasets, and check for missing predictions.
     """
     import json
     import os
     import pandas as pd
-    from datasets import load_dataset
 
-    # Load SWE-Bench Verified dataset from Hugging Face
-    swe_bench_verified = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
+    # Determine file type based on extension
+    file_ext = os.path.splitext(custom_dataset_path)[-1].lower()
 
-    # Load Generated Tests JSONL file (treated as the predictions here)
+    custom_data = []
+    
+    with open(custom_dataset_path, 'r') as f:
+        if file_ext == ".jsonl":  # Process line by line for JSONL
+            for line in f:
+                custom_data.append(json.loads(line.strip()))
+        elif file_ext == ".json":  # Load entire JSON file
+            custom_data = json.load(f)
+        else:
+            raise ValueError("Unsupported file format. Please provide a .json or .jsonl file.")
+
+    custom_df = pd.DataFrame(custom_data)
+
+    # Load Generated Tests
     generated_tests = []
     with open(generated_tests_path, 'r') as f:
         for line in f:
@@ -104,24 +122,23 @@ def load_CodeArena_prediction_dataset(
                 entry['model_patch'] = entry['model_patch'].replace('---', 'diff --git', 1)
             generated_tests.append(entry)
 
-    # Convert SWE-Bench Verified and Generated Tests to Pandas DataFrames
-    swe_bench_df = pd.DataFrame(swe_bench_verified)
     generated_tests_df = pd.DataFrame(generated_tests)
 
-    # Check for missing predictions by comparing `instance_id`s between the two datasets
-    swe_bench_ids = set(swe_bench_df['instance_id'])
+    # Check for missing predictions
+    custom_ids = set(custom_df['instance_id'])
     generated_tests_ids = set(generated_tests_df['instance_id'])
     
-    missing_preds = swe_bench_ids - generated_tests_ids
+    missing_preds = custom_ids - generated_tests_ids
     if missing_preds:
         print(f"Warning: Missing predictions for {len(missing_preds)} instance IDs: {missing_preds}")
 
-    # Rename `patch` column in SWE-Bench Verified to `gold_patch`
-    swe_bench_df.rename(columns={'patch': 'gold_patch'}, inplace=True)
+    # Rename `patch` column in Custom Dataset to `gold_patch`
+    if 'patch' in custom_df.columns:
+        custom_df.rename(columns={'patch': 'gold_patch'}, inplace=True)
 
-    # Merge SWE-Bench Verified with Generated Tests on `instance_id`
+    # Merge Custom Dataset with Generated Tests
     merged_df = pd.merge(
-        swe_bench_df,
+        custom_df,
         generated_tests_df[['instance_id', 'model_patch', 'model_name_or_path']],
         on='instance_id',
         how='left'
@@ -142,7 +159,7 @@ def load_CodeArena_prediction_dataset(
         codearena_instances_df['bad_patch'].notna() & codearena_instances_df['bad_patch'].str.strip().ne("")
     ]
 
-    # Merge the filtered data with the current merged DataFrame on `instance_id`
+    # Merge with CodeArena Instances
     merged_df = pd.merge(
         merged_df,
         codearena_instances_filtered[['instance_id', 'bad_patch', 'bad_patch_author', 'Review', 'Review_Author']],
@@ -153,21 +170,19 @@ def load_CodeArena_prediction_dataset(
     # Extract `model_name_or_path` for naming the output file
     if 'model_name_or_path' in generated_tests_df.columns:
         model_name_or_path = generated_tests_df['model_name_or_path'].iloc[0]
-        # Sanitize the model name for use in a file name
         sanitized_model_name = model_name_or_path.replace("/", "_").replace("\\", "_").replace(" ", "_")
     else:
         raise ValueError("`model_name_or_path` is missing from the generated tests dataset.")
 
-    # Save the final merged dataset as a CSV
+    # Save as CSV if requested
     if save: 
         output_dir = "TestGeneration_Datasets/"
-        output_csv_path = f"{output_dir}swe_bench_merged_{sanitized_model_name}.csv"
+        output_csv_path = f"{output_dir}custom_dataset_merged_{sanitized_model_name}.csv"
         os.makedirs(output_dir, exist_ok=True)
 
-        # Save as CSV
         merged_df.to_csv(output_csv_path, index=False)
-
         print(f"Output saved as CSV: {output_csv_path}")
+
     return merged_df
 
 
