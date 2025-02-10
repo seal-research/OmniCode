@@ -477,16 +477,16 @@ Requirement already satisfied: six>=1.5 in /opt/miniconda3/envs/testbed/lib/pyth
 Building wheels for collected packages: homeassistant
   Building editable for homeassistant (pyproject.toml): started
   Building editable for homeassistant (pyproject.toml): finished with status 'done'
-  Created wheel for homeassistant: filename=homeassistant-2025.3.0.dev0-0.editable-py3-none-any.whl size=9357 sha256=50d95dca8bbece30d960bf9be329ab2731095ed312d3c0bc783b9c4ffb5a79f6
-  Stored in directory: /tmp/pip-ephem-wheel-cache-ht9acwt3/wheels/b8/03/05/eb5e767df8630a76f867d199c01cebda49491b70902358279b
+  Created wheel for homeassistant: filename=homeassistant-2025.3.0.dev0-0.editable-py3-none-any.whl size=9357 sha256=6208653f6872c187f3e9c412350c70bf8cfcb7e939327810db44ea994794aa3d
+  Stored in directory: /tmp/pip-ephem-wheel-cache-d5z9teil/wheels/b8/03/05/eb5e767df8630a76f867d199c01cebda49491b70902358279b
 Successfully built homeassistant
 Installing collected packages: homeassistant
   Attempting uninstall: homeassistant
     Found existing installation: homeassistant 2025.3.0.dev0
     Uninstalling homeassistant-2025.3.0.dev0:
       Successfully uninstalled homeassistant-2025.3.0.dev0
-Successfully installed homeassistant-2025.3.0.dev0
 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+Successfully installed homeassistant-2025.3.0.dev0
 + git checkout fc979cd564ee2d5fd27e05b32fa6f11b343ee4d5 tests/components/swiss_public_transport/snapshots/test_sensor.ambr tests/components/swiss_public_transport/test_sensor.py
 Updated 0 paths from d95ad422b8d
 + git apply -v -
