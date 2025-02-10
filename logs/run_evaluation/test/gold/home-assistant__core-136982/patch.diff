@@ -1,0 +1,43 @@
+diff --git a/homeassistant/components/swiss_public_transport/icons.json b/homeassistant/components/swiss_public_transport/icons.json
+index 06a640a06b2705..45cf4713705e63 100644
+--- a/homeassistant/components/swiss_public_transport/icons.json
++++ b/homeassistant/components/swiss_public_transport/icons.json
+@@ -10,7 +10,7 @@
+       "departure2": {
+         "default": "mdi:bus-clock"
+       },
+-      "duration": {
++      "trip_duration": {
+         "default": "mdi:timeline-clock"
+       },
+       "transfers": {
+diff --git a/homeassistant/components/swiss_public_transport/sensor.py b/homeassistant/components/swiss_public_transport/sensor.py
+index a0131938a37f9f..c8075a6746cbab 100644
+--- a/homeassistant/components/swiss_public_transport/sensor.py
++++ b/homeassistant/components/swiss_public_transport/sensor.py
+@@ -56,8 +56,10 @@ class SwissPublicTransportSensorEntityDescription(SensorEntityDescription):
+     ],
+     SwissPublicTransportSensorEntityDescription(
+         key="duration",
++        translation_key="trip_duration",
+         device_class=SensorDeviceClass.DURATION,
+         native_unit_of_measurement=UnitOfTime.SECONDS,
++        suggested_unit_of_measurement=UnitOfTime.HOURS,
+         value_fn=lambda data_connection: data_connection["duration"],
+     ),
+     SwissPublicTransportSensorEntityDescription(
+diff --git a/homeassistant/components/swiss_public_transport/strings.json b/homeassistant/components/swiss_public_transport/strings.json
+index ef8cc5595e3eff..270cb097e0a3a6 100644
+--- a/homeassistant/components/swiss_public_transport/strings.json
++++ b/homeassistant/components/swiss_public_transport/strings.json
+@@ -64,8 +64,8 @@
+       "departure2": {
+         "name": "Departure +2"
+       },
+-      "duration": {
+-        "name": "Duration"
++      "trip_duration": {
++        "name": "Trip duration"
+       },
+       "transfers": {
+         "name": "Transfers"

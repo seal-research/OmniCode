@@ -1,0 +1,31 @@
+{
+    "total_instances": 1,
+    "submitted_instances": 8,
+    "completed_instances": 0,
+    "resolved_instances": 0,
+    "unresolved_instances": 0,
+    "empty_patch_instances": 0,
+    "error_instances": 1,
+    "unstopped_instances": 0,
+    "completed_ids": [],
+    "incomplete_ids": [],
+    "empty_patch_ids": [],
+    "submitted_ids": [
+        "home-assistant__core-136793",
+        "home-assistant__core-136888",
+        "home-assistant__core-136910",
+        "home-assistant__core-136911",
+        "home-assistant__core-136919",
+        "home-assistant__core-136949",
+        "home-assistant__core-136980",
+        "home-assistant__core-136982"
+    ],
+    "resolved_ids": [],
+    "unresolved_ids": [],
+    "error_ids": [
+        "home-assistant__core-136982"
+    ],
+    "unstopped_containers": [],
+    "unremoved_images": [],
+    "schema_version": 2
+}

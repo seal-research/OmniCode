@@ -1,0 +1,512 @@
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z '' ']'
++++ export CONDA_SHLVL=0
++++ CONDA_SHLVL=0
++++ '[' -n '' ']'
++++++ dirname /opt/miniconda3/bin/conda
+++++ dirname /opt/miniconda3/bin
++++ PATH=/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export PATH
++++ '[' -z '' ']'
++++ PS1=
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1=
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=1
++++ CONDA_SHLVL=1
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=2
+++ CONDA_SHLVL=2
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_1=/opt/miniconda3
+++ CONDA_PREFIX_1=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ cd /testbed
++ git config --global --add safe.directory /testbed
++ cd /testbed
++ git status
+On branch dev
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   homeassistant/components/swiss_public_transport/icons.json
+	modified:   homeassistant/components/swiss_public_transport/sensor.py
+	modified:   homeassistant/components/swiss_public_transport/strings.json
+
+no changes added to commit (use "git add" and/or "git commit -a")
++ git show
+commit fc979cd564ee2d5fd27e05b32fa6f11b343ee4d5
+Author: J. Nick Koston <nick@koston.org>
+Date:   Fri Jan 31 01:34:39 2025 -0600
+
+    Bump habluetooth to 3.15.0 (#136973)
+
+diff --git a/homeassistant/components/bluetooth/manifest.json b/homeassistant/components/bluetooth/manifest.json
+index 1fcd507da83..38677400418 100644
+--- a/homeassistant/components/bluetooth/manifest.json
++++ b/homeassistant/components/bluetooth/manifest.json
+@@ -21,6 +21,6 @@
+     "bluetooth-auto-recovery==1.4.2",
+     "bluetooth-data-tools==1.22.0",
+     "dbus-fast==2.30.2",
+-    "habluetooth==3.14.0"
++    "habluetooth==3.15.0"
+   ]
+ }
+diff --git a/homeassistant/package_constraints.txt b/homeassistant/package_constraints.txt
+index 891d91e134b..64353901fbf 100644
+--- a/homeassistant/package_constraints.txt
++++ b/homeassistant/package_constraints.txt
+@@ -33,7 +33,7 @@ dbus-fast==2.30.2
+ fnv-hash-fast==1.2.2
+ go2rtc-client==0.1.2
+ ha-ffmpeg==3.2.2
+-habluetooth==3.14.0
++habluetooth==3.15.0
+ hass-nabucasa==0.88.1
+ hassil==2.2.0
+ home-assistant-bluetooth==1.13.0
+diff --git a/requirements_all.txt b/requirements_all.txt
+index dc5dc04420f..679c496e5a5 100644
+--- a/requirements_all.txt
++++ b/requirements_all.txt
+@@ -1103,7 +1103,7 @@ ha-philipsjs==3.2.2
+ habiticalib==0.3.3
+ 
+ # homeassistant.components.bluetooth
+-habluetooth==3.14.0
++habluetooth==3.15.0
+ 
+ # homeassistant.components.cloud
+ hass-nabucasa==0.88.1
+diff --git a/requirements_test_all.txt b/requirements_test_all.txt
+index 8707b3ff044..09478cb6447 100644
+--- a/requirements_test_all.txt
++++ b/requirements_test_all.txt
+@@ -944,7 +944,7 @@ ha-philipsjs==3.2.2
+ habiticalib==0.3.3
+ 
+ # homeassistant.components.bluetooth
+-habluetooth==3.14.0
++habluetooth==3.15.0
+ 
+ # homeassistant.components.cloud
+ hass-nabucasa==0.88.1
++ git diff fc979cd564ee2d5fd27e05b32fa6f11b343ee4d5
+diff --git a/homeassistant/components/swiss_public_transport/icons.json b/homeassistant/components/swiss_public_transport/icons.json
+index 06a640a06b2..45cf4713705 100644
+--- a/homeassistant/components/swiss_public_transport/icons.json
++++ b/homeassistant/components/swiss_public_transport/icons.json
+@@ -10,7 +10,7 @@
+       "departure2": {
+         "default": "mdi:bus-clock"
+       },
+-      "duration": {
++      "trip_duration": {
+         "default": "mdi:timeline-clock"
+       },
+       "transfers": {
+diff --git a/homeassistant/components/swiss_public_transport/sensor.py b/homeassistant/components/swiss_public_transport/sensor.py
+index a0131938a37..c8075a6746c 100644
+--- a/homeassistant/components/swiss_public_transport/sensor.py
++++ b/homeassistant/components/swiss_public_transport/sensor.py
+@@ -56,8 +56,10 @@ SENSORS: tuple[SwissPublicTransportSensorEntityDescription, ...] = (
+     ],
+     SwissPublicTransportSensorEntityDescription(
+         key="duration",
++        translation_key="trip_duration",
+         device_class=SensorDeviceClass.DURATION,
+         native_unit_of_measurement=UnitOfTime.SECONDS,
++        suggested_unit_of_measurement=UnitOfTime.HOURS,
+         value_fn=lambda data_connection: data_connection["duration"],
+     ),
+     SwissPublicTransportSensorEntityDescription(
+diff --git a/homeassistant/components/swiss_public_transport/strings.json b/homeassistant/components/swiss_public_transport/strings.json
+index ef8cc5595e3..270cb097e0a 100644
+--- a/homeassistant/components/swiss_public_transport/strings.json
++++ b/homeassistant/components/swiss_public_transport/strings.json
+@@ -64,8 +64,8 @@
+       "departure2": {
+         "name": "Departure +2"
+       },
+-      "duration": {
+-        "name": "Duration"
++      "trip_duration": {
++        "name": "Trip duration"
+       },
+       "transfers": {
+         "name": "Transfers"
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z x ']'
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1='(testbed) '
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=3
++++ CONDA_SHLVL=3
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=4
+++ CONDA_SHLVL=4
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_3=/opt/miniconda3
+++ CONDA_PREFIX_3=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ pip install -e '.[all, dev, test]'
+Obtaining file:///testbed
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: aiodns==3.2.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (3.2.0)
+Requirement already satisfied: aiohasupervisor==0.2.2b6 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.2.2b6)
+Requirement already satisfied: aiohttp==3.11.11 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (3.11.11)
+Requirement already satisfied: aiohttp-cors==0.7.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.7.0)
+Requirement already satisfied: aiohttp-fast-zlib==0.2.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.2.0)
+Requirement already satisfied: aiohttp-asyncmdnsresolver==0.0.2 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.0.2)
+Requirement already satisfied: aiozoneinfo==0.2.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.2.1)
+Requirement already satisfied: astral==2.2 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (2.2)
+Requirement already satisfied: async-interrupt==1.2.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (1.2.0)
+Requirement already satisfied: attrs==24.2.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (24.2.0)
+Requirement already satisfied: atomicwrites-homeassistant==1.4.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (1.4.1)
+Requirement already satisfied: awesomeversion==24.6.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (24.6.0)
+Requirement already satisfied: bcrypt==4.2.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (4.2.0)
+Requirement already satisfied: certifi>=2021.5.30 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (2025.1.31)
+Requirement already satisfied: ciso8601==2.3.2 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (2.3.2)
+Requirement already satisfied: cronsim==2.6 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (2.6)
+Requirement already satisfied: fnv-hash-fast==1.2.2 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (1.2.2)
+Requirement already satisfied: hass-nabucasa==0.88.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.88.1)
+Requirement already satisfied: httpx==0.28.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.28.1)
+Requirement already satisfied: home-assistant-bluetooth==1.13.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (1.13.0)
+Requirement already satisfied: ifaddr==0.2.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.2.0)
+Requirement already satisfied: Jinja2==3.1.5 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (3.1.5)
+Requirement already satisfied: lru-dict==1.3.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (1.3.0)
+Requirement already satisfied: PyJWT==2.10.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (2.10.1)
+Requirement already satisfied: cryptography==44.0.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (44.0.0)
+Requirement already satisfied: Pillow==11.1.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (11.1.0)
+Requirement already satisfied: propcache==0.2.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.2.1)
+Requirement already satisfied: pyOpenSSL==24.3.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (24.3.0)
+Requirement already satisfied: orjson==3.10.12 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (3.10.12)
+Requirement already satisfied: packaging>=23.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (24.2)
+Requirement already satisfied: psutil-home-assistant==0.0.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.0.1)
+Requirement already satisfied: python-slugify==8.0.4 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (8.0.4)
+Requirement already satisfied: PyYAML==6.0.2 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (6.0.2)
+Requirement already satisfied: requests==2.32.3 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (2.32.3)
+Requirement already satisfied: securetar==2025.1.4 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (2025.1.4)
+Requirement already satisfied: SQLAlchemy==2.0.36 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (2.0.36)
+Requirement already satisfied: typing-extensions<5.0,>=4.12.2 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (4.12.2)
+Requirement already satisfied: ulid-transform==1.2.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (1.2.0)
+Requirement already satisfied: urllib3<2,>=1.26.5 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (1.26.20)
+Requirement already satisfied: uv==0.5.21 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.5.21)
+Requirement already satisfied: voluptuous==0.15.2 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.15.2)
+Requirement already satisfied: voluptuous-serialize==2.6.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (2.6.0)
+Requirement already satisfied: voluptuous-openapi==0.0.6 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.0.6)
+Requirement already satisfied: yarl==1.18.3 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (1.18.3)
+Requirement already satisfied: webrtc-models==0.3.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.3.0)
+Requirement already satisfied: zeroconf==0.142.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.142.0)
+Requirement already satisfied: audioop-lts==0.2.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (0.2.1)
+Requirement already satisfied: standard-aifc==3.13.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (3.13.0)
+Requirement already satisfied: standard-telnetlib==3.13.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from homeassistant==2025.3.0.dev0) (3.13.0)
+Requirement already satisfied: pycares>=4.0.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from aiodns==3.2.0->homeassistant==2025.3.0.dev0) (4.5.0)
+Requirement already satisfied: mashumaro<4.0,>=3.11 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from aiohasupervisor==0.2.2b6->homeassistant==2025.3.0.dev0) (3.15)
+Requirement already satisfied: aiohappyeyeballs>=2.3.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from aiohttp==3.11.11->homeassistant==2025.3.0.dev0) (2.4.6)
+Requirement already satisfied: aiosignal>=1.1.2 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from aiohttp==3.11.11->homeassistant==2025.3.0.dev0) (1.3.2)
+Requirement already satisfied: frozenlist>=1.1.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from aiohttp==3.11.11->homeassistant==2025.3.0.dev0) (1.5.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from aiohttp==3.11.11->homeassistant==2025.3.0.dev0) (6.1.0)
+Requirement already satisfied: tzdata>=2024.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from aiozoneinfo==0.2.1->homeassistant==2025.3.0.dev0) (2025.1)
+Requirement already satisfied: pytz in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from astral==2.2->homeassistant==2025.3.0.dev0) (2025.1)
+Requirement already satisfied: cffi>=1.12 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from cryptography==44.0.0->homeassistant==2025.3.0.dev0) (1.17.1)
+Requirement already satisfied: fnvhash<0.2.0,>=0.1.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from fnv-hash-fast==1.2.2->homeassistant==2025.3.0.dev0) (0.1.0)
+Requirement already satisfied: acme==3.1.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (3.1.0)
+Requirement already satisfied: pycognito==2024.5.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (2024.5.1)
+Requirement already satisfied: snitun==0.40.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (0.40.0)
+Requirement already satisfied: habluetooth>=3.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (3.21.1)
+Requirement already satisfied: anyio in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from httpx==0.28.1->homeassistant==2025.3.0.dev0) (4.8.0)
+Requirement already satisfied: httpcore==1.* in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from httpx==0.28.1->homeassistant==2025.3.0.dev0) (1.0.7)
+Requirement already satisfied: idna in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from httpx==0.28.1->homeassistant==2025.3.0.dev0) (3.10)
+Requirement already satisfied: MarkupSafe>=2.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from Jinja2==3.1.5->homeassistant==2025.3.0.dev0) (3.0.2)
+Requirement already satisfied: psutil in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from psutil-home-assistant==0.0.1->homeassistant==2025.3.0.dev0) (6.1.1)
+Requirement already satisfied: text-unidecode>=1.3 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from python-slugify==8.0.4->homeassistant==2025.3.0.dev0) (1.3)
+Requirement already satisfied: charset-normalizer<4,>=2 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from requests==2.32.3->homeassistant==2025.3.0.dev0) (3.4.1)
+Requirement already satisfied: standard-chunk in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from standard-aifc==3.13.0->homeassistant==2025.3.0.dev0) (3.13.0)
+Requirement already satisfied: josepy<2,>=1.13.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from acme==3.1.0->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (1.15.0)
+Requirement already satisfied: pyrfc3339 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from acme==3.1.0->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (2.0.1)
+Requirement already satisfied: h11<0.15,>=0.13 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from httpcore==1.*->httpx==0.28.1->homeassistant==2025.3.0.dev0) (0.14.0)
+Requirement already satisfied: boto3>=1.10.49 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from pycognito==2024.5.1->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (1.36.16)
+Requirement already satisfied: envs>=1.3 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from pycognito==2024.5.1->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (1.4)
+Requirement already satisfied: async_timeout>=3.0.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from snitun==0.40.0->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (5.0.1)
+WARNING: homeassistant 2025.3.0.dev0 does not provide the extra 'all'
+WARNING: homeassistant 2025.3.0.dev0 does not provide the extra 'dev'
+WARNING: homeassistant 2025.3.0.dev0 does not provide the extra 'test'
+Requirement already satisfied: pycparser in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from cffi>=1.12->cryptography==44.0.0->homeassistant==2025.3.0.dev0) (2.22)
+Requirement already satisfied: bleak>=0.21.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (0.22.3)
+Requirement already satisfied: bleak-retry-connector>=3.8.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (3.8.1)
+Requirement already satisfied: bluetooth-adapters>=0.16.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (0.21.4)
+Requirement already satisfied: bluetooth-auto-recovery>=1.2.3 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (1.4.2)
+Requirement already satisfied: bluetooth-data-tools>=1.16.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (1.23.4)
+Requirement already satisfied: sniffio>=1.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from anyio->httpx==0.28.1->homeassistant==2025.3.0.dev0) (1.3.1)
+Requirement already satisfied: dbus-fast<3,>=1.83.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from bleak>=0.21.1->habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (2.33.0)
+Requirement already satisfied: aiooui>=0.1.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from bluetooth-adapters>=0.16.1->habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (0.1.9)
+Requirement already satisfied: uart-devices>=0.1.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from bluetooth-adapters>=0.16.1->habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (0.1.0)
+Requirement already satisfied: usb-devices>=0.4.5 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from bluetooth-adapters>=0.16.1->habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (0.4.5)
+Requirement already satisfied: PyRIC>=0.1.6.3 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from bluetooth-auto-recovery>=1.2.3->habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (0.1.6.3)
+Requirement already satisfied: btsocket>=0.2.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from bluetooth-auto-recovery>=1.2.3->habluetooth>=3.0->home-assistant-bluetooth==1.13.0->homeassistant==2025.3.0.dev0) (0.3.0)
+Requirement already satisfied: botocore<1.37.0,>=1.36.16 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from boto3>=1.10.49->pycognito==2024.5.1->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (1.36.16)
+Requirement already satisfied: jmespath<2.0.0,>=0.7.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from boto3>=1.10.49->pycognito==2024.5.1->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (1.0.1)
+Requirement already satisfied: s3transfer<0.12.0,>=0.11.0 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from boto3>=1.10.49->pycognito==2024.5.1->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (0.11.2)
+Requirement already satisfied: python-dateutil<3.0.0,>=2.1 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from botocore<1.37.0,>=1.36.16->boto3>=1.10.49->pycognito==2024.5.1->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (2.9.0.post0)
+Requirement already satisfied: six>=1.5 in /opt/miniconda3/envs/testbed/lib/python3.13/site-packages (from python-dateutil<3.0.0,>=2.1->botocore<1.37.0,>=1.36.16->boto3>=1.10.49->pycognito==2024.5.1->hass-nabucasa==0.88.1->homeassistant==2025.3.0.dev0) (1.17.0)
+Building wheels for collected packages: homeassistant
+  Building editable for homeassistant (pyproject.toml): started
+  Building editable for homeassistant (pyproject.toml): finished with status 'done'
+  Created wheel for homeassistant: filename=homeassistant-2025.3.0.dev0-0.editable-py3-none-any.whl size=9357 sha256=50d95dca8bbece30d960bf9be329ab2731095ed312d3c0bc783b9c4ffb5a79f6
+  Stored in directory: /tmp/pip-ephem-wheel-cache-ht9acwt3/wheels/b8/03/05/eb5e767df8630a76f867d199c01cebda49491b70902358279b
+Successfully built homeassistant
+Installing collected packages: homeassistant
+  Attempting uninstall: homeassistant
+    Found existing installation: homeassistant 2025.3.0.dev0
+    Uninstalling homeassistant-2025.3.0.dev0:
+      Successfully uninstalled homeassistant-2025.3.0.dev0
+Successfully installed homeassistant-2025.3.0.dev0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable.It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
++ git checkout fc979cd564ee2d5fd27e05b32fa6f11b343ee4d5 tests/components/swiss_public_transport/snapshots/test_sensor.ambr tests/components/swiss_public_transport/test_sensor.py
+Updated 0 paths from d95ad422b8d
++ git apply -v -
+Checking patch tests/components/swiss_public_transport/snapshots/test_sensor.ambr...
+Checking patch tests/components/swiss_public_transport/test_sensor.py...
+Applied patch tests/components/swiss_public_transport/snapshots/test_sensor.ambr cleanly.
+Applied patch tests/components/swiss_public_transport/test_sensor.py cleanly.
++ pytest -rA --tb=long tests/components/swiss_public_transport/snapshots/test_sensor.ambr tests/components/swiss_public_transport/test_sensor.py
+/opt/miniconda3/envs/testbed/lib/python3.13/site-packages/_pytest/config/__init__.py:331: PluggyTeardownRaisedWarning: A plugin raised an exception during an old-style hookwrapper teardown.
+Plugin: helpconfig, Hook: pytest_cmdline_parse
+ConftestImportFailure: TypeError: fixture() got an unexpected keyword argument 'loop_scope' (from /testbed/tests/conftest.py)
+For more information see https://pluggy.readthedocs.io/en/stable/api_reference.html#pluggy.PluggyTeardownRaisedWarning
+  config = pluginmanager.hook.pytest_cmdline_parse(
+ImportError while loading conftest '/testbed/tests/conftest.py'.
+tests/conftest.py:1240: in <module>
+    @pytest_asyncio.fixture(autouse=True, scope="session", loop_scope="session")
+/opt/miniconda3/envs/testbed/lib/python3.13/site-packages/pytest_asyncio/plugin.py:151: in inner
+    return fixture(fixture_function, **kwargs)
+/opt/miniconda3/envs/testbed/lib/python3.13/site-packages/pytest_asyncio/plugin.py:145: in fixture
+    return pytest.fixture(fixture_function, **kwargs)
+E   TypeError: fixture() got an unexpected keyword argument 'loop_scope'
++ git checkout fc979cd564ee2d5fd27e05b32fa6f11b343ee4d5 tests/components/swiss_public_transport/snapshots/test_sensor.ambr tests/components/swiss_public_transport/test_sensor.py
+Updated 2 paths from d95ad422b8d

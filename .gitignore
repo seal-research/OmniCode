@@ -192,4 +192,5 @@ ENV/
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.dbdata/new_repos/home-assistant/core/
+Thumbs.db
+data/new_repos/home-assistant/core/
