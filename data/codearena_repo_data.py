@@ -20,7 +20,7 @@
     "MAP_REPO_VERSION_TO_SPECS": {
             k: {
             "python": "3.7",
-            "install": "pip install -e",
+            # "install": "pip install -e",
             # "pip_packages": [
 
             # ],
