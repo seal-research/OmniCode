@@ -1,0 +1,38 @@
+{
+    "scrapy__scrapy-6388": {
+        "patch_is_None": false,
+        "patch_exists": true,
+        "patch_successfully_applied": true,
+        "resolved": true,
+        "tests_status": {
+            "FAIL_TO_PASS": {
+                "success": [
+                    "tests/test_contracts.py::ContractsManagerTest::test_cb_kwargs",
+                    "tests/test_contracts.py::ContractsManagerTest::test_contracts",
+                    "tests/test_contracts.py::ContractsManagerTest::test_custom_contracts",
+                    "tests/test_contracts.py::ContractsManagerTest::test_errback",
+                    "tests/test_contracts.py::ContractsManagerTest::test_form_contract",
+                    "tests/test_contracts.py::ContractsManagerTest::test_inherited_contracts",
+                    "tests/test_contracts.py::ContractsManagerTest::test_regex",
+                    "tests/test_contracts.py::ContractsManagerTest::test_returns",
+                    "tests/test_contracts.py::ContractsManagerTest::test_returns_async",
+                    "tests/test_contracts.py::ContractsManagerTest::test_same_url",
+                    "tests/test_contracts.py::ContractsManagerTest::test_scrapes"
+                ],
+                "failure": []
+            },
+            "PASS_TO_PASS": {
+                "success": [],
+                "failure": []
+            },
+            "FAIL_TO_FAIL": {
+                "success": [],
+                "failure": []
+            },
+            "PASS_TO_FAIL": {
+                "success": [],
+                "failure": []
+            }
+        }
+    }
+}
