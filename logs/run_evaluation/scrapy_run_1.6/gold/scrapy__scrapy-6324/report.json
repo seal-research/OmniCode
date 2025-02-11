@@ -1,0 +1,51 @@
+{
+    "scrapy__scrapy-6324": {
+        "patch_is_None": false,
+        "patch_exists": true,
+        "patch_successfully_applied": true,
+        "resolved": true,
+        "tests_status": {
+            "FAIL_TO_PASS": {
+                "success": [
+                    "tests/test_utils_log.py::FailureToExcInfoTest::test_failure",
+                    "tests/test_utils_log.py::FailureToExcInfoTest::test_non_failure",
+                    "tests/test_utils_log.py::TopLevelFormatterTest::test_children_logger",
+                    "tests/test_utils_log.py::TopLevelFormatterTest::test_different_name_logger",
+                    "tests/test_utils_log.py::TopLevelFormatterTest::test_overlapping_name_logger",
+                    "tests/test_utils_log.py::TopLevelFormatterTest::test_top_level_logger",
+                    "tests/test_utils_log.py::LogCounterHandlerTest::test_accepted_level",
+                    "tests/test_utils_log.py::LogCounterHandlerTest::test_filtered_out_level",
+                    "tests/test_utils_log.py::LogCounterHandlerTest::test_init",
+                    "tests/test_utils_log.py::StreamLoggerTest::test_redirect",
+                    "tests/test_utils_log.py::test_spider_logger_adapter_process[base_extra0-log_extra0-expected_extra0]",
+                    "tests/test_utils_log.py::test_spider_logger_adapter_process[base_extra1-log_extra1-expected_extra1]",
+                    "tests/test_utils_log.py::test_spider_logger_adapter_process[base_extra2-log_extra2-expected_extra2]",
+                    "tests/test_utils_log.py::LoggingTestCase::test_critical_logging",
+                    "tests/test_utils_log.py::LoggingTestCase::test_debug_logging",
+                    "tests/test_utils_log.py::LoggingTestCase::test_error_logging",
+                    "tests/test_utils_log.py::LoggingTestCase::test_info_logging",
+                    "tests/test_utils_log.py::LoggingTestCase::test_warning_logging",
+                    "tests/test_utils_log.py::LoggingWithExtraTestCase::test_critical_logging",
+                    "tests/test_utils_log.py::LoggingWithExtraTestCase::test_debug_logging",
+                    "tests/test_utils_log.py::LoggingWithExtraTestCase::test_error_logging",
+                    "tests/test_utils_log.py::LoggingWithExtraTestCase::test_info_logging",
+                    "tests/test_utils_log.py::LoggingWithExtraTestCase::test_overwrite_spider_extra",
+                    "tests/test_utils_log.py::LoggingWithExtraTestCase::test_warning_logging"
+                ],
+                "failure": []
+            },
+            "PASS_TO_PASS": {
+                "success": [],
+                "failure": []
+            },
+            "FAIL_TO_FAIL": {
+                "success": [],
+                "failure": []
+            },
+            "PASS_TO_FAIL": {
+                "success": [],
+                "failure": []
+            }
+        }
+    }
+}
