@@ -1,0 +1,391 @@
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z '' ']'
++++ export CONDA_SHLVL=0
++++ CONDA_SHLVL=0
++++ '[' -n '' ']'
++++++ dirname /opt/miniconda3/bin/conda
+++++ dirname /opt/miniconda3/bin
++++ PATH=/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export PATH
++++ '[' -z '' ']'
++++ PS1=
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1=
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=1
++++ CONDA_SHLVL=1
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=2
+++ CONDA_SHLVL=2
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_1=/opt/miniconda3
+++ CONDA_PREFIX_1=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ cd /testbed
++ git config --global --add safe.directory /testbed
++ cd /testbed
++ git status
+On branch master
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   scrapy/contracts/__init__.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
++ git show
+commit 2b9e32f1ca491340148e6a1918d1df70443823e6
+Merge: 492c3bce9 019f23e3b
+Author: Adrián Chaves <adrian@chaves.io>
+Date:   Mon Jun 3 13:29:38 2024 +0200
+
+    Merge pull request #6385 from wRAR/typing-generics-collections
+    
+    Add parameters to various generics.
+
++ git diff 2b9e32f1ca491340148e6a1918d1df70443823e6
+diff --git a/scrapy/contracts/__init__.py b/scrapy/contracts/__init__.py
+index b300b8457..27bc2fcba 100644
+--- a/scrapy/contracts/__init__.py
++++ b/scrapy/contracts/__init__.py
+@@ -120,7 +120,8 @@ class ContractsManager:
+ 
+             if line.startswith("@"):
+                 m = re.match(r"@(\w+)\s*(.*)", line)
+-                assert m is not None
++                if m is None:
++                    continue
+                 name, args = m.groups()
+                 args = re.split(r"\s+", args)
+ 
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z x ']'
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1='(testbed) '
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=3
++++ CONDA_SHLVL=3
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=4
+++ CONDA_SHLVL=4
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_3=/opt/miniconda3
+++ CONDA_PREFIX_3=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ pip install -e .
+Obtaining file:///testbed
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Requirement already satisfied: Twisted>=18.9.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (24.11.0)
+Requirement already satisfied: cryptography>=36.0.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (44.0.0)
+Requirement already satisfied: cssselect>=0.9.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (1.2.0)
+Requirement already satisfied: itemloaders>=1.0.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (1.3.2)
+Requirement already satisfied: parsel>=1.5.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (1.10.0)
+Requirement already satisfied: pyOpenSSL>=21.0.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (25.0.0)
+Requirement already satisfied: queuelib>=1.4.2 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (1.7.0)
+Requirement already satisfied: service_identity>=18.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (24.2.0)
+Requirement already satisfied: w3lib>=1.17.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (2.3.1)
+Requirement already satisfied: zope.interface>=5.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (7.2)
+Requirement already satisfied: protego>=0.1.15 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (0.4.0)
+Requirement already satisfied: itemadapter>=0.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (0.11.0)
+Requirement already satisfied: setuptools in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (75.8.0)
+Requirement already satisfied: packaging in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (24.2)
+Requirement already satisfied: tldextract in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (5.1.3)
+Requirement already satisfied: lxml>=4.4.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (5.3.1)
+Requirement already satisfied: defusedxml>=0.7.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (0.7.1)
+Requirement already satisfied: PyDispatcher>=2.0.5 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.11.2) (2.0.7)
+Requirement already satisfied: cffi>=1.12 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from cryptography>=36.0.0->Scrapy==2.11.2) (1.17.1)
+Requirement already satisfied: jmespath>=0.9.5 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from itemloaders>=1.0.1->Scrapy==2.11.2) (1.0.1)
+Requirement already satisfied: typing-extensions>=4.9 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from pyOpenSSL>=21.0.0->Scrapy==2.11.2) (4.12.2)
+Requirement already satisfied: attrs>=19.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.11.2) (25.1.0)
+Requirement already satisfied: pyasn1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.11.2) (0.6.1)
+Requirement already satisfied: pyasn1-modules in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.11.2) (0.4.1)
+Requirement already satisfied: automat>=24.8.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.11.2) (24.8.1)
+Requirement already satisfied: constantly>=15.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.11.2) (23.10.4)
+Requirement already satisfied: hyperlink>=17.1.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.11.2) (21.0.0)
+Requirement already satisfied: incremental>=24.7.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.11.2) (24.7.2)
+Requirement already satisfied: idna in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.11.2) (3.10)
+Requirement already satisfied: requests>=2.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.11.2) (2.32.3)
+Requirement already satisfied: requests-file>=1.4 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.11.2) (2.1.0)
+Requirement already satisfied: filelock>=3.0.8 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.11.2) (3.17.0)
+Requirement already satisfied: pycparser in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from cffi>=1.12->cryptography>=36.0.0->Scrapy==2.11.2) (2.22)
+Requirement already satisfied: tomli in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from incremental>=24.7.0->Twisted>=18.9.0->Scrapy==2.11.2) (2.2.1)
+Requirement already satisfied: charset-normalizer<4,>=2 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.11.2) (3.4.1)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.11.2) (2.3.0)
+Requirement already satisfied: certifi>=2017.4.17 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.11.2) (2025.1.31)
+Installing collected packages: Scrapy
+  Attempting uninstall: Scrapy
+    Found existing installation: Scrapy 2.11.2
+    Uninstalling Scrapy-2.11.2:
+      Successfully uninstalled Scrapy-2.11.2
+  DEPRECATION: Legacy editable install of Scrapy==2.11.2 from file:///testbed (setup.py develop) is deprecated. pip 25.1 will enforce this behaviour change. A possible replacement is to add a pyproject.toml or enable --use-pep517, and use setuptools >= 64. If the resulting installation is not behaving as expected, try using --config-settings editable_mode=compat. Please consult the setuptools documentation for more information. Discussion can be found at https://github.com/pypa/pip/issues/11457
+  Running setup.py develop for Scrapy
+Successfully installed Scrapy
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
++ git checkout 2b9e32f1ca491340148e6a1918d1df70443823e6 tests/test_contracts.py
+Updated 0 paths from 5a9c9631a
++ git apply -v -
+Checking patch tests/test_contracts.py...
+Applied patch tests/test_contracts.py cleanly.
++ pytest -rA --tb=long tests/test_contracts.py
+============================= test session starts ==============================
+platform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: pytest.ini
+collected 11 items
+
+tests/test_contracts.py ...........                                      [100%]
+
+=============================== warnings summary ===============================
+../opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:35
+  /opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:35: DeprecationWarning: twisted.web.resource._UnsafeNoResource.__init__ was deprecated in Twisted 22.10.0; please use Use twisted.web.pages.notFound instead, which properly escapes HTML. instead
+    dangerousPathError = resource._UnsafeNoResource("Invalid request URL.")
+
+../opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:264
+  /opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:264: DeprecationWarning: twisted.web.resource._UnsafeNoResource.__init__ was deprecated in Twisted 22.10.0; please use Use twisted.web.pages.notFound instead, which properly escapes HTML. instead
+    childNotFound = resource._UnsafeNoResource("File not found.")
+
+../opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:265
+  /opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:265: DeprecationWarning: twisted.web.resource._UnsafeForbiddenResource.__init__ was deprecated in Twisted 22.10.0; please use Use twisted.web.pages.forbidden instead, which properly escapes HTML. instead
+    forbidden = resource._UnsafeForbiddenResource()
+
+tests/test_contracts.py::ContractsManagerTest::test_returns_async
+  /testbed/scrapy/contracts/__init__.py:196: RuntimeWarning: coroutine 'TestSpider.returns_request_async' was never awaited
+    results.addError(case, sys.exc_info())
+
+tests/test_contracts.py::ContractsManagerTest::test_same_url
+  /testbed/scrapy/core/downloader/webclient.py:8: DeprecationWarning: twisted.web.http.HTTPClient was deprecated in Twisted 24.7.0: Use twisted.web.client.Agent instead.
+    from twisted.web.http import HTTPClient
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_contracts.py::ContractsManagerTest::test_cb_kwargs
+PASSED tests/test_contracts.py::ContractsManagerTest::test_contracts
+PASSED tests/test_contracts.py::ContractsManagerTest::test_custom_contracts
+PASSED tests/test_contracts.py::ContractsManagerTest::test_errback
+PASSED tests/test_contracts.py::ContractsManagerTest::test_form_contract
+PASSED tests/test_contracts.py::ContractsManagerTest::test_inherited_contracts
+PASSED tests/test_contracts.py::ContractsManagerTest::test_regex
+PASSED tests/test_contracts.py::ContractsManagerTest::test_returns
+PASSED tests/test_contracts.py::ContractsManagerTest::test_returns_async
+PASSED tests/test_contracts.py::ContractsManagerTest::test_same_url
+PASSED tests/test_contracts.py::ContractsManagerTest::test_scrapes
+======================== 11 passed, 5 warnings in 0.85s ========================
++ git checkout 2b9e32f1ca491340148e6a1918d1df70443823e6 tests/test_contracts.py
+Updated 1 path from 5a9c9631a

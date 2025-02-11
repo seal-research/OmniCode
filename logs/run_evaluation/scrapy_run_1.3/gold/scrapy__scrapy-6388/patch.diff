@@ -1,0 +1,14 @@
+diff --git a/scrapy/contracts/__init__.py b/scrapy/contracts/__init__.py
+index b300b8457fc..27bc2fcbaf9 100644
+--- a/scrapy/contracts/__init__.py
++++ b/scrapy/contracts/__init__.py
+@@ -120,7 +120,8 @@ def extract_contracts(self, method: Callable) -> List[Contract]:
+ 
+             if line.startswith("@"):
+                 m = re.match(r"@(\w+)\s*(.*)", line)
+-                assert m is not None
++                if m is None:
++                    continue
+                 name, args = m.groups()
+                 args = re.split(r"\s+", args)
+ 

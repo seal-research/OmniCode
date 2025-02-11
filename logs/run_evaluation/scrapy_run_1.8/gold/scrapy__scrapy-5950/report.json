@@ -1,0 +1,55 @@
+{
+    "scrapy__scrapy-5950": {
+        "patch_is_None": false,
+        "patch_exists": true,
+        "patch_successfully_applied": true,
+        "resolved": true,
+        "tests_status": {
+            "FAIL_TO_PASS": {
+                "success": [
+                    "tests/test_addons.py::AddonTest::test_update_settings",
+                    "tests/test_addons.py::AddonManagerTest::test_create_instance",
+                    "tests/test_addons.py::AddonManagerTest::test_fallback_workflow",
+                    "tests/test_addons.py::AddonManagerTest::test_load_settings",
+                    "tests/test_addons.py::AddonManagerTest::test_load_settings_order",
+                    "tests/test_addons.py::AddonManagerTest::test_notconfigured",
+                    "tests/test_addons.py::AddonManagerTest::test_settings_priority",
+                    "tests/test_middleware.py::MiddlewareManagerTest::test_enabled",
+                    "tests/test_middleware.py::MiddlewareManagerTest::test_enabled_from_settings",
+                    "tests/test_middleware.py::MiddlewareManagerTest::test_init",
+                    "tests/test_middleware.py::MiddlewareManagerTest::test_methods",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_clsdict",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_custom_class_paths",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_deprecate_a_class_with_custom_metaclass",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_deprecate_subclass_of_deprecated_class",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_inspect_stack",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_isinstance",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_issubclass",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_no_warning_on_definition",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_subclassing_warning_message",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_subclassing_warns_once_by_default",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_subclassing_warns_only_on_direct_children",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_warning_auto_message",
+                    "tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_warning_on_instance",
+                    "tests/test_utils_deprecate.py::UpdateClassPathTest::test_old_path_gets_fixed",
+                    "tests/test_utils_deprecate.py::UpdateClassPathTest::test_returns_nonstring",
+                    "tests/test_utils_deprecate.py::UpdateClassPathTest::test_sorted_replacement",
+                    "tests/test_utils_deprecate.py::UpdateClassPathTest::test_unmatched_path_stays_the_same"
+                ],
+                "failure": []
+            },
+            "PASS_TO_PASS": {
+                "success": [],
+                "failure": []
+            },
+            "FAIL_TO_FAIL": {
+                "success": [],
+                "failure": []
+            },
+            "PASS_TO_FAIL": {
+                "success": [],
+                "failure": []
+            }
+        }
+    }
+}
