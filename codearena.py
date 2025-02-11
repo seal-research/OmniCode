@@ -115,11 +115,11 @@ def main():
 
     # Update constants in swebench
     for instance_repo in REPO_DATA:
+        print(instance_repo)
         swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
         swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
         swebench.harness.constants.MAP_REPO_VERSION_TO_SPECS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
     importlib.reload(swebench)
-
 
     # Handle BugFixing
     if "BugFixing" in active_flags:
