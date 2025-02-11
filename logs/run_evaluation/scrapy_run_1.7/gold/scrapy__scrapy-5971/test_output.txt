@@ -1,0 +1,699 @@
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z '' ']'
++++ export CONDA_SHLVL=0
++++ CONDA_SHLVL=0
++++ '[' -n '' ']'
++++++ dirname /opt/miniconda3/bin/conda
+++++ dirname /opt/miniconda3/bin
++++ PATH=/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export PATH
++++ '[' -z '' ']'
++++ PS1=
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1=
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=1
++++ CONDA_SHLVL=1
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=2
+++ CONDA_SHLVL=2
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_1=/opt/miniconda3
+++ CONDA_PREFIX_1=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ cd /testbed
++ git config --global --add safe.directory /testbed
++ cd /testbed
++ git status
+On branch master
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   scrapy/extensions/feedexport.py
+	modified:   scrapy/utils/conf.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
++ git show
+commit 8055a948dc2544c4d8ebe7aa1c6227e19b1583ac
+Merge: b6196309c 7ce3d8f98
+Author: Andrey Rakhmatullin <wrar@wrar.name>
+Date:   Wed Jul 5 12:51:06 2023 +0400
+
+    Merge pull request #5965 from andersoncarlosfs/patch-1
+    
+    Removing hard code entries
+
++ git diff 8055a948dc2544c4d8ebe7aa1c6227e19b1583ac
+diff --git a/scrapy/extensions/feedexport.py b/scrapy/extensions/feedexport.py
+index 1cdc78f59..3bf64dc12 100644
+--- a/scrapy/extensions/feedexport.py
++++ b/scrapy/extensions/feedexport.py
+@@ -9,7 +9,7 @@ import re
+ import sys
+ import warnings
+ from datetime import datetime
+-from pathlib import Path
++from pathlib import Path, PureWindowsPath
+ from tempfile import NamedTemporaryFile
+ from typing import IO, Any, Callable, List, Optional, Tuple, Union
+ from urllib.parse import unquote, urlparse
+@@ -591,7 +591,7 @@ class FeedExporter:
+ 
+     def _storage_supported(self, uri, feed_options):
+         scheme = urlparse(uri).scheme
+-        if scheme in self.storages:
++        if scheme in self.storages or PureWindowsPath(uri).drive:
+             try:
+                 self._get_storage(uri, feed_options)
+                 return True
+@@ -617,7 +617,7 @@ class FeedExporter:
+         It supports not passing the *feed_options* parameters to classes that
+         do not support it, and issuing a deprecation warning instead.
+         """
+-        feedcls = self.storages[urlparse(uri).scheme]
++        feedcls = self.storages.get(urlparse(uri).scheme, self.storages["file"])
+         crawler = getattr(self, "crawler", None)
+ 
+         def build_instance(builder, *preargs):
+diff --git a/scrapy/utils/conf.py b/scrapy/utils/conf.py
+index 3ade1d105..05d43e456 100644
+--- a/scrapy/utils/conf.py
++++ b/scrapy/utils/conf.py
+@@ -202,7 +202,8 @@ def feed_process_params_from_cli(
+     for element in output:
+         try:
+             feed_uri, feed_format = element.rsplit(":", 1)
+-        except ValueError:
++            check_valid_format(feed_format)
++        except (ValueError, UsageError):
+             feed_uri = element
+             feed_format = Path(element).suffix.replace(".", "")
+         else:
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z x ']'
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1='(testbed) '
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=3
++++ CONDA_SHLVL=3
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=4
+++ CONDA_SHLVL=4
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_3=/opt/miniconda3
+++ CONDA_PREFIX_3=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ pip install -e .
+Obtaining file:///testbed
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Requirement already satisfied: Twisted>=18.9.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (24.11.0)
+Requirement already satisfied: cryptography>=36.0.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (44.0.0)
+Requirement already satisfied: cssselect>=0.9.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (1.2.0)
+Requirement already satisfied: itemloaders>=1.0.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (1.3.2)
+Requirement already satisfied: parsel>=1.5.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (1.10.0)
+Requirement already satisfied: pyOpenSSL>=21.0.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (25.0.0)
+Requirement already satisfied: queuelib>=1.4.2 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (1.7.0)
+Requirement already satisfied: service_identity>=18.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (24.2.0)
+Requirement already satisfied: w3lib>=1.17.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (2.3.1)
+Requirement already satisfied: zope.interface>=5.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (7.2)
+Requirement already satisfied: protego>=0.1.15 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (0.4.0)
+Requirement already satisfied: itemadapter>=0.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (0.11.0)
+Requirement already satisfied: setuptools in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (75.8.0)
+Requirement already satisfied: packaging in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (24.2)
+Requirement already satisfied: tldextract in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (5.1.3)
+Requirement already satisfied: lxml>=4.4.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (5.3.1)
+Requirement already satisfied: PyDispatcher>=2.0.5 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (2.0.7)
+Requirement already satisfied: cffi>=1.12 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from cryptography>=36.0.0->Scrapy==2.9.0) (1.17.1)
+Requirement already satisfied: jmespath>=0.9.5 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from itemloaders>=1.0.1->Scrapy==2.9.0) (1.0.1)
+Requirement already satisfied: typing-extensions>=4.9 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from pyOpenSSL>=21.0.0->Scrapy==2.9.0) (4.12.2)
+Requirement already satisfied: attrs>=19.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.9.0) (25.1.0)
+Requirement already satisfied: pyasn1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.9.0) (0.6.1)
+Requirement already satisfied: pyasn1-modules in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.9.0) (0.4.1)
+Requirement already satisfied: automat>=24.8.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.9.0) (24.8.1)
+Requirement already satisfied: constantly>=15.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.9.0) (23.10.4)
+Requirement already satisfied: hyperlink>=17.1.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.9.0) (21.0.0)
+Requirement already satisfied: incremental>=24.7.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.9.0) (24.7.2)
+Requirement already satisfied: idna in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.9.0) (3.10)
+Requirement already satisfied: requests>=2.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.9.0) (2.32.3)
+Requirement already satisfied: requests-file>=1.4 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.9.0) (2.1.0)
+Requirement already satisfied: filelock>=3.0.8 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.9.0) (3.17.0)
+Requirement already satisfied: pycparser in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from cffi>=1.12->cryptography>=36.0.0->Scrapy==2.9.0) (2.22)
+Requirement already satisfied: tomli in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from incremental>=24.7.0->Twisted>=18.9.0->Scrapy==2.9.0) (2.2.1)
+Requirement already satisfied: charset-normalizer<4,>=2 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.9.0) (3.4.1)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.9.0) (2.3.0)
+Requirement already satisfied: certifi>=2017.4.17 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.9.0) (2025.1.31)
+Installing collected packages: Scrapy
+  Attempting uninstall: Scrapy
+    Found existing installation: Scrapy 2.9.0
+    Uninstalling Scrapy-2.9.0:
+      Successfully uninstalled Scrapy-2.9.0
+  DEPRECATION: Legacy editable install of Scrapy==2.9.0 from file:///testbed (setup.py develop) is deprecated. pip 25.1 will enforce this behaviour change. A possible replacement is to add a pyproject.toml or enable --use-pep517, and use setuptools >= 64. If the resulting installation is not behaving as expected, try using --config-settings editable_mode=compat. Please consult the setuptools documentation for more information. Discussion can be found at https://github.com/pypa/pip/issues/11457
+  Running setup.py develop for Scrapy
+Successfully installed Scrapy
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
++ git checkout 8055a948dc2544c4d8ebe7aa1c6227e19b1583ac tests/test_commands.py
+Updated 0 paths from 2599740f5
++ git apply -v -
+Checking patch tests/test_commands.py...
+Applied patch tests/test_commands.py cleanly.
++ pytest -rA --tb=long tests/test_commands.py
+============================= test session starts ==============================
+platform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: pytest.ini
+collected 80 items
+
+tests/test_commands.py ...............................Fs....F.....FF.... [ 61%]
+...sssssssssssssssssssss.......                                          [100%]
+
+=================================== FAILURES ===================================
+________________ RunSpiderCommandTest.test_absolute_path_linux _________________
+
+self = <tests.test_commands.RunSpiderCommandTest testMethod=test_absolute_path_linux>
+
+        @skipIf(platform.system() == "Windows", reason="Linux only")
+        def test_absolute_path_linux(self):
+            spider_code = """
+    import scrapy
+    
+    class MySpider(scrapy.Spider):
+        name = 'myspider'
+    
+        start_urls = ["data:,"]
+    
+        def parse(self, response):
+            yield {"hello": "world"}
+            """
+            temp_dir = mkdtemp()
+    
+            args = ["-o", f"{temp_dir}/output1.json:json"]
+            log = self.get_log(spider_code, args=args)
+>           self.assertIn(
+                f"[scrapy.extensions.feedexport] INFO: Stored json feed (1 items) in: {temp_dir}/output1.json",
+                log,
+            )
+
+/testbed/tests/test_commands.py:939: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_commands.RunSpiderCommandTest testMethod=test_absolute_path_linux>
+containee = '[scrapy.extensions.feedexport] INFO: Stored json feed (1 items) in: /tmp/tmporepyufi/output1.json'
+container = "2025-02-11 02:49:24 [scrapy.utils.log] INFO: Scrapy 2.9.0 started (bot: testproject)\n2025-02-11 02:49:24 [scrapy.uti...ers\n    reactor._handleSignals()\nAttributeError: 'AsyncioSelectorReactor' object has no attribute '_handleSignals'\n"
+msg = None
+
+    def assertIn(self, containee, container, msg=None):
+        """
+        Fail the test if C{containee} is not found in C{container}.
+    
+        @param containee: the value that should be in C{container}
+        @param container: a sequence type, or in the case of a mapping type,
+                          will follow semantics of 'if key in dict.keys()'
+        @param msg: if msg is None, then the failure message will be
+                    '%r not in %r' % (first, second)
+        """
+        if containee not in container:
+>           raise self.failureException(msg or f"{containee!r} not in {container!r}")
+E           twisted.trial.unittest.FailTest: '[scrapy.extensions.feedexport] INFO: Stored json feed (1 items) in: /tmp/tmporepyufi/output1.json' not in '2025-02-11 02:49:24 [scrapy.utils.log] INFO: Scrapy 2.9.0 started (bot: testproject)\n2025-02-11 02:49:24 [scrapy.utils.log] INFO: Versions: lxml 5.3.1.0, libxml2 2.12.9, cssselect 1.2.0, parsel 1.10.0, w3lib 2.3.1, Twisted 24.11.0, Python 3.9.21 (main, Dec 11 2024, 16:27:47) - [GCC 11.2.0], pyOpenSSL 25.0.0 (OpenSSL 3.4.0 22 Oct 2024), cryptography 44.0.0, Platform Linux-6.10.14-linuxkit-aarch64-with-glibc2.35\n2025-02-11 02:49:24 [scrapy.crawler] INFO: Overridden settings:\n{\'BOT_NAME\': \'testproject\',\n \'FEED_EXPORT_ENCODING\': \'utf-8\',\n \'NEWSPIDER_MODULE\': \'testproject.spiders\',\n \'REQUEST_FINGERPRINTER_IMPLEMENTATION\': \'2.7\',\n \'ROBOTSTXT_OBEY\': True,\n \'SPIDER_LOADER_WARN_ONLY\': True,\n \'SPIDER_MODULES\': [\'testproject.spiders\'],\n \'TWISTED_REACTOR\': \'twisted.internet.asyncioreactor.AsyncioSelectorReactor\'}\n2025-02-11 02:49:24 [asyncio] DEBUG: Using selector: EpollSelector\n2025-02-11 02:49:24 [scrapy.utils.log] DEBUG: Using reactor: twisted.internet.asyncioreactor.AsyncioSelectorReactor\n2025-02-11 02:49:24 [scrapy.utils.log] DEBUG: Using asyncio event loop: asyncio.unix_events._UnixSelectorEventLoop\n2025-02-11 02:49:24 [scrapy.extensions.telnet] INFO: Telnet Password: cfbeae8eddbd29d0\n2025-02-11 02:49:24 [scrapy.middleware] INFO: Enabled extensions:\n[\'scrapy.extensions.corestats.CoreStats\',\n \'scrapy.extensions.telnet.TelnetConsole\',\n \'scrapy.extensions.memusage.MemoryUsage\',\n \'scrapy.extensions.feedexport.FeedExporter\',\n \'scrapy.extensions.logstats.LogStats\']\n2025-02-11 02:49:25 [scrapy.middleware] INFO: Enabled downloader middlewares:\n[\'scrapy.downloadermiddlewares.robotstxt.RobotsTxtMiddleware\',\n \'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware\',\n \'scrapy.downloadermiddlewares.downloadtimeout.DownloadTimeoutMiddleware\',\n \'scrapy.downloadermiddlewares.defaultheaders.DefaultHeadersMiddleware\',\n \'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware\',\n \'scrapy.downloadermiddlewares.retry.RetryMiddleware\',\n \'scrapy.downloadermiddlewares.redirect.MetaRefreshMiddleware\',\n \'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware\',\n \'scrapy.downloadermiddlewares.redirect.RedirectMiddleware\',\n \'scrapy.downloadermiddlewares.cookies.CookiesMiddleware\',\n \'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware\',\n \'scrapy.downloadermiddlewares.stats.DownloaderStats\']\n2025-02-11 02:49:25 [scrapy.middleware] INFO: Enabled spider middlewares:\n[\'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware\',\n \'scrapy.spidermiddlewares.offsite.OffsiteMiddleware\',\n \'scrapy.spidermiddlewares.referer.RefererMiddleware\',\n \'scrapy.spidermiddlewares.urllength.UrlLengthMiddleware\',\n \'scrapy.spidermiddlewares.depth.DepthMiddleware\']\n2025-02-11 02:49:25 [scrapy.middleware] INFO: Enabled item pipelines:\n[]\n2025-02-11 02:49:25 [scrapy.core.engine] INFO: Spider opened\n2025-02-11 02:49:25 [scrapy.extensions.logstats] INFO: Crawled 0 pages (at 0 pages/min), scraped 0 items (at 0 items/min)\n2025-02-11 02:49:25 [scrapy.extensions.telnet] INFO: Telnet console listening on 127.0.0.1:6023\nTraceback (most recent call last):\n  File "/opt/miniconda3/envs/testbed/lib/python3.9/runpy.py", line 197, in _run_module_as_main\n    return _run_code(code, main_globals, None,\n  File "/opt/miniconda3/envs/testbed/lib/python3.9/runpy.py", line 87, in _run_code\n    exec(code, run_globals)\n  File "/testbed/scrapy/cmdline.py", line 180, in <module>\n    execute()\n  File "/testbed/scrapy/cmdline.py", line 157, in execute\n    _run_print_help(parser, _run_command, cmd, args, opts)\n  File "/testbed/scrapy/cmdline.py", line 110, in _run_print_help\n    func(*a, **kw)\n  File "/testbed/scrapy/cmdline.py", line 165, in _run_command\n    cmd.run(args, opts)\n  File "/testbed/scrapy/commands/runspider.py", line 55, in run\n    self.crawler_process.start()\n  File "/testbed/scrapy/crawler.py", line 386, in start\n    install_shutdown_handlers(self._signal_shutdown)\n  File "/testbed/scrapy/utils/ossignal.py", line 19, in install_shutdown_handlers\n    reactor._handleSignals()\nAttributeError: \'AsyncioSelectorReactor\' object has no attribute \'_handleSignals\'\n'
+
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/trial/_synctest.py:509: FailTest
+__________ RunSpiderCommandTest.test_custom_asyncio_loop_enabled_true __________
+
+self = <tests.test_commands.RunSpiderCommandTest testMethod=test_custom_asyncio_loop_enabled_true>
+
+    @mark.skipif(
+        sys.implementation.name == "pypy",
+        reason="uvloop does not support pypy properly",
+    )
+    @mark.skipif(
+        platform.system() == "Windows", reason="uvloop does not support Windows"
+    )
+    @mark.skipif(
+        twisted_version == Version("twisted", 21, 2, 0),
+        reason="https://twistedmatrix.com/trac/ticket/10106",
+    )
+    def test_custom_asyncio_loop_enabled_true(self):
+        log = self.get_log(
+            self.debug_log_spider,
+            args=[
+                "-s",
+                "TWISTED_REACTOR=twisted.internet.asyncioreactor.AsyncioSelectorReactor",
+                "-s",
+                "ASYNCIO_EVENT_LOOP=uvloop.Loop",
+            ],
+        )
+>       self.assertIn("Using asyncio event loop: uvloop.Loop", log)
+
+/testbed/tests/test_commands.py:826: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_commands.RunSpiderCommandTest testMethod=test_custom_asyncio_loop_enabled_true>
+containee = 'Using asyncio event loop: uvloop.Loop'
+container = '2025-02-11 02:49:29 [scrapy.utils.log] INFO: Scrapy 2.9.0 started (bot: testproject)\n2025-02-11 02:49:29 [scrapy.uti...frozen importlib._bootstrap>", line 984, in _find_and_load_unlocked\nModuleNotFoundError: No module named \'uvloop\'\n'
+msg = None
+
+    def assertIn(self, containee, container, msg=None):
+        """
+        Fail the test if C{containee} is not found in C{container}.
+    
+        @param containee: the value that should be in C{container}
+        @param container: a sequence type, or in the case of a mapping type,
+                          will follow semantics of 'if key in dict.keys()'
+        @param msg: if msg is None, then the failure message will be
+                    '%r not in %r' % (first, second)
+        """
+        if containee not in container:
+>           raise self.failureException(msg or f"{containee!r} not in {container!r}")
+E           twisted.trial.unittest.FailTest: 'Using asyncio event loop: uvloop.Loop' not in '2025-02-11 02:49:29 [scrapy.utils.log] INFO: Scrapy 2.9.0 started (bot: testproject)\n2025-02-11 02:49:29 [scrapy.utils.log] INFO: Versions: lxml 5.3.1.0, libxml2 2.12.9, cssselect 1.2.0, parsel 1.10.0, w3lib 2.3.1, Twisted 24.11.0, Python 3.9.21 (main, Dec 11 2024, 16:27:47) - [GCC 11.2.0], pyOpenSSL 25.0.0 (OpenSSL 3.4.0 22 Oct 2024), cryptography 44.0.0, Platform Linux-6.10.14-linuxkit-aarch64-with-glibc2.35\n2025-02-11 02:49:29 [scrapy.crawler] INFO: Overridden settings:\n{\'ASYNCIO_EVENT_LOOP\': \'uvloop.Loop\',\n \'BOT_NAME\': \'testproject\',\n \'FEED_EXPORT_ENCODING\': \'utf-8\',\n \'NEWSPIDER_MODULE\': \'testproject.spiders\',\n \'REQUEST_FINGERPRINTER_IMPLEMENTATION\': \'2.7\',\n \'ROBOTSTXT_OBEY\': True,\n \'SPIDER_LOADER_WARN_ONLY\': True,\n \'SPIDER_MODULES\': [\'testproject.spiders\'],\n \'TWISTED_REACTOR\': \'twisted.internet.asyncioreactor.AsyncioSelectorReactor\'}\nTraceback (most recent call last):\n  File "/opt/miniconda3/envs/testbed/lib/python3.9/runpy.py", line 197, in _run_module_as_main\n    return _run_code(code, main_globals, None,\n  File "/opt/miniconda3/envs/testbed/lib/python3.9/runpy.py", line 87, in _run_code\n    exec(code, run_globals)\n  File "/testbed/scrapy/cmdline.py", line 180, in <module>\n    execute()\n  File "/testbed/scrapy/cmdline.py", line 157, in execute\n    _run_print_help(parser, _run_command, cmd, args, opts)\n  File "/testbed/scrapy/cmdline.py", line 110, in _run_print_help\n    func(*a, **kw)\n  File "/testbed/scrapy/cmdline.py", line 165, in _run_command\n    cmd.run(args, opts)\n  File "/testbed/scrapy/commands/runspider.py", line 54, in run\n    self.crawler_process.crawl(spidercls, **opts.spargs)\n  File "/testbed/scrapy/crawler.py", line 240, in crawl\n    crawler = self.create_crawler(crawler_or_spidercls)\n  File "/testbed/scrapy/crawler.py", line 276, in create_crawler\n    return self._create_crawler(crawler_or_spidercls)\n  File "/testbed/scrapy/crawler.py", line 359, in _create_crawler\n    return Crawler(spidercls, self.settings, init_reactor=init_reactor)\n  File "/testbed/scrapy/crawler.py", line 106, in __init__\n    install_reactor(reactor_class, event_loop)\n  File "/testbed/scrapy/utils/reactor.py", line 105, in install_reactor\n    event_loop = set_asyncio_event_loop(event_loop_path)\n  File "/testbed/scrapy/utils/reactor.py", line 122, in set_asyncio_event_loop\n    event_loop_class: Type[AbstractEventLoop] = load_object(event_loop_path)\n  File "/testbed/scrapy/utils/misc.py", line 79, in load_object\n    mod = import_module(module)\n  File "/opt/miniconda3/envs/testbed/lib/python3.9/importlib/__init__.py", line 127, in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\n  File "<frozen importlib._bootstrap>", line 1030, in _gcd_import\n  File "<frozen importlib._bootstrap>", line 1007, in _find_and_load\n  File "<frozen importlib._bootstrap>", line 984, in _find_and_load_unlocked\nModuleNotFoundError: No module named \'uvloop\'\n'
+
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/trial/_synctest.py:509: FailTest
+__________________ RunSpiderCommandTest.test_run_good_spider ___________________
+
+self = <tests.test_commands.RunSpiderCommandTest testMethod=test_run_good_spider>
+
+    def test_run_good_spider(self):
+        proc, _, _ = self.runspider(
+            "import scrapy\n" + inspect.getsource(NoRequestsSpider)
+        )
+        ret = proc.returncode
+>       self.assertEqual(ret, 0)
+
+/testbed/tests/test_commands.py:720: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_commands.RunSpiderCommandTest testMethod=test_run_good_spider>
+first = 1, second = 0, msg = None
+
+    def assertEqual(self, first, second, msg=None):
+        """
+        Fail the test if C{first} and C{second} are not equal.
+    
+        @param msg: A string describing the failure that's included in the
+            exception.
+        """
+>       super().assertEqual(first, second, msg)
+E       twisted.trial.unittest.FailTest: 1 != 0
+
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/trial/_synctest.py:444: FailTest
+_____________________ RunSpiderCommandTest.test_runspider ______________________
+
+self = <tests.test_commands.RunSpiderCommandTest testMethod=test_runspider>
+
+    def test_runspider(self):
+        log = self.get_log(self.debug_log_spider)
+        self.assertIn("DEBUG: It Works!", log)
+        self.assertIn("INFO: Spider opened", log)
+>       self.assertIn("INFO: Closing spider (finished)", log)
+
+/testbed/tests/test_commands.py:705: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_commands.RunSpiderCommandTest testMethod=test_runspider>
+containee = 'INFO: Closing spider (finished)'
+container = "2025-02-11 02:49:34 [scrapy.utils.log] INFO: Scrapy 2.9.0 started (bot: testproject)\n2025-02-11 02:49:34 [scrapy.uti...ers\n    reactor._handleSignals()\nAttributeError: 'AsyncioSelectorReactor' object has no attribute '_handleSignals'\n"
+msg = None
+
+    def assertIn(self, containee, container, msg=None):
+        """
+        Fail the test if C{containee} is not found in C{container}.
+    
+        @param containee: the value that should be in C{container}
+        @param container: a sequence type, or in the case of a mapping type,
+                          will follow semantics of 'if key in dict.keys()'
+        @param msg: if msg is None, then the failure message will be
+                    '%r not in %r' % (first, second)
+        """
+        if containee not in container:
+>           raise self.failureException(msg or f"{containee!r} not in {container!r}")
+E           twisted.trial.unittest.FailTest: 'INFO: Closing spider (finished)' not in '2025-02-11 02:49:34 [scrapy.utils.log] INFO: Scrapy 2.9.0 started (bot: testproject)\n2025-02-11 02:49:34 [scrapy.utils.log] INFO: Versions: lxml 5.3.1.0, libxml2 2.12.9, cssselect 1.2.0, parsel 1.10.0, w3lib 2.3.1, Twisted 24.11.0, Python 3.9.21 (main, Dec 11 2024, 16:27:47) - [GCC 11.2.0], pyOpenSSL 25.0.0 (OpenSSL 3.4.0 22 Oct 2024), cryptography 44.0.0, Platform Linux-6.10.14-linuxkit-aarch64-with-glibc2.35\n2025-02-11 02:49:34 [scrapy.crawler] INFO: Overridden settings:\n{\'BOT_NAME\': \'testproject\',\n \'FEED_EXPORT_ENCODING\': \'utf-8\',\n \'NEWSPIDER_MODULE\': \'testproject.spiders\',\n \'REQUEST_FINGERPRINTER_IMPLEMENTATION\': \'2.7\',\n \'ROBOTSTXT_OBEY\': True,\n \'SPIDER_LOADER_WARN_ONLY\': True,\n \'SPIDER_MODULES\': [\'testproject.spiders\'],\n \'TWISTED_REACTOR\': \'twisted.internet.asyncioreactor.AsyncioSelectorReactor\'}\n2025-02-11 02:49:34 [asyncio] DEBUG: Using selector: EpollSelector\n2025-02-11 02:49:34 [scrapy.utils.log] DEBUG: Using reactor: twisted.internet.asyncioreactor.AsyncioSelectorReactor\n2025-02-11 02:49:34 [scrapy.utils.log] DEBUG: Using asyncio event loop: asyncio.unix_events._UnixSelectorEventLoop\n2025-02-11 02:49:34 [scrapy.extensions.telnet] INFO: Telnet Password: 52c99affe87d4361\n2025-02-11 02:49:34 [scrapy.middleware] INFO: Enabled extensions:\n[\'scrapy.extensions.corestats.CoreStats\',\n \'scrapy.extensions.telnet.TelnetConsole\',\n \'scrapy.extensions.memusage.MemoryUsage\',\n \'scrapy.extensions.logstats.LogStats\']\n2025-02-11 02:49:34 [scrapy.middleware] INFO: Enabled downloader middlewares:\n[\'scrapy.downloadermiddlewares.robotstxt.RobotsTxtMiddleware\',\n \'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware\',\n \'scrapy.downloadermiddlewares.downloadtimeout.DownloadTimeoutMiddleware\',\n \'scrapy.downloadermiddlewares.defaultheaders.DefaultHeadersMiddleware\',\n \'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware\',\n \'scrapy.downloadermiddlewares.retry.RetryMiddleware\',\n \'scrapy.downloadermiddlewares.redirect.MetaRefreshMiddleware\',\n \'scrapy.downloadermiddlewares.httpcompression.HttpCompressionMiddleware\',\n \'scrapy.downloadermiddlewares.redirect.RedirectMiddleware\',\n \'scrapy.downloadermiddlewares.cookies.CookiesMiddleware\',\n \'scrapy.downloadermiddlewares.httpproxy.HttpProxyMiddleware\',\n \'scrapy.downloadermiddlewares.stats.DownloaderStats\']\n2025-02-11 02:49:34 [scrapy.middleware] INFO: Enabled spider middlewares:\n[\'scrapy.spidermiddlewares.httperror.HttpErrorMiddleware\',\n \'scrapy.spidermiddlewares.offsite.OffsiteMiddleware\',\n \'scrapy.spidermiddlewares.referer.RefererMiddleware\',\n \'scrapy.spidermiddlewares.urllength.UrlLengthMiddleware\',\n \'scrapy.spidermiddlewares.depth.DepthMiddleware\']\n2025-02-11 02:49:34 [scrapy.middleware] INFO: Enabled item pipelines:\n[]\n2025-02-11 02:49:34 [myspider] DEBUG: It Works!\n2025-02-11 02:49:34 [scrapy.core.engine] INFO: Spider opened\n2025-02-11 02:49:34 [scrapy.extensions.logstats] INFO: Crawled 0 pages (at 0 pages/min), scraped 0 items (at 0 items/min)\n2025-02-11 02:49:34 [scrapy.extensions.telnet] INFO: Telnet console listening on 127.0.0.1:6023\nTraceback (most recent call last):\n  File "/opt/miniconda3/envs/testbed/lib/python3.9/runpy.py", line 197, in _run_module_as_main\n    return _run_code(code, main_globals, None,\n  File "/opt/miniconda3/envs/testbed/lib/python3.9/runpy.py", line 87, in _run_code\n    exec(code, run_globals)\n  File "/testbed/scrapy/cmdline.py", line 180, in <module>\n    execute()\n  File "/testbed/scrapy/cmdline.py", line 157, in execute\n    _run_print_help(parser, _run_command, cmd, args, opts)\n  File "/testbed/scrapy/cmdline.py", line 110, in _run_print_help\n    func(*a, **kw)\n  File "/testbed/scrapy/cmdline.py", line 165, in _run_command\n    cmd.run(args, opts)\n  File "/testbed/scrapy/commands/runspider.py", line 55, in run\n    self.crawler_process.start()\n  File "/testbed/scrapy/crawler.py", line 386, in start\n    install_shutdown_handlers(self._signal_shutdown)\n  File "/testbed/scrapy/utils/ossignal.py", line 19, in install_shutdown_handlers\n    reactor._handleSignals()\nAttributeError: \'AsyncioSelectorReactor\' object has no attribute \'_handleSignals\'\n'
+
+/opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/trial/_synctest.py:509: FailTest
+=============================== warnings summary ===============================
+../opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:35
+  /opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:35: DeprecationWarning: twisted.web.resource._UnsafeNoResource.__init__ was deprecated in Twisted 22.10.0; please use Use twisted.web.pages.notFound instead, which properly escapes HTML. instead
+    dangerousPathError = resource._UnsafeNoResource("Invalid request URL.")
+
+../opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:264
+  /opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:264: DeprecationWarning: twisted.web.resource._UnsafeNoResource.__init__ was deprecated in Twisted 22.10.0; please use Use twisted.web.pages.notFound instead, which properly escapes HTML. instead
+    childNotFound = resource._UnsafeNoResource("File not found.")
+
+../opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:265
+  /opt/miniconda3/envs/testbed/lib/python3.9/site-packages/twisted/web/static.py:265: DeprecationWarning: twisted.web.resource._UnsafeForbiddenResource.__init__ was deprecated in Twisted 22.10.0; please use Use twisted.web.pages.forbidden instead, which properly escapes HTML. instead
+    forbidden = resource._UnsafeForbiddenResource()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+__________________ StartprojectTest.test_existing_project_dir __________________
+----------------------------- Captured stdout call -----------------------------
+New Scrapy project 'testproject_existing', using template directory '/testbed/scrapy/templates/project', created in:
+    /tmp/tmps4n10x_r/testproject_existing
+
+You can start your first spider with:
+    cd testproject_existing
+    scrapy genspider example example.com
+
+----------------------------- Captured stderr call -----------------------------
+
+______________________ StartprojectTest.test_startproject ______________________
+----------------------------- Captured stdout call -----------------------------
+New Scrapy project 'testproject', using template directory '/testbed/scrapy/templates/project', created in:
+    /tmp/tmps8srqmo7/testproject
+
+You can start your first spider with:
+    cd testproject
+    scrapy genspider example example.com
+
+----------------------------- Captured stderr call -----------------------------
+
+____ StartprojectTemplatesTest.test_startproject_permissions_from_read_only ____
+----------------------------- Captured stdout call -----------------------------
+New Scrapy project 'startproject2', using template directory '/tmp/tmp6hxkwrq_/templates/project', created in:
+    /tmp/tmpel9i9lky/startproject2
+
+You can start your first spider with:
+    cd startproject2
+    scrapy genspider example example.com
+____ StartprojectTemplatesTest.test_startproject_permissions_from_writable _____
+----------------------------- Captured stdout call -----------------------------
+New Scrapy project 'startproject1', using template directory '/testbed/scrapy/templates/project', created in:
+    /tmp/tmpkhsezk2z/startproject1
+
+You can start your first spider with:
+    cd startproject1
+    scrapy genspider example example.com
+______ StartprojectTemplatesTest.test_startproject_permissions_umask_022 _______
+----------------------------- Captured stdout call -----------------------------
+New Scrapy project 'umaskproject', using template directory '/testbed/scrapy/templates/project', created in:
+    /tmp/tmpuxb485_7/umaskproject
+
+You can start your first spider with:
+    cd umaskproject
+    scrapy genspider example example.com
+_ StartprojectTemplatesTest.test_startproject_permissions_unchanged_in_destination _
+----------------------------- Captured stdout call -----------------------------
+New Scrapy project 'startproject3', using template directory '/testbed/scrapy/templates/project', created in:
+    /tmp/tmp_6z2j7vm/startproject3
+
+You can start your first spider with:
+    cd .
+    scrapy genspider example example.com
+=========================== short test summary info ============================
+PASSED tests/test_commands.py::CommandSettings::test_help_formatter
+PASSED tests/test_commands.py::CommandSettings::test_settings_json_string
+PASSED tests/test_commands.py::StartprojectTest::test_existing_project_dir
+PASSED tests/test_commands.py::StartprojectTest::test_startproject
+PASSED tests/test_commands.py::StartprojectTest::test_startproject_with_project_dir
+PASSED tests/test_commands.py::StartprojectTemplatesTest::test_startproject_permissions_from_read_only
+PASSED tests/test_commands.py::StartprojectTemplatesTest::test_startproject_permissions_from_writable
+PASSED tests/test_commands.py::StartprojectTemplatesTest::test_startproject_permissions_umask_022
+PASSED tests/test_commands.py::StartprojectTemplatesTest::test_startproject_permissions_unchanged_in_destination
+PASSED tests/test_commands.py::StartprojectTemplatesTest::test_startproject_template_override
+PASSED tests/test_commands.py::GenspiderCommandTest::test_arguments
+PASSED tests/test_commands.py::GenspiderCommandTest::test_dump
+PASSED tests/test_commands.py::GenspiderCommandTest::test_genspider_basic_start_urls
+PASSED tests/test_commands.py::GenspiderCommandTest::test_genspider_crawl_start_urls
+PASSED tests/test_commands.py::GenspiderCommandTest::test_genspider_csvfeed_start_urls
+PASSED tests/test_commands.py::GenspiderCommandTest::test_genspider_xmlfeed_start_urls
+PASSED tests/test_commands.py::GenspiderCommandTest::test_list
+PASSED tests/test_commands.py::GenspiderCommandTest::test_same_filename_as_existing_spider
+PASSED tests/test_commands.py::GenspiderCommandTest::test_same_filename_as_existing_spider_force
+PASSED tests/test_commands.py::GenspiderCommandTest::test_same_name_as_project
+PASSED tests/test_commands.py::GenspiderCommandTest::test_template
+PASSED tests/test_commands.py::GenspiderCommandTest::test_template_basic
+PASSED tests/test_commands.py::GenspiderCommandTest::test_template_csvfeed
+PASSED tests/test_commands.py::GenspiderCommandTest::test_template_start_urls
+PASSED tests/test_commands.py::GenspiderCommandTest::test_template_xmlfeed
+PASSED tests/test_commands.py::GenspiderCommandTest::test_url
+PASSED tests/test_commands.py::GenspiderCommandTest::test_url_schema
+PASSED tests/test_commands.py::GenspiderStandaloneCommandTest::test_generate_standalone_spider
+PASSED tests/test_commands.py::GenspiderStandaloneCommandTest::test_same_name_as_existing_file
+PASSED tests/test_commands.py::GenspiderStandaloneCommandTest::test_same_name_as_existing_file_force
+PASSED tests/test_commands.py::MiscCommandsTest::test_list
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_asyncio_enabled_default
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_asyncio_enabled_false
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_asyncio_enabled_true
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_custom_asyncio_loop_enabled_false
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_output
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_output_and_overwrite_output
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_output_stdout
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_overwrite_output
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_run_fail_spider
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_runspider_dnscache_disabled
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_runspider_file_not_found
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_runspider_log_level
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_runspider_log_short_names
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_runspider_no_spider_found
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_runspider_unable_to_load
+PASSED tests/test_commands.py::RunSpiderCommandTest::test_start_requests_errors
+PASSED tests/test_commands.py::BenchCommandTest::test_run
+PASSED tests/test_commands.py::ViewCommandTest::test_methods
+PASSED tests/test_commands.py::CrawlCommandTest::test_no_output
+PASSED tests/test_commands.py::CrawlCommandTest::test_output
+PASSED tests/test_commands.py::CrawlCommandTest::test_output_and_overwrite_output
+PASSED tests/test_commands.py::CrawlCommandTest::test_overwrite_output
+PASSED tests/test_commands.py::HelpMessageTest::test_help_messages
+SKIPPED [1] tests/test_commands.py:951: Windows only
+SKIPPED [1] tests/test_commands.py:922: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:951: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:787: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:793: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:775: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:828: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:805: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:1011: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:891: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:907: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:1014: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:708: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:993: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:996: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:999: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:762: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:1002: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:1005: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:1008: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:1017: Windows required for .pyw files
+SKIPPED [1] tests/test_commands.py:988: Windows required for .pyw files
+FAILED tests/test_commands.py::RunSpiderCommandTest::test_absolute_path_linux
+FAILED tests/test_commands.py::RunSpiderCommandTest::test_custom_asyncio_loop_enabled_true
+FAILED tests/test_commands.py::RunSpiderCommandTest::test_run_good_spider - t...
+FAILED tests/test_commands.py::RunSpiderCommandTest::test_runspider - twisted...
+============ 4 failed, 54 passed, 22 skipped, 3 warnings in 52.36s =============
++ git checkout 8055a948dc2544c4d8ebe7aa1c6227e19b1583ac tests/test_commands.py
+Updated 1 path from 2599740f5

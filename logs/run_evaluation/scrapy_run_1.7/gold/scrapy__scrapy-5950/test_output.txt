@@ -1,0 +1,698 @@
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z '' ']'
++++ export CONDA_SHLVL=0
++++ CONDA_SHLVL=0
++++ '[' -n '' ']'
++++++ dirname /opt/miniconda3/bin/conda
+++++ dirname /opt/miniconda3/bin
++++ PATH=/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export PATH
++++ '[' -z '' ']'
++++ PS1=
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1=
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=1
++++ CONDA_SHLVL=1
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=2
+++ CONDA_SHLVL=2
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_1=/opt/miniconda3
+++ CONDA_PREFIX_1=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ cd /testbed
++ git config --global --add safe.directory /testbed
++ cd /testbed
++ git status
+On branch master
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   docs/index.rst
+	modified:   docs/topics/api.rst
+	modified:   docs/topics/settings.rst
+	modified:   scrapy/crawler.py
+	modified:   scrapy/middleware.py
+	modified:   scrapy/settings/__init__.py
+	modified:   scrapy/settings/default_settings.py
+	modified:   scrapy/utils/misc.py
+	deleted:    sep/sep-021.rst
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	docs/topics/addons.rst
+	scrapy/addons.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
++ git show
+commit 510574216d70ec84d75639ebcda360834a992e47
+Merge: 85f512296 712ee9884
+Author: Andrey Rakhmatullin <wrar@wrar.name>
+Date:   Sat Jun 24 20:08:41 2023 +0400
+
+    Merge pull request #5925 from wRAR/typing-utils
+    
+    Typing for scrapy/utils
+
++ git diff 510574216d70ec84d75639ebcda360834a992e47
+diff --git a/docs/index.rst b/docs/index.rst
+index 5404969e0..8798aebd1 100644
+--- a/docs/index.rst
++++ b/docs/index.rst
+@@ -222,6 +222,7 @@ Extending Scrapy
+    :hidden:
+ 
+    topics/architecture
++   topics/addons
+    topics/downloader-middleware
+    topics/spider-middleware
+    topics/extensions
+@@ -235,6 +236,9 @@ Extending Scrapy
+ :doc:`topics/architecture`
+     Understand the Scrapy architecture.
+ 
++:doc:`topics/addons`
++    Enable and configure third-party extensions.
++
+ :doc:`topics/downloader-middleware`
+     Customize how pages get requested and downloaded.
+ 
+diff --git a/docs/topics/api.rst b/docs/topics/api.rst
+index 268344879..16c28405c 100644
+--- a/docs/topics/api.rst
++++ b/docs/topics/api.rst
+@@ -137,6 +137,7 @@ Settings API
+         SETTINGS_PRIORITIES = {
+             "default": 0,
+             "command": 10,
++            "addon": 15,
+             "project": 20,
+             "spider": 30,
+             "cmdline": 40,
+diff --git a/docs/topics/settings.rst b/docs/topics/settings.rst
+index 3e06d84f9..602ab587d 100644
+--- a/docs/topics/settings.rst
++++ b/docs/topics/settings.rst
+@@ -40,8 +40,9 @@ precedence:
+  1. Command line options (most precedence)
+  2. Settings per-spider
+  3. Project settings module
+- 4. Default settings per-command
+- 5. Default global settings (less precedence)
++ 4. Settings set by add-ons
++ 5. Default settings per-command
++ 6. Default global settings (less precedence)
+ 
+ The population of these settings sources is taken care of internally, but a
+ manual handling is possible using API calls. See the
+@@ -89,7 +90,13 @@ project, it's where most of your custom settings will be populated. For a
+ standard Scrapy project, this means you'll be adding or changing the settings
+ in the ``settings.py`` file created for your project.
+ 
+-4. Default settings per-command
++4. Settings set by add-ons
++--------------------------
++
++:ref:`Add-ons <topics-addons>` can modify settings. They should do this with
++this priority, though this is not enforced.
++
++5. Default settings per-command
+ -------------------------------
+ 
+ Each :doc:`Scrapy tool </topics/commands>` command can have its own default
+@@ -97,7 +104,7 @@ settings, which override the global default settings. Those custom command
+ settings are specified in the ``default_settings`` attribute of the command
+ class.
+ 
+-5. Default global settings
++6. Default global settings
+ --------------------------
+ 
+ The global defaults are located in the ``scrapy.settings.default_settings``
+@@ -201,6 +208,16 @@ to any particular component. In that case the module of that component will be
+ shown, typically an extension, middleware or pipeline. It also means that the
+ component must be enabled in order for the setting to have any effect.
+ 
++.. setting:: ADDONS
++
++ADDONS
++------
++
++Default: ``{}``
++
++A dict containing paths to the add-ons enabled in your project and their
++priorities. For more information, see :ref:`topics-addons`.
++
+ .. setting:: AWS_ACCESS_KEY_ID
+ 
+ AWS_ACCESS_KEY_ID
+@@ -964,7 +981,6 @@ some of them need to be enabled through a setting.
+ For more information See the :ref:`extensions user guide  <topics-extensions>`
+ and the :ref:`list of available extensions <topics-extensions-ref>`.
+ 
+-
+ .. setting:: FEED_TEMPDIR
+ 
+ FEED_TEMPDIR
+diff --git a/scrapy/crawler.py b/scrapy/crawler.py
+index 69ff07bb7..bf69cee26 100644
+--- a/scrapy/crawler.py
++++ b/scrapy/crawler.py
+@@ -18,6 +18,7 @@ except ImportError:
+ from zope.interface.verify import verifyClass
+ 
+ from scrapy import Spider, signals
++from scrapy.addons import AddonManager
+ from scrapy.core.engine import ExecutionEngine
+ from scrapy.exceptions import ScrapyDeprecationWarning
+ from scrapy.extension import ExtensionManager
+@@ -68,6 +69,9 @@ class Crawler:
+         self.settings: Settings = settings.copy()
+         self.spidercls.update_settings(self.settings)
+ 
++        self.addons: AddonManager = AddonManager(self)
++        self.addons.load_settings(self.settings)
++
+         self.signals: SignalManager = SignalManager(self)
+ 
+         self.stats: StatsCollector = load_object(self.settings["STATS_CLASS"])(self)
+diff --git a/scrapy/middleware.py b/scrapy/middleware.py
+index 03e92b565..04b838d2d 100644
+--- a/scrapy/middleware.py
++++ b/scrapy/middleware.py
+@@ -46,10 +46,9 @@ class MiddlewareManager:
+                 enabled.append(clspath)
+             except NotConfigured as e:
+                 if e.args:
+-                    clsname = clspath.split(".")[-1]
+                     logger.warning(
+-                        "Disabled %(clsname)s: %(eargs)s",
+-                        {"clsname": clsname, "eargs": e.args[0]},
++                        "Disabled %(clspath)s: %(eargs)s",
++                        {"clspath": clspath, "eargs": e.args[0]},
+                         extra={"crawler": crawler},
+                     )
+ 
+diff --git a/scrapy/settings/__init__.py b/scrapy/settings/__init__.py
+index 8b3bdbabe..0f5cf85ac 100644
+--- a/scrapy/settings/__init__.py
++++ b/scrapy/settings/__init__.py
+@@ -9,6 +9,7 @@ from scrapy.settings import default_settings
+ SETTINGS_PRIORITIES = {
+     "default": 0,
+     "command": 10,
++    "addon": 15,
+     "project": 20,
+     "spider": 30,
+     "cmdline": 40,
+diff --git a/scrapy/settings/default_settings.py b/scrapy/settings/default_settings.py
+index a4cb555bd..ef1b7ea99 100644
+--- a/scrapy/settings/default_settings.py
++++ b/scrapy/settings/default_settings.py
+@@ -17,6 +17,8 @@ import sys
+ from importlib import import_module
+ from pathlib import Path
+ 
++ADDONS = {}
++
+ AJAXCRAWL_ENABLED = False
+ 
+ ASYNCIO_EVENT_LOOP = None
+diff --git a/scrapy/utils/misc.py b/scrapy/utils/misc.py
+index 70187ba74..b3c28da92 100644
+--- a/scrapy/utils/misc.py
++++ b/scrapy/utils/misc.py
+@@ -67,7 +67,7 @@ def load_object(path: Union[str, Callable]) -> Any:
+         if callable(path):
+             return path
+         raise TypeError(
+-            "Unexpected argument type, expected string " f"or object, got: {type(path)}"
++            f"Unexpected argument type, expected string or object, got: {type(path)}"
+         )
+ 
+     try:
+diff --git a/sep/sep-021.rst b/sep/sep-021.rst
+deleted file mode 100644
+index e8affa943..000000000
+--- a/sep/sep-021.rst
++++ /dev/null
+@@ -1,113 +0,0 @@
+-=======  ===================
+-SEP      21
+-Title    Add-ons
+-Author   Pablo Hoffman
+-Created  2014-02-14
+-Status   Draft
+-=======  ===================
+-
+-================
+-SEP-021: Add-ons
+-================
+-
+-This proposal introduces add-ons, a unified way to manage Scrapy extensions,
+-middlewares and pipelines.
+-
+-Scrapy currently supports many hooks and mechanisms for extending its
+-functionality, but no single entry point for enabling and configuring them.
+-Instead, the hooks are spread over:
+-
+-* Spider middlewares (SPIDER_MIDDLEWARES)
+-* Downloader middlewares (DOWNLOADER_MIDDLEWARES)
+-* Downloader handlers (DOWNLOADER_HANDLERS)
+-* Item pipelines (ITEM_PIPELINES)
+-* Feed exporters and storages (FEED_EXPORTERS, FEED_STORAGES)
+-* Overridable components (DUPEFILTER_CLASS, STATS_CLASS, SCHEDULER, SPIDER_MANAGER_CLASS, ITEM_PROCESSOR, etc)
+-* Generic extensions (EXTENSIONS)
+-* CLI commands (COMMANDS_MODULE)
+-
+-One problem of this approach is that enabling an extension often requires
+-modifying many settings, often in a coordinated way, which is complex and error
+-prone. Add-ons are meant to fix this by providing a simple mechanism for
+-enabling extensions.
+-
+-Design goals and non-goals
+-==========================
+-
+-Goals:
+-
+-* simple to manage: adding or removing extensions should be just a matter of
+-  adding or removing lines in a ``scrapy.cfg`` file
+-* backward compatibility with enabling extension the "old way" (i.e. modifying
+-  settings directly)
+-
+-Non-goals:
+-
+-* a way to publish, distribute or discover extensions (use pypi for that)
+-
+-
+-Managing add-ons
+-================
+-
+-Add-ons are defined in the ``scrapy.cfg`` file, inside the ``[addons]``
+-section.
+-
+-To enable the "httpcache" addon, either shipped with Scrapy or in the Python
+-search path, create an entry for it in your ``scrapy.cfg``, like this::
+-
+-    [addons]
+-    httpcache = 
+-
+-You may also specify the full path to an add-on (which may be either a .py file
+-or a folder containing __init__.py)::
+-
+-    [addons]
+-    mongodb_pipeline = /path/to/mongodb_pipeline.py
+-
+-
+-Writing add-ons
+-===============
+-
+-Add-ons are Python modules that implement the following callbacks.
+-
+-addon_configure
+----------------
+-
+-Receives the Settings object and modifies it to enable the required components.
+-If it raises an exception, Scrapy will print it and exit.
+-
+-Examples:
+-
+-.. code-block:: python
+-
+-    def addon_configure(settings):
+-        settings.overrides["DOWNLOADER_MIDDLEWARES"].update(
+-            {
+-                "scrapy.contrib.downloadermiddleware.httpcache.HttpCacheMiddleware": 900,
+-            }
+-        )
+-
+-.. code-block:: python
+-
+-    def addon_configure(settings):
+-        try:
+-            import boto
+-        except ImportError:
+-            raise RuntimeError("boto library is required")
+-
+-
+-crawler_ready
+--------------
+-
+-``crawler_ready`` receives a Crawler object after it has been initialized and
+-is meant to be used to perform post-initialization checks like making sure the
+-extension and its dependencies were configured properly. If it raises an
+-exception, Scrapy will print and exit.
+-
+-Examples:
+-
+-.. code-block:: python
+-
+-    def crawler_ready(crawler):
+-        if "some.other.addon" not in crawler.extensions.enabled:
+-            raise RuntimeError("Some other addon is required to use this addon")
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z x ']'
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1='(testbed) '
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=3
++++ CONDA_SHLVL=3
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=4
+++ CONDA_SHLVL=4
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_3=/opt/miniconda3
+++ CONDA_PREFIX_3=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ pip install -e .
+Obtaining file:///testbed
+  Preparing metadata (setup.py): started
+  Preparing metadata (setup.py): finished with status 'done'
+Requirement already satisfied: Twisted>=18.9.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (24.11.0)
+Requirement already satisfied: cryptography>=36.0.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (44.0.0)
+Requirement already satisfied: cssselect>=0.9.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (1.2.0)
+Requirement already satisfied: itemloaders>=1.0.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (1.3.2)
+Requirement already satisfied: parsel>=1.5.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (1.10.0)
+Requirement already satisfied: pyOpenSSL>=21.0.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (25.0.0)
+Requirement already satisfied: queuelib>=1.4.2 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (1.7.0)
+Requirement already satisfied: service_identity>=18.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (24.2.0)
+Requirement already satisfied: w3lib>=1.17.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (2.3.1)
+Requirement already satisfied: zope.interface>=5.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (7.2)
+Requirement already satisfied: protego>=0.1.15 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (0.4.0)
+Requirement already satisfied: itemadapter>=0.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (0.11.0)
+Requirement already satisfied: setuptools in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (75.8.0)
+Requirement already satisfied: packaging in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (24.2)
+Requirement already satisfied: tldextract in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (5.1.3)
+Requirement already satisfied: lxml>=4.4.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (5.3.1)
+Requirement already satisfied: PyDispatcher>=2.0.5 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.9.0) (2.0.7)
+Requirement already satisfied: cffi>=1.12 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from cryptography>=36.0.0->Scrapy==2.9.0) (1.17.1)
+Requirement already satisfied: jmespath>=0.9.5 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from itemloaders>=1.0.1->Scrapy==2.9.0) (1.0.1)
+Requirement already satisfied: typing-extensions>=4.9 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from pyOpenSSL>=21.0.0->Scrapy==2.9.0) (4.12.2)
+Requirement already satisfied: attrs>=19.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.9.0) (25.1.0)
+Requirement already satisfied: pyasn1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.9.0) (0.6.1)
+Requirement already satisfied: pyasn1-modules in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.9.0) (0.4.1)
+Requirement already satisfied: automat>=24.8.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.9.0) (24.8.1)
+Requirement already satisfied: constantly>=15.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.9.0) (23.10.4)
+Requirement already satisfied: hyperlink>=17.1.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.9.0) (21.0.0)
+Requirement already satisfied: incremental>=24.7.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=18.9.0->Scrapy==2.9.0) (24.7.2)
+Requirement already satisfied: idna in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.9.0) (3.10)
+Requirement already satisfied: requests>=2.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.9.0) (2.32.3)
+Requirement already satisfied: requests-file>=1.4 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.9.0) (2.1.0)
+Requirement already satisfied: filelock>=3.0.8 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.9.0) (3.17.0)
+Requirement already satisfied: pycparser in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from cffi>=1.12->cryptography>=36.0.0->Scrapy==2.9.0) (2.22)
+Requirement already satisfied: tomli in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from incremental>=24.7.0->Twisted>=18.9.0->Scrapy==2.9.0) (2.2.1)
+Requirement already satisfied: charset-normalizer<4,>=2 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.9.0) (3.4.1)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.9.0) (2.3.0)
+Requirement already satisfied: certifi>=2017.4.17 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.9.0) (2025.1.31)
+Installing collected packages: Scrapy
+  Attempting uninstall: Scrapy
+    Found existing installation: Scrapy 2.9.0
+    Uninstalling Scrapy-2.9.0:
+      Successfully uninstalled Scrapy-2.9.0
+  DEPRECATION: Legacy editable install of Scrapy==2.9.0 from file:///testbed (setup.py develop) is deprecated. pip 25.1 will enforce this behaviour change. A possible replacement is to add a pyproject.toml or enable --use-pep517, and use setuptools >= 64. If the resulting installation is not behaving as expected, try using --config-settings editable_mode=compat. Please consult the setuptools documentation for more information. Discussion can be found at https://github.com/pypa/pip/issues/11457
+  Running setup.py develop for Scrapy
+Successfully installed Scrapy
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
++ git checkout 510574216d70ec84d75639ebcda360834a992e47 tests/test_middleware.py tests/test_utils_deprecate.py
+Updated 0 paths from efa0360ed
++ git apply -v -
+Checking patch tests/test_addons.py...
+Checking patch tests/test_middleware.py...
+Checking patch tests/test_utils_deprecate.py...
+Applied patch tests/test_addons.py cleanly.
+Applied patch tests/test_middleware.py cleanly.
+Applied patch tests/test_utils_deprecate.py cleanly.
++ pytest -rA --tb=long tests/test_addons.py tests/test_middleware.py tests/test_utils_deprecate.py
+============================= test session starts ==============================
+platform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: pytest.ini
+collected 28 items
+
+tests/test_addons.py .......                                             [ 25%]
+tests/test_middleware.py ....                                            [ 39%]
+tests/test_utils_deprecate.py .................                          [100%]
+
+=============================== warnings summary ===============================
+tests/test_addons.py::AddonManagerTest::test_settings_priority
+  /testbed/scrapy/utils/request.py:248: ScrapyDeprecationWarning: '2.6' is a deprecated value for the 'REQUEST_FINGERPRINTER_IMPLEMENTATION' setting.
+  
+  It is also the default value. In other words, it is normal to get this warning if you have not defined a value for the 'REQUEST_FINGERPRINTER_IMPLEMENTATION' setting. This is so for backward compatibility reasons, but it will change in a future version of Scrapy.
+  
+  See the documentation of the 'REQUEST_FINGERPRINTER_IMPLEMENTATION' setting for information on how to handle this deprecation.
+    return cls(crawler)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==================================== PASSES ====================================
+_______________ MiddlewareManagerTest.test_enabled_from_settings _______________
+------------------------------ Captured log call -------------------------------
+WARNING  scrapy.middleware:middleware.py:49 Disabled <class 'tests.test_middleware.MOff'>: foo
+=========================== short test summary info ============================
+PASSED tests/test_addons.py::AddonTest::test_update_settings
+PASSED tests/test_addons.py::AddonManagerTest::test_create_instance
+PASSED tests/test_addons.py::AddonManagerTest::test_fallback_workflow
+PASSED tests/test_addons.py::AddonManagerTest::test_load_settings
+PASSED tests/test_addons.py::AddonManagerTest::test_load_settings_order
+PASSED tests/test_addons.py::AddonManagerTest::test_notconfigured
+PASSED tests/test_addons.py::AddonManagerTest::test_settings_priority
+PASSED tests/test_middleware.py::MiddlewareManagerTest::test_enabled
+PASSED tests/test_middleware.py::MiddlewareManagerTest::test_enabled_from_settings
+PASSED tests/test_middleware.py::MiddlewareManagerTest::test_init
+PASSED tests/test_middleware.py::MiddlewareManagerTest::test_methods
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_clsdict
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_custom_class_paths
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_deprecate_a_class_with_custom_metaclass
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_deprecate_subclass_of_deprecated_class
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_inspect_stack
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_isinstance
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_issubclass
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_no_warning_on_definition
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_subclassing_warning_message
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_subclassing_warns_once_by_default
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_subclassing_warns_only_on_direct_children
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_warning_auto_message
+PASSED tests/test_utils_deprecate.py::WarnWhenSubclassedTest::test_warning_on_instance
+PASSED tests/test_utils_deprecate.py::UpdateClassPathTest::test_old_path_gets_fixed
+PASSED tests/test_utils_deprecate.py::UpdateClassPathTest::test_returns_nonstring
+PASSED tests/test_utils_deprecate.py::UpdateClassPathTest::test_sorted_replacement
+PASSED tests/test_utils_deprecate.py::UpdateClassPathTest::test_unmatched_path_stays_the_same
+======================== 28 passed, 1 warning in 0.40s =========================
++ git checkout 510574216d70ec84d75639ebcda360834a992e47 tests/test_middleware.py tests/test_utils_deprecate.py
+Updated 2 paths from efa0360ed

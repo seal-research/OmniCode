@@ -1,0 +1,45 @@
+diff --git a/scrapy/extensions/feedexport.py b/scrapy/extensions/feedexport.py
+index 1cdc78f5915..3bf64dc1289 100644
+--- a/scrapy/extensions/feedexport.py
++++ b/scrapy/extensions/feedexport.py
+@@ -9,7 +9,7 @@
+ import sys
+ import warnings
+ from datetime import datetime
+-from pathlib import Path
++from pathlib import Path, PureWindowsPath
+ from tempfile import NamedTemporaryFile
+ from typing import IO, Any, Callable, List, Optional, Tuple, Union
+ from urllib.parse import unquote, urlparse
+@@ -591,7 +591,7 @@ def _settings_are_valid(self):
+ 
+     def _storage_supported(self, uri, feed_options):
+         scheme = urlparse(uri).scheme
+-        if scheme in self.storages:
++        if scheme in self.storages or PureWindowsPath(uri).drive:
+             try:
+                 self._get_storage(uri, feed_options)
+                 return True
+@@ -617,7 +617,7 @@ def _get_storage(self, uri, feed_options):
+         It supports not passing the *feed_options* parameters to classes that
+         do not support it, and issuing a deprecation warning instead.
+         """
+-        feedcls = self.storages[urlparse(uri).scheme]
++        feedcls = self.storages.get(urlparse(uri).scheme, self.storages["file"])
+         crawler = getattr(self, "crawler", None)
+ 
+         def build_instance(builder, *preargs):
+diff --git a/scrapy/utils/conf.py b/scrapy/utils/conf.py
+index 3ade1d105b4..05d43e4567f 100644
+--- a/scrapy/utils/conf.py
++++ b/scrapy/utils/conf.py
+@@ -202,7 +202,8 @@ def check_valid_format(output_format):
+     for element in output:
+         try:
+             feed_uri, feed_format = element.rsplit(":", 1)
+-        except ValueError:
++            check_valid_format(feed_format)
++        except (ValueError, UsageError):
+             feed_uri = element
+             feed_format = Path(element).suffix.replace(".", "")
+         else:

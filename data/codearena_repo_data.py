@@ -28,7 +28,7 @@
             ],
             "test_cmd": "pytest -rA --tb=long", 
         }
-        for k in ['2.12', '2.11']
+        for k in ['2.12', '2.11','2.9']
     }
 },
 }
