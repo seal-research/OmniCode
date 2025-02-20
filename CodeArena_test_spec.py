@@ -247,6 +247,9 @@ def make_env_script_list(instance: CodeArenaInstance, specs: dict, env_name: str
         pip_packages = " ".join(specs["pip_packages"])
         cmd = f"python -m pip install {pip_packages}"
         reqs_commands.append(cmd)
+    # External pylint dependency to run Style Review inside the docker environment
+    
+    reqs_commands.append("python -m pip install pylint")
     return reqs_commands
 
 
