@@ -47,6 +47,7 @@ class TestSpec:
     eval_script_list: list[str]
     gold_inverted_eval_script_list : list[str]
     bad_inverted_eval_script_list : list[str]
+    linting_eval_script_list : list[str]
     env_script_list: list[str]
     arch: str
 
@@ -248,7 +249,7 @@ def make_env_script_list(instance: CodeArenaInstance, specs: dict, env_name: str
         cmd = f"python -m pip install {pip_packages}"
         reqs_commands.append(cmd)
     # External pylint dependency to run Style Review inside the docker environment
-    
+
     reqs_commands.append("python -m pip install pylint")
     return reqs_commands
 
@@ -449,6 +450,7 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
         instance, specs, env_name, repo_directory, base_commit, gold_issue_patch, test_patch)
     inverted_eval_script_list_bad = make_inverted_eval_script_list(
         instance, specs, env_name, repo_directory, base_commit, bad_issue_patch, test_patch)
+    linting_eval_script = generate_patch_lint_script(repo_directory, base_commit, bad_issue_patch, "lint_out.txt", env_name)
     if platform.machine() in {"aarch64", "arm64"}:
         # use arm64 unless explicitly specified
         arch = "arm64" if instance_id not in USE_X86 else "x86_64"
@@ -463,6 +465,7 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
         eval_script_list=eval_script_list, # Contains Test Directives
         gold_inverted_eval_script_list=inverted_eval_script_list_gold,
         bad_inverted_eval_script_list=inverted_eval_script_list_bad,
+        linting_eval_script_list=linting_eval_script,
         version=version,
         arch=arch,
     )
