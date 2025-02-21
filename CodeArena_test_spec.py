@@ -395,12 +395,15 @@ def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output
         [ -z "$file" ] && continue
         [ ! -f "$file" ] && continue
 
+
         # Run pylint and capture outputs
-        pylint "$file" --output-format=json > "$temp_dir/pylint.json" 2>/dev/null || echo "[]" > "$temp_dir/pylint.json"
+        pylint "$file" --output-format=json > "$temp_dir/pylint.json" 2>&1 || true
         pylint "$file" > "$temp_dir/pylint.txt" 2>&1 || true
 
+        cat "$temp_dir/pylint.json"
+
         # Extract score
-        file_score=$(awk '/Your code has been rated at/ {{print $7}}' "$temp_dir/pylint.txt" | sed 's/[^0-9.]//g')
+        file_score=$(awk '/Your code has been rated at/ {{print $7}}' "$temp_dir/pylint.txt" | cut -d'/' -f1)
         if [ -z "$file_score" ] || ! [[ "$file_score" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
             file_score="0.0"
         fi
