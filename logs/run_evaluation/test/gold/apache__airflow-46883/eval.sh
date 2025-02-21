@@ -10,7 +10,7 @@ git show
 git diff 4833b53705acfc4bd0a26bf3e4dd4fc7a22b0bfa
 source /opt/miniconda3/bin/activate
 conda activate testbed
-pip install -e '.[all,dev,test]' --no-deps && pip install --no-deps -r <(pip freeze)
+pip install -e '.[all,dev,test]' --no-deps && pip install -e '.[devel]' --upgrade --upgrade-strategy eager && pip install --no-deps -r <(pip freeze)
 git checkout 4833b53705acfc4bd0a26bf3e4dd4fc7a22b0bfa tests/api_fastapi/core_api/routes/public/test_task_instances.py
 git apply -v - <<'EOF_114329324912'
 diff --git a/tests/api_fastapi/core_api/routes/public/test_task_instances.py b/tests/api_fastapi/core_api/routes/public/test_task_instances.py

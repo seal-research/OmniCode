@@ -5,7 +5,7 @@
     "MAP_REPO_VERSION_TO_SPECS": {
             k: {
             "python": "3.12", 
-            "install": "pip install -e '.[all,dev,test]' --no-deps && pip install --no-deps -r <(pip freeze)",
+            "install": "pip install -e '.[all,dev,test]' --no-deps && pip install -e '.[devel]' --upgrade --upgrade-strategy eager && pip install --no-deps -r <(pip freeze)",
             "pip_packages": [
                 "sqlalchemy",
                 "time_machine",
