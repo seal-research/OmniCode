@@ -1,0 +1,35 @@
+Summary of Changes
+1. Version Update
+    - Updated __version__ from 8.2.8 to 8.2.9 in ultralytics/__init__.py.
+2. Import Fixes & Refactoring
+    - Adjusted imports in multiple files to use absolute imports instead of relative imports.
+    - This change affects:
+    - ultralytics/data/augment.py
+    - ultralytics/data/base.py
+    - ultralytics/data/build.py
+    - ultralytics/engine/exporter.py
+3. Enhancements in INT8 Quantization Exporting
+    - Added better handling for INT8 model calibration in ultralytics/engine/exporter.py:
+
+    - Introduced a method: get_int8_calibration_dataloader
+    - This method:
+    - Fetches calibration images
+    - Warns if fewer than 300 images are found (recommended for INT8 calibration)
+    - Returns a dataloader instead of processing the dataset inline
+    - Adjusted INT8 export logic:
+
+    - Previously, dataset loading for calibration was done inline in multiple places.
+    - Now, get_int8_calibration_dataloader is used instead.
+    - Ensures consistency and avoids redundant dataset loading logic.
+    - Modified how images are preprocessed for INT8 quantization:
+
+    - Used torch.Tensor directly for better type handling.
+    - Ensured input images are converted correctly from uint8 to float32.
+4. Return Type Annotations for Export Functions
+    - Added explicit return types (-> str) for functions that return exported file names:
+    export()
+    - __call__() in Exporter
+    - Improves clarity on what these functions return.
+5. TensorFlow SavedModel INT8 Export Improvement
+    - Instead of iterating over a dataset inline, now uses get_int8_calibration_dataloader().
+Ensures consistency with how INT8 calibration images are fetched for OpenVINO & TensorFlow models.

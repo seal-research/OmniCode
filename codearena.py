@@ -119,12 +119,16 @@ def main():
         swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
         swebench.harness.constants.MAP_REPO_VERSION_TO_SPECS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
 
+        print("instance repo: ", instance_repo)
         from swebench.harness.log_parsers import parse_log_pytest, parse_log_pytest_options, parse_log_pytest_v2
         if "MAP_REPO_TO_PARSER" in REPO_DATA[instance_repo]:
             repo_log_parser = eval(REPO_DATA[instance_repo]["MAP_REPO_TO_PARSER"])
         else:
             repo_log_parser = parse_log_pytest
-        swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
+        
+        # swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
+        swebench.harness.log_parsers.MAP_REPO_TO_PARSER["ultralytics/ultralytics"] = parse_log_pytest_v2
+
     
     importlib.reload(swebench)
 
