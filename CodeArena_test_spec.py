@@ -42,12 +42,12 @@ class TestSpec:
     """
     instance_id: str
     repo: str
+    base_commit :str
     version: str
     repo_script_list: list[str]
     eval_script_list: list[str]
     gold_inverted_eval_script_list : list[str]
     bad_inverted_eval_script_list : list[str]
-    linting_eval_script_list : list[str]
     env_script_list: list[str]
     arch: str
 
@@ -344,77 +344,115 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     ]
     return eval_commands
 
-def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output_path, env_name):
+def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output_path, error_output_path, env_name):
     """
-    Generates commands that apply the given patch, run pylint on modified files, 
-    extract the score, and write the feedback to a specified path.
+    Generate a shell script to run pylint evaluation on modified Python files.
     
-    :param repo_directory: The path to the repository directory
-    :param base_commit: The base commit to revert to before applying the patch
-    :param patch: The patch (in string format) to apply
-    :param pylint_output_path: The file path to write the pylint feedback to
-    :param env_name: The environment name for activating conda
-    :return: List of commands to apply the patch, run pylint, and save feedback
+    Args:
+        repo_directory (str): Path to the git repository
+        base_commit (str): Base commit to compare against
+        patch (str): Git patch to apply
+        pylint_output_path (str): Path to save aggregated pylint results
+        error_output_path (str): Path to save detailed error messages
+        env_name (str): Conda environment name
+    
+    Returns:
+        list: Shell commands to execute the evaluation
     """
     HEREDOC_DELIMITER = "EOF_114329324912"
-
-    reset_command = f"git stash push --include-untracked && git checkout {base_commit} -- . && git stash pop"
-    
+    reset_command = f"git stash push --include-untracked && git checkout {base_commit} -- . && git stash pop --index"
     apply_patch_command = f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{patch}\n{HEREDOC_DELIMITER}"
 
-    pylint_command = f"""
-    # Get the list of modified Python files
-    modified_files=$(git diff --name-only)
+    # Define the entire script as a raw string with proper substitution
+    script = rf'''
+    # Ensure required tools are available
+    for cmd in jq awk pylint; do
+        if ! command -v "$cmd" &>/dev/null; then
+            echo "$cmd is not installed, exiting." >&2
+            exit 1
+        fi
+    done
 
-    # Filter out Python files from the modified list
-    python_files=$(echo "$modified_files" | grep '.py$')
+    # Create temporary directory for intermediate files
+    temp_dir=$(mktemp -d)
+    trap 'rm -rf "$temp_dir"' EXIT
 
-    # If no Python files were modified, exit
+    # Get modified Python files
+    modified_files=$(git diff --name-only HEAD)
+    python_files=$(echo "$modified_files" | grep -E '\.pyx?$' || true)
+
     if [ -z "$python_files" ]; then
-        echo "No Python files modified by the patch."
+        echo '{{"global_score": 10.0, "total_errors": 0, "total_warnings": 0, "total_conventions": 0}}' > {pylint_output_path}
+        echo "[]" > {error_output_path}
         exit 0
     fi
 
-    # Initialize an empty JSON file for pylint feedback
-    echo "{{}}" > {pylint_output_path}
+    # Initialize error report
+    echo "[]" > {error_output_path}
 
-    # Run pylint on each modified Python file
-    for file in $python_files; do
-        pylint_output=$(pylint $file --output-format=json)
+    # Process each file
+    while IFS= read -r file; do
+        [ -z "$file" ] && continue
+        [ ! -f "$file" ] && continue
 
-        # Extract the pylint score (average of all issues)
-        score=0
-        issue_count=0
-        for issue in $(echo "$pylint_output" | jq -c '.[]'); do
-            issue_score=$(echo "$issue" | jq '.score')
-            score=$(echo "$score + $issue_score" | bc)
-            issue_count=$((issue_count + 1))
-        done
+        # Run pylint and capture outputs
+        pylint "$file" --output-format=json > "$temp_dir/pylint.json" 2>/dev/null || echo "[]" > "$temp_dir/pylint.json"
+        pylint "$file" > "$temp_dir/pylint.txt" 2>&1 || true
 
-        if [ "$issue_count" -gt 0 ]; then
-            avg_score=$(echo "$score / $issue_count" | bc -l)
-        else
-            avg_score=0
+        # Extract score
+        file_score=$(awk '/Your code has been rated at/ {{print $7}}' "$temp_dir/pylint.txt" | sed 's/[^0-9.]//g')
+        if [ -z "$file_score" ] || ! [[ "$file_score" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+            file_score="0.0"
         fi
 
-        # Write the feedback into the JSON file
-        jq --arg file "$file" --argjson score "$avg_score" --argjson feedback "$pylint_output" \
-            '. + {{($file): {{"score": $score, "feedback": $feedback}}}}' \
-            {pylint_output_path} > temp.json && mv temp.json {pylint_output_path}
-    done
-    """
+        # Process file results
+        jq -n --arg file "$file" \
+              --arg score "$file_score" \
+              --slurpfile messages "$temp_dir/pylint.json" \
+              '{{
+                "file": $file,
+                "score": ($score | tonumber),
+                "messages": $messages[0],
+                "error_count": ($messages[0] | map(select(.type=="error")) | length),
+                "warning_count": ($messages[0] | map(select(.type=="warning")) | length),
+                "convention_count": ($messages[0] | map(select(.type=="convention")) | length)
+              }}' > "$temp_dir/file_report.json"
+
+        # Append to main report
+        jq -s '.[0] + [.[1]]' {error_output_path} "$temp_dir/file_report.json" > "$temp_dir/new_report.json"
+        mv "$temp_dir/new_report.json" {error_output_path}
+
+    done <<< "$python_files"
+
+    # Generate final summary
+    jq -r 'reduce .[] as $file (
+        {{"global_score": 0, "total_errors": 0, "total_warnings": 0, "total_conventions": 0, "count": 0}};
+        {{
+            "global_score": (.global_score + ($file.score)),
+            "total_errors": (.total_errors + $file.error_count),
+            "total_warnings": (.total_warnings + $file.warning_count),
+            "total_conventions": (.total_conventions + $file.convention_count),
+            "count": (.count + 1)
+        }}
+    ) | {{
+        "global_score": (if .count > 0 then (.global_score / .count) else 10.0 end),
+        "total_errors": .total_errors,
+        "total_warnings": .total_warnings,
+        "total_conventions": .total_conventions
+    }}' {error_output_path} > {pylint_output_path}
+    '''
 
     eval_commands = [
+        "set -ex",
         "source /opt/miniconda3/bin/activate",
         f"conda activate {env_name}",
         f"cd {repo_directory}",
-        "git config --global --add safe.directory {repo_directory}",  # for nonroot user
+        f"git config --global --add safe.directory {repo_directory}",
         reset_command,
         apply_patch_command,
-        pylint_command,
-        reset_command,  # Revert patch after done, leave the repo in the same state as before
+        script.strip(),
+        reset_command
     ]
-    
     return eval_commands
 
 
@@ -450,7 +488,6 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
         instance, specs, env_name, repo_directory, base_commit, gold_issue_patch, test_patch)
     inverted_eval_script_list_bad = make_inverted_eval_script_list(
         instance, specs, env_name, repo_directory, base_commit, bad_issue_patch, test_patch)
-    linting_eval_script = generate_patch_lint_script(repo_directory, base_commit, bad_issue_patch, "lint_out.txt", env_name)
     if platform.machine() in {"aarch64", "arm64"}:
         # use arm64 unless explicitly specified
         arch = "arm64" if instance_id not in USE_X86 else "x86_64"
@@ -460,12 +497,12 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
     return TestSpec(
         instance_id=instance_id,
         repo=repo,
+        base_commit=instance["base_commit"],
         env_script_list=env_script_list,
         repo_script_list=repo_script_list,
         eval_script_list=eval_script_list, # Contains Test Directives
         gold_inverted_eval_script_list=inverted_eval_script_list_gold,
         bad_inverted_eval_script_list=inverted_eval_script_list_bad,
-        linting_eval_script_list=linting_eval_script,
         version=version,
         arch=arch,
     )

@@ -35,9 +35,9 @@ from docker_build import (
 )
 from CodeArena_grading import get_eval_report_test_generation, get_fail_to_fail
 #from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
-from CodeArena_test_spec import make_test_spec, TestSpec
+from CodeArena_test_spec import make_test_spec, TestSpec, generate_patch_lint_script
 from swebench.harness.utils import str2bool
-from utils import load_swebench_dataset, load_CodeArena_prediction_dataset
+from utils import load_swebench_dataset, load_CodeArena_prediction_dataset, copy_from_container
 
 class EvaluationError(Exception):
     def __init__(self, instance_id, message, logger):
@@ -316,6 +316,7 @@ def main(
     clean_images(client, existing_images, cache_level, clean)
     make_run_report(predictions, full_dataset, client, run_id)
 
+    
 def run_instance(
         test_spec: TestSpec,
         pred: dict,
@@ -326,233 +327,139 @@ def run_instance(
         timeout: int | None = None,
     ):
     """
-    Run a single instance with the given prediction.
+    Run a single style evaluation instance with the given prediction.
 
     Args:
-        test_spec (TestSpec): TestSpec instance
-        pred (dict): Prediction w/ model_name_or_path, model_patch, instance_id
-        rm_image (bool): Whether to remove the image after running
-        force_rebuild (bool): Whether to force rebuild the image
-        client (docker.DockerClient): Docker client
-        run_id (str): Run ID
-        timeout (int): Timeout for running tests
+        test_spec (TestSpec): TestSpec instance.
+        pred (dict): Prediction with model_name_or_path, model_patch, instance_id.
+        rm_image (bool): Whether to remove the image after running.
+        force_rebuild (bool): Whether to force rebuild the image.
+        client (docker.DockerClient): Docker client.
+        run_id (str): Run ID.
+        timeout (int): Timeout for running tests.
     """
     # Set up logging directory
     instance_id = test_spec.instance_id
     model_name_or_path = pred.get("model_name_or_path", "None").replace("/", "__")
-    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / (instance_id+"_testGeneration")
+    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / (instance_id + "_styleReview")
     log_dir.mkdir(parents=True, exist_ok=True)
 
-    # Link the image build dir in the log dir
+    # Link image build directory in the log directory
     build_dir = INSTANCE_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
     image_build_link = log_dir / "image_build_dir"
     if not image_build_link.exists():
         try:
-            # link the image build dir in the log dir
             image_build_link.symlink_to(build_dir.absolute(), target_is_directory=True)
-        except:
-            # some error, idk why
-            pass
-    log_file = log_dir / "run_instance.log"
+        except Exception as e:
+            print(f"Error creating symlink: {e}")
 
-    # Set up report file + logger
+    log_file = log_dir / "run_instance.log"
     report_path = log_dir / "report.json"
+
+    # Define local files for aggregated report and error messages.
+    aggregated_report_path = log_dir / "pylint_report.json"
+    error_output_path = log_dir / "pylint_errors.json"
+
     if report_path.exists():
         return instance_id, json.loads(report_path.read_text())
+
     logger = setup_logger(instance_id, log_file)
 
-    # Run the instance
     container = None
     try:
-        # Build + start instance container (instance image should already be built)
+        # Build and start container.
         container = build_container(test_spec, client, run_id, logger, rm_image, force_rebuild)
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
 
-        # TODO: Before candidate test patch is applied, determine F2F tests.
-        ######################################################################
+        env_name = "testbed"  # Fixed environment name.
+        repo_directory = f"/{env_name}"
+        base_commit = test_spec.base_commit
+        model_patch = pred.get("model_patch", "") or pred.get("candidate_test_patch", "")
+        
+        # Define absolute container paths.
+        container_aggregated = "/tmp/pylint_report.json"
+        container_errors = "/tmp/pylint_errors.json"
 
-        # Get git diff before running gold eval script
-        git_diff_output_before = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        # Generate evaluation script with container paths.
+        linting_eval_script = generate_patch_lint_script(
+            repo_directory=repo_directory,
+            base_commit=base_commit,
+            patch=model_patch,
+            pylint_output_path=container_aggregated,
+            error_output_path=container_errors,
+            env_name=env_name
         )
-        logger.info(f"Git diff before:\n{git_diff_output_before}")
+        linting_eval_script = "\n".join(linting_eval_script)
 
-        # Use inverted evaluation Gold script
-        eval_file = Path(log_dir / "gold_eval.sh")
-        eval_file.write_text(test_spec.inverted_eval_script_gold)
-        logger.info(
-            f"Eval script for Gold Evaluation of {instance_id} written to {eval_file}; copying to container..."
+        # Write the generated script to the log directory and copy it to the container.
+        lint_eval_file = Path(log_dir / "lint_eval.sh")
+        lint_eval_file.write_text(linting_eval_script)
+        logger.info(f"Linting eval script written to {lint_eval_file}; copying to container...")
+        copy_to_container(container, lint_eval_file, Path("/lint_eval.sh"))
+
+        # Run the evaluation script inside the container.
+        lint_output, lint_timed_out, lint_runtime = exec_run_with_timeout(
+            container,
+            "/bin/bash /lint_eval.sh",
+            timeout
         )
-        copy_to_container(container, eval_file, Path("/gold_eval.sh"))
-
-        # Run eval script, write output to logs.
-        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
-        test_output_path_f2f = log_dir / "f2f_check.txt"
-        logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
-        with open(test_output_path_f2f, "w") as f:
-            f.write(test_output)
-            logger.info(f"Test output using gold patch for {instance_id} written to {test_output_path_f2f}")
-            if timed_out:
+        local_lint_output = log_dir / "lint_output.txt"
+        with open(local_lint_output, "w") as f:
+            f.write(lint_output)
+            if lint_timed_out:
                 f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
                 raise EvaluationError(
                     instance_id,
-                    f"Test timed out after {timeout} seconds.",
+                    f"Linting evaluation timed out after {timeout} seconds.",
                     logger,
                 )
+        logger.info(f"Linting runtime: {lint_runtime:_.2f} seconds")
 
-        # Get git diff after running eval script
-        git_diff_output_after = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
+        # Copy aggregated report and error messages files from the container.
+        try:
+            copy_from_container(container, Path(container_aggregated), aggregated_report_path)
+            copy_from_container(container, Path(container_errors), error_output_path)
+        except Exception as e:
+            logger.error(f"Copy failed: {str(e)}")
+            aggregated_report_path = None
 
-        fail_to_fail = get_fail_to_fail(test_output_path_f2f)
-
-
-
-        # Check if git diff changed after running eval script
-        logger.info(f"Git diff after:\n{git_diff_output_after}")
-        if git_diff_output_after != git_diff_output_before:
-            logger.info(f"Git diff changed after running eval script")
-
-        ###########################################################################################
-
-        # Copy model prediction as patch file to container
-        # Applying Candidate Test Patch
-        patch_file = Path(log_dir / "patch.diff")
-        if("candidate_test_patch" in pred):
-            patch_file.write_text(pred["candidate_test_patch"] or "")
+        # Parse the aggregated report.
+        aggregated_report = {}
+        if aggregated_report_path and aggregated_report_path.exists():
+            try:
+                aggregated_report = json.loads(aggregated_report_path.read_text())
+            except json.JSONDecodeError:
+                logger.error(f"Invalid JSON in aggregated report file {aggregated_report_path}")
         else:
-            patch_file.write_text(pred["model_patch"] or "")
-        logger.info(
-            f"Candidate Test Patch for {instance_id} written to {patch_file}, now applying to container..."
-        )
-        copy_to_container(container, patch_file, Path("/tmp/patch.diff"))
+            logger.error("Aggregated report file not found")
 
-        # Attempt to apply patch to container
-        val = container.exec_run(
-            "git apply --allow-empty -v /tmp/patch.diff",
-            workdir="/testbed",
-            user="root",
-        )
-        if val.exit_code != 0:
-            logger.info(f"Failed to apply patch to container, trying again...")
-            
-            # try "patch --batch --fuzz=5 -p1 -i {patch_path}" to try again
-            val = container.exec_run(
-                "patch --batch --fuzz=5 -p1 -i /tmp/patch.diff",
-                workdir="/testbed",
-                user="root",
-            )
-            if val.exit_code != 0:
-                logger.info(f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}")
-                raise EvaluationError(
-                    instance_id,
-                    f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}",
-                    logger,
-                )
-            else:
-                logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
+        # Parse error messages.
+        error_messages = []
+        if error_output_path.exists():
+            try:
+                error_messages = json.loads(error_output_path.read_text())
+            except json.JSONDecodeError:
+                logger.error(f"Invalid JSON in error messages file {error_output_path}")
         else:
-            logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
+            logger.error("Error messages file not found")
 
+        # Build final report.
+        report = {
+            instance_id: {
+                "model_name": pred.get("model_name_or_path", "None"),
+                "aggregated": aggregated_report,
+                "error_messages": error_messages,
+                "linting_runtime": lint_runtime,
+                "timed_out": lint_timed_out
+            }
+        }
+        logger.info(f"Report for {instance_id}: {report}")
 
-        # Get git diff before running gold eval script
-        git_diff_output_before = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-        logger.info(f"Git diff before:\n{git_diff_output_before}")
-
-        # Run eval script, write output to logs.
-        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
-        test_output_path_gold = log_dir / "gold_test_output.txt"
-        logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
-        with open(test_output_path_gold, "w") as f:
-            f.write(test_output)
-            logger.info(f"Test output using gold patch for {instance_id} written to {test_output_path_gold}")
-            if timed_out:
-                f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
-                raise EvaluationError(
-                    instance_id,
-                    f"Test timed out after {timeout} seconds.",
-                    logger,
-                )
-
-        # Get git diff after running eval script
-        git_diff_output_after = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-
-        # Check if git diff changed after running eval script
-        logger.info(f"Git diff after:\n{git_diff_output_after}")
-        if git_diff_output_after != git_diff_output_before:
-            logger.info(f"Git diff changed after running eval script")
-
-        # Reset the container state -not needed when using inverse evaluation scripts
-        # Reset changes if needed
-        #reset_val = container.exec_run(
-        #    "git apply --reverse --allow-empty -v /tmp/patch.diff",
-        #    workdir="/testbed",
-        #    user="root",
-        #)
-        #if reset_val.exit_code == 0:
-        #    logger.info(f"Successfully reset patch changes for {instance_id}")
-        #else:
-        #    logger.warning(
-        #        f"Failed to reset patch for {instance_id}:\n{reset_val.output.decode('utf-8')}"
-        #    )
-
-        # Evaluation procedure does not change for bad patch
-        eval_file = Path(log_dir / "bad_eval.sh")
-        eval_file.write_text(test_spec.inverted_eval_script_bad)
-        logger.info(
-            f"Eval script for Bad Evaluation of {instance_id} written to {eval_file}; copying to container..."
-        )
-        copy_to_container(container, eval_file, Path("/bad_eval.sh"))
-
-        # Run eval script after applying bad patch, write output to logs. Bad Patch should fail test
-        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /bad_eval.sh", timeout)
-        test_output_path_bad = log_dir / "bad_test_output.txt"
-        logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
-        with open(test_output_path_bad, "w") as f:
-            f.write(test_output)
-            logger.info(f"Test output using bad patch for {instance_id} written to {test_output_path_bad}")
-            if timed_out:
-                f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
-                raise EvaluationError(
-                    instance_id,
-                    f"Test timed out after {timeout} seconds.",
-                    logger,
-                )
-
-        # Get git diff after running eval script
-        git_diff_output_after = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-
-        # Check if git diff changed after running eval script
-        logger.info(f"Git diff after:\n{git_diff_output_after}")
-        if git_diff_output_after != git_diff_output_before:
-            logger.info(f"Git diff changed after running eval script")
-
-        # Get report from test output for Gold
-        logger.info(f"Grading test performance for {instance_id}...")
-        report = get_eval_report_test_generation(
-            test_spec=test_spec,
-            prediction=pred,
-            log_paths=[test_output_path_gold, test_output_path_bad],
-            include_tests_status=True,
-            fail_to_fail_tests=fail_to_fail
-        )
-        logger.info(
-            f"report: {report}\n"
-            f"Result for {instance_id}: Test Accepted: {report[instance_id]['Test_Accept']}"
-        )
-
-        # Write report to report.json
         with open(report_path, "w") as f:
             f.write(json.dumps(report, indent=4))
         return instance_id, report
+
     except EvaluationError as e:
         error_msg = traceback.format_exc()
         logger.info(error_msg)
@@ -567,13 +474,11 @@ def run_instance(
                      f"Check ({logger.log_file}) for more information.")
         logger.error(error_msg)
     finally:
-        # Remove instance container + image, close logger
         cleanup_container(client, container, logger)
         if rm_image:
             remove_image(client, test_spec.instance_image_key, logger)
         close_logger(logger)
     return
-
 
 def run_instances(
         predictions: dict,
