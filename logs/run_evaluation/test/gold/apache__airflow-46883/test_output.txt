@@ -1,0 +1,968 @@
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z '' ']'
++++ export CONDA_SHLVL=0
++++ CONDA_SHLVL=0
++++ '[' -n '' ']'
++++++ dirname /opt/miniconda3/bin/conda
+++++ dirname /opt/miniconda3/bin
++++ PATH=/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export PATH
++++ '[' -z '' ']'
++++ PS1=
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1=
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=1
++++ CONDA_SHLVL=1
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=2
+++ CONDA_SHLVL=2
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_1=/opt/miniconda3
+++ CONDA_PREFIX_1=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ cd /testbed
++ git config --global --add safe.directory /testbed
++ cd /testbed
++ git status
+On branch main
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   airflow/api_fastapi/core_api/routes/public/task_instances.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
++ git show
+commit 4833b53705acfc4bd0a26bf3e4dd4fc7a22b0bfa
+Author: David Blain <info@dabla.be>
+Date:   Wed Feb 19 07:33:39 2025 +0100
+
+    Refactor result_processor and event_handler signatures in MSGraphAsyncOperator (#46637)
+    
+    * refactor: Refactor result_processor and event_handler signatures so that context is the last parameter
+    
+    * refactor: Reformatted TestMSGraphAsyncOperator
+    
+    * refactor: Ignore types
+    
+    * refactor: Ignore types
+    
+    * refactor: Changed types xcom helper methods
+    
+    * refactor: Fixed MSGraphSensor
+    
+    * refactor: Fixed TestMSGraphSensor
+    
+    * refactor: Changed type pull_xcom
+    
+    * refactor: Removed white line
+    
+    * refactor: Reduced timeout of sensor in tests to 5 seconds
+    
+    * refactor: Extracted common execute_callback method for the handlers and make copy of context before expanding to avoid deprecation warnings
+    
+    * refactor: Changed types of execute_callable
+    
+    * refactor: Changed func parameter type of execute_callable
+    
+    * refactor: Added test for execute_callable
+    
+    * refactor: Changed func type for execute_callable as it still fails
+    
+    * refactor: Added test for request_information with custom host in TestKiotaRequestAdapterHook
+    
+    * refactor: Ignore types in execute_callable
+    
+    * refactor: Reformatted test_request_information_with_custom_host
+    
+    * refactor: Reformatted test_execute_callable
+    
+    * refactor: Context should not be in type checking block
+    
+    * refactor: Ignore type event_handler
+    
+    * refactor: Context should be type checked just like in main
+    
+    * refactor: Fixed TestMSGraphAsyncOperator
+    
+    ---------
+    
+    Co-authored-by: David Blain <david.blain@infrabel.be>
+    Co-authored-by: David Blain <david.blain@b-holding.be>
+
+diff --git a/providers/microsoft/azure/src/airflow/providers/microsoft/azure/hooks/msgraph.py b/providers/microsoft/azure/src/airflow/providers/microsoft/azure/hooks/msgraph.py
+index 209847ce5f..01421b1b90 100644
+--- a/providers/microsoft/azure/src/airflow/providers/microsoft/azure/hooks/msgraph.py
++++ b/providers/microsoft/azure/src/airflow/providers/microsoft/azure/hooks/msgraph.py
+@@ -213,7 +213,7 @@ class KiotaRequestAdapterHook(BaseHook):
+     @staticmethod
+     def format_no_proxy_url(url: str) -> str:
+         if "://" not in url:
+-            url = f"all://{url}"
++            return f"all://{url}"
+         return url
+ 
+     @classmethod
+diff --git a/providers/microsoft/azure/src/airflow/providers/microsoft/azure/operators/msgraph.py b/providers/microsoft/azure/src/airflow/providers/microsoft/azure/operators/msgraph.py
+index 8d2b1ae1ee..4a47403b9d 100644
+--- a/providers/microsoft/azure/src/airflow/providers/microsoft/azure/operators/msgraph.py
++++ b/providers/microsoft/azure/src/airflow/providers/microsoft/azure/operators/msgraph.py
+@@ -17,6 +17,7 @@
+ # under the License.
+ from __future__ import annotations
+ 
++import warnings
+ from collections.abc import Sequence
+ from copy import deepcopy
+ from typing import (
+@@ -25,7 +26,7 @@ from typing import (
+     Callable,
+ )
+ 
+-from airflow.exceptions import AirflowException, TaskDeferred
++from airflow.exceptions import AirflowException, AirflowProviderDeprecationWarning, TaskDeferred
+ from airflow.models import BaseOperator
+ from airflow.providers.microsoft.azure.hooks.msgraph import KiotaRequestAdapterHook
+ from airflow.providers.microsoft.azure.triggers.msgraph import (
+@@ -44,7 +45,7 @@ if TYPE_CHECKING:
+     from airflow.utils.context import Context
+ 
+ 
+-def default_event_handler(context: Context, event: dict[Any, Any] | None = None) -> Any:
++def default_event_handler(event: dict[Any, Any] | None = None, **context) -> Any:
+     if event:
+         if event.get("status") == "failure":
+             raise AirflowException(event.get("message"))
+@@ -52,6 +53,23 @@ def default_event_handler(context: Context, event: dict[Any, Any] | None = None)
+         return event.get("response")
+ 
+ 
++def execute_callable(
++    func: Callable[[dict[Any, Any] | None, Context], Any] | Callable[[dict[Any, Any] | None, Any], Any],
++    value: Any,
++    context: Context,
++    message: str,
++) -> Any:
++    try:
++        return func(value, **context)  # type: ignore
++    except TypeError:
++        warnings.warn(
++            message,
++            AirflowProviderDeprecationWarning,
++            stacklevel=2,
++        )
++        return func(context, value)  # type: ignore
++
++
+ class MSGraphAsyncOperator(BaseOperator):
+     """
+     A Microsoft Graph API operator which allows you to execute REST call to the Microsoft Graph API.
+@@ -76,7 +94,7 @@ class MSGraphAsyncOperator(BaseOperator):
+         You can pass an enum named APIVersion which has 2 possible members v1 and beta,
+         or you can pass a string as `v1.0` or `beta`.
+     :param result_processor: Function to further process the response from MS Graph API
+-        (default is lambda: context, response: response).  When the response returned by the
++        (default is lambda: response, context: response).  When the response returned by the
+         `KiotaRequestAdapterHook` are bytes, then those will be base64 encoded into a string.
+     :param event_handler: Function to process the event returned from `MSGraphTrigger`.  By default, when the
+         event returned by the `MSGraphTrigger` has a failed status, an AirflowException is being raised with
+@@ -114,8 +132,8 @@ class MSGraphAsyncOperator(BaseOperator):
+         scopes: str | list[str] | None = None,
+         api_version: APIVersion | str | None = None,
+         pagination_function: Callable[[MSGraphAsyncOperator, dict, Context], tuple[str, dict]] | None = None,
+-        result_processor: Callable[[Context, Any], Any] = lambda context, result: result,
+-        event_handler: Callable[[Context, dict[Any, Any] | None], Any] | None = None,
++        result_processor: Callable[[Any, Context], Any] = lambda result, **context: result,
++        event_handler: Callable[[dict[Any, Any] | None, Context], Any] | None = None,
+         serializer: type[ResponseSerializer] = ResponseSerializer,
+         **kwargs: Any,
+     ):
+@@ -175,7 +193,12 @@ class MSGraphAsyncOperator(BaseOperator):
+         if event:
+             self.log.debug("%s completed with %s: %s", self.task_id, event.get("status"), event)
+ 
+-            response = self.event_handler(context, event)
++            response = execute_callable(
++                self.event_handler,  # type: ignore
++                event,
++                context,
++                "event_handler signature has changed, event parameter should be defined before context!",
++            )
+ 
+             self.log.debug("response: %s", response)
+ 
+@@ -186,7 +209,12 @@ class MSGraphAsyncOperator(BaseOperator):
+ 
+                 self.log.debug("deserialize response: %s", response)
+ 
+-                result = self.result_processor(context, response)
++                result = execute_callable(
++                    self.result_processor,
++                    response,
++                    context,
++                    "result_processor signature has changed, result parameter should be defined before context!",
++                )
+ 
+                 self.log.debug("processed response: %s", result)
+ 
+@@ -234,13 +262,14 @@ class MSGraphAsyncOperator(BaseOperator):
+                 return result
+         return results
+ 
+-    def pull_xcom(self, context: Context) -> list:
++    def pull_xcom(self, context: Context | dict[str, Any]) -> list:
+         map_index = context["ti"].map_index
+         value = list(
+             context["ti"].xcom_pull(
+                 key=self.key,
+                 task_ids=self.task_id,
+                 dag_id=self.dag_id,
++                map_indexes=map_index,
+             )
+             or []
+         )
+@@ -265,7 +294,7 @@ class MSGraphAsyncOperator(BaseOperator):
+ 
+         return value
+ 
+-    def push_xcom(self, context: Context, value) -> None:
++    def push_xcom(self, context: Any, value) -> None:
+         self.log.debug("do_xcom_push: %s", self.do_xcom_push)
+         if self.do_xcom_push:
+             self.log.info("Pushing XCom with key '%s': %s", self.key, value)
+@@ -273,7 +302,7 @@ class MSGraphAsyncOperator(BaseOperator):
+ 
+     @staticmethod
+     def paginate(
+-        operator: MSGraphAsyncOperator, response: dict, context: Context
++        operator: MSGraphAsyncOperator, response: dict, **context
+     ) -> tuple[Any, dict[str, Any] | None]:
+         odata_count = response.get("@odata.count")
+         if odata_count and operator.query_parameters:
+@@ -282,7 +311,7 @@ class MSGraphAsyncOperator(BaseOperator):
+ 
+             if top and odata_count:
+                 if len(response.get("value", [])) == top and context:
+-                    results = operator.pull_xcom(context=context)
++                    results = operator.pull_xcom(context)
+                     skip = sum([len(result["value"]) for result in results]) + top if results else top  # type: ignore
+                     query_parameters["$skip"] = skip
+                     return operator.url, query_parameters
+@@ -290,7 +319,7 @@ class MSGraphAsyncOperator(BaseOperator):
+ 
+     def trigger_next_link(self, response, method_name: str, context: Context) -> None:
+         if isinstance(response, dict):
+-            url, query_parameters = self.pagination_function(self, response, context)
++            url, query_parameters = self.pagination_function(self, response, **dict(context.items()))  # type: ignore
+ 
+             self.log.debug("url: %s", url)
+             self.log.debug("query_parameters: %s", query_parameters)
+diff --git a/providers/microsoft/azure/src/airflow/providers/microsoft/azure/sensors/msgraph.py b/providers/microsoft/azure/src/airflow/providers/microsoft/azure/sensors/msgraph.py
+index ecad1a34f1..39e728a9de 100644
+--- a/providers/microsoft/azure/src/airflow/providers/microsoft/azure/sensors/msgraph.py
++++ b/providers/microsoft/azure/src/airflow/providers/microsoft/azure/sensors/msgraph.py
+@@ -23,6 +23,7 @@ from typing import TYPE_CHECKING, Any, Callable
+ from airflow.exceptions import AirflowException
+ from airflow.providers.common.compat.standard.triggers import TimeDeltaTrigger
+ from airflow.providers.microsoft.azure.hooks.msgraph import KiotaRequestAdapterHook
++from airflow.providers.microsoft.azure.operators.msgraph import execute_callable
+ from airflow.providers.microsoft.azure.triggers.msgraph import MSGraphTrigger, ResponseSerializer
+ from airflow.sensors.base import BaseSensorOperator
+ 
+@@ -55,7 +56,7 @@ class MSGraphSensor(BaseSensorOperator):
+         `default_event_processor` method) and returns a boolean.  When the result is True, the sensor
+         will stop poking, otherwise it will continue until it's True or times out.
+     :param result_processor: Function to further process the response from MS Graph API
+-        (default is lambda: context, response: response).  When the response returned by the
++        (default is lambda: response, context: response).  When the response returned by the
+         `KiotaRequestAdapterHook` are bytes, then those will be base64 encoded into a string.
+     :param serializer: Class which handles response serialization (default is ResponseSerializer).
+         Bytes will be base64 encoded into a string, so it can be stored as an XCom.
+@@ -86,8 +87,8 @@ class MSGraphSensor(BaseSensorOperator):
+         proxies: dict | None = None,
+         scopes: str | list[str] | None = None,
+         api_version: APIVersion | str | None = None,
+-        event_processor: Callable[[Context, Any], bool] = lambda context, e: e.get("status") == "Succeeded",
+-        result_processor: Callable[[Context, Any], Any] = lambda context, result: result,
++        event_processor: Callable[[Any, Context], bool] = lambda e, **context: e.get("status") == "Succeeded",
++        result_processor: Callable[[Any, Context], Any] = lambda result, **context: result,
+         serializer: type[ResponseSerializer] = ResponseSerializer,
+         retry_delay: timedelta | float = 60,
+         **kwargs,
+@@ -164,12 +165,22 @@ class MSGraphSensor(BaseSensorOperator):
+ 
+                 self.log.debug("deserialize response: %s", response)
+ 
+-                is_done = self.event_processor(context, response)
++                is_done = execute_callable(
++                    self.event_processor,
++                    response,
++                    context,
++                    "event_processor signature has changed, event parameter should be defined before context!",
++                )
+ 
+                 self.log.debug("is_done: %s", is_done)
+ 
+                 if is_done:
+-                    result = self.result_processor(context, response)
++                    result = execute_callable(
++                        self.result_processor,
++                        response,
++                        context,
++                        "result_processor signature has changed, result parameter should be defined before context!",
++                    )
+ 
+                     self.log.debug("processed response: %s", result)
+ 
+diff --git a/providers/microsoft/azure/tests/unit/microsoft/azure/hooks/test_msgraph.py b/providers/microsoft/azure/tests/unit/microsoft/azure/hooks/test_msgraph.py
+index c7604a2666..75616a420f 100644
+--- a/providers/microsoft/azure/tests/unit/microsoft/azure/hooks/test_msgraph.py
++++ b/providers/microsoft/azure/tests/unit/microsoft/azure/hooks/test_msgraph.py
+@@ -26,6 +26,7 @@ from unittest.mock import Mock, patch
+ import pytest
+ from httpx import Response
+ from httpx._utils import URLPattern
++from kiota_abstractions.request_information import RequestInformation
+ from kiota_http.httpx_request_adapter import HttpxRequestAdapter
+ from kiota_serialization_json.json_parse_node import JsonParseNode
+ from kiota_serialization_text.text_parse_node import TextParseNode
+@@ -271,6 +272,26 @@ class TestKiotaRequestAdapterHook:
+ 
+         assert actual == {"%24expand": "reports,users,datasets,dataflows,dashboards", "%24top": 5000}
+ 
++    def test_request_information_with_custom_host(self):
++        connection = lambda conn_id: get_airflow_connection(
++            conn_id=conn_id,
++            host="api.fabric.microsoft.com",
++            api_version="v1",
++        )
++
++        with patch(
++            "airflow.hooks.base.BaseHook.get_connection",
++            side_effect=connection,
++        ):
++            hook = KiotaRequestAdapterHook(conn_id="msgraph_api")
++            request_info = hook.request_information(url="myorg/admin/apps", query_parameters={"$top": 5000})
++            request_adapter = hook.get_conn()
++            request_adapter.set_base_url_for_request_information(request_info)
++
++            assert isinstance(request_info, RequestInformation)
++            assert isinstance(request_adapter, HttpxRequestAdapter)
++            assert request_info.url == "https://api.fabric.microsoft.com/v1/myorg/admin/apps?%24top=5000"
++
+     @pytest.mark.asyncio
+     async def test_throw_failed_responses_with_text_plain_content_type(self):
+         with patch(
+diff --git a/providers/microsoft/azure/tests/unit/microsoft/azure/operators/test_msgraph.py b/providers/microsoft/azure/tests/unit/microsoft/azure/operators/test_msgraph.py
+index a26a7f8345..69dc04c45f 100644
+--- a/providers/microsoft/azure/tests/unit/microsoft/azure/operators/test_msgraph.py
++++ b/providers/microsoft/azure/tests/unit/microsoft/azure/operators/test_msgraph.py
+@@ -24,9 +24,10 @@ from typing import TYPE_CHECKING, Any
+ 
+ import pytest
+ 
+-from airflow.exceptions import AirflowException
+-from airflow.providers.microsoft.azure.operators.msgraph import MSGraphAsyncOperator
++from airflow.exceptions import AirflowException, AirflowProviderDeprecationWarning
++from airflow.providers.microsoft.azure.operators.msgraph import MSGraphAsyncOperator, execute_callable
+ from airflow.triggers.base import TriggerEvent
++from airflow.utils import timezone
+ from unit.microsoft.azure.base import Base
+ from unit.microsoft.azure.test_utils import mock_json_response, mock_response
+ 
+@@ -45,7 +46,7 @@ if TYPE_CHECKING:
+ 
+ class TestMSGraphAsyncOperator(Base):
+     @pytest.mark.db_test
+-    def test_execute(self):
++    def test_execute_with_old_result_processor_signature(self):
+         users = load_json_from_resources(dirname(__file__), "..", "resources", "users.json")
+         next_users = load_json_from_resources(dirname(__file__), "..", "resources", "next_users.json")
+         response = mock_json_response(200, users, next_users)
+@@ -58,6 +59,38 @@ class TestMSGraphAsyncOperator(Base):
+                 result_processor=lambda context, result: result.get("value"),
+             )
+ 
++            with pytest.warns(
++                AirflowProviderDeprecationWarning,
++                match="result_processor signature has changed, result parameter should be defined before context!",
++            ):
++                results, events = execute_operator(operator)
++
++                assert len(results) == 30
++                assert results == users.get("value") + next_users.get("value")
++                assert len(events) == 2
++                assert isinstance(events[0], TriggerEvent)
++                assert events[0].payload["status"] == "success"
++                assert events[0].payload["type"] == "builtins.dict"
++                assert events[0].payload["response"] == json.dumps(users)
++                assert isinstance(events[1], TriggerEvent)
++                assert events[1].payload["status"] == "success"
++                assert events[1].payload["type"] == "builtins.dict"
++                assert events[1].payload["response"] == json.dumps(next_users)
++
++    @pytest.mark.db_test
++    def test_execute_with_new_result_processor_signature(self):
++        users = load_json_from_resources(dirname(__file__), "..", "resources", "users.json")
++        next_users = load_json_from_resources(dirname(__file__), "..", "resources", "next_users.json")
++        response = mock_json_response(200, users, next_users)
++
++        with self.patch_hook_and_request_adapter(response):
++            operator = MSGraphAsyncOperator(
++                task_id="users_delta",
++                conn_id="msgraph_api",
++                url="users",
++                result_processor=lambda result, **context: result.get("value"),
++            )
++
+             results, events = execute_operator(operator)
+ 
+             assert len(results) == 30
+@@ -109,7 +142,7 @@ class TestMSGraphAsyncOperator(Base):
+                 execute_operator(operator)
+ 
+     @pytest.mark.db_test
+-    def test_execute_when_an_exception_occurs_on_custom_event_handler(self):
++    def test_execute_when_an_exception_occurs_on_custom_event_handler_with_old_signature(self):
+         with self.patch_hook_and_request_adapter(AirflowException("An error occurred")):
+ 
+             def custom_event_handler(context: Context, event: dict[Any, Any] | None = None):
+@@ -126,6 +159,36 @@ class TestMSGraphAsyncOperator(Base):
+                 event_handler=custom_event_handler,
+             )
+ 
++            with pytest.warns(
++                AirflowProviderDeprecationWarning,
++                match="event_handler signature has changed, event parameter should be defined before context!",
++            ):
++                results, events = execute_operator(operator)
++
++                assert not results
++                assert len(events) == 1
++                assert isinstance(events[0], TriggerEvent)
++                assert events[0].payload["status"] == "failure"
++                assert events[0].payload["message"] == "An error occurred"
++
++    @pytest.mark.db_test
++    def test_execute_when_an_exception_occurs_on_custom_event_handler_with_new_signature(self):
++        with self.patch_hook_and_request_adapter(AirflowException("An error occurred")):
++
++            def custom_event_handler(event: dict[Any, Any] | None = None, **context):
++                if event:
++                    if event.get("status") == "failure":
++                        return None
++
++                    return event.get("response")
++
++            operator = MSGraphAsyncOperator(
++                task_id="users_delta",
++                conn_id="msgraph_api",
++                url="users/delta",
++                event_handler=custom_event_handler,
++            )
++
+             results, events = execute_operator(operator)
+ 
+             assert not results
+@@ -209,7 +272,7 @@ class TestMSGraphAsyncOperator(Base):
+         )
+         context = mock_context(task=operator)
+         response = load_json_from_resources(dirname(__file__), "..", "resources", "users.json")
+-        next_link, query_parameters = MSGraphAsyncOperator.paginate(operator, response, context)
++        next_link, query_parameters = MSGraphAsyncOperator.paginate(operator, response, **context)
+ 
+         assert next_link == response["@odata.nextLink"]
+         assert query_parameters is None
+@@ -224,7 +287,31 @@ class TestMSGraphAsyncOperator(Base):
+         context = mock_context(task=operator)
+         response = load_json_from_resources(dirname(__file__), "..", "resources", "users.json")
+         response["@odata.count"] = 100
+-        url, query_parameters = MSGraphAsyncOperator.paginate(operator, response, context)
++        url, query_parameters = MSGraphAsyncOperator.paginate(operator, response, **context)
+ 
+         assert url == "users"
+         assert query_parameters == {"$skip": 12, "$top": 12}
++
++    def test_execute_callable(self):
++        with pytest.warns(
++            AirflowProviderDeprecationWarning,
++            match="result_processor signature has changed, result parameter should be defined before context!",
++        ):
++            assert (
++                execute_callable(
++                    lambda context, response: response,
++                    "response",
++                    {"execution_date": timezone.utcnow()},
++                    "result_processor signature has changed, result parameter should be defined before context!",
++                )
++                == "response"
++            )
++        assert (
++            execute_callable(
++                lambda response, **context: response,
++                "response",
++                {"execution_date": timezone.utcnow()},
++                "result_processor signature has changed, result parameter should be defined before context!",
++            )
++            == "response"
++        )
+diff --git a/providers/microsoft/azure/tests/unit/microsoft/azure/sensors/test_msgraph.py b/providers/microsoft/azure/tests/unit/microsoft/azure/sensors/test_msgraph.py
+index 5f42a7c16a..4a88ecbca4 100644
+--- a/providers/microsoft/azure/tests/unit/microsoft/azure/sensors/test_msgraph.py
++++ b/providers/microsoft/azure/tests/unit/microsoft/azure/sensors/test_msgraph.py
+@@ -22,6 +22,7 @@ from os.path import dirname
+ 
+ import pytest
+ 
++from airflow.exceptions import AirflowProviderDeprecationWarning
+ from airflow.providers.microsoft.azure.sensors.msgraph import MSGraphSensor
+ from airflow.triggers.base import TriggerEvent
+ from unit.microsoft.azure.base import Base
+@@ -33,7 +34,7 @@ from tests_common.test_utils.version_compat import AIRFLOW_V_2_10_PLUS
+ 
+ 
+ class TestMSGraphSensor(Base):
+-    def test_execute(self):
++    def test_execute_with_result_processor_with_old_signature(self):
+         status = load_json_from_resources(dirname(__file__), "..", "resources", "status.json")
+         response = mock_json_response(200, *status)
+ 
+@@ -45,7 +46,43 @@ class TestMSGraphSensor(Base):
+                 path_parameters={"scanId": "0a1b1bf3-37de-48f7-9863-ed4cda97a9ef"},
+                 result_processor=lambda context, result: result["id"],
+                 retry_delay=5,
+-                timeout=350.0,
++                timeout=5,
++            )
++
++            with pytest.warns(
++                AirflowProviderDeprecationWarning,
++                match="result_processor signature has changed, result parameter should be defined before context!",
++            ):
++                results, events = execute_operator(sensor)
++
++                assert sensor.path_parameters == {"scanId": "0a1b1bf3-37de-48f7-9863-ed4cda97a9ef"}
++                assert isinstance(results, str)
++                assert results == "0a1b1bf3-37de-48f7-9863-ed4cda97a9ef"
++                assert len(events) == 3
++                assert isinstance(events[0], TriggerEvent)
++                assert events[0].payload["status"] == "success"
++                assert events[0].payload["type"] == "builtins.dict"
++                assert events[0].payload["response"] == json.dumps(status[0])
++                assert isinstance(events[1], TriggerEvent)
++                assert isinstance(events[1].payload, datetime)
++                assert isinstance(events[2], TriggerEvent)
++                assert events[2].payload["status"] == "success"
++                assert events[2].payload["type"] == "builtins.dict"
++                assert events[2].payload["response"] == json.dumps(status[1])
++
++    def test_execute_with_result_processor_with_new_signature(self):
++        status = load_json_from_resources(dirname(__file__), "..", "resources", "status.json")
++        response = mock_json_response(200, *status)
++
++        with self.patch_hook_and_request_adapter(response):
++            sensor = MSGraphSensor(
++                task_id="check_workspaces_status",
++                conn_id="powerbi",
++                url="myorg/admin/workspaces/scanStatus/{scanId}",
++                path_parameters={"scanId": "0a1b1bf3-37de-48f7-9863-ed4cda97a9ef"},
++                result_processor=lambda result, **context: result["id"],
++                retry_delay=5,
++                timeout=5,
+             )
+ 
+             results, events = execute_operator(sensor)
+@@ -66,7 +103,7 @@ class TestMSGraphSensor(Base):
+             assert events[2].payload["response"] == json.dumps(status[1])
+ 
+     @pytest.mark.skipif(not AIRFLOW_V_2_10_PLUS, reason="Lambda parameters works in Airflow >= 2.10.0")
+-    def test_execute_with_lambda_parameter(self):
++    def test_execute_with_lambda_parameter_and_result_processor_with_new_signature(self):
+         status = load_json_from_resources(dirname(__file__), "..", "resources", "status.json")
+         response = mock_json_response(200, *status)
+ 
+@@ -76,9 +113,9 @@ class TestMSGraphSensor(Base):
+                 conn_id="powerbi",
+                 url="myorg/admin/workspaces/scanStatus/{scanId}",
+                 path_parameters=lambda context, jinja_env: {"scanId": "0a1b1bf3-37de-48f7-9863-ed4cda97a9ef"},
+-                result_processor=lambda context, result: result["id"],
++                result_processor=lambda result, **context: result["id"],
+                 retry_delay=5,
+-                timeout=350.0,
++                timeout=5,
+             )
+ 
+             results, events = execute_operator(sensor)
++ git diff 4833b53705acfc4bd0a26bf3e4dd4fc7a22b0bfa
+diff --git a/airflow/api_fastapi/core_api/routes/public/task_instances.py b/airflow/api_fastapi/core_api/routes/public/task_instances.py
+index 4b6dc2d836..174c398e0d 100644
+--- a/airflow/api_fastapi/core_api/routes/public/task_instances.py
++++ b/airflow/api_fastapi/core_api/routes/public/task_instances.py
+@@ -61,7 +61,6 @@ from airflow.api_fastapi.core_api.datamodels.task_instances import (
+ )
+ from airflow.api_fastapi.core_api.openapi.exceptions import create_openapi_http_exception_doc
+ from airflow.exceptions import TaskNotFound
+-from airflow.jobs.scheduler_job_runner import DR
+ from airflow.models import Base, DagRun
+ from airflow.models.dag import DAG
+ from airflow.models.taskinstance import TaskInstance as TI, clear_task_instances
+@@ -625,7 +624,9 @@ def post_clear_task_instances(
+     upstream = body.include_upstream
+ 
+     if dag_run_id is not None:
+-        dag_run: DR | None = session.scalar(select(DR).where(DR.dag_id == dag_id, DR.run_id == dag_run_id))
++        dag_run: DagRun | None = session.scalar(
++            select(DagRun).where(DagRun.dag_id == dag_id, DagRun.run_id == dag_run_id)
++        )
+         if dag_run is None:
+             error_message = f"Dag Run id {dag_run_id} not found in dag {dag_id}"
+             raise HTTPException(status.HTTP_404_NOT_FOUND, error_message)
+@@ -653,6 +654,7 @@ def post_clear_task_instances(
+ 
+     task_instances = dag.clear(
+         dry_run=True,
++        run_id=None if past or future else dag_run_id,
+         task_ids=task_ids,
+         dag_bag=request.app.state.dag_bag,
+         session=session,
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z x ']'
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1='(testbed) '
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=3
++++ CONDA_SHLVL=3
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=4
+++ CONDA_SHLVL=4
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_3=/opt/miniconda3
+++ CONDA_PREFIX_3=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ pip install -e '.[all,dev,test]' --no-deps
+Obtaining file:///testbed
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: apache-airflow
+  Building editable for apache-airflow (pyproject.toml): started
+  Building editable for apache-airflow (pyproject.toml): finished with status 'done'
+  Created wheel for apache-airflow: filename=apache_airflow-3.0.0.dev0-py3-none-any.whl size=43386 sha256=d20267057aa2247130f144b21e36aaff3a65aa0240ebf4ffe8f741226c04d075
+  Stored in directory: /tmp/pip-ephem-wheel-cache-blypbxy6/wheels/5d/7e/d4/0611b5e1f6b19283dfc03cca62ebc6a41021c5c464d28aab8f
+Successfully built apache-airflow
+Installing collected packages: apache-airflow
+  Attempting uninstall: apache-airflow
+    Found existing installation: apache-airflow 3.0.0.dev0
+    Uninstalling apache-airflow-3.0.0.dev0:
+      Successfully uninstalled apache-airflow-3.0.0.dev0
+Successfully installed apache-airflow-3.0.0.dev0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
++ pip install --no-deps -r /dev/fd/63
+++ pip freeze
+Obtaining file:///testbed (from -r /dev/fd/63 (line 4))
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: annotated-types==0.7.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 1)) (0.7.0)
+Requirement already satisfied: anyio==4.8.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 2)) (4.8.0)
+Requirement already satisfied: certifi==2025.1.31 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 5)) (2025.1.31)
+Requirement already satisfied: cffi==1.17.1 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 6)) (1.17.1)
+Requirement already satisfied: cryptography==44.0.1 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 7)) (44.0.1)
+Requirement already satisfied: fastapi==0.115.8 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 8)) (0.115.8)
+Requirement already satisfied: google-re2==1.1.20240702 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 9)) (1.1.20240702)
+Requirement already satisfied: greenlet==3.1.1 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 10)) (3.1.1)
+Requirement already satisfied: h11==0.14.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 11)) (0.14.0)
+Requirement already satisfied: httpcore==1.0.7 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 12)) (1.0.7)
+Requirement already satisfied: httpx==0.28.1 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 13)) (0.28.1)
+Requirement already satisfied: idna==3.10 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 14)) (3.10)
+Requirement already satisfied: iniconfig==2.0.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 15)) (2.0.0)
+Requirement already satisfied: methodtools==0.4.7 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 16)) (0.4.7)
+Requirement already satisfied: packaging==24.2 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 17)) (24.2)
+Requirement already satisfied: pendulum==3.0.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 18)) (3.0.0)
+Requirement already satisfied: pluggy==1.5.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 19)) (1.5.0)
+Requirement already satisfied: pycparser==2.22 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 20)) (2.22)
+Requirement already satisfied: pydantic==2.10.6 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 21)) (2.10.6)
+Requirement already satisfied: pydantic_core==2.27.2 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 22)) (2.27.2)
+Requirement already satisfied: pytest==8.3.4 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 23)) (8.3.4)
+Requirement already satisfied: pytest-asyncio==0.25.3 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 24)) (0.25.3)
+Requirement already satisfied: python-dateutil==2.9.0.post0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 25)) (2.9.0.post0)
+Requirement already satisfied: PyYAML==6.0.2 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 26)) (6.0.2)
+Requirement already satisfied: setuptools==75.8.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 27)) (75.8.0)
+Requirement already satisfied: six==1.17.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 28)) (1.17.0)
+Requirement already satisfied: sniffio==1.3.1 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 29)) (1.3.1)
+Requirement already satisfied: SQLAlchemy==2.0.38 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 30)) (2.0.38)
+Requirement already satisfied: starlette==0.45.3 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 31)) (0.45.3)
+Requirement already satisfied: termcolor==2.5.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 32)) (2.5.0)
+Requirement already satisfied: time-machine==2.16.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 33)) (2.16.0)
+Requirement already satisfied: typing_extensions==4.12.2 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 34)) (4.12.2)
+Requirement already satisfied: tzdata==2025.1 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 35)) (2025.1)
+Requirement already satisfied: wheel==0.45.1 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 36)) (0.45.1)
+Requirement already satisfied: wirerope==1.0.0 in /opt/miniconda3/envs/testbed/lib/python3.12/site-packages (from -r /dev/fd/63 (line 37)) (1.0.0)
+Building wheels for collected packages: apache-airflow
+  Building editable for apache-airflow (pyproject.toml): started
+  Building editable for apache-airflow (pyproject.toml): finished with status 'done'
+  Created wheel for apache-airflow: filename=apache_airflow-3.0.0.dev0-py3-none-any.whl size=43386 sha256=d20267057aa2247130f144b21e36aaff3a65aa0240ebf4ffe8f741226c04d075
+  Stored in directory: /tmp/pip-ephem-wheel-cache-psibfpsc/wheels/5d/7e/d4/0611b5e1f6b19283dfc03cca62ebc6a41021c5c464d28aab8f
+Successfully built apache-airflow
+Installing collected packages: apache-airflow
+  Attempting uninstall: apache-airflow
+    Found existing installation: apache-airflow 3.0.0.dev0
+    Uninstalling apache-airflow-3.0.0.dev0:
+      Successfully uninstalled apache-airflow-3.0.0.dev0
+Successfully installed apache-airflow-3.0.0.dev0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
++ git checkout 4833b53705acfc4bd0a26bf3e4dd4fc7a22b0bfa tests/api_fastapi/core_api/routes/public/test_task_instances.py
+Updated 0 paths from ab2e1bd4b7
++ git apply -v -
+Checking patch tests/api_fastapi/core_api/routes/public/test_task_instances.py...
+Applied patch tests/api_fastapi/core_api/routes/public/test_task_instances.py cleanly.
++ pytest -rA --tb=long tests/api_fastapi/core_api/routes/public/test_task_instances.py
+Unable to load the config, contains a configuration error.
+ImportError while loading conftest '/testbed/tests/api_fastapi/conftest.py'.
+tests/api_fastapi/conftest.py:25: in <module>
+    from airflow.api_fastapi.app import create_app
+airflow/__init__.py:78: in <module>
+    settings.initialize()
+airflow/settings.py:637: in initialize
+    LOGGING_CLASS_PATH = configure_logging()
+airflow/logging_config.py:74: in configure_logging
+    raise e
+airflow/logging_config.py:69: in configure_logging
+    dictConfig(logging_config)
+/opt/miniconda3/envs/testbed/lib/python3.12/logging/config.py:942: in dictConfig
+    dictConfigClass(config).configure()
+/opt/miniconda3/envs/testbed/lib/python3.12/logging/config.py:590: in configure
+    raise ValueError('Unable to configure '
+E   ValueError: Unable to configure formatter 'airflow_coloured'
++ git checkout 4833b53705acfc4bd0a26bf3e4dd4fc7a22b0bfa tests/api_fastapi/core_api/routes/public/test_task_instances.py
+Updated 1 path from ab2e1bd4b7

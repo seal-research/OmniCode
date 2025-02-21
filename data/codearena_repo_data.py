@@ -1,17 +1,27 @@
 {
-"fastapi/fastapi": {
-    "MAP_REPO_TO_VERSION_PATHS": ["fastapi/__init__.py"],
-    "MAP_REPO_TO_VERSION_PATTERNS":  ["__version__ = ['\"](.*)['\"]", "VERSION = \\((.*)\\)"],
+"apache/airflow": {
+    "MAP_REPO_TO_VERSION_PATHS": ["airflow/__init__.py"],
+    "MAP_REPO_TO_VERSION_PATTERNS": ["__version__ = ['\"](.*)['\"]"],
     "MAP_REPO_VERSION_TO_SPECS": {
             k: {
-            "python": "3.7",
-            "install": "pip install -e '.[all, dev, test]'",
+            "python": "3.12", 
+            "install": "pip install -e '.[all,dev,test]' --no-deps && pip install --no-deps -r <(pip freeze)",
             "pip_packages": [
-                "'flask<2.3.0'"
+                "sqlalchemy",
+                "time_machine",
+                "fastapi",
+                "httpx",
+                "pytest-asyncio",
+                "methodtools",
+                "google-re2",
+                "PyYAML",
+                "cryptography",
+                "pendulum",
+                "termcolor"
             ],
-            "test_cmd": "pytest -rA --tb=long", 
+            "test_cmd": "pytest -rA --tb=long"
         }
-        for k in ['0.55', '0.56', '0.87']
+        for k in ["3.0"]
     }
 },
 }
