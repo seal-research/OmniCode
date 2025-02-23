@@ -443,6 +443,9 @@ def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output
         "total_warnings": .total_warnings,
         "total_conventions": .total_conventions
     }}' {error_output_path} > {pylint_output_path}
+    
+    jq 'map(del(.score))' {error_output_path} > "$temp_dir/cleaned_errors.json" && mv "$temp_dir/cleaned_errors.json" {error_output_path}
+
     '''
 
     eval_commands = [
