@@ -8,6 +8,15 @@ import pandas as pd
 import os
 import re
 from collections import defaultdict
+import tempfile
+import shutil
+import tree_sitter_python as tspython
+from tree_sitter import Language, Parser, Node
+from unidiff import PatchSet
+from git import Repo
+
+PY_LANGUAGE = Language(tspython.language())
+
 from swebench.harness.constants import (
     NON_TEST_EXTS,
     KEY_INSTANCE_ID
@@ -254,3 +263,135 @@ def get_test_directives(instance: CodeArenaInstance) -> list:
         directives = directives_transformed
 
     return directives
+
+
+
+class DirHandler:
+    def __init__(self, dir_path: Path, temp_dir: Path = Path("/tmp")):
+        self.dir_path = dir_path
+        self.temp_dir = temp_dir
+
+    def __enter__(self):
+        """create a temp dir and copy repo into it with tempdir"""
+        self.temp_dir = tempfile.mkdtemp()
+        shutil.copytree(self.dir_path, self.temp_dir, dirs_exist_ok=True)
+        return self.temp_dir
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        shutil.rmtree(self.temp_dir)
+
+
+
+def git_checkout(repo_path: Path, commit_sha: str) -> Path:
+    """
+    Checkout a specific commit in a repository
+    """
+    repo = Repo(repo_path)
+    repo.git.checkout(commit_sha)
+
+
+def get_current_commit(repo_path: Path) -> str:
+    """
+    Get the current commit of a repository
+    """
+    repo = Repo(repo_path)
+    return repo.head.commit.hexsha
+
+
+EXTENSION_TO_TS_LANG = {
+    ".py": PY_LANGUAGE,
+}
+
+
+def get_identifier_name(node: Node, source_bytes: bytes) -> str | None:
+    """
+    Given a node (of type function_definition or class_definition)
+    find its child whose type is "identifier" and return its text.
+    """
+    for child in node.children:
+        if child.type == "identifier":
+            return source_bytes[child.start_byte:child.end_byte].decode("utf8")
+    return None
+
+
+
+def get_fully_qualified_name(source_code: str, parser: Parser, line_number: int) -> str | None:
+    """
+    Given the source_code (a string), a tree-sitter parser and a 1-indexed
+    line_number, returns the fully qualified name (or None if not found)
+    of the function (or method) that the line is part of.
+    """
+
+    # Parse the source text. (Note: tree-sitter expects bytes.)
+    tree = parser.parse(source_code.encode("utf8"))
+    source_bytes = source_code.encode("utf8")
+    # Convert external line number (1-indexed) to a point (row, column)
+    # We use column 0 so that we grab the first node on that line.
+    target_point = (line_number - 1, 0)
+
+    # Find the smallest node that spans our target point.
+    node = tree.root_node.descendant_for_point_range(target_point, target_point)
+    if node is None:
+        return None
+
+    # Walk upward from the node to find any surrounding function or class definitions.
+    names = []
+    current = node
+    while current is not None:
+        if current.type in ("function_definition", "class_definition"):
+            name = get_identifier_name(current, source_bytes)
+            # If found, add it to our list.
+            if name:
+                names.append(name)
+        current = current.parent
+
+    # The names were collected from inner to outer so we reverse them.
+    if names:
+        # For example, if the node is inside a class and then a method,
+        # the fully qualified name becomes "ClassName.function_name".
+        return ".".join(reversed(names))
+    else:
+        return None
+
+
+def get_function_name(file_path: Path, line_number: int) -> str | None:
+    """
+    Parse the code file and return the fully qualified name of the function containing the line number
+    """
+    parser = Parser(EXTENSION_TO_TS_LANG[file_path.suffix])
+    source_code = file_path.read_text()
+    return get_fully_qualified_name(source_code, parser, line_number)
+
+
+def get_modified_line_chunks(diff_str: str, repo_path: Path, base_commit: str) -> list[str]:
+    """
+    Get line number ranges from the original file that were modified in the patch
+    """
+    with DirHandler(repo_path) as temp_dir:
+        git_checkout(temp_dir, base_commit)
+        patch_set = PatchSet(diff_str)
+        
+
+def get_modified_functions(diff_str: str, repo_path: Path, base_commit: str) -> list[str]:
+    """
+    Get the modified functions from a diff string
+    """
+    with DirHandler(repo_path) as temp_dir:
+        git_checkout(temp_dir, base_commit)
+        patch_set = PatchSet(diff_str)
+        modified_functions = []
+        for patched_file in patch_set:
+            for hunk in patched_file:
+                for line in hunk:
+                    if line.is_added:
+                        continue
+                    breakpoint()
+                    func_name = get_function_name(repo_path / patched_file.path, line.source_line_no)
+                    if func_name is None:
+                        continue
+                    func_fqn = patched_file.path + ":" + func_name
+                    if func_fqn not in modified_functions:
+                        modified_functions.append(func_fqn)
+    
+        return modified_functions
+    
