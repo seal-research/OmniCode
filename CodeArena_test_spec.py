@@ -42,6 +42,7 @@ class TestSpec:
     """
     instance_id: str
     repo: str
+    base_commit :str
     version: str
     repo_script_list: list[str]
     eval_script_list: list[str]
@@ -247,6 +248,9 @@ def make_env_script_list(instance: CodeArenaInstance, specs: dict, env_name: str
         pip_packages = " ".join(specs["pip_packages"])
         cmd = f"python -m pip install {pip_packages}"
         reqs_commands.append(cmd)
+    # External pylint dependency to run Style Review inside the docker environment
+
+    reqs_commands.append("python -m pip install pylint")
     return reqs_commands
 
 
@@ -340,6 +344,124 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     ]
     return eval_commands
 
+def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output_path, error_output_path, env_name):
+    """
+    Generate a shell script to run pylint evaluation on modified Python files.
+    
+    Args:
+        repo_directory (str): Path to the git repository
+        base_commit (str): Base commit to compare against
+        patch (str): Git patch to apply
+        pylint_output_path (str): Path to save aggregated pylint results
+        error_output_path (str): Path to save detailed error messages
+        env_name (str): Conda environment name
+    
+    Returns:
+        list: Shell commands to execute the evaluation
+    """
+    HEREDOC_DELIMITER = "EOF_114329324912"
+    reset_command = f"git stash push --include-untracked && git checkout {base_commit} -- . && git stash pop --index"
+    apply_patch_command = f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{patch}\n{HEREDOC_DELIMITER}"
+
+    # Define the entire script as a raw string with proper substitution
+    script = rf'''
+    # Ensure required tools are available
+    for cmd in jq awk pylint; do
+        if ! command -v "$cmd" &>/dev/null; then
+            echo "$cmd is not installed, exiting." >&2
+            exit 1
+        fi
+    done
+
+    # Create temporary directory for intermediate files
+    temp_dir=$(mktemp -d)
+    trap 'rm -rf "$temp_dir"' EXIT
+
+    # Get modified Python files
+    modified_files=$(git diff --name-only HEAD)
+    python_files=$(echo "$modified_files" | grep -E '\.pyx?$' || true)
+
+    if [ -z "$python_files" ]; then
+        echo '{{"global_score": 10.0, "total_errors": 0, "total_warnings": 0, "total_conventions": 0}}' > {pylint_output_path}
+        echo "[]" > {error_output_path}
+        exit 0
+    fi
+
+    # Initialize error report
+    echo "[]" > {error_output_path}
+
+    # Process each file
+    while IFS= read -r file; do
+        [ -z "$file" ] && continue
+        [ ! -f "$file" ] && continue
+
+
+        # Run pylint and capture outputs
+        pylint "$file" --output-format=json > "$temp_dir/pylint.json" 2>&1 || true
+        pylint "$file" > "$temp_dir/pylint.txt" 2>&1 || true
+
+        cat "$temp_dir/pylint.json"
+
+        # Extract score
+        file_score=$(awk '/Your code has been rated at/ {{print $7}}' "$temp_dir/pylint.txt" | cut -d'/' -f1)
+        if [ -z "$file_score" ] || ! [[ "$file_score" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+            file_score="0.0"
+        fi
+
+        # Process file results
+        jq -n --arg file "$file" \
+              --arg score "$file_score" \
+              --slurpfile messages "$temp_dir/pylint.json" \
+              '{{
+                "file": $file,
+                "score": ($score | tonumber),
+                "messages": $messages[0],
+                "error_count": ($messages[0] | map(select(.type=="error")) | length),
+                "warning_count": ($messages[0] | map(select(.type=="warning")) | length),
+                "convention_count": ($messages[0] | map(select(.type=="convention")) | length)
+              }}' > "$temp_dir/file_report.json"
+
+        # Append to main report
+        jq -s '.[0] + [.[1]]' {error_output_path} "$temp_dir/file_report.json" > "$temp_dir/new_report.json"
+        mv "$temp_dir/new_report.json" {error_output_path}
+
+    done <<< "$python_files"
+
+    # Generate final summary
+    jq -r 'reduce .[] as $file (
+        {{"global_score": 0, "total_errors": 0, "total_warnings": 0, "total_conventions": 0, "count": 0}};
+        {{
+            "global_score": (.global_score + ($file.score)),
+            "total_errors": (.total_errors + $file.error_count),
+            "total_warnings": (.total_warnings + $file.warning_count),
+            "total_conventions": (.total_conventions + $file.convention_count),
+            "count": (.count + 1)
+        }}
+    ) | {{
+        "global_score": (if .count > 0 then (.global_score / .count) else 10.0 end),
+        "total_errors": .total_errors,
+        "total_warnings": .total_warnings,
+        "total_conventions": .total_conventions
+    }}' {error_output_path} > {pylint_output_path}
+    
+    jq 'map(del(.score))' {error_output_path} > "$temp_dir/cleaned_errors.json" && mv "$temp_dir/cleaned_errors.json" {error_output_path}
+
+    '''
+
+    eval_commands = [
+        "set -ex",
+        "source /opt/miniconda3/bin/activate",
+        f"conda activate {env_name}",
+        f"cd {repo_directory}",
+        f"git config --global --add safe.directory {repo_directory}",
+        reset_command,
+        apply_patch_command,
+        script.strip(),
+        reset_command
+    ]
+    return eval_commands
+
+
 
 def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
     if isinstance(instance, TestSpec):
@@ -381,6 +503,7 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
     return TestSpec(
         instance_id=instance_id,
         repo=repo,
+        base_commit=instance["base_commit"],
         env_script_list=env_script_list,
         repo_script_list=repo_script_list,
         eval_script_list=eval_script_list, # Contains Test Directives
