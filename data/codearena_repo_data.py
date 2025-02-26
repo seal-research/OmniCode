@@ -11,7 +11,7 @@
             ],
             "test_cmd": "pytest -rA --tb=long", 
         }
-        for k in ['0.55', '0.56', '0.87']
+        for k in ['0.55', '0.56']
     }
 },
 }
