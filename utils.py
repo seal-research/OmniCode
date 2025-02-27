@@ -326,14 +326,16 @@ def get_fully_qualified_name(source_code: str, parser: Parser, line_number: int)
     tree = parser.parse(source_code.encode("utf8"))
     source_bytes = source_code.encode("utf8")
     # Convert external line number (1-indexed) to a point (row, column)
-    # We use column 0 so that we grab the first node on that line.
-    target_point = (line_number - 1, 0)
+    # figure out leading whitespace to use as column
+    line_source_code = source_code.splitlines()[line_number - 1]
+    leading_whitespace = len(line_source_code) - len(line_source_code.lstrip())
+    target_point = (line_number - 1, leading_whitespace)
 
     # Find the smallest node that spans our target point.
     node = tree.root_node.descendant_for_point_range(target_point, target_point)
     if node is None:
         return None
-
+    
     # Walk upward from the node to find any surrounding function or class definitions.
     names = []
     current = node
@@ -381,12 +383,17 @@ def get_modified_functions(diff_str: str, repo_path: Path, base_commit: str) -> 
         patch_set = PatchSet(diff_str)
         modified_functions = []
         for patched_file in patch_set:
+            offset = 1
             for hunk in patched_file:
                 for line in hunk:
+                    func_name = None
                     if line.is_added:
-                        continue
-                    breakpoint()
-                    func_name = get_function_name(repo_path / patched_file.path, line.source_line_no)
+                        func_name = get_function_name(repo_path / patched_file.path, line.target_line_no - offset)
+                        offset += 1
+                    if line.is_removed:
+                        func_name = get_function_name(repo_path / patched_file.path, line.source_line_no)
+                        offset -= 1
+
                     if func_name is None:
                         continue
                     func_fqn = patched_file.path + ":" + func_name
