@@ -126,6 +126,7 @@ def main(
     input_tasks_path: Path,
     output_dir_path: Path,
     model_name: str,
+    instance_ids: list[str] | None= None,
 ):
     if input_tasks_path.exists():
         if input_tasks_path.suffix.endswith("json"):
@@ -146,10 +147,8 @@ def main(
     if not (isinstance(dataset, list) and all(isinstance(d, dict) for d in dataset)):
         raise RuntimeError(f"Data folllows incorrect format")
 
-    dataset = [
-        d for d in dataset
-        if ("bad_patch" not in d or (isinstance(d['bad_patch'], str) and d['bad_patch'].strip() != ''))
-    ]
+    if instance_ids is not None:
+        dataset = [d for d in dataset if d["instance_id"] in instance_ids]
 
     existing_ids = set()
     
@@ -185,6 +184,7 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("-i", "--input_tasks", type=str, required=True)
+    parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gpt-4o")
     args = parser.parse_args()
@@ -193,5 +193,6 @@ if __name__ == '__main__':
         input_tasks_path=Path(args.input_tasks),
         output_dir_path=Path(args.output_dir),
         model_name=args.model_name,
+        instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
     )
 
