@@ -1,0 +1,702 @@
+diff --git a/airflow/api_fastapi/core_api/datamodels/dag_run.py b/airflow/api_fastapi/core_api/datamodels/dag_run.py
+index 77a5bedcde14e..77727406bcea9 100644
+--- a/airflow/api_fastapi/core_api/datamodels/dag_run.py
++++ b/airflow/api_fastapi/core_api/datamodels/dag_run.py
+@@ -116,6 +116,8 @@ class DAGRunsBatchBody(StrictBaseModel):
+     page_limit: NonNegativeInt = 100
+     dag_ids: list[str] | None = None
+     states: list[DagRunState | None] | None = None
++    run_after_gte: AwareDatetime | None = None
++    run_after_lte: AwareDatetime | None = None
+     logical_date_gte: AwareDatetime | None = None
+     logical_date_lte: AwareDatetime | None = None
+     start_date_gte: AwareDatetime | None = None
+diff --git a/airflow/api_fastapi/core_api/openapi/v1-generated.yaml b/airflow/api_fastapi/core_api/openapi/v1-generated.yaml
+index 660f1c243483f..550c7747ee34c 100644
+--- a/airflow/api_fastapi/core_api/openapi/v1-generated.yaml
++++ b/airflow/api_fastapi/core_api/openapi/v1-generated.yaml
+@@ -2230,6 +2230,24 @@ paths:
+           minimum: 0
+           default: 0
+           title: Offset
++      - name: run_after_gte
++        in: query
++        required: false
++        schema:
++          anyOf:
++          - type: string
++            format: date-time
++          - type: 'null'
++          title: Run After Gte
++      - name: run_after_lte
++        in: query
++        required: false
++        schema:
++          anyOf:
++          - type: string
++            format: date-time
++          - type: 'null'
++          title: Run After Lte
+       - name: logical_date_gte
+         in: query
+         required: false
+@@ -8418,6 +8436,18 @@ components:
+             type: array
+           - type: 'null'
+           title: States
++        run_after_gte:
++          anyOf:
++          - type: string
++            format: date-time
++          - type: 'null'
++          title: Run After Gte
++        run_after_lte:
++          anyOf:
++          - type: string
++            format: date-time
++          - type: 'null'
++          title: Run After Lte
+         logical_date_gte:
+           anyOf:
+           - type: string
+diff --git a/airflow/api_fastapi/core_api/routes/public/dag_run.py b/airflow/api_fastapi/core_api/routes/public/dag_run.py
+index c1ce04c31f94f..fc4397447da12 100644
+--- a/airflow/api_fastapi/core_api/routes/public/dag_run.py
++++ b/airflow/api_fastapi/core_api/routes/public/dag_run.py
+@@ -269,6 +269,7 @@ def get_dag_runs(
+     dag_id: str,
+     limit: QueryLimit,
+     offset: QueryOffset,
++    run_after: Annotated[RangeFilter, Depends(datetime_range_filter_factory("run_after", DagRun))],
+     logical_date: Annotated[RangeFilter, Depends(datetime_range_filter_factory("logical_date", DagRun))],
+     start_date_range: Annotated[RangeFilter, Depends(datetime_range_filter_factory("start_date", DagRun))],
+     end_date_range: Annotated[RangeFilter, Depends(datetime_range_filter_factory("end_date", DagRun))],
+@@ -284,6 +285,7 @@ def get_dag_runs(
+                     "dag_id",
+                     "run_id",
+                     "logical_date",
++                    "run_after",
+                     "start_date",
+                     "end_date",
+                     "updated_at",
+@@ -314,7 +316,7 @@ def get_dag_runs(
+ 
+     dag_run_select, total_entries = paginated_select(
+         statement=query,
+-        filters=[logical_date, start_date_range, end_date_range, update_at_range, state],
++        filters=[run_after, logical_date, start_date_range, end_date_range, update_at_range, state],
+         order_by=order_by,
+         offset=offset,
+         limit=limit,
+@@ -416,6 +418,10 @@ def get_list_dag_runs_batch(
+         Range(lower_bound=body.logical_date_gte, upper_bound=body.logical_date_lte),
+         attribute=DagRun.logical_date,
+     )
++    run_after = RangeFilter(
++        Range(lower_bound=body.run_after_gte, upper_bound=body.run_after_lte),
++        attribute=DagRun.run_after,
++    )
+     start_date = RangeFilter(
+         Range(lower_bound=body.start_date_gte, upper_bound=body.start_date_lte),
+         attribute=DagRun.start_date,
+@@ -434,6 +440,7 @@ def get_list_dag_runs_batch(
+             "id",
+             "state",
+             "dag_id",
++            "run_after",
+             "logical_date",
+             "run_id",
+             "start_date",
+@@ -449,7 +456,7 @@ def get_list_dag_runs_batch(
+     base_query = select(DagRun)
+     dag_runs_select, total_entries = paginated_select(
+         statement=base_query,
+-        filters=[dag_ids, logical_date, start_date, end_date, state],
++        filters=[dag_ids, logical_date, run_after, start_date, end_date, state],
+         order_by=order_by,
+         offset=offset,
+         limit=limit,
+diff --git a/airflow/api_fastapi/core_api/routes/ui/dags.py b/airflow/api_fastapi/core_api/routes/ui/dags.py
+index 0ed999c1c99cf..e89855fe5426f 100644
+--- a/airflow/api_fastapi/core_api/routes/ui/dags.py
++++ b/airflow/api_fastapi/core_api/routes/ui/dags.py
+@@ -74,39 +74,39 @@ def recent_dag_runs(
+     recent_runs_subquery = (
+         select(
+             DagRun.dag_id,
+-            DagRun.logical_date,
++            DagRun.run_after,
+             func.rank()
+             .over(
+                 partition_by=DagRun.dag_id,
+-                order_by=DagRun.logical_date.desc(),
++                order_by=DagRun.run_after.desc(),
+             )
+             .label("rank"),
+         )
+-        .order_by(DagRun.logical_date.desc())
++        .order_by(DagRun.run_after.desc())
+         .subquery()
+     )
+     dags_with_recent_dag_runs_select = (
+         select(
+             DagRun,
+             DagModel,
+-            recent_runs_subquery.c.logical_date,
++            recent_runs_subquery.c.run_after,
+         )
+         .join(DagModel, DagModel.dag_id == recent_runs_subquery.c.dag_id)
+         .join(
+             DagRun,
+             and_(
+                 DagRun.dag_id == DagModel.dag_id,
+-                DagRun.logical_date == recent_runs_subquery.c.logical_date,
++                DagRun.run_after == recent_runs_subquery.c.run_after,
+             ),
+         )
+         .where(recent_runs_subquery.c.rank <= dag_runs_limit)
+         .group_by(
+             DagModel.dag_id,
+-            recent_runs_subquery.c.logical_date,
+-            DagRun.logical_date,
++            recent_runs_subquery.c.run_after,
++            DagRun.run_after,
+             DagRun.id,
+         )
+-        .order_by(recent_runs_subquery.c.logical_date.desc())
++        .order_by(recent_runs_subquery.c.run_after.desc())
+     )
+     dags_with_recent_dag_runs_select_filter, _ = paginated_select(
+         statement=dags_with_recent_dag_runs_select,
+diff --git a/airflow/ui/openapi-gen/queries/common.ts b/airflow/ui/openapi-gen/queries/common.ts
+index d89d185783965..5d9d328739d73 100644
+--- a/airflow/ui/openapi-gen/queries/common.ts
++++ b/airflow/ui/openapi-gen/queries/common.ts
+@@ -578,6 +578,8 @@ export const UseDagRunServiceGetDagRunsKeyFn = (
+     logicalDateLte,
+     offset,
+     orderBy,
++    runAfterGte,
++    runAfterLte,
+     startDateGte,
+     startDateLte,
+     state,
+@@ -592,6 +594,8 @@ export const UseDagRunServiceGetDagRunsKeyFn = (
+     logicalDateLte?: string;
+     offset?: number;
+     orderBy?: string;
++    runAfterGte?: string;
++    runAfterLte?: string;
+     startDateGte?: string;
+     startDateLte?: string;
+     state?: string[];
+@@ -611,6 +615,8 @@ export const UseDagRunServiceGetDagRunsKeyFn = (
+       logicalDateLte,
+       offset,
+       orderBy,
++      runAfterGte,
++      runAfterLte,
+       startDateGte,
+       startDateLte,
+       state,
+diff --git a/airflow/ui/openapi-gen/queries/prefetch.ts b/airflow/ui/openapi-gen/queries/prefetch.ts
+index b3c706fad9695..b2ee8421e4c5c 100644
+--- a/airflow/ui/openapi-gen/queries/prefetch.ts
++++ b/airflow/ui/openapi-gen/queries/prefetch.ts
+@@ -771,6 +771,8 @@ export const prefetchUseDagRunServiceGetUpstreamAssetEvents = (
+  * @param data.dagId
+  * @param data.limit
+  * @param data.offset
++ * @param data.runAfterGte
++ * @param data.runAfterLte
+  * @param data.logicalDateGte
+  * @param data.logicalDateLte
+  * @param data.startDateGte
+@@ -795,6 +797,8 @@ export const prefetchUseDagRunServiceGetDagRuns = (
+     logicalDateLte,
+     offset,
+     orderBy,
++    runAfterGte,
++    runAfterLte,
+     startDateGte,
+     startDateLte,
+     state,
+@@ -809,6 +813,8 @@ export const prefetchUseDagRunServiceGetDagRuns = (
+     logicalDateLte?: string;
+     offset?: number;
+     orderBy?: string;
++    runAfterGte?: string;
++    runAfterLte?: string;
+     startDateGte?: string;
+     startDateLte?: string;
+     state?: string[];
+@@ -826,6 +832,8 @@ export const prefetchUseDagRunServiceGetDagRuns = (
+       logicalDateLte,
+       offset,
+       orderBy,
++      runAfterGte,
++      runAfterLte,
+       startDateGte,
+       startDateLte,
+       state,
+@@ -842,6 +850,8 @@ export const prefetchUseDagRunServiceGetDagRuns = (
+         logicalDateLte,
+         offset,
+         orderBy,
++        runAfterGte,
++        runAfterLte,
+         startDateGte,
+         startDateLte,
+         state,
+diff --git a/airflow/ui/openapi-gen/queries/queries.ts b/airflow/ui/openapi-gen/queries/queries.ts
+index 531102d2dd2c1..226127fc337c4 100644
+--- a/airflow/ui/openapi-gen/queries/queries.ts
++++ b/airflow/ui/openapi-gen/queries/queries.ts
+@@ -939,6 +939,8 @@ export const useDagRunServiceGetUpstreamAssetEvents = <
+  * @param data.dagId
+  * @param data.limit
+  * @param data.offset
++ * @param data.runAfterGte
++ * @param data.runAfterLte
+  * @param data.logicalDateGte
+  * @param data.logicalDateLte
+  * @param data.startDateGte
+@@ -966,6 +968,8 @@ export const useDagRunServiceGetDagRuns = <
+     logicalDateLte,
+     offset,
+     orderBy,
++    runAfterGte,
++    runAfterLte,
+     startDateGte,
+     startDateLte,
+     state,
+@@ -980,6 +984,8 @@ export const useDagRunServiceGetDagRuns = <
+     logicalDateLte?: string;
+     offset?: number;
+     orderBy?: string;
++    runAfterGte?: string;
++    runAfterLte?: string;
+     startDateGte?: string;
+     startDateLte?: string;
+     state?: string[];
+@@ -1000,6 +1006,8 @@ export const useDagRunServiceGetDagRuns = <
+         logicalDateLte,
+         offset,
+         orderBy,
++        runAfterGte,
++        runAfterLte,
+         startDateGte,
+         startDateLte,
+         state,
+@@ -1018,6 +1026,8 @@ export const useDagRunServiceGetDagRuns = <
+         logicalDateLte,
+         offset,
+         orderBy,
++        runAfterGte,
++        runAfterLte,
+         startDateGte,
+         startDateLte,
+         state,
+diff --git a/airflow/ui/openapi-gen/queries/suspense.ts b/airflow/ui/openapi-gen/queries/suspense.ts
+index 8b304aa8d6d14..27a58d791ed7d 100644
+--- a/airflow/ui/openapi-gen/queries/suspense.ts
++++ b/airflow/ui/openapi-gen/queries/suspense.ts
+@@ -916,6 +916,8 @@ export const useDagRunServiceGetUpstreamAssetEventsSuspense = <
+  * @param data.dagId
+  * @param data.limit
+  * @param data.offset
++ * @param data.runAfterGte
++ * @param data.runAfterLte
+  * @param data.logicalDateGte
+  * @param data.logicalDateLte
+  * @param data.startDateGte
+@@ -943,6 +945,8 @@ export const useDagRunServiceGetDagRunsSuspense = <
+     logicalDateLte,
+     offset,
+     orderBy,
++    runAfterGte,
++    runAfterLte,
+     startDateGte,
+     startDateLte,
+     state,
+@@ -957,6 +961,8 @@ export const useDagRunServiceGetDagRunsSuspense = <
+     logicalDateLte?: string;
+     offset?: number;
+     orderBy?: string;
++    runAfterGte?: string;
++    runAfterLte?: string;
+     startDateGte?: string;
+     startDateLte?: string;
+     state?: string[];
+@@ -977,6 +983,8 @@ export const useDagRunServiceGetDagRunsSuspense = <
+         logicalDateLte,
+         offset,
+         orderBy,
++        runAfterGte,
++        runAfterLte,
+         startDateGte,
+         startDateLte,
+         state,
+@@ -995,6 +1003,8 @@ export const useDagRunServiceGetDagRunsSuspense = <
+         logicalDateLte,
+         offset,
+         orderBy,
++        runAfterGte,
++        runAfterLte,
+         startDateGte,
+         startDateLte,
+         state,
+diff --git a/airflow/ui/openapi-gen/requests/schemas.gen.ts b/airflow/ui/openapi-gen/requests/schemas.gen.ts
+index bb1f1a998f0ac..cdd063506696d 100644
+--- a/airflow/ui/openapi-gen/requests/schemas.gen.ts
++++ b/airflow/ui/openapi-gen/requests/schemas.gen.ts
+@@ -2418,6 +2418,30 @@ export const $DAGRunsBatchBody = {
+       ],
+       title: "States",
+     },
++    run_after_gte: {
++      anyOf: [
++        {
++          type: "string",
++          format: "date-time",
++        },
++        {
++          type: "null",
++        },
++      ],
++      title: "Run After Gte",
++    },
++    run_after_lte: {
++      anyOf: [
++        {
++          type: "string",
++          format: "date-time",
++        },
++        {
++          type: "null",
++        },
++      ],
++      title: "Run After Lte",
++    },
+     logical_date_gte: {
+       anyOf: [
+         {
+diff --git a/airflow/ui/openapi-gen/requests/services.gen.ts b/airflow/ui/openapi-gen/requests/services.gen.ts
+index 995e95e2ea358..a56ebe886582e 100644
+--- a/airflow/ui/openapi-gen/requests/services.gen.ts
++++ b/airflow/ui/openapi-gen/requests/services.gen.ts
+@@ -1371,6 +1371,8 @@ export class DagRunService {
+    * @param data.dagId
+    * @param data.limit
+    * @param data.offset
++   * @param data.runAfterGte
++   * @param data.runAfterLte
+    * @param data.logicalDateGte
+    * @param data.logicalDateLte
+    * @param data.startDateGte
+@@ -1394,6 +1396,8 @@ export class DagRunService {
+       query: {
+         limit: data.limit,
+         offset: data.offset,
++        run_after_gte: data.runAfterGte,
++        run_after_lte: data.runAfterLte,
+         logical_date_gte: data.logicalDateGte,
+         logical_date_lte: data.logicalDateLte,
+         start_date_gte: data.startDateGte,
+diff --git a/airflow/ui/openapi-gen/requests/types.gen.ts b/airflow/ui/openapi-gen/requests/types.gen.ts
+index 54e74a7198dbf..ff6cb20c7512b 100644
+--- a/airflow/ui/openapi-gen/requests/types.gen.ts
++++ b/airflow/ui/openapi-gen/requests/types.gen.ts
+@@ -628,6 +628,8 @@ export type DAGRunsBatchBody = {
+   page_limit?: number;
+   dag_ids?: Array<string> | null;
+   states?: Array<DagRunState | null> | null;
++  run_after_gte?: string | null;
++  run_after_lte?: string | null;
+   logical_date_gte?: string | null;
+   logical_date_lte?: string | null;
+   start_date_gte?: string | null;
+@@ -1884,6 +1886,8 @@ export type GetDagRunsData = {
+   logicalDateLte?: string | null;
+   offset?: number;
+   orderBy?: string;
++  runAfterGte?: string | null;
++  runAfterLte?: string | null;
+   startDateGte?: string | null;
+   startDateLte?: string | null;
+   state?: Array<string>;
+diff --git a/airflow/ui/src/components/DagRunInfo.tsx b/airflow/ui/src/components/DagRunInfo.tsx
+index 55739b4f98d12..80742a3868747 100644
+--- a/airflow/ui/src/components/DagRunInfo.tsx
++++ b/airflow/ui/src/components/DagRunInfo.tsx
+@@ -25,59 +25,44 @@ import Time from "src/components/Time";
+ import { Tooltip } from "src/components/ui";
+ 
+ type Props = {
+-  readonly dataIntervalEnd?: string | null;
+-  readonly dataIntervalStart?: string | null;
+   readonly endDate?: string | null;
+-  readonly nextDagrunCreateAfter?: string | null;
++  readonly logicalDate?: string | null;
++  readonly runAfter: string;
+   readonly startDate?: string | null;
+   readonly state?: DAGRunResponse["state"];
+ };
+ 
+-const DagRunInfo = ({
+-  dataIntervalEnd,
+-  dataIntervalStart,
+-  endDate,
+-  nextDagrunCreateAfter,
+-  startDate,
+-  state,
+-}: Props) =>
+-  Boolean(dataIntervalStart) && Boolean(dataIntervalEnd) ? (
+-    <Tooltip
+-      content={
+-        <VStack align="left" gap={0}>
+-          {state === undefined ? undefined : <Text>State: {state}</Text>}
+-          {Boolean(nextDagrunCreateAfter) ? (
+-            <Text>
+-              Run After: <Time datetime={nextDagrunCreateAfter} />
+-            </Text>
+-          ) : undefined}
+-          {Boolean(startDate) ? (
+-            <Text>
+-              Start Date: <Time datetime={startDate} />
+-            </Text>
+-          ) : undefined}
+-          {Boolean(endDate) ? (
+-            <Text>
+-              End Date: <Time datetime={endDate} />
+-            </Text>
+-          ) : undefined}
+-          {Boolean(startDate) ? (
+-            <Text>Duration: {dayjs.duration(dayjs(endDate).diff(startDate)).asSeconds()}s</Text>
+-          ) : undefined}
++const DagRunInfo = ({ endDate, logicalDate, runAfter, startDate, state }: Props) => (
++  <Tooltip
++    content={
++      <VStack align="left" gap={0}>
++        {state === undefined ? undefined : <Text>State: {state}</Text>}
++        {Boolean(logicalDate) ? (
+           <Text>
+-            Data Interval Start: <Time datetime={dataIntervalStart} />
++            Logical Date: <Time datetime={logicalDate} />
+           </Text>
++        ) : undefined}
++        {Boolean(startDate) ? (
+           <Text>
+-            Data Interval End: <Time datetime={dataIntervalEnd} />
++            Start Date: <Time datetime={startDate} />
+           </Text>
+-        </VStack>
+-      }
+-    >
+-      <Box>
+-        <Time datetime={dataIntervalStart} mr={2} showTooltip={false} />
+-        {state === undefined ? undefined : <StateBadge state={state} />}
+-      </Box>
+-    </Tooltip>
+-  ) : undefined;
++        ) : undefined}
++        {Boolean(endDate) ? (
++          <Text>
++            End Date: <Time datetime={endDate} />
++          </Text>
++        ) : undefined}
++        {Boolean(startDate) ? (
++          <Text>Duration: {dayjs.duration(dayjs(endDate).diff(startDate)).asSeconds()}s</Text>
++        ) : undefined}
++      </VStack>
++    }
++  >
++    <Box>
++      <Time datetime={runAfter} mr={2} showTooltip={false} />
++      {state === undefined ? undefined : <StateBadge state={state} />}
++    </Box>
++  </Tooltip>
++);
+ 
+ export default DagRunInfo;
+diff --git a/airflow/ui/src/pages/Dag/Header.tsx b/airflow/ui/src/pages/Dag/Header.tsx
+index 618bc8a4f665a..525df81ba769b 100644
+--- a/airflow/ui/src/pages/Dag/Header.tsx
++++ b/airflow/ui/src/pages/Dag/Header.tsx
+@@ -93,20 +93,19 @@ export const Header = ({
+           <Stat label="Latest Run">
+             {Boolean(latestRun) && latestRun !== undefined ? (
+               <DagRunInfo
+-                dataIntervalEnd={latestRun.data_interval_end}
+-                dataIntervalStart={latestRun.data_interval_start}
+                 endDate={latestRun.end_date}
++                logicalDate={latestRun.logical_date}
++                runAfter={latestRun.run_after}
+                 startDate={latestRun.start_date}
+                 state={latestRun.state}
+               />
+             ) : undefined}
+           </Stat>
+           <Stat label="Next Run">
+-            {Boolean(dagWithRuns?.next_dagrun) ? (
++            {Boolean(dagWithRuns?.next_dagrun_create_after) ? (
+               <DagRunInfo
+-                dataIntervalEnd={dagWithRuns?.next_dagrun_data_interval_end}
+-                dataIntervalStart={dagWithRuns?.next_dagrun_data_interval_start}
+-                nextDagrunCreateAfter={dagWithRuns?.next_dagrun_create_after}
++                logicalDate={dagWithRuns?.next_dagrun}
++                runAfter={dagWithRuns?.next_dagrun_create_after as string}
+               />
+             ) : undefined}
+           </Stat>
+diff --git a/airflow/ui/src/pages/Dag/Overview/Overview.tsx b/airflow/ui/src/pages/Dag/Overview/Overview.tsx
+index 76275f146284b..3e6e213196b93 100644
+--- a/airflow/ui/src/pages/Dag/Overview/Overview.tsx
++++ b/airflow/ui/src/pages/Dag/Overview/Overview.tsx
+@@ -45,15 +45,15 @@ export const Overview = () => {
+ 
+   const { data: failedRuns, isLoading: isLoadingFailedRuns } = useDagRunServiceGetDagRuns({
+     dagId: dagId ?? "",
+-    logicalDateGte: startDate,
+-    logicalDateLte: endDate,
++    runAfterGte: startDate,
++    runAfterLte: endDate,
+     state: ["failed"],
+   });
+ 
+   const { data: runs, isLoading: isLoadingRuns } = useDagRunServiceGetDagRuns({
+     dagId: dagId ?? "",
+     limit: 14,
+-    orderBy: "-logical_date",
++    orderBy: "-run_after",
+   });
+ 
+   return (
+@@ -88,7 +88,7 @@ export const Overview = () => {
+           count={failedRuns?.total_entries ?? 0}
+           endDate={endDate}
+           events={(failedRuns?.dag_runs ?? []).map((dr) => ({
+-            timestamp: dr.start_date ?? dr.logical_date ?? "",
++            timestamp: dr.run_after,
+           }))}
+           isLoading={isLoadingFailedRuns}
+           label="Failed Run"
+diff --git a/airflow/ui/src/pages/DagRuns.tsx b/airflow/ui/src/pages/DagRuns.tsx
+index de13ddb604717..a98df1c70eabb 100644
+--- a/airflow/ui/src/pages/DagRuns.tsx
++++ b/airflow/ui/src/pages/DagRuns.tsx
+@@ -53,16 +53,15 @@ const runColumns = (dagId?: string): Array<ColumnDef<DAGRunResponse>> => [
+         },
+       ]),
+   {
+-    accessorKey: "run_id",
++    accessorKey: "run_after",
+     cell: ({ row: { original } }: DagRunRow) => (
+       <Link asChild color="fg.info" fontWeight="bold">
+         <RouterLink to={`/dags/${original.dag_id}/runs/${original.dag_run_id}`}>
+-          {original.dag_run_id}
++          <Time datetime={original.run_after} />
+         </RouterLink>
+       </Link>
+     ),
+-    enableSorting: false,
+-    header: "Run ID",
++    header: "Run After",
+   },
+   {
+     accessorKey: "state",
+@@ -123,7 +122,7 @@ export const DagRuns = () => {
+   const { setTableURLState, tableURLState } = useTableURLState();
+   const { pagination, sorting } = tableURLState;
+   const [sort] = sorting;
+-  const orderBy = sort ? `${sort.desc ? "-" : ""}${sort.id}` : "-logical_date";
++  const orderBy = sort ? `${sort.desc ? "-" : ""}${sort.id}` : "-run_after";
+ 
+   const filteredState = searchParams.get(STATE_PARAM);
+ 
+diff --git a/airflow/ui/src/pages/DagsList/DagCard.tsx b/airflow/ui/src/pages/DagsList/DagCard.tsx
+index d99845cdb4b0f..f926bab5abd39 100644
+--- a/airflow/ui/src/pages/DagsList/DagCard.tsx
++++ b/airflow/ui/src/pages/DagsList/DagCard.tsx
+@@ -65,9 +65,9 @@ export const DagCard = ({ dag }: Props) => {
+             <Link asChild color="fg.info">
+               <RouterLink to={`/dags/${latestRun.dag_id}/runs/${latestRun.dag_run_id}`}>
+                 <DagRunInfo
+-                  dataIntervalEnd={latestRun.data_interval_end}
+-                  dataIntervalStart={latestRun.data_interval_start}
+                   endDate={latestRun.end_date}
++                  logicalDate={latestRun.logical_date}
++                  runAfter={latestRun.run_after}
+                   startDate={latestRun.start_date}
+                   state={latestRun.state}
+                 />
+@@ -77,12 +77,8 @@ export const DagCard = ({ dag }: Props) => {
+           ) : undefined}
+         </Stat>
+         <Stat label="Next Run">
+-          {Boolean(dag.next_dagrun) ? (
+-            <DagRunInfo
+-              dataIntervalEnd={dag.next_dagrun_data_interval_end}
+-              dataIntervalStart={dag.next_dagrun_data_interval_start}
+-              nextDagrunCreateAfter={dag.next_dagrun_create_after}
+-            />
++          {Boolean(dag.next_dagrun_create_after) ? (
++            <DagRunInfo logicalDate={dag.next_dagrun} runAfter={dag.next_dagrun_create_after as string} />
+           ) : undefined}
+         </Stat>
+         <RecentRuns latestRuns={dag.latest_dag_runs} />
+diff --git a/airflow/ui/src/pages/DagsList/DagsList.tsx b/airflow/ui/src/pages/DagsList/DagsList.tsx
+index 31b5eb04a4670..ac71234f3071a 100644
+--- a/airflow/ui/src/pages/DagsList/DagsList.tsx
++++ b/airflow/ui/src/pages/DagsList/DagsList.tsx
+@@ -87,11 +87,10 @@ const columns: Array<ColumnDef<DAGWithLatestDagRunsResponse>> = [
+   {
+     accessorKey: "next_dagrun",
+     cell: ({ row: { original } }) =>
+-      Boolean(original.next_dagrun) ? (
++      Boolean(original.next_dagrun_create_after) ? (
+         <DagRunInfo
+-          dataIntervalEnd={original.next_dagrun_data_interval_end}
+-          dataIntervalStart={original.next_dagrun_data_interval_start}
+-          nextDagrunCreateAfter={original.next_dagrun_create_after}
++          logicalDate={original.next_dagrun}
++          runAfter={original.next_dagrun_create_after as string}
+         />
+       ) : undefined,
+     header: "Next Dag Run",
+@@ -101,9 +100,9 @@ const columns: Array<ColumnDef<DAGWithLatestDagRunsResponse>> = [
+     cell: ({ row: { original } }) =>
+       original.latest_dag_runs[0] ? (
+         <DagRunInfo
+-          dataIntervalEnd={original.latest_dag_runs[0].data_interval_end}
+-          dataIntervalStart={original.latest_dag_runs[0].data_interval_start}
+           endDate={original.latest_dag_runs[0].end_date}
++          logicalDate={original.latest_dag_runs[0].logical_date}
++          runAfter={original.latest_dag_runs[0].run_after}
+           startDate={original.latest_dag_runs[0].start_date}
+           state={original.latest_dag_runs[0].state}
+         />
+diff --git a/airflow/ui/src/pages/DagsList/RecentRuns.tsx b/airflow/ui/src/pages/DagsList/RecentRuns.tsx
+index 4b80355123024..045a85d45fcb0 100644
+--- a/airflow/ui/src/pages/DagsList/RecentRuns.tsx
++++ b/airflow/ui/src/pages/DagsList/RecentRuns.tsx
+@@ -56,8 +56,18 @@ export const RecentRuns = ({
+             <Box>
+               <Text>State: {run.state}</Text>
+               <Text>
+-                Start Date: <Time datetime={run.start_date} />
++                Run After: <Time datetime={run.run_after} />
+               </Text>
++              {run.start_date === null ? undefined : (
++                <Text>
++                  Start Date: <Time datetime={run.start_date} />
++                </Text>
++              )}
++              {run.end_date === null ? undefined : (
++                <Text>
++                  End Date: <Time datetime={run.end_date} />
++                </Text>
++              )}
+               <Text>Duration: {run.duration.toFixed(2)}s</Text>
+             </Box>
+           }

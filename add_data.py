@@ -86,8 +86,7 @@ def main():
                 if len(repo_data_unspecified) == 0:
                     st.success(f"REPO_DATA specified for all repositories")
                 else:
-                    st.error(f"REPO_DATA not specified for the following repositories:\n{'\n'.join(repo_data_unspecified)}")
-
+                    st.error("REPO_DATA not specified for the following repositories:\n" + "\n".join(repo_data_unspecified))
 
                 st.dataframe([
                     {

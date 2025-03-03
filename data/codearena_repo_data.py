@@ -1,17 +1,16 @@
 {
-"fastapi/fastapi": {
-    "MAP_REPO_TO_VERSION_PATHS": ["fastapi/__init__.py"],
+"Avaiga/taipy": {
+    "MAP_REPO_TO_VERSION_PATHS": ["taipy/__init__.py"],
     "MAP_REPO_TO_VERSION_PATTERNS":  ["__version__ = ['\"](.*)['\"]", "VERSION = \\((.*)\\)"],
     "MAP_REPO_VERSION_TO_SPECS": {
             k: {
-            "python": "3.7",
-            "install": "pip install -e '.[all, dev, test]'",
+            "python": "3.9",
+            "install": "pip install -e .",
             "pip_packages": [
-                "'flask<2.3.0'"
             ],
             "test_cmd": "pytest -rA --tb=long", 
         }
-        for k in ['0.55', '0.56', '0.87']
+        for k in ['4.0']
     }
 },
 }
