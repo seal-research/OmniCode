@@ -174,3 +174,5 @@ cython_debug/
 
 # github tokens
 github_tokens.sh
+
+logs/
