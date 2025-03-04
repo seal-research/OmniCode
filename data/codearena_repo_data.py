@@ -12,7 +12,6 @@
                     "pytest",
                     "sock",
                     "testbed",
-                    "botocore",
                     "Pillow",
                 ],
                 "test_cmd": "pytest -rA --tb=long",
