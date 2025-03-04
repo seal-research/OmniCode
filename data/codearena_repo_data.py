@@ -20,10 +20,10 @@
     "MAP_REPO_VERSION_TO_SPECS": {
             k: {
             "python": "3.7",
-            # "install": "pip install -e",
-            # "pip_packages": [
-
-            # ],
+            "install": "pip install -e '.[all, dev, test]'",
+            "pip_packages": [
+                "pytest"
+            ],
             "test_cmd": "pytest -rA --tb=long",
         }
         for k in ['2021.12', '2019.11']
