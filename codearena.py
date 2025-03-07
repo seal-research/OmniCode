@@ -3,6 +3,7 @@ from pathlib import Path
 import importlib
 
 from run_evaluation_GenTests import main as GenTestMain
+from runevaluation_StyleReview import main as StyleReviewMain
 import swebench
 from swebench.harness.utils import str2bool
 from swebench.harness.run_evaluation import main as RegularEval
@@ -81,6 +82,19 @@ def main():
     parser.add_argument(
         "--CodeMigration", action="store_true", help="Run the CodeMigration benchmark"
     )
+    parser.add_argument(
+        "--StyleReview", action="store_true", help="Run the StyleReview benchmark"
+    )
+    
+    # Add style review specific parameters
+    parser.add_argument(
+        "--min_score", type=float, default=None, 
+        help="Minimum acceptable pylint score (0-10) for StyleReview"
+    )
+    parser.add_argument(
+        "--max_severity", type=str, choices=['convention', 'warning', 'error'], default=None,
+        help="Maximum acceptable severity level for StyleReview"
+    )
 
     args = parser.parse_args()
 
@@ -94,11 +108,13 @@ def main():
         active_flags.append("CodeReview")
     if args.CodeMigration:
         active_flags.append("CodeMigration")
+    if args.StyleReview:
+        active_flags.append("StyleReview")
 
     # Ensure at least one flag is provided
     if not active_flags:
         print(
-            "Error: You must specify at least one of --BugFixing --TestGeneration, --CodeReview, or --CodeMigration."
+            "Error: You must specify at least one of --BugFixing, --TestGeneration, --CodeReview, --CodeMigration, or --StyleReview."
         )
         return
 
@@ -118,6 +134,14 @@ def main():
         swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
         swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
         swebench.harness.constants.MAP_REPO_VERSION_TO_SPECS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
+
+        from swebench.harness.log_parsers import parse_log_pytest, parse_log_pytest_options, parse_log_pytest_v2
+        if "MAP_REPO_TO_PARSER" in REPO_DATA[instance_repo]:
+            repo_log_parser = eval(REPO_DATA[instance_repo]["MAP_REPO_TO_PARSER"])
+        else:
+            repo_log_parser = parse_log_pytest
+        swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
+    
     importlib.reload(swebench)
 
 
@@ -145,16 +169,16 @@ def main():
         execute_command(
             GenTestMain,
             dataset_name=args.dataset_name,
-        split="test",  # Assuming split is always 'test', can be parameterized
-        instance_ids=args.instance_ids,
-        predictions_path=predictions_map["TestGeneration"],
-        max_workers=args.max_workers,
-        force_rebuild=args.force_rebuild,
-        cache_level=args.cache_level,
-        clean=args.clean,
-        open_file_limit=args.open_file_limit,
-        run_id=args.run_id,
-        timeout=args.timeout,
+            split="test",  # Assuming split is always 'test', can be parameterized
+            instance_ids=args.instance_ids,
+            predictions_path=predictions_map["TestGeneration"],
+            max_workers=args.max_workers,
+            force_rebuild=args.force_rebuild,
+            cache_level=args.cache_level,
+            clean=args.clean,
+            open_file_limit=args.open_file_limit,
+            run_id=args.run_id,
+            timeout=args.timeout,
         )
 
     # Handle CodeReview
@@ -179,6 +203,26 @@ def main():
     if "CodeMigration" in active_flags:
         print("Executing CodeMigration...")
         print(f"Code Migration is not yet supported!")
+        
+    # Handle StyleReview
+    if "StyleReview" in active_flags:
+        print("Executing StyleReview...")
+        execute_command(
+            StyleReviewMain,
+            dataset_name=args.dataset_name,
+            split="test",
+            instance_ids=args.instance_ids,
+            predictions_path=predictions_map["StyleReview"],
+            max_workers=args.max_workers,
+            force_rebuild=args.force_rebuild,
+            cache_level=args.cache_level,
+            clean=args.clean,
+            open_file_limit=args.open_file_limit,
+            run_id=args.run_id,
+            timeout=args.timeout,
+            min_score=args.min_score,
+            max_severity=args.max_severity
+        )
 
 
 if __name__ == "__main__":
