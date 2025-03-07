@@ -11,8 +11,10 @@
                     "testfixtures",
                     "pytest",
                     "sock",
-                    "testbed",
-                    "Pillow",
+                    "pillow",
+                    "botocore",
+                    "pexpect",
+                    "uvloop",
                 ],
                 "test_cmd": "pytest -rA --tb=long",
             }
