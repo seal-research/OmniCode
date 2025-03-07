@@ -3,6 +3,7 @@ from datasets import Dataset, load_dataset
 from typing import cast
 import json
 from pathlib import Path
+# from constants import KEY_INSTANCE_ID
 import pandas as pd
 import os
 import re
@@ -11,6 +12,41 @@ from swebench.harness.constants import (
     NON_TEST_EXTS,
     KEY_INSTANCE_ID
 )
+
+import tarfile
+from io import BytesIO
+
+def copy_from_container(container, src_path: Path, dest_path: Path):
+    """
+    Copies a file from the Docker container to the host.
+
+    Args:
+        container: Docker container object
+        src_path (Path): Path to the file in the container
+        dest_path (Path): Path to save the file on the host
+    """
+    try:
+        # Get the file as a tar archive from the container
+        bits, _ = container.get_archive(str(src_path))
+        
+        # Read the tar stream into a bytes buffer
+        tar_stream = BytesIO()
+        for chunk in bits:
+            tar_stream.write(chunk)
+        tar_stream.seek(0)
+        
+        # Extract the file from the tar archive
+        with tarfile.open(fileobj=tar_stream) as tar:
+            # Ensure the destination directory exists
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Extract the file
+            member = tar.getmembers()[0]  # Assumes single file
+            with open(dest_path, "wb") as f:
+                f.write(tar.extractfile(member).read())
+                
+    except Exception as e:
+        raise RuntimeError(f"Failed to copy {src_path} from container: {e}")
 
 def load_swebench_dataset(name="princeton-nlp/SWE-bench", split="test", instance_ids=None, full: bool = False) -> list[CodeArenaInstance]:
     """
