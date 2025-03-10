@@ -172,5 +172,7 @@ cython_debug/
 
 .DS_Store
 
+# github tokens
+github_tokens.sh
 
 logs/

@@ -7,6 +7,7 @@ from runevaluation_StyleReview import main as StyleReviewMain
 import swebench
 from swebench.harness.utils import str2bool
 from swebench.harness.run_evaluation import main as RegularEval
+from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
 
 
 CUR_DIR = Path(__file__).parent
@@ -85,10 +86,10 @@ def main():
     parser.add_argument(
         "--StyleReview", action="store_true", help="Run the StyleReview benchmark"
     )
-    
+
     # Add style review specific parameters
     parser.add_argument(
-        "--min_score", type=float, default=None, 
+        "--min_score", type=float, default=None,
         help="Minimum acceptable pylint score (0-10) for StyleReview"
     )
     parser.add_argument(
@@ -141,9 +142,12 @@ def main():
         else:
             repo_log_parser = parse_log_pytest
         swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
-    
-    importlib.reload(swebench)
 
+    # monkey patch the test_passed and test_failed functions in grading.py
+    swebench.harness.grading.test_passed = test_passed_prefix_match
+    swebench.harness.grading.test_failed = test_failed_prefix_match
+
+    importlib.reload(swebench)
 
     # Handle BugFixing
     if "BugFixing" in active_flags:
@@ -203,7 +207,7 @@ def main():
     if "CodeMigration" in active_flags:
         print("Executing CodeMigration...")
         print(f"Code Migration is not yet supported!")
-        
+
     # Handle StyleReview
     if "StyleReview" in active_flags:
         print("Executing StyleReview...")
