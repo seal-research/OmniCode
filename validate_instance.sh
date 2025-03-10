@@ -4,7 +4,7 @@
 # conda activate codearena
 
 # Use the INSTANCE_ID environment variable if set, otherwise use default
-INSTANCE_ID=${INSTANCE_ID:-celery__celery-8791}
+INSTANCE_ID=${INSTANCE_ID:-celery__celery-8702}
 
 # Run validation
 rm -rf logs
