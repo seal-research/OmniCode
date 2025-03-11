@@ -1,0 +1,21 @@
+import json
+import sys
+
+def extract_instance_ids(jsonl_file, output_file):
+    with open(jsonl_file, 'r', encoding='utf-8') as infile, open(output_file, 'w', encoding='utf-8') as outfile:
+        for line in infile:
+            try:
+                data = json.loads(line)
+                if "instance_id" in data:
+                    outfile.write(data["instance_id"] + "\t")  # Tab-separated for Excel
+            except json.JSONDecodeError:
+                pass
+        outfile.write("\n")  # Ensure final newline
+
+if __name__ == "__main__":
+    if len(sys.argv) != 3:
+        sys.exit(1)
+    
+    jsonl_file = sys.argv[1]
+    output_file = sys.argv[2]
+    extract_instance_ids(jsonl_file, output_file)

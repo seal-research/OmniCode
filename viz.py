@@ -34,6 +34,9 @@ def main():
     if "editable_instance" not in st.session_state:
         st.session_state.editable_instance = selected_instance.copy()
 
+    if st.session_state.editable_instance['instance_id'] != selected_instance['instance_id']:
+        st.session_state.editable_instance = selected_instance.copy()
+
     # Save changes button
     if st.button("Save Changes"):
         # Update the original data with the edited instance
