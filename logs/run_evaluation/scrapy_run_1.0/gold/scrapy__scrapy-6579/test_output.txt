@@ -1,0 +1,585 @@
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z '' ']'
++++ export CONDA_SHLVL=0
++++ CONDA_SHLVL=0
++++ '[' -n '' ']'
++++++ dirname /opt/miniconda3/bin/conda
+++++ dirname /opt/miniconda3/bin
++++ PATH=/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export PATH
++++ '[' -z '' ']'
++++ PS1=
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1=
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''1'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=1
++++ CONDA_SHLVL=1
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''2'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_1='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=2
+++ CONDA_SHLVL=2
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_1=/opt/miniconda3
+++ CONDA_PREFIX_1=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ cd /testbed
++ git config --global --add safe.directory /testbed
++ cd /testbed
++ git status
+On branch master
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   pyproject.toml
+	modified:   scrapy/core/downloader/handlers/http.py
+	modified:   scrapy/http/__init__.py
+	modified:   scrapy/linkextractors/__init__.py
+	modified:   scrapy/selector/__init__.py
+	modified:   scrapy/spiders/__init__.py
+
+no changes added to commit (use "git add" and/or "git commit -a")
++ git show
+commit c330a399dcc69f6d51fcfbe397fbc42b5a9ee323
+Merge: 6ae5b9267 176ae348c
+Author: Andrey Rakhmatullin <wrar@wrar.name>
+Date:   Thu Jan 2 17:38:15 2025 +0400
+
+    Merge pull request #6601 from wRAR/ruff-rules-5
+    
+    Add more Ruff rules, do some pylint cleanups
+
++ git diff c330a399dcc69f6d51fcfbe397fbc42b5a9ee323
+diff --git a/pyproject.toml b/pyproject.toml
+index 8c985753f..571a61f1c 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -72,9 +72,9 @@ version = {file = "./scrapy/VERSION"}
+ 
+ [tool.mypy]
+ ignore_missing_imports = true
++implicit_reexport = false
+ 
+ # Interface classes are hard to support
+-
+ [[tool.mypy.overrides]]
+ module = "twisted.internet.interfaces"
+ follow_imports = "skip"
+@@ -92,6 +92,14 @@ follow_imports = "skip"
+ module = "scrapy.settings.default_settings"
+ ignore_errors = true
+ 
++[[tool.mypy.overrides]]
++module = "itemadapter"
++implicit_reexport = true
++
++[[tool.mypy.overrides]]
++module = "twisted"
++implicit_reexport = true
++
+ [tool.bumpversion]
+ current_version = "2.12.0"
+ commit = true
+@@ -359,13 +367,9 @@ ignore = [
+ ]
+ 
+ [tool.ruff.lint.per-file-ignores]
+-# Exclude files that are meant to provide top-level imports
+-"scrapy/__init__.py" = ["E402"]
+-"scrapy/core/downloader/handlers/http.py" = ["F401"]
+-"scrapy/http/__init__.py" = ["F401"]
+-"scrapy/linkextractors/__init__.py" = ["E402", "F401"]
+-"scrapy/selector/__init__.py" = ["F401"]
+-"scrapy/spiders/__init__.py" = ["E402", "F401"]
++# Circular import workarounds
++"scrapy/linkextractors/__init__.py" = ["E402"]
++"scrapy/spiders/__init__.py" = ["E402"]
+ 
+ # Skip bandit in tests
+ "tests/**" = ["S"]
+diff --git a/scrapy/core/downloader/handlers/http.py b/scrapy/core/downloader/handlers/http.py
+index 52535bd8b..93b96c779 100644
+--- a/scrapy/core/downloader/handlers/http.py
++++ b/scrapy/core/downloader/handlers/http.py
+@@ -2,3 +2,8 @@ from scrapy.core.downloader.handlers.http10 import HTTP10DownloadHandler
+ from scrapy.core.downloader.handlers.http11 import (
+     HTTP11DownloadHandler as HTTPDownloadHandler,
+ )
++
++__all__ = [
++    "HTTP10DownloadHandler",
++    "HTTPDownloadHandler",
++]
+diff --git a/scrapy/http/__init__.py b/scrapy/http/__init__.py
+index d0b726bad..0e5c2b53b 100644
+--- a/scrapy/http/__init__.py
++++ b/scrapy/http/__init__.py
+@@ -15,3 +15,16 @@ from scrapy.http.response.html import HtmlResponse
+ from scrapy.http.response.json import JsonResponse
+ from scrapy.http.response.text import TextResponse
+ from scrapy.http.response.xml import XmlResponse
++
++__all__ = [
++    "FormRequest",
++    "Headers",
++    "HtmlResponse",
++    "JsonRequest",
++    "JsonResponse",
++    "Request",
++    "Response",
++    "TextResponse",
++    "XmlResponse",
++    "XmlRpcRequest",
++]
+diff --git a/scrapy/linkextractors/__init__.py b/scrapy/linkextractors/__init__.py
+index 1c7e96ae0..b39859f7b 100644
+--- a/scrapy/linkextractors/__init__.py
++++ b/scrapy/linkextractors/__init__.py
+@@ -126,3 +126,8 @@ def _is_valid_url(url: str) -> bool:
+ 
+ # Top-level imports
+ from scrapy.linkextractors.lxmlhtml import LxmlLinkExtractor as LinkExtractor
++
++__all__ = [
++    "IGNORED_EXTENSIONS",
++    "LinkExtractor",
++]
+diff --git a/scrapy/selector/__init__.py b/scrapy/selector/__init__.py
+index 85c500d66..7cfa3c364 100644
+--- a/scrapy/selector/__init__.py
++++ b/scrapy/selector/__init__.py
+@@ -4,3 +4,8 @@ Selectors
+ 
+ # top-level imports
+ from scrapy.selector.unified import Selector, SelectorList
++
++__all__ = [
++    "Selector",
++    "SelectorList",
++]
+diff --git a/scrapy/spiders/__init__.py b/scrapy/spiders/__init__.py
+index 6136dabc7..e255e91cc 100644
+--- a/scrapy/spiders/__init__.py
++++ b/scrapy/spiders/__init__.py
+@@ -117,3 +117,12 @@ class Spider(object_ref):
+ from scrapy.spiders.crawl import CrawlSpider, Rule
+ from scrapy.spiders.feed import CSVFeedSpider, XMLFeedSpider
+ from scrapy.spiders.sitemap import SitemapSpider
++
++__all__ = [
++    "CSVFeedSpider",
++    "CrawlSpider",
++    "Rule",
++    "SitemapSpider",
++    "Spider",
++    "XMLFeedSpider",
++]
++ source /opt/miniconda3/bin/activate
+++ _CONDA_ROOT=/opt/miniconda3
+++ . /opt/miniconda3/etc/profile.d/conda.sh
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ '[' -z x ']'
+++ conda activate
+++ local cmd=activate
+++ case "$cmd" in
+++ __conda_activate activate
+++ '[' -n '' ']'
+++ local ask_conda
++++ PS1='(testbed) '
++++ __conda_exe shell.posix activate
++++ /opt/miniconda3/bin/conda shell.posix activate
+++ ask_conda='PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ eval 'PS1='\''(base) '\''
+export PATH='\''/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3'\''
+export CONDA_SHLVL='\''3'\''
+export CONDA_DEFAULT_ENV='\''base'\''
+export CONDA_PROMPT_MODIFIER='\''(base) '\''
+export CONDA_PREFIX_2='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++++ PS1='(base) '
++++ export PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ PATH=/opt/miniconda3/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
++++ export CONDA_PREFIX=/opt/miniconda3
++++ CONDA_PREFIX=/opt/miniconda3
++++ export CONDA_SHLVL=3
++++ CONDA_SHLVL=3
++++ export CONDA_DEFAULT_ENV=base
++++ CONDA_DEFAULT_ENV=base
++++ export 'CONDA_PROMPT_MODIFIER=(base) '
++++ CONDA_PROMPT_MODIFIER='(base) '
++++ export CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ CONDA_PREFIX_2=/opt/miniconda3/envs/testbed
++++ export CONDA_EXE=/opt/miniconda3/bin/conda
++++ CONDA_EXE=/opt/miniconda3/bin/conda
++++ export _CE_M=
++++ _CE_M=
++++ export _CE_CONDA=
++++ _CE_CONDA=
++++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ __conda_hashr
+++ '[' -n '' ']'
+++ '[' -n '' ']'
+++ hash -r
++ conda activate testbed
++ local cmd=activate
++ case "$cmd" in
++ __conda_activate activate testbed
++ '[' -n '' ']'
++ local ask_conda
+++ PS1='(base) '
+++ __conda_exe shell.posix activate testbed
+++ /opt/miniconda3/bin/conda shell.posix activate testbed
++ ask_conda='PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
++ eval 'PS1='\''(testbed) '\''
+export PATH='\''/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'\''
+export CONDA_PREFIX='\''/opt/miniconda3/envs/testbed'\''
+export CONDA_SHLVL='\''4'\''
+export CONDA_DEFAULT_ENV='\''testbed'\''
+export CONDA_PROMPT_MODIFIER='\''(testbed) '\''
+export CONDA_PREFIX_3='\''/opt/miniconda3'\''
+export CONDA_EXE='\''/opt/miniconda3/bin/conda'\''
+export _CE_M='\'''\''
+export _CE_CONDA='\'''\''
+export CONDA_PYTHON_EXE='\''/opt/miniconda3/bin/python'\'''
+++ PS1='(testbed) '
+++ export PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ PATH=/opt/miniconda3/envs/testbed/bin:/opt/miniconda3/condabin:/opt/miniconda3/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+++ export CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ CONDA_PREFIX=/opt/miniconda3/envs/testbed
+++ export CONDA_SHLVL=4
+++ CONDA_SHLVL=4
+++ export CONDA_DEFAULT_ENV=testbed
+++ CONDA_DEFAULT_ENV=testbed
+++ export 'CONDA_PROMPT_MODIFIER=(testbed) '
+++ CONDA_PROMPT_MODIFIER='(testbed) '
+++ export CONDA_PREFIX_3=/opt/miniconda3
+++ CONDA_PREFIX_3=/opt/miniconda3
+++ export CONDA_EXE=/opt/miniconda3/bin/conda
+++ CONDA_EXE=/opt/miniconda3/bin/conda
+++ export _CE_M=
+++ _CE_M=
+++ export _CE_CONDA=
+++ _CE_CONDA=
+++ export CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
+++ CONDA_PYTHON_EXE=/opt/miniconda3/bin/python
++ __conda_hashr
++ '[' -n '' ']'
++ '[' -n '' ']'
++ hash -r
++ pip install -e .
+Obtaining file:///testbed
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: Twisted>=21.7.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (24.11.0)
+Requirement already satisfied: cryptography>=37.0.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (44.0.0)
+Requirement already satisfied: cssselect>=0.9.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (1.2.0)
+Requirement already satisfied: itemloaders>=1.0.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (1.3.2)
+Requirement already satisfied: parsel>=1.5.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (1.10.0)
+Requirement already satisfied: pyOpenSSL>=22.0.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (25.0.0)
+Requirement already satisfied: queuelib>=1.4.2 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (1.7.0)
+Requirement already satisfied: service_identity>=18.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (24.2.0)
+Requirement already satisfied: w3lib>=1.17.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (2.3.1)
+Requirement already satisfied: zope.interface>=5.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (7.2)
+Requirement already satisfied: protego>=0.1.15 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (0.4.0)
+Requirement already satisfied: itemadapter>=0.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (0.11.0)
+Requirement already satisfied: packaging in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (24.2)
+Requirement already satisfied: tldextract in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (5.1.3)
+Requirement already satisfied: lxml>=4.6.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (5.3.0)
+Requirement already satisfied: defusedxml>=0.7.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (0.7.1)
+Requirement already satisfied: PyDispatcher>=2.0.5 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Scrapy==2.12.0) (2.0.7)
+Requirement already satisfied: cffi>=1.12 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from cryptography>=37.0.0->Scrapy==2.12.0) (1.17.1)
+Requirement already satisfied: jmespath>=0.9.5 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from itemloaders>=1.0.1->Scrapy==2.12.0) (1.0.1)
+Requirement already satisfied: typing-extensions>=4.9 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from pyOpenSSL>=22.0.0->Scrapy==2.12.0) (4.12.2)
+Requirement already satisfied: attrs>=19.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.12.0) (25.1.0)
+Requirement already satisfied: pyasn1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.12.0) (0.6.1)
+Requirement already satisfied: pyasn1-modules in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from service_identity>=18.1.0->Scrapy==2.12.0) (0.4.1)
+Requirement already satisfied: automat>=24.8.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=21.7.0->Scrapy==2.12.0) (24.8.1)
+Requirement already satisfied: constantly>=15.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=21.7.0->Scrapy==2.12.0) (23.10.4)
+Requirement already satisfied: hyperlink>=17.1.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=21.7.0->Scrapy==2.12.0) (21.0.0)
+Requirement already satisfied: incremental>=24.7.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from Twisted>=21.7.0->Scrapy==2.12.0) (24.7.2)
+Requirement already satisfied: setuptools in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from zope.interface>=5.1.0->Scrapy==2.12.0) (75.8.0)
+Requirement already satisfied: idna in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.12.0) (3.10)
+Requirement already satisfied: requests>=2.1.0 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.12.0) (2.32.3)
+Requirement already satisfied: requests-file>=1.4 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.12.0) (2.1.0)
+Requirement already satisfied: filelock>=3.0.8 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from tldextract->Scrapy==2.12.0) (3.17.0)
+Requirement already satisfied: pycparser in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from cffi>=1.12->cryptography>=37.0.0->Scrapy==2.12.0) (2.22)
+Requirement already satisfied: tomli in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from incremental>=24.7.0->Twisted>=21.7.0->Scrapy==2.12.0) (2.2.1)
+Requirement already satisfied: charset-normalizer<4,>=2 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.12.0) (3.4.1)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.12.0) (2.3.0)
+Requirement already satisfied: certifi>=2017.4.17 in /opt/miniconda3/envs/testbed/lib/python3.9/site-packages (from requests>=2.1.0->tldextract->Scrapy==2.12.0) (2025.1.31)
+Building wheels for collected packages: Scrapy
+  Building editable for Scrapy (pyproject.toml): started
+  Building editable for Scrapy (pyproject.toml): finished with status 'done'
+  Created wheel for Scrapy: filename=Scrapy-2.12.0-0.editable-py3-none-any.whl size=6592 sha256=53073a1675236d338cfa77b915bfdc9bdc43a6527b4ac9f07c4595d11cc71b87
+  Stored in directory: /tmp/pip-ephem-wheel-cache-buactq3r/wheels/7d/66/67/70d1ee2124ccf21d601c352e25cdca10f611f7c8b3f9ffb9e4
+Successfully built Scrapy
+Installing collected packages: Scrapy
+  Attempting uninstall: Scrapy
+    Found existing installation: Scrapy 2.12.0
+    Uninstalling Scrapy-2.12.0:
+      Successfully uninstalled Scrapy-2.12.0
+Successfully installed Scrapy-2.12.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
++ git checkout c330a399dcc69f6d51fcfbe397fbc42b5a9ee323 tests/test_item.py tests/test_utils_url.py
+Updated 0 paths from 618d4041e
++ git apply -v -
+Checking patch tests/test_item.py...
+Checking patch tests/test_utils_url.py...
+Applied patch tests/test_item.py cleanly.
+Applied patch tests/test_utils_url.py cleanly.
++ pytest -rA --tb=long tests/test_item.py tests/test_utils_url.py
+============================= test session starts ==============================
+platform linux -- Python 3.9.21, pytest-8.3.4, pluggy-1.5.0
+rootdir: /testbed
+configfile: pyproject.toml
+collected 98 items
+
+tests/test_item.py ...................                                   [ 19%]
+tests/test_utils_url.py ................................................ [ 68%]
+....s..........................                                          [100%]
+
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_item.py::ItemTest::test_copy
+PASSED tests/test_item.py::ItemTest::test_custom_methods
+PASSED tests/test_item.py::ItemTest::test_deepcopy
+PASSED tests/test_item.py::ItemTest::test_init
+PASSED tests/test_item.py::ItemTest::test_invalid_field
+PASSED tests/test_item.py::ItemTest::test_metaclass
+PASSED tests/test_item.py::ItemTest::test_metaclass_inheritance
+PASSED tests/test_item.py::ItemTest::test_metaclass_multiple_inheritance_diamond
+PASSED tests/test_item.py::ItemTest::test_metaclass_multiple_inheritance_simple
+PASSED tests/test_item.py::ItemTest::test_metaclass_multiple_inheritance_without_metaclass
+PASSED tests/test_item.py::ItemTest::test_metaclass_with_fields_attribute
+PASSED tests/test_item.py::ItemTest::test_private_attr
+PASSED tests/test_item.py::ItemTest::test_raise_getattr
+PASSED tests/test_item.py::ItemTest::test_raise_setattr
+PASSED tests/test_item.py::ItemTest::test_repr
+PASSED tests/test_item.py::ItemTest::test_simple
+PASSED tests/test_item.py::ItemTest::test_to_dict
+PASSED tests/test_item.py::ItemMetaTest::test_new_method_propagates_classcell
+PASSED tests/test_item.py::ItemMetaClassCellRegression::test_item_meta_classcell_regression
+PASSED tests/test_utils_url.py::UrlUtilsTest::test_url_has_any_extension
+PASSED tests/test_utils_url.py::UrlUtilsTest::test_url_is_from_any_domain
+PASSED tests/test_utils_url.py::UrlUtilsTest::test_url_is_from_spider
+PASSED tests/test_utils_url.py::UrlUtilsTest::test_url_is_from_spider_class_attributes
+PASSED tests/test_utils_url.py::UrlUtilsTest::test_url_is_from_spider_with_allowed_domains
+PASSED tests/test_utils_url.py::UrlUtilsTest::test_url_is_from_spider_with_allowed_domains_class_attributes
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_add_scheme
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_complete_url
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_fragment
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_path
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_port
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_ftp
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_http
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_http_complete_url
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_http_fragment
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_http_path
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_http_port
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_http_query
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_http_username_password
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_http_without_subdomain
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_preserve_https
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_protocol_relative
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_protocol_relative_complete_url
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_protocol_relative_fragment
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_protocol_relative_path
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_protocol_relative_port
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_protocol_relative_query
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_protocol_relative_username_password
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_protocol_relative_without_subdomain
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_query
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_username_password
+PASSED tests/test_utils_url.py::AddHttpIfNoScheme::test_without_subdomain
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_001
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_002
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_003
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_004
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_005
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_006
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_007
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_008
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_009
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_010
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_011
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_012
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_013
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_014
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_015
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_016
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_017
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_018
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_019
+PASSED tests/test_utils_url.py::GuessSchemeTest::test_uri_020
+PASSED tests/test_utils_url.py::StripUrl::test_credentials
+PASSED tests/test_utils_url.py::StripUrl::test_credentials_encoded_delims
+PASSED tests/test_utils_url.py::StripUrl::test_default_ports
+PASSED tests/test_utils_url.py::StripUrl::test_default_ports_creds_off
+PASSED tests/test_utils_url.py::StripUrl::test_default_ports_keep
+PASSED tests/test_utils_url.py::StripUrl::test_fragments
+PASSED tests/test_utils_url.py::StripUrl::test_noop
+PASSED tests/test_utils_url.py::StripUrl::test_noop_query_string
+PASSED tests/test_utils_url.py::StripUrl::test_origin_only
+PASSED tests/test_utils_url.py::StripUrl::test_path
+PASSED tests/test_utils_url.py::IsPathTestCase::test_path
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[_unquotepath]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[_safe_chars]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[parse_url]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[add_or_replace_parameter]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[add_or_replace_parameters]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[any_to_uri]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[canonicalize_url]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[file_uri_to_path]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[is_url]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[parse_data_uri]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[path_to_file_uri]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[safe_download_url]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[safe_url_string]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[url_query_cleaner]
+PASSED tests/test_utils_url.py::test_deprecated_imports_from_w3lib[url_query_parameter]
+SKIPPED [1] tests/test_utils_url.py:332: Windows filepath are not supported for scrapy shell
+======================== 97 passed, 1 skipped in 0.30s =========================
++ git checkout c330a399dcc69f6d51fcfbe397fbc42b5a9ee323 tests/test_item.py tests/test_utils_url.py
+Updated 2 paths from 618d4041e
