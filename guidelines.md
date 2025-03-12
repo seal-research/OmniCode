@@ -18,7 +18,7 @@ Github rate-limits API queries, resetting every hour. Best solution is to run ov
 
 ### Adding dependencies
 Use the `add_data.py` streamlit app to generate and add task instances to Codearena. Use the provided area in the app to setup the correct dependencies
-(further instructions?)
+For examples/inspiration you can look at the configs in `SWE-bench/swebench/harness/constants.py`.
 
 If it's hard (takes more than a couple hours) to get the dependencies installed, try another repo.
 
