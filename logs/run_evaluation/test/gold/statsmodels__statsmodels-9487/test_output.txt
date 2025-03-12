@@ -658,10 +658,9 @@ Requirement already satisfied: six>=1.5 in /opt/miniconda3/envs/testbed/lib/pyth
 Building wheels for collected packages: statsmodels
   Building editable for statsmodels (pyproject.toml): started
   Building editable for statsmodels (pyproject.toml): still running...
-  Building editable for statsmodels (pyproject.toml): still running...
   Building editable for statsmodels (pyproject.toml): finished with status 'done'
-  Created wheel for statsmodels: filename=statsmodels-0.15.0.dev596+g8600926f2.d20250312-0.editable-cp39-cp39-linux_aarch64.whl size=7455 sha256=baf21daab11511c56cb89c82253d69ca8b20f11a0f09cdff96abc2b1cb06cfb9
-  Stored in directory: /tmp/pip-ephem-wheel-cache-iw_psd_e/wheels/7d/66/67/70d1ee2124ccf21d601c352e25cdca10f611f7c8b3f9ffb9e4
+  Created wheel for statsmodels: filename=statsmodels-0.15.0.dev596+g8600926f2.d20250312-0.editable-cp39-cp39-linux_aarch64.whl size=7455 sha256=e1362986f0299fd5b5344fa9697fc2ae3b09ddcb985e1db78fe8a5bfd982cd01
+  Stored in directory: /tmp/pip-ephem-wheel-cache-zcwwusfn/wheels/7d/66/67/70d1ee2124ccf21d601c352e25cdca10f611f7c8b3f9ffb9e4
 Successfully built statsmodels
 Installing collected packages: statsmodels
   Attempting uninstall: statsmodels
@@ -718,6 +717,6 @@ PASSED statsmodels/stats/tests/test_pairwise.py::TestTuckeyHSD4::test_shortcut_f
 PASSED statsmodels/stats/tests/test_pairwise.py::TestTuckeyHSD4::test_plot_simultaneous_ci
 PASSED statsmodels/stats/tests/test_pairwise.py::TestTuckeyHSD4::test_hochberg_intervals
 PASSED statsmodels/stats/tests/test_pairwise.py::test_plot
-============================== 31 passed in 3.33s ==============================
+============================== 31 passed in 3.05s ==============================
 + git checkout 8600926f2f22e58779a667d82047a90318b20431 statsmodels/stats/tests/test_pairwise.py
 Updated 1 path from 176a11a06

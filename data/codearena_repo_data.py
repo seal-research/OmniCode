@@ -23,19 +23,4 @@
         for k in [None]
     }
 },
-"ytdl-org/youtube-dl": {
-    "MAP_REPO_TO_VERSION_PATHS": ["youtube_dl/version.py"],
-    "MAP_REPO_TO_VERSION_PATTERNS":  ["__version__ = ['\"](.*)['\"]", "VERSION = \\((.*)\\)"],
-    "MAP_REPO_VERSION_TO_SPECS": {
-            k: {
-            "python": "3.7",
-            "install": "pip install -e '.[all, dev, test]'",
-            "pip_packages": [
-                "pytest"
-            ],
-            "test_cmd": "pytest -rA --tb=long",
-        }
-        for k in ['2021.12', '2019.11']
-    }
-},
 }
