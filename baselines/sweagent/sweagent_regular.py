@@ -20,8 +20,6 @@ from sweagent.agent.problem_statement import TextProblemStatement, FileProblemSt
 CUR_DIR = Path(__file__).parent
 DOTENV_PATH = CUR_DIR / '.env'
 
-PROMPT_TEMPLATE = Template((CUR_DIR / "sweagent_testgen_template.j2").read_text())
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -97,11 +95,7 @@ def run_sweagent_single(
     url = f"https://github.com/{instance['repo']}"
 
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
-        fp.write(
-            PROMPT_TEMPLATE.render(
-                issue=instance['problem_statement']
-            )
-        )
+        fp.write(instance['problem_statement'])
         fp.close()
 
         args = [
