@@ -139,19 +139,19 @@ def main():
                     })
 
 
-                    processed_instances = []
-                    for ci in checked_instances:
-                        if ci["specs_available"]:
-                            instance = copy.deepcopy(ci['instance'])
-                            instance["version"] = ci['version']
-                            instance["PASS_TO_PASS"] = []                
-                            instance["FAIL_TO_PASS"] = get_modified_files(instance['test_patch'])
-                            processed_instances.append(instance)
+                processed_instances = []
+                for ci in checked_instances:
+                    if ci["specs_available"]:
+                        instance = copy.deepcopy(ci['instance'])
+                        instance["version"] = ci['version']
+                        instance["PASS_TO_PASS"] = []                
+                        instance["FAIL_TO_PASS"] = get_modified_files(instance['test_patch'])
+                        processed_instances.append(instance)
 
-                    data.extend(processed_instances)
+                data.extend(processed_instances)
 
-                    DATA_PATH.write_text(json.dumps(data, indent=4))
-                    st.success(f"Added {len(processed_instances)} instances successfully to {DATA_PATH}")
+                DATA_PATH.write_text(json.dumps(data, indent=4))
+                st.success(f"Added {len(processed_instances)} instances successfully to {DATA_PATH}")
 
             else:
                 st.warning("Please enter a valid file path.")
@@ -164,7 +164,6 @@ def patch_constants(module_to_patch, repo_data):
         module_to_patch.harness.constants.MAP_REPO_VERSION_TO_SPECS[repo] = data["MAP_REPO_VERSION_TO_SPECS"]
 
 
-
-
 if __name__ == '__main__':
     main()
+    

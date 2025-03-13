@@ -3,9 +3,11 @@ from pathlib import Path
 import importlib
 
 from run_evaluation_GenTests import main as GenTestMain
+from runevaluation_StyleReview import main as StyleReviewMain
 import swebench
 from swebench.harness.utils import str2bool
 from swebench.harness.run_evaluation import main as RegularEval
+from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
 
 
 CUR_DIR = Path(__file__).parent
@@ -81,6 +83,19 @@ def main():
     parser.add_argument(
         "--CodeMigration", action="store_true", help="Run the CodeMigration benchmark"
     )
+    parser.add_argument(
+        "--StyleReview", action="store_true", help="Run the StyleReview benchmark"
+    )
+
+    # Add style review specific parameters
+    parser.add_argument(
+        "--min_score", type=float, default=None,
+        help="Minimum acceptable pylint score (0-10) for StyleReview"
+    )
+    parser.add_argument(
+        "--max_severity", type=str, choices=['convention', 'warning', 'error'], default=None,
+        help="Maximum acceptable severity level for StyleReview"
+    )
 
     args = parser.parse_args()
 
@@ -94,11 +109,13 @@ def main():
         active_flags.append("CodeReview")
     if args.CodeMigration:
         active_flags.append("CodeMigration")
+    if args.StyleReview:
+        active_flags.append("StyleReview")
 
     # Ensure at least one flag is provided
     if not active_flags:
         print(
-            "Error: You must specify at least one of --BugFixing --TestGeneration, --CodeReview, or --CodeMigration."
+            "Error: You must specify at least one of --BugFixing, --TestGeneration, --CodeReview, --CodeMigration, or --StyleReview."
         )
         return
 
@@ -131,8 +148,13 @@ def main():
         swebench.harness.log_parsers.MAP_REPO_TO_PARSER["freqtrade/freqtrade"] = parse_log_pytest_v2
 
     
-    importlib.reload(swebench)
+        swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
 
+    # monkey patch the test_passed and test_failed functions in grading.py
+    swebench.harness.grading.test_passed = test_passed_prefix_match
+    swebench.harness.grading.test_failed = test_failed_prefix_match
+
+    importlib.reload(swebench)
 
     # Handle BugFixing
     if "BugFixing" in active_flags:
@@ -158,16 +180,16 @@ def main():
         execute_command(
             GenTestMain,
             dataset_name=args.dataset_name,
-        split="test",  # Assuming split is always 'test', can be parameterized
-        instance_ids=args.instance_ids,
-        predictions_path=predictions_map["TestGeneration"],
-        max_workers=args.max_workers,
-        force_rebuild=args.force_rebuild,
-        cache_level=args.cache_level,
-        clean=args.clean,
-        open_file_limit=args.open_file_limit,
-        run_id=args.run_id,
-        timeout=args.timeout,
+            split="test",  # Assuming split is always 'test', can be parameterized
+            instance_ids=args.instance_ids,
+            predictions_path=predictions_map["TestGeneration"],
+            max_workers=args.max_workers,
+            force_rebuild=args.force_rebuild,
+            cache_level=args.cache_level,
+            clean=args.clean,
+            open_file_limit=args.open_file_limit,
+            run_id=args.run_id,
+            timeout=args.timeout,
         )
 
     # Handle CodeReview
@@ -192,6 +214,26 @@ def main():
     if "CodeMigration" in active_flags:
         print("Executing CodeMigration...")
         print(f"Code Migration is not yet supported!")
+
+    # Handle StyleReview
+    if "StyleReview" in active_flags:
+        print("Executing StyleReview...")
+        execute_command(
+            StyleReviewMain,
+            dataset_name=args.dataset_name,
+            split="test",
+            instance_ids=args.instance_ids,
+            predictions_path=predictions_map["StyleReview"],
+            max_workers=args.max_workers,
+            force_rebuild=args.force_rebuild,
+            cache_level=args.cache_level,
+            clean=args.clean,
+            open_file_limit=args.open_file_limit,
+            run_id=args.run_id,
+            timeout=args.timeout,
+            min_score=args.min_score,
+            max_severity=args.max_severity
+        )
 
 
 if __name__ == "__main__":

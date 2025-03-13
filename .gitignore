@@ -171,3 +171,8 @@ cython_debug/
 .pypirc
 
 .DS_Store
+
+# github tokens
+github_tokens.sh
+
+logs/
