@@ -780,7 +780,7 @@ index d2536542428..227a76d5fda 100644
          if self.args.int8:
              fq = str(self.file).replace(self.file.suffix, f"_int8_openvino_model{os.sep}")
              fq_ov = str(Path(fq) / self.file.with_suffix(".xml").name)
-             if not self.args.data: # FLAG
+             if not self.args.data: # FLAG (Un-Deleted previous code)
                 self.args.data = DEFAULT_CFG.data or "coco128.yaml"
                 LOGGER.warning(
                     f"{prefix} WARNING ⚠️ INT8 export requires a missing 'data' arg for calibration. "

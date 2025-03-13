@@ -33,3 +33,9 @@ Summary of Changes
 5. TensorFlow SavedModel INT8 Export Improvement
     - Instead of iterating over a dataset inline, now uses get_int8_calibration_dataloader().
 Ensures consistency with how INT8 calibration images are fetched for OpenVINO & TensorFlow models.
+
+TA Comments: 
+
+1. Make sure that get_int8_calibration_dataloader() uses the correct dataset. 
+
+2. 

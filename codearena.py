@@ -128,6 +128,7 @@ def main():
         
         # swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
         swebench.harness.log_parsers.MAP_REPO_TO_PARSER["ultralytics/ultralytics"] = parse_log_pytest_v2
+        swebench.harness.log_parsers.MAP_REPO_TO_PARSER["freqtrade/freqtrade"] = parse_log_pytest_v2
 
     
     importlib.reload(swebench)
