@@ -1,5 +1,5 @@
 {
-    "total_instances": 24,
+    "total_instances": 20,
     "submitted_instances": 547,
     "completed_instances": 1,
     "resolved_instances": 1,
@@ -8,7 +8,7 @@
     "error_instances": 0,
     "unstopped_instances": 0,
     "completed_ids": [
-        "statsmodels__statsmodels-9471"
+        "statsmodels__statsmodels-9413"
     ],
     "incomplete_ids": [],
     "empty_patch_ids": [],
@@ -562,7 +562,7 @@
         "ytdl-org__youtube-dl-32987"
     ],
     "resolved_ids": [
-        "statsmodels__statsmodels-9471"
+        "statsmodels__statsmodels-9413"
     ],
     "unresolved_ids": [],
     "error_ids": [],
