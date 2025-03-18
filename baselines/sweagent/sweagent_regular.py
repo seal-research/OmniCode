@@ -101,6 +101,7 @@ def run_sweagent_single(
         args = [
             "run",
             f"--agent.model.name={model_name}",
+            f"--agent.tools.parse_function.type=thought_action",
             f"--env.repo.github_url={url}",
             f"--env.repo.base_commit={instance['base_commit']}",
             f"--problem_statement.path={str(fp.name)}",
