@@ -135,8 +135,6 @@ def main():
                         "specs_available": specs_available,
                     })
 
-                # This entire block was incorrectly indented inside the loop
-                # Moving it outside the loop to fix duplicate data issue
                 processed_instances = []
                 for ci in checked_instances:
                     if ci["specs_available"]:
@@ -160,8 +158,6 @@ def patch_constants(module_to_patch, repo_data):
         module_to_patch.versioning.constants.MAP_REPO_TO_VERSION_PATHS[repo] = data["MAP_REPO_TO_VERSION_PATHS"]
         module_to_patch.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[repo] = data["MAP_REPO_TO_VERSION_PATTERNS"]
         module_to_patch.harness.constants.MAP_REPO_VERSION_TO_SPECS[repo] = data["MAP_REPO_VERSION_TO_SPECS"]
-
-
 
 
 if __name__ == '__main__':
