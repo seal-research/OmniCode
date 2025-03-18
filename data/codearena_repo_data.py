@@ -22,9 +22,14 @@
                 "importlib-resources",
                 "pydantic",
                 "dnspython",
-                "pymongo>=3.12.0",
+                "pymongo==4.10.1",
                 "django-celery",
-                "elasticsearch"
+                "elasticsearch",
+                "sqlalchemy==2.0.38",
+                "python-memcached==1.62",
+                "tblib",
+                "pytz",
+                "ephem==4.2.0"
             ],
             "test_cmd": "pytest -rA --tb=long"
         }

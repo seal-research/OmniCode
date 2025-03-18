@@ -6,9 +6,9 @@
     "unresolved_instances": 1,
     "empty_patch_instances": 0,
     "error_instances": 0,
-    "unstopped_instances": 1,
+    "unstopped_instances": 5,
     "completed_ids": [
-        "celery__celery-8702"
+        "celery__celery-8806"
     ],
     "incomplete_ids": [],
     "empty_patch_ids": [],
@@ -645,10 +645,14 @@
     ],
     "resolved_ids": [],
     "unresolved_ids": [
-        "celery__celery-8702"
+        "celery__celery-8806"
     ],
     "error_ids": [],
     "unstopped_containers": [
+        "sweb.eval.celery__celery-8663.test",
+        "sweb.eval.celery__celery-9021.test",
+        "sweb.eval.celery__celery-9023.test",
+        "sweb.eval.celery__celery-9173.test",
         "sweb.eval.celery__celery-9580.test"
     ],
     "unremoved_images": [],
