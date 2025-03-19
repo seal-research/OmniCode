@@ -3,7 +3,7 @@
 Welcome to **CodeArena**! This repository allows you to evaluate performance on various Software Development Activities for different models and datasets. Below, you'll find the commands to test your setup and evaluate the results. CodeArena requires you to have docker set up and running prior to executing Evaluation.
 
 ### Setup
-CodeArena is currently set up to work with a specific swebench version which can be installed using 
+CodeArena is currently set up to work with a specific swebench version which can be installed using
 
 `pip install git+https://github.com/swe-bench/SWE-bench@e0b9bf9#egg=swebench`
 
@@ -65,7 +65,7 @@ The `add_data.py` script can be run with `streamlit run add_data.py` and allows 
 
 ### Contained Tasks
 
-We use SWE-Bench_Verified as an initial data source and have manually created bad patches and Reviews for them. 
+We use SWE-Bench_Verified as an initial data source and have manually created bad patches and Reviews for them.
 
 <div align="center">
 
@@ -78,4 +78,4 @@ We use SWE-Bench_Verified as an initial data source and have manually created ba
 
 </div>
 
-   
+

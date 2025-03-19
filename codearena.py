@@ -143,6 +143,9 @@ def main():
             repo_log_parser = parse_log_pytest
         swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
 
+        if "MAP_REPO_TO_REQS_PATHS" in REPO_DATA[instance_repo]:
+            swebench.harness.constants.MAP_REPO_TO_REQS_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_REQS_PATHS"]
+
     # monkey patch the test_passed and test_failed functions in grading.py
     swebench.harness.grading.test_passed = test_passed_prefix_match
     swebench.harness.grading.test_failed = test_failed_prefix_match
