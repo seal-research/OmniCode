@@ -268,7 +268,7 @@ def make_eval_script_list(instance, specs, env_name, repo_directory, base_commit
         )
     test_command = " ".join(
         [
-            MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]["test_cmd"],
+            MAP_REPO_VERSION_TO_SPECS[instance["repo"]][str(instance["version"])]["test_cmd"],
             *get_test_directives(instance),
         ]
     )
@@ -313,7 +313,7 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     )
     test_command = " ".join(
         [
-            MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]["test_cmd"],
+            MAP_REPO_VERSION_TO_SPECS[instance["repo"]][str(instance["version"])]["test_cmd"],
             *get_test_directives(instance),
         ]
     )
@@ -468,7 +468,7 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
         return instance
     instance_id = instance[KEY_INSTANCE_ID]
     repo = instance["repo"]
-    version = instance["version"]
+    version = str(instance["version"])
     base_commit = instance["base_commit"]
     test_patch = instance["candidate_test_patch"]
     gold_issue_patch = instance["gold_patch"]
@@ -482,7 +482,7 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
 
     env_name = "testbed"
     repo_directory = f"/{env_name}"
-    specs = MAP_REPO_VERSION_TO_SPECS[repo][version]
+    specs = MAP_REPO_VERSION_TO_SPECS[repo][str(version)]
 
     repo_script_list = make_repo_script_list(specs, repo, repo_directory, base_commit, env_name)
     env_script_list = make_env_script_list(instance, specs, env_name)
