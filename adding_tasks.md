@@ -75,4 +75,19 @@ Additionally, manually review the patch to ensure that it is a reasonable attemp
 
 ### Add the bad patches to CodeArena 
 
-(Coming soon)
+Use the `add_sweagent_bad_patches.py` script to add bad patches to your data file in `data/components/` in the following way - 
+
+```
+python add_sweagent_bad_patches.py baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl data/components/fastapi_instances.json
+```
+
+## TODOs
+
+- [ ] Complete adding base instances in `data/components`
+- [ ] Add bad patches for each base instance
+- [ ] Add reviews for bad patches
+- [ ] Unify data files in `data/components` into a single file
+- [ ] Add code to run the _lint fixing_ task
+- [ ] Run baselines for all tasks
+- [ ] Adding Java tasks
+
