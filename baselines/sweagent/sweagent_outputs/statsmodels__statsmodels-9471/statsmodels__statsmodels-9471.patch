@@ -1,0 +1,50 @@
+diff --git a/reproduce_error.py b/reproduce_error.py
+new file mode 100644
+index 0000000..6bf35cf
+--- /dev/null
++++ b/reproduce_error.py
+@@ -0,0 +1,21 @@
++import pandas as pd
++import statsmodels.formula.api as smf
++
++data = pd.DataFrame([
++    {"y": 2, "x": 2},
++    {"y": 2, "x": 4},
++    {"y": 4, "x": 6},
++    {"y": 4, "x": 8},
++])
++
++# Works
++smf.phreg("y ~ x", data=data).fit()
++
++def plus_one(x):
++    return x + 1
++
++# Works
++smf.ols("y ~ plus_one(x)", data=data).fit()
++
++# PatsyError from NameError: name 'plus_one' is not defined
++smf.phreg("y ~ plus_one(x)", data=data).fit()
+diff --git a/statsmodels/base/model.py b/statsmodels/base/model.py
+index b1e5c2a..91e0b3b 100644
+--- a/statsmodels/base/model.py
++++ b/statsmodels/base/model.py
+@@ -2887,3 +2887,18 @@ class GenericLikelihoodModelResults(LikelihoodModelResults, ResultMixin):
+                               use_t=self.use_t)
+ 
+         return smry
++import inspect
++
++def fix_from_formula(from_formula_method):
++    """
++    A decorator that fixes the  method to correctly capture the calling environment.
++    """
++    import inspect
++
++    def wrapper(*args, **kwargs):
++        eval_env = kwargs.pop('eval_env', inspect.currentframe().f_back.f_locals)
++        kwargs['eval_env'] = eval_env
++        return from_formula_method(*args, **kwargs)
++
++    wrapper.__doc__ = from_formula_method.__doc__
++    return wrapper

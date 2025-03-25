@@ -1,0 +1,31 @@
+diff --git a/reproduce_tukey_error.py b/reproduce_tukey_error.py
+new file mode 100644
+index 0000000..ae8dce9
+--- /dev/null
++++ b/reproduce_tukey_error.py
+@@ -0,0 +1,25 @@
++import subprocess
++import os
++import sys
++
++subprocess.check_call(['pip', 'install', 'numpy'])
++subprocess.check_call(['pip', 'install', 'statsmodels'])
++
++# Add current directory to PYTHONPATH
++sys.path.append(os.getcwd())
++
++import numpy as np
++from statsmodels.sandbox.stats.multicomp import MultiComparison
++
++# Data from the PR description
++data = np.array([82.8, 76.8, 81, 83.4, 74.8, 79.4, 81.6, 77.4, 75.4, 76,
++                 72.6, 68.6, 65.4, 67.6, 74.2, 73.2, 64.8, 71, 69.2, 72.2])
++groups = np.array(['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A',
++                   'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B', 'B'])
++
++# Perform Tukey HSD test
++mc = MultiComparison(data, groups)
++result = mc.tukeyhsd()
++
++# Print the results
++print(result)
