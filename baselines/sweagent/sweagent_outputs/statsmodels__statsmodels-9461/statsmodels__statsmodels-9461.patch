@@ -1,0 +1,769 @@
+diff --git a/reproduce_error.py b/reproduce_error.py
+new file mode 100644
+index 0000000..efa1b9c
+--- /dev/null
++++ b/reproduce_error.py
+@@ -0,0 +1,13 @@
++import pandas as pd
++import sys
++sys.path.append('/statsmodels__statsmodels')
++from statsmodels.tsa import seasonal
++
++series = pd.Series(range(10), index=pd.period_range(start="2024-01-01", periods=10))
++print(type(series.index))
++print(series.index.freq)
++try:
++    seasonal.seasonal_decompose(series)
++except ValueError as e:
++    print(e)
++
+diff --git a/statsmodels/__init__.py b/statsmodels/__init__.py
+index 419ab80..c72a34b 100644
+--- a/statsmodels/__init__.py
++++ b/statsmodels/__init__.py
+@@ -1,8 +1,8 @@
+ from statsmodels.compat.patsy import monkey_patch_cat_dtype
+ 
+-from statsmodels._version import __version__, __version_tuple__
++# # from statsmodels._version import __version__, __version_tuple__
+ 
+-__version_info__ = __version_tuple__
++# __version_info__ = __version_tuple__
+ 
+ monkey_patch_cat_dtype()
+ 
+diff --git a/statsmodels/tsa/seasonal.py b/statsmodels/tsa/seasonal.py
+index 636336b..4d58514 100644
+--- a/statsmodels/tsa/seasonal.py
++++ b/statsmodels/tsa/seasonal.py
+@@ -6,9 +6,9 @@ import pandas as pd
+ from pandas.core.nanops import nanmean as pd_nanmean
+ 
+ from statsmodels.tools.validation import PandasWrapper, array_like
+-from statsmodels.tsa.stl._stl import STL
++# from statsmodels.tsa.stl._stl import STL
+ from statsmodels.tsa.filters.filtertools import convolution_filter
+-from statsmodels.tsa.stl.mstl import MSTL
++# from statsmodels.tsa.stl.mstl import MSTL
+ from statsmodels.tsa.tsatools import freq_to_period
+ 
+ __all__ = [
+@@ -145,6 +145,358 @@ def seasonal_decompose(
+     pfreq = period
+     pw = PandasWrapper(x)
+     if period is None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++    index = getattr(x, "index", None)
++    if isinstance(index, pd.PeriodIndex):
++        pfreq = index.freqstr
++    else:
++        pfreq = getattr(index, "inferred_freq", None)
++    if pfreq is not None:
++    index = getattr(x, "index", None)
++    if isinstance(index, pd.PeriodIndex):
++        pfreq = index.freqstr
++    else:
++        pfreq = getattr(index, "inferred_freq", None)
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
+         pfreq = getattr(getattr(x, "index", None), "inferred_freq", None)
+ 
+     x = array_like(x, "x", maxdim=2)
+@@ -160,7 +512,359 @@ def seasonal_decompose(
+             )
+ 
+     if period is None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
+         if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++        if pfreq is not None:
++    index = getattr(x, "index", None)
++    if isinstance(index, pd.PeriodIndex):
++        pfreq = index.freqstr
++    else:
++        pfreq = getattr(index, "inferred_freq", None)
++    if pfreq is not None:
++    index = getattr(x, "index", None)
++    if isinstance(index, pd.PeriodIndex):
++        pfreq = index.freqstr
++    else:
++        pfreq = getattr(index, "inferred_freq", None)
++        index = getattr(x, "index", None)
++        if isinstance(index, pd.PeriodIndex):
++            pfreq = index.freqstr
++        else:
++            pfreq = getattr(index, "inferred_freq", None)
++                    if pfreq is not None:
+             pfreq = freq_to_period(pfreq)
+             period = pfreq
+         else:

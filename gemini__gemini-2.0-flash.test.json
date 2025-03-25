@@ -8,15 +8,15 @@
     "error_instances": 0,
     "unstopped_instances": 0,
     "completed_ids": [
-        "statsmodels__statsmodels-9487"
+        "statsmodels__statsmodels-9471"
     ],
     "incomplete_ids": [],
     "empty_patch_ids": [],
     "submitted_ids": [
-        "statsmodels__statsmodels-9487"
+        "statsmodels__statsmodels-9471"
     ],
     "resolved_ids": [
-        "statsmodels__statsmodels-9487"
+        "statsmodels__statsmodels-9471"
     ],
     "unresolved_ids": [],
     "error_ids": [],
