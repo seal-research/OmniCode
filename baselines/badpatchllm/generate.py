@@ -24,13 +24,10 @@ def run_model_single(
     model_name: str,
     secret_key: str,
 ):
-    patch = instance['patch']
-
-    # prompt = f"Output a different version of the given .diff file. Only output a formatted .diff file and nothing else. Diff File: {patch}"
-    
+    patch = instance['patch']    
 
     prompt = f"""
-    Output a different version of the given .diff file. 
+    Output a version of the given .diff file that is functionally incorrect.
     Only output a properly formatted .diff file and nothing else. 
     Do NOT include triple backticks (```) or any other Markdown formatting. 
 
@@ -111,22 +108,23 @@ def main(
             instance_id = datum["instance_id"]
             # if instance_id in existing_ids:
             #     continue
-            output_dict = {"instance_id": instance_id}
+            output_dict = {"instance_id": instance_id, "bad_patches": []}
             output_dict.update(basic_args)
 
             for i in range(1, num_patches + 1):
                 full_output, model_patch = run_model_single(datum, model_name=model_name, secret_key=secret_key)
-                output_dict["full_output"] = full_output
-                output_dict["model_patch"] = model_patch
-                print(json.dumps(output_dict), file=f, flush=True)
+                
+                if model_patch:
+                    output_dict["bad_patches"].append(model_patch)
 
-                diff_file_path = output_d_path /f"patch_{i}.diff"
+                    diff_file_path = output_d_path / f"patch_{i}.diff"
+                    try:
+                        with open(diff_file_path, "w") as diff_file:
+                            diff_file.write(model_patch)
+                    except Exception as e:
+                        print(f"Error writing .diff file for {instance_id}: {e}")
 
-                try:
-                    with open(diff_file_path, "w") as diff_file:
-                        diff_file.write(model_patch)
-                except Exception as e:
-                    print(f"Error writing .diff file for {instance_id}: {e}")
+            print(json.dumps(output_dict), file=f, flush=True)
 
 if __name__ == '__main__':
 
@@ -135,7 +133,7 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--input_tasks", type=str, required=True)
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
-    parser.add_argument("-m", "--model_name", type=str, default="gpt-4o")
+    parser.add_argument("-m", "--model_name", type=str, default="gemini-2.0-flash")
     parser.add_argument("-k", "--api_key", type=str, required=True)
     parser.add_argument("-n", "--num_patches", type=int, required=False, default=5)
 
@@ -149,5 +147,3 @@ if __name__ == '__main__':
         secret_key=args.api_key,
         num_patches=args.num_patches,
     )
-
-# TODO Add support for multiple bad patches
