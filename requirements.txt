@@ -3,3 +3,4 @@ openai
 datasets
 tqdm
 python-dotenv
+fire

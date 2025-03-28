@@ -35,7 +35,7 @@ For examples/inspiration you can look at the configs in `SWE-bench/swebench/harn
 If it's hard (takes more than a couple hours) to get the dependencies installed, try another repo.
 
 #### Verifying tasks
-Validate that your have added instances correctly by making sure that `codearena.py --BugFixing --predictions_path gold --instance_ids <ids for instances you are adding>` results in all successes.
+Validate that your have added instances correctly by making sure that `python codearena.py --BugFixing --predictions_path gold --instance_ids <ids for instances you are adding>` results in all successes.
 
 Also, manually check that the task "looks good":
 - Look at the issue that the PR solves, and make sure it gives a well specified problem
@@ -62,7 +62,7 @@ Use the following command (substituing paths and instance ids) to run SWE-Agent 
 python baselines/sweagent/sweagent_regular.py -i data/codearena_instances.json -o baselines/sweagent/sweagent_outputs --instance_ids fastapi__fastapi-1534 -m gemini/gemini-2.0-flash
 ```
 
-This should generate an instance specific log inside `baselines/sweagent/logs/sweagent_outputs/<instance_id>`. 
+This should generate an instance specific log inside `baselines/sweagent/logs/sweagent_outputs/<instance_id>`.
 You can inspect the various logs (the most useful being the `.traj` file) to understand SWE-Agent execution.
 The above command would also have updated `baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl`, adding the prediction data as a new line at the end of the file.
 Since this data is in a slightly different format from the prediction data expected by codearena, we need to run the following cleaning script to clean it up -
@@ -73,6 +73,30 @@ python clean_sweagent_outputs.py /baselines/sweagent/logs/sweagent_outputs/all_p
 
 This will modify `all_preds.jsonl` in place.
 
+
+#### Using Agentless to generate patches
+1. Clone Simon's fork of the Agentless repo (into `codearena/baselines/`) and create a conda environment for it:
+
+```bash
+git clone https://github.com/simonalford42/Agentless.git
+cd Agentless
+conda create -n agentless python=3.11
+conda activate agentless
+pip install -r requirements.txt
+```
+
+2. Make sure you have an OpenAI API key set to the `OPENAI_API_KEY` environment variable and that Docker is working.
+
+##### To run Agentless:
+1. At the beginning of `run_agentless.sh`, set the `TARGET_ID` variable.
+2. `bash run_agentless.sh` will run the method via a sequence of python commands for the different steps. The script was derived from the instructions and commands at https://github.com/simonalford42/Agentless/blob/main/README_swebench.md, see that page for full explanation and instructions.
+    Note: It will ask you to trust custom code. This is to load the codearena instances into a local huggingface dataset (`codearena_local.py`) to interface with Agentless.
+3. Clean the outputs: `python clean_sweagent_outputs.py /baselines/Agentless/results/$OUTPUT_DIR/all_preds.jsonl`
+4. Check the patch: `python codearena.py --BugFixing --predictions_path baselines/Agentless/results/$OUTPUT_DIR/all_preds.jsonl --instance_ids $TARGET_ID --run_id test`
+
+Notes:
+- I removed the reproduction tests so that it is always able to come up with a patch. Without doing this, the agent would usually not be able to come up with anything that passes the reproduction stage.
+- This uses OpenAI credits, but if you use 4o mini and 1 sample it isn't very expensive. For me it takes ~5-10 minutes and 10 cents to get one sample for a task. You can track usage at https://platform.openai.com/settings/organization/usage.
 
 #### Evaluate the generated patches with CodeArena
 
@@ -85,9 +109,9 @@ python codearena.py --BugFixing --predictions_path baselines/sweagent/logs/sweag
 Additionally, manually review the patch to ensure that it is a reasonable attempt at fixing the issue.
 
 
-#### Add the bad patches to CodeArena 
+#### Add the bad patches to CodeArena
 
-Use the `add_sweagent_bad_patches.py` script to add bad patches to your data file in `data/components/` in the following way - 
+Use the `add_sweagent_bad_patches.py` script to add bad patches to your data file in `data/components/` in the following way -
 
 ```
 python add_sweagent_bad_patches.py baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl data/components/fastapi_instances.json

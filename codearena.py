@@ -1,14 +1,13 @@
 import argparse
 from pathlib import Path
-import importlib
 
 from run_evaluation_GenTests import main as GenTestMain
 from runevaluation_StyleReview import main as StyleReviewMain
-import swebench
+# imports and monkey patches swebench
+from monkeypatched_swebench import swebench
 from swebench.harness.utils import str2bool
 from swebench.harness.run_evaluation import main as RegularEval
 from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
-
 
 CUR_DIR = Path(__file__).parent
 REPO_DATA_PATH = CUR_DIR / "data/codearena_repo_data.py"
@@ -129,28 +128,6 @@ def main():
 
     # Map the predictions paths to the flags
     predictions_map = dict(zip(active_flags, args.predictions_path))
-
-    # Update constants in swebench
-    for instance_repo in REPO_DATA:
-        swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
-        swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
-        swebench.harness.constants.MAP_REPO_VERSION_TO_SPECS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
-
-        from swebench.harness.log_parsers import parse_log_pytest, parse_log_pytest_options, parse_log_pytest_v2
-        if "MAP_REPO_TO_PARSER" in REPO_DATA[instance_repo]:
-            repo_log_parser = eval(REPO_DATA[instance_repo]["MAP_REPO_TO_PARSER"])
-        else:
-            repo_log_parser = parse_log_pytest
-        swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
-
-        if "MAP_REPO_TO_REQS_PATHS" in REPO_DATA[instance_repo]:
-            swebench.harness.constants.MAP_REPO_TO_REQS_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_REQS_PATHS"]
-
-    # monkey patch the test_passed and test_failed functions in grading.py
-    swebench.harness.grading.test_passed = test_passed_prefix_match
-    swebench.harness.grading.test_failed = test_failed_prefix_match
-
-    importlib.reload(swebench)
 
     # Handle BugFixing
     if "BugFixing" in active_flags:
