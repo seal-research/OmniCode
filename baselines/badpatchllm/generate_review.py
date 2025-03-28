@@ -26,28 +26,6 @@ def process_input_data():
     }
     return input_data
 
-def generate_bad_patch(input_data):
-    """
-    Generates a patch based on input_data.
-    In this dummy implementation, we simulate a bad patch that doesn't address the actual problem.
-    """
-    # Dummy logic: This patch is intentionally incorrect and does not solve the problem described.
-    bad_patch = (
-        "diff --git a/fastapi/dependencies/utils.py b/fastapi/dependencies/utils.py\n"
-        "index 1a660f5d355fa..15e7790cea9b5 100644\n"
-        "--- a/fastapi/dependencies/utils.py\n"
-        "+++ b/fastapi/dependencies/utils.py\n"
-        "@@ -478,6 +478,7 @@ async def solve_dependencies(\n"
-        "                 name=sub_dependant.name,\n" # Corrected indentation based on likely context
-        "                 security_scopes=sub_dependant.security_scopes,\n" # Corrected indentation
-        "             )\n" # Corrected indentation
-        "+            use_sub_dependant.name = sub_dependant.name\n" # Added '+' assuming this was the intended change line
-        " \n"
-        "         solved_result = await solve_dependencies(\n"
-        "             request=request,"
-    )
-    return bad_patch
-
 def query_llm_for_review(patch: str, input_data: dict) -> str:
     """
     Queries the LLM to get a review of the provided patch using Google's Generative AI (Gemini).
@@ -68,9 +46,7 @@ def query_llm_for_review(patch: str, input_data: dict) -> str:
     
     # --- Use the current API ---
     try:
-        # Choose a suitable Gemini model (e.g., 'gemini-1.5-flash', 'gemini-pro')
-        # 'gemini-1.5-flash' is often a good balance of capability and speed/cost
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
 
         # Create GenerationConfig object for parameters
         config = GenerationConfig(
@@ -129,8 +105,21 @@ def main():
     input_data = process_input_data()
 
     # Generate a patch that is likely to be bad (i.e., doesn't actually fix the problem)
-    bad_patch = generate_bad_patch(input_data)
-    print("--- Generated Bad Patch ---")
+    bad_patch = (
+        "diff --git a/fastapi/dependencies/utils.py b/fastapi/dependencies/utils.py\n"
+        "index 1a660f5d355fa..15e7790cea9b5 100644\n"
+        "--- a/fastapi/dependencies/utils.py\n"
+        "+++ b/fastapi/dependencies/utils.py\n"
+        "@@ -478,6 +478,7 @@ async def solve_dependencies(\n"
+        "                 name=sub_dependant.name,\n" # Corrected indentation based on likely context
+        "                 security_scopes=sub_dependant.security_scopes,\n" # Corrected indentation
+        "             )\n" # Corrected indentation
+        "+            use_sub_dependant.name = sub_dependant.name\n" # Added '+' assuming this was the intended change line
+        " \n"
+        "         solved_result = await solve_dependencies(\n"
+        "             request=request,"
+    )
+    print("--- Bad Patch ---")
     print(bad_patch)
     print("-" * 27)
 
