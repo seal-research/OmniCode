@@ -1,3 +1,10 @@
 Command To Generate Bad Patches: 
 
 python baselines/badpatchllm/generate.py -i data/codearena_instances.json -o baselines/badpatchllm/logs/gemini_outputs --instance_ids [TODO] -m gemini-2.0-flash -k [TODO]
+
+
+Command to clean the bad patches for validation with codearena.py [only the first out of 5 patchs is saved in all_preds.jsonl]
+python baselines/badpatchllm/clean_badpatch_outputs.py baselines/badpatchllm/logs
+
+Command for validation
+python codearena.py --BugFixing --predictions_path baselines/badpatchllm/logs/gemini_outputs/all_preds.jsonl --instance_ids [TODO] --run_id test
