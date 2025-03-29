@@ -1,134 +1,145 @@
-#!/usr/bin/env python3
+# USAGE
+# python baselines/badpatchllm/generate_rev.py --input_tasks data/codearena_instances.json --output_dir baselines/badpatchllm/logs/gemini_outputs --instance_ids fastapi__fastapi-1549 --model_name gemini-2.0-flash --api_key
 import os
+import json
+import argparse
+from pathlib import Path
 import google.generativeai as genai
-from google.generativeai.types import GenerationConfig # For specifying config
 
-def process_input_data():
+def query_llm_for_review(patch: str, problem_statement: str, correct_patch_example: str, model_name: str = "gemini-2.0-flash") -> str:
     """
-    Process or generate the input data required for patch generation.
-    In a real scenario, this function would gather information from a pull request,
-    issue, or another source. For this example, we simulate input data with a dictionary.
-    """
-    input_data = {
-        "problem_statement": (
-            "I need a way to specify servers in the OpenAPI spec. "
-            "I want to be able to use the generated openapi.json doc as it is and hook it up with a document publishing flow, "
-            "but I'm not able to because I have to add in information about servers manually."
-        ),
-        "desired_patch_description": ( # Renamed for clarity, as it's a description not the patch itself
-            "Add support for specifying servers in the generated OpenAPI schema by accepting a 'servers' parameter in the application initialization."
-        ),
-         # It's helpful to provide the correct patch if known, for better review context
-        "correct_patch_example": (
-        "diff --git a/fastapi/applications.py b/fastapi/applications.py\nindex 3306aab3d95eb..c21087911ebf4 100644\n--- a/fastapi/applications.py\n+++ b/fastapi/applications.py\n@@ -38,6 +38,7 @@ def __init__(\n         version: str = \"0.1.0\",\n         openapi_url: Optional[str] = \"/openapi.json\",\n         openapi_tags: Optional[List[Dict[str, Any]]] = None,\n+        servers: Optional[List[Dict[str, Union[str, Any]]]] = None,\n         default_response_class: Type[Response] = JSONResponse,\n         docs_url: Optional[str] = \"/docs\",\n         redoc_url: Optional[str] = \"/redoc\",\n@@ -70,6 +71,7 @@ def __init__(\n         self.title = title\n         self.description = description\n         self.version = version\n+        self.servers = servers\n         self.openapi_url = openapi_url\n         self.openapi_tags = openapi_tags\n         # TODO: remove when discarding the openapi_prefix parameter\n@@ -106,6 +108,7 @@ def openapi(self, openapi_prefix: str = \"\") -> Dict:\n                 routes=self.routes,\n                 openapi_prefix=openapi_prefix,\n                 tags=self.openapi_tags,\n+                servers=self.servers,\n             )\n         return self.openapi_schema\n \ndiff --git a/fastapi/openapi/models.py b/fastapi/openapi/models.py\nindex a7c4460fab43a..13dc59f189527 100644\n--- a/fastapi/openapi/models.py\n+++ b/fastapi/openapi/models.py\n@@ -63,7 +63,7 @@ class ServerVariable(BaseModel):\n \n \n class Server(BaseModel):\n-    url: AnyUrl\n+    url: Union[AnyUrl, str]\n     description: Optional[str] = None\n     variables: Optional[Dict[str, ServerVariable]] = None\n \ndiff --git a/fastapi/openapi/utils.py b/fastapi/openapi/utils.py\nindex b6221ca202826..5a0c89a894cb3 100644\n--- a/fastapi/openapi/utils.py\n+++ b/fastapi/openapi/utils.py\n@@ -86,7 +86,7 @@ def get_openapi_security_definitions(flat_dependant: Dependant) -> Tuple[Dict, L\n def get_openapi_operation_parameters(\n     *,\n     all_route_params: Sequence[ModelField],\n-    model_name_map: Dict[Union[Type[BaseModel], Type[Enum]], str]\n+    model_name_map: Dict[Union[Type[BaseModel], Type[Enum]], str],\n ) -> List[Dict[str, Any]]:\n     parameters = []\n     for param in all_route_params:\n@@ -112,7 +112,7 @@ def get_openapi_operation_parameters(\n def get_openapi_operation_request_body(\n     *,\n     body_field: Optional[ModelField],\n-    model_name_map: Dict[Union[Type[BaseModel], Type[Enum]], str]\n+    model_name_map: Dict[Union[Type[BaseModel], Type[Enum]], str],\n ) -> Optional[Dict]:\n     if not body_field:\n         return None\n@@ -318,12 +318,15 @@ def get_openapi(\n     description: str = None,\n     routes: Sequence[BaseRoute],\n     openapi_prefix: str = \"\",\n-    tags: Optional[List[Dict[str, Any]]] = None\n+    tags: Optional[List[Dict[str, Any]]] = None,\n+    servers: Optional[List[Dict[str, Union[str, Any]]]] = None,\n ) -> Dict:\n     info = {\"title\": title, \"version\": version}\n     if description:\n         info[\"description\"] = description\n     output: Dict[str, Any] = {\"openapi\": openapi_version, \"info\": info}\n+    if servers:\n+        output[\"servers\"] = servers\n     components: Dict[str, Dict] = {}\n     paths: Dict[str, Dict] = {}\n     flat_models = get_flat_models_from_routes(routes)\n",
-
-        )
-    }
-    return input_data
-
-def query_llm_for_review(patch: str, input_data: dict) -> str:
-    """
-    Queries the LLM to get a review of the provided patch using Google's Generative AI (Gemini).
-    Provides context about the original problem.
-    """
-    prompt = f"""You are an expert code reviewer.
-    Analyze the provided "Bad Patch" which was intended to solve the "Problem Statement".
-    The goal was to: {input_data.get('desired_patch_description', 'No description provided.')}
-
-    Explain specifically why the "Bad Patch" is incorrect, incomplete, or fails to address the "Problem Statement" adequately. Focus on the functional correctness and relevance to the problem.
-
-    Problem Statement:
-    {input_data.get('problem_statement', 'No problem statement provided.')}
-
-    (Optional Reference - Correct Patch Snippet):
-    ```diff
-    {input_data.get('correct_patch_example', 'N/A')}"""
+    Queries the LLM to get a detailed review of the provided patch using Google's Generative AI.
+    The prompt now includes the problem statement and a correct patch example so the LLM knows the intended changes.
     
-    # --- Use the current API ---
-    try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
-
-        # Create GenerationConfig object for parameters
-        config = GenerationConfig(
-            temperature=0.3, # Slightly higher than 0.2 for a bit more variance if needed
-            max_output_tokens=500
-        )
-
-        # Generate content using the model instance
-        response = model.generate_content(prompt, generation_config=config)
-
-        # Extract the text, handling potential errors or blocks
-        review = response.text.strip()
-
-    except ValueError as e:
-        # Handle potential errors like blocked content more gracefully
-        review = f"Review generation failed or content blocked. Details: {e}\nResponse feedback: {getattr(response, 'prompt_feedback', 'N/A')}"
-    except Exception as e:
-        # Catch other potential exceptions during API call or processing
-        review = f"An unexpected error occurred during review generation: {e}"
-
-    if not review: # Handle empty reviews
-        review = "No review generated or review was empty."
-
-    return review
-    # # Use the text generation function from the Google Generative AI library.
-    # # Here we use 'text-bison-001' as the model. You may adjust the model name and parameters as needed.
-    # response = genai.generate_text(
-    #     prompt=prompt,
-    #     model="text-bison-001",
-    #     temperature=0.2,        # Lower temperature for more deterministic feedback
-    #     max_output_tokens=500
-    # )
+    Args:
+        patch (str): The bad patch text.
+        problem_statement (str): A description of the problem that needs to be fixed.
+        correct_patch_example (str): An example of a correct patch.
+        model_name (str): The model name to use (default: "gemini-2.0-flash").
     
-    # # Extract the output from the response. The response contains a list of candidates.
-    # if response and response.candidates:
-    #     review = response.candidates[0].output.strip()
-    # else:
-    #     review = "No review generated."
-    # return review
-def main():
-    # Ensure your API key is set in the environment
-    google_api_key = os.getenv("GOOGLE_API_KEY")
-    if not google_api_key:
-        print("Error: Please set your GOOGLE_API_KEY environment variable.")
-        print("You can get a key from Google AI Studio: https://aistudio.google.com/app/apikey")
-        return # Exit gracefully if key is missing
+    Returns:
+        str: The generated detailed review.
+    """
+    model = genai.GenerativeModel(model_name)
 
-    # Configure the google.generativeai library with your API key.
-    try:
-        genai.configure(api_key=google_api_key)
-    except Exception as e:
-        print(f"Error configuring Google Generative AI: {e}")
-        return
-
-    # Process input data (simulate gathering data from a pull request or issue)
-    input_data = process_input_data()
-
-    # Generate a patch that is likely to be bad (i.e., doesn't actually fix the problem)
-    bad_patch = (
-        "diff --git a/fastapi/dependencies/utils.py b/fastapi/dependencies/utils.py\n"
-        "index 1a660f5d355fa..15e7790cea9b5 100644\n"
-        "--- a/fastapi/dependencies/utils.py\n"
-        "+++ b/fastapi/dependencies/utils.py\n"
-        "@@ -478,6 +478,7 @@ async def solve_dependencies(\n"
-        "                 name=sub_dependant.name,\n" # Corrected indentation based on likely context
-        "                 security_scopes=sub_dependant.security_scopes,\n" # Corrected indentation
-        "             )\n" # Corrected indentation
-        "+            use_sub_dependant.name = sub_dependant.name\n" # Added '+' assuming this was the intended change line
-        " \n"
-        "         solved_result = await solve_dependencies(\n"
-        "             request=request,"
+    prompt = (
+        "You are an experienced software engineer tasked with reviewing code patches. "
+        "Below is a problem statement, a correct patch example, and a submitted patch which is likely incorrect or incomplete. "
+        "Please provide a detailed review that includes:\n"
+        "  1. A brief summary of the problem to be fixed.\n"
+        "  2. Identification of issues with the submitted patch (e.g., missing context, incorrect modifications, or potential bugs).\n"
+        "  3. Specific suggestions for improvements that would bring the patch closer to the correct solution.\n"
+        "  4. A comparison of the submitted patch against the correct patch example.\n\n"
+        "Problem Statement:\n"
+        f"{problem_statement}\n\n"
+        "Correct Patch Example:\n"
+        f"{correct_patch_example}\n\n"
+        "Submitted Patch (Bad Patch):\n"
+        f"{patch}\n\n"
+        "Detailed Review:"
     )
-    print("--- Bad Patch ---")
-    print(bad_patch)
-    print("-" * 27)
+    
+    response = model.generate_content(
+        prompt,
+        generation_config={"temperature": 0.9, "top_p": 0.9} 
+    )
+    
+    return response.text.strip()
 
-    # Query the LLM for a review of the generated patch, providing context
-    print("\nQuerying LLM for review...")
-    review = query_llm_for_review(bad_patch, input_data)
-    print("\n--- LLM Review ---")
-    print(review)
-    print("-" * 18)
+def main(
+    input_tasks_path: Path,
+    output_dir_path: Path,
+    model_name: str,
+    instance_ids: list,
+    secret_key: str,
+    num_reviews: int
+):
+    # Configure the Google Generative AI library with the provided API key.
+    genai.configure(api_key=secret_key)
+
+    # Load the input tasks JSON to build a mapping from instance_id to its context.
+    try:
+        with open(input_tasks_path, "r", encoding="utf-8") as f:
+            tasks = json.load(f)
+        # Assume tasks is a list of objects, each having an "instance_id", "problem_statement", and either "correct_patch_example" or "patch" key.
+        instance_map = {}
+        for task in tasks:
+            inst_id = str(task.get("instance_id"))
+            if inst_id:
+                instance_map[inst_id] = {
+                    "problem_statement": task.get("problem_statement", ""),
+                    # Use the key "correct_patch_example" if available; otherwise, fallback to "patch" field.
+                    "correct_patch_example": task.get("correct_patch_example", task.get("patch", ""))
+                }
+    except Exception as e:
+        raise ValueError(f"Failed to load input tasks from {input_tasks_path}: {e}")
+    output_dir_path = output_dir_path / instance_ids[0]
+    # If instance_ids was not provided on the command line, use all instance_ids from the JSON.
+    if not instance_ids:
+        instance_ids = list(instance_map.keys())
+    patch_file = output_dir_path / f"patch_1.diff"
+    # Process each instance.
+    for instance_id in instance_ids:
+        # Read the bad patch from a file named patch_<instance_id>.diff in the output directory.
+        try:
+            with open(patch_file, "r", encoding="utf-8") as f:
+                bad_patch = f.read().strip()
+        except FileNotFoundError:
+            print(f"Warning: Bad patch file for instance {instance_id} not found at {patch_file}. Skipping.")
+            continue
+
+        if not bad_patch:
+            print(f"Warning: Patch file for instance {instance_id} is empty. Skipping.")
+            continue
+
+        # Retrieve additional context from the input tasks.
+        context = instance_map.get(instance_id, {})
+        problem_statement = context.get("problem_statement", "No problem statement provided.")
+        correct_patch_example = context.get("correct_patch_example", "No correct patch example provided.")
+
+        print(f"Processing instance: {instance_id}")
+        print("Loaded Bad Patch:")
+        print(bad_patch)
+
+        # Generate the requested number of reviews for this patch.
+        reviews = []
+        for i in range(num_reviews):
+            review = query_llm_for_review(
+                patch=bad_patch,
+                problem_statement=problem_statement,
+                correct_patch_example=correct_patch_example,
+                model_name=model_name
+            )
+            reviews.append(review)
+            print(f"\nLLM Review {i+1} for instance {instance_id}:")
+            print(review)
+
+        # Save the reviews for this instance to a file.
+        review_file = output_dir_path / f"{instance_id}_reviews.txt"
+        try:
+            with open(review_file, "w", encoding="utf-8") as f:
+                for idx, review in enumerate(reviews, start=1):
+                    f.write(f"Review {idx}:\n{review}\n\n")
+            print(f"Reviews for instance {instance_id} saved to {review_file}\n")
+        except Exception as e:
+            print(f"Error saving reviews for instance {instance_id}: {e}")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Generate detailed reviews for bad patches using Gemini-2.0-Flash.")
+    parser.add_argument("--input_tasks", required=True, help="Path to the JSON file containing input tasks.")
+    parser.add_argument("--output_dir", required=True, help="Path to the directory where bad patch files are stored and reviews will be saved.")
+    parser.add_argument("--model_name", default="gemini-2.0-flash", help="Model name to use for review generation.")
+    parser.add_argument("--instance_ids", default=None, help="Comma-separated list of instance IDs to process. If omitted, all instance IDs from the input tasks file will be used.")
+    parser.add_argument("--api_key", required=True, help="Secret key for accessing the Google Generative AI API.")
+    parser.add_argument("--num_reviews", type=int, default=1, help="Number of reviews to generate per patch.")
+    
+    args = parser.parse_args()
+
+    main(
+        input_tasks_path=Path(args.input_tasks),
+        output_dir_path=Path(args.output_dir),
+        model_name=args.model_name,
+        instance_ids=args.instance_ids.split(",") if args.instance_ids else [],
+        secret_key=args.api_key,
+        num_reviews=args.num_reviews,
+    )
