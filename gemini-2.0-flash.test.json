@@ -1,0 +1,34 @@
+{
+    "total_instances": 1,
+    "submitted_instances": 3,
+    "completed_instances": 1,
+    "resolved_instances": 1,
+    "unresolved_instances": 0,
+    "empty_patch_instances": 0,
+    "error_instances": 0,
+    "unstopped_instances": 5,
+    "completed_ids": [
+        "celery__celery-8702"
+    ],
+    "incomplete_ids": [],
+    "empty_patch_ids": [],
+    "submitted_ids": [
+        "celery__celery-8486",
+        "celery__celery-8489",
+        "celery__celery-8702"
+    ],
+    "resolved_ids": [
+        "celery__celery-8702"
+    ],
+    "unresolved_ids": [],
+    "error_ids": [],
+    "unstopped_containers": [
+        "sweb.eval.celery__celery-8663.test",
+        "sweb.eval.celery__celery-9021.test",
+        "sweb.eval.celery__celery-9023.test",
+        "sweb.eval.celery__celery-9173.test",
+        "sweb.eval.celery__celery-9580.test"
+    ],
+    "unremoved_images": [],
+    "schema_version": 2
+}
