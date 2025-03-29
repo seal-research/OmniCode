@@ -2,13 +2,13 @@
     "total_instances": 1,
     "submitted_instances": 629,
     "completed_instances": 1,
-    "resolved_instances": 0,
-    "unresolved_instances": 1,
+    "resolved_instances": 1,
+    "unresolved_instances": 0,
     "empty_patch_instances": 0,
     "error_instances": 0,
     "unstopped_instances": 5,
     "completed_ids": [
-        "celery__celery-8806"
+        "celery__celery-8702"
     ],
     "incomplete_ids": [],
     "empty_patch_ids": [],
@@ -643,10 +643,10 @@
         "sympy__sympy-24562",
         "sympy__sympy-24661"
     ],
-    "resolved_ids": [],
-    "unresolved_ids": [
-        "celery__celery-8806"
+    "resolved_ids": [
+        "celery__celery-8702"
     ],
+    "unresolved_ids": [],
     "error_ids": [],
     "unstopped_containers": [
         "sweb.eval.celery__celery-8663.test",

@@ -1,0 +1,14 @@
+diff --git a/beat_output_no_quiet.txt b/beat_output_no_quiet.txt
+new file mode 100644
+index 0000000..b82396d
+--- /dev/null
++++ b/beat_output_no_quiet.txt
+@@ -0,0 +1 @@
++bash: celery: command not found
+diff --git a/beat_output_quiet.txt b/beat_output_quiet.txt
+new file mode 100644
+index 0000000..b82396d
+--- /dev/null
++++ b/beat_output_quiet.txt
+@@ -0,0 +1 @@
++bash: celery: command not found
