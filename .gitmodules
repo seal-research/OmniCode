@@ -1,6 +1,3 @@
 [submodule "swe-bench"]
 	path = swe-bench
 	url = git@github.com:princeton-nlp/SWE-bench.git
-[submodule "multiswebench"]
-	path = multiswebench
-	url = https://github.com/multi-swe-bench/multi-swe-bench-env.git
