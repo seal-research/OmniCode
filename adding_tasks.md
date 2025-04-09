@@ -74,7 +74,9 @@ python clean_sweagent_outputs.py /baselines/sweagent/logs/sweagent_outputs/all_p
 This will modify `all_preds.jsonl` in place.
 
 
-#### Using Agentless to generate patches
+#### Using Agentless to generate bad patches
+
+##### Installation
 1. Clone Simon's fork of the Agentless repo (into `codearena/baselines/`) and create a conda environment for it:
 
 ```bash
@@ -88,6 +90,7 @@ pip install -r requirements.txt
 2. Make sure you have an OpenAI API key set to the `OPENAI_API_KEY` environment variable and that Docker is working.
 
 ##### To run Agentless:
+Make sure you've pulled from our Agentless repo copy to have the most up to date version.
 Run `run_agentless.sh $target_id` passing in the target id that you wish to generate a patch for.
 Notes:
 - `run_agentless.sh` will run the method via a sequence of python commands for the different steps. The script was derived from the instructions and commands at https://github.com/simonalford42/Agentless/blob/main/README_swebench.md, see that page for full explanation and instructions.
