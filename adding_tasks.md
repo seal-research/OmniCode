@@ -88,15 +88,17 @@ pip install -r requirements.txt
 2. Make sure you have an OpenAI API key set to the `OPENAI_API_KEY` environment variable and that Docker is working.
 
 ##### To run Agentless:
-1. At the beginning of `run_agentless.sh`, set the `TARGET_ID` variable.
-2. `bash run_agentless.sh` will run the method via a sequence of python commands for the different steps. The script was derived from the instructions and commands at https://github.com/simonalford42/Agentless/blob/main/README_swebench.md, see that page for full explanation and instructions.
-    Note: It will ask you to trust custom code. This is to load the codearena instances into a local huggingface dataset (`codearena_local.py`) to interface with Agentless.
-3. Clean the outputs: `python clean_sweagent_outputs.py /baselines/Agentless/results/$OUTPUT_DIR/all_preds.jsonl`
-4. Check the patch: `python codearena.py --BugFixing --predictions_path baselines/Agentless/results/$OUTPUT_DIR/all_preds.jsonl --instance_ids $TARGET_ID --run_id test`
-
+Run `run_agentless.sh $target_id` passing in the target id that you wish to generate a patch for.
 Notes:
+- `run_agentless.sh` will run the method via a sequence of python commands for the different steps. The script was derived from the instructions and commands at https://github.com/simonalford42/Agentless/blob/main/README_swebench.md, see that page for full explanation and instructions.
+- The script will ask you to trust custom code. This is to load the codearena instances into a local huggingface dataset (`codearena_local.py`) to interface with Agentless.
+- The `run_agentless.sh` script will also check whether the generated patch is a good bad patch, and add the bad patch to the codearena task dataset if it is.
+- Make sure to also manually check that the patch looks okay by inspecting it. A .diff file is saved by codearena bug fixing under `codearena/logs/run_evaluation/check_pad_patch/agentless/$target_id/patch.diff`.
+
+Dev notes:
 - I removed the reproduction tests so that it is always able to come up with a patch. Without doing this, the agent would usually not be able to come up with anything that passes the reproduction stage.
 - This uses OpenAI credits, but if you use 4o mini and 1 sample it isn't very expensive. For me it takes ~5-10 minutes and 10 cents to get one sample for a task. You can track usage at https://platform.openai.com/settings/organization/usage.
+- Currently not sure whether running multiple times to get more samples is possible or not. In my experience, if it generates a successful patch, rerunning will still generate a successful patch.
 
 #### Evaluate the generated patches with CodeArena
 
