@@ -6,13 +6,13 @@ import argparse
 from pathlib import Path
 import google.generativeai as genai
 
-def query_llm_for_review(patch: str, problem_statement: str, correct_patch_example: str, model_name: str = "gemini-2.0-flash") -> str:
+def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_example: str, model_name: str = "gemini-2.0-flash") -> str:
     """
     Queries the LLM to get a detailed review of the provided patch using Google's Generative AI.
     The prompt now includes the problem statement and a correct patch example so the LLM knows the intended changes.
     
     Args:
-        patch (str): The bad patch text.
+        bad_patch (str): The bad patch text.
         problem_statement (str): A description of the problem that needs to be fixed.
         correct_patch_example (str): An example of a correct patch.
         model_name (str): The model name to use (default: "gemini-2.0-flash").
@@ -34,7 +34,7 @@ def query_llm_for_review(patch: str, problem_statement: str, correct_patch_examp
         "Correct Patch Example:\n"
         f"{correct_patch_example}\n\n"
         "Submitted Patch (Bad Patch):\n"
-        f"{patch}\n\n"
+        f"{bad_patch}\n\n"
         "Detailed Review:"
     )
     
