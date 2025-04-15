@@ -25,10 +25,7 @@ def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_e
     prompt = (
         "You are an experienced software engineer tasked with reviewing code patches. "
         "Below is a problem statement, a correct patch example, and a submitted patch which is likely incorrect or incomplete. "
-        "Please provide a detailed review that includes:\n"
-        "  1. A brief summary of the problem to be fixed.\n"
-        "  2. Identification of issues with the submitted patch (e.g., missing context, incorrect modifications, or potential bugs).\n"
-        "  3. Specific suggestions for improvements that would bring the patch closer to the correct solution. You can create these suggestions via a comparison of the submitted incorrect patch against the correct patch example, but do NOT justify with reasoning along the line of: the correct patch does this.\n\n"
+        "Please provide a detailed review that identify of issues with the submitted patch (e.g., missing context, incorrect modifications, or potential bugs) and specify suggestions for improvements that would bring the patch closer to the correct solution. You can create these suggestions via a comparison of the submitted incorrect patch against the correct patch example, but do NOT justify with reasoning along the line of: the correct patch does this. Some example reviews you should output include: `object passed to as_scalar_or_list_str can be a single element list. I this case, should extract element and display instead of printing list` or `Using incorrect shape for cright. It should be of shape (noutp, right.shape[1])` or `arguments list passed convert to world values should be unrolled instead of a list` which you can see are concise and to the point, you can be a bit more in-depth but be sure to not give away the actual answer (code from correct patch example should not be shared).\n\n"
         "Problem Statement:\n"
         f"{problem_statement}\n\n"
         "Correct Patch Example:\n"
@@ -109,7 +106,7 @@ def main(
     modified_instances = copy.deepcopy(instances) # Work on a copy
 
     # Process each instance.
-    for instance in modified_instances[0:5]: # Limit to first 3 instances for testing
+    for instance in modified_instances: # Limit to first 3 instances for testing
         instance_id = instance.get("instance_id")
         problem_statement = instance.get("problem_statement", "No problem statement provided.")
         correct_patch_example = instance.get("patch", "No correct patch example provided.")
