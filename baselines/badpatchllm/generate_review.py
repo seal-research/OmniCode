@@ -1,22 +1,22 @@
-# USAGE
-# python baselines/badpatchllm/generate_rev.py --input_tasks data/codearena_instances.json --output_dir baselines/badpatchllm/logs/gemini_outputs --instance_ids fastapi__fastapi-1549 --model_name gemini-2.0-flash --api_key
 import os
 import json
 import argparse
 from pathlib import Path
 import google.generativeai as genai
+import math
+import copy # Import copy for deep copying
 
 def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_example: str, model_name: str = "gemini-2.0-flash") -> str:
     """
     Queries the LLM to get a detailed review of the provided patch using Google's Generative AI.
     The prompt now includes the problem statement and a correct patch example so the LLM knows the intended changes.
-    
+
     Args:
         bad_patch (str): The bad patch text.
         problem_statement (str): A description of the problem that needs to be fixed.
         correct_patch_example (str): An example of a correct patch.
         model_name (str): The model name to use (default: "gemini-2.0-flash").
-    
+
     Returns:
         str: The generated detailed review.
     """
@@ -37,108 +37,152 @@ def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_e
         f"{bad_patch}\n\n"
         "Detailed Review:"
     )
-    
-    response = model.generate_content(
-        prompt,
-        generation_config={"temperature": 0.9, "top_p": 0.9} 
-    )
-    
-    return response.text.strip()
+
+    review_text = "[Review not generated]" # Default value
+    api_response = None # Initialize api_response to None
+    try:
+        api_response = model.generate_content(
+            prompt,
+            # Adjust generation config as needed, ensure compatibility with the chosen model
+            # Example generation config (adjust temperature, top_p, etc. as needed)
+            generation_config={"temperature": 0.7, "top_p": 0.9}
+        )
+        # Accessing response.text might raise an exception if the response is blocked
+        # or doesn't contain valid text. Use response.parts to check first.
+        if api_response.parts:
+             review_text = api_response.text.strip()
+        else:
+            # Handle cases where the response might be blocked or empty
+            # Check for prompt feedback if available
+            if hasattr(api_response, 'prompt_feedback') and api_response.prompt_feedback:
+                review_text = f"[Review generation failed due to safety settings or other issues: {api_response.prompt_feedback}]"
+            else:
+                review_text = "[Review generation failed: Empty response]"
+
+    except Exception as e:
+        # Handle exceptions during the API call or response processing
+        review_text = f"[Error generating review: {e}]"
+        # Optionally log more details about the error or the response if it exists
+        # (but be careful as 'api_response' might still be None if the exception
+        # happened before or during the generate_content call)
+        # if api_response and hasattr(api_response, 'prompt_feedback') and api_response.prompt_feedback:
+        #     pass # Log api_response.prompt_feedback if needed
+        # else:
+        #     pass # Log basic error 'e'
+
+    return review_text
+
+def load_instances(json_path: Path) -> list:
+    """Loads instance data from the specified JSON file."""
+    if not json_path.exists():
+        # print(f"Error: JSON file not found at {json_path}")
+        return None
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            if not isinstance(data, list):
+                # print(f"Error: Expected a JSON list, but found {type(data)} in {json_path}")
+                return None
+            return data
+    except json.JSONDecodeError:
+        # print(f"Error: Could not decode JSON from {json_path}")
+        return None
+    except Exception as e:
+        # print(f"An unexpected error occurred while loading {json_path}: {e}")
+        return None
 
 def main(
-    input_tasks_path: Path,
-    output_dir_path: Path,
+    json_file_path: Path, # Renamed for clarity
     model_name: str,
-    instance_ids: list,
     secret_key: str,
-    num_reviews: int
+    num_reviews_per_patch: int # Kept for consistency, but logic will only use the first review
 ):
     # Configure the Google Generative AI library with the provided API key.
     genai.configure(api_key=secret_key)
 
-    # Load the input tasks JSON to build a mapping from instance_id to its context.
-    try:
-        with open(input_tasks_path, "r", encoding="utf-8") as f:
-            tasks = json.load(f)
-        # Assume tasks is a list of objects, each having an "instance_id", "problem_statement", and either "correct_patch_example" or "patch" key.
-        instance_map = {}
-        for task in tasks:
-            inst_id = str(task.get("instance_id"))
-            if inst_id:
-                instance_map[inst_id] = {
-                    "problem_statement": task.get("problem_statement", ""),
-                    # Use the key "correct_patch_example" if available; otherwise, fallback to "patch" field.
-                    "correct_patch_example": task.get("correct_patch_example", task.get("patch", ""))
-                }
-    except Exception as e:
-        raise ValueError(f"Failed to load input tasks from {input_tasks_path}: {e}")
-    output_dir_path = output_dir_path / instance_ids[0]
-    # If instance_ids was not provided on the command line, use all instance_ids from the JSON.
-    if not instance_ids:
-        instance_ids = list(instance_map.keys())
-    patch_file = output_dir_path / f"patch_1.diff"
+    # Load the instances from the JSON file.
+    instances = load_instances(json_file_path)
+    if not instances:
+        # print("No instances loaded. Exiting.")
+        return
+
+    modified_instances = copy.deepcopy(instances) # Work on a copy
+
     # Process each instance.
-    for instance_id in instance_ids:
-        # Read the bad patch from a file named patch_<instance_id>.diff in the output directory.
-        try:
-            with open(patch_file, "r", encoding="utf-8") as f:
-                bad_patch = f.read().strip()
-        except FileNotFoundError:
-            print(f"Warning: Bad patch file for instance {instance_id} not found at {patch_file}. Skipping.")
+    for instance in modified_instances[0:5]: # Limit to first 3 instances for testing
+        instance_id = instance.get("instance_id")
+        problem_statement = instance.get("problem_statement", "No problem statement provided.")
+        correct_patch_example = instance.get("patch", "No correct patch example provided.")
+        bad_patches_list = instance.get("bad_patch")
+        reviews = instance.get("Review", [])
+
+        if not instance_id:
             continue
 
-        if not bad_patch:
-            print(f"Warning: Patch file for instance {instance_id} is empty. Skipping.")
+        # --- Validate the bad_patch field ---
+        if bad_patches_list is None or (isinstance(bad_patches_list, float) and math.isnan(bad_patches_list)):
             continue
 
-        # Retrieve additional context from the input tasks.
-        context = instance_map.get(instance_id, {})
-        problem_statement = context.get("problem_statement", "No problem statement provided.")
-        correct_patch_example = context.get("correct_patch_example", "No correct patch example provided.")
+        # --- Check if bad patches already have reviews, if so don't overwrite/do redundantwork ---
+        if reviews and len(reviews) >= num_reviews_per_patch* len(bad_patches_list):
+            print(f"  Info: Instance {instance_id} already has enough reviews. Skipping review generation.")
+            continue
 
-        print(f"Processing instance: {instance_id}")
-        print("Loaded Bad Patch:")
-        print(bad_patch)
 
-        # Generate the requested number of reviews for this patch.
-        reviews = []
-        for i in range(num_reviews):
-            review = query_llm_for_review(
-                patch=bad_patch,
-                problem_statement=problem_statement,
-                correct_patch_example=correct_patch_example,
-                model_name=model_name
-            )
-            reviews.append(review)
-            print(f"\nLLM Review {i+1} for instance {instance_id}:")
-            print(review)
+        if not isinstance(bad_patches_list, list):
+            if isinstance(bad_patches_list, str):
+                 bad_patches_list = [bad_patches_list]
+            else:
+                # print(f"Warning: Instance {instance_id} 'bad_patch' field is not a list or string (type: {type(bad_patches_list)}). Skipping review generation.")
+                continue
 
-        # Save the reviews for this instance to a file.
-        review_file = output_dir_path / f"{instance_id}_reviews.txt"
-        try:
-            with open(review_file, "w", encoding="utf-8") as f:
-                for idx, review in enumerate(reviews, start=1):
-                    f.write(f"Review {idx}:\n{review}\n\n")
-            print(f"Reviews for instance {instance_id} saved to {review_file}\n")
-        except Exception as e:
-            print(f"Error saving reviews for instance {instance_id}: {e}")
+        if not bad_patches_list:
+            continue
+
+        new_reviews = []
+        for bad_patch_content in bad_patches_list:
+            if isinstance(bad_patch_content, str) and bad_patch_content.strip():
+                review = query_llm_for_review(
+                    bad_patch=bad_patch_content,
+                    problem_statement=problem_statement,
+                    correct_patch_example=correct_patch_example,
+                    model_name=model_name
+                )
+                new_reviews.append(review)
+        # Update the instance dictionary
+        instance["Review"] = new_reviews
+        # instance["Review_Author"] = "Gemini 2.0 Flash" # Hardcoded author
+            # else:
+                # print(f"  Info: No valid bad patches found for instance {instance_id}. Skipping review generation.")
+
+
+    # Write the modified data back to the original JSON file.
+    try:
+        with open(json_file_path, "w", encoding="utf-8") as f:
+            json.dump(modified_instances, f, indent=4) # Use indent for readability
+        # print(f"\nSuccessfully updated {json_file_path} with generated reviews.")
+    except Exception as e:
+        # print(f"Error writing updated data back to {json_file_path}: {e}")
+        pass
+
+    # print("-" * 70)
+    # print(f"Finished processing.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate detailed reviews for bad patches using Gemini-2.0-Flash.")
-    parser.add_argument("--input_tasks", required=True, help="Path to the JSON file containing input tasks.")
-    parser.add_argument("--output_dir", required=True, help="Path to the directory where bad patch files are stored and reviews will be saved.")
-    parser.add_argument("--model_name", default="gemini-2.0-flash", help="Model name to use for review generation.")
-    parser.add_argument("--instance_ids", default=None, help="Comma-separated list of instance IDs to process. If omitted, all instance IDs from the input tasks file will be used.")
+    parser = argparse.ArgumentParser(description="Generate reviews for bad patches listed in a JSON file and update the file.")
+    # Changed argument name and help text
+    parser.add_argument("--input_tasks", required=True, help="Path to the codearena_instances.json file (will be read and updated).")
+    # Removed output_dir argument
+    parser.add_argument("--model_name", default="gemini-2.0-flash", help="Model name to use for review generation (e.g., gemini-2.0-flash).")
     parser.add_argument("--api_key", required=True, help="Secret key for accessing the Google Generative AI API.")
-    parser.add_argument("--num_reviews", type=int, default=1, help="Number of reviews to generate per patch.")
-    
+    # Kept this argument but clarified its behavior in the help text
+    parser.add_argument("--num_reviews_per_patch", type=int, default=1, help="Number of reviews to attempt generating per bad patch (currently only the first successful review for the first valid patch per instance is saved).")
+
     args = parser.parse_args()
 
     main(
-        input_tasks_path=Path(args.input_tasks),
-        output_dir_path=Path(args.output_dir),
+        json_file_path=Path(args.input_tasks),
         model_name=args.model_name,
-        instance_ids=args.instance_ids.split(",") if args.instance_ids else [],
         secret_key=args.api_key,
-        num_reviews=args.num_reviews,
+        num_reviews_per_patch=args.num_reviews_per_patch,
     )
