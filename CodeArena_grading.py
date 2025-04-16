@@ -28,13 +28,11 @@ class TestedStatus(Enum):
 
 
 def test_passed_prefix_match(case: str, sm: dict[str, str]) -> bool:
-    # return case in sm and sm[case] in [TestStatus.PASSED.value, TestStatus.XFAIL.value]
-
-    # alternate version which can handle case where "case" is something like "test/test_InfoExtractor"
-    # and sm contains test names like "test/test_InfoExtractor.py::TestInfoExtractor::test_download_json"
     if case in sm:
         return sm[case] in [TestStatus.PASSED.value, TestStatus.XFAIL.value]
 
+    # alternate version which can handle case where "case" is something like "test/test_InfoExtractor"
+    # and sm contains test names like "test/test_InfoExtractor.py::TestInfoExtractor::test_download_json"
     matching_keys = [k for k in sm if k.startswith(case + '::')]
 
     if len(matching_keys) == 0:
@@ -47,21 +45,17 @@ def test_passed_prefix_match(case: str, sm: dict[str, str]) -> bool:
 
 
 def test_failed_prefix_match(case: str, sm: dict[str, str]) -> bool:
-    # return case not in sm or any(
-    #     sm[case] == status for status in [TestStatus.FAILED.value, TestStatus.ERROR.value]
-    # )
-
-    # alternate version which can handle case where "case" is something like "test/test_InfoExtractor"
-    # and sm contains test names like "test/test_InfoExtractor.py::TestInfoExtractor::test_download_json"
     if case in sm:
         return sm[case] in [TestStatus.FAILED.value, TestStatus.ERROR.value]
 
+    # alternate version which can handle case where "case" is something like "test/test_InfoExtractor"
+    # and sm contains test names like "test/test_InfoExtractor.py::TestInfoExtractor::test_download_json"
     matching_keys = [k for k in sm if k.startswith(case + '::')]
 
     if len(matching_keys) == 0:
         return False
 
-    if any(sm[k] in [TestStatus.PASSED.value, TestStatus.XFAIL.value] for k in matching_keys):
+    if any(sm[k] in [TestStatus.FAILED.value, TestStatus.ERROR.value] for k in matching_keys):
         return False
 
     return True
