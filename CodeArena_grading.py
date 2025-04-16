@@ -53,12 +53,13 @@ def test_failed_prefix_match(case: str, sm: dict[str, str]) -> bool:
     matching_keys = [k for k in sm if k.startswith(case + '::')]
 
     if len(matching_keys) == 0:
-        return False
+        # this seems wrong to me idk. but just mirroring logic from test_failed function.
+        return True
 
     if any(sm[k] in [TestStatus.FAILED.value, TestStatus.ERROR.value] for k in matching_keys):
-        return False
+        return True
 
-    return True
+    return False
 
 
 # MARK: Utility functions
