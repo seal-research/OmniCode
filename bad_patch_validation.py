@@ -18,6 +18,7 @@ if len(results_dirs) == 0:
     print('No results found with prefix', args.results_folder_prefix)
     sys.exit(1)
 
+print('Looking for bad patches...')
 found_bad_patch = False
 for results_dir in results_dirs:
     full_dir = os.path.join('logs/run_evaluation', results_dir, 'agentless', args.instance_id)
@@ -26,6 +27,8 @@ for results_dir in results_dirs:
         report = json.load(f)
 
     resolved = report[args.instance_id]['resolved']
+    if resolved:
+        print('Solved task:', results_dir)
     if not resolved:
         print('Bad patch found in', results_dir)
 
