@@ -1,26 +1,3 @@
-Command To Generate Bad Patches: 
+Command To Generate Bad Patches + Run Bug Fixing to Validate Patches: 
 
-python baselines/badpatchllm/generate.py -i data/codearena_instances.json -o baselines/badpatchllm/logs/gemini_outputs --instance_ids [TODO] -m gemini-2.0-flash -k [TODO]
-
-
-Command to clean the bad patches for validation:
-# This will generate:
-# - all_preds_1.jsonl through all_preds_5.jsonl (separate files for each patch number)
-# - all_preds.jsonl (combined file with all patches and their numbers)
-python baselines/badpatchllm/clean_badpatch_outputs.py baselines/badpatchllm/logs
-
-Commands for Validation:
-# Evaluate the first bad patch for the instance
-python codearena.py --BugFixing --predictions_path baselines/badpatchllm/logs/gemini_outputs/all_preds_1.jsonl --instance_ids [TODO] --run_id test
-
-# Evaluate the second bad patch for the instance
-python codearena.py --BugFixing --predictions_path baselines/badpatchllm/logs/gemini_outputs/all_preds_2.jsonl --instance_ids [TODO] --run_id test
-
-# Evaluate the third bad patch for the instance
-python codearena.py --BugFixing --predictions_path baselines/badpatchllm/logs/gemini_outputs/all_preds_3.jsonl --instance_ids [TODO] --run_id test
-
-# Evaluate the fourth bad patch for the instance
-python codearena.py --BugFixing --predictions_path baselines/badpatchllm/logs/gemini_outputs/all_preds_4.jsonl --instance_ids [TODO] --run_id test
-
-# Evaluate the fifth bad patch for the instance
-python codearena.py --BugFixing --predictions_path baselines/badpatchllm/logs/gemini_outputs/all_preds_5.jsonl --instance_ids [TODO] --run_id test
+python3 baselines/badpatchllm/generate.py -o baselines/badpatchllm/logs/gemini_outputs --instance_ids [Instance_ID] -m gemini-2.0-flash -k [KEY] --run_id [TODO] -n 5 -d data/components/[TODO]
