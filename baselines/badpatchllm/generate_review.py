@@ -6,7 +6,7 @@ import google.generativeai as genai
 import math
 import copy # Import copy for deep copying
 
-def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_example: str, model_name: str = "gemini-2.0-flash") -> str:
+def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_example: str, model_name: str = "gemini-2.5-flash-preview-04-17") -> str:
     """
     Queries the LLM to get a detailed review of the provided patch using Google's Generative AI.
     The prompt now includes the problem statement and a correct patch example so the LLM knows the intended changes.
@@ -15,7 +15,7 @@ def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_e
         bad_patch (str): The bad patch text.
         problem_statement (str): A description of the problem that needs to be fixed.
         correct_patch_example (str): An example of a correct patch.
-        model_name (str): The model name to use (default: "gemini-2.0-flash").
+        model_name (str): The model name to use (default: "gemini-2.5-flash-preview-04-17").
 
     Returns:
         str: The generated detailed review.
@@ -25,7 +25,13 @@ def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_e
     prompt = (
         "You are an experienced software engineer tasked with reviewing code patches. "
         "Below is a problem statement, a correct patch example, and a submitted patch which is likely incorrect or incomplete. "
-        "Please provide a detailed review that identify of issues with the submitted patch (e.g., missing context, incorrect modifications, or potential bugs) and specify suggestions for improvements that would bring the patch closer to the correct solution. You can create these suggestions via a comparison of the submitted incorrect patch against the correct patch example, but do NOT justify with reasoning along the line of: the correct patch does this. Some example reviews you should output include: `object passed to as_scalar_or_list_str can be a single element list. I this case, should extract element and display instead of printing list` or `Using incorrect shape for cright. It should be of shape (noutp, right.shape[1])` or `arguments list passed convert to world values should be unrolled instead of a list` which you can see are concise and to the point, you can be a bit more in-depth but be sure to not give away the actual answer (code from correct patch example should not be shared).\n\n"
+        "Please provide a detailed review that identify of issues with the submitted patch (e.g., missing context, incorrect modifications, or potential bugs) and specify suggestions for improvements the new patch"
+        "would solve the problem statement. You can create these suggestions via a comparison of the submitted incorrect patch against the correct"
+        "patch example, but try to come up with original suggestions on your own (as there can be multiple ways to fix th problem. DO NOT justify with reasoning along the line of: the correct patch does this. Some example reviews you"
+        "should output include: \"object passed to as_scalar_or_list_str can be a single element list. I this case, should extract "
+        "element and display instead of printing list\" or \"Using incorrect shape for cright. It should be of shape (noutp, right.shape[1])\""
+        "or \"arguments list passed convert to world values should be unrolled instead of a list\" which you can see are concise and to the point,"
+        "you should keep your recommendation/response under 50 words and make sure to not give away the actual answer as code from correct patch example should not be shared.\n\n"
         "Problem Statement:\n"
         f"{problem_statement}\n\n"
         "Correct Patch Example:\n"
@@ -72,68 +78,86 @@ def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_e
 def load_instances(json_path: Path) -> list:
     """Loads instance data from the specified JSON file."""
     if not json_path.exists():
-        # print(f"Error: JSON file not found at {json_path}")
+        print(f"Error: JSON file not found at {json_path}")
         return None
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
             if not isinstance(data, list):
-                # print(f"Error: Expected a JSON list, but found {type(data)} in {json_path}")
+                print(f"Error: Expected a JSON list, but found {type(data)} in {json_path}")
                 return None
             return data
     except json.JSONDecodeError:
-        # print(f"Error: Could not decode JSON from {json_path}")
+        print(f"Error: Could not decode JSON from {json_path}")
         return None
     except Exception as e:
-        # print(f"An unexpected error occurred while loading {json_path}: {e}")
+        print(f"An unexpected error occurred while loading {json_path}: {e}")
         return None
 
+def validate_and_normalize_list(value, instance_id, field_name):
+    """
+    Validates and normalizes the input value to always be a list if valid.
+    """
+    if value is None or (isinstance(value, float) and math.isnan(value)):
+        return None  # Explicitly no data provided
+
+    if isinstance(value, str):
+        # Convert string to list, handle empty string as empty list
+        return [value] if value else []
+
+    if isinstance(value, list):
+        return value
+
+    # If none of the above, it's an invalid type
+    print(f"Warning: Instance {instance_id} '{field_name}' field is not None, str, or list (type: {type(value)}). Skipping.")
+    return None
+
 def main(
-    json_file_path: Path, # Renamed for clarity
+    json_file_path: Path,
     model_name: str,
     secret_key: str,
-    num_reviews_per_patch: int # Kept for consistency, but logic will only use the first review
+    num_reviews_per_patch: int
 ):
-    # Configure the Google Generative AI library with the provided API key.
     genai.configure(api_key=secret_key)
-
-    # Load the instances from the JSON file.
+    # ... (setup code like genai.configure, load_instances) ...
     instances = load_instances(json_file_path)
     if not instances:
-        # print("No instances loaded. Exiting.")
         return
 
     modified_instances = copy.deepcopy(instances) # Work on a copy
 
-    # Process each instance.
-    for instance in modified_instances: # Limit to first 3 instances for testing
+    for instance in modified_instances[:3]: # Example: process first 3
         instance_id = instance.get("instance_id")
         problem_statement = instance.get("problem_statement", "No problem statement provided.")
         correct_patch_example = instance.get("patch", "No correct patch example provided.")
-        bad_patches_list = instance.get("bad_patch")
-        reviews = instance.get("Review", [])
+        bad_patches_input = instance.get("bad_patch")
+        reviews_input = instance.get("Review")
 
         if not instance_id:
+            print("Warning: Skipping instance with no instance_id.")
             continue
 
-        # --- Validate the bad_patch field ---
-        if bad_patches_list is None or (isinstance(bad_patches_list, float) and math.isnan(bad_patches_list)):
+        # Validate and normalize bad_patches
+        bad_patches_list = validate_and_normalize_list(bad_patches_input, instance_id, 'bad_patch')
+
+        # If bad_patches_list is None (invalid input) or empty, skip review generation
+        if bad_patches_list is None or not bad_patches_list:
+            print(f"  Info: No valid bad patches found for instance {instance_id}. Skipping review generation.")
             continue
 
-        # --- Check if bad patches already have reviews, if so don't overwrite/do redundantwork ---
-        if reviews and len(reviews) >= num_reviews_per_patch* len(bad_patches_list):
-            print(f"  Info: Instance {instance_id} already has enough reviews. Skipping review generation.")
-            continue
+        # Validate and normalize existing reviews
+        reviews_list = validate_and_normalize_list(reviews_input, instance_id, 'Review')
 
+        # If reviews_list is None, it means the field was invalid or missing. Treat as 0 reviews.
+        # If it's an empty list [], it means 0 reviews exist.
+        existing_review_count = len(reviews_list) if reviews_list is not None else 0
 
-        if not isinstance(bad_patches_list, list):
-            if isinstance(bad_patches_list, str):
-                 bad_patches_list = [bad_patches_list]
-            else:
-                # print(f"Warning: Instance {instance_id} 'bad_patch' field is not a list or string (type: {type(bad_patches_list)}). Skipping review generation.")
-                continue
-
-        if not bad_patches_list:
+        # Check if enough reviews already exist
+        # Note: This assumes num_reviews_per_patch applies *per bad patch*.
+        # If it means total reviews for the instance, the logic might differ slightly.
+        required_reviews = num_reviews_per_patch * len(bad_patches_list)
+        if existing_review_count >= required_reviews:
+            print(f"  Info: Instance {instance_id} already has {existing_review_count} reviews (>= {required_reviews} required). Skipping.")
             continue
 
         new_reviews = []
@@ -148,7 +172,7 @@ def main(
                 new_reviews.append(review)
         # Update the instance dictionary
         instance["Review"] = new_reviews
-        # instance["Review_Author"] = "Gemini 2.0 Flash" # Hardcoded author
+        # instance["Review_Author"] = "Gemini 2.5 Flash" # Hardcoded author
             # else:
                 # print(f"  Info: No valid bad patches found for instance {instance_id}. Skipping review generation.")
 
@@ -170,7 +194,7 @@ if __name__ == "__main__":
     # Changed argument name and help text
     parser.add_argument("--input_tasks", required=True, help="Path to the codearena_instances.json file (will be read and updated).")
     # Removed output_dir argument
-    parser.add_argument("--model_name", default="gemini-2.0-flash", help="Model name to use for review generation (e.g., gemini-2.0-flash).")
+    parser.add_argument("--model_name", default="gemini-2.5-flash-preview-04-17", help="Model name to use for review generation (e.g., gemini-2.5-flash).")
     parser.add_argument("--api_key", required=True, help="Secret key for accessing the Google Generative AI API.")
     # Kept this argument but clarified its behavior in the help text
     parser.add_argument("--num_reviews_per_patch", type=int, default=1, help="Number of reviews to attempt generating per bad patch (currently only the first successful review for the first valid patch per instance is saved).")
