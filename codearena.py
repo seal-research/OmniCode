@@ -21,6 +21,10 @@ REPO_DATA = eval(REPO_DATA_PATH.read_text())
 def execute_command(func, **kwargs):
     """Wrapper to execute a function safely and catch errors."""
     func(**kwargs)
+    # try:
+    #     func(**kwargs)
+    # except Exception as e:
+    #     print(f"Error while executing: {func.__name__}. Error: {e}")
 
 def generate_gold_patch_predictions(dataset_files, instance_ids=None, max_instances=0):
     """Generate predictions from gold patches in the dataset files."""
