@@ -8,6 +8,16 @@ import pandas as pd
 import os
 import re
 from collections import defaultdict
+import tempfile
+import shutil
+import tree_sitter_python as tspython
+from tree_sitter import Language, Parser, Node
+from unidiff import PatchSet
+from git import Repo
+from swebench.harness.constants import MAP_REPO_VERSION_TO_SPECS
+
+PY_LANGUAGE = Language(tspython.language())
+
 from swebench.harness.constants import (
     NON_TEST_EXTS,
     KEY_INSTANCE_ID
@@ -121,7 +131,6 @@ def load_CodeArena_prediction_dataset(
     generated_tests_path: str,
     codearena_instances: str, 
     instance_ids: list, 
-    custom_dataset_path: str = "data/codearena_instances.jsonl",
     save: bool = False
 ):
     """
@@ -131,22 +140,6 @@ def load_CodeArena_prediction_dataset(
     import json
     import os
     import pandas as pd
-
-    # Determine file type based on extension
-    file_ext = os.path.splitext(custom_dataset_path)[-1].lower()
-
-    custom_data = []
-    
-    with open(custom_dataset_path, 'r') as f:
-        if file_ext == ".jsonl":  # Process line by line for JSONL
-            for line in f:
-                custom_data.append(json.loads(line.strip()))
-        elif file_ext == ".json":  # Load entire JSON file
-            custom_data = json.load(f)
-        else:
-            raise ValueError("Unsupported file format. Please provide a .json or .jsonl file.")
-
-    custom_df = pd.DataFrame(custom_data)
 
     # Load Generated Tests
     generated_tests = []
@@ -160,21 +153,32 @@ def load_CodeArena_prediction_dataset(
 
     generated_tests_df = pd.DataFrame(generated_tests)
 
+    # Load the CodeArena Instances file
+    with open(codearena_instances, 'r') as f:
+        codearena_instances_data = json.load(f)  # Load entire file as JSON
+
+    codearena_instances_df = pd.DataFrame(codearena_instances_data)
+
+    # Filter rows where `bad_patch` is not empty
+    codearena_instances_filtered = codearena_instances_df[
+    codearena_instances_df['bad_patch'].notna() & codearena_instances_df['bad_patch'].str.strip().ne("")
+    ].copy()
+
     # Check for missing predictions
-    custom_ids = set(custom_df['instance_id'])
+    codeArena_ids = set(codearena_instances_filtered['instance_id'])
     generated_tests_ids = set(generated_tests_df['instance_id'])
     
-    missing_preds = custom_ids - generated_tests_ids
+    missing_preds = codeArena_ids - generated_tests_ids
     if missing_preds:
         print(f"Warning: Missing predictions for {len(missing_preds)} instance IDs: {missing_preds}")
 
-    # Rename `patch` column in Custom Dataset to `gold_patch`
-    if 'patch' in custom_df.columns:
-        custom_df.rename(columns={'patch': 'gold_patch'}, inplace=True)
+    # Rename `patch` column to `gold_patch` if needed
+    if 'patch' in codearena_instances_filtered.columns:
+        codearena_instances_filtered.rename(columns={'patch': 'gold_patch'}, inplace=True)
 
-    # Merge Custom Dataset with Generated Tests
+    # Merge CodeArena Instances with Generated Tests
     merged_df = pd.merge(
-        custom_df,
+        codearena_instances_filtered,
         generated_tests_df[['instance_id', 'model_patch', 'model_name_or_path']],
         on='instance_id',
         how='left'
@@ -182,26 +186,6 @@ def load_CodeArena_prediction_dataset(
 
     # Rename `model_patch` to `candidate_test_patch`
     merged_df.rename(columns={'model_patch': 'candidate_test_patch'}, inplace=True)
-
-    # Load the additional CodeArena Instances JSONL file
-    codearena_instances_data = []
-    with open(codearena_instances, 'r') as f:
-        for line in f:
-            codearena_instances_data.append(json.loads(line.strip()))
-    codearena_instances_df = pd.DataFrame(codearena_instances_data)
-
-    # Filter rows where `bad_patch` is not empty
-    codearena_instances_filtered = codearena_instances_df[
-        codearena_instances_df['bad_patch'].notna() & codearena_instances_df['bad_patch'].str.strip().ne("")
-    ]
-
-    # Merge with CodeArena Instances
-    merged_df = pd.merge(
-        merged_df,
-        codearena_instances_filtered[['instance_id', 'bad_patch', 'bad_patch_author', 'Review', 'Review_Author']],
-        on='instance_id',
-        how='left'
-    )
 
     # Extract `model_name_or_path` for naming the output file
     if 'model_name_or_path' in generated_tests_df.columns:
@@ -254,3 +238,222 @@ def get_test_directives(instance: CodeArenaInstance) -> list:
         directives = directives_transformed
 
     return directives
+
+
+
+class DirHandler:
+    def __init__(self, dir_path: Path, temp_dir: Path = Path("/tmp")):
+        self.dir_path = dir_path
+        self.temp_dir = temp_dir
+
+    def __enter__(self):
+        """create a temp dir and copy repo into it with tempdir"""
+        self.temp_dir = tempfile.mkdtemp()
+        shutil.copytree(self.dir_path, self.temp_dir, dirs_exist_ok=True)
+        return self.temp_dir
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        shutil.rmtree(self.temp_dir)
+
+
+
+def git_checkout(repo_path: Path, commit_sha: str) -> Path:
+    """
+    Checkout a specific commit in a repository
+    """
+    repo = Repo(repo_path)
+    repo.git.checkout(commit_sha)
+
+
+def get_current_commit(repo_path: Path) -> str:
+    """
+    Get the current commit of a repository
+    """
+    repo = Repo(repo_path)
+    return repo.head.commit.hexsha
+
+
+EXTENSION_TO_TS_LANG = {
+    ".py": PY_LANGUAGE,
+}
+
+
+def get_identifier_name(node: Node, source_bytes: bytes) -> str | None:
+    """
+    Given a node (of type function_definition or class_definition)
+    find its child whose type is "identifier" and return its text.
+    """
+    for child in node.children:
+        if child.type == "identifier":
+            return source_bytes[child.start_byte:child.end_byte].decode("utf8")
+    return None
+
+
+
+def get_fully_qualified_name(source_code: str, parser: Parser, line_number: int) -> str | None:
+    """
+    Given the source_code (a string), a tree-sitter parser and a 1-indexed
+    line_number, returns the fully qualified name (or None if not found)
+    of the function (or method) that the line is part of.
+    """
+
+    # Parse the source text. (Note: tree-sitter expects bytes.)
+    tree = parser.parse(source_code.encode("utf8"))
+    source_bytes = source_code.encode("utf8")
+    # Convert external line number (1-indexed) to a point (row, column)
+    # figure out leading whitespace to use as column
+    line_source_code = source_code.splitlines()[line_number - 1]
+    leading_whitespace = len(line_source_code) - len(line_source_code.lstrip())
+    target_point = (line_number - 1, leading_whitespace)
+
+    # Find the smallest node that spans our target point.
+    node = tree.root_node.descendant_for_point_range(target_point, target_point)
+    if node is None:
+        return None
+    
+    # Walk upward from the node to find any surrounding function or class definitions.
+    names = []
+    current = node
+    while current is not None:
+        if current.type in ("function_definition", "class_definition"):
+            name = get_identifier_name(current, source_bytes)
+            # If found, add it to our list.
+            if name:
+                names.append(name)
+        current = current.parent
+
+    # The names were collected from inner to outer so we reverse them.
+    if names:
+        # For example, if the node is inside a class and then a method,
+        # the fully qualified name becomes "ClassName.function_name".
+        return ".".join(reversed(names))
+    else:
+        return None
+
+
+def get_function_name(file_path: Path, line_number: int) -> str | None:
+    """
+    Parse the code file and return the fully qualified name of the function containing the line number
+    """
+    parser = Parser(EXTENSION_TO_TS_LANG[file_path.suffix])
+    source_code = file_path.read_text()
+    return get_fully_qualified_name(source_code, parser, line_number)
+
+
+def get_modified_line_chunks(diff_str: str, repo_path: Path, base_commit: str) -> list[str]:
+    """
+    Get line number ranges from the original file that were modified in the patch
+    """
+    with DirHandler(repo_path) as temp_dir:
+        git_checkout(temp_dir, base_commit)
+        patch_set = PatchSet(diff_str)
+        
+
+def get_modified_functions(diff_str: str, repo_path: Path, base_commit: str) -> list[str]:
+    """
+    Get the modified functions from a diff string
+    """
+    with DirHandler(repo_path) as temp_dir:
+        git_checkout(temp_dir, base_commit)
+        patch_set = PatchSet(diff_str)
+        modified_functions = []
+        for patched_file in patch_set:
+            offset = 1
+            for hunk in patched_file:
+                for line in hunk:
+                    func_name = None
+                    if line.is_added:
+                        func_name = get_function_name(repo_path / patched_file.path, line.target_line_no - offset)
+                        offset += 1
+                    if line.is_removed:
+                        func_name = get_function_name(repo_path / patched_file.path, line.source_line_no)
+                        offset -= 1
+
+                    if func_name is None:
+                        continue
+                    func_fqn = patched_file.path + "::" + func_name
+                    if func_fqn not in modified_functions:
+                        modified_functions.append(func_fqn)
+    
+        return modified_functions
+    
+
+def update_test_spec_with_specific_test_names(test_spec, repo_path):
+    """
+    Updates a TestSpec to use specific test function names instead of file paths.
+    
+    Args:
+        test_spec (TestSpec): The TestSpec to update
+        repo_path (Path): Path to the local repository
+    
+    Returns:
+        TestSpec: The updated TestSpec
+    """
+    try:
+        # Extract necessary information
+        base_commit = test_spec.base_commit
+        
+        # Extract test patch from the command string in eval_script_list
+        test_patch = None
+        for cmd in test_spec.eval_script_list:
+            if "git apply -v -" in cmd and "EOF_" in cmd:
+                # Extract the patch content between the heredoc delimiters
+                patch_match = re.search(r"<<'EOF_\d+'\n(.*?)\nEOF_\d+", cmd, re.DOTALL)
+                if patch_match:
+                    test_patch = patch_match.group(1)
+                    break
+        
+        if not test_patch:
+            print(f"Warning: Could not find test patch in test_spec for {test_spec.instance_id}")
+            return test_spec
+        
+        # Get modified functions
+        modified_functions = get_modified_functions(test_patch, repo_path, base_commit)
+        
+        # Filter for test functions
+        test_functions = []
+        for func_path in modified_functions:
+            file_path, func_name = func_path.split(":", 1)
+            
+            # Only include test functions
+            if "test" in func_name.lower() or "Test" in func_name:
+                # Check if it's a test file (not in NON_TEST_EXTS)
+                if not any(file_path.endswith(ext) for ext in NON_TEST_EXTS):
+                    if test_spec.repo == "django/django":
+                        # Apply Django transformations
+                        if file_path.endswith(".py"):
+                            file_path = file_path[: -len(".py")]
+                        if file_path.startswith("tests/"):
+                            file_path = file_path[len("tests/"):]
+                        file_path = file_path.replace("/", ".")
+                        test_functions.append(f"{file_path}.{func_name}")
+                    else:
+                        # Use pytest format for other repos
+                        test_functions.append(f"{file_path}::{func_name}")
+        
+        # Only update if we found specific test functions
+        if test_functions:
+            # Update the test commands in all scripts (eval_script_list, gold_inverted_eval_script_list, bad_inverted_eval_script_list)
+            script_lists = [
+                test_spec.eval_script_list,
+                test_spec.gold_inverted_eval_script_list,
+                test_spec.bad_inverted_eval_script_list
+            ]
+            
+            for script_list in script_lists:
+                for i, cmd in enumerate(script_list):
+                    # Find the test command
+                    test_cmd_base = MAP_REPO_VERSION_TO_SPECS[test_spec.repo][test_spec.version]["test_cmd"]
+                    if cmd.startswith(test_cmd_base):
+                        # Replace with the new command using specific test functions
+                        script_list[i] = f"{test_cmd_base} {' '.join(test_functions)}"
+            
+            print(f"Updated test commands for {test_spec.instance_id} with {len(test_functions)} specific test functions")
+        else:
+            print(f"No test functions found for {test_spec.instance_id}, leaving test commands unchanged")
+        
+        return test_spec
+    
+    except Exception as e:
+        print(f"Error updating test spec for {test_spec.instance_id}: {str(e)}")
+        return test_spec  # Return unmodified spec on error

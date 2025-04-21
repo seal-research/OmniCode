@@ -37,7 +37,7 @@ from CodeArena_grading import get_eval_report_test_generation, get_fail_to_fail
 #from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
 from CodeArena_test_spec import make_test_spec, TestSpec
 from swebench.harness.utils import str2bool
-from utils import load_swebench_dataset, load_CodeArena_prediction_dataset
+from utils import load_swebench_dataset, load_CodeArena_prediction_dataset, update_test_spec_with_specific_test_names
 
 class EvaluationError(Exception):
     def __init__(self, instance_id, message, logger):
@@ -93,7 +93,7 @@ def get_dataset_from_preds(
     instance_ids: list,
     run_id: str,
     exclude_completed: bool = True,
-    codearena_instances: str = "data/codearena_instances.jsonl",
+    codearena_instances: str = "data/codearena_instances.json",
     generated_tests_path: str = "generated_tests.jsonl"
 ):
     """
@@ -137,6 +137,8 @@ def get_dataset_from_preds(
 
     # Filter dataset to only instances with predictions and non-empty patches
     merged_df = merged_df[merged_df['instance_id'].isin(dataset_ids)]
+
+    print(merged_df.to_dict(orient="records")[0].keys())
 
     # Convert the DataFrame to a list of dictionaries
     return merged_df.to_dict(orient="records")
@@ -368,6 +370,8 @@ def run_instance(
         container = build_container(test_spec, client, run_id, logger, rm_image, force_rebuild)
         container.start()
         logger.info(f"Container for {instance_id} started: {container.id}")
+
+        update_test_spec_with_specific_test_names(test_spec=test_spec, repo_path=Path("/testbed"))
 
         # TODO: Before candidate test patch is applied, determine F2F tests.
         ######################################################################
