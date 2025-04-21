@@ -20,8 +20,6 @@ from sweagent.agent.problem_statement import TextProblemStatement, FileProblemSt
 CUR_DIR = Path(__file__).parent
 DOTENV_PATH = CUR_DIR / '.env'
 
-PROMPT_TEMPLATE = Template((CUR_DIR / "sweagent_testgen_template.j2").read_text())
-
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -97,16 +95,14 @@ def run_sweagent_single(
     url = f"https://github.com/{instance['repo']}"
 
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
-        fp.write(
-            PROMPT_TEMPLATE.render(
-                issue=instance['problem_statement']
-            )
-        )
+        fp.write(instance['problem_statement'])
         fp.close()
 
         args = [
             "run",
             f"--agent.model.name={model_name}",
+            f"--agent.model.per_instance_cost_limit=0.2",
+            f"--agent.tools.parse_function.type=thought_action",
             f"--env.repo.github_url={url}",
             f"--env.repo.base_commit={instance['base_commit']}",
             f"--problem_statement.path={str(fp.name)}",
@@ -126,6 +122,7 @@ def main(
     input_tasks_path: Path,
     output_dir_path: Path,
     model_name: str,
+    instance_ids: list[str] | None= None,
 ):
     if input_tasks_path.exists():
         if input_tasks_path.suffix.endswith("json"):
@@ -146,10 +143,8 @@ def main(
     if not (isinstance(dataset, list) and all(isinstance(d, dict) for d in dataset)):
         raise RuntimeError(f"Data folllows incorrect format")
 
-    dataset = [
-        d for d in dataset
-        if ("bad_patch" not in d or (isinstance(d['bad_patch'], str) and d['bad_patch'].strip() != ''))
-    ]
+    if instance_ids is not None:
+        dataset = [d for d in dataset if d["instance_id"] in instance_ids]
 
     existing_ids = set()
     
@@ -185,6 +180,7 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("-i", "--input_tasks", type=str, required=True)
+    parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gpt-4o")
     args = parser.parse_args()
@@ -193,5 +189,6 @@ if __name__ == '__main__':
         input_tasks_path=Path(args.input_tasks),
         output_dir_path=Path(args.output_dir),
         model_name=args.model_name,
+        instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
     )
 

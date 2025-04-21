@@ -172,6 +172,8 @@ cython_debug/
 
 .DS_Store
 
+# github tokens
+github_tokens.sh
 
 # Exclude specific directories in multiswebench
 multiswebench/mswebench_dataset/
@@ -186,3 +188,4 @@ multiswebench/.vscode/
 multiswebench/LICENSE
 multiswebench/README.md
 multiswebench/clean_config.json
+logs/
