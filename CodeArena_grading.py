@@ -26,6 +26,42 @@ class TestedStatus(Enum):
     SUCCESS_BAD = "GOLD_FAIL_BAD_SUCCESS"
     SUCCESS = "GOLD_SUCCESS_BAD_SUCCESS"
 
+
+def test_passed_prefix_match(case: str, sm: dict[str, str]) -> bool:
+    if case in sm:
+        return sm[case] in [TestStatus.PASSED.value, TestStatus.XFAIL.value]
+
+    # alternate version which can handle case where "case" is something like "test/test_InfoExtractor"
+    # and sm contains test names like "test/test_InfoExtractor.py::TestInfoExtractor::test_download_json"
+    matching_keys = [k for k in sm if k.startswith(case + '::')]
+
+    if len(matching_keys) == 0:
+        return False
+
+    if all(sm[k] in [TestStatus.PASSED.value, TestStatus.XFAIL.value] for k in matching_keys):
+        return True
+
+    return False
+
+
+def test_failed_prefix_match(case: str, sm: dict[str, str]) -> bool:
+    if case in sm:
+        return sm[case] in [TestStatus.FAILED.value, TestStatus.ERROR.value]
+
+    # alternate version which can handle case where "case" is something like "test/test_InfoExtractor"
+    # and sm contains test names like "test/test_InfoExtractor.py::TestInfoExtractor::test_download_json"
+    matching_keys = [k for k in sm if k.startswith(case + '::')]
+
+    if len(matching_keys) == 0:
+        # this seems wrong to me idk. but just mirroring logic from test_failed function.
+        return True
+
+    if any(sm[k] in [TestStatus.FAILED.value, TestStatus.ERROR.value] for k in matching_keys):
+        return True
+
+    return False
+
+
 # MARK: Utility functions
 def test_passed(case: str, sm: dict[str, str]) -> bool:
     return case in sm and sm[case] in [TestStatus.PASSED.value, TestStatus.XFAIL.value]
@@ -47,7 +83,7 @@ def get_logs_eval(log_fp: str) -> tuple[dict[str, str], bool]:
     Returns:
         bool: whether the patch applied successfully
         dict: status map
-    
+
     TODO(john-b-yang): Check this is working properly...
     """
     # Convert e.g. "logs/scikit-learn__scikit-learn-12421/test_output.txt" to "scikit-learn/scikit-learn"
@@ -109,7 +145,7 @@ def get_eval_tests_report(
     - Fail-Fail (F2F) + P: Success (Extra Credit)
     - Pass-Fail (P2F) + P: Not considered
     """
-    # Calculate resolution metrics 
+    # Calculate resolution metrics
     f2p_success = []
     f2p_failure = []
     for test_case in gold_results[FAIL_TO_PASS]:
@@ -212,7 +248,7 @@ def get_resolution_status(report: dict[str, dict[str, Any]]) -> str:
         return ResolvedStatus.PARTIAL.value
     else:
         return ResolvedStatus.NO.value
-    
+
 def evaluate_report_TestGeneration(report: dict[str, dict[str, Any]]) -> str:
         # Extract values from the report
     expected_pass = report.get("EXPECTED_PASS", {})
@@ -221,13 +257,13 @@ def evaluate_report_TestGeneration(report: dict[str, dict[str, Any]]) -> str:
     # Calculate success and failure counts for both pass (GOLD) and fail (bad patch) categories
     pass_success = len(expected_pass.get("success", []))
     pass_failure = len(expected_pass.get("failure", []))
-    
+
     expected_fail = merge_and_unpack(expected=expected_fail)
     fail_success = len(expected_fail.get("success", []))
     fail_failure = len(expected_fail.get("failure", []))
 
     # Evaluate the combination of pass and fail categories
-    # TODO: Re-Evaluate this, is it reasonable to assume full test file will pass for Gold? 
+    # TODO: Re-Evaluate this, is it reasonable to assume full test file will pass for Gold?
     if pass_success > 0 and pass_failure == 0:
         if fail_success > 0 and fail_failure >= 0:
             return TestedStatus.SUCCESS  # Full success in pass (GOLD) and fail (bad)
@@ -240,7 +276,7 @@ def evaluate_report_TestGeneration(report: dict[str, dict[str, Any]]) -> str:
             return TestedStatus.FAIL  # Partial success in pass (GOLD)
 
 
-    
+
 
 def get_eval_report(
     test_spec: TestSpec,
@@ -295,7 +331,7 @@ def get_eval_report(
 
     if include_tests_status:
         report_map[instance_id]["tests_status"] = report  # type: ignore
-    
+
     return report_map
 
 def get_eval_tests_report_TestGeneration(
@@ -412,12 +448,12 @@ def get_eval_report_test_generation(
 
     if evaluate_report_TestGeneration(report) == TestedStatus.SUCCESS:
         report_map[instance_id]["Test_Accept"] = True
-    else: 
+    else:
         report_map[instance_id]["Test_Accept"] = False
 
     if include_tests_status:
         report_map[instance_id]["tests_status"] = report  # type: ignore
-    
+
     return report_map
 
 def get_fail_to_fail(
@@ -425,16 +461,16 @@ def get_fail_to_fail(
 ) -> list[str]:
     """
     Gets the failed test case names from the current evaluation log.
-    
+
     Args:
       gold_log_path (str) : Path to the gold patch evaluation log.
     Returns:
       fail_to_fail_tests (list[str]) : Names of F2F tests.
 
     """
-    
+
     fail_to_fail_tests = []
-    
+
     eval_sm_gold, found_gold = get_logs_eval(gold_log_path)
 
     if not found_gold:

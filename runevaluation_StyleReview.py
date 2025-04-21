@@ -297,6 +297,8 @@ def main(
         open_file_limit: int,
         run_id: str,
         timeout: int,
+        min_score: int,
+        max_severity: int
     ):
     """
     Run evaluation harness for the given dataset and predictions.
@@ -338,7 +340,7 @@ def main(
 
     # clean images + make final report
     clean_images(client, existing_images, cache_level, clean)
-    make_run_report(predictions, full_dataset, client, run_id, min_score=5.0)
+    make_run_report(predictions, full_dataset, client, run_id, min_score= min_score, max_severity = max_severity)
 
     
 def run_instance(
@@ -596,6 +598,14 @@ if __name__ == "__main__":
         choices=["none", "base", "env", "instance"],
         help="Cache level - remove images above this level",
         default="env",
+    )
+    parser.add_argument(
+        "--min_score", type=float, default=None, 
+        help="Minimum acceptable pylint score (0-10) for StyleReview"
+    )
+    parser.add_argument(
+        "--max_severity", type=str, choices=['convention', 'warning', 'error'], default='error',
+        help="Maximum acceptable severity level for StyleReview"
     )
     # if clean is true then we remove all images that are above the cache level
     # if clean is false, we only remove images above the cache level if they don't already exist

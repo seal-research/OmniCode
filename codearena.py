@@ -7,37 +7,33 @@ import subprocess
 import sys
 import glob
 import time
-import signal
+import select
 
 from run_evaluation_GenTests import main as GenTestMain
-import swebench
+from runevaluation_StyleReview import main as StyleReviewMain
+# imports and monkey patches swebench
+from monkeypatched_swebench import swebench
 from swebench.harness.utils import str2bool
 from swebench.harness.run_evaluation import main as RegularEval
+from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
 
 CUR_DIR = Path(__file__).parent
 REPO_DATA_PATH = CUR_DIR / "data/codearena_repo_data.py"
 REPO_DATA = eval(REPO_DATA_PATH.read_text())
 
 def execute_command(func, **kwargs):
-    """Wrapper to execute a function safely and catch errors."""
+    """Wrapper to execute a function safely."""
     func(**kwargs)
-    # try:
-    #     func(**kwargs)
-    # except Exception as e:
-    #     print(f"Error while executing: {func.__name__}. Error: {e}")
 
 def generate_gold_patch_predictions(dataset_files, instance_ids=None, max_instances=0):
     """Generate predictions from gold patches in the dataset files."""
     predictions = []
-    
-    # Keep track of how many predictions we've added
     added_count = 0
     
-    # Early check for max_instances
-    if max_instances <= 0:
-        max_instances = float('inf')  # No limit
+    # Convert to infinite if no limit specified
+    max_instances = float('inf') if max_instances <= 0 else max_instances
     
-    # Print what instances we're looking for
+    # Print instance IDs we're looking for
     if instance_ids:
         print(f"Filtering for specific instances: {instance_ids}")
         
@@ -45,54 +41,45 @@ def generate_gold_patch_predictions(dataset_files, instance_ids=None, max_instan
         target_repos = set()
         for instance_id in instance_ids:
             if ":" in instance_id:
-                repo_part = instance_id.split(":")[0]  # Extract org/repo part
-                target_repos.add(repo_part.replace("/", "__"))  # Convert to format in filenames
-        
-        print(f"Looking only in dataset files for repos: {target_repos}")
+                repo_part = instance_id.split(":")[0]
+                target_repos.add(repo_part.replace("/", "__"))
         
         # Filter dataset files to only include relevant repos
-        filtered_dataset_files = []
+        filtered_files = []
         for dataset_file in dataset_files:
             for repo in target_repos:
                 if repo in dataset_file:
-                    filtered_dataset_files.append(dataset_file)
+                    filtered_files.append(dataset_file)
                     print(f"Including dataset file: {dataset_file}")
                     break
-        
-        # Replace the original list with the filtered one
-        dataset_files = filtered_dataset_files
+        dataset_files = filtered_files
     
     if not dataset_files:
-        print("No matching dataset files found for the requested instances!")
-        return predictions
+        print("No matching dataset files found!")
+        return []
     
+    # Process each dataset file
     for dataset_file in dataset_files:
         print(f"Processing dataset file: {dataset_file}")
         
-        # If we've already reached max_instances, break early
+        # Stop if we've reached max instances
         if added_count >= max_instances:
-            print(f"Reached maximum of {max_instances} instances, stopping.")
             break
         
         with open(dataset_file, 'r', encoding='utf-8') as f:
-            for i, line in enumerate(f):
-                if not line.strip():
+            for line in f:
+                if not line.strip() or added_count >= max_instances:
                     continue
-                
-                # If we've already reached max_instances, break early
-                if added_count >= max_instances:
-                    break
                 
                 try:
                     item = json.loads(line)
-                    # Create ID for filtering
                     item_id = f"{item['org']}/{item['repo']}:{item['number']}"
                     
-                    # Filter by instance_ids if provided
+                    # Skip if not in requested instances
                     if instance_ids and item_id not in instance_ids:
                         continue
                     
-                    # Create prediction entry from dataset item
+                    # Create prediction entry
                     pred = {
                         "id": item_id,
                         "org": item['org'],
@@ -101,19 +88,18 @@ def generate_gold_patch_predictions(dataset_files, instance_ids=None, max_instan
                         "patch": item.get('fix_patch', '')
                     }
                     
-                    if pred["patch"]:  # Only include entries with non-empty patches
+                    if pred["patch"]:
                         predictions.append(pred)
                         added_count += 1
                         print(f"  Added prediction for {pred['id']} ({added_count}/{max_instances})")
                         
-                        # If we've found all requested instances, we can stop
+                        # Stop if we've found all requested instances
                         if instance_ids and len(predictions) == len(instance_ids):
-                            print("Found all requested instances, stopping search.")
+                            print("Found all requested instances.")
                             return predictions
                         
                 except json.JSONDecodeError as e:
-                    print(f"Error parsing JSON from {dataset_file} at line {i+1}: {e}")
-                    continue
+                    print(f"Error parsing JSON from {dataset_file}: {e}")
     
     print(f"Total predictions added: {len(predictions)}")
     return predictions
@@ -122,24 +108,17 @@ def setup_multiswebench_config(predictions, max_workers, force_rebuild, run_id, 
     """Set up configuration for Multi-SWE-Bench evaluation."""
     data_dir = Path("data/multiswebench")
     
-    # Create necessary directories
+    # Create directories
     print("Creating directory structure...")
     os.makedirs(data_dir, exist_ok=True)
-    os.makedirs(data_dir / "workdir", exist_ok=True)
-    os.makedirs(data_dir / "logs", exist_ok=True)
-    os.makedirs(data_dir / "output", exist_ok=True)
-    os.makedirs(data_dir / "patches", exist_ok=True)
-    os.makedirs(data_dir / "datasets", exist_ok=True)
-    os.makedirs(data_dir / "repos", exist_ok=True)
+    for subdir in ["workdir", "logs", "output", "patches", "datasets", "repos"]:
+        os.makedirs(data_dir / subdir, exist_ok=True)
     
-    # Extract unique repo/org pairs from the predictions to know which images to build
-    unique_repos = set()
-    for pred in predictions:
-        unique_repos.add(f"{pred['org']}/{pred['repo']}")
+    # Get unique repos for image building
+    unique_repos = {f"{pred['org']}/{pred['repo']}" for pred in predictions}
+    print(f"Will build images for these repos: {unique_repos}")
     
-    print(f"Will only build images for these repos: {unique_repos}")
-    
-    # Create a patch file from the predictions
+    # Create patches file
     patch_file = data_dir / "patches" / f"{run_id}_patches.jsonl"
     print(f"Writing {len(predictions)} patches to {patch_file}...")
     with open(patch_file, 'w', encoding='utf-8') as f:
@@ -152,33 +131,25 @@ def setup_multiswebench_config(predictions, max_workers, force_rebuild, run_id, 
             }
             f.write(json.dumps(patch_data) + "\n")
     
-    # Find appropriate dataset files in the specified location
+    # Find dataset files matching our repos
     dataset_base_path = "./multiswebench/mswebench_dataset"
     dataset_files = []
     
-    # Only include dataset files that correspond to our repos
-    print(f"Finding relevant dataset files in {dataset_base_path}...")
+    print(f"Finding relevant dataset files...")
     for root, _, files in os.walk(dataset_base_path):
         for file in files:
             if file.endswith("_dataset.jsonl"):
-                # Check if this dataset file is for one of our repos
                 for repo in unique_repos:
-                    # Extract org/repo from filename
                     org_repo = repo.replace('/', '__')
                     if org_repo in file:
                         dataset_files.append(os.path.join(root, file))
-                        print(f"  Found relevant dataset: {os.path.join(root, file)}")
+                        print(f"  Found dataset: {os.path.join(root, file)}")
                         break
     
     # Determine mode based on phase
-    if phase == "image":
-        mode = "image"
-    elif phase == "instance":
-        mode = "instance_only"
-    else:
-        mode = "evaluation"
+    mode = {"image": "image", "instance": "instance_only"}.get(phase, "evaluation")
     
-    # Create config with the correct parameter names
+    # Create config
     print(f"Creating configuration for phase: {phase}...")
     config = {
         "mode": mode,
@@ -187,7 +158,7 @@ def setup_multiswebench_config(predictions, max_workers, force_rebuild, run_id, 
         "dataset_files": dataset_files,
         "force_build": force_rebuild,
         "output_dir": str(data_dir / "output"),
-        "specifics": [],  # We filter by instance IDs in the prediction generation
+        "specifics": [],
         "skips": [],
         "repo_dir": str(data_dir / "repos"),
         "need_clone": True,
@@ -198,7 +169,7 @@ def setup_multiswebench_config(predictions, max_workers, force_rebuild, run_id, 
         "max_workers_build_image": max(1, max_workers // 2),
         "max_workers_run_instance": max(1, max_workers // 2),
         "log_dir": str(data_dir / "logs"),
-        "log_level": "DEBUG",  # Use DEBUG for more verbose output
+        "log_level": "DEBUG",
         "log_to_console": True
     }
     
@@ -207,38 +178,37 @@ def setup_multiswebench_config(predictions, max_workers, force_rebuild, run_id, 
         json.dump(config, f, indent=2)
     
     print(f"Configuration saved to {config_file}")
-    return str(config_file)  # Return as string, not Path object
+    return str(config_file)
 
 def run_with_timeout(cmd, timeout_seconds=1800):
-    """Run a command with timeout and proper signal handling."""
+    """Run a command with timeout and real-time output streaming."""
     print(f"Running command with {timeout_seconds}s timeout: {' '.join(cmd)}")
     
     try:
+        # Start process
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            bufsize=1,  # Line buffered
+            bufsize=1,
             universal_newlines=True
         )
         
-        # Monitor process with timeout
+        # Set up streaming
         start_time = time.time()
-        stdout_lines = []
-        stderr_lines = []
-        
-        # Set up polling to read output
-        import select
+        stdout_lines, stderr_lines = [], []
         outputs = [process.stdout, process.stderr]
+        
+        # Monitor process
         while process.poll() is None:
-            # Check if we've exceeded timeout
+            # Check for timeout
             if time.time() - start_time > timeout_seconds:
                 print(f"Process timed out after {timeout_seconds} seconds!")
                 process.kill()
                 return None, "Timeout exceeded", 1
             
-            # Read any available output
+            # Read output
             readable, _, _ = select.select(outputs, [], [], 1.0)
             for stream in readable:
                 line = stream.readline()
@@ -248,11 +218,8 @@ def run_with_timeout(cmd, timeout_seconds=1800):
                         print(f"STDOUT: {line.strip()}")
                     else:
                         stderr_lines.append(line)
-                        # Check if this is an actual error or just a log message
-                        if "ERROR" in line or "CRITICAL" in line or "FATAL" in line:
-                            print(f"STDERR: {line.strip()}")
-                        else:
-                            print(f"LOG: {line.strip()}")
+                        is_error = any(level in line for level in ["ERROR", "CRITICAL", "FATAL"])
+                        print(f"{'STDERR' if is_error else 'LOG'}: {line.strip()}")
         
         # Read any remaining output
         for line in process.stdout:
@@ -260,19 +227,17 @@ def run_with_timeout(cmd, timeout_seconds=1800):
             print(f"STDOUT: {line.strip()}")
         for line in process.stderr:
             stderr_lines.append(line)
-            if "ERROR" in line or "CRITICAL" in line or "FATAL" in line:
-                print(f"STDERR: {line.strip()}")
-            else:
-                print(f"LOG: {line.strip()}")
+            is_error = any(level in line for level in ["ERROR", "CRITICAL", "FATAL"])
+            print(f"{'STDERR' if is_error else 'LOG'}: {line.strip()}")
         
+        # Return results
         stdout = "".join(stdout_lines)
         stderr = "".join(stderr_lines)
         
         if process.returncode != 0:
             print(f"Command failed with exit code {process.returncode}")
-            return stdout, stderr, process.returncode
         
-        return stdout, stderr, 0
+        return stdout, stderr, process.returncode
         
     except Exception as e:
         print(f"Error running command: {e}")
@@ -280,36 +245,30 @@ def run_with_timeout(cmd, timeout_seconds=1800):
 
 def run_multiswebench_phase(config_file, phase="all", timeout=1800):
     """Run a specific phase of Multi-SWE-Bench evaluation."""
-    # Determine which script and arguments to use
     script_path = "./multiswebench/multi_swe_bench/harness/run_evaluation.py"
     
-    # Check if the script exists
+    # Validate inputs
     if not os.path.exists(script_path):
         print(f"Script not found: {script_path}")
         return None
     
-    # Check if config_file is None
-    if config_file is None:
-        print("Error: config_file is None, cannot run evaluation")
+    if not config_file:
+        print("Error: No config file provided")
         return None
-        
-    # Ensure config_file is a string path
-    config_file_path = str(config_file)
     
-    # Run with timeout
-    print(f"Running command with full config file path: {config_file_path}")
-    cmd = [sys.executable, script_path, "--config", config_file_path]
+    # Run the subprocess
+    cmd = [sys.executable, script_path, "--config", config_file]
     stdout, stderr, returncode = run_with_timeout(cmd, timeout)
     
     if returncode != 0:
         print(f"Command failed with code {returncode}")
-        print(f"stderr: {stderr}")
         return None
     
-    # Return evaluation results if available
+    # Process results
     try:
         with open(config_file, 'r') as f:
             config_data = json.load(f)
+        
         final_report_path = Path(config_data["output_dir"]) / "final_report.json"
         if final_report_path.exists():
             with open(final_report_path, 'r') as f:
@@ -326,8 +285,7 @@ def clean_docker_images(image_prefix):
         cmd = ["docker", "images", "--format", "{{.Repository}}:{{.Tag}}", f"{image_prefix}*"]
         result = subprocess.run(cmd, check=True, stdout=subprocess.PIPE, text=True)
         
-        images = result.stdout.strip().split('\n')
-        images = [img for img in images if img]  # Filter out empty lines
+        images = [img for img in result.stdout.strip().split('\n') if img]
         
         if images:
             print(f"Found {len(images)} images to remove")
@@ -342,120 +300,97 @@ def clean_docker_images(image_prefix):
 def main():
     parser = argparse.ArgumentParser(description="Run CodeArena Benchmarks")
 
-    # Add arguments for common parameters
-    parser.add_argument("--dataset_name", default="data/codearena_instances.json", help="Name of the dataset")
-    parser.add_argument(
-        "--predictions_path",
-        nargs="+",
-        required=True,
-        help="Paths to predictions files (.json or .jsonl). Use 'gold' to use gold patches.",
-    )
-    parser.add_argument(
-        "--max_workers", type=int, default=1, help="Number of maximum workers to use"
-    )
-    parser.add_argument("--run_id", required=True, help="Run ID for the evaluation")
-    parser.add_argument(
-        "--instance_ids",
-        nargs="*",
-        help="Optional instance IDs",
-    )
-    parser.add_argument(
-        "--open_file_limit",
-        type=int,
-        default=4096,
-        help="Maximum number of open files",
-    )
-    parser.add_argument(
-        "--timeout",
-        type=int,
-        default=1_800,
-        help="Timeout for individual evaluations in seconds",
-    )
-    parser.add_argument(
-        "--force_rebuild", type=str2bool, default=False, help="Force rebuild of all images"
-    )
-    parser.add_argument(
-        "--cache_level",
-        type=str,
-        choices=["none", "base", "env", "instance"],
-        help="Cache level - remove images above this level",
-        default="env",
-    )
-    parser.add_argument(
-        "--clean", type=str2bool, default=False, help="Clean images above cache level"
-    )
-    # Add an option to limit the number of instances for testing
-    parser.add_argument(
-        "--max_instances", type=int, default=0, 
-        help="Maximum number of instances to process (0 for unlimited)"
-    )
-    # Add a phase option for MSWE
-    parser.add_argument(
-        "--mswe_phase", 
-        choices=["all", "image", "instance"],
-        default="all",
-        help="Which phase of Multi-SWE-Bench to run"
-    )
+    # Common parameters
+    parser.add_argument("--dataset_name", default="data/codearena_instances.json", 
+                        help="Name of the dataset")
+    parser.add_argument("--predictions_path", nargs="+", required=True,
+                        help="Paths to predictions files. Use 'gold' for gold patches.")
+    parser.add_argument("--max_workers", type=int, default=1, 
+                        help="Number of maximum workers to use")
+    parser.add_argument("--run_id", required=True, 
+                        help="Run ID for the evaluation")
+    parser.add_argument("--instance_ids", nargs="*",
+                        help="Optional instance IDs")
+    parser.add_argument("--open_file_limit", type=int, default=4096,
+                        help="Maximum number of open files")
+    parser.add_argument("--timeout", type=int, default=1800,
+                        help="Timeout for individual evaluations in seconds")
+    parser.add_argument("--force_rebuild", type=str2bool, default=False,
+                        help="Force rebuild of all images")
+    parser.add_argument("--cache_level", type=str,
+                        choices=["none", "base", "env", "instance"],
+                        default="env", help="Cache level - remove images above this level")
+    parser.add_argument("--clean", type=str2bool, default=False,
+                        help="Clean images above cache level")
+    parser.add_argument("--max_instances", type=int, default=0,
+                        help="Maximum number of instances to process (0 for unlimited)")
+    parser.add_argument("--mswe_phase", choices=["all", "image", "instance"],
+                        default="all", help="Which phase of Multi-SWE-Bench to run")
+    parser.add_argument("--list_instances", action="store_true",
+                        help="Just list available instances without running evaluation")
 
-    # Add flags for selecting the benchmark
-    parser.add_argument(
-        "--BugFixing", action="store_true", help="Run the regular BugFixing benchmark"
-    )
-    parser.add_argument(
-        "--TestGeneration", action="store_true", help="Run the TestGeneration benchmark"
-    )
-    parser.add_argument(
-        "--CodeReview", action="store_true", help="Run the CodeReview benchmark"
-    )
-    parser.add_argument(
-        "--CodeMigration", action="store_true", help="Run the CodeMigration benchmark"
-    )
-    # Multi-SWE-Bench flags - you can add specific ones for different task types
-    parser.add_argument(
-        "--MSWEBugFixing", action="store_true", help="Run the Multi-SWE-Bench BugFixing benchmark"
-    )
-    parser.add_argument(
-        "--MSWETestGeneration", action="store_true", help="Run the Multi-SWE-Bench TestGeneration benchmark"
-    )
+    # Benchmark flags
+    parser.add_argument("--BugFixing", action="store_true", 
+                        help="Run the regular BugFixing benchmark")
+    parser.add_argument("--TestGeneration", action="store_true", 
+                        help="Run the TestGeneration benchmark")
+    parser.add_argument("--CodeReview", action="store_true", 
+                        help="Run the CodeReview benchmark")
+    parser.add_argument("--CodeMigration", action="store_true", 
+                        help="Run the CodeMigration benchmark")
+    parser.add_argument("--MSWEBugFixing", action="store_true", 
+                        help="Run the Multi-SWE-Bench BugFixing benchmark")
+    parser.add_argument("--MSWETestGeneration", action="store_true", 
+                        help="Run the Multi-SWE-Bench TestGeneration benchmark")
+    parser.add_argument("--StyleReview", action="store_true", 
+                        help="Run the StyleReview benchmark")
+
+    # Style review specific parameters
+    parser.add_argument("--min_score", type=float, default=None,
+                        help="Minimum acceptable pylint score (0-10) for StyleReview")
+    parser.add_argument("--max_severity", type=str, 
+                        choices=['convention', 'warning', 'error'], default=None,
+                        help="Maximum acceptable severity level for StyleReview")
 
     args = parser.parse_args()
 
-    # Collect the active flags
+    # Collect active flags
     active_flags = []
-    if args.BugFixing:
-        active_flags.append("BugFixing")
-    if args.TestGeneration:
-        active_flags.append("TestGeneration")
-    if args.CodeReview:
-        active_flags.append("CodeReview")
-    if args.CodeMigration:
-        active_flags.append("CodeMigration")
-    if args.MSWEBugFixing:
-        active_flags.append("MSWEBugFixing")
-    if args.MSWETestGeneration:
-        active_flags.append("MSWETestGeneration")
+    for flag in ["BugFixing", "TestGeneration", "CodeReview", "CodeMigration", 
+                "MSWEBugFixing", "MSWETestGeneration", "StyleReview"]:
+        if getattr(args, flag):
+            active_flags.append(flag)
 
     # Ensure at least one flag is provided
     if not active_flags:
-        print(
-            "Error: You must specify at least one benchmark flag (--BugFixing, --TestGeneration, --CodeReview, "
-            "--CodeMigration, --MSWEBugFixing, or --MSWETestGeneration)."
-        )
+        print("Error: You must specify at least one benchmark flag.")
         return
 
-    # Ensure the number of predictions paths matches the number of active flags
+    # Ensure predictions paths match active flags
     if len(args.predictions_path) != len(active_flags):
-        print(
-            f"Error: You provided {len(args.predictions_path)} predictions path(s), "
-            f"but {len(active_flags)} mode flag(s) are active. These numbers must match."
-        )
+        print(f"Error: You provided {len(args.predictions_path)} predictions path(s), "
+              f"but {len(active_flags)} mode flag(s) are active. These must match.")
         return
 
-    # Map the predictions paths to the flags
+    # Map predictions paths to flags
     predictions_map = dict(zip(active_flags, args.predictions_path))
 
-    # Update constants in swebench for the original CodeArena tasks
-    if any(flag in active_flags for flag in ["BugFixing", "TestGeneration", "CodeReview", "CodeMigration"]):
+    # Special case: just list instances
+    if args.list_instances and "MSWEBugFixing" in active_flags:
+        print("Listing available instances...")
+        dataset_base_path = "./multiswebench/mswebench_dataset"
+        dataset_files = []
+        for root, _, files in os.walk(dataset_base_path):
+            for file in files:
+                if file.endswith("_dataset.jsonl"):
+                    dataset_files.append(os.path.join(root, file))
+        
+        generate_gold_patch_predictions(dataset_files, max_instances=0)
+        return
+
+    # Update constants for CodeArena tasks
+    codearena_flags = ["BugFixing", "TestGeneration", "CodeReview", "CodeMigration"]
+    if any(flag in active_flags for flag in codearena_flags):
         for instance_repo in REPO_DATA:
             swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
             swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
@@ -470,13 +405,13 @@ def main():
         
         importlib.reload(swebench)
 
-    # Handle BugFixing
+    # Execute tasks based on flags
     if "BugFixing" in active_flags:
         print("Executing BugFixing...")
         execute_command(
             RegularEval,
             dataset_name=args.dataset_name,
-            split="test",  # Assuming split is always 'test', can be parameterized
+            split="test",
             instance_ids=args.instance_ids,
             predictions_path=predictions_map["BugFixing"],
             max_workers=args.max_workers,
@@ -488,13 +423,12 @@ def main():
             timeout=args.timeout
         )
 
-    # Handle TestGeneration
     if "TestGeneration" in active_flags:
         print("Executing TestGeneration...")
         execute_command(
             GenTestMain,
             dataset_name=args.dataset_name,
-            split="test",  # Assuming split is always 'test', can be parameterized
+            split="test",
             instance_ids=args.instance_ids,
             predictions_path=predictions_map["TestGeneration"],
             max_workers=args.max_workers,
@@ -506,13 +440,12 @@ def main():
             timeout=args.timeout,
         )
 
-    # Handle CodeReview
     if "CodeReview" in active_flags:
         print("Executing CodeReview...")
         execute_command(
             RegularEval,
             dataset_name=args.dataset_name,
-            split="test",  # Assuming split is always 'test', can be parameterized
+            split="test",
             instance_ids=args.instance_ids,
             predictions_path=predictions_map["CodeReview"],
             max_workers=args.max_workers,
@@ -524,22 +457,19 @@ def main():
             timeout=args.timeout
         )
 
-    # Handle CodeMigration
     if "CodeMigration" in active_flags:
         print("Executing CodeMigration...")
-        print(f"Code Migration is not yet supported!")
+        print("Code Migration is not yet supported!")
 
-    # Handle MSWEBugFixing
     if "MSWEBugFixing" in active_flags:
         print("Executing Multi-SWE-Bench BugFixing...")
         
-        # Create a unique image prefix for this run to avoid conflicts with CodeArena
+        # Create image prefix
         mswe_image_prefix = f"mswebench_{args.run_id}"
         
-        # Check if using gold patches
+        # Process predictions
         if predictions_map["MSWEBugFixing"] == "gold":
             print("Using gold patches from the dataset...")
-            # Find dataset files
             dataset_base_path = "./multiswebench/mswebench_dataset"
             dataset_files = []
             for root, _, files in os.walk(dataset_base_path):
@@ -551,7 +481,6 @@ def main():
                 print("Error: No dataset files found in", dataset_base_path)
                 return
                 
-            # Generate predictions from gold patches
             predictions = generate_gold_patch_predictions(
                 dataset_files, 
                 args.instance_ids, 
@@ -564,12 +493,10 @@ def main():
                 
             print(f"Generated {len(predictions)} predictions from gold patches")
         else:
-            # Use provided predictions file
             try:
                 with open(predictions_map["MSWEBugFixing"], 'r') as f:
                     predictions = json.load(f)
                     
-                # Limit the number of instances if requested
                 if args.max_instances > 0 and len(predictions) > args.max_instances:
                     print(f"Limiting to {args.max_instances} instances out of {len(predictions)}")
                     predictions = predictions[:args.max_instances]
@@ -577,11 +504,11 @@ def main():
                 print(f"Error loading predictions file: {e}")
                 return
         
-        # Clean up any existing images with this prefix if force_rebuild is True
+        # Clean existing images if needed
         if args.force_rebuild:
             clean_docker_images(mswe_image_prefix)
         
-        # Set up config for the specified phase
+        # Set up config
         config_file = setup_multiswebench_config(
             predictions=predictions,
             max_workers=args.max_workers,
@@ -591,11 +518,9 @@ def main():
             phase=args.mswe_phase
         )
         
-        # Make sure the config file was created successfully
+        # Run evaluation
         if config_file and os.path.exists(config_file):
-            print(f"Config file created successfully at: {config_file}")
-            
-            # Run just the specified phase
+            print(f"Config file created at: {config_file}")
             report = run_multiswebench_phase(config_file, args.mswe_phase, args.timeout)
             
             if report:
@@ -608,16 +533,31 @@ def main():
         else:
             print("Failed to create config file, cannot run evaluation")
 
-    # Handle MSWETestGeneration
     if "MSWETestGeneration" in active_flags:
         print("Executing Multi-SWE-Bench TestGeneration...")
-        # Similar pattern for test generation...
         if predictions_map["MSWETestGeneration"] == "gold":
             print("Using gold test cases from the dataset is not supported for TestGeneration")
-            return
         else:
             print("Multi-SWE-Bench TestGeneration is not yet implemented")
 
+    if "StyleReview" in active_flags:
+        print("Executing StyleReview...")
+        execute_command(
+            StyleReviewMain,
+            dataset_name=args.dataset_name,
+            split="test",
+            instance_ids=args.instance_ids,
+            predictions_path=predictions_map["StyleReview"],
+            max_workers=args.max_workers,
+            force_rebuild=args.force_rebuild,
+            cache_level=args.cache_level,
+            clean=args.clean,
+            open_file_limit=args.open_file_limit,
+            run_id=args.run_id,
+            timeout=args.timeout,
+            min_score=args.min_score,
+            max_severity=args.max_severity
+        )
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     main()
