@@ -13,7 +13,8 @@ def clean_directories():
     dirs_to_remove = [
         "data/workdir",
         "data/logs",
-        "data/output"
+        "data/output",
+        "data/repos"
     ]
     
     for dir_path in dirs_to_remove:
@@ -36,7 +37,7 @@ def fix_and_clean():
     clean_directories()
     
     # Ensure directories exist
-    dirs = ["data", "data/patches", "data/datasets"]
+    dirs = ["data", "data/patches", "data/datasets", "data/repos"]
     for dir_path in dirs:
         os.makedirs(dir_path, exist_ok=True)
     
