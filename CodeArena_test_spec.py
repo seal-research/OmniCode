@@ -38,18 +38,46 @@ DIFF_MODIFIED_FILE_REGEX = r"--- a/(.*)"
 @dataclass
 class TestSpec:
     """
-    A dataclass that represents a test specification for a single instance of SWE-bench.
+    A test specification for a CodeArena instance.
     """
     instance_id: str
     repo: str
-    base_commit :str
+    base_commit: str
     version: str
+    gold_patch: str
+    test_patch: str
+    bad_patches: list[str]  # Changed from bad_patch to bad_patches
     repo_script_list: list[str]
-    eval_script_list: list[str]
-    gold_inverted_eval_script_list : list[str]
-    bad_inverted_eval_script_list : list[str]
     env_script_list: list[str]
+    eval_script_list: list[str]
+    gold_inverted_eval_script_list: list[str]
+    bad_inverted_eval_script_list: list[list[str]]  # Changed to list of lists to handle multiple bad patches
     arch: str
+
+    def __post_init__(self):
+        """
+        Validate and process the test specification after initialization.
+        """
+        # Ensure bad_patches is a list
+        if not isinstance(self.bad_patches, list):
+            self.bad_patches = [self.bad_patches]
+        
+        # Filter out empty or None patches
+        self.bad_patches = [patch for patch in self.bad_patches if patch and patch != 0]
+        
+        # Create inverted eval script lists for each bad patch
+        self.bad_inverted_eval_script_list = [
+            make_inverted_eval_script_list(
+                self, 
+                MAP_REPO_VERSION_TO_SPECS[self.repo][str(self.version)],
+                "testbed",
+                f"/testbed",
+                self.base_commit,
+                bad_patch,
+                self.test_patch
+            )
+            for bad_patch in self.bad_patches
+        ]
 
     @property
     def setup_env_script(self):
@@ -67,8 +95,16 @@ class TestSpec:
 
     @property
     def inverted_eval_script_bad(self):
-        return "\n".join(["#!/bin/bash", "set -uxo pipefail"] + self.bad_inverted_eval_script_list) + "\n"
-        # Don't exit early because we need to revert tests at the end
+        """Returns the first bad patch's inverted eval script for backward compatibility"""
+        if not self.bad_inverted_eval_script_list:
+            return ""
+        return "\n".join(["#!/bin/bash", "set -uxo pipefail"] + self.bad_inverted_eval_script_list[0]) + "\n"
+
+    def get_inverted_eval_script_bad(self, index: int = 0) -> str:
+        """Returns the inverted eval script for a specific bad patch by index"""
+        if not self.bad_inverted_eval_script_list or index >= len(self.bad_inverted_eval_script_list):
+            return ""
+        return "\n".join(["#!/bin/bash", "set -uxo pipefail"] + self.bad_inverted_eval_script_list[index]) + "\n"
 
     @property
     def install_repo_script(self):
@@ -299,6 +335,30 @@ def make_eval_script_list(instance, specs, env_name, repo_directory, base_commit
     ]
     return eval_commands
 
+def get_test_directives(instance: Union[dict, TestSpec]) -> list:
+    """
+    Get test directives for a specific instance.
+    """
+    # Handle both dict and TestSpec types
+    repo = instance["repo"] if isinstance(instance, dict) else instance.repo
+    
+    if repo == "swe-bench/humaneval":
+        return []
+    
+    # Handle both dict and TestSpec types
+    if isinstance(instance, dict):
+        if "test_directives" in instance:
+            return instance["test_directives"]
+        if "test_directive" in instance:
+            return [instance["test_directive"]]
+    else:
+        if hasattr(instance, "test_directives"):
+            return instance.test_directives
+        if hasattr(instance, "test_directive"):
+            return [instance.test_directive]
+    
+    return []
+
 def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, base_commit, issue_patch, test_patch):
     """
     Applies the given issue patch (gold or bad) and runs the candidate tests.
@@ -311,9 +371,14 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     apply_issue_patch_command = (
         f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{issue_patch}\n{HEREDOC_DELIMITER}"
     )
+    
+    # Handle both dict and TestSpec types
+    repo = instance["repo"] if isinstance(instance, dict) else instance.repo
+    version = str(instance["version"] if isinstance(instance, dict) else instance.version)
+    
     test_command = " ".join(
         [
-            MAP_REPO_VERSION_TO_SPECS[instance["repo"]][str(instance["version"])]["test_cmd"],
+            MAP_REPO_VERSION_TO_SPECS[repo][version]["test_cmd"],
             *get_test_directives(instance),
         ]
     )
@@ -464,51 +529,51 @@ def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output
 
 
 def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
-    if isinstance(instance, TestSpec):
-        return instance
+    """
+    Create a TestSpec from a CodeArena instance.
+    """
+    # Extract necessary information
     instance_id = instance[KEY_INSTANCE_ID]
     repo = instance["repo"]
-    version = str(instance["version"])
     base_commit = instance["base_commit"]
+    version = instance["version"]
+    gold_patch = instance["gold_patch"]
     test_patch = instance["candidate_test_patch"]
-    gold_issue_patch = instance["gold_patch"]
-    bad_issue_patch = instance["bad_patch"]
-
-    def _from_json_or_obj(key: str) -> Any:
-        """If key points to string, load with json"""
-        if isinstance(instance[key], str):
-            return json.loads(instance[key])
-        return instance[key]
-
-    env_name = "testbed"
-    repo_directory = f"/{env_name}"
-    specs = MAP_REPO_VERSION_TO_SPECS[repo][str(version)]
-
-    repo_script_list = make_repo_script_list(specs, repo, repo_directory, base_commit, env_name)
-    env_script_list = make_env_script_list(instance, specs, env_name)
-    eval_script_list = make_eval_script_list(
-        instance, specs, env_name, repo_directory, base_commit, test_patch
-    )
-    # Inverted Evaluation scripts keep the (candidate) test files consistent and apply (and revert after evaluation) the given issue patch
-    inverted_eval_script_list_gold = make_inverted_eval_script_list(
-        instance, specs, env_name, repo_directory, base_commit, gold_issue_patch, test_patch)
-    inverted_eval_script_list_bad = make_inverted_eval_script_list(
-        instance, specs, env_name, repo_directory, base_commit, bad_issue_patch, test_patch)
-    if platform.machine() in {"aarch64", "arm64"}:
-        # use arm64 unless explicitly specified
-        arch = "arm64" if instance_id not in USE_X86 else "x86_64"
-    else:
-        arch = "x86_64"
-
-    return TestSpec(
+    
+    # Get bad patches - now using bad_patches instead of bad_patch
+    bad_patches = instance.get("bad_patches", [])  # Default to empty list if not found
+    if not isinstance(bad_patches, list):
+        bad_patches = [bad_patches]  # Convert single patch to list if needed
+    
+    # Filter out empty or None patches
+    bad_patches = [patch for patch in bad_patches if patch and patch != 0]
+    
+    # Create test spec
+    test_spec = TestSpec(
         instance_id=instance_id,
         repo=repo,
-        base_commit=instance["base_commit"],
-        env_script_list=env_script_list,
-        repo_script_list=repo_script_list,
-        eval_script_list=eval_script_list, # Contains Test Directives
-        gold_inverted_eval_script_list=inverted_eval_script_list_gold,
-        bad_inverted_eval_script_list=inverted_eval_script_list_bad,
+        base_commit=base_commit,
         version=version,
-        arch=arch,
+        gold_patch=gold_patch,
+        test_patch=test_patch,
+        bad_patches=bad_patches,  # Pass the list of bad patches
+        repo_script_list=make_repo_script_list(MAP_REPO_VERSION_TO_SPECS[repo][str(version)], repo, f"/testbed", base_commit, "testbed"),
+        env_script_list=make_env_script_list(instance, MAP_REPO_VERSION_TO_SPECS[repo][str(version)], "testbed"),
+        eval_script_list=make_eval_script_list(instance, MAP_REPO_VERSION_TO_SPECS[repo][str(version)], "testbed", f"/testbed", base_commit, test_patch),
+        gold_inverted_eval_script_list=make_inverted_eval_script_list(instance, MAP_REPO_VERSION_TO_SPECS[repo][str(version)], "testbed", f"/testbed", base_commit, gold_patch, test_patch),
+        bad_inverted_eval_script_list=[
+            make_inverted_eval_script_list(
+                instance, 
+                MAP_REPO_VERSION_TO_SPECS[repo][str(version)],
+                "testbed",
+                f"/testbed",
+                base_commit,
+                bad_patch,
+                test_patch
+            )
+            for bad_patch in bad_patches
+        ],
+        arch="x86_64"
     )
+    
+    return test_spec
