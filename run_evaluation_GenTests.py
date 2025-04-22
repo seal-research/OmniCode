@@ -441,33 +441,21 @@ def run_instance(
 
         # Create the base bad eval script
         base_eval_script = test_spec.inverted_eval_script_bad
-        
-        # Process each bad patch
+
+        # Create and copy eval script for each bad patch
         for i, bad_patch in enumerate(bad_patches):
-            if not bad_patch or bad_patch == 0:  # Check for both empty string/None and 0
-                logger.info(f"Skipping empty bad patch {i}")
-                continue
-
-            logger.info(f"Processing bad patch {i}")
+            # Create a new eval script for this specific bad patch
+            eval_script = base_eval_script.replace(
+                f"EOF_{test_spec.instance_id}",
+                f"EOF_{test_spec.instance_id}_bad_{i}"
+            )
+            eval_script = eval_script.replace(
+                test_spec.bad_patches[0],  # Replace the first bad patch
+                bad_patch  # With the current bad patch
+            )
             
-            # Write and apply the current bad patch
-            patch_file = Path(log_dir / f"patch_{i}.diff")
-            patch_file.write_text(str(bad_patch))  # Convert to string in case it's not
-            logger.info(f"Bad patch {i} written to {patch_file}")
-            copy_to_container(container, patch_file, Path("/tmp/patch.diff"))
-
-            # Try to apply patch
-            val = container.exec_run("git apply --allow-empty -v /tmp/patch.diff", workdir="/testbed", user="root")
-            if val.exit_code != 0:
-                logger.info(f"First patch attempt failed for bad patch {i}, trying with more permissive options...")
-                val = container.exec_run("patch --batch --fuzz=5 -p1 -i /tmp/patch.diff", workdir="/testbed", user="root")
-                if val.exit_code != 0:
-                    logger.info(f"{APPLY_PATCH_FAIL} for bad patch {i}")
-                    continue
-
-            # Create and copy eval script for this bad patch
             eval_file = Path(log_dir / f"bad_eval_{i}.sh")
-            eval_file.write_text(base_eval_script)
+            eval_file.write_text(eval_script)
             logger.info(f"Bad patch {i} evaluation script written to {eval_file}")
             copy_to_container(container, eval_file, Path(f"/bad_eval_{i}.sh"))
 
