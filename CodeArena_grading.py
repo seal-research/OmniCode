@@ -271,7 +271,7 @@ def evaluate_report_TestGeneration(report: dict[str, dict[str, Any]]) -> str:
             return TestedStatus.SUCCESS_GOLD  # Only success in pass (GOLD)
     else:
         if fail_success > 0:
-            return TestedStatus.SUCCESS_BAD  # Partial success in pass (GOLD) and full success in fail (bad patch)
+            return TestedStatus.SUCCESS_BAD  # Partial success in pass (GOLD)
         else:
             return TestedStatus.FAIL  # Partial success in pass (GOLD)
 
@@ -393,12 +393,12 @@ def get_eval_report_test_generation(
 ) -> dict[str, Any]:
     """
     Generate a report of model evaluation results from a prediction, task instance,
-    and evaluation log.
+    and evaluation logs.
 
     Args:
         test_spec (dict): test spec containing keys "instance_id", "FAIL_TO_PASS", and "PASS_TO_PASS"
         prediction (dict): prediction containing keys "instance_id", "model_name_or_path", and "model_patch"
-        log_paths (str): path to evaluation logs, first is expected to be gold patch, second (and following) bad
+        log_paths (str): path to evaluation logs, first is expected to be gold patch, rest are bad patches
         include_tests_status (bool): whether to include the status of each test in the returned report
     Returns:
         report (dict): report of metrics
@@ -410,49 +410,62 @@ def get_eval_report_test_generation(
         "patch_is_None": False,
         "patch_exists": False,
         "gold_patch_successfully_applied": False,
+        "bad_patches_results": [],
+        "Test_Accept": False
     }
 
     # Check if the model patch exists
-    if prediction["candidate_test_patch"] is None:
+    if prediction.get("candidate_test_patch") is None and prediction.get("model_patch") is None:
         report_map[instance_id]["patch_is_None"] = True
-    else:
-        report_map[instance_id]["patch_exists"] = True
+        return report_map
 
-        # Get evaluation logs for gold patch
-        eval_sm_gold, found_gold = get_logs_eval(log_paths[0])
+    report_map[instance_id]["patch_exists"] = True
 
-        if not found_gold:
-            return report_map
-        report_map[instance_id]["gold_patch_successfully_applied"] = True
+    # Get evaluation logs for gold patch
+    eval_sm_gold, found_gold = get_logs_eval(log_paths[0])
+    if not found_gold:
+        return report_map
 
-        report_gold = get_eval_tests_report_TestGeneration(eval_sm_gold, is_gold_patch=True)
+    report_map[instance_id]["gold_patch_successfully_applied"] = True
+    report_gold = get_eval_tests_report_TestGeneration(eval_sm_gold, is_gold_patch=True)
 
-    # Get evaluation logs for bad patch
-    for index, path in enumerate(log_paths[1:]):
-        combined_bad_report = {}
-        eval_sm_bad, found_bad = get_logs_eval(path)
+    # Process each bad patch result
+    for i, bad_patch_log in enumerate(log_paths[1:]):
+        eval_sm_bad, found_bad = get_logs_eval(bad_patch_log)
+        
+        bad_patch_result = {
+            "patch_index": i,
+            "successfully_applied": found_bad,
+            "tests_status": None
+        }
 
-        if not found_bad:
-            continue
-        report_map[instance_id][f"bad_patch_{index}_successfully_applied"] = True
+        if found_bad:
+            report_bad = get_eval_tests_report_TestGeneration(eval_sm_bad, is_gold_patch=False)
+            bad_patch_result["tests_status"] = report_bad
 
-        report_bad = get_eval_tests_report_TestGeneration(eval_sm_bad, is_gold_patch=False)
+        report_map[instance_id]["bad_patches_results"].append(bad_patch_result)
 
-        if len(combined_bad_report) == 0:
-            combined_bad_report = {key: [report_bad[key]] for key in report_bad}
-        else:
-            for key in report_bad:
-                combined_bad_report[key].append(report_bad[key])
-    # Combine Results into a joint dictionary (EXPECTED_PASS and EXPECTED_FAIL)
-    report = {**report_gold, **combined_bad_report}
+    # A test is accepted if:
+    # 1. Gold patch tests pass
+    # 2. At least one bad patch fails the tests
+    gold_tests_pass = (
+        len(report_gold.get("EXPECTED_PASS", {}).get("success", [])) > 0 and
+        len(report_gold.get("EXPECTED_PASS", {}).get("failure", [])) == 0
+    )
 
-    if evaluate_report_TestGeneration(report) == TestedStatus.SUCCESS:
-        report_map[instance_id]["Test_Accept"] = True
-    else:
-        report_map[instance_id]["Test_Accept"] = False
+    # Check if any bad patch failed the tests (which is what we want)
+    any_bad_patch_failed = False
+    for result in report_map[instance_id]["bad_patches_results"]:
+        if result["tests_status"]:
+            bad_tests = result["tests_status"].get("EXPECTED_FAIL", {})
+            if bad_tests.get("failure", []):  # If there are failures, that's good!
+                any_bad_patch_failed = True
+                break
+
+    report_map[instance_id]["Test_Accept"] = gold_tests_pass and any_bad_patch_failed
 
     if include_tests_status:
-        report_map[instance_id]["tests_status"] = report  # type: ignore
+        report_map[instance_id]["gold_tests_status"] = report_gold
 
     return report_map
 
