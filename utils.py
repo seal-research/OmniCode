@@ -69,9 +69,26 @@ def load_swebench_dataset(name="princeton-nlp/SWE-bench", split="test", instance
     if name.endswith(".json") or name.endswith(".jsonl"):
         dataset = []
         with open(name, "r", encoding="utf-8") as f:
-            for line in f:
-                entry = json.loads(line) if name.endswith(".jsonl") else json.load(f)
-                dataset.append(entry)
+            if name.endswith(".jsonl"):
+                for line in f:
+                    if line.strip():
+                        try:
+                            entry = json.loads(line)
+                            dataset.append(entry)
+                        except json.JSONDecodeError:
+                            continue
+            else:
+                try:
+                    dataset = json.load(f)
+                except json.JSONDecodeError:
+                    f.seek(0)
+                    for line in f:
+                        if line.strip():
+                            try:
+                                entry = json.loads(line)
+                                dataset.append(entry)
+                            except json.JSONDecodeError:
+                                continue
 
         dataset_ids = {instance[KEY_INSTANCE_ID] for instance in dataset}
     else:
