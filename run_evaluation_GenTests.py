@@ -400,6 +400,10 @@ def run_instance(
         fail_to_fail = get_fail_to_fail(test_output_path_f2f)
 
         # Step 2: Apply and test candidate test patch
+        # Get initial git diff before applying test patch
+        git_diff_before_test = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        logger.info(f"Git diff before test patch:\n{git_diff_before_test}")
+
         patch_file = Path(log_dir / "patch.diff")
         patch_content = pred.get("candidate_test_patch") or pred.get("model_patch") or ""
         patch_file.write_text(patch_content)
@@ -419,15 +423,42 @@ def run_instance(
         else:
             logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
 
+        # Get git diff after applying test patch
+        git_diff_after_test = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        logger.info(f"Git diff after test patch:\n{git_diff_after_test}")
+
         # Step 3: Run gold patch evaluation
+        # Get git diff before running gold eval
+        git_diff_before_gold = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        logger.info(f"Git diff before gold evaluation:\n{git_diff_before_gold}")
+
         test_output_path_gold = log_dir / "gold_test_output.txt"
         test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
         logger.info(f'Gold evaluation runtime: {total_runtime:_.2f} seconds')
+        
+        # Get git diff after running gold eval
+        git_diff_after_gold = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        logger.info(f"Git diff after gold evaluation:\n{git_diff_after_gold}")
+
         with open(test_output_path_gold, "w") as f:
             f.write(test_output)
             if timed_out:
                 f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
                 raise EvaluationError(instance_id, f"Test timed out after {timeout} seconds.", logger)
+
+        # Reset to clean state before bad patches
+        reset_val = container.exec_run("git reset --hard HEAD", workdir="/testbed", user="root")
+        if reset_val.exit_code != 0:
+            logger.warning("Failed to reset before bad patches")
+            reset_val = container.exec_run("git checkout -- .", workdir="/testbed", user="root")
+            if reset_val.exit_code != 0:
+                logger.error("All reset attempts failed before bad patches")
+                raise EvaluationError(instance_id, "Failed to reset before bad patches", logger)
+
+        # Verify clean state after reset
+        git_diff_after_reset = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        if git_diff_after_reset:
+            logger.warning(f"Codebase not clean after reset before bad patches:\n{git_diff_after_reset}")
 
         # Step 4: Run bad patch evaluations
         test_output_paths_bad = []
@@ -444,6 +475,10 @@ def run_instance(
 
         # Create and copy eval script for each bad patch
         for i, bad_patch in enumerate(bad_patches):
+            # Get initial git diff before applying bad patch
+            git_diff_before = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+            logger.info(f"Git diff before bad patch {i}:\n{git_diff_before}")
+
             # Create a new eval script for this specific bad patch
             eval_script = base_eval_script.replace(
                 f"EOF_{test_spec.instance_id}",
@@ -466,6 +501,10 @@ def run_instance(
             test_output, timed_out, total_runtime = exec_run_with_timeout(container, f"/bin/bash /bad_eval_{i}.sh", timeout)
             logger.info(f'Bad patch {i} evaluation runtime: {total_runtime:_.2f} seconds')
             
+            # Get git diff after running the evaluation
+            git_diff_after = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+            logger.info(f"Git diff after bad patch {i}:\n{git_diff_after}")
+            
             with open(test_output_path_bad, "w") as f:
                 f.write(test_output)
                 if timed_out:
@@ -482,6 +521,11 @@ def run_instance(
                 if reset_val.exit_code != 0:
                     logger.error(f"All reset attempts failed for bad patch {i}")
                     continue
+
+            # Verify clean state after reset
+            git_diff_after_reset = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+            if git_diff_after_reset:
+                logger.warning(f"Codebase not clean after reset for bad patch {i}:\n{git_diff_after_reset}")
 
         # Step 5: Generate final report
         logger.info("Generating evaluation report...")
