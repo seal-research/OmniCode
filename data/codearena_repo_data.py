@@ -90,17 +90,23 @@
                     "python": "3.9",
                     "install": "pip install -e '.'",
                     "pip_packages": [
+                        "boto3",
+                        "google-cloud-storage",
                         "tox",
                         "testfixtures",
                         "pytest",
-                        "pexpect",
+                        "sock",
+                        "pillow",
                         "botocore",
-                        "boto3",
-                        "google-cloud-storage",
+                        "pexpect",
+                        "uvloop",
+                        "zstd",
+                        "brotli",
+                        "twisted",
                     ],
                     "test_cmd": "pytest -rA --tb=long",
                 }
-                for k in ["2.6", "2.7", "2.8", "2.9"]
+                for k in ['2.6', '2.5']
             },
             **{
                 k: {
@@ -111,6 +117,30 @@
                         "testfixtures",
                         "pytest",
                         "pexpect",
+                        "botocore",
+                        "boto3",
+                        "google-cloud-storage",
+                    ],
+                    "test_cmd": "pytest -rA --tb=long",
+                }
+                for k in ["2.7", "2.8", "2.9"]
+            },
+            **{
+                k: {
+                    "python": "3.9",
+                    "install": "pip install -e '.'",
+                    "pip_packages": [
+                        "tox",
+                        "testfixtures",
+                        "pytest",
+                        "pexpect",
+                        "sock",
+                        "pillow",
+                        "botocore",
+                        "uvloop",
+                        "zstd",
+                        "brotli",
+                        "twisted",
                     ],
                     "test_cmd": "pytest -rA --tb=long",
                 }
