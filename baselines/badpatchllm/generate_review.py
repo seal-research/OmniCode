@@ -1,3 +1,17 @@
+"""
+How to run this script:
+1. Make sure you have the required libraries installed:
+   pip install google-generativeai
+2. Set up your Google Generative AI API key in the environment variable or pass it directly.
+3. Run the script with the following command:
+python [PATH to /codearena/baselines/badpatchllm/generate_review.py] \
+    --input_tasks [PATH to codearena_instances.json or desired file] \
+    --api_key [API_KEY] 
+
+Optionally, you can specify the model name and the number of reviews per patch:
+    --model_name [MODEL_NAME] \
+    --num_reviews_per_patch [NUM_REVIEWS]
+"""
 import os
 import json
 import argparse
@@ -186,8 +200,6 @@ def main(
         # print(f"Error writing updated data back to {json_file_path}: {e}")
         pass
 
-    # print("-" * 70)
-    # print(f"Finished processing.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate reviews for bad patches listed in a JSON file and update the file.")
