@@ -1,3 +1,9 @@
 Command To Generate Bad Patches + Run Bug Fixing to Validate Patches: 
 
-python3 baselines/badpatchllm/generate.py -o baselines/badpatchllm/logs/gemini_outputs --instance_ids [Instance_ID] -m gemini-2.0-flash -k [KEY] --run_id [TODO] -n 5 -d data/components/[TODO]
+Steps: 
+
+1: Run "export GITHUB_TOKEN=[Your git token]"
+2. python3 baselines/badpatchllm/generate_bad.py -o baselines/badpatchllm/logs/gemini_outputs --instance_ids [Instance_ID] -m gemini-2.0-flash -k [Secret_Key] --run_id [run_id] -n [num_bad_patches] -d [input_data_path]
+
+- Can find raw .diff files in generated log files 
+- Can find output .json instances with bad_patches field in input_data_directory

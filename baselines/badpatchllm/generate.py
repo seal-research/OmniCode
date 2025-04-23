@@ -10,6 +10,7 @@ from jinja2 import Template
 import pandas as pd
 
 import google.generativeai as genai
+import openai
 
 import sys
 sys.path.append(str(Path(__file__).resolve().parent.parent.parent))  # Goes from baselines/badpatchllm to project root
@@ -21,88 +22,190 @@ from swebench.harness.utils import str2bool
 CUR_DIR = Path(__file__).parent
 DOTENV_PATH = CUR_DIR / '.env'
 
+SECRET_KEY = "" # Insert Personal
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
+
+import random
+import re
+from typing import Optional
+
+
+from openai import OpenAI
+from typing import Optional
+
+def generate_bad_patch_from_diff(
+    diff_text: str,
+    api_key: str,
+    model_name: str = "gpt-4o",
+    temperature: float = 0.8,
+    max_tokens: Optional[int] = None,
+    output_path: str = "bad_patch.diff",
+) -> str:
+    """
+    Inject functional bugs into a complete .diff using the new openai>=1.0.0 interface.
+    """
+    # 1) Instantiate the client
+    client = OpenAI(api_key=api_key)
+
+    # 2) Build your messages
+    system_msg = {
+        "role": "system",
+        "content": "You are an expert assistant that injects subtle functional bugs into code diffs."
+    }
+    user_msg = {
+        "role": "user",
+        "content": (
+            "Please introduce a functional bug into the following unified diff.\n"
+            "Only output the complete, modified diff (including all '@@' headers, context lines,\n"
+            "and properly-prefixed '+' and '-' lines), and nothing else:\n\n"
+            f"{diff_text}"
+        )
+    }
+
+    # 3) Call the chat completion endpoint on your client
+    completion = client.chat.completions.create(
+        model=model_name,
+        messages=[system_msg, user_msg],
+        temperature=temperature,
+        max_tokens=max_tokens,
+    )
+
+    # 4) Return the assistant’s diff
+    bad_diff = completion.choices[0].message.content
+
+ # 5) Save to file
+    with open(output_path, "w", encoding="utf-8") as f:
+        f.write(bad_diff)
+
+    return bad_diff
+
 
 
 def run_model_single(
     instance: dict,
     model_name: str,
     secret_key: str,
+    min_additions: int = 4,      # minimum number of '+' lines per chunk
+    max_addition_length: Optional[int] = None,
 ):
-    patch = instance['patch']    
+    full_patch = instance['patch']
+    lines = full_patch.splitlines()
 
-    prompt = f"""
-    Output a version of the given .diff file that is functionally incorrect. Focus on harder bugs.
-    Only change the "+" lines and do NOT change any other lines.
-    Only output a properly formatted .diff file and nothing else. 
-    Do NOT include triple backticks (```) or any other Markdown formatting. 
+    # 1. Identify hunk boundaries
+    hunk_indices = [i for i, l in enumerate(lines) if l.startswith('@@ ')]
+    hunk_indices.append(len(lines))  # sentinel end
 
-    Diff File:
-    {patch}
-    """
+    # 2. Extract hunks as lists of lines
+    hunks = []
+    for start, end in zip(hunk_indices, hunk_indices[1:]):
+        hunks.append(lines[start:end])
 
-    prompt = f"""
-    Output a version of the given .diff file that is functionally incorrect. Focus on harder bugs.
-    Do this by changing one addition in the given .diff file and nothing else.
+    # 3. Helper to count addition lines in a hunk
+    def count_adds(hunk):
+        return len([l for l in hunk if l.startswith('+') and not l.startswith('+++')])
 
-    Only output a properly formatted .diff file and nothing else. 
-    Do NOT include triple backticks (```) or any other Markdown formatting. 
+    # 4. Filter hunks by min and max addition count
+    qualifying = [
+        hunk for hunk in hunks
+        if count_adds(hunk) >= min_additions
+           and (max_addition_length is None or count_adds(hunk) <= max_addition_length)
+    ]
 
-    Diff File:
-    {patch}
-    """
-
-
-    prompt = f"""
-    Change one addition in the given .diff file and output the new line with its line number.
-    ONLY output the new line and its line number.
-
-    Diff File:
-    {patch}
-    """
-
-    prompt = f"""
-    Output a version of the given .diff file that is functionally incorrect.
-    Keep the file identical but only change one addition in the given .diff file and nothing else.
-
-    Only output this properly formatted .diff file and nothing else. 
-    Do NOT include triple backticks (```) or any other Markdown formatting. 
-
-    Diff File:
-    {patch}
-    """
-
-    # Above, testing various prompts
-
-    # TODO Parse patch, unidiff, can get hunks
-
-    response = None
-
-    genai.configure(api_key=secret_key)
-
-
-    if(model_name == "gemini-2.0-flash"):
-        model = genai.GenerativeModel(model_name)
-        # response = model.generate_content(prompt)
-        response = model.generate_content(
-            prompt,
-            generation_config={"temperature": 0.9, "top_p": 0.9}  # Adjust values to change responses
-        )
-        model_patch = response.text
-
-        if model_patch.startswith("```diff"):
-            model_patch = model_patch[len("```diff"):].lstrip()  # Remove the prefix and leading spaces
-
-        if model_patch.endswith("```"):
-            model_patch = model_patch[:-3].rstrip()  # Remove the suffix and trailing spaces
-        
-        model_patch += "\n"
-    
-        return None, model_patch
+    # 5. Fallback: if no hunks in the [min…max] range, try any hunk with ≥min additions
+    if not qualifying:
+        fallback = [h for h in hunks if count_adds(h) >= min_additions]
+        chosen_hunk = random.choice(fallback) if fallback else hunks[0]
     else:
-        print('Will add support soon!') # TODO: Add other models pending API keys
-        return None, None
+        chosen_hunk = random.choice(qualifying)
+
+    # # 3. Filter hunks by addition-line count
+    # qualifying = []
+    # for hunk in hunks:
+    #     adds = [l for l in hunk if l.startswith('+') and not l.startswith('+++')]
+    #     if len(adds) >= min_additions:
+    #         qualifying.append((hunk, adds))
+
+    # # 4. If no chunk qualifies, fall back to entire patch
+    # if not qualifying:
+    #     chosen_hunk, additions = hunks[0], [
+    #         l for l in lines if l.startswith('+') and not l.startswith('+++')
+    #     ]
+    # else:
+    #     chosen_hunk, additions = random.choice(qualifying)
+
+    # capture both full hunk context and just the added lines
+    hunk_block = "\n".join(chosen_hunk)
+
+    # 5. Build prompt around the full hunk, but only ask to modify the +‑lines
+    prompt = f"""
+        Change the addition lines in the diff below so that you introduce a functional bug.
+        Here is the diff you should work with (this includes context, removals, and additions):
+        {hunk_block}
+
+        Only output the diff with no other formatting characters.
+    """
+
+    # return hunk_block, hunk_block
+
+    # 6. Call Gemini
+    genai.configure(api_key=secret_key)
+    model = genai.GenerativeModel(model_name)
+    response = model.generate_content(
+        prompt,
+        generation_config={"temperature": 0.9, "top_p": 0.9}
+    )
+
+    model_patch = response.text
+
+    if model_patch.startswith("```diff"):
+        model_patch = model_patch[len("```diff"):].lstrip()  # Remove the prefix and leading spaces
+
+    if model_patch.endswith("```"):
+        model_patch = model_patch[:-3].rstrip()  # Remove the suffix and trailing spaces
+
+    # return model_patch, model_patch
+
+    model_patch = model_patch.splitlines()
+
+    new_hunk = ""
+
+    for idx, line in enumerate(model_patch):
+        if line.startswith('@@ '):
+            new_hunk = model_patch[idx:]
+            break
+    else:
+        # if no "@@ " found, fall back to everything
+        new_hunk = model_patch
+
+
+    # 8. Reconstruct the full patch, replacing the entire chosen hunk
+    new_lines = []
+    in_target_hunk = False
+    header = chosen_hunk[0] if chosen_hunk and chosen_hunk[0].startswith('@@ ') else None
+
+    for l in lines:
+        if l == header:
+            # start of the hunk to replace
+            in_target_hunk = True
+            new_lines.extend(new_hunk)
+            continue
+
+        if in_target_hunk:
+            # skip all original hunk lines until the next hunk header
+            if l.startswith('@@ '):
+                in_target_hunk = False
+                new_lines.append(l)
+            # otherwise just drop this line
+            continue
+
+        # outside the target hunk, keep the line
+        new_lines.append(l)
+
+    # 9. Return patched text
+    return None, "\n".join(new_lines) + "\n"
+
 
 def execute_command(func, **kwargs):
     """Wrapper to execute a function safely and catch errors."""
@@ -226,8 +329,11 @@ def main(
             output_dict.update(basic_args)
 
             for i in range(1, max_iter + 1):
-                full_output, model_patch = run_model_single(datum, model_name=model_name, secret_key=secret_key)
+                full_output, model_patch = run_model_single(datum, model_name=model_name, secret_key=secret_key, max_addition_length=70)
                 
+                openai_patch = generate_bad_patch_from_diff(datum["patch"],api_key=SECRET_KEY)
+                # print("OpenAI Patch: ", openai_patch)
+
                 if model_patch:
 
                     #  Run Testing Code Directly Here to Ensure Bad Patches Fail
@@ -344,3 +450,135 @@ if __name__ == '__main__':
         run_id=args.run_id,
         timeout=args.timeout
     )
+
+
+# def run_model_single(
+#     instance: dict,
+#     model_name: str,
+#     secret_key: str,
+# ):
+#     full_patch = instance['patch']
+#     lines = full_patch.splitlines()
+#     # Extract the first addition line (skip '+++ ' headers)
+#     addition_lines = [l for l in lines if l.startswith('+') and not l.startswith('+++')]
+#     if not addition_lines:
+#         # No additions found, return original patch with newline
+#         return None, full_patch + "\n"
+#     orig_add = addition_lines[0]
+
+#     # Prompt to modify only this addition line
+#     prompt = f"""
+#     Change the following diff addition line to introduce a functional bug. Only output the modified addition line.
+#     Original addition line:
+#     {orig_add}
+# """
+
+#     genai.configure(api_key=secret_key)
+#     if model_name == "gemini-2.0-flash":
+#         model = genai.GenerativeModel(model_name)
+#         response = model.generate_content(
+#             prompt,
+#             generation_config={"temperature": 0.9, "top_p": 0.9}
+#         )
+#         new_add = response.text.strip()
+#         # Remove any markdown backticks
+#         new_add = new_add.strip('`').strip()
+#         # Ensure it starts with '+'
+#         if not new_add.startswith('+'):
+#             new_add = '+' + new_add.lstrip('+').strip()
+
+#         # Reconstruct full patch with the new addition
+#         new_lines = []
+#         replaced = False
+#         for l in lines:
+#             if l == orig_add and not replaced:
+#                 new_lines.append(new_add)
+#                 replaced = True
+#             else:
+#                 new_lines.append(l)
+#         model_patch = '\n'.join(new_lines) + '\n'
+#         return None, model_patch
+#     else:
+#         print('Will add support soon!')
+#         return None, None
+
+
+
+# def run_model_single(
+#     instance: dict,
+#     model_name: str,
+#     secret_key: str,
+# ):
+#     patch = instance['patch']    
+
+#     prompt = f"""
+#     Output a version of the given .diff file that is functionally incorrect. Focus on harder bugs.
+#     Only change the "+" lines and do NOT change any other lines.
+#     Only output a properly formatted .diff file and nothing else. 
+#     Do NOT include triple backticks (```) or any other Markdown formatting. 
+
+#     Diff File:
+#     {patch}
+#     """
+
+#     prompt = f"""
+#     Output a version of the given .diff file that is functionally incorrect. Focus on harder bugs.
+#     Do this by changing one addition in the given .diff file and nothing else.
+
+#     Only output a properly formatted .diff file and nothing else. 
+#     Do NOT include triple backticks (```) or any other Markdown formatting. 
+
+#     Diff File:
+#     {patch}
+#     """
+
+
+#     prompt = f"""
+#     Change one addition in the given .diff file and output the new line with its line number.
+#     ONLY output the new line and its line number.
+
+#     Diff File:
+#     {patch}
+#     """
+
+#     prompt = f"""
+#     Output a version of the given .diff file that is functionally incorrect.
+#     Keep the file identical but only change one addition in the given .diff file and nothing else.
+
+#     Only output this properly formatted .diff file and nothing else. 
+#     Do NOT include triple backticks (```) or any other Markdown formatting. 
+
+#     Diff File:
+#     {patch}
+#     """
+
+#     # Above, testing various prompts
+
+#     # TODO Parse patch, unidiff, can get hunks
+
+#     response = None
+
+#     genai.configure(api_key=secret_key)
+
+
+#     if(model_name == "gemini-2.0-flash"):
+#         model = genai.GenerativeModel(model_name)
+#         # response = model.generate_content(prompt)
+#         response = model.generate_content(
+#             prompt,
+#             generation_config={"temperature": 0.9, "top_p": 0.9}  # Adjust values to change responses
+#         )
+#         model_patch = response.text
+
+        # if model_patch.startswith("```diff"):
+        #     model_patch = model_patch[len("```diff"):].lstrip()  # Remove the prefix and leading spaces
+
+        # if model_patch.endswith("```"):
+        #     model_patch = model_patch[:-3].rstrip()  # Remove the suffix and trailing spaces
+        
+#         model_patch += "\n"
+    
+#         return None, model_patch
+#     else:
+#         print('Will add support soon!') # TODO: Add other models pending API keys
+#         return None, None
