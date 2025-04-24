@@ -29,7 +29,8 @@ from swebench.harness.utils import (
 )
 
 from utils import (
-    get_test_directives
+    NON_TEST_EXTS,
+    get_modified_added_files,
 )
 
 DIFF_MODIFIED_FILE_REGEX = r"--- a/(.*)"
@@ -341,7 +342,8 @@ def get_test_directives(instance: Union[dict, TestSpec]) -> list:
     """
     # Handle both dict and TestSpec types
     repo = instance["repo"] if isinstance(instance, dict) else instance.repo
-    
+    test_patch = instance["candidate_test_patch"] if isinstance(instance, dict) else instance.test_patch
+     
     if repo == "swe-bench/humaneval":
         return []
     
@@ -357,7 +359,27 @@ def get_test_directives(instance: Union[dict, TestSpec]) -> list:
         if hasattr(instance, "test_directive"):
             return [instance.test_directive]
     
-    return []
+
+    # diff_pat = r"diff --git a/.* b/(.*)"
+    # directives = re.findall(diff_pat, test_patch)
+    
+    directives = get_modified_added_files(test_patch)
+    directives = [
+        d for d in directives if not any(d.endswith(ext) for ext in NON_TEST_EXTS)
+    ]
+
+    # For Django tests, remove extension + "tests/" prefix and convert slashes to dots (module referencing)
+    if repo == "django/django":
+        directives_transformed = []
+        for d in directives:
+            d = d[: -len(".py")] if d.endswith(".py") else d
+            d = d[len("tests/") :] if d.startswith("tests/") else d
+            d = d.replace("/", ".")
+            directives_transformed.append(d)
+        directives = directives_transformed
+
+    return directives
+
 
 def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, base_commit, issue_patch, test_patch):
     """
@@ -548,6 +570,13 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
     # Filter out empty or None patches
     bad_patches = [patch for patch in bad_patches if patch and patch != 0]
     
+    if platform.machine() in {"aarch64", "arm64"}:
+        # use arm64 unless explicitly specified
+        arch = "arm64" if instance_id not in USE_X86 else "x86_64"
+    else:
+        arch = "x86_64"
+
+
     # Create test spec
     test_spec = TestSpec(
         instance_id=instance_id,
@@ -573,7 +602,7 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
             )
             for bad_patch in bad_patches
         ],
-        arch="x86_64"
+        arch=arch
     )
     
     return test_spec
