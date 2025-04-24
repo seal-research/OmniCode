@@ -11,6 +11,9 @@ python [PATH to /codearena/baselines/badpatchllm/generate_review.py] \
 Optionally, you can specify the model name and the number of reviews per patch:
     --model_name [MODEL_NAME] \
     --num_reviews_per_patch [NUM_REVIEWS]
+
+WARNING: This script will overwrite the input reviews in JSON file with the generated reviews if the 'Reviews' field does not have enough reviews for each bad patch.
+I recommend you to make a backup of the JSON file before running this script.
 """
 import os
 import json
