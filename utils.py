@@ -223,6 +223,33 @@ def load_CodeArena_prediction_dataset(
     return merged_df
 
 
+def get_modified_added_files(patch_string):
+    """
+    Parse a patch string and return lists of modified and added files.
+    
+    Args:
+        patch_string (str): String containing the patch/diff content
+        
+    Returns:
+        tuple: (list of modified files, list of added files)
+    """
+    # Parse the patch
+    patch_set = PatchSet.from_string(patch_string)
+    
+    modified_files = []
+    added_files = []
+    
+    # Iterate through each file in the patch
+    for patched_file in patch_set:
+        if patched_file.is_added_file:
+            added_files.append(patched_file.path)
+        elif patched_file.is_modified_file:
+            modified_files.append(patched_file.path)
+    
+    return modified_files + added_files
+
+
+
 def get_test_directives(instance: CodeArenaInstance) -> list:
     """
     Get test directives from the test_patch of a task instance
