@@ -58,23 +58,91 @@ The `add_data.py` script can be run with `streamlit run add_data.py` and allows 
 * **Evaluation**: This task is evaluated using the standard SWE-bench approach, measuring the effectiveness of review comments in guiding towards correct implementations.
 * **Use Case**: Particularly useful for assessing a model's ability to understand code context and provide constructive feedback.
 
-#### Code Migration (Coming Soon)
-* **Description**: Translate code between programming languages while maintaining functionality and idiomaticity.
-* **Scope**: Initially focusing on translations between major programming languages.
-* **Future Plans**: Will support automated verification of translated code functionality.
 
-### Contained Tasks
+## Status
 
-We use SWE-Bench_Verified as an initial data source and have manually created bad patches and Reviews for them.
+### Benchmark Construction Infrastructure
 
 <div align="center">
 
-|                | Python (Tasks) | Java (Tasks) | C++ (Tasks) |
-|----------------|----------------|--------------|-------------|
-| Test Generation | ✅ (15)         | ✖️ (0)        | ✖️ (0)       |
-| Code Review     | ✅ (15)         | ✖️ (0)        | ✖️ (0)       |
-| Code Migration  | ✖️ (0)         | ✖️ (0)        | ✖️ (0)       |
+|                 | Python (Tasks) | Java (Tasks) |
+|-----------------|----------------|--------------|
+| Base Instances  | Complete       | Complete     |
+| Test Generation | Complete      | In progress    |
+| Code Review     | Complete       | In progress   |
+| Style Review    | Complete       | In progress   |
 
+
+</div>
+
+### Instances Onboarded
+
+<div align="center">
+
+|                 | Python (Tasks) | Java (Tasks) |
+|-----------------|----------------|--------------|
+| Base Instances  | 716            | 3/128            |
+| Test Generation | 0/716          | 0/128            |
+| Review Response | 0/716          | 0/128            |
+| Style Review    | 716/716       | 0/128   |
+
+
+</div>
+
+
+#### Python Instances Breakdown
+
+<div align="center">
+
+| Repo | Count |
+|------|-------|
+| astropy/astropy | 22 |
+| django/django  | 231 |
+| matplotlib/matplotlib |  34 |
+| mwaskom/seaborn | 2 |
+| pallets/flask |  1 |
+| psf/requests  |  8 | 
+| pydata/xarray |  22 |
+| pylint-dev/pylint     |  10 |
+| pytest-dev/pytest    |   19 |
+| scikit-learn/scikit-learn |      32| 
+| sphinx-doc/sphinx   |    44 |
+| sympy/sympy   |  75 | 
+| ytdl-org/youtube-dl  |    10 |
+| scrapy/scrapy  | 41 | 
+| keras-team/keras    |    83 |
+| camel-ai/camel |  21 |
+| celery/celery   | 12 |
+| fastapi/fastapi | 26 |
+| statsmodels/statsmodels | 23 |
+
+</div>
+
+### Baseline Results
+
+
+#### Python
+
+<div align="center">
+
+|                 | Bug Fixing | Test Generation | Review Response | Style Review |
+|-----------------|----------------|--------------|----------------|--------------|
+| Agentless       |  2/5          |   1/5       |                  |            |
+| SWE-Agent       |               |               |                  |            |
+| Aider           |               |               |                  |            |
+
+</div>
+
+
+#### Java
+
+<div align="center">
+
+|                 | Bug Fixing | Test Generation | Review Response | Style Review |
+|-----------------|----------------|--------------|----------------|--------------|
+| Agentless       |               |               |                  |            |
+| SWE-Agent       |               |               |                  |            |
+| Aider           |               |               |                  |            |
 
 </div>
 
