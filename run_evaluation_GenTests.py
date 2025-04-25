@@ -78,11 +78,17 @@ def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
             "repo": datum["repo"],
             "base_commit": datum["base_commit"],
             "gold_patch": datum["patch"],
-            "bad_patch" : 0,
             "candidate_test_patch": datum["test_patch"], # gold test patch
             "version": datum["version"],
             "model_name_or_path": "gold"
         }
+        
+        # Add bad patches if they exist
+        if "bad_patches" in datum:
+            result["bad_patches"] = datum["bad_patches"]
+        elif "bad_patch" in datum:
+            result["bad_patches"] = [datum["bad_patch"]]
+            
         results.append(result)
     
     return results
@@ -350,10 +356,8 @@ def run_instance(
     image_build_link = log_dir / "image_build_dir"
     if not image_build_link.exists():
         try:
-            # link the image build dir in the log dir
             image_build_link.symlink_to(build_dir.absolute(), target_is_directory=True)
         except:
-            # some error, idk why
             pass
     log_file = log_dir / "run_instance.log"
 
@@ -376,187 +380,181 @@ def run_instance(
         # TODO: Before candidate test patch is applied, determine F2F tests.
         ######################################################################
 
-        # Get git diff before running gold eval script
-        git_diff_output_before = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-        logger.info(f"Git diff before:\n{git_diff_output_before}")
-
-        # Use inverted evaluation Gold script
+        # Step 1: Run F2F check with gold patch
+        test_output_path_f2f = log_dir / "f2f_check.txt"
         eval_file = Path(log_dir / "gold_eval.sh")
         eval_file.write_text(test_spec.inverted_eval_script_gold)
-        logger.info(
-            f"Eval script for Gold Evaluation of {instance_id} written to {eval_file}; copying to container..."
-        )
+        logger.info(f"Eval script for Gold Evaluation written to {eval_file}")
         copy_to_container(container, eval_file, Path("/gold_eval.sh"))
 
-        # Run eval script, write output to logs.
+        # Run F2F check
         test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
-        test_output_path_f2f = log_dir / "f2f_check.txt"
-        logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
+        logger.info(f'F2F check runtime: {total_runtime:_.2f} seconds')
         with open(test_output_path_f2f, "w") as f:
             f.write(test_output)
-            logger.info(f"Test output using gold patch for {instance_id} written to {test_output_path_f2f}")
             if timed_out:
                 f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
-                raise EvaluationError(
-                    instance_id,
-                    f"Test timed out after {timeout} seconds.",
-                    logger,
-                )
+                raise EvaluationError(instance_id, f"Test timed out after {timeout} seconds.", logger)
 
-        # Get git diff after running eval script
-        git_diff_output_after = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-
+        # Get F2F tests
         fail_to_fail = get_fail_to_fail(test_output_path_f2f)
 
+        # Step 2: Apply and test candidate test patch
+        # Get initial git diff before applying test patch
+        git_diff_before_test = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        logger.info(f"Git diff before test patch:\n{git_diff_before_test}")
 
-
-        # Check if git diff changed after running eval script
-        logger.info(f"Git diff after:\n{git_diff_output_after}")
-        if git_diff_output_after != git_diff_output_before:
-            logger.info(f"Git diff changed after running eval script")
-
-        ###########################################################################################
-
-        # Copy model prediction as patch file to container
-        # Applying Candidate Test Patch
         patch_file = Path(log_dir / "patch.diff")
-        if("candidate_test_patch" in pred):
-            patch_file.write_text(pred["candidate_test_patch"] or "")
-        else:
-            patch_file.write_text(pred["model_patch"] or "")
-        logger.info(
-            f"Candidate Test Patch for {instance_id} written to {patch_file}, now applying to container..."
-        )
+        patch_content = pred.get("candidate_test_patch") or pred.get("model_patch") or ""
+        patch_file.write_text(patch_content)
+        logger.info(f"Candidate Test Patch written to {patch_file}")
         copy_to_container(container, patch_file, Path("/tmp/patch.diff"))
 
-        # Attempt to apply patch to container
-        val = container.exec_run(
-            "git apply --allow-empty -v /tmp/patch.diff",
-            workdir="/testbed",
-            user="root",
-        )
+        # Apply patch
+        val = container.exec_run("git apply --allow-empty -v /tmp/patch.diff", workdir="/testbed", user="root")
         if val.exit_code != 0:
-            logger.info(f"Failed to apply patch to container, trying again...")
-            
-            # try "patch --batch --fuzz=5 -p1 -i {patch_path}" to try again
-            val = container.exec_run(
-                "patch --batch --fuzz=5 -p1 -i /tmp/patch.diff",
-                workdir="/testbed",
-                user="root",
-            )
+            logger.info("First patch attempt failed, trying with more permissive options...")
+            val = container.exec_run("patch --batch --fuzz=5 -p1 -i /tmp/patch.diff", workdir="/testbed", user="root")
             if val.exit_code != 0:
                 logger.info(f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}")
-                raise EvaluationError(
-                    instance_id,
-                    f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}",
-                    logger,
-                )
+                raise EvaluationError(instance_id, f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}", logger)
             else:
                 logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
         else:
             logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
 
+        # Get git diff after applying test patch
+        git_diff_after_test = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        logger.info(f"Git diff after test patch:\n{git_diff_after_test}")
 
-        # Get git diff before running gold eval script
-        git_diff_output_before = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
-        logger.info(f"Git diff before:\n{git_diff_output_before}")
+        # Step 3: Run gold patch evaluation
+        # Get git diff before running gold eval
+        git_diff_before_gold = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        logger.info(f"Git diff before gold evaluation:\n{git_diff_before_gold}")
 
-        # Run eval script, write output to logs.
-        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
         test_output_path_gold = log_dir / "gold_test_output.txt"
-        logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
+        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /gold_eval.sh", timeout)
+        logger.info(f'Gold evaluation runtime: {total_runtime:_.2f} seconds')
+        
+        # Get git diff after running gold eval
+        git_diff_after_gold = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        logger.info(f"Git diff after gold evaluation:\n{git_diff_after_gold}")
+
         with open(test_output_path_gold, "w") as f:
             f.write(test_output)
-            logger.info(f"Test output using gold patch for {instance_id} written to {test_output_path_gold}")
             if timed_out:
                 f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
-                raise EvaluationError(
-                    instance_id,
-                    f"Test timed out after {timeout} seconds.",
-                    logger,
-                )
+                raise EvaluationError(instance_id, f"Test timed out after {timeout} seconds.", logger)
 
-        # Get git diff after running eval script
-        git_diff_output_after = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
+        # Reset to clean state before bad patches
+        reset_val = container.exec_run("git reset --hard HEAD", workdir="/testbed", user="root")
+        if reset_val.exit_code != 0:
+            logger.warning("Failed to reset before bad patches")
+            reset_val = container.exec_run("git checkout -- .", workdir="/testbed", user="root")
+            if reset_val.exit_code != 0:
+                logger.error("All reset attempts failed before bad patches")
+                raise EvaluationError(instance_id, "Failed to reset before bad patches", logger)
 
-        # Check if git diff changed after running eval script
-        logger.info(f"Git diff after:\n{git_diff_output_after}")
-        if git_diff_output_after != git_diff_output_before:
-            logger.info(f"Git diff changed after running eval script")
+        # Verify clean state after reset
+        git_diff_after_reset = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+        if git_diff_after_reset:
+            logger.warning(f"Codebase not clean after reset before bad patches:\n{git_diff_after_reset}")
 
-        # Reset the container state -not needed when using inverse evaluation scripts
-        # Reset changes if needed
-        #reset_val = container.exec_run(
-        #    "git apply --reverse --allow-empty -v /tmp/patch.diff",
-        #    workdir="/testbed",
-        #    user="root",
-        #)
-        #if reset_val.exit_code == 0:
-        #    logger.info(f"Successfully reset patch changes for {instance_id}")
-        #else:
-        #    logger.warning(
-        #        f"Failed to reset patch for {instance_id}:\n{reset_val.output.decode('utf-8')}"
-        #    )
+        # Step 4: Run bad patch evaluations
+        test_output_paths_bad = []
+        bad_patches = []
+        
+        # Get all bad patches
+        if 'bad_patches' in pred:
+            bad_patches = pred['bad_patches']
+        elif 'bad_patch' in pred:
+            bad_patches = [pred['bad_patch']]
 
-        # Evaluation procedure does not change for bad patch
-        eval_file = Path(log_dir / "bad_eval.sh")
-        eval_file.write_text(test_spec.inverted_eval_script_bad)
-        logger.info(
-            f"Eval script for Bad Evaluation of {instance_id} written to {eval_file}; copying to container..."
-        )
-        copy_to_container(container, eval_file, Path("/bad_eval.sh"))
+        # Create the base bad eval script
+        base_eval_script = test_spec.inverted_eval_script_bad
 
-        # Run eval script after applying bad patch, write output to logs. Bad Patch should fail test
-        test_output, timed_out, total_runtime = exec_run_with_timeout(container, "/bin/bash /bad_eval.sh", timeout)
-        test_output_path_bad = log_dir / "bad_test_output.txt"
-        logger.info(f'Test runtime: {total_runtime:_.2f} seconds')
-        with open(test_output_path_bad, "w") as f:
-            f.write(test_output)
-            logger.info(f"Test output using bad patch for {instance_id} written to {test_output_path_bad}")
-            if timed_out:
-                f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
-                raise EvaluationError(
-                    instance_id,
-                    f"Test timed out after {timeout} seconds.",
-                    logger,
-                )
+        # Create and copy eval script for each bad patch
+        for i, bad_patch in enumerate(bad_patches):
+            # Get initial git diff before applying bad patch
+            git_diff_before = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+            logger.info(f"Git diff before bad patch {i}:\n{git_diff_before}")
 
-        # Get git diff after running eval script
-        git_diff_output_after = (
-            container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        )
+            # Create a new eval script for this specific bad patch
+            eval_script = base_eval_script.replace(
+                f"EOF_{test_spec.instance_id}",
+                f"EOF_{test_spec.instance_id}_bad_{i}"
+            )
+            eval_script = eval_script.replace(
+                test_spec.bad_patches[0],  # Replace the first bad patch
+                bad_patch  # With the current bad patch
+            )
+            
+            eval_file = Path(log_dir / f"bad_eval_{i}.sh")
+            eval_file.write_text(eval_script)
+            logger.info(f"Bad patch {i} evaluation script written to {eval_file}")
+            copy_to_container(container, eval_file, Path(f"/bad_eval_{i}.sh"))
 
-        # Check if git diff changed after running eval script
-        logger.info(f"Git diff after:\n{git_diff_output_after}")
-        if git_diff_output_after != git_diff_output_before:
-            logger.info(f"Git diff changed after running eval script")
+            # Run evaluation for this bad patch
+            test_output_path_bad = log_dir / f"bad_test_output_{i}.txt"
+            test_output_paths_bad.append(test_output_path_bad)
+            
+            test_output, timed_out, total_runtime = exec_run_with_timeout(container, f"/bin/bash /bad_eval_{i}.sh", timeout)
+            logger.info(f'Bad patch {i} evaluation runtime: {total_runtime:_.2f} seconds')
+            
+            # Get git diff after running the evaluation
+            git_diff_after = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+            logger.info(f"Git diff after bad patch {i}:\n{git_diff_after}")
+            
+            with open(test_output_path_bad, "w") as f:
+                f.write(test_output)
+                if timed_out:
+                    f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
+                    logger.warning(f"Bad patch {i} evaluation timed out after {timeout} seconds")
+                    continue
 
-        # Get report from test output for Gold
-        logger.info(f"Grading test performance for {instance_id}...")
-        report = get_eval_report_test_generation(
-            test_spec=test_spec,
-            prediction=pred,
-            log_paths=[test_output_path_gold, test_output_path_bad],
-            include_tests_status=True,
-            fail_to_fail_tests=fail_to_fail
-        )
-        logger.info(
-            f"report: {report}\n"
-            f"Result for {instance_id}: Test Accepted: {report[instance_id]['Test_Accept']}"
-        )
+            # Reset to clean state for next patch
+            reset_val = container.exec_run("git reset --hard HEAD", workdir="/testbed", user="root")
+            if reset_val.exit_code != 0:
+                logger.warning(f"Failed to reset after bad patch {i}")
+                # Try alternative reset method
+                reset_val = container.exec_run("git checkout -- .", workdir="/testbed", user="root")
+                if reset_val.exit_code != 0:
+                    logger.error(f"All reset attempts failed for bad patch {i}")
+                    continue
 
-        # Write report to report.json
+            # Verify clean state after reset
+            git_diff_after_reset = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+            if git_diff_after_reset:
+                logger.warning(f"Codebase not clean after reset for bad patch {i}:\n{git_diff_after_reset}")
+
+        # Step 5: Generate final report
+        logger.info("Generating evaluation report...")
+        if test_output_paths_bad:
+            report = get_eval_report_test_generation(
+                test_spec=test_spec,
+                prediction=pred,
+                log_paths=[test_output_path_gold] + test_output_paths_bad,
+                include_tests_status=True,
+                fail_to_fail_tests=fail_to_fail
+            )
+            logger.info(f"Result: Test Accepted: {report[instance_id]['Test_Accept']}")
+        else:
+            logger.warning("No bad patch evaluations completed successfully")
+            report = {
+                instance_id: {
+                    "patch_is_None": False,
+                    "patch_exists": True,
+                    "gold_patch_successfully_applied": True,
+                    "Test_Accept": False,
+                    "error": "No bad patch evaluations completed successfully"
+                }
+            }
+
+        # Save report
         with open(report_path, "w") as f:
             f.write(json.dumps(report, indent=4))
         return instance_id, report
+
     except EvaluationError as e:
         error_msg = traceback.format_exc()
         logger.info(error_msg)
@@ -571,8 +569,8 @@ def run_instance(
                      f"Check ({logger.log_file}) for more information.")
         logger.error(error_msg)
     finally:
-        # Remove instance container + image, close logger
-        cleanup_container(client, container, logger)
+        if container:
+            cleanup_container(client, container, logger)
         if rm_image:
             remove_image(client, test_spec.instance_image_key, logger)
         close_logger(logger)
