@@ -69,9 +69,26 @@ def load_swebench_dataset(name="princeton-nlp/SWE-bench", split="test", instance
     if name.endswith(".json") or name.endswith(".jsonl"):
         dataset = []
         with open(name, "r", encoding="utf-8") as f:
-            for line in f:
-                entry = json.loads(line) if name.endswith(".jsonl") else json.load(f)
-                dataset.append(entry)
+            if name.endswith(".jsonl"):
+                for line in f:
+                    if line.strip():
+                        try:
+                            entry = json.loads(line)
+                            dataset.append(entry)
+                        except json.JSONDecodeError:
+                            continue
+            else:
+                try:
+                    dataset = json.load(f)
+                except json.JSONDecodeError:
+                    f.seek(0)
+                    for line in f:
+                        if line.strip():
+                            try:
+                                entry = json.loads(line)
+                                dataset.append(entry)
+                            except json.JSONDecodeError:
+                                continue
 
         dataset_ids = {instance[KEY_INSTANCE_ID] for instance in dataset}
     else:
@@ -204,6 +221,33 @@ def load_CodeArena_prediction_dataset(
         print(f"Output saved as CSV: {output_csv_path}")
 
     return merged_df
+
+
+def get_modified_added_files(patch_string):
+    """
+    Parse a patch string and return lists of modified and added files.
+    
+    Args:
+        patch_string (str): String containing the patch/diff content
+        
+    Returns:
+        tuple: (list of modified files, list of added files)
+    """
+    # Parse the patch
+    patch_set = PatchSet.from_string(patch_string)
+    
+    modified_files = []
+    added_files = []
+    
+    # Iterate through each file in the patch
+    for patched_file in patch_set:
+        if patched_file.is_added_file:
+            added_files.append(patched_file.path)
+        elif patched_file.is_modified_file:
+            modified_files.append(patched_file.path)
+    
+    return modified_files + added_files
+
 
 
 def get_test_directives(instance: CodeArenaInstance) -> list:
