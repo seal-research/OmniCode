@@ -222,10 +222,24 @@ def generate_incorrect_diff(
 
         prompt = f"""
         You are given a production-ready source file below. Your task:
-        1. **Introduce exactly two subtle, functional bugs**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
-        2. **Do not break compilation** and **do not introduce any syntax or spelling errors** or code-style changes.
-        3. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
-        4. Return **only** the full modified file content, with no explanations or diff markers.
+        1. **Introduce one to three subtle, functional bugs**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
+        2. **Do not change any import statements**
+        3. **Do not break compilation** and **do not introduce any syntax or spelling errors** or make any code-style changes.
+        4. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
+        5. Return **only** the full modified file content, with no explanations or diff markers.
+
+        --- {path} original content START ---
+        {curr_text}
+        --- {path} original content END ---
+        """
+
+        prompt = f"""
+        You are given a production-ready source file below. Your task:
+        1. **Introduce one to three subtle, functional bugs**—
+        2. **Do NOT break compilation** and **do not introduce any syntax or spelling errors** or make any code-style changes.
+        3. **Do NOT change any import statements**
+        4. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
+        5. Return **only** the full modified file content, with no explanations or diff markers.
 
         --- {path} original content START ---
         {curr_text}
@@ -288,6 +302,7 @@ def generate_incorrect_diff(
 
 
     diff_str = "\n".join(diffs)
+    diff_str += "\n"
 
     return output_diff_path, diff_str
 
