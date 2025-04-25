@@ -21,6 +21,8 @@ from swebench.harness.utils import str2bool
 
 import difflib
 
+# from google import genai
+
 
 # Requests API logic
 import os
@@ -170,18 +172,12 @@ def get_changed_and_current_files(pr_url: str, token: str) -> Dict[str, Optional
         for path in files
     }
 
-def gemini_25(gemini_api_key, prompt):
+def gemini_25(prompt, temperature):
 
-    client = genai.Client(api_key=gemini_api_key)
-
-    response = client.models.generate_content(
-        model="gemini-2.5-flash-preview-04-17",
-        contents=prompt,
-        config=genai.types.GenerateContentConfig(
-            thinking_config=genai.types.ThinkingConfig(
-            thinking_budget=1024
-            )
-        )
+    model = genai.GenerativeModel("gemini-2.5-flash-preview-04-17")
+    response = model.generate_content(
+            prompt,
+            generation_config={"temperature": temperature, "top_p": 0.9}
     )
 
     return response.text
@@ -213,18 +209,53 @@ def generate_incorrect_diff(
         curr_text = curr_bytes.decode("utf-8", errors="ignore") if curr_bytes else ""
 
         prompt = f"""
-        Please introduce a functional bug into this source file.
-        Return only the full modified file content, without any commentary.
+        You are given a production-ready source file below. Your task:
+        1. **Introduce exactly one subtle, functional bug**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
+        2. **Do not break compilation** and **do not introduce any syntax or spelling errors** or code-style changes.
+        3. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
+        4. Return **only** the full modified file content, with no explanations or diff markers.
 
-        --- {path} original content start ---
+        --- {path} original content START ---
         {curr_text}
-        --- {path} original content end ---
+        --- {path} original content END ---
         """
+
+        prompt = f"""
+        You are given a production-ready source file below. Your task:
+        1. **Introduce exactly two subtle, functional bugs**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
+        2. **Do not break compilation** and **do not introduce any syntax or spelling errors** or code-style changes.
+        3. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
+        4. Return **only** the full modified file content, with no explanations or diff markers.
+
+        --- {path} original content START ---
+        {curr_text}
+        --- {path} original content END ---
+        """
+
+
+        # prompt = f"""
+        # Please introduce a functional bug into this source file. Do not change any comments. 
+        # Make sure the bug would not cause a syntax error.
+        # Return only the full modified file content, without any commentary.
+
+        # --- {path} original content start ---
+        # {curr_text}
+        # --- {path} original content end ---
+        # """
+
+        # prompt = f"""
+        # Please introduce a functional bug into this source file.
+        # Return only the full modified file content, without any commentary.
+
+        # --- {path} original content start ---
+        # {curr_text}
+        # --- {path} original content end ---
+        # """ # In larger files, can make simple syntax errors
 
         modified_text = None
 
         if(model_name == "gemini-2.5-flash-preview-4-17" and curr_text):
-            modified_text = gemini_25(gemini_api_key, prompt)
+            modified_text = gemini_25(prompt, temperature)
 
         elif (model_name == "gemini-2.0-flash" and curr_text):
             model = genai.GenerativeModel(model_name)
@@ -255,9 +286,6 @@ def generate_incorrect_diff(
         )
         diffs.extend(file_diff)
 
-    # Write all diffs to the .diff file
-    with open(output_diff_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(diffs))
 
     diff_str = "\n".join(diffs)
 
@@ -317,89 +345,84 @@ def main(
 
     max_iter = 10
 
-    with open(output_file_path, "a+") as f:
-        for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
-            instance_id = datum["instance_id"]
-            # if instance_id in existing_ids:
-            #     continue
-            output_dict = {"instance_id": instance_id, "bad_patches": []}
-            output_dict.update(basic_args)
+    for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
+        instance_id = datum["instance_id"]
+        # if instance_id in existing_ids:
+        #     continue
+        output_dict = {"instance_id": instance_id, "bad_patches": []}
+        output_dict.update(basic_args)
 
-            for i in range(1, max_iter + 1):
-                
-                # TODO Generate Model Patch Here: 
+        for i in range(1, max_iter + 1):
+            
+            # TODO Generate Model Patch Here: 
 
 
-                url = f"https://github.com/{datum['repo']}/pull/{datum['pull_number']}"
-                curr = get_changed_and_current_files(url, TOKEN)
-                prev = get_changed_and_previous_files(url, TOKEN)
+            url = f"https://github.com/{datum['repo']}/pull/{datum['pull_number']}"
+            curr = get_changed_and_current_files(url, TOKEN)
+            prev = get_changed_and_previous_files(url, TOKEN)
 
-                for path in curr:
-                    print(path)
-                
-                diff_file, model_patch = generate_incorrect_diff(
-                    prev_files=prev,
-                    curr_files=curr,
-                    gemini_api_key=secret_key,
-                    model_name=model_name,
-                    temperature=0.7,
-                    output_diff_path="my_pr_with_bugs{i}.diff"
+            
+            diff_file, model_patch = generate_incorrect_diff(
+                prev_files=prev,
+                curr_files=curr,
+                gemini_api_key=secret_key,
+                model_name=model_name,
+                temperature=0.85,
+                output_diff_path="my_pr_with_bugs{i}.diff"
+            )
+
+            # TODO create loop behavior for this
+
+            if model_patch:
+
+                #  Run Testing Code Directly Here to Ensure Bad Patches Fail
+
+                bad_instance = dict()
+                bad_instance['instance_id'] = instance_id
+                bad_instance['model_patch'] = model_patch
+                bad_instance['model_name_or_path'] = model_name
+            
+                resolved = check_patch( # BugFixing begins here
+                    bad_instance,
+                    str(input_tasks_path),
+                    max_workers=max_workers,
+                    force_rebuild=force_rebuild,
+                    cache_level=cache_level,
+                    clean=clean,
+                    open_file_limit=open_file_limit,
+                    run_id=f"{run_id}_{i}",
+                    timeout=timeout
                 )
-                print(f"Written buggy diff to {diff_file}")
 
-                # return # TODO create loop behavior for this
+                if resolved:
+                    continue
 
-                if model_patch:
-
-                    #  Run Testing Code Directly Here to Ensure Bad Patches Fail
-
-                    bad_instance = dict()
-                    bad_instance['instance_id'] = instance_id
-                    bad_instance['model_patch'] = model_patch
-                    bad_instance['model_name_or_path'] = model_name
-                
-                    resolved = check_patch( # BugFixing begins here
-                        bad_instance,
-                        str(input_tasks_path),
-                        max_workers=max_workers,
-                        force_rebuild=force_rebuild,
-                        cache_level=cache_level,
-                        clean=clean,
-                        open_file_limit=open_file_limit,
-                        run_id=f"{run_id}_{i}",
-                        timeout=timeout
-                    )
-
-                    if resolved:
-                        continue
-
-                    num_patches_ctr +=1 
+                num_patches_ctr +=1 
 
 
-                    output_dict["bad_patches"].append(model_patch)
+                output_dict["bad_patches"].append(model_patch)
 
-                    diff_file_path = output_d_path / f"patch_{i}.diff"
-                    try:
-                        with open(diff_file_path, "w") as diff_file:
-                            diff_file.write(model_patch)
-                    except Exception as e:
-                        print(f"Error writing .diff file for {instance_id}: {e}")
+                diff_file_path = output_d_path / f"patch_{i}.diff"
+                try:
+                    with open(diff_file_path, "w") as diff_file:
+                        diff_file.write(model_patch)
+                except Exception as e:
+                    print(f"Error writing .diff file for {instance_id}: {e}")
 
-                    if num_patches_ctr == num_patches : break
+                if num_patches_ctr == num_patches : break
 
-            print(json.dumps(output_dict), file=f, flush=True)
 
-            # Update original dataset in-place
-            id_to_instance = {inst["instance_id"]: inst for inst in dataset}
+        # Update original dataset in-place
+        id_to_instance = {inst["instance_id"]: inst for inst in dataset}
 
-            for datum in dataset:
-                instance_id = datum["instance_id"]
-                if instance_id in id_to_instance:
-                    id_to_instance[instance_id]["bad_patches"] = output_dict.get("bad_patches", [])
+        for datum in dataset:
+            instance_id = datum["instance_id"]
+            if instance_id in id_to_instance:
+                id_to_instance[instance_id]["bad_patches"] = output_dict.get("bad_patches", [])
 
-            updated_path = input_tasks_path.parent / f"updated_{input_tasks_path.name}"
-            with open(updated_path, "w") as f_out:
-                json.dump(list(id_to_instance.values()), f_out, indent=2)
+        updated_path = input_tasks_path.parent / f"updated_{input_tasks_path.name}"
+        with open(updated_path, "w") as f_out:
+            json.dump(list(id_to_instance.values()), f_out, indent=2)
 
 
 
