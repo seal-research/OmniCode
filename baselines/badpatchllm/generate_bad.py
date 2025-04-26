@@ -343,39 +343,30 @@ def main(
     if instance_ids is not None:
         dataset = [d for d in dataset if d["instance_id"] in instance_ids]
 
-    existing_ids = set()
-
-    # TODO: Update code to work with list of instances
-
-    output_d_path = output_dir_path / instance_ids[0] # E.g baselines/badpatchllm/logs/gemini_outputs/camel-ai__camel-1469
-    
-    output_d_path.mkdir(parents=True, exist_ok=True)
-    output_file_path = output_d_path /"badpatch.jsonl"
-
-    basic_args = {
-        "model_name_or_path": model_name,
-    }
-
-    num_patches_ctr = 0
-
     max_iter = 10
+    modified_dataset = []
 
     for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
+
         instance_id = datum["instance_id"]
-        # if instance_id in existing_ids:
-        #     continue
-        output_dict = {"instance_id": instance_id, "bad_patches": []}
-        output_dict.update(basic_args)
+
+        output_d_path = output_dir_path / instance_id
+        output_d_path.mkdir(parents=True, exist_ok=True)
+
+        bad_patches = []
+        print(f"Processing instance {instance_id}")
 
         for i in range(1, max_iter + 1):
             
             # TODO Generate Model Patch Here: 
 
+            print(f"Getting patches for instance {instance_id} ...")
 
             url = f"https://github.com/{datum['repo']}/pull/{datum['pull_number']}"
             curr = get_changed_and_current_files(url, TOKEN)
             prev = get_changed_and_previous_files(url, TOKEN)
 
+            print(f"Generating incorrect diff for instance {instance_id} ...")
             
             diff_file, model_patch = generate_incorrect_diff(
                 prev_files=prev,
@@ -388,7 +379,7 @@ def main(
 
             # TODO create loop behavior for this
 
-            if model_patch:
+            if model_patch and model_patch not in bad_patches:
 
                 #  Run Testing Code Directly Here to Ensure Bad Patches Fail
 
@@ -396,6 +387,8 @@ def main(
                 bad_instance['instance_id'] = instance_id
                 bad_instance['model_patch'] = model_patch
                 bad_instance['model_name_or_path'] = model_name
+
+                print(f"Checking if patch fails tests for instance {instance_id} ...")
             
                 resolved = check_patch( # BugFixing begins here
                     bad_instance,
@@ -409,35 +402,28 @@ def main(
                     timeout=timeout
                 )
 
-                if resolved:
-                    continue
+                if not resolved:
+                    bad_patches.append(model_patch)
+                    diff_file_path = output_d_path / f"patch_{i}.diff"
+                else:
+                    diff_file_path = output_d_path / f"resolved/patch_{i}.diff"
+                
+                diff_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-                num_patches_ctr +=1 
-
-
-                output_dict["bad_patches"].append(model_patch)
-
-                diff_file_path = output_d_path / f"patch_{i}.diff"
                 try:
                     with open(diff_file_path, "w") as diff_file:
                         diff_file.write(model_patch)
                 except Exception as e:
                     print(f"Error writing .diff file for {instance_id}: {e}")
 
-                if num_patches_ctr == num_patches : break
+                if len(bad_patches) == num_patches : break
 
+        modified_datum = {**datum, "bad_patches": bad_patches} 
+        modified_dataset.append(modified_datum)
 
-        # Update original dataset in-place
-        id_to_instance = {inst["instance_id"]: inst for inst in dataset}
-
-        for datum in dataset:
-            instance_id = datum["instance_id"]
-            if instance_id in id_to_instance:
-                id_to_instance[instance_id]["bad_patches"] = output_dict.get("bad_patches", [])
-
-        updated_path = input_tasks_path.parent / f"updated_{input_tasks_path.name}"
-        with open(updated_path, "w") as f_out:
-            json.dump(list(id_to_instance.values()), f_out, indent=2)
+        (output_dir_path / "modified_dataset.json").write_text(
+            json.dumps(modified_dataset, indent=2)
+        )
 
 
 
