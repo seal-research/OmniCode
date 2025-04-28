@@ -133,13 +133,18 @@ def main(
     json_file_path: Path,
     model_name: str,
     secret_key: str,
-    num_reviews_per_patch: int
+    num_reviews_per_patch: int,
+    output_dir: Path,
+    instance_ids: list[str] = None,
 ):
     genai.configure(api_key=secret_key)
     # ... (setup code like genai.configure, load_instances) ...
     instances = load_instances(json_file_path)
     if not instances:
         return
+    
+    if instance_ids is not None:
+        instances = [i for i in instances if i['instance_id'] in instance_ids]
 
     modified_instances = copy.deepcopy(instances) # Work on a copy
 
@@ -147,15 +152,15 @@ def main(
         instance_id = instance.get("instance_id")
         problem_statement = instance.get("problem_statement", "No problem statement provided.")
         correct_patch_example = instance.get("patch", "No correct patch example provided.")
-        bad_patches_input = instance.get("bad_patch")
-        reviews_input = instance.get("Review")
+        bad_patches_input = instance.get("bad_patches")
+        reviews_input = instance.get("reviews")
 
         if not instance_id:
             print("Warning: Skipping instance with no instance_id.")
             continue
 
         # Validate and normalize bad_patches
-        bad_patches_list = validate_and_normalize_list(bad_patches_input, instance_id, 'bad_patch')
+        bad_patches_list = validate_and_normalize_list(bad_patches_input, instance_id, 'bad_patches')
 
         # If bad_patches_list is None (invalid input) or empty, skip review generation
         if bad_patches_list is None or not bad_patches_list:
@@ -163,7 +168,7 @@ def main(
             continue
 
         # Validate and normalize existing reviews
-        reviews_list = validate_and_normalize_list(reviews_input, instance_id, 'Review')
+        reviews_list = validate_and_normalize_list(reviews_input, instance_id, 'reviews')
 
         # If reviews_list is None, it means the field was invalid or missing. Treat as 0 reviews.
         # If it's an empty list [], it means 0 reviews exist.
@@ -188,20 +193,14 @@ def main(
                 )
                 new_reviews.append(review)
         # Update the instance dictionary
-        instance["Review"] = new_reviews
-        # instance["Review_Author"] = "Gemini 2.5 Flash" # Hardcoded author
+        instance["reviews"] = new_reviews
+        # instance["review_author"] = model_name # Hardcoded author
             # else:
                 # print(f"  Info: No valid bad patches found for instance {instance_id}. Skipping review generation.")
 
-
-    # Write the modified data back to the original JSON file.
-    try:
-        with open(json_file_path, "w", encoding="utf-8") as f:
-            json.dump(modified_instances, f, indent=4) # Use indent for readability
-        # print(f"\nSuccessfully updated {json_file_path} with generated reviews.")
-    except Exception as e:
-        # print(f"Error writing updated data back to {json_file_path}: {e}")
-        pass
+        (output_dir / "modified_instances.json").write_text(
+            json.dumps(modified_instances, indent=2)
+        )
 
 
 if __name__ == "__main__":
@@ -214,6 +213,10 @@ if __name__ == "__main__":
     # Kept this argument but clarified its behavior in the help text
     parser.add_argument("--num_reviews_per_patch", type=int, default=1, help="Number of reviews to attempt generating per bad patch (currently only the first successful review for the first valid patch per instance is saved).")
 
+    parser.add_argument("--output_dir", required=True, help="Path to directory to store output of script")
+
+    parser.add_argument("--instance_ids", type=str, default=None)
+
     args = parser.parse_args()
 
     main(
@@ -221,4 +224,6 @@ if __name__ == "__main__":
         model_name=args.model_name,
         secret_key=args.api_key,
         num_reviews_per_patch=args.num_reviews_per_patch,
+        output_dir=Path(args.output_dir),
+        instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
     )
