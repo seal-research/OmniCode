@@ -183,6 +183,7 @@ multiswebench/data/
 multiswebench/build/
 multiswebench/.github/
 multiswebench/docs/
+multiswebench/multi_swe_bench
 # Exclude specific files in multiswebench
 multiswebench/.vscode/
 multiswebench/LICENSE
