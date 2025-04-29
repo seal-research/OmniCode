@@ -20,6 +20,7 @@ from swebench.harness.run_evaluation import main as RegularEval
 from swebench.harness.utils import str2bool
 
 import difflib
+import re
 
 # from google import genai
 
@@ -198,6 +199,23 @@ def generate_incorrect_diff(
     genai.configure(api_key=gemini_api_key)
     diffs: List[str] = []
 
+    # prompt = f"""
+    # You are given a production-ready source file below. Your task:
+    # 1. **Introduce one to three subtle, functional bugs**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
+    # 2. **Do not change any import statements**
+    # 3. **Do not break compilation** and **do not introduce any syntax or spelling errors** or make any code-style changes.
+    # 4. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
+    # 5. Return **only** the full modified file content, with no explanations or diff markers.
+
+    # --- {path} original content START ---
+    # {curr_text}
+    # --- {path} original content END ---
+    # """
+
+    # regex to identify comment lines with BUG
+    # bug_comment_re = re.compile(r'^\s*(#|//|/\*|\*)[^\n]*\bBUG\b', re.IGNORECASE)
+    bug_re = re.compile(r'bug', re.IGNORECASE)
+
     for path, curr_bytes in curr_files.items():
         prev_bytes = prev_files.get(path)
         
@@ -207,45 +225,6 @@ def generate_incorrect_diff(
 
         prev_text = prev_bytes.decode("utf-8", errors="ignore") if prev_bytes else ""
         curr_text = curr_bytes.decode("utf-8", errors="ignore") if curr_bytes else ""
-
-        prompt = f"""
-        You are given a production-ready source file below. Your task:
-        1. **Introduce exactly one subtle, functional bug**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
-        2. **Do not break compilation** and **do not introduce any syntax or spelling errors** or code-style changes.
-        3. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
-        4. Return **only** the full modified file content, with no explanations or diff markers.
-
-        --- {path} original content START ---
-        {curr_text}
-        --- {path} original content END ---
-        """
-
-        prompt = f"""
-        You are given a production-ready source file below. Your task:
-        1. **Introduce one to three subtle, functional bugs**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
-        2. **Do not change any import statements**
-        3. **Do not break compilation** and **do not introduce any syntax or spelling errors** or make any code-style changes.
-        4. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
-        5. Return **only** the full modified file content, with no explanations or diff markers.
-
-        --- {path} original content START ---
-        {curr_text}
-        --- {path} original content END ---
-        """
-
-        prompt = f"""
-        You are given a production-ready source file below. Your task:
-        1. **Introduce one to three subtle, functional bugs**—
-        2. **Do NOT break compilation** and **do not introduce any syntax or spelling errors** or make any code-style changes.
-        3. **Do NOT change any import statements**
-        4. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
-        5. Return **only** the full modified file content, with no explanations or diff markers.
-
-        --- {path} original content START ---
-        {curr_text}
-        --- {path} original content END ---
-        """
-
 
         # prompt = f"""
         # Please introduce a functional bug into this source file. Do not change any comments. 
@@ -257,38 +236,64 @@ def generate_incorrect_diff(
         # --- {path} original content end ---
         # """
 
-        # prompt = f"""
-        # Please introduce a functional bug into this source file.
-        # Return only the full modified file content, without any commentary.
+        filtered_text = curr_text
 
-        # --- {path} original content start ---
-        # {curr_text}
-        # --- {path} original content end ---
-        # """ # In larger files, can make simple syntax errors
+        if path.endswith(".py"):
 
-        modified_text = None
+            prompt = f"""
+            You are given a production-ready source file below. Your task:
+            1. **Introduce one to two subtle, functional bugs**—
+            2. **Do NOT break compilation** and **do not introduce any syntax or spelling errors** or make any code-style changes.
+            3. **Do NOT change any import statements**
+            4. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
+            5. Return **only** the full modified file content, with no explanations or diff markers.
 
-        if(model_name == "gemini-2.5-flash-preview-4-17" and curr_text):
-            modified_text = gemini_25(prompt, temperature)
+            --- {path} original content START ---
+            {curr_text}
+            --- {path} original content END ---
+            """
 
-        elif (model_name == "gemini-2.0-flash" and curr_text):
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(
-                prompt,
-                generation_config={"temperature": temperature}
-            )
+            modified_text = None
 
-            modified_text = response.text
+            # only python files edge case
 
-        if modified_text.startswith("```python"):
-            modified_text = modified_text[len("```python"):].lstrip()  # Remove the prefix and leading spaces
+            if(model_name == "gemini-2.5-flash-preview-4-17" and curr_text):
+                modified_text = gemini_25(prompt, temperature)
 
-        if modified_text.endswith("```"):
-            modified_text = modified_text[:-3].rstrip()  # Remove the suffix and trailing spaces
-            # Split into lines for diffing
+            elif (model_name == "gemini-2.0-flash" and curr_text):
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(
+                    prompt,
+                    generation_config={"temperature": temperature}
+                )
+
+                modified_text = response.text
+
+            if modified_text.startswith("```python"):
+                modified_text = modified_text[len("```python"):].lstrip()  # Remove the prefix and leading spaces
+
+            if modified_text.endswith("```"):
+                modified_text = modified_text[:-3].rstrip()  # Remove the suffix and trailing spaces
+                # Split into lines for diffing
+            
+            filtered_lines: List[str] = []
+
+            for line in modified_text.splitlines():
+                if '#' in line:
+                    idx = line.find('#')
+                    comment = line[idx+1:]
+                    if bug_re.search(comment):
+                        # drop the comment, keep only code before '#'
+                        filtered_lines.append(line[:idx].rstrip())
+                    else:
+                        filtered_lines.append(line)
+                else:
+                    filtered_lines.append(line)
+            
+            filtered_text = "\n".join(filtered_lines)
         
         prev_lines     = prev_text.splitlines()
-        modified_lines = modified_text.splitlines()
+        modified_lines = filtered_text.splitlines()
 
         # Produce a unified diff for this file
         file_diff = difflib.unified_diff(
@@ -377,7 +382,6 @@ def main(
                 output_diff_path="my_pr_with_bugs{i}.diff"
             )
 
-            # TODO create loop behavior for this
 
             if model_patch and model_patch not in bad_patches:
 
