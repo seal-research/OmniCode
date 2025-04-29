@@ -19,6 +19,11 @@ if not os.path.exists(results_dir):
 
 full_dir = os.path.join(results_dir, 'agentless', args.instance_id)
 report_path = os.path.join(full_dir, 'report.json')
+
+if not os.path.exists(report_path):
+    print('Report file does not exist (likely due to error in building image)', report_path)
+    sys.exit(1)
+
 with open(report_path, 'r') as f:
     report = json.load(f)
 
@@ -38,6 +43,10 @@ else:
 
     # add patch to dataset
     task_ix = [i for i in range(len(dataset)) if dataset[i]['instance_id'] == args.instance_id][0]
+    # if 'bad_patches' in dataset[task_ix]:
+    #     dataset[task_ix]['bad_patches'].append(patch)
+    # else:
+    #     dataset[task_ix]['bad_patches'] = [patch]
     dataset[task_ix]['bad_patch'] = patch
 
     # save dataset back to json file

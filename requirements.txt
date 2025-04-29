@@ -4,3 +4,4 @@ datasets
 tqdm
 python-dotenv
 fire
+google-generativeai
