@@ -39,6 +39,10 @@ from CodeArena_test_spec import make_test_spec, TestSpec, generate_patch_lint_sc
 from swebench.harness.utils import str2bool
 from utils import load_swebench_dataset, load_CodeArena_prediction_dataset, copy_from_container
 
+import os
+os.environ["STYLE_REVIEW"] = "1"
+
+
 class EvaluationError(Exception):
     def __init__(self, instance_id, message, logger):
         super().__init__(message)
