@@ -35,9 +35,9 @@
     "MAP_REPO_VERSION_TO_SPECS": {
         k: {
             "python": "3.10",
-            "packges": "requirements.txt",
+            "pip_packages": "requirements.txt",
             # "install": "python pip_build.py --install",
-            "install": "python -m pip install -e '.[all, dev, test]'",
+            "install": "python -m pip install -e .",
             "test_cmd": "pytest -rA",
         }
         for k in ['3.3', '3.4', '3.5', '3.6', '3.7', '3.8', None]
@@ -123,7 +123,7 @@
     "MAP_REPO_TO_VERSION_PATTERNS": ["__version__ = ['\"](.*)['\"]"],
     "MAP_REPO_VERSION_TO_SPECS": {
             k: {
-            "python": "3.9", 
+            "python": "3.9",
             "install": "pip install -U -r requirements/test.txt",
             "pip_packages": [
                 "pytest==8.3.4",
