@@ -4,3 +4,5 @@ datasets
 tqdm
 python-dotenv
 fire
+tree-sitter
+tree-sitter-python
