@@ -40,7 +40,7 @@
             "install": "python -m pip install -e .",
             "test_cmd": "pytest -rA",
         }
-        for k in ['3.3', '3.4', '3.5', '3.6', '3.7', '3.8', None]
+        for k in ['3.3', '3.4', '3.5', '3.6', '3.7', '3.8', 'None']
     },
     # "MAP_REPO_TO_REQS_PATHS": ["requirements.txt"],
 },
