@@ -20,6 +20,7 @@ from swebench.harness.run_evaluation import main as RegularEval
 from swebench.harness.utils import str2bool
 
 import difflib
+import re
 
 # from google import genai
 
@@ -198,6 +199,23 @@ def generate_incorrect_diff(
     genai.configure(api_key=gemini_api_key)
     diffs: List[str] = []
 
+    # prompt = f"""
+    # You are given a production-ready source file below. Your task:
+    # 1. **Introduce one to three subtle, functional bugs**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
+    # 2. **Do not change any import statements**
+    # 3. **Do not break compilation** and **do not introduce any syntax or spelling errors** or make any code-style changes.
+    # 4. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
+    # 5. Return **only** the full modified file content, with no explanations or diff markers.
+
+    # --- {path} original content START ---
+    # {curr_text}
+    # --- {path} original content END ---
+    # """
+
+    # regex to identify comment lines with BUG
+    # bug_comment_re = re.compile(r'^\s*(#|//|/\*|\*)[^\n]*\bBUG\b', re.IGNORECASE)
+    bug_re = re.compile(r'bug', re.IGNORECASE)
+
     for path, curr_bytes in curr_files.items():
         prev_bytes = prev_files.get(path)
         
@@ -207,31 +225,6 @@ def generate_incorrect_diff(
 
         prev_text = prev_bytes.decode("utf-8", errors="ignore") if prev_bytes else ""
         curr_text = curr_bytes.decode("utf-8", errors="ignore") if curr_bytes else ""
-
-        prompt = f"""
-        You are given a production-ready source file below. Your task:
-        1. **Introduce exactly one subtle, functional bug**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
-        2. **Do not break compilation** and **do not introduce any syntax or spelling errors** or code-style changes.
-        3. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
-        4. Return **only** the full modified file content, with no explanations or diff markers.
-
-        --- {path} original content START ---
-        {curr_text}
-        --- {path} original content END ---
-        """
-
-        prompt = f"""
-        You are given a production-ready source file below. Your task:
-        1. **Introduce exactly two subtle, functional bugs**—for example an off-by-one in a loop, a wrong comparison operator, an incorrect return value in an edge case, a swapped parameter, or a logic inversion.
-        2. **Do not break compilation** and **do not introduce any syntax or spelling errors** or code-style changes.
-        3. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
-        4. Return **only** the full modified file content, with no explanations or diff markers.
-
-        --- {path} original content START ---
-        {curr_text}
-        --- {path} original content END ---
-        """
-
 
         # prompt = f"""
         # Please introduce a functional bug into this source file. Do not change any comments. 
@@ -243,38 +236,64 @@ def generate_incorrect_diff(
         # --- {path} original content end ---
         # """
 
-        # prompt = f"""
-        # Please introduce a functional bug into this source file.
-        # Return only the full modified file content, without any commentary.
+        filtered_text = curr_text
 
-        # --- {path} original content start ---
-        # {curr_text}
-        # --- {path} original content end ---
-        # """ # In larger files, can make simple syntax errors
+        if path.endswith(".py"):
 
-        modified_text = None
+            prompt = f"""
+            You are given a production-ready source file below. Your task:
+            1. **Introduce one to two subtle, functional bugs**—
+            2. **Do NOT break compilation** and **do not introduce any syntax or spelling errors** or make any code-style changes.
+            3. **Do NOT change any import statements**
+            4. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
+            5. Return **only** the full modified file content, with no explanations or diff markers.
 
-        if(model_name == "gemini-2.5-flash-preview-4-17" and curr_text):
-            modified_text = gemini_25(prompt, temperature)
+            --- {path} original content START ---
+            {curr_text}
+            --- {path} original content END ---
+            """
 
-        elif (model_name == "gemini-2.0-flash" and curr_text):
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(
-                prompt,
-                generation_config={"temperature": temperature}
-            )
+            modified_text = None
 
-            modified_text = response.text
+            # only python files edge case
 
-        if modified_text.startswith("```python"):
-            modified_text = modified_text[len("```python"):].lstrip()  # Remove the prefix and leading spaces
+            if(model_name == "gemini-2.5-flash-preview-4-17" and curr_text):
+                modified_text = gemini_25(prompt, temperature)
 
-        if modified_text.endswith("```"):
-            modified_text = modified_text[:-3].rstrip()  # Remove the suffix and trailing spaces
-            # Split into lines for diffing
+            elif (model_name == "gemini-2.0-flash" and curr_text):
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(
+                    prompt,
+                    generation_config={"temperature": temperature}
+                )
+
+                modified_text = response.text
+
+            if modified_text.startswith("```python"):
+                modified_text = modified_text[len("```python"):].lstrip()  # Remove the prefix and leading spaces
+
+            if modified_text.endswith("```"):
+                modified_text = modified_text[:-3].rstrip()  # Remove the suffix and trailing spaces
+                # Split into lines for diffing
+            
+            filtered_lines: List[str] = []
+
+            for line in modified_text.splitlines():
+                if '#' in line:
+                    idx = line.find('#')
+                    comment = line[idx+1:]
+                    if bug_re.search(comment):
+                        # drop the comment, keep only code before '#'
+                        filtered_lines.append(line[:idx].rstrip())
+                    else:
+                        filtered_lines.append(line)
+                else:
+                    filtered_lines.append(line)
+            
+            filtered_text = "\n".join(filtered_lines)
         
         prev_lines     = prev_text.splitlines()
-        modified_lines = modified_text.splitlines()
+        modified_lines = filtered_text.splitlines()
 
         # Produce a unified diff for this file
         file_diff = difflib.unified_diff(
@@ -288,6 +307,7 @@ def generate_incorrect_diff(
 
 
     diff_str = "\n".join(diffs)
+    diff_str += "\n"
 
     return output_diff_path, diff_str
 
@@ -328,39 +348,30 @@ def main(
     if instance_ids is not None:
         dataset = [d for d in dataset if d["instance_id"] in instance_ids]
 
-    existing_ids = set()
-
-    # TODO: Update code to work with list of instances
-
-    output_d_path = output_dir_path / instance_ids[0] # E.g baselines/badpatchllm/logs/gemini_outputs/camel-ai__camel-1469
-    
-    output_d_path.mkdir(parents=True, exist_ok=True)
-    output_file_path = output_d_path /"badpatch.jsonl"
-
-    basic_args = {
-        "model_name_or_path": model_name,
-    }
-
-    num_patches_ctr = 0
-
-    max_iter = 10
+    max_iter = 6 # make lower for faster iterations
+    modified_dataset = []
 
     for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
+
         instance_id = datum["instance_id"]
-        # if instance_id in existing_ids:
-        #     continue
-        output_dict = {"instance_id": instance_id, "bad_patches": []}
-        output_dict.update(basic_args)
+
+        output_d_path = output_dir_path / instance_id
+        output_d_path.mkdir(parents=True, exist_ok=True)
+
+        bad_patches = []
+        print(f"Processing instance {instance_id}")
 
         for i in range(1, max_iter + 1):
             
             # TODO Generate Model Patch Here: 
 
+            print(f"Getting patches for instance {instance_id} ...")
 
             url = f"https://github.com/{datum['repo']}/pull/{datum['pull_number']}"
             curr = get_changed_and_current_files(url, TOKEN)
             prev = get_changed_and_previous_files(url, TOKEN)
 
+            print(f"Generating incorrect diff for instance {instance_id} ...")
             
             diff_file, model_patch = generate_incorrect_diff(
                 prev_files=prev,
@@ -371,9 +382,8 @@ def main(
                 output_diff_path="my_pr_with_bugs{i}.diff"
             )
 
-            # TODO create loop behavior for this
 
-            if model_patch:
+            if model_patch and model_patch not in bad_patches:
 
                 #  Run Testing Code Directly Here to Ensure Bad Patches Fail
 
@@ -381,6 +391,8 @@ def main(
                 bad_instance['instance_id'] = instance_id
                 bad_instance['model_patch'] = model_patch
                 bad_instance['model_name_or_path'] = model_name
+
+                print(f"Checking if patch fails tests for instance {instance_id} ...")
             
                 resolved = check_patch( # BugFixing begins here
                     bad_instance,
@@ -394,35 +406,43 @@ def main(
                     timeout=timeout
                 )
 
-                if resolved:
-                    continue
+                if not resolved:
+                    bad_patches.append(model_patch)
+                    diff_file_path = output_d_path / f"patch_{i}.diff"
+                else:
+                    diff_file_path = output_d_path / f"resolved/patch_{i}.diff"
+                
+                diff_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-                num_patches_ctr +=1 
-
-
-                output_dict["bad_patches"].append(model_patch)
-
-                diff_file_path = output_d_path / f"patch_{i}.diff"
                 try:
                     with open(diff_file_path, "w") as diff_file:
                         diff_file.write(model_patch)
                 except Exception as e:
                     print(f"Error writing .diff file for {instance_id}: {e}")
 
-                if num_patches_ctr == num_patches : break
+                if(resolved): sys.exit() # Short Circuiting if patch passes tests...
+                if len(bad_patches) == num_patches : break
 
+        modified_datum = {**datum, "bad_patches": bad_patches} 
+        modified_dataset.append(modified_datum)
 
-        # Update original dataset in-place
-        id_to_instance = {inst["instance_id"]: inst for inst in dataset}
+        json_path = output_dir_path / "modified_dataset.json"
 
-        for datum in dataset:
-            instance_id = datum["instance_id"]
-            if instance_id in id_to_instance:
-                id_to_instance[instance_id]["bad_patches"] = output_dict.get("bad_patches", [])
+        # (output_dir_path / "modified_dataset.json").write_text(
+        #     json.dumps(modified_dataset, indent=2)
+        # )
 
-        updated_path = input_tasks_path.parent / f"updated_{input_tasks_path.name}"
-        with open(updated_path, "w") as f_out:
-            json.dump(list(id_to_instance.values()), f_out, indent=2)
+        # 1) Load existing list (or start fresh)
+        if json_path.exists():
+            existing = json.loads(json_path.read_text())
+        else:
+            existing = []
+
+        # 2) Append your new record
+        existing.append(modified_datum)
+
+        # 3) Write the updated list back (this will preserve old entries)
+        json_path.write_text(json.dumps(existing, indent=2))
 
 
 
