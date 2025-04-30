@@ -80,7 +80,9 @@ def create_multiswebench_config(predictions, dataset_path, max_workers, force_re
     with open(patch_file, 'w', encoding='utf-8') as f:
         for instance in predictions:
             item = predictions[instance]
-            org, repo = item.get("repo").split("/")
+            org = instance.split("__")[0]
+            repo = instance.split("_")[-2]
+            # org, repo = item.get("repo").split("/")
             number = instance.split("_")[-1]
             if bad_patch_index != -1:
                 bad_patch = item.get("bad_patches", [])
@@ -340,8 +342,11 @@ def run_instances(
     
     success_dict = {}
     clean_directories()
+    instance_dict = {}
+    for instance in instances:
+        instance_dict[instance["instance_id"]] = instance
     config_file = create_multiswebench_config(
-        predictions=predictions, 
+        predictions=instance_dict, 
         dataset_path=dataset_path, 
         max_workers=max_workers, 
         force_rebuild=force_rebuild, 
@@ -349,7 +354,7 @@ def run_instances(
         timeout=timeout
     )
     report = run_instance(
-        instances=instances,
+        instances=instance_dict,
         config_file=config_file,
         timeout=timeout,
         tag="gold"
@@ -359,12 +364,12 @@ def run_instances(
         success_dict["gold_failures"] = report.get("unresolved_ids", [])
 
     print(f"Running instances with bad patches...")
-    max_bad_patches = max([len(predictions[instance_id].get("bad_patches", [])) for instance_id in predictions])
+    max_bad_patches = max([len(instance_dict[instance_id].get("bad_patches", [])) for instance_id in instance_dict])
     for i in range(max_bad_patches):
         print(f"Running instances with bad patch index: {i}")
         clean_directories()
         config_file = create_multiswebench_config(
-            predictions=predictions, 
+            predictions=instance_dict, 
             dataset_path=dataset_path, 
             max_workers=max_workers, 
             force_rebuild=force_rebuild, 
@@ -373,7 +378,7 @@ def run_instances(
             bad_patch_index=i
         )
         report = run_instance(
-            instances=instances,
+            instances=instance_dict,
             config_file=config_file,
             timeout=timeout,
             tag=f"bad_patch_{i}"
@@ -381,10 +386,10 @@ def run_instances(
         if report:
             existing_success = success_dict.get(f"bad_patch_successes", [])
             existing_failures = success_dict.get(f"bad_patch_failures", [])
-            existing_success.extend(report.get("resolved_ids", []))
-            existing_failures.extend(report.get("unresolved_ids", []))
-            success_dict[f"bad_patch_successes"] = existing_failures # bad patches should be failures
-            success_dict[f"bad_patch_failures"] = existing_success
+            existing_failures.extend(report.get("resolved_ids", []))
+            existing_success.extend(report.get("unresolved_ids", [])) # bad patches should be unresolved
+            success_dict[f"bad_patch_successes"] = existing_success
+            success_dict[f"bad_patch_failures"] = existing_failures
     print("All instances run.")
     print("Success dictionary:", success_dict)
 
@@ -452,11 +457,21 @@ def main(
                 predictions = [json.loads(line) for line in f]
         else:
             raise ValueError("Predictions path must be \"gold\", .json, or .jsonl")
+        for pred in predictions:
+            pred["candidate_test_patch"] = pred.get("model_patch", "")
+    
     predictions = {pred[KEY_INSTANCE_ID]: pred for pred in predictions}
 
     # get dataset from predictions
     if(not predictions_path == 'gold'):
-        dataset = get_dataset_from_preds(dataset_name, split, instance_ids, run_id=run_id, generated_tests_path=predictions_path)
+        dataset = get_dataset_from_preds(
+            dataset_name, 
+            split, 
+            instance_ids, 
+            run_id=run_id, 
+            generated_tests_path=predictions_path, 
+            codearena_instances=dataset_name # necessary because of current function structure
+        )
     else:
         dataset = get_gold_predictions(dataset_name, instance_ids, split)
 
