@@ -348,7 +348,7 @@ def main(
     if instance_ids is not None:
         dataset = [d for d in dataset if d["instance_id"] in instance_ids]
 
-    max_iter = 10
+    max_iter = 6 # make lower for faster iterations
     modified_dataset = []
 
     for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
@@ -420,14 +420,29 @@ def main(
                 except Exception as e:
                     print(f"Error writing .diff file for {instance_id}: {e}")
 
+                if(resolved): sys.exit() # Short Circuiting if patch passes tests...
                 if len(bad_patches) == num_patches : break
 
         modified_datum = {**datum, "bad_patches": bad_patches} 
         modified_dataset.append(modified_datum)
 
-        (output_dir_path / "modified_dataset.json").write_text(
-            json.dumps(modified_dataset, indent=2)
-        )
+        json_path = output_dir_path / "modified_dataset.json"
+
+        # (output_dir_path / "modified_dataset.json").write_text(
+        #     json.dumps(modified_dataset, indent=2)
+        # )
+
+        # 1) Load existing list (or start fresh)
+        if json_path.exists():
+            existing = json.loads(json_path.read_text())
+        else:
+            existing = []
+
+        # 2) Append your new record
+        existing.append(modified_datum)
+
+        # 3) Write the updated list back (this will preserve old entries)
+        json_path.write_text(json.dumps(existing, indent=2))
 
 
 
