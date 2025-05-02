@@ -238,7 +238,7 @@ def generate_incorrect_diff(
 
         filtered_text = curr_text
 
-        if path.endswith(".py"):
+        if path.endswith(".py") and curr_text:
 
             prompt = f"""
             You are given a production-ready source file below. Your task:
