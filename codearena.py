@@ -180,7 +180,7 @@ def setup_multiswebench_config(predictions, max_workers, force_rebuild, run_id, 
     print(f"Configuration saved to {config_file}")
     return str(config_file)
 
-def run_with_timeout(cmd, timeout_seconds=1800):
+def run_with_timeout(cmd, timeout_seconds=-1):
     """Run a command with timeout and real-time output streaming."""
     print(f"Running command with {timeout_seconds}s timeout: {' '.join(cmd)}")
     
@@ -203,7 +203,7 @@ def run_with_timeout(cmd, timeout_seconds=1800):
         # Monitor process
         while process.poll() is None:
             # Check for timeout
-            if time.time() - start_time > timeout_seconds:
+            if(timeout_seconds>0 and time.time() - start_time > timeout_seconds):
                 print(f"Process timed out after {timeout_seconds} seconds!")
                 process.kill()
                 return None, "Timeout exceeded", 1
@@ -243,7 +243,7 @@ def run_with_timeout(cmd, timeout_seconds=1800):
         print(f"Error running command: {e}")
         return None, str(e), 1
 
-def run_multiswebench_phase(config_file, phase="all", timeout=1800):
+def run_multiswebench_phase(config_file, phase="all", timeout=-1):
     """Run a specific phase of Multi-SWE-Bench evaluation."""
     script_path = "./multiswebench/multi_swe_bench/harness/run_evaluation.py"
     
@@ -313,7 +313,7 @@ def main():
                         help="Optional instance IDs")
     parser.add_argument("--open_file_limit", type=int, default=4096,
                         help="Maximum number of open files")
-    parser.add_argument("--timeout", type=int, default=1800,
+    parser.add_argument("--timeout", type=int, default=-1,
                         help="Timeout for individual evaluations in seconds")
     parser.add_argument("--force_rebuild", type=str2bool, default=False,
                         help="Force rebuild of all images")
