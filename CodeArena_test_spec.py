@@ -4,6 +4,8 @@ import hashlib
 import json
 import platform
 import re
+import os
+
 
 from dataclasses import dataclass
 from typing import Any, Union, cast
@@ -29,7 +31,8 @@ from swebench.harness.utils import (
 )
 
 from utils import (
-    get_test_directives
+    NON_TEST_EXTS,
+    get_modified_added_files,
 )
 
 DIFF_MODIFIED_FILE_REGEX = r"--- a/(.*)"
@@ -38,18 +41,46 @@ DIFF_MODIFIED_FILE_REGEX = r"--- a/(.*)"
 @dataclass
 class TestSpec:
     """
-    A dataclass that represents a test specification for a single instance of SWE-bench.
+    A test specification for a CodeArena instance.
     """
     instance_id: str
     repo: str
-    base_commit :str
+    base_commit: str
     version: str
+    gold_patch: str
+    test_patch: str
+    bad_patches: list[str]  # Changed from bad_patch to bad_patches
     repo_script_list: list[str]
-    eval_script_list: list[str]
-    gold_inverted_eval_script_list : list[str]
-    bad_inverted_eval_script_list : list[str]
     env_script_list: list[str]
+    eval_script_list: list[str]
+    gold_inverted_eval_script_list: list[str]
+    bad_inverted_eval_script_list: list[list[str]]  # Changed to list of lists to handle multiple bad patches
     arch: str
+
+    def __post_init__(self):
+        """
+        Validate and process the test specification after initialization.
+        """
+        # Ensure bad_patches is a list
+        if not isinstance(self.bad_patches, list):
+            self.bad_patches = [self.bad_patches]
+        
+        # Filter out empty or None patches
+        self.bad_patches = [patch for patch in self.bad_patches if patch and patch != 0]
+        
+        # Create inverted eval script lists for each bad patch
+        self.bad_inverted_eval_script_list = [
+            make_inverted_eval_script_list(
+                self, 
+                MAP_REPO_VERSION_TO_SPECS[self.repo][str(self.version)],
+                "testbed",
+                f"/testbed",
+                self.base_commit,
+                bad_patch,
+                self.test_patch
+            )
+            for bad_patch in self.bad_patches
+        ]
 
     @property
     def setup_env_script(self):
@@ -67,8 +98,16 @@ class TestSpec:
 
     @property
     def inverted_eval_script_bad(self):
-        return "\n".join(["#!/bin/bash", "set -uxo pipefail"] + self.bad_inverted_eval_script_list) + "\n"
-        # Don't exit early because we need to revert tests at the end
+        """Returns the first bad patch's inverted eval script for backward compatibility"""
+        if not self.bad_inverted_eval_script_list:
+            return ""
+        return "\n".join(["#!/bin/bash", "set -uxo pipefail"] + self.bad_inverted_eval_script_list[0]) + "\n"
+
+    def get_inverted_eval_script_bad(self, index: int = 0) -> str:
+        """Returns the inverted eval script for a specific bad patch by index"""
+        if not self.bad_inverted_eval_script_list or index >= len(self.bad_inverted_eval_script_list):
+            return ""
+        return "\n".join(["#!/bin/bash", "set -uxo pipefail"] + self.bad_inverted_eval_script_list[index]) + "\n"
 
     @property
     def install_repo_script(self):
@@ -183,74 +222,82 @@ def replace_uninstallable_packages_requirements_txt(requirement_str: str) -> str
     return "\n".join(requirements_replaced) + "\n"
 
 
-def make_env_script_list(instance: CodeArenaInstance, specs: dict, env_name: str) -> list[str]:
+def make_env_script_list(instance: CodeArenaInstance,
+                         specs: dict,
+                         env_name: str) -> list[str]:
     """
     Creates the list of commands to set up the conda environment for testing.
-    This is the setup script for the environment image.
-
-    Returns:
-        list[str]: List of commands to set up the conda environment
+    If conda isn’t already present, it downloads & bootstraps Miniconda.
     """
     HEREDOC_DELIMITER = "EOF_59812759871"
+
     reqs_commands = [
-        "source /opt/miniconda3/bin/activate",
+        # 1) if conda isn't on PATH, install Miniconda
+        'if ! command -v conda &> /dev/null; then '
+        '  echo ">>> Bootstrapping Miniconda"; '
+        '  wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/mc.sh && '
+        '  bash /tmp/mc.sh -b -p /opt/miniconda3 && '
+        '  rm /tmp/mc.sh; '
+        'fi',
+        # 2) ensure we can run `conda`
+        'export PATH="/opt/miniconda3/bin:${PATH}"',
+        # 3) initialize shell functions so `conda activate` works
+        'source /opt/miniconda3/etc/profile.d/conda.sh',
+        'eval "$(conda shell.bash hook)"',
     ]
-    # Create conda environment according to install instructinos
+
     pkgs = specs.get("packages", "")
     if pkgs == "requirements.txt":
-        # Create environment
-        cmd = f"conda create -n {env_name} python={specs['python']} -y"
-        reqs_commands.append(cmd)
-
-        # Install dependencies
+        reqs_commands.append(f"conda create -n {env_name} python={specs['python']} -y")
         reqs = replace_uninstallable_packages_requirements_txt(get_requirements(instance))
         path_to_reqs = "$HOME/requirements.txt"
         reqs_commands.append(
             f"cat <<'{HEREDOC_DELIMITER}' > {path_to_reqs}\n{reqs}\n{HEREDOC_DELIMITER}"
         )
-        cmd = f"conda activate {env_name} && python -m pip install -r {path_to_reqs}"
-        reqs_commands.append(cmd)
+        reqs_commands.append(
+            f"conda activate {env_name} && python -m pip install -r {path_to_reqs}"
+        )
         reqs_commands.append(f"rm {path_to_reqs}")
+
     elif pkgs == "environment.yml":
-        # Create environment from yml
         reqs = get_environment_yml(instance, env_name)
         path_to_reqs = "environment.yml"
         reqs_commands.append(
             f"cat <<'{HEREDOC_DELIMITER}' > {path_to_reqs}\n{reqs}\n{HEREDOC_DELIMITER}"
         )
-        if "no_use_env" in specs and specs["no_use_env"]:
-            # `conda create` based installation
-            cmd = f"conda create -c conda-forge -n {env_name} python={specs['python']} -y"
-            reqs_commands.append(cmd)
-
-            # Install dependencies
-            cmd = f"conda env update -f {path_to_reqs}"
-            reqs_commands.append(cmd)
+        if specs.get("no_use_env", False):
+            reqs_commands.append(
+                f"conda create -c conda-forge -n {env_name} "
+                f"python={specs['python']} -y"
+            )
+            reqs_commands.append(f"conda env update -f {path_to_reqs}")
         else:
-            # `conda env create` based installation
-            cmd = f"conda env create --file {path_to_reqs}"
-            reqs_commands.append(cmd)
-
-            cmd = f"conda activate {env_name} && conda install python={specs['python']} -y"
-            reqs_commands.append(cmd)
-
-        # Remove environment.yml
+            reqs_commands.append(f"conda env create --file {path_to_reqs}")
+            reqs_commands.append(
+                f"conda activate {env_name} && "
+                f"conda install python={specs['python']} -y"
+            )
         reqs_commands.append(f"rm {path_to_reqs}")
-    else:
-        # Create environment + install dependencies
-        cmd = f"conda create -n {env_name} python={specs['python']} {pkgs} -y"
-        reqs_commands.append(cmd)
 
+    else:
+        reqs_commands.append(
+            f"conda create -n {env_name} python={specs['python']} {pkgs or ''} -y"
+        )
+
+    # Activate the new env
     reqs_commands.append(f"conda activate {env_name}")
 
-    # Install additional packages if specified
+    # Extra pip packages
     if "pip_packages" in specs:
         pip_packages = " ".join(specs["pip_packages"])
-        cmd = f"python -m pip install {pip_packages}"
-        reqs_commands.append(cmd)
-    # External pylint dependency to run Style Review inside the docker environment
+        reqs_commands.append(f"python -m pip install {pip_packages}")
 
-    reqs_commands.append("python -m pip install pylint")
+    # And always install pylint
+    # Only install pylint if we’ve asked for a style review build
+    if os.environ.get("STYLE_REVIEW", "0") == "1":
+        reqs_commands.append("python -m pip install pylint")
+
+
     return reqs_commands
 
 
@@ -268,7 +315,7 @@ def make_eval_script_list(instance, specs, env_name, repo_directory, base_commit
         )
     test_command = " ".join(
         [
-            MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]["test_cmd"],
+            MAP_REPO_VERSION_TO_SPECS[instance["repo"]][str(instance["version"])]["test_cmd"],
             *get_test_directives(instance),
         ]
     )
@@ -299,6 +346,58 @@ def make_eval_script_list(instance, specs, env_name, repo_directory, base_commit
     ]
     return eval_commands
 
+def get_test_directives(instance: Union[dict, TestSpec]) -> list:
+    """
+    Get test directives for a specific instance.
+    """
+    # Handle both dict and TestSpec types
+    repo = instance["repo"] if isinstance(instance, dict) else instance.repo
+    if isinstance(instance, dict):
+    # prefer candidate_test_patch, but fall back to test_patch
+        test_patch = instance.get("candidate_test_patch",
+                                  instance.get("test_patch"))
+    else:
+        # for objects, try attribute then fallback to .test_patch
+        test_patch = getattr(instance, "candidate_test_patch",
+                             getattr(instance, "test_patch", None))
+     
+    if repo == "swe-bench/humaneval":
+        return []
+    
+    # Handle both dict and TestSpec types
+    if isinstance(instance, dict):
+        if "test_directives" in instance:
+            return instance["test_directives"]
+        if "test_directive" in instance:
+            return [instance["test_directive"]]
+    else:
+        if hasattr(instance, "test_directives"):
+            return instance.test_directives
+        if hasattr(instance, "test_directive"):
+            return [instance.test_directive]
+    
+
+    # diff_pat = r"diff --git a/.* b/(.*)"
+    # directives = re.findall(diff_pat, test_patch)
+    
+    directives = get_modified_added_files(test_patch)
+    directives = [
+        d for d in directives if not any(d.endswith(ext) for ext in NON_TEST_EXTS)
+    ]
+
+    # For Django tests, remove extension + "tests/" prefix and convert slashes to dots (module referencing)
+    if repo == "django/django":
+        directives_transformed = []
+        for d in directives:
+            d = d[: -len(".py")] if d.endswith(".py") else d
+            d = d[len("tests/") :] if d.startswith("tests/") else d
+            d = d.replace("/", ".")
+            directives_transformed.append(d)
+        directives = directives_transformed
+
+    return directives
+
+
 def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, base_commit, issue_patch, test_patch):
     """
     Applies the given issue patch (gold or bad) and runs the candidate tests.
@@ -311,9 +410,14 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     apply_issue_patch_command = (
         f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{issue_patch}\n{HEREDOC_DELIMITER}"
     )
+    
+    # Handle both dict and TestSpec types
+    repo = instance["repo"] if isinstance(instance, dict) else instance.repo
+    version = str(instance["version"] if isinstance(instance, dict) else instance.version)
+    
     test_command = " ".join(
         [
-            MAP_REPO_VERSION_TO_SPECS[instance["repo"]][instance["version"]]["test_cmd"],
+            MAP_REPO_VERSION_TO_SPECS[repo][version]["test_cmd"],
             *get_test_directives(instance),
         ]
     )
@@ -464,51 +568,70 @@ def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output
 
 
 def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
-    if isinstance(instance, TestSpec):
-        return instance
+    """
+    Create a TestSpec from a CodeArena instance.
+    """
+    
+    # Extract necessary information
     instance_id = instance[KEY_INSTANCE_ID]
     repo = instance["repo"]
-    version = instance["version"]
     base_commit = instance["base_commit"]
-    test_patch = instance["candidate_test_patch"]
-    gold_issue_patch = instance["gold_patch"]
-    bad_issue_patch = instance["bad_patch"]
+    version = str(instance["version"])
+    # Extract the “gold” patch, falling back to the generic `patch` field if needed
+    gold_patch = instance.get("gold_patch", instance.get("patch"))
+    if gold_patch is None:
+        raise KeyError(f"Instance {instance.get('instance_id')} missing both 'gold_patch' and 'patch'")
 
-    def _from_json_or_obj(key: str) -> Any:
-        """If key points to string, load with json"""
-        if isinstance(instance[key], str):
-            return json.loads(instance[key])
-        return instance[key]
-
-    env_name = "testbed"
-    repo_directory = f"/{env_name}"
-    specs = MAP_REPO_VERSION_TO_SPECS[repo][version]
-
-    repo_script_list = make_repo_script_list(specs, repo, repo_directory, base_commit, env_name)
-    env_script_list = make_env_script_list(instance, specs, env_name)
-    eval_script_list = make_eval_script_list(
-        instance, specs, env_name, repo_directory, base_commit, test_patch
-    )
-    # Inverted Evaluation scripts keep the (candidate) test files consistent and apply (and revert after evaluation) the given issue patch
-    inverted_eval_script_list_gold = make_inverted_eval_script_list(
-        instance, specs, env_name, repo_directory, base_commit, gold_issue_patch, test_patch)
-    inverted_eval_script_list_bad = make_inverted_eval_script_list(
-        instance, specs, env_name, repo_directory, base_commit, bad_issue_patch, test_patch)
+    if isinstance(instance, dict):
+    # prefer candidate_test_patch, but fall back to test_patch
+        test_patch = instance.get("candidate_test_patch",
+                                  instance.get("test_patch"))
+    else:
+        # for objects, try attribute then fallback to .test_patch
+        test_patch = getattr(instance, "candidate_test_patch",
+                             getattr(instance, "test_patch", None))
+    
+    # Get bad patches - now using bad_patches instead of bad_patch
+    bad_patches = instance.get("bad_patches", [])  # Default to empty list if not found
+    if not isinstance(bad_patches, list):
+        bad_patches = [bad_patches]  # Convert single patch to list if needed
+    
+    # Filter out empty or None patches
+    bad_patches = [patch for patch in bad_patches if patch and patch != 0]
+    
     if platform.machine() in {"aarch64", "arm64"}:
         # use arm64 unless explicitly specified
         arch = "arm64" if instance_id not in USE_X86 else "x86_64"
     else:
         arch = "x86_64"
 
-    return TestSpec(
+
+    # Create test spec
+    test_spec = TestSpec(
         instance_id=instance_id,
         repo=repo,
-        base_commit=instance["base_commit"],
-        env_script_list=env_script_list,
-        repo_script_list=repo_script_list,
-        eval_script_list=eval_script_list, # Contains Test Directives
-        gold_inverted_eval_script_list=inverted_eval_script_list_gold,
-        bad_inverted_eval_script_list=inverted_eval_script_list_bad,
+        base_commit=base_commit,
         version=version,
-        arch=arch,
+        gold_patch=gold_patch,
+        test_patch=test_patch,
+        bad_patches=bad_patches,  # Pass the list of bad patches
+        repo_script_list=make_repo_script_list(MAP_REPO_VERSION_TO_SPECS[repo][str(version)], repo, f"/testbed", base_commit, "testbed"),
+        env_script_list=make_env_script_list(instance, MAP_REPO_VERSION_TO_SPECS[repo][str(version)], "testbed"),
+        eval_script_list=make_eval_script_list(instance, MAP_REPO_VERSION_TO_SPECS[repo][str(version)], "testbed", f"/testbed", base_commit, test_patch),
+        gold_inverted_eval_script_list=make_inverted_eval_script_list(instance, MAP_REPO_VERSION_TO_SPECS[repo][str(version)], "testbed", f"/testbed", base_commit, gold_patch, test_patch),
+        bad_inverted_eval_script_list=[
+            make_inverted_eval_script_list(
+                instance, 
+                MAP_REPO_VERSION_TO_SPECS[repo][str(version)],
+                "testbed",
+                f"/testbed",
+                base_commit,
+                bad_patch,
+                test_patch
+            )
+            for bad_patch in bad_patches
+        ],
+        arch=arch
     )
+    
+    return test_spec
