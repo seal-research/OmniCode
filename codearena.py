@@ -113,20 +113,34 @@ def setup_multiswebench_config(
     phase="all"
 ):
     """Set up configuration for Multi-SWE-Bench evaluation."""
-    data_dir = Path("data/multiswebench")
+    data_dir = Path("multiswebench_runs/BugFixing")
     
     # Create directories
     print("Creating directory structure...")
     os.makedirs(data_dir, exist_ok=True)
-    for subdir in ["workdir", "logs", "output", "patches", "datasets", "repos"]:
-        os.makedirs(data_dir / subdir, exist_ok=True)
+    
+    # Create all necessary directories with proper f-string formatting
+    subdirs = [
+        f"workdir/run_{run_id}", 
+        f"logs/run_{run_id}", 
+        f"output/run_{run_id}",  # Make output run-specific too
+        f"patches/run_{run_id}", 
+        "datasets", 
+        "repos",
+        "configs"  # Add configs directory
+    ]
+    
+    for subdir in subdirs:
+        dir_path = data_dir / subdir
+        os.makedirs(dir_path, exist_ok=True)
+        print(f"Created directory: {dir_path}")
     
     # Get unique repos for image building
     unique_repos = {f"{pred['org']}/{pred['repo']}" for pred in predictions}
     print(f"Will build images for these repos: {unique_repos}")
     
     # Create patches file
-    patch_file = data_dir / "patches" / f"{run_id}_patches.jsonl"
+    patch_file = data_dir / "patches" / f"run_{run_id}" / "patches.jsonl"
     print(f"Writing {len(predictions)} patches to {patch_file}...")
     with open(patch_file, 'w', encoding='utf-8') as f:
         for pred in predictions:
@@ -160,11 +174,11 @@ def setup_multiswebench_config(
     print(f"Creating configuration for phase: {phase}...")
     config = {
         "mode": mode,
-        "workdir": str(data_dir / "workdir"),
+        "workdir": str(data_dir / "workdir" / f"run_{run_id}"),
         "patch_files": [str(patch_file)],
         "dataset_files": dataset_files,
         "force_build": force_rebuild,
-        "output_dir": str(data_dir / "output"),
+        "output_dir": str(data_dir / "output" / f"run_{run_id}"),  # Make this run-specific
         "specifics": [],
         "skips": [],
         "repo_dir": str(data_dir / "repos"),
@@ -175,12 +189,12 @@ def setup_multiswebench_config(
         "max_workers": max_workers,
         "max_workers_build_image": max(1, max_workers // 2),
         "max_workers_run_instance": max(1, max_workers // 2),
-        "log_dir": str(data_dir / "logs"),
+        "log_dir": str(data_dir / "logs" / f"run_{run_id}"),
         "log_level": "DEBUG",
         "log_to_console": True
     }
     
-    config_file = data_dir / f"{run_id}_{phase}_config.json"
+    config_file = data_dir / "configs" / f"{run_id}_{phase}_config.json"
     with open(config_file, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2)
     
