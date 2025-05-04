@@ -360,7 +360,7 @@ SANITY_CMD = """python codearena.py \
 
 
 BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
--o baselines/badpatchllm/logs/gemini_outputs \
+-o logs/ \
 -m gemini-2.5-flash-preview-4-17 \
 --run_id bp_gen \
 -n 3 \
