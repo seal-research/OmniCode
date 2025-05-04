@@ -40,7 +40,7 @@ def create_distributed_compute_vms(
         vm_instance_ids = instance_ids[start_index:end_index]
         
         # Create a unique name for this VM
-        vm_name = f"{job_prefix}-vm-{vm_index}"
+        vm_name = f"seds-vm-{vm_index}"
 
         startup_script = f"""#!/bin/bash
 set -e  # Exit immediately if a command exits with a non-zero status

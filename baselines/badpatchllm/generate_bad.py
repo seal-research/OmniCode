@@ -456,7 +456,7 @@ if __name__ == '__main__':
     parser.add_argument("--instance_ids", type=str, required=True)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini-2.0-flash")
-    parser.add_argument("-k", "--api_key", type=str | None, default=None, required=False)
+    parser.add_argument("-k", "--api_key", default=None, required=False)
     parser.add_argument("-n", "--num_patches", type=int, required=False, default=5)
     parser.add_argument("--run_id", required=True, help="Run ID for the evaluation")
     parser.add_argument(
