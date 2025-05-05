@@ -5,3 +5,4 @@ tqdm
 python-dotenv
 fire
 google-generativeai
+multi-swe-bench
