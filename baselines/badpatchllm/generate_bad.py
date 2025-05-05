@@ -368,7 +368,9 @@ def main(
 
             print(f"Getting patches for instance {instance_id} ...")
 
-            url = f"https://github.com/{datum['repo']}/pull/{datum['pull_number']}"
+            pull_number = instance_id.split('-')[-1]
+
+            url = f"https://github.com/{datum['repo']}/pull/{pull_number}"
             curr = get_changed_and_current_files(url, TOKEN)
             prev = get_changed_and_previous_files(url, TOKEN)
 
