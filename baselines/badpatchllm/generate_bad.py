@@ -78,6 +78,7 @@ def check_patch(
                 timeout=timeout
             )
         except Exception as e:
+            print(e)
             print(f"Evaluation failed for {instance_id}: {e}")
             return False
 
@@ -367,7 +368,10 @@ def main(
 
             print(f"Getting patches for instance {instance_id} ...")
 
-            url = f"https://github.com/{datum['repo']}/pull/{datum['pull_number']}"
+            pull_number = datum['instance_id'].split('-')[-1]
+
+            url = f"https://github.com/{datum['repo']}/pull/{pull_number}"
+            print("URL: ", url)
             curr = get_changed_and_current_files(url, TOKEN)
             prev = get_changed_and_previous_files(url, TOKEN)
 
