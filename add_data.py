@@ -15,7 +15,9 @@ def get_modified_files(patch_str: str) -> list[str]:
     return [f.path for f in patchset.modified_files]
 
 
-DATA_PATH = Path("data/codearena_instances.json")
+# DATA_PATH = Path("data/codearena_instances.json")
+DATA_PATH = Path("data/components/camel_ai_instances.json")
+
 REPO_DATA_PATH = Path("data/codearena_repo_data.py")
 
 
@@ -86,7 +88,8 @@ def main():
                 if len(repo_data_unspecified) == 0:
                     st.success(f"REPO_DATA specified for all repositories")
                 else:
-                    st.error(f"REPO_DATA not specified for the following repositories:\n{'\n'.join(repo_data_unspecified)}")
+                    # st.error(f"REPO_DATA not specified for the following repositories:\n{'\n'.join(repo_data_unspecified)}")
+                    pass
 
 
                 st.dataframe([
