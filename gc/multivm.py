@@ -1,6 +1,12 @@
+import os
+
 from google.cloud import compute_v1
 
 from utils import list_to_bash_array, check_vm_exists, get_vm_status, reset_vm, wait_for_operation, start_vm, get_command, create_image_wrapped, delete_vm
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", None)
+GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", None)
+
 
 def create_distributed_compute_vms(
     project_id: str,
@@ -13,7 +19,8 @@ def create_distributed_compute_vms(
     num_vms: int = 20,
     disk_image: str = None,
     data_bucket: str = "your-data-bucket",
-    overwrite: bool = False
+    overwrite: bool = False,
+    vm_num_offset: int = 0,
 ):
     """Create or reuse multiple Compute Engine VMs to distribute the processing of all instances."""
     
@@ -40,7 +47,7 @@ def create_distributed_compute_vms(
         vm_instance_ids = instance_ids[start_index:end_index]
         
         # Create a unique name for this VM
-        vm_name = f"seds-vm-{vm_index}"
+        vm_name = f"seds-vm-{vm_num_offset + vm_index}"
 
         startup_script = f"""#!/bin/bash
 set -e  # Exit immediately if a command exits with a non-zero status
@@ -51,6 +58,8 @@ echo "$(date): Script started"
 echo "Running as user: $(whoami)"
 echo "Home directory: $HOME"
 su - ays57 << 'EOSU'
+export GEMINI_API_KEY="{GEMINI_API_KEY}"
+export GITHUB_TOKEN="{GITHUB_TOKEN}"
 echo "Now running as $(whoami) with home directory $HOME"
 # Explicitly set PATH to include common conda locations
 export PATH="$HOME/miniconda3/bin:$HOME/anaconda3/bin:/opt/conda/bin:$PATH"
@@ -198,7 +207,14 @@ poweroff
                 "https://www.googleapis.com/auth/monitoring.write",
             ]
             instance.service_accounts = [service_account]
-            
+
+            # Set up as spot/preemptible instance
+            scheduling = compute_v1.Scheduling()
+            # scheduling.preemptible = True  # This makes it a spot instance
+            # Or for newer Spot VMs:
+            scheduling.provisioning_model = "SPOT"
+            instance.scheduling = scheduling
+                        
             # Create metadata with startup script
             metadata = compute_v1.Metadata()
             item = compute_v1.Items()
@@ -229,6 +245,7 @@ if __name__ == "__main__":
     import sys
     from pathlib import Path
     import argparse
+    import random
     
     # Set up argument parsing
     parser = argparse.ArgumentParser(description="Create distributed batch jobs for processing instances")
@@ -236,11 +253,14 @@ if __name__ == "__main__":
     parser.add_argument("job_type", help="Type of job to run (e.g., 'sanity', 'bp-gen')")
     parser.add_argument("--rebuild", action="store_true", help="Rebuild the image from the base VM")
     parser.add_argument("--overwrite", action="store_true", help="If specified, delete existing VMs with the same name before creating new ones")
-    
+    parser.add_argument("--dummy", action="store_true", help="Run on 4 instances with 4 VMs")
+    parser.add_argument("--vm_num_offset", type=int, required=False, default=0)
+    parser.add_argument("--num_vms", type=int, default=20, required=False)
+    parser.add_argument("--randomise", action="store_true", help="randomise sequence of instances being processed")
+
     args = parser.parse_args()
     
     # Parse arguments
-    instances_path = Path(args.instances_path)
     job_type = args.job_type
     rebuild = args.rebuild
     overwrite = rebuild or args.overwrite
@@ -254,8 +274,14 @@ if __name__ == "__main__":
     
     command = get_command(job_type)
  
-    instances_list = instances_path.read_text().splitlines()
-    # instances_list = ["scrapy__scrapy-6608", "statsmodels__statsmodels-9395", "ytdl-org__youtube-dl-32725", "camel-ai__camel-1478"]
+    if args.instances_path == "dummy":
+        # instances_list = ["scrapy__scrapy-6608", "statsmodels__statsmodels-9395", "ytdl-org__youtube-dl-32725", "camel-ai__camel-1478"]
+        instances_list = ["sympy__sympy-23950", "pydata__xarray-4356", "ytdl-org__youtube-dl-32725", "celery__celery-8486"]
+    else:
+        instances_list = Path(args.instances_path).read_text().splitlines()
+
+    if args.randomise:
+        random.shuffle(instances_list)
     
     try:
 
@@ -274,11 +300,12 @@ if __name__ == "__main__":
             command=command,
             machine_type="e2-standard-4",
             disk_size_gb=100,
-            num_vms=20,
+            num_vms=len(instances_list) if args.instances_path == "dummy" else args.num_vms,
             disk_image=disk_image,
             data_bucket="sedsstore",
             overwrite=overwrite,
-        )
+            vm_num_offset=args.vm_num_offset,
+        ) 
         
         print(f"Successfully managed {len(vms)} VMs to process instances")
         

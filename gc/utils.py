@@ -370,13 +370,13 @@ BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
 
 
 
-AGENTLESS_CHECK_CMD = """process_files() {
+AGENTLESS_CHECK_CMD_OLD = """process_files() {
     # Create a temporary directory for logs
     mkdir -p tmp_logs
 
     # Get all files matching the pattern from Google Storage
     echo "Fetching files from Google Storage..."
-    gsutil ls gs://agentless_results/${{INSTANCE_ID}}*.json > file_list.txt
+    gsutil ls gs://sedsstore/agentless_bad_patches/${INSTANCE_ID}*.jsonl > file_list.txt
 
     # Check if any files were found
     if [ ! -s file_list.txt ]; then
@@ -402,8 +402,8 @@ AGENTLESS_CHECK_CMD = """process_files() {
             --instance_ids "$INSTANCE_ID"
         
         # Extract the suffix from filename (e.g., fl_5)
-        suffix=$(echo "$filename" | sed "s/${{INSTANCE_ID}}_//")
-        suffix=${suffix%.json}
+        suffix=$(echo "$filename" | sed "s/${INSTANCE_ID}_//")
+        suffix=${suffix%.jsonl}
         
         # Copy logs to tmp_logs with appropriate name
         echo "Copying logs to tmp_logs/${INSTANCE_ID}_${suffix}"
@@ -420,6 +420,63 @@ AGENTLESS_CHECK_CMD = """process_files() {
 # Execute the function and capture all output
 process_files"""
 
+
+AGENTLESS_CHECK_CMD = """process_files() {
+    # Create a temporary directory for logs
+    mkdir -p tmp_logs
+    
+    # Base Google Storage path
+    BASE_PATH="gs://sedsstore/agentless_bad_patches"
+    
+    for i in {0..2}; do
+        # Construct the filename
+        filename="${INSTANCE_ID}_${i}.jsonl"
+        file_path="${BASE_PATH}/${filename}"
+        
+        # Check if the file exists in Google Storage
+        if gsutil -q stat "$file_path"; then
+            echo "File $filename exists, processing..."
+            
+            # Download the file
+            gsutil cp "$file_path" .
+            
+            # Run the Python script
+            echo "Running codearena.py for $filename"
+            python codearena.py \
+                --BugFixing \
+                --predictions_path "$filename" \
+                --run_id agentless_check \
+                --instance_ids "$INSTANCE_ID"
+            
+            # Copy logs to tmp_logs with appropriate name
+            echo "Copying logs to tmp_logs/${INSTANCE_ID}_${i}"
+            cp -r logs "tmp_logs/${INSTANCE_ID}_${i}"
+        else
+            echo "File $filename does not exist, skipping."
+        fi
+    done
+    
+    # Replace logs with tmp_logs if any files were processed
+    if [ -d "tmp_logs" ] && [ "$(ls -A tmp_logs)" ]; then
+        echo "Replacing logs directory with tmp_logs"
+        rm -rf logs
+        mv tmp_logs logs
+    else
+        echo "No files were processed, logs directory unchanged."
+        rm -rf tmp_logs
+    fi
+}
+
+process_files"""
+
+
+SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m gemini/gemini-2.5-flash-preview-04-17 \
+-k $GEMINI_API_KEY \
+--instance_ids $INSTANCE_ID"""
+
 def get_command(
     job_type: str
 ) -> str:
@@ -430,5 +487,7 @@ def get_command(
             return BAD_PATCH_GEN_CMD
         case "agentless-check":
             return AGENTLESS_CHECK_CMD
+        case "sweagent-bf":
+            return SWEAGENT_BUGFIXING_CMD
 
     return None   

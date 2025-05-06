@@ -3,6 +3,7 @@ import json
 import logging
 import math
 import tempfile
+import os
 
 from datasets import load_dataset, load_from_disk
 from tqdm import tqdm
@@ -89,6 +90,7 @@ logger = logging.getLogger(__name__)
 def run_sweagent_single(
     instance: dict,
     model_name: str,
+    api_key: str,
     output_dir: Path,
 ):
     
@@ -101,6 +103,7 @@ def run_sweagent_single(
         args = [
             "run",
             f"--agent.model.name={model_name}",
+            f"--agent.model.api_key={api_key}",
             f"--agent.model.per_instance_cost_limit=0.2",
             f"--agent.tools.parse_function.type=thought_action",
             f"--env.repo.github_url={url}",
@@ -122,6 +125,7 @@ def main(
     input_tasks_path: Path,
     output_dir_path: Path,
     model_name: str,
+    api_key: str,
     instance_ids: list[str] | None= None,
 ):
     if input_tasks_path.exists():
@@ -170,7 +174,7 @@ def main(
                 continue
             output_dict = {"instance_id": instance_id}
             output_dict.update(basic_args)
-            full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path)
+            full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path, api_key=api_key)
             output_dict["full_output"] = full_output
             output_dict["model_patch"] = model_patch
             print(json.dumps(output_dict), file=f, flush=True)
@@ -182,7 +186,8 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--input_tasks", type=str, required=True)
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
-    parser.add_argument("-m", "--model_name", type=str, default="gpt-4o")
+    parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
+    parser.add_argument("-k", "--api_key", type=str, required=True)
     args = parser.parse_args()
 
     main(
@@ -190,5 +195,6 @@ if __name__ == '__main__':
         output_dir_path=Path(args.output_dir),
         model_name=args.model_name,
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
+        api_key=args.api_key,
     )
 
