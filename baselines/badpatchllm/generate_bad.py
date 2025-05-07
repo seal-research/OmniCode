@@ -22,6 +22,7 @@ from swebench.harness.utils import str2bool
 import difflib
 import re
 
+from codearena import clean_docker_images, setup_multiswebench_config, run_multiswebench_phase
 # from google import genai
 
 
@@ -239,11 +240,11 @@ def generate_incorrect_diff(
 
         filtered_text = curr_text
 
-        if path.endswith(".py") and curr_text:
+        if (path.endswith(".py") or path.endswith('.java')) and curr_text:
 
             prompt = f"""
             You are given a production-ready source file below. Your task:
-            1. **Introduce one to two subtle, functional bugs**—
+            1. **Introduce one to two subtle, functional bugs**— without adding any comments
             2. **Do NOT break compilation** and **do not introduce any syntax or spelling errors** or make any code-style changes.
             3. **Do NOT change any import statements**
             4. Preserve formatting and comments; modify only the minimum lines needed to trigger a logical failure under certain inputs.
@@ -255,8 +256,6 @@ def generate_incorrect_diff(
             """
 
             modified_text = None
-
-            # only python files edge case
 
             if(model_name == "gemini-2.5-flash-preview-4-17" and curr_text):
                 modified_text = gemini_25(prompt, temperature)
@@ -272,6 +271,9 @@ def generate_incorrect_diff(
 
             if modified_text.startswith("```python"):
                 modified_text = modified_text[len("```python"):].lstrip()  # Remove the prefix and leading spaces
+            
+            if modified_text.startswith("```java"):
+                modified_text = modified_text[len("```java"):].lstrip()  # Remove the prefix and leading spaces
 
             if modified_text.endswith("```"):
                 modified_text = modified_text[:-3].rstrip()  # Remove the suffix and trailing spaces
@@ -288,11 +290,19 @@ def generate_incorrect_diff(
                         filtered_lines.append(line[:idx].rstrip())
                     else:
                         filtered_lines.append(line)
+                if '//' in line:
+                    idx = line.find('//')
+                    comment = line[idx+2:]
+                    if bug_re.search(comment):
+                        # drop the // comment entirely
+                        filtered_lines.append(line[:idx].rstrip())
+                    else:
+                        filtered_lines.append(line)
                 else:
                     filtered_lines.append(line)
             
             filtered_text = "\n".join(filtered_lines)
-        
+          
         prev_lines     = prev_text.splitlines()
         modified_lines = filtered_text.splitlines()
 
@@ -312,6 +322,76 @@ def generate_incorrect_diff(
 
     return output_diff_path, diff_str
 
+def check_multi_patch(patch, instance_id, item, force_rebuild, run_id, max_workers, timeout):
+
+        mswe_image_prefix = f"mswebench_{run_id}"
+
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as temp_file:
+            
+            # prediction here
+
+            instance = {}
+            instance["id"] = instance_id
+            instance["org"] = item["org"]
+            instance["repo"] = item["repo"]
+            instance["number"] = item["number"]
+            instance["patch"] = patch
+            
+            json.dump([instance], temp_file)  # Must be a list of dicts for some evaluation harnesses
+            temp_file.flush()
+
+            pred_path = temp_file.name
+            print("predictions path name: ", pred_path)
+
+            try:
+                with open(pred_path, 'r') as f:
+                    predictions = json.load(f)
+
+            except Exception as e:
+                print(f"Error loading predictions file: {e}")
+                return
+            
+            # Clean existing images if needed
+            if force_rebuild:
+                clean_docker_images(mswe_image_prefix)
+            
+            # Set up config
+            config_file = setup_multiswebench_config(
+                predictions=predictions,
+                max_workers=max_workers,
+                force_rebuild=force_rebuild,
+                run_id=run_id,
+                timeout=timeout,
+                phase="all"
+            )
+
+            if config_file and os.path.exists(config_file):
+                print(f"Config file created at: {config_file}")
+                report = run_multiswebench_phase(config_file, "all", timeout)
+                
+                if report:
+                    print("Multi-SWE-Bench BugFixing evaluation completed!")
+                    print(f"Total instances: {report.get('total_instances', 0)}")
+                    print(f"Resolved instances: {report.get('resolved_instances', 0)}")
+                    print(f"Unresolved instances: {report.get('unresolved_instances', 0)}")
+                else:
+                    print("Multi-SWE-Bench BugFixing evaluation failed to produce a report")
+            else:
+                print("Failed to create config file, cannot run evaluation")
+        
+        report_file = f'multiswebench_runs/BugFixing/output/{run_id}/final_report.json'
+
+        report_file_path = Path(report_file)
+        resolved = False
+        if report_file_path.exists():
+
+            with open(report_file, 'r') as f:
+                report = json.load(f)
+            
+            resolved = report['resolved_instances']
+        
+        return resolved
+
 def main(
     input_tasks_path: Path,
     output_dir_path: Path,
@@ -325,94 +405,109 @@ def main(
     clean: str2bool,
     open_file_limit: int,
     run_id,
-    timeout: int
+    timeout: int,
+    type: str
 ):
-    if input_tasks_path.exists():
-        if input_tasks_path.suffix.endswith("json"):
-            dataset = json.loads(input_tasks_path.read_text())
-        elif input_tasks_path.suffix.endswith("jsonl"):
-            dataset = [json.loads(i) for i in input_tasks_path.read_text().splitlines()]
-        elif input_tasks_path.suffix.endswith("csv"):
-            dataset = pd.read_csv(input_tasks_path).to_dict('records')
-        else:
-            raise RuntimeError(f"Data type ({input_tasks_path.suffix}) not supported")
+    if type == "java":
 
-    else:
-        dataset = load_dataset(str(input_tasks_path))
+        instance_id = instance_ids[0] # TODO extend functionality for list of instances
 
-    if isinstance(dataset, dict):
-        dataset = dataset['test']
+        dataset_base_path = "./multiswebench/mswebench_dataset"
+        dataset_files = []
+        for root, _, files in os.walk(dataset_base_path):
+            for file in files:
+                if file.endswith("_dataset.jsonl"):
+                    dataset_files.append(os.path.join(root, file))
+        
+        if not dataset_files:
+            print("Error: No dataset files found in", dataset_base_path)
+            return
 
-    if not (isinstance(dataset, list) and all(isinstance(d, dict) for d in dataset)):
-        raise RuntimeError(f"Data folllows incorrect format")
+        target_repos = set()
 
-    if instance_ids is not None:
-        dataset = [d for d in dataset if d["instance_id"] in instance_ids]
+        if ":" in instance_id:
+            repo_part = instance_id.split(":")[0]
+            target_repos.add(repo_part.replace("/", "__"))
+        
+        filtered_files = []
+        for dataset_file in dataset_files:
+            for repo in target_repos:
+                if repo in dataset_file:
+                    filtered_files.append(dataset_file)
+                    print(f"Including dataset file: {dataset_file}")
+                    break
+        dataset_files = filtered_files
 
-    max_iter = 6 # make lower for faster iterations
-    modified_dataset = []
+        if not dataset_files:
+            print("No matching dataset files found!")
+            return []
+        
+        found = False
 
-    for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
+        for dataset_file in dataset_files:
+            print(f"Processing dataset file: {dataset_file}")
+            
+            with open(dataset_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if not line.strip():
+                        continue
+                    
+                    try:
+                        item = json.loads(line)
+                        item_id = f"{item['org']}/{item['repo']}:{item['number']}"
+                        
+                        if instance_ids and item_id not in instance_ids:
+                            continue
 
-        instance_id = datum["instance_id"]
+                        if item_id == instance_id:
+                            found = True
+                            break
+
+                    except json.JSONDecodeError as e:
+                        print(f"Error parsing JSON from {dataset_file}: {e}")
+
+                if found:
+                    break
+            
+        pull_number = item['number']
+
+        url = f"https://github.com/{item['org']}/{item['repo']}/pull/{pull_number}"
+
+        curr = get_changed_and_current_files(url, TOKEN)
+        prev = get_changed_and_previous_files(url, TOKEN)
+
+        print(f"Generating incorrect diff for instance {instance_id} ...")
 
         output_d_path = output_dir_path / instance_id
         output_d_path.mkdir(parents=True, exist_ok=True)
 
         bad_patches = []
-        print(f"Processing instance {instance_id}")
+        modified_dataset = []
 
-        for i in range(1, max_iter + 1):
-            
-            # TODO Generate Model Patch Here: 
-
-            print(f"Getting patches for instance {instance_id} ...")
-
-            pull_number = datum['instance_id'].split('-')[-1]
-
-            url = f"https://github.com/{datum['repo']}/pull/{pull_number}"
-            print("URL: ", url)
-            curr = get_changed_and_current_files(url, TOKEN)
-            prev = get_changed_and_previous_files(url, TOKEN)
-
-            print(f"Generating incorrect diff for instance {instance_id} ...")
-            
+        for i in range(num_patches):
+        
             diff_file, model_patch = generate_incorrect_diff(
                 prev_files=prev,
                 curr_files=curr,
                 gemini_api_key=secret_key,
                 model_name=model_name,
                 temperature=0.85,
-                output_diff_path="my_pr_with_bugs{i}.diff"
+                output_diff_path="java_sanity.diff"
             )
 
 
             if model_patch and model_patch not in bad_patches:
 
-                #  Run Testing Code Directly Here to Ensure Bad Patches Fail
+                run_id = f'{run_id}_{i}'
 
-                bad_instance = dict()
-                bad_instance['instance_id'] = instance_id
-                bad_instance['model_patch'] = model_patch
-                bad_instance['model_name_or_path'] = model_name
+                print("RUN_ID: ", run_id)
 
-                print(f"Checking if patch fails tests for instance {instance_id} ...")
-            
-                resolved = check_patch( # BugFixing begins here
-                    bad_instance,
-                    str(input_tasks_path),
-                    max_workers=max_workers,
-                    force_rebuild=force_rebuild,
-                    cache_level=cache_level,
-                    clean=clean,
-                    open_file_limit=open_file_limit,
-                    run_id=f"{run_id}_{i}",
-                    timeout=timeout
-                )
+                resolved = check_multi_patch(model_patch, instance_id, 
+                item, force_rebuild, run_id, max_workers, force_rebuild)
 
                 if not resolved:
-                    bad_patches.append(model_patch)
-                    diff_file_path = output_d_path / f"patch_{i}.diff"
+                        bad_patches.append(model_patch)
+                        diff_file_path = output_d_path / f"patch_{i}.diff"
                 else:
                     diff_file_path = output_d_path / f"resolved/patch_{i}.diff"
                 
@@ -426,27 +521,142 @@ def main(
 
                 if(resolved): sys.exit() # Short Circuiting if patch passes tests...
                 if len(bad_patches) == num_patches : break
-
-        modified_datum = {**datum, "bad_patches": bad_patches} 
+            
+        modified_datum = {**item, "bad_patches": bad_patches} 
         modified_dataset.append(modified_datum)
 
         json_path = output_dir_path / "modified_dataset.json"
 
-        # (output_dir_path / "modified_dataset.json").write_text(
-        #     json.dumps(modified_dataset, indent=2)
-        # )
-
-        # 1) Load existing list (or start fresh)
         if json_path.exists():
-            existing = json.loads(json_path.read_text())
+                existing = json.loads(json_path.read_text())
         else:
             existing = []
 
-        # 2) Append your new record
         existing.append(modified_datum)
 
-        # 3) Write the updated list back (this will preserve old entries)
         json_path.write_text(json.dumps(existing, indent=2))
+
+    elif type == "python":
+        if input_tasks_path.exists():
+            if input_tasks_path.suffix.endswith("json"):
+                dataset = json.loads(input_tasks_path.read_text())
+            elif input_tasks_path.suffix.endswith("jsonl"):
+                dataset = [json.loads(i) for i in input_tasks_path.read_text().splitlines()]
+            elif input_tasks_path.suffix.endswith("csv"):
+                dataset = pd.read_csv(input_tasks_path).to_dict('records')
+            else:
+                raise RuntimeError(f"Data type ({input_tasks_path.suffix}) not supported")
+
+        else:
+            dataset = load_dataset(str(input_tasks_path))
+
+        if isinstance(dataset, dict):
+            dataset = dataset['test']
+
+        if not (isinstance(dataset, list) and all(isinstance(d, dict) for d in dataset)):
+            raise RuntimeError(f"Data folllows incorrect format")
+
+        if instance_ids is not None:
+            dataset = [d for d in dataset if d["instance_id"] in instance_ids]
+
+        max_iter = 6 # make lower for faster iterations
+        modified_dataset = []
+
+        for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
+
+            instance_id = datum["instance_id"]
+
+            output_d_path = output_dir_path / instance_id
+            output_d_path.mkdir(parents=True, exist_ok=True)
+
+            bad_patches = []
+            print(f"Processing instance {instance_id}")
+
+            for i in range(1, max_iter + 1):
+                
+                # TODO Generate Model Patch Here: 
+
+                print(f"Getting patches for instance {instance_id} ...")
+
+                pull_number = datum['instance_id'].split('-')[-1]
+
+                url = f"https://github.com/{datum['repo']}/pull/{pull_number}"
+                print("URL: ", url)
+                curr = get_changed_and_current_files(url, TOKEN)
+                prev = get_changed_and_previous_files(url, TOKEN)
+
+                print(f"Generating incorrect diff for instance {instance_id} ...")
+                
+                diff_file, model_patch = generate_incorrect_diff(
+                    prev_files=prev,
+                    curr_files=curr,
+                    gemini_api_key=secret_key,
+                    model_name=model_name,
+                    temperature=0.85,
+                    output_diff_path="my_pr_with_bugs{i}.diff"
+                ) # TODO 
+
+
+                if model_patch and model_patch not in bad_patches:
+
+                    #  Run Testing Code Directly Here to Ensure Bad Patches Fail
+
+                    bad_instance = dict()
+                    bad_instance['instance_id'] = instance_id
+                    bad_instance['model_patch'] = model_patch
+                    bad_instance['model_name_or_path'] = model_name
+
+                    print(f"Checking if patch fails tests for instance {instance_id} ...")
+                
+                    resolved = check_patch( # BugFixing begins here
+                        bad_instance,
+                        str(input_tasks_path),
+                        max_workers=max_workers,
+                        force_rebuild=force_rebuild,
+                        cache_level=cache_level,
+                        clean=clean,
+                        open_file_limit=open_file_limit,
+                        run_id=f"{run_id}_{i}",
+                        timeout=timeout
+                    ) # TODO 
+
+                    if not resolved:
+                        bad_patches.append(model_patch)
+                        diff_file_path = output_d_path / f"patch_{i}.diff"
+                    else:
+                        diff_file_path = output_d_path / f"resolved/patch_{i}.diff"
+                    
+                    diff_file_path.parent.mkdir(parents=True, exist_ok=True)
+
+                    try:
+                        with open(diff_file_path, "w") as diff_file:
+                            diff_file.write(model_patch)
+                    except Exception as e:
+                        print(f"Error writing .diff file for {instance_id}: {e}")
+
+                    if(resolved): sys.exit() # Short Circuiting if patch passes tests...
+                    if len(bad_patches) == num_patches : break
+
+            modified_datum = {**datum, "bad_patches": bad_patches} 
+            modified_dataset.append(modified_datum)
+
+            json_path = output_dir_path / "modified_dataset.json"
+
+            # (output_dir_path / "modified_dataset.json").write_text(
+            #     json.dumps(modified_dataset, indent=2)
+            # )
+
+            # 1) Load existing list (or start fresh)
+            if json_path.exists():
+                existing = json.loads(json_path.read_text())
+            else:
+                existing = []
+
+            # 2) Append your new record
+            existing.append(modified_datum)
+
+            # 3) Write the updated list back (this will preserve old entries)
+            json_path.write_text(json.dumps(existing, indent=2))
 
 
 
@@ -494,6 +704,14 @@ if __name__ == '__main__':
         help="Timeout for individual evaluations in seconds",
     )
 
+    parser.add_argument(
+        "--type",
+        required=False,
+        type=str,
+        default="python",
+        help="Language Type",
+    )
+
     args = parser.parse_args()
 
     main(
@@ -509,5 +727,6 @@ if __name__ == '__main__':
         clean=args.clean,
         open_file_limit=args.open_file_limit,
         run_id=args.run_id,
-        timeout=args.timeout
+        timeout=args.timeout,
+        type=args.type
     )
