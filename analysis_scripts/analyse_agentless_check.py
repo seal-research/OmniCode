@@ -63,13 +63,13 @@ def analyse(
     print(f"Skipped: {skipped}")
     print(f"{len(present)=}, {len(skipped)=}, {len(bp_present)=}, {len(bp_missing)=}")
 
-    all_ids = set([i for i in Path("/Users/ays57/Documents/opus/seds/codearena/data/instance_ids.txt").read_text().splitlines()])
-    remaining = all_ids - set(present)
-    print(f"{len(remaining)=}")
+    # all_ids = set([i for i in Path("/Users/ays57/Documents/opus/seds/codearena/data/instance_ids.txt").read_text().splitlines()])
+    # remaining = all_ids - set(present)
+    # print(f"{len(remaining)=}")
 
-    Path("agentless_check_instances_remaining.txt").write_text(
-        '\n'.join(i for i in sorted(remaining))
-    )
+    # Path("agentless_check_instances_remaining.txt").write_text(
+    #     '\n'.join(i for i in sorted(remaining))
+    # )
 
 
 if __name__ == '__main__':

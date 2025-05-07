@@ -21,7 +21,7 @@ def analyse(
         generated.append(instance_id)
         output_data = json.loads(output_file.read_text().splitlines()[0])
 
-        if output_data.get("full_output", None) is not None:
+        if output_data.get("model_patch", None) is not None and output_data["model_patch"]["model_patch"] is not None:
             print(f"Patch found for {instance_id}")
             not_null.append(instance_id)
 

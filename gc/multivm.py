@@ -373,6 +373,9 @@ if __name__ == "__main__":
     
     # Define image family for this job type
     command = get_command(job_type)
+
+    if command is None:
+        raise RuntimeError(f"No command found for job type: {job_type}")
  
     if args.instances_path == "dummy":
         instances_list = ["sympy__sympy-23950", "pydata__xarray-4356", "ytdl-org__youtube-dl-32725", "celery__celery-8486"]
