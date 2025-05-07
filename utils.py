@@ -178,8 +178,9 @@ def load_CodeArena_prediction_dataset(
 
     # Filter rows where `bad_patch` is not empty
     codearena_instances_filtered = codearena_instances_df[
-    codearena_instances_df['bad_patch'].notna() & codearena_instances_df['bad_patch'].str.strip().ne("")
+    codearena_instances_df['bad_patches'].notna()
     ].copy()
+    # codearena_instances_filtered = codearena_instances_df.copy()
 
     # Check for missing predictions
     codeArena_ids = set(codearena_instances_filtered['instance_id'])
