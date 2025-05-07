@@ -475,6 +475,7 @@ SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
 -o logs \
 -m gemini/gemini-2.5-flash-preview-04-17 \
 -k $GEMINI_API_KEY \
+--mode bugfixing \
 --instance_ids $INSTANCE_ID"""
 
 
@@ -568,6 +569,18 @@ SWEAGENT_BF_CHECK_CMD = PATCH_CHECK_CMD.format(
 )
 
 
+
+
+SWEAGENT_TESTGEN_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m gemini/gemini-2.5-flash-preview-04-17 \
+-k $GEMINI_API_KEY \
+--mode testgen \
+--instance_ids $INSTANCE_ID"""
+
+
+
 def get_command(
     job_type: str
 ) -> str:
@@ -582,5 +595,7 @@ def get_command(
             return SWEAGENT_BUGFIXING_CMD
         case "sweagent-bf-check":
             return SWEAGENT_BF_CHECK_CMD
+        case "sweagent-testgen":
+            return SWEAGENT_TESTGEN_CMD
 
     return None   
