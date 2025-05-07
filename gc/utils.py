@@ -477,6 +477,97 @@ SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
 -k $GEMINI_API_KEY \
 --instance_ids $INSTANCE_ID"""
 
+
+PATCH_CHECK_CMD = """process_files() {{
+    gcs_path="gs://sedsstore/{results_dir}"
+    temp_dir=$(mktemp -d)
+    
+    # Initialize an array to store matching file data
+    declare -a founds=()
+    
+    # Use wildcards to search specifically in directories with INSTANCE_ID prefix
+    # This significantly narrows down our search space
+    matching_files=$(gsutil ls "${{gcs_path}}/${{INSTANCE_ID}}*/**/all_preds.jsonl")
+    
+    # Process each potential matching file
+    for filepath in $matching_files; do
+        # Download the file to temp directory
+        local temp_file="${{temp_dir}}/$(basename "$filepath")"
+        gsutil cp "${{filepath}}" "${{temp_file}}"
+        
+        # Process the file to find matching instance_id
+        while IFS= read -r line; do
+            if [ "$(echo "$line" | jq -r '.instance_id // empty')" = "${{INSTANCE_ID}}" ]; then
+                founds+=("$line")
+                break  # Found a match in this file
+            fi
+        done < "${{temp_file}}"
+        
+        # Remove temp file after processing
+        rm "${{temp_file}}"
+    done
+    
+    # Check if no predictions were found
+    if [ ${{#founds[@]}} -eq 0 ]; then
+        echo "No predictions found for ${{INSTANCE_ID}}, skipping ..."
+        # Clean up temp directory
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+    
+    # Check if multiple predictions were found
+    if [ ${{#founds[@]}} -gt 1 ]; then
+        echo "Warning: found multiple predictions for ${{INSTANCE_ID}}"
+    fi
+    
+    # Use the first found prediction
+    local predsd="${{founds[0]}}"
+    
+    # Check if model_patch field exists
+    if [ "$(echo "$predsd" | jq 'has("model_patch")')" != "true" ]; then
+        echo "No model patch field found for ${{INSTANCE_ID}}, skipping ..."
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+    
+    # Check if model_patch field exists within model_patch
+    if [ "$(echo "$predsd" | jq '.model_patch | has("model_patch")')" != "true" ]; then
+        echo "No model patch field in model patch for ${{INSTANCE_ID}}, skipping ..."
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+    
+    # Check if model_patch is null
+    if [ "$(echo "$predsd" | jq '.model_patch.model_patch == null')" = "true" ]; then
+        echo "Model patch for ${{INSTANCE_ID}} is null, skipping ..."
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+    
+    # Ensure logs directory exists
+    mkdir -p logs
+    
+    # Write to output file - extract the model_patch field and write as compact JSON on a single line
+    echo "$predsd" | jq -c '.model_patch' > "logs/${{INSTANCE_ID}}_all_preds.jsonl"
+    
+    # Clean up temp directory
+    rm -rf "${{temp_dir}}"
+    
+    # Running check
+    python codearena.py \
+        --BugFixing \
+        --predictions_path "logs/${{INSTANCE_ID}}_all_preds.jsonl" \
+        --run_id sweagent_bf_check \
+        --instance_ids "${{INSTANCE_ID}}"
+}}
+process_files"""
+
+
+SWEAGENT_BF_CHECK_CMD = PATCH_CHECK_CMD.format(
+   results_dir="sweb-sweagent-bf",
+)
+
+
 def get_command(
     job_type: str
 ) -> str:
@@ -489,5 +580,7 @@ def get_command(
             return AGENTLESS_CHECK_CMD
         case "sweagent-bf":
             return SWEAGENT_BUGFIXING_CMD
+        case "sweagent-bf-check":
+            return SWEAGENT_BF_CHECK_CMD
 
     return None   
