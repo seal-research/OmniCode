@@ -3,6 +3,7 @@ import json
 import logging
 import math
 import tempfile
+import os
 
 from datasets import load_dataset, load_from_disk
 from tqdm import tqdm
@@ -669,7 +670,7 @@ if __name__ == '__main__':
     parser.add_argument("--instance_ids", type=str, required=True)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini-2.0-flash")
-    parser.add_argument("-k", "--api_key", type=str, required=True)
+    parser.add_argument("-k", "--api_key", default=None, required=False)
     parser.add_argument("-n", "--num_patches", type=int, required=False, default=5)
     parser.add_argument("--run_id", required=True, help="Run ID for the evaluation")
     parser.add_argument(
@@ -714,12 +715,19 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    api_key = None
+    if args.api_key is None:
+        api_key = os.environ.get("GEMINI_API_KEY", None)
+
+    if api_key is None:
+        raise RuntimeError("Gemini API Key not specified")
+
     main(
         input_tasks_path = Path(args.dataset_name),
         output_dir_path=Path(args.output_dir),
         model_name=args.model_name,
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
-        secret_key=args.api_key,
+        secret_key=api_key,
         num_patches=args.num_patches,
         max_workers=args.max_workers,
         force_rebuild=args.force_rebuild,
