@@ -376,7 +376,7 @@ AGENTLESS_CHECK_CMD_OLD = """process_files() {
 
     # Get all files matching the pattern from Google Storage
     echo "Fetching files from Google Storage..."
-    gsutil ls gs://sedsstore/agentless_bad_patches/${INSTANCE_ID}*.jsonl > file_list.txt
+    gsutil ls gs://${BUCKET_NAME}/agentless_bad_patches/${INSTANCE_ID}*.jsonl > file_list.txt
 
     # Check if any files were found
     if [ ! -s file_list.txt ]; then
@@ -426,7 +426,7 @@ AGENTLESS_CHECK_CMD = """process_files() {
     mkdir -p tmp_logs
     
     # Base Google Storage path
-    BASE_PATH="gs://sedsstore/agentless_bad_patches"
+    BASE_PATH="gs://${BUCKET_NAME}/agentless_bad_patches"
     
     for i in {0..2}; do
         # Construct the filename
@@ -479,7 +479,7 @@ SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
 
 
 PATCH_CHECK_CMD = """process_files() {{
-    gcs_path="gs://sedsstore/{results_dir}"
+    gcs_path="gs://${{BUCKET_NAME}}/{results_dir}"
     temp_dir=$(mktemp -d)
     
     # Initialize an array to store matching file data

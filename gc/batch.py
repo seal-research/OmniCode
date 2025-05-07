@@ -231,7 +231,7 @@ if __name__ == "__main__":
             disk_size_gb=100,
             num_jobs=20,
             disk_image=disk_image,
-            data_bucket="sedsstore"
+            data_bucket="seds-store"
         )
         
         print(f"Successfully submitted {len(jobs)} jobs to instances")

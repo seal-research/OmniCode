@@ -241,6 +241,7 @@ cleanup() {{
   # Any cleanup actions here
 }}
 trap cleanup EXIT INT TERM
+export BUCKET_NAME="{data_bucket}"
 instances=({list_to_bash_array(vm_instance_ids)})
 # Check if instances array is empty
 if [ ${{#instances[@]}} -eq 0 ]; then
@@ -248,8 +249,8 @@ if [ ${{#instances[@]}} -eq 0 ]; then
   exit 1
 fi
 # Verify only the bucket access, not the job_prefix directory
-gcloud storage ls gs://{data_bucket}/ >/dev/null 2>&1 || {{ 
-  echo "ERROR: Cannot access destination bucket gs://{data_bucket}/"
+gcloud storage ls gs://${{BUCKET_NAME}}/ >/dev/null 2>&1 || {{ 
+  echo "ERROR: Cannot access destination bucket gs://${{BUCKET_NAME}}/"
   exit 1
 }}
 cd /home/ays57/seds/codearena || {{ echo "ERROR: Directory not found"; exit 1; }}
@@ -277,7 +278,7 @@ for INSTANCE_ID in "${{instances[@]}}"; do
   
   # Upload results
   echo "$(date): Uploading results for instance $INSTANCE_ID" | tee -a "$INSTANCE_LOGFILE"
-  gcloud storage cp -r logs/ gs://{data_bucket}/{job_prefix}/$INSTANCE_ID 2>&1
+  gcloud storage cp -r logs/ gs://${{BUCKET_NAME}}/{job_prefix}/$INSTANCE_ID 2>&1
   
   if [ $? -eq 0 ]; then
     echo "$(date): Completed instance $INSTANCE_ID" | tee -a "$INSTANCE_LOGFILE"
@@ -367,9 +368,9 @@ if __name__ == "__main__":
     overwrite = rebuild or args.overwrite
     
     # Hardcode the base VM name
-    base_vm_name = "sedsbase-20250502-030654"
-    project_id = "rv-project-457202"
-    zone = "us-central1-a"
+    base_vm_name = "sedsbase"
+    project_id = "gen-lang-client-0511233871"
+    zone = "us-east1-b"
     
     # Define image family for this job type
     command = get_command(job_type)
@@ -403,7 +404,7 @@ if __name__ == "__main__":
             disk_size_gb=100,
             num_vms=len(instances_list) if args.instances_path == "dummy" else args.num_vms,
             disk_image=disk_image,
-            data_bucket="sedsstore",
+            data_bucket="seds-store",
             overwrite=overwrite,
             vm_num_offset=args.vm_num_offset,
             max_workers=args.max_parallel,
