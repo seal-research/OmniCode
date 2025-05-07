@@ -10,7 +10,7 @@ import time
 import select
 
 from run_evaluation_GenTests import main as GenTestMain
-from runevaluation_StyleReview import main as StyleReviewMain
+from runevaluation_StyleReview import main as PythonStyleReviewMain
 # imports and monkey patches swebench
 from monkeypatched_swebench import swebench
 from swebench.harness.utils import str2bool
@@ -104,22 +104,43 @@ def generate_gold_patch_predictions(dataset_files, instance_ids=None, max_instan
     print(f"Total predictions added: {len(predictions)}")
     return predictions
 
-def setup_multiswebench_config(predictions, max_workers, force_rebuild, run_id, timeout, phase="all"):
+def setup_multiswebench_config(
+    predictions, 
+    max_workers, 
+    force_rebuild, 
+    run_id, 
+    timeout, 
+    phase="all"
+):
     """Set up configuration for Multi-SWE-Bench evaluation."""
-    data_dir = Path("data/multiswebench")
+    data_dir = Path("multiswebench_runs/BugFixing")
     
     # Create directories
     print("Creating directory structure...")
     os.makedirs(data_dir, exist_ok=True)
-    for subdir in ["workdir", "logs", "output", "patches", "datasets", "repos"]:
-        os.makedirs(data_dir / subdir, exist_ok=True)
+    
+    # Create all necessary directories with proper f-string formatting
+    subdirs = [
+        f"workdir/run_{run_id}", 
+        f"logs/run_{run_id}", 
+        f"output/run_{run_id}",  # Make output run-specific too
+        f"patches/run_{run_id}", 
+        "datasets", 
+        "repos",
+        "configs"  # Add configs directory
+    ]
+    
+    for subdir in subdirs:
+        dir_path = data_dir / subdir
+        os.makedirs(dir_path, exist_ok=True)
+        print(f"Created directory: {dir_path}")
     
     # Get unique repos for image building
     unique_repos = {f"{pred['org']}/{pred['repo']}" for pred in predictions}
     print(f"Will build images for these repos: {unique_repos}")
     
     # Create patches file
-    patch_file = data_dir / "patches" / f"{run_id}_patches.jsonl"
+    patch_file = data_dir / "patches" / f"run_{run_id}" / "patches.jsonl"
     print(f"Writing {len(predictions)} patches to {patch_file}...")
     with open(patch_file, 'w', encoding='utf-8') as f:
         for pred in predictions:
@@ -153,11 +174,11 @@ def setup_multiswebench_config(predictions, max_workers, force_rebuild, run_id, 
     print(f"Creating configuration for phase: {phase}...")
     config = {
         "mode": mode,
-        "workdir": str(data_dir / "workdir"),
+        "workdir": str(data_dir / "workdir" / f"run_{run_id}"),
         "patch_files": [str(patch_file)],
         "dataset_files": dataset_files,
         "force_build": force_rebuild,
-        "output_dir": str(data_dir / "output"),
+        "output_dir": str(data_dir / "output" / f"run_{run_id}"),  # Make this run-specific
         "specifics": [],
         "skips": [],
         "repo_dir": str(data_dir / "repos"),
@@ -168,19 +189,19 @@ def setup_multiswebench_config(predictions, max_workers, force_rebuild, run_id, 
         "max_workers": max_workers,
         "max_workers_build_image": max(1, max_workers // 2),
         "max_workers_run_instance": max(1, max_workers // 2),
-        "log_dir": str(data_dir / "logs"),
+        "log_dir": str(data_dir / "logs" / f"run_{run_id}"),
         "log_level": "DEBUG",
         "log_to_console": True
     }
     
-    config_file = data_dir / f"{run_id}_{phase}_config.json"
+    config_file = data_dir / "configs" / f"{run_id}_{phase}_config.json"
     with open(config_file, 'w', encoding='utf-8') as f:
         json.dump(config, f, indent=2)
     
     print(f"Configuration saved to {config_file}")
     return str(config_file)
 
-def run_with_timeout(cmd, timeout_seconds=1800):
+def run_with_timeout(cmd, timeout_seconds=-1):
     """Run a command with timeout and real-time output streaming."""
     print(f"Running command with {timeout_seconds}s timeout: {' '.join(cmd)}")
     
@@ -203,7 +224,7 @@ def run_with_timeout(cmd, timeout_seconds=1800):
         # Monitor process
         while process.poll() is None:
             # Check for timeout
-            if time.time() - start_time > timeout_seconds:
+            if(timeout_seconds>0 and time.time() - start_time > timeout_seconds):
                 print(f"Process timed out after {timeout_seconds} seconds!")
                 process.kill()
                 return None, "Timeout exceeded", 1
@@ -243,7 +264,7 @@ def run_with_timeout(cmd, timeout_seconds=1800):
         print(f"Error running command: {e}")
         return None, str(e), 1
 
-def run_multiswebench_phase(config_file, phase="all", timeout=1800):
+def run_multiswebench_phase(config_file, phase="all", timeout=-1):
     """Run a specific phase of Multi-SWE-Bench evaluation."""
     script_path = "./multiswebench/multi_swe_bench/harness/run_evaluation.py"
     
@@ -313,7 +334,7 @@ def main():
                         help="Optional instance IDs")
     parser.add_argument("--open_file_limit", type=int, default=4096,
                         help="Maximum number of open files")
-    parser.add_argument("--timeout", type=int, default=1800,
+    parser.add_argument("--timeout", type=int, default=-1,
                         help="Timeout for individual evaluations in seconds")
     parser.add_argument("--force_rebuild", type=str2bool, default=False,
                         help="Force rebuild of all images")
@@ -347,10 +368,12 @@ def main():
 
     # Style review specific parameters
     parser.add_argument("--min_score", type=float, default=None,
-                        help="Minimum acceptable pylint score (0-10) for StyleReview")
+                        help="Minimum acceptable style score (0-10) for StyleReview")
     parser.add_argument("--max_severity", type=str, 
                         choices=['convention', 'warning', 'error'], default=None,
                         help="Maximum acceptable severity level for StyleReview")
+    parser.add_argument("--language", type=str, choices=['auto', 'python', 'java'],
+                        default='auto', help="Language for StyleReview, auto for automatic detection")
 
     args = parser.parse_args()
 
@@ -542,22 +565,163 @@ def main():
 
     if "StyleReview" in active_flags:
         print("Executing StyleReview...")
-        execute_command(
-            StyleReviewMain,
-            dataset_name=args.dataset_name,
-            split="test",
-            instance_ids=args.instance_ids,
-            predictions_path=predictions_map["StyleReview"],
-            max_workers=args.max_workers,
-            force_rebuild=args.force_rebuild,
-            cache_level=args.cache_level,
-            clean=args.clean,
-            open_file_limit=args.open_file_limit,
-            run_id=args.run_id,
-            timeout=args.timeout,
-            min_score=args.min_score,
-            max_severity=args.max_severity
-        )
+        language = args.language
+        
+        # Determine language if auto-detection is selected
+        if language == 'auto':
+            # Simple auto-detection logic based on file extensions
+            if args.instance_ids and len(args.instance_ids) > 0:
+                # For now just defaulting to Java if instance_ids are specified
+                language = 'java'
+            else:
+                language = 'python'  # Default to Python if unsure
+            print(f"Auto-detected language: {language}")
+        
+        if language == 'java':
+            print("Using Java StyleReview...")
+            
+            # Use the exact same data loading approach as MSWEBugFixing
+            # Create image prefix consistent with MSWEBugFixing
+            mswe_image_prefix = f"mswebench_{args.run_id}"
+            
+            # Process predictions exactly like MSWEBugFixing
+            if predictions_map["StyleReview"] == "gold":
+                print("Using gold patches from the dataset...")
+                dataset_base_path = "./multiswebench/mswebench_dataset"
+                dataset_files = []
+                for root, _, files in os.walk(dataset_base_path):
+                    for file in files:
+                        if file.endswith("_dataset.jsonl"):
+                            dataset_files.append(os.path.join(root, file))
+                
+                if not dataset_files:
+                    print("Error: No dataset files found in", dataset_base_path)
+                    return
+                    
+                predictions = generate_gold_patch_predictions(
+                    dataset_files, 
+                    args.instance_ids, 
+                    args.max_instances
+                )
+                
+                if not predictions:
+                    print("Error: No valid predictions could be generated from gold patches")
+                    return
+                    
+                print(f"Generated {len(predictions)} predictions from gold patches")
+            else:
+                # Load predictions from file
+                try:
+                    with open(predictions_map["StyleReview"], 'r') as f:
+                        predictions = json.load(f)
+                        
+                    if args.max_instances > 0 and len(predictions) > args.max_instances:
+                        print(f"Limiting to {args.max_instances} instances out of {len(predictions)}")
+                        predictions = predictions[:args.max_instances]
+                except Exception as e:
+                    print(f"Error loading predictions file: {e}")
+                    return
+            
+            # Here's a major change: instead of using a fixed dataset name,
+            # use the dataset files from the same location as MSWEBugFixing
+            # which we already know works with these predictions
+            
+            # Find dataset files matching our repos
+            dataset_base_path = "./multiswebench/mswebench_dataset"
+            dataset_files = []
+            
+            # Get unique repos for finding datasets
+            unique_repos = {f"{pred['org']}/{pred['repo']}" for pred in predictions}
+            
+            print(f"Finding relevant dataset files...")
+            for root, _, files in os.walk(dataset_base_path):
+                for file in files:
+                    if file.endswith("_dataset.jsonl"):
+                        for repo in unique_repos:
+                            org_repo = repo.replace('/', '__')
+                            if org_repo in file:
+                                dataset_files.append(os.path.join(root, file))
+                                print(f"  Found dataset: {os.path.join(root, file)}")
+                                break
+            
+            if not dataset_files:
+                print("Error: No matching dataset files found")
+                return
+                
+            # Join dataset files with commas for command line argument
+            dataset_files_arg = ",".join(dataset_files)
+                
+            # Directly call Java style review script with the predictions
+            print("Running Java StyleReview directly...")
+            
+            # Convert predictions to a temporary file path
+            temp_predictions_path = f"temp_{args.run_id}_java_style_predictions.json"
+            with open(temp_predictions_path, 'w') as f:
+                json.dump(predictions, f)
+            
+            try:
+                # Use the exact path provided
+                script_path = "multiswebench/multi_swe_bench/harness/style_review/run_java_style_review.py"
+                
+                if not os.path.exists(script_path):
+                    print(f"Error: Java style review script not found at: {script_path}")
+                    return
+                
+                print(f"Found Java style review script at: {script_path}")
+                
+                # Build command
+                cmd = [
+                    sys.executable,
+                    script_path,
+                    "--dataset_name", dataset_files_arg,  # Use the found dataset files
+                    "--split", "test",
+                    "--predictions_path", temp_predictions_path,
+                    "--max_workers", str(args.max_workers),
+                    "--force_rebuild", str(args.force_rebuild),
+                    "--cache_level", args.cache_level,
+                    "--clean", str(args.clean),
+                    "--open_file_limit", str(args.open_file_limit),
+                    "--run_id", args.run_id,
+                    "--timeout", str(args.timeout)
+                ]
+                
+                # Add optional arguments if they're set
+                if args.min_score is not None:
+                    cmd.extend(["--min_score", str(args.min_score)])
+                if args.max_severity is not None:
+                    cmd.extend(["--max_severity", args.max_severity])
+                if args.instance_ids:
+                    cmd.extend(["--instance_ids"] + args.instance_ids)
+                
+                # Run the command
+                print(f"Executing command: {' '.join(cmd)}")
+                result = run_with_timeout(cmd, args.timeout)
+                if result and result[2] == 0:
+                    print("Java StyleReview completed successfully")
+                else:
+                    print("Java StyleReview failed")
+            finally:
+                # Clean up temporary file
+                if os.path.exists(temp_predictions_path):
+                    os.remove(temp_predictions_path)
+        else:
+            print("Using Python StyleReview...")
+            execute_command(
+                PythonStyleReviewMain,
+                dataset_name=args.dataset_name,
+                split="test",
+                instance_ids=args.instance_ids,
+                predictions_path=predictions_map["StyleReview"],
+                max_workers=args.max_workers,
+                force_rebuild=args.force_rebuild,
+                cache_level=args.cache_level,
+                clean=args.clean,
+                open_file_limit=args.open_file_limit,
+                run_id=args.run_id,
+                timeout=args.timeout,
+                min_score=args.min_score,
+                max_severity=args.max_severity
+            )
 
 if __name__ == "__main__": 
     main()
