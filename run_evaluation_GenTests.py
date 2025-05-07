@@ -322,7 +322,7 @@ def main(
 
     # clean images + make final report
     clean_images(client, existing_images, cache_level, clean)
-    make_run_report(predictions, full_dataset, client, run_id)
+    make_run_report(predictions, dataset, client, run_id)
 
 def run_instance(
         test_spec: TestSpec,
@@ -474,7 +474,8 @@ def run_instance(
         base_eval_script = test_spec.inverted_eval_script_bad
 
         # Create and copy eval script for each bad patch
-        for i, bad_patch in enumerate(bad_patches):
+        for bad_patch_d in bad_patches:
+            i, bad_patch = bad_patch_d['idx'], bad_patch_d['patch']
             # Get initial git diff before applying bad patch
             git_diff_before = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
             logger.info(f"Git diff before bad patch {i}:\n{git_diff_before}")

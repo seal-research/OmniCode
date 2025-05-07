@@ -595,7 +595,7 @@ def get_command(
             return SWEAGENT_BUGFIXING_CMD
         case "sweagent-bf-check":
             return SWEAGENT_BF_CHECK_CMD
-        case "sweagent-testgen":
+        case "sweagent-tg":
             return SWEAGENT_TESTGEN_CMD
 
     return None   
