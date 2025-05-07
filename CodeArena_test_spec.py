@@ -4,6 +4,8 @@ import hashlib
 import json
 import platform
 import re
+import os
+
 
 from dataclasses import dataclass
 from typing import Any, Union, cast
@@ -220,74 +222,82 @@ def replace_uninstallable_packages_requirements_txt(requirement_str: str) -> str
     return "\n".join(requirements_replaced) + "\n"
 
 
-def make_env_script_list(instance: CodeArenaInstance, specs: dict, env_name: str) -> list[str]:
+def make_env_script_list(instance: CodeArenaInstance,
+                         specs: dict,
+                         env_name: str) -> list[str]:
     """
     Creates the list of commands to set up the conda environment for testing.
-    This is the setup script for the environment image.
-
-    Returns:
-        list[str]: List of commands to set up the conda environment
+    If conda isn’t already present, it downloads & bootstraps Miniconda.
     """
     HEREDOC_DELIMITER = "EOF_59812759871"
+
     reqs_commands = [
-        "source /opt/miniconda3/bin/activate",
+        # 1) if conda isn't on PATH, install Miniconda
+        'if ! command -v conda &> /dev/null; then '
+        '  echo ">>> Bootstrapping Miniconda"; '
+        '  wget -q https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O /tmp/mc.sh && '
+        '  bash /tmp/mc.sh -b -p /opt/miniconda3 && '
+        '  rm /tmp/mc.sh; '
+        'fi',
+        # 2) ensure we can run `conda`
+        'export PATH="/opt/miniconda3/bin:${PATH}"',
+        # 3) initialize shell functions so `conda activate` works
+        'source /opt/miniconda3/etc/profile.d/conda.sh',
+        'eval "$(conda shell.bash hook)"',
     ]
-    # Create conda environment according to install instructinos
+
     pkgs = specs.get("packages", "")
     if pkgs == "requirements.txt":
-        # Create environment
-        cmd = f"conda create -n {env_name} python={specs['python']} -y"
-        reqs_commands.append(cmd)
-
-        # Install dependencies
+        reqs_commands.append(f"conda create -n {env_name} python={specs['python']} -y")
         reqs = replace_uninstallable_packages_requirements_txt(get_requirements(instance))
         path_to_reqs = "$HOME/requirements.txt"
         reqs_commands.append(
             f"cat <<'{HEREDOC_DELIMITER}' > {path_to_reqs}\n{reqs}\n{HEREDOC_DELIMITER}"
         )
-        cmd = f"conda activate {env_name} && python -m pip install -r {path_to_reqs}"
-        reqs_commands.append(cmd)
+        reqs_commands.append(
+            f"conda activate {env_name} && python -m pip install -r {path_to_reqs}"
+        )
         reqs_commands.append(f"rm {path_to_reqs}")
+
     elif pkgs == "environment.yml":
-        # Create environment from yml
         reqs = get_environment_yml(instance, env_name)
         path_to_reqs = "environment.yml"
         reqs_commands.append(
             f"cat <<'{HEREDOC_DELIMITER}' > {path_to_reqs}\n{reqs}\n{HEREDOC_DELIMITER}"
         )
-        if "no_use_env" in specs and specs["no_use_env"]:
-            # `conda create` based installation
-            cmd = f"conda create -c conda-forge -n {env_name} python={specs['python']} -y"
-            reqs_commands.append(cmd)
-
-            # Install dependencies
-            cmd = f"conda env update -f {path_to_reqs}"
-            reqs_commands.append(cmd)
+        if specs.get("no_use_env", False):
+            reqs_commands.append(
+                f"conda create -c conda-forge -n {env_name} "
+                f"python={specs['python']} -y"
+            )
+            reqs_commands.append(f"conda env update -f {path_to_reqs}")
         else:
-            # `conda env create` based installation
-            cmd = f"conda env create --file {path_to_reqs}"
-            reqs_commands.append(cmd)
-
-            cmd = f"conda activate {env_name} && conda install python={specs['python']} -y"
-            reqs_commands.append(cmd)
-
-        # Remove environment.yml
+            reqs_commands.append(f"conda env create --file {path_to_reqs}")
+            reqs_commands.append(
+                f"conda activate {env_name} && "
+                f"conda install python={specs['python']} -y"
+            )
         reqs_commands.append(f"rm {path_to_reqs}")
-    else:
-        # Create environment + install dependencies
-        cmd = f"conda create -n {env_name} python={specs['python']} {pkgs} -y"
-        reqs_commands.append(cmd)
 
+    else:
+        reqs_commands.append(
+            f"conda create -n {env_name} python={specs['python']} {pkgs or ''} -y"
+        )
+
+    # Activate the new env
     reqs_commands.append(f"conda activate {env_name}")
 
-    # Install additional packages if specified
+    # Extra pip packages
     if "pip_packages" in specs:
         pip_packages = " ".join(specs["pip_packages"])
-        cmd = f"python -m pip install {pip_packages}"
-        reqs_commands.append(cmd)
-    # External pylint dependency to run Style Review inside the docker environment
+        reqs_commands.append(f"python -m pip install {pip_packages}")
 
-    reqs_commands.append("python -m pip install pylint")
+    # And always install pylint
+    # Only install pylint if we’ve asked for a style review build
+    if os.environ.get("STYLE_REVIEW", "0") == "1":
+        reqs_commands.append("python -m pip install pylint")
+
+
     return reqs_commands
 
 
@@ -342,7 +352,14 @@ def get_test_directives(instance: Union[dict, TestSpec]) -> list:
     """
     # Handle both dict and TestSpec types
     repo = instance["repo"] if isinstance(instance, dict) else instance.repo
-    test_patch = instance["candidate_test_patch"] if isinstance(instance, dict) else instance.test_patch
+    if isinstance(instance, dict):
+    # prefer candidate_test_patch, but fall back to test_patch
+        test_patch = instance.get("candidate_test_patch",
+                                  instance.get("test_patch"))
+    else:
+        # for objects, try attribute then fallback to .test_patch
+        test_patch = getattr(instance, "candidate_test_patch",
+                             getattr(instance, "test_patch", None))
      
     if repo == "swe-bench/humaneval":
         return []
@@ -554,13 +571,25 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
     """
     Create a TestSpec from a CodeArena instance.
     """
+    
     # Extract necessary information
     instance_id = instance[KEY_INSTANCE_ID]
     repo = instance["repo"]
     base_commit = instance["base_commit"]
-    version = instance["version"]
-    gold_patch = instance["gold_patch"]
-    test_patch = instance["candidate_test_patch"]
+    version = str(instance["version"])
+    # Extract the “gold” patch, falling back to the generic `patch` field if needed
+    gold_patch = instance.get("gold_patch", instance.get("patch"))
+    if gold_patch is None:
+        raise KeyError(f"Instance {instance.get('instance_id')} missing both 'gold_patch' and 'patch'")
+
+    if isinstance(instance, dict):
+    # prefer candidate_test_patch, but fall back to test_patch
+        test_patch = instance.get("candidate_test_patch",
+                                  instance.get("test_patch"))
+    else:
+        # for objects, try attribute then fallback to .test_patch
+        test_patch = getattr(instance, "candidate_test_patch",
+                             getattr(instance, "test_patch", None))
     
     # Get bad patches - now using bad_patches instead of bad_patch
     bad_patches = instance.get("bad_patches", [])  # Default to empty list if not found
