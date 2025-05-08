@@ -119,7 +119,7 @@ def run_sweagent_single(
         args += [
             f"--agent.model.name={model_name}",
             f"--agent.model.api_key={api_key}",
-            f"--agent.model.per_instance_cost_limit=0.2",
+            f"--agent.model.per_instance_cost_limit=2.0",
             f"--env.repo.github_url={url}",
             f"--env.repo.base_commit={instance['base_commit']}",
             f"--problem_statement.path={str(fp.name)}",
