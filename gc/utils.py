@@ -28,7 +28,7 @@ def create_image_from_vm(
 ):
     """
     Creates a new VM image from an existing instance.
-    
+
     Args:
         project_id: The GCP project ID.
         zone: The zone where the source instance is located.
@@ -37,77 +37,77 @@ def create_image_from_vm(
         image_family: Optional image family to group related images.
         image_description: Optional description for the image.
         timeout_seconds: Maximum time to wait for the operation to complete.
-        
+
     Returns:
         The created image object.
     """
     # Initialize the Compute Engine client
     instance_client = compute_v1.InstancesClient()
     image_client = compute_v1.ImagesClient()
-    
+
     # Get the source instance
     instance = instance_client.get(
-        project=project_id, 
-        zone=zone, 
+        project=project_id,
+        zone=zone,
         instance=source_instance
     )
-    
+
     # Create the image from the instance
     image = compute_v1.Image()
     image.name = image_name
     image.source_disk = f"projects/{project_id}/zones/{zone}/disks/{source_instance}"
     image.family = image_family
     image.description = image_description
-    
+
     # Start the image creation operation
     print(f"Creating image '{image_name}' from instance '{source_instance}'...")
     operation = image_client.insert(project=project_id, image_resource=image)
-    
+
     # Wait for the operation to complete
     start_time = time.time()
     operation_client = compute_v1.GlobalOperationsClient()
-    
+
     while True:
         # Check if we've exceeded the timeout
         if time.time() - start_time > timeout_seconds:
             raise TimeoutError(f"Image creation timed out after {timeout_seconds} seconds")
-        
+
         # Get the operation status
         operation_status = operation_client.get(project=project_id, operation=operation.name)
-        
+
         # Check if the operation is done
         if operation_status.status == compute_v1.Operation.Status.DONE:
             break
-        
+
         # Print status and wait before checking again
         print(f"Image creation in progress... Status: {operation_status.status.name}")
         time.sleep(10)
-    
+
     # Check if the operation was successful
     if operation_status.error:
         error_messages = [error.message for error in operation_status.error.errors]
         raise Exception(f"Image creation failed: {error_messages}")
-    
+
     # Get and return the created image
     created_image = image_client.get(project=project_id, image=image_name)
     print(f"Image '{image_name}' created successfully with ID: {created_image.id}")
-    
+
     return created_image
 
 def get_latest_image_from_family(project_id: str, family: str):
 
     """
     Retrieves the latest image from a specified image family.
-    
+
     Args:
         project_id: The GCP project ID.
         family: The image family to search in.
-        
+
     Returns:
         The URL of the latest image in the family, or None if not found.
     """
     image_client = compute_v1.ImagesClient()
-    
+
     try:
         # Get the latest image from the family
         image = image_client.get_from_family(project=project_id, family=family)
@@ -122,18 +122,18 @@ def get_latest_image_from_family(project_id: str, family: str):
 def wait_for_operation(operation, project_id, zone):
     """Wait for a compute engine zone operation to complete."""
     print(f"Waiting for operation {operation.name} to complete...")
-    
+
     # Create a zone operations client
     operation_client = compute_v1.ZoneOperationsClient()
-    
+
     while operation.status != compute_v1.Operation.Status.DONE:
         time.sleep(5)
         operation = operation_client.get(
-            project=project_id, 
+            project=project_id,
             zone=zone,
             operation=operation.name
         )
-    
+
     if operation.error:
         print(f"Error during operation: {operation.error}")
         return False
@@ -183,33 +183,33 @@ def delete_vm(instance_client, project_id, zone, vm_name):
 def reset_vm(instance_client, project_id, zone, vm_name, startup_script, instance_ids):
     """Reset a VM by updating its metadata with new startup script and instance IDs."""
     print(f"Updating metadata for VM {vm_name}...")
-    
+
     # Get the current instance
     instance = instance_client.get(project=project_id, zone=zone, instance=vm_name)
-    
+
     # Create a new metadata object with the updated startup script
     metadata = compute_v1.Metadata()
-    
+
     # Copy existing metadata items if they exist
     existing_items = []
     if instance.metadata and instance.metadata.items:
         for item in instance.metadata.items:
             if item.key != "startup-script":
                 existing_items.append(item)
-    
+
     # Add the new startup script item
     script_item = compute_v1.Items()
     script_item.key = "startup-script"
     script_item.value = startup_script
     existing_items.append(script_item)
-    
+
     # Set all items
     metadata.items = existing_items
-    
+
     # Set the fingerprint to ensure we're updating the latest version
     if instance.metadata:
         metadata.fingerprint = instance.metadata.fingerprint
-    
+
     # Update the metadata
     operation = instance_client.set_metadata(
         project=project_id,
@@ -217,25 +217,25 @@ def reset_vm(instance_client, project_id, zone, vm_name, startup_script, instanc
         instance=vm_name,
         metadata_resource=metadata
     )
-    
+
     return operation
 
 def list_images_in_family(project_id: str, family: str):
     """
     Lists all images in a specified image family.
-    
+
     Args:
         project_id: The GCP project ID.
         family: The image family to search in.
-        
+
     Returns:
         A list of image objects in the family.
     """
     image_client = compute_v1.ImagesClient()
-    
+
     # Filter by family
     filter_str = f'family="{family}"'
-    
+
     try:
         # List all images matching the filter
         images = list(image_client.list(project=project_id, filter=filter_str))
@@ -248,22 +248,22 @@ def list_images_in_family(project_id: str, family: str):
 def delete_image(project_id: str, image_name: str):
     """
     Deletes a specified image.
-    
+
     Args:
         project_id: The GCP project ID.
         image_name: The name of the image to delete.
-        
+
     Returns:
         True if deletion was successful, False otherwise.
     """
     image_client = compute_v1.ImagesClient()
     operation_client = compute_v1.GlobalOperationsClient()
-    
+
     try:
         # Delete the image
         print(f"Deleting image '{image_name}'...")
         operation = image_client.delete(project=project_id, image=image_name)
-        
+
         # Wait for the operation to complete
         while operation.status != compute_v1.Operation.Status.DONE:
             time.sleep(5)
@@ -271,11 +271,11 @@ def delete_image(project_id: str, image_name: str):
                 project=project_id,
                 operation=operation.name
             )
-        
+
         if operation.error:
             print(f"Error deleting image '{image_name}': {operation.error}")
             return False
-        
+
         print(f"Image '{image_name}' deleted successfully")
         return True
     except Exception as e:
@@ -308,24 +308,24 @@ def create_image_wrapped(
 ):
     """
     Wrapper around `create_image_for_vm` that checks if image already exists
-    
+
     Args:
         rebuild: whether to rebuild the image if it already exists
         project_id: The GCP project ID.
         zone: The zone where the source instance is located.
         source_instance: The name of the source instance to create the image from.
         timeout_seconds: Maximum time to wait for the operation to complete.
-        
+
     Returns:
         The created image object.
     """
     # Initialize the image client
-    
+
     # Use static naming based on job_type
     image_name = f"{source_instance}-image"
-    
+
     image_exists = check_image_exists(project_id, image_name)
-    
+
     if rebuild:
         if image_exists:
             delete_image(
@@ -389,10 +389,10 @@ AGENTLESS_CHECK_CMD_OLD = """process_files() {
         # Extract filename from path
         filename=$(basename "$file_path")
         echo "Processing $filename"
-        
+
         # Download the file
         gsutil cp "$file_path" .
-        
+
         # Run the Python script
         echo "Running codearena.py for $filename"
         python codearena.py \
@@ -400,15 +400,15 @@ AGENTLESS_CHECK_CMD_OLD = """process_files() {
             --predictions_path "$filename" \
             --run_id agentless_check \
             --instance_ids "$INSTANCE_ID"
-        
+
         # Extract the suffix from filename (e.g., fl_5)
         suffix=$(echo "$filename" | sed "s/${INSTANCE_ID}_//")
         suffix=${suffix%.jsonl}
-        
+
         # Copy logs to tmp_logs with appropriate name
         echo "Copying logs to tmp_logs/${INSTANCE_ID}_${suffix}"
         cp -r logs "tmp_logs/${INSTANCE_ID}_${suffix}"
-        
+
     done < file_list.txt
 
     # Replace logs with tmp_logs
@@ -424,22 +424,22 @@ process_files"""
 AGENTLESS_CHECK_CMD = """process_files() {
     # Create a temporary directory for logs
     mkdir -p tmp_logs
-    
+
     # Base Google Storage path
     BASE_PATH="gs://${BUCKET_NAME}/agentless_bad_patches"
-    
+
     for i in {0..2}; do
         # Construct the filename
         filename="${INSTANCE_ID}_${i}.jsonl"
         file_path="${BASE_PATH}/${filename}"
-        
+
         # Check if the file exists in Google Storage
         if gsutil -q stat "$file_path"; then
             echo "File $filename exists, processing..."
-            
+
             # Download the file
             gsutil cp "$file_path" .
-            
+
             # Run the Python script
             echo "Running codearena.py for $filename"
             python codearena.py \
@@ -447,7 +447,7 @@ AGENTLESS_CHECK_CMD = """process_files() {
                 --predictions_path "$filename" \
                 --run_id agentless_check \
                 --instance_ids "$INSTANCE_ID"
-            
+
             # Copy logs to tmp_logs with appropriate name
             echo "Copying logs to tmp_logs/${INSTANCE_ID}_${i}"
             cp -r logs "tmp_logs/${INSTANCE_ID}_${i}"
@@ -455,7 +455,61 @@ AGENTLESS_CHECK_CMD = """process_files() {
             echo "File $filename does not exist, skipping."
         fi
     done
-    
+
+    # Replace logs with tmp_logs if any files were processed
+    if [ -d "tmp_logs" ] && [ "$(ls -A tmp_logs)" ]; then
+        echo "Replacing logs directory with tmp_logs"
+        rm -rf logs
+        mv tmp_logs logs
+    else
+        echo "No files were processed, logs directory unchanged."
+        rm -rf tmp_logs
+    fi
+}
+
+process_files"""
+
+AGENTLESS_CHECK_JAVA_CMD = """process_files() {
+    # Create a temporary directory for logs
+    mkdir -p tmp_logs
+
+    # Base Google Storage path
+    BASE_PATH="gs://${BUCKET_NAME}/agentless_bad_patches_java"
+
+    for i in {0..2}; do
+        # Construct the filename
+        filename="${INSTANCE_ID}_${i}.jsonl"
+        file_path="${BASE_PATH}/${filename}"
+
+        # Check if the file exists in Google Storage
+        if gsutil -q stat "$file_path"; then
+            echo "File $filename exists, processing..."
+
+            # Download the file
+            gsutil cp "$file_path" .
+
+            # Get msebench formatted id,
+            # e.g. go from "mockito__mockito-3129" to "mockito/mockito:3129"
+            MSWE_ID=$(sed 's|__|/|;s|_|:|' <<<"$INSTANCE_ID")
+            echo "MSWE_ID: $MSWE_ID"
+
+            # Run the Python script
+            echo "Running codearena.py for $filename"
+            python codearena.py \
+                --MSWEBugFixing \
+                --predictions_path gold \
+                --run_id mswebench_test \
+                --instance_ids "$MSWE_ID"  \
+                --mswe_phase all
+
+            # Copy logs to tmp_logs with appropriate name
+            echo "Copying logs to tmp_logs/${INSTANCE_ID}_${i}"
+            cp -r logs "tmp_logs/${INSTANCE_ID}_${i}"
+        else
+            echo "File $filename does not exist, skipping."
+        fi
+    done
+
     # Replace logs with tmp_logs if any files were processed
     if [ -d "tmp_logs" ] && [ "$(ls -A tmp_logs)" ]; then
         echo "Replacing logs directory with tmp_logs"
@@ -473,20 +527,20 @@ process_files"""
 PATCH_CHECK_CMD = """process_files() {{
     gcs_path="gs://${{BUCKET_NAME}}/{results_dir}"
     temp_dir=$(mktemp -d)
-    
+
     # Initialize an array to store matching file data
     declare -a founds=()
-    
+
     # Use wildcards to search specifically in directories with INSTANCE_ID prefix
     # This significantly narrows down our search space
     matching_files=$(gsutil ls "${{gcs_path}}/${{INSTANCE_ID}}*/**/all_preds.jsonl")
-    
+
     # Process each potential matching file
     for filepath in $matching_files; do
         # Download the file to temp directory
         local temp_file="${{temp_dir}}/$(basename "$filepath")"
         gsutil cp "${{filepath}}" "${{temp_file}}"
-        
+
         # Process the file to find matching instance_id
         while IFS= read -r line; do
             if [ "$(echo "$line" | jq -r '.instance_id // empty')" = "${{INSTANCE_ID}}" ]; then
@@ -494,11 +548,11 @@ PATCH_CHECK_CMD = """process_files() {{
                 break  # Found a match in this file
             fi
         done < "${{temp_file}}"
-        
+
         # Remove temp file after processing
         rm "${{temp_file}}"
     done
-    
+
     # Check if no predictions were found
     if [ ${{#founds[@]}} -eq 0 ]; then
         echo "No predictions found for ${{INSTANCE_ID}}, skipping ..."
@@ -506,45 +560,45 @@ PATCH_CHECK_CMD = """process_files() {{
         rm -rf "${{temp_dir}}"
         return 0
     fi
-    
+
     # Check if multiple predictions were found
     if [ ${{#founds[@]}} -gt 1 ]; then
         echo "Warning: found multiple predictions for ${{INSTANCE_ID}}"
     fi
-    
+
     # Use the first found prediction
     local predsd="${{founds[0]}}"
-    
+
     # Check if model_patch field exists
     if [ "$(echo "$predsd" | jq 'has("model_patch")')" != "true" ]; then
         echo "No model patch field found for ${{INSTANCE_ID}}, skipping ..."
         rm -rf "${{temp_dir}}"
         return 0
     fi
-    
+
     # Check if model_patch field exists within model_patch
     if [ "$(echo "$predsd" | jq '.model_patch | has("model_patch")')" != "true" ]; then
         echo "No model patch field in model patch for ${{INSTANCE_ID}}, skipping ..."
         rm -rf "${{temp_dir}}"
         return 0
     fi
-    
+
     # Check if model_patch is null
     if [ "$(echo "$predsd" | jq '.model_patch.model_patch == null')" = "true" ]; then
         echo "Model patch for ${{INSTANCE_ID}} is null, skipping ..."
         rm -rf "${{temp_dir}}"
         return 0
     fi
-    
+
     # Ensure logs directory exists
     mkdir -p logs
-    
+
     # Write to output file - extract the model_patch field and write as compact JSON on a single line
     echo "$predsd" | jq -c '.model_patch' > "logs/${{INSTANCE_ID}}_all_preds.jsonl"
-    
+
     # Clean up temp directory
     rm -rf "${{temp_dir}}"
-    
+
     # Running check
     python codearena.py \
         --BugFixing \
@@ -604,6 +658,7 @@ COMMAND_MAP = {
     "sanity": SANITY_CMD,
     "bp-gen": BAD_PATCH_GEN_CMD,
     "agentless-check": AGENTLESS_CHECK_CMD,
+    "agentless-check-java": AGENTLESS_CHECK_JAVA_CMD,
     "sweagent-bf": SWEAGENT_BUGFIXING_CMD,
     "sweagent-bf-check": SWEAGENT_BF_CHECK_CMD,
     "sweagent-tg": SWEAGENT_TESTGEN_CMD,
@@ -616,5 +671,5 @@ def get_command(
 ) -> str:
     if job_type not in COMMAND_MAP:
         raise RuntimeError(f"Invalid job type: {job_type}")
-    
+
     return COMMAND_MAP[job_type]
