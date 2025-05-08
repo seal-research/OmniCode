@@ -360,6 +360,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_vms", type=int, default=20, required=False)
     parser.add_argument("--randomise", action="store_true", help="randomise sequence of instances being processed")
     parser.add_argument("--max_parallel", type=int, default=10, help="Maximum number of VMs to create in parallel")
+    parser.add_argument("--zone", type=str, required=True, help="zone in which to create VMs")
 
     args = parser.parse_args()
     
@@ -371,7 +372,7 @@ if __name__ == "__main__":
     # Hardcode the base VM name
     base_vm_name = "sedsbase"
     project_id = "gen-lang-client-0511233871"
-    zone = "us-east1-b"
+    zone = args.zone
     
     # Define image family for this job type
     command = get_command(job_type)
