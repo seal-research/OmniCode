@@ -600,17 +600,28 @@ PATCH_CHECK_CMD = """process_files() {{
     rm -rf "${{temp_dir}}"
 
     # Running check
-    python codearena.py \
-        --BugFixing \
-        --predictions_path "logs/${{INSTANCE_ID}}_all_preds.jsonl" \
-        --run_id sweagent_bf_check \
-        --instance_ids "${{INSTANCE_ID}}"
+    {check_cmd}
 }}
 process_files"""
 
 
 SWEAGENT_BF_CHECK_CMD = PATCH_CHECK_CMD.format(
    results_dir="sweb-sweagent-bf",
+   check_cmd="""python codearena.py \
+        --BugFixing \
+        --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
+        --run_id sweagent_bf_check \
+        --instance_ids "${INSTANCE_ID}" """,
+)
+
+
+SWEAGENT_TG_CHECK_CMD = PATCH_CHECK_CMD.format(
+   results_dir="sweb-sweagent-tg",
+   check_cmd="""python codearena.py \
+        --TestGeneration \
+        --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
+        --run_id sweagent_tg_check \
+        --instance_ids "${INSTANCE_ID}" """,
 )
 
 
@@ -662,6 +673,7 @@ COMMAND_MAP = {
     "sweagent-bf": SWEAGENT_BUGFIXING_CMD,
     "sweagent-bf-check": SWEAGENT_BF_CHECK_CMD,
     "sweagent-tg": SWEAGENT_TESTGEN_CMD,
+    "sweagent-tg-check": SWEAGENT_TG_CHECK_CMD,
     "sweagent-bf-java": SWEAGENT_BUGFIXING_JAVA_CMD,
     "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
 }
