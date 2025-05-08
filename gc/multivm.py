@@ -191,6 +191,7 @@ def create_distributed_compute_vms(
     overwrite: bool = False,
     vm_num_offset: int = 0,
     max_workers: int = 10,  # Control parallelism
+    indices_to_run: list[int] | None = None,
 ):
     """Create or reuse multiple Compute Engine VMs in parallel to distribute the processing."""
 
@@ -203,6 +204,10 @@ def create_distributed_compute_vms(
     tasks = []
 
     for vm_index in range(num_vms):
+
+        if indices_to_run is not None and vm_index not in indices_to_run:
+            continue
+
         # Calculate the start and end indices for this VM
         start_index = vm_index * instances_per_vm
         end_index = start_index + instances_per_vm
@@ -362,6 +367,7 @@ if __name__ == "__main__":
     parser.add_argument("--max_parallel", type=int, default=10, help="Maximum number of VMs to create in parallel")
     parser.add_argument("--zone", type=str, required=True, help="zone in which to create VMs")
     parser.add_argument("--base_vm", type=str, required=True, help="Base VM name, e.g. sedsbase")
+    parser.add_argument("--vm_idx_to_run", type=str, help="comma seperate list if ints indicating vms to run", default=None)
 
     args = parser.parse_args()
 
@@ -389,6 +395,8 @@ if __name__ == "__main__":
     if args.randomise:
         random.shuffle(instances_list)
 
+    indices_to_run = [int(s) for s in args.vm_idx_to_run.split(',')] if args.vm_idx_to_run is not None else None
+
     try:
         disk_image = create_image_wrapped(
             rebuild=rebuild,
@@ -412,6 +420,7 @@ if __name__ == "__main__":
             overwrite=overwrite,
             vm_num_offset=args.vm_num_offset,
             max_workers=args.max_parallel,
+            indices_to_run=indices_to_run,
         )
 
         logger.info(f"Successfully managed {len(vms)} VMs to process instances")
