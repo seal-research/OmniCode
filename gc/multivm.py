@@ -182,6 +182,7 @@ def create_distributed_compute_vms(
     job_prefix: str,
     instance_ids: list[str],
     command: str,
+    base_vm_name: str,
     machine_type: str = "e2-standard-4",
     disk_size_gb: int = 100,
     num_vms: int = 20,
@@ -214,7 +215,7 @@ def create_distributed_compute_vms(
         vm_instance_ids = instance_ids[start_index:end_index]
         
         # Create a unique name for this VM
-        vm_name = f"seds-vm-{vm_num_offset + vm_index}"
+        vm_name = f"{base_vm_name}-{vm_num_offset + vm_index}"
 
         startup_script = f"""#!/bin/bash
 set -e  # Exit immediately if a command exits with a non-zero status
@@ -400,6 +401,7 @@ if __name__ == "__main__":
             job_prefix=f"sweb-{job_type}",
             instance_ids=instances_list,
             command=command,
+            base_vm_name=base_vm_name,
             machine_type="e2-standard-4",
             disk_size_gb=100,
             num_vms=len(instances_list) if args.instances_path == "dummy" else args.num_vms,
