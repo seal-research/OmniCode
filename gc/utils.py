@@ -470,15 +470,6 @@ AGENTLESS_CHECK_CMD = """process_files() {
 process_files"""
 
 
-SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
--i data/codearena_instances.json \
--o logs \
--m gemini/gemini-2.5-flash-preview-04-17 \
--k $GEMINI_API_KEY \
---mode bugfixing \
---instance_ids $INSTANCE_ID"""
-
-
 PATCH_CHECK_CMD = """process_files() {{
     gcs_path="gs://${{BUCKET_NAME}}/{results_dir}"
     temp_dir=$(mktemp -d)
@@ -571,6 +562,16 @@ SWEAGENT_BF_CHECK_CMD = PATCH_CHECK_CMD.format(
 
 
 
+SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m gemini/gemini-2.5-flash-preview-04-17 \
+-k $GEMINI_API_KEY \
+--mode bugfixing \
+--instance_ids $INSTANCE_ID"""
+
+
+
 SWEAGENT_TESTGEN_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances.json \
 -o logs \
@@ -581,21 +582,39 @@ SWEAGENT_TESTGEN_CMD = """python baselines/sweagent/sweagent_regular.py \
 
 
 
+SWEAGENT_BUGFIXING_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances_java.json \
+-o logs \
+-m gemini/gemini-2.5-flash-preview-04-17 \
+-k $GEMINI_API_KEY \
+--mode bugfixing_java \
+--instance_ids $INSTANCE_ID"""
+
+
+SWEAGENT_TESTGEN_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances_java.json \
+-o logs \
+-m gemini/gemini-2.5-flash-preview-04-17 \
+-k $GEMINI_API_KEY \
+--mode testgen_java \
+--instance_ids $INSTANCE_ID"""
+
+
+COMMAND_MAP = {
+    "sanity": SANITY_CMD,
+    "bp-gen": BAD_PATCH_GEN_CMD,
+    "agentless-check": AGENTLESS_CHECK_CMD,
+    "sweagent-bf": SWEAGENT_BUGFIXING_CMD,
+    "sweagent-bf-check": SWEAGENT_BF_CHECK_CMD,
+    "sweagent-tg": SWEAGENT_TESTGEN_CMD,
+    "sweagent-bf-java": SWEAGENT_BUGFIXING_JAVA_CMD,
+    "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
+}
+
 def get_command(
     job_type: str
 ) -> str:
-    match job_type:
-        case "sanity":
-            return SANITY_CMD
-        case "bp-gen":
-            return BAD_PATCH_GEN_CMD
-        case "agentless-check":
-            return AGENTLESS_CHECK_CMD
-        case "sweagent-bf":
-            return SWEAGENT_BUGFIXING_CMD
-        case "sweagent-bf-check":
-            return SWEAGENT_BF_CHECK_CMD
-        case "sweagent-tg":
-            return SWEAGENT_TESTGEN_CMD
-
-    return None   
+    if job_type not in COMMAND_MAP:
+        raise RuntimeError(f"Invalid job type: {job_type}")
+    
+    return COMMAND_MAP[job_type]

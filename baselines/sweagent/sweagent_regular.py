@@ -19,8 +19,13 @@ from sweagent.agent.problem_statement import TextProblemStatement, FileProblemSt
 CUR_DIR = Path(__file__).parent
 DOTENV_PATH = CUR_DIR / '.env'
 
-BUGFIXING_CONFIG_FILE = CUR_DIR / "bugfixing.yaml"
-TESTGEN_CONFIG_FILE = CUR_DIR / "testgen.yaml"
+CONFIG_FILE_MAP = {
+    "bugfixing": CUR_DIR / "bugfixing.yaml",
+    "testgen": CUR_DIR / "testgen.yaml",
+    "bugfixing_java": CUR_DIR / "bugfixing_java.yaml",
+    "testgen_java": CUR_DIR / "testgen_java.yaml",
+}
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -98,13 +103,10 @@ def run_sweagent_single(
     
     url = f"https://github.com/{instance['repo']}"
 
-    config_file = None
-    if mode == "bugfixing":
-        config_file = BUGFIXING_CONFIG_FILE
-    elif mode == "testgen":
-        config_file = TESTGEN_CONFIG_FILE
-    else:
+    if mode not in CONFIG_FILE_MAP:
         raise RuntimeError(f"Unknown mode: {mode}")    
+
+    config_file = CONFIG_FILE_MAP[mode]
 
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
 
@@ -203,7 +205,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
     parser.add_argument("-k", "--api_key", type=str, required=True)
-    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen"])
+    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java"])
     args = parser.parse_args()
 
     main(
