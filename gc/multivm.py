@@ -11,7 +11,7 @@ from google.api_core.exceptions import GoogleAPIError
 from utils import list_to_bash_array, check_vm_exists, get_vm_status, reset_vm, wait_for_operation, start_vm, get_command, create_image_wrapped, delete_vm
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, 
+logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -47,12 +47,12 @@ def process_single_vm(
 ) -> Tuple[str, bool]:
     """Process a single VM with retry logic."""
     instance_client = compute_v1.InstancesClient()
-    
+
     for retry in range(MAX_RETRIES):
         try:
             # Check if VM already exists
             vm_exists = check_vm_exists(instance_client, project_id, zone, vm_name)
-            
+
             if vm_exists:
                 if overwrite:
                     # Delete the VM and create a new one
@@ -66,20 +66,20 @@ def process_single_vm(
                 else:
                     # Get the VM status
                     status = get_vm_status(instance_client, project_id, zone, vm_name)
-                    
+
                     # Reset the VM with the new startup script
                     reset_operation = reset_vm(instance_client, project_id, zone, vm_name, startup_script, vm_instance_ids)
                     wait_result = wait_for_operation(reset_operation, project_id, zone)
-                    
+
                     if not wait_result:
                         logger.error(f"Failed to update metadata for VM: {vm_name}. Retrying...")
                         raise Exception(f"Failed to update metadata for VM: {vm_name}")
-                    
+
                     if status == "TERMINATED":
                         # Start the VM if it's stopped
                         start_operation = start_vm(instance_client, project_id, zone, vm_name)
                         wait_result = wait_for_operation(start_operation, project_id, zone)
-                        
+
                         if wait_result:
                             logger.info(f"Successfully started existing VM: {vm_name}")
                             return vm_name, True
@@ -92,35 +92,35 @@ def process_single_vm(
                     else:
                         logger.warning(f"VM {vm_name} exists but is in state {status}. No action taken.")
                         return vm_name, False
-            
+
             if not vm_exists:
                 # Define the VM configuration
                 instance = compute_v1.Instance()
                 instance.name = vm_name
                 instance.machine_type = f"zones/{zone}/machineTypes/{machine_type}"
-                
+
                 # Define the disk configuration
                 disk = compute_v1.AttachedDisk()
                 disk.auto_delete = True
                 disk.boot = True
-                
+
                 initialize_params = compute_v1.AttachedDiskInitializeParams()
                 initialize_params.disk_size_gb = disk_size_gb
                 initialize_params.source_image = disk_image
                 disk.initialize_params = initialize_params
                 instance.disks = [disk]
-                
+
                 # Define the network configuration
                 network_interface = compute_v1.NetworkInterface()
                 network_interface.network = "global/networks/default"
-                
+
                 access_config = compute_v1.AccessConfig()
                 access_config.name = "External NAT"
                 access_config.type_ = "ONE_TO_ONE_NAT"
                 network_interface.access_configs = [access_config]
-                
+
                 instance.network_interfaces = [network_interface]
-                
+
                 # Set the service account and scopes
                 service_account = compute_v1.ServiceAccount()
                 service_account.email = "default"
@@ -130,12 +130,12 @@ def process_single_vm(
                     "https://www.googleapis.com/auth/monitoring.write",
                 ]
                 instance.service_accounts = [service_account]
-                
+
                 # Set up as spot/preemptible instance
                 scheduling = compute_v1.Scheduling()
                 scheduling.provisioning_model = "SPOT"
                 instance.scheduling = scheduling
-                
+
                 # Create metadata with startup script
                 metadata = compute_v1.Metadata()
                 item = compute_v1.Items()
@@ -143,7 +143,7 @@ def process_single_vm(
                 item.value = startup_script
                 metadata.items = [item]
                 instance.metadata = metadata
-                
+
                 # Create the VM
                 logger.info(f"Creating new VM {vm_name} to process {len(vm_instance_ids)} instances...")
                 operation = instance_client.insert(
@@ -151,7 +151,7 @@ def process_single_vm(
                     zone=zone,
                     instance_resource=instance
                 )
-                
+
                 wait_result = wait_for_operation(operation, project_id, zone)
                 if wait_result:
                     logger.info(f"Successfully created VM: {vm_name}")
@@ -159,10 +159,10 @@ def process_single_vm(
                 else:
                     logger.error(f"Failed to create VM: {vm_name}. Retrying...")
                     raise Exception(f"Failed to create VM: {vm_name}")
-                
+
             # If we get here, something unexpected happened
             return vm_name, False
-            
+
         except Exception as e:
             if retry < MAX_RETRIES - 1:
                 delay = exponential_backoff(retry)
@@ -171,7 +171,7 @@ def process_single_vm(
             else:
                 logger.error(f"All {MAX_RETRIES} attempts failed for VM {vm_name}: {str(e)}")
                 return vm_name, False
-    
+
     # This should not be reached, but just in case
     return vm_name, False
 
@@ -193,27 +193,27 @@ def create_distributed_compute_vms(
     max_workers: int = 10,  # Control parallelism
 ):
     """Create or reuse multiple Compute Engine VMs in parallel to distribute the processing."""
-    
+
     # Calculate how many instances each VM should handle
     total_instances = len(instance_ids)
     instances_per_vm = total_instances // num_vms
     remainder = total_instances % num_vms
-    
+
     # Prepare tasks for parallel execution
     tasks = []
-    
+
     for vm_index in range(num_vms):
         # Calculate the start and end indices for this VM
         start_index = vm_index * instances_per_vm
         end_index = start_index + instances_per_vm
-        
+
         # Distribute any remainder instances to the first few VMs
         if vm_index < remainder:
             end_index += 1
-        
+
         # Get the subset of instance IDs for this VM
         vm_instance_ids = instance_ids[start_index:end_index]
-        
+
         # Create a unique name for this VM
         vm_name = f"{base_vm_name}-{vm_num_offset + vm_index}"
 
@@ -250,7 +250,7 @@ if [ ${{#instances[@]}} -eq 0 ]; then
   exit 1
 fi
 # Verify only the bucket access, not the job_prefix directory
-gcloud storage ls gs://${{BUCKET_NAME}}/ >/dev/null 2>&1 || {{ 
+gcloud storage ls gs://${{BUCKET_NAME}}/ >/dev/null 2>&1 || {{
   echo "ERROR: Cannot access destination bucket gs://${{BUCKET_NAME}}/"
   exit 1
 }}
@@ -261,26 +261,26 @@ conda activate seds || {{ echo "ERROR: Failed to activate conda environment 'sed
 # Loop through the assigned instances
 for INSTANCE_ID in "${{instances[@]}}"; do
   echo "$(date): Processing instance $INSTANCE_ID"
-  
+
   # Clean up logs directory if it exists
-  [ -d "logs" ] && rm -rf logs  
+  [ -d "logs" ] && rm -rf logs
   mkdir logs
   # Set up instance-specific logging
   INSTANCE_LOGFILE="logs/instance_${{INSTANCE_ID}}.log"
-  
+
   # Run your processing script with timeout
   echo "$(date): Running python script for instance $INSTANCE_ID" | tee -a "$INSTANCE_LOGFILE"
   {command} 2>&1 | tee -a "$INSTANCE_LOGFILE"
-  
+
   PYTHON_EXIT_CODE=${{PIPESTATUS[0]}}
   if [ $PYTHON_EXIT_CODE -ne 0 ]; then
     echo "ERROR: Processing failed for instance $INSTANCE_ID with exit code $PYTHON_EXIT_CODE" | tee -a "$INSTANCE_LOGFILE"
   fi
-  
+
   # Upload results
   echo "$(date): Uploading results for instance $INSTANCE_ID" | tee -a "$INSTANCE_LOGFILE"
   gcloud storage cp -r logs/ gs://${{BUCKET_NAME}}/{job_prefix}/$INSTANCE_ID 2>&1
-  
+
   if [ $? -eq 0 ]; then
     echo "$(date): Completed instance $INSTANCE_ID" | tee -a "$INSTANCE_LOGFILE"
   else
@@ -293,7 +293,7 @@ EOSU
 echo "$(date): Shutting down VM"
 poweroff
 """
-        
+
         # Add task for this VM
         tasks.append((
             project_id,
@@ -308,18 +308,18 @@ poweroff
             data_bucket,
             overwrite,
         ))
-    
+
     # Execute tasks in parallel
     successful_vms = []
     failed_vms = []
-    
+
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         # Submit all tasks
         future_to_vm = {
             executor.submit(process_single_vm, *task): task[3]  # vm_name is at index 3
             for task in tasks
         }
-        
+
         # Process results as they complete
         for future in as_completed(future_to_vm):
             vm_name = future_to_vm[future]
@@ -334,12 +334,12 @@ poweroff
             except Exception as e:
                 failed_vms.append(vm_name)
                 logger.error(f"Exception for VM {vm_name}: {str(e)}")
-    
+
     # Log summary
     logger.info(f"VM Creation Summary: {len(successful_vms)} successful, {len(failed_vms)} failed")
     if failed_vms:
         logger.warning(f"Failed VMs: {', '.join(failed_vms)}")
-    
+
     return successful_vms
 
 
@@ -348,7 +348,7 @@ if __name__ == "__main__":
     from pathlib import Path
     import argparse
     import random
-    
+
     # Set up argument parsing
     parser = argparse.ArgumentParser(description="Create distributed batch jobs for processing instances")
     parser.add_argument("instances_path", help="Path to file containing instance IDs")
@@ -361,25 +361,26 @@ if __name__ == "__main__":
     parser.add_argument("--randomise", action="store_true", help="randomise sequence of instances being processed")
     parser.add_argument("--max_parallel", type=int, default=10, help="Maximum number of VMs to create in parallel")
     parser.add_argument("--zone", type=str, required=True, help="zone in which to create VMs")
+    parser.add_argument("--base_vm", type=str, required=True, help="Base VM name, e.g. sedsbase")
 
     args = parser.parse_args()
-    
+
     # Parse arguments
     job_type = args.job_type
     rebuild = args.rebuild
     overwrite = rebuild or args.overwrite
-    
+
     # Hardcode the base VM name
-    base_vm_name = "sedsbase"
+    base_vm_name = args.base_vm
     project_id = "gen-lang-client-0511233871"
     zone = args.zone
-    
+
     # Define image family for this job type
     command = get_command(job_type)
 
     if command is None:
         raise RuntimeError(f"No command found for job type: {job_type}")
- 
+
     if args.instances_path == "dummy":
         instances_list = ["sympy__sympy-23950", "pydata__xarray-4356", "ytdl-org__youtube-dl-32725", "celery__celery-8486"]
     else:
@@ -387,7 +388,7 @@ if __name__ == "__main__":
 
     if args.randomise:
         random.shuffle(instances_list)
-    
+
     try:
         disk_image = create_image_wrapped(
             rebuild=rebuild,
@@ -411,10 +412,10 @@ if __name__ == "__main__":
             overwrite=overwrite,
             vm_num_offset=args.vm_num_offset,
             max_workers=args.max_parallel,
-        ) 
-        
+        )
+
         logger.info(f"Successfully managed {len(vms)} VMs to process instances")
-        
+
     except Exception as e:
         logger.error(f"Error creating image or submitting jobs: {e}")
         sys.exit(1)
