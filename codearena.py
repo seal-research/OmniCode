@@ -202,7 +202,7 @@ def setup_multiswebench_config(
     print(f"Configuration saved to {config_file}")
     return str(config_file)
 
-def run_with_timeout(cmd, timeout_seconds=-1):
+def run_with_timeout(cmd, timeout_seconds=10000):
     """Run a command with timeout and real-time output streaming."""
     print(f"Running command with {timeout_seconds}s timeout: {' '.join(cmd)}")
     
@@ -265,7 +265,7 @@ def run_with_timeout(cmd, timeout_seconds=-1):
         print(f"Error running command: {e}")
         return None, str(e), 1
 
-def run_multiswebench_phase(config_file, phase="all", timeout=-1):
+def run_multiswebench_phase(config_file, phase="all", timeout=10000):
     """Run a specific phase of Multi-SWE-Bench evaluation."""
     script_path = "./multiswebench/multi_swe_bench/harness/run_evaluation.py"
     
@@ -335,7 +335,7 @@ def main():
                         help="Optional instance IDs")
     parser.add_argument("--open_file_limit", type=int, default=4096,
                         help="Maximum number of open files")
-    parser.add_argument("--timeout", type=int, default=-1,
+    parser.add_argument("--timeout", type=int, default=10000,
                         help="Timeout for individual evaluations in seconds")
     parser.add_argument("--force_rebuild", type=str2bool, default=False,
                         help="Force rebuild of all images")

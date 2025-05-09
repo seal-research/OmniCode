@@ -84,10 +84,11 @@ def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
         }
         
         # Add bad patches if they exist
-        if "bad_patches" in datum:
-            result["bad_patches"] = datum["bad_patches"]
-        elif "bad_patch" in datum:
-            result["bad_patches"] = [datum["bad_patch"]]
+        # if "bad_patches" in datum:
+        #     result["bad_patches"] = datum["bad_patches"]
+        # elif "bad_patch" in datum:
+        #     result["bad_patches"] = [datum["bad_patch"]]
+        result["bad_patches"] = [{'idx': 0, 'patch': 0}]
             
         results.append(result)
     
@@ -322,7 +323,7 @@ def main(
 
     # clean images + make final report
     clean_images(client, existing_images, cache_level, clean)
-    make_run_report(predictions, full_dataset, client, run_id)
+    make_run_report(predictions, dataset, client, run_id)
 
 def run_instance(
         test_spec: TestSpec,
@@ -470,24 +471,56 @@ def run_instance(
         elif 'bad_patch' in pred:
             bad_patches = [pred['bad_patch']]
 
+        if bad_patches == []:
+            bad_patches = [{'idx': 0, 'patch': 0}]
+        
         # Create the base bad eval script
         base_eval_script = test_spec.inverted_eval_script_bad
 
         # Create and copy eval script for each bad patch
-        for i, bad_patch in enumerate(bad_patches):
-            # Get initial git diff before applying bad patch
-            git_diff_before = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-            logger.info(f"Git diff before bad patch {i}:\n{git_diff_before}")
+        for bad_patch_d in bad_patches:
+            i, bad_patch = bad_patch_d['idx'], bad_patch_d['patch']
+        # for i, bad_patch in enumerate(bad_patches):
+
+            # Apply and test candidate test patch
+            # Get initial git diff before applying test patch
+            git_diff_before_test = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+            logger.info(f"Git diff before test patch:\n{git_diff_before_test}")
+
+            patch_file = Path(log_dir / "patch.diff")
+            patch_content = pred.get("candidate_test_patch") or pred.get("model_patch") or ""
+            patch_file.write_text(patch_content)
+            logger.info(f"Candidate Test Patch written to {patch_file}")
+            copy_to_container(container, patch_file, Path("/tmp/patch.diff"))
+
+            # Apply patch
+            val = container.exec_run("git apply --allow-empty -v /tmp/patch.diff", workdir="/testbed", user="root")
+            if val.exit_code != 0:
+                logger.info("First patch attempt failed, trying with more permissive options...")
+                val = container.exec_run("patch --batch --fuzz=5 -p1 -i /tmp/patch.diff", workdir="/testbed", user="root")
+                if val.exit_code != 0:
+                    logger.info(f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}")
+                    raise EvaluationError(instance_id, f"{APPLY_PATCH_FAIL}:\n{val.output.decode('utf-8')}", logger)
+                else:
+                    logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
+            else:
+                logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
+
+            # Get git diff after applying test patch
+            git_diff_after_test = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
+            logger.info(f"Git diff after test patch and before applying the bad patch:\n{git_diff_after_test}")
+
 
             # Create a new eval script for this specific bad patch
             eval_script = base_eval_script.replace(
                 f"EOF_{test_spec.instance_id}",
                 f"EOF_{test_spec.instance_id}_bad_{i}"
             )
-            eval_script = eval_script.replace(
-                test_spec.bad_patches[0],  # Replace the first bad patch
-                bad_patch  # With the current bad patch
-            )
+            if bad_patches != [{'idx': 0, 'patch': 0}]:
+                eval_script = eval_script.replace(
+                    test_spec.bad_patches[0]["patch"],  # Replace the first bad patch
+                    bad_patch  # With the current bad patch
+                )
             
             eval_file = Path(log_dir / f"bad_eval_{i}.sh")
             eval_file.write_text(eval_script)

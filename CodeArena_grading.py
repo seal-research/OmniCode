@@ -458,7 +458,7 @@ def get_eval_report_test_generation(
     for result in report_map[instance_id]["bad_patches_results"]:
         if result["tests_status"]:
             bad_tests = result["tests_status"].get("EXPECTED_FAIL", {})
-            if bad_tests.get("failure", []):  # If there are failures, that's good!
+            if bad_tests.get("success", []):  # If there are failures, that's good!
                 any_bad_patch_failed = True
                 break
 
