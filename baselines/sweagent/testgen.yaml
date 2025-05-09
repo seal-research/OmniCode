@@ -14,12 +14,12 @@ agent:
       </problem_description>
 
       Can you help me implement a test that successfully reproduces the problem specified in the <problem_description>?
-      The test can be created in the repository's existing test suite or as an independent test if more suitable.
+      The test must be created in the repository's existing test suite and should be runable with the repository's testing infrastructure / tooling (e.g. pytest).
       Do not make any changes to the non-test code in the repository since we only need to create a reproduction test.
       Follow these steps to resolve the issue:
       1. As a first step, it might be a good idea to find and read code relevant to the <problem_description>
       2. Create a script to reproduce the error and execute it with `python <filename.py>` using the bash tool, to confirm the error
-      3. Edit the the testing suite of the repo to implement a test for the problem described
+      3. Edit the the testing suite of the repo to implement a test based on this reproduction script which can be run using the repository's testing infrastructure / tooling (e.g. pytest)
       4. Ensure this test runs and successfully reproduces the problem!
       Your thinking should be thorough and so it's fine if it's very long.
     next_step_template: |-
@@ -38,7 +38,7 @@ agent:
         - |
           Thank you for your work on this issue. Please carefully follow the steps below to help review your changes.
 
-          1. Make sure that the test you have implemented runs and successfully reproduces the problem specified
+          1. Make sure that the test you have implemented runs and successfully using the repository's testing infrastructure / tooling and reproduces the problem specified
           2. If you have modified any NON-TEST files, please revert them to the state they had before you started fixing the issue.
             You can do this with `git checkout -- /path/to/file.py`. Use below <diff> to find the files you need to revert.
           3. Run the submit command again to confirm.
