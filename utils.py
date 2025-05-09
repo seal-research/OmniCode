@@ -182,8 +182,9 @@ def load_CodeArena_prediction_dataset(
         patch_label = "bad_patches"
 
     codearena_instances_filtered = codearena_instances_df[
-    codearena_instances_df[patch_label].notna() & codearena_instances_df[patch_label].str.strip().ne("")
+    codearena_instances_df['bad_patches'].notna()
     ].copy()
+    # codearena_instances_filtered = codearena_instances_df.copy()
 
     print(codearena_instances_df.columns)
     # Check for missing predictions

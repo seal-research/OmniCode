@@ -76,7 +76,7 @@ class TestSpec:
                 "testbed",
                 f"/testbed",
                 self.base_commit,
-                bad_patch,
+                bad_patch['patch'],
                 self.test_patch
             )
             for bad_patch in self.bad_patches
@@ -407,9 +407,12 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     # Reset all files *except* test files to the state they should be in before the patch.
     reset_command = f"git stash push -- {' '.join(test_files)} && git checkout {base_commit} -- . && git stash pop"
 
-    apply_issue_patch_command = (
-        f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{issue_patch}\n{HEREDOC_DELIMITER}"
-    )
+    if issue_patch != 0:
+        apply_issue_patch_command = (
+            f"git apply -v - <<'{HEREDOC_DELIMITER}'\n{issue_patch}\n{HEREDOC_DELIMITER}"
+        )
+    else:
+        apply_issue_patch_command = ""
     
     # Handle both dict and TestSpec types
     repo = instance["repo"] if isinstance(instance, dict) else instance.repo
@@ -596,15 +599,17 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
     if not isinstance(bad_patches, list):
         bad_patches = [bad_patches]  # Convert single patch to list if needed
     
+    if bad_patches == []:
+        bad_patches = [{'idx': 0, 'patch': 0}]
+
     # Filter out empty or None patches
-    bad_patches = [patch for patch in bad_patches if patch and patch != 0]
+    # bad_patches = [patch for patch in bad_patches if patch and patch != 0]
     
     if platform.machine() in {"aarch64", "arm64"}:
         # use arm64 unless explicitly specified
         arch = "arm64" if instance_id not in USE_X86 else "x86_64"
     else:
         arch = "x86_64"
-
 
     # Create test spec
     test_spec = TestSpec(
@@ -626,7 +631,7 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
                 "testbed",
                 f"/testbed",
                 base_commit,
-                bad_patch,
+                bad_patch['patch'],
                 test_patch
             )
             for bad_patch in bad_patches
