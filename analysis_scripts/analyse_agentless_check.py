@@ -33,11 +33,13 @@ def analyse(
             continue
 
         original_instance = instances[0]
-        if "bad_patches" not in original_instance or len(original_instance["bad_patches"]) == 0:
-            original_instance["bad_patches"] = []
-            max_id = 0
-        else:
-            max_id = max([bp['idx'] for bp in original_instance['bad_patches']])
+        original_instance["bad_patches"] = []
+        max_id = 0
+        # if "bad_patches" not in original_instance or len(original_instance["bad_patches"]) == 0:
+        #     original_instance["bad_patches"] = []
+        #     max_id = 0
+        # else:
+        #     max_id = max([bp['idx'] for bp in original_instance['bad_patches']])
 
         for pdir in patch_dirs:
 
@@ -64,8 +66,14 @@ def analyse(
                 skipped.append(instance_id)
                 continue
 
-            resolved_dict[pdir.name] = report_data[instance_id]['resolved']
-    
+            resolved_status = report_data[instance_id]['resolved']
+            resolved_dict[pdir.name] = resolved_status
+
+            if not resolved_status:
+                max_id += 1
+                patch = json.loads((patches_dir / f"{pdir.name}.jsonl").read_text())["model_patch"]
+                original_instance['bad_patches'].append({"idx": max_id, "patch": patch})
+
         if len(resolved_dict) == 0:
             print(f"Error: No reports found for {instance_id}, skipping ...")
             skipped.append(instance_id)
@@ -73,17 +81,12 @@ def analyse(
 
         if any(r == False for r in resolved_dict.values()):
             bp_present.append(instance_id)
-            max_id += 1
-            patch = json.loads((patches_dir / f"{pdir.name}.jsonl").read_text())["model_patch"]
-            original_instance['bad_patches'].append({"idx": max_id, "patch": patch})
-
         else:
             bp_missing.append(instance_id)
 
         with_patches_data.append(original_instance)
     
     
-
     print(f"Skipped: {skipped}")
     print(f"{len(present)=}, {len(skipped)=}, {len(bp_present)=}, {len(bp_missing)=}")
 
