@@ -209,12 +209,10 @@ def create_distributed_compute_vms(
             continue
 
         # Calculate the start and end indices for this VM
-        start_index = vm_index * instances_per_vm
-        end_index = start_index + instances_per_vm
-
         # Distribute any remainder instances to the first few VMs
-        if vm_index < remainder:
-            end_index += 1
+        start_index = vm_index * instances_per_vm + min(vm_index, remainder)
+        extra = 1 if vm_index < remainder else 0
+        end_index  = start_index + instances_per_vm + extra
 
         # Get the subset of instance IDs for this VM
         vm_instance_ids = instance_ids[start_index:end_index]
