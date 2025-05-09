@@ -58,73 +58,44 @@ def copy_from_container(container, src_path: Path, dest_path: Path):
     except Exception as e:
         raise RuntimeError(f"Failed to copy {src_path} from container: {e}")
 
-def load_swebench_dataset(name="princeton-nlp/SWE-bench", split="test", instance_ids=None, full: bool = False) -> list[CodeArenaInstance]:
+def load_swebench_dataset(name="data/codearena_instances.json", split="test", instance_ids=None, full: bool = False) -> list[CodeArenaInstance]:
     """
-    Load SWE-bench dataset from Hugging Face Datasets or local .json/.jsonl file
+    Load dataset from local JSON file
     """
     # check that all instance IDs are in the dataset
     if instance_ids:
         instance_ids = set(instance_ids)
-    # Load from local .json/.jsonl file
-    if name.endswith(".json") or name.endswith(".jsonl"):
-        dataset = []
+
+    try:
         with open(name, "r", encoding="utf-8") as f:
-            if name.endswith(".jsonl"):
-                for line in f:
-                    if line.strip():
-                        try:
-                            entry = json.loads(line)
-                            dataset.append(entry)
-                        except json.JSONDecodeError:
-                            continue
-            else:
-                try:
-                    dataset = json.load(f)
-                except json.JSONDecodeError:
-                    f.seek(0)
-                    for line in f:
-                        if line.strip():
-                            try:
-                                entry = json.loads(line)
-                                dataset.append(entry)
-                            except json.JSONDecodeError:
-                                continue
-
+            dataset = json.load(f)
         dataset_ids = {instance[KEY_INSTANCE_ID] for instance in dataset}
-    else:
-        # Load from Hugging Face Datasets
-        if name.lower() in {"swe-bench", "swebench", "swe_bench"}:
-            name = "princeton-nlp/SWE-bench"
-        elif name.lower() in {"swe-bench-lite", "swebench-lite", "swe_bench_lite", "swe-bench_lite", "lite"}:
-            name = "princeton-nlp/SWE-bench_Lite"
-        elif name.lower() in {"swe-bench_verified"}:
-            name = "princeton-nlp/SWE-bench_Verified"
-
-        # Load dataset
-        dataset = cast(Dataset, load_dataset(name, split=split))
-        if full:
-            # Rename columns
-            if "test_patch" in dataset.column_names:
-                dataset = dataset.rename_column("test_patch", "candidate_test_patch")
-            if "patch" in dataset.column_names:
-                dataset = dataset.rename_column("patch", "gold_patch")
-            
-            # Insert a new column 'bad_patch' with the default value 0
-            dataset = dataset.add_column("bad_patch", [0] * len(dataset))
-
-        # Collect dataset IDs
-        dataset_ids = {instance[KEY_INSTANCE_ID] for instance in dataset}
-
-    if instance_ids:
-        if instance_ids - dataset_ids:
-            raise ValueError(
-                (
-                    "Some instance IDs not found in dataset!"
-                    f"\nMissing IDs:\n{' '.join(instance_ids - dataset_ids)}"
+        
+        if instance_ids:
+            if instance_ids - dataset_ids:
+                raise ValueError(
+                    (
+                        "Some instance IDs not found in dataset!"
+                        f"\nMissing IDs:\n{' '.join(instance_ids - dataset_ids)}"
+                    )
                 )
-            )
-        dataset = [instance for instance in dataset if instance[KEY_INSTANCE_ID] in instance_ids]
-    return [cast(CodeArenaInstance, instance) for instance in dataset]
+            dataset = [instance for instance in dataset if instance[KEY_INSTANCE_ID] in instance_ids]
+        
+        # Ensure all required fields are present
+        for instance in dataset:
+            if "model_name_or_path" not in instance:
+                instance["model_name_or_path"] = "gold"
+            if "bad_patch" not in instance:
+                instance["bad_patch"] = 0
+            if "candidate_test_patch" not in instance:
+                instance["candidate_test_patch"] = instance.get("test_patch", "")
+            if "gold_patch" not in instance:
+                instance["gold_patch"] = instance.get("patch", "")
+        
+        return [cast(CodeArenaInstance, instance) for instance in dataset]
+    except Exception as e:
+        print(f"Error loading {name}: {e}")
+        raise
 
 def merge_and_unpack(expected):
     # Handle case where the input is not a list but a single dictionary
