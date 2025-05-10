@@ -290,19 +290,19 @@ def make_run_report(
     return report_file
 
 def main(
-        dataset_name: str,
-        split: str,
-        instance_ids: list,
-        predictions_path: str,
-        max_workers: int,
-        force_rebuild: bool,
-        cache_level: str,
-        clean: bool,
-        open_file_limit: int,
-        run_id: str,
-        timeout: int,
-        min_score: int,
-        max_severity: int
+        dataset_name: str = "data/codearena_instances.json",
+        split: str = "test",
+        instance_ids: list = None,
+        predictions_path: str = None,
+        max_workers: int = 4,
+        force_rebuild: bool = False,
+        cache_level: str = "env",
+        clean: bool = False,
+        open_file_limit: int = 4096,
+        run_id: str = None,
+        timeout: int = 1800,
+        min_score: int = None,
+        max_severity: int = None
     ):
     """
     Run evaluation harness for the given dataset and predictions.
@@ -315,7 +315,7 @@ def main(
     # load predictions as map of instance_id to prediction
     if predictions_path == 'gold':
         print("Using gold predictions - ignoring predictions_path")
-        predictions = get_gold_predictions(dataset_name, instance_ids, split) # Gold Prediction should correspond to ground truth test (PASS TO FAIl)
+        predictions = get_gold_predictions(dataset_name, instance_ids, split)
     else:
         if predictions_path.endswith(".json"):
             with open(predictions_path, "r") as f:
@@ -328,11 +328,14 @@ def main(
     predictions = {pred[KEY_INSTANCE_ID]: pred for pred in predictions}
 
     # get dataset from predictions
-    if(not predictions_path == 'gold'):
-        dataset = get_dataset_from_preds(dataset_name, split, instance_ids, run_id=run_id, generated_tests_path=predictions_path)
-    else:
+    if predictions_path == 'gold':
         dataset = get_gold_predictions(dataset_name, instance_ids, split)
+    else:
+        dataset = get_dataset_from_preds(dataset_name, split, instance_ids, run_id=run_id, generated_tests_path=predictions_path)
+    
+    # Load full dataset
     full_dataset = load_swebench_dataset(dataset_name, split, instance_ids, full=True)
+
     existing_images = list_images(client)
     print(f"Running {len(dataset)} unevaluated instances...")
     if not dataset:
@@ -344,7 +347,7 @@ def main(
 
     # clean images + make final report
     clean_images(client, existing_images, cache_level, clean)
-    make_run_report(predictions, full_dataset, client, run_id, min_score= min_score, max_severity = max_severity)
+    make_run_report(predictions, full_dataset, client, run_id, min_score=min_score, max_severity=max_severity)
 
     
 def run_instance(
@@ -408,7 +411,7 @@ def run_instance(
         model_patch = pred.get("model_patch", "") or pred.get("gold_patch", "") or pred.get("candidate_test_patch", "")
         
         # Define absolute container paths.
-        container_aggregated = "/tmp/pylint_report.json"
+        container_aggregated = "/tmp/pylint_aggregated.json"
         container_errors = "/tmp/pylint_errors.json"
 
         # Generate evaluation script with container paths.
@@ -448,16 +451,28 @@ def run_instance(
 
         # Copy error messages files from the container.
         try:
-            copy_from_container(container, Path(container_errors), error_output_path)
+            # First check if the files exist in the container
+            for path in [container_errors, container_aggregated]:
+                result = container.exec_run(f"test -f {path}")
+                if result.exit_code != 0:
+                    logger.error(f"File {path} does not exist in container")
+                    continue
+                
+                # Copy the file
+                if path == container_errors:
+                    copy_from_container(container, Path(path), error_output_path)
+                else:
+                    copy_from_container(container, Path(path), aggregated_report_path)
         except Exception as e:
             logger.error(f"Copy failed: {str(e)}")
-            aggregated_report_path = None
 
-        # Parse the aggregated report, instead of creating a separate file, write to full report
+        # Parse the aggregated report
         aggregated_report = {}
         try:
-            lint_output_str = exec_run_with_timeout(container, f"cat {container_aggregated}", timeout)[0]
-            aggregated_report = json.loads(lint_output_str)
+            if aggregated_report_path.exists():
+                aggregated_report = json.loads(aggregated_report_path.read_text())
+            else:
+                logger.error("Aggregated report file not found")
         except json.JSONDecodeError:
             logger.error(f"Invalid JSON in aggregated report output from container")
         except Exception as e:
@@ -535,6 +550,7 @@ def run_instances(
     client = docker.from_env()
     test_specs = list(map(make_test_spec, instances)) # will include inverted evaluation script for gold and bad patch
 
+
     # print number of existing instance images
     instance_image_ids = {x.instance_image_key for x in test_specs}
     existing_images = {
@@ -584,7 +600,7 @@ def run_instances(
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--dataset_name", default="princeton-nlp/SWE-bench_Verified", type=str, help="Name of dataset or path to JSON file.")
+    parser.add_argument("--dataset_name", default="data/codearena_instances.json", type=str, help="Name of dataset or path to JSON file.")
     parser.add_argument("--split", type=str, default="test", help="Split of the dataset")
     parser.add_argument("--instance_ids", nargs="+", type=str, help="Instance IDs to run (space separated)")
     parser.add_argument("--predictions_path", type=str, help="Path to predictions file - if 'gold', uses gold predictions", required=True)
@@ -611,8 +627,6 @@ if __name__ == "__main__":
         "--max_severity", type=str, choices=['convention', 'warning', 'error'], default='error',
         help="Maximum acceptable severity level for StyleReview"
     )
-    # if clean is true then we remove all images that are above the cache level
-    # if clean is false, we only remove images above the cache level if they don't already exist
     parser.add_argument(
         "--clean", type=str2bool, default=False, help="Clean images above cache level"
     )
