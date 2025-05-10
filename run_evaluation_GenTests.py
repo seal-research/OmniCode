@@ -424,10 +424,6 @@ def run_instance(
         else:
             logger.info(f"{APPLY_PATCH_PASS}:\n{val.output.decode('utf-8')}")
 
-        # Get git diff after applying test patch
-        git_diff_after_test = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
-        logger.info(f"Git diff after test patch:\n{git_diff_after_test}")
-
         # Step 3: Run gold patch evaluation
         # Get git diff before running gold eval
         git_diff_before_gold = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
@@ -455,6 +451,11 @@ def run_instance(
             if reset_val.exit_code != 0:
                 logger.error("All reset attempts failed before bad patches")
                 raise EvaluationError(instance_id, "Failed to reset before bad patches", logger)
+
+        # Remove untracked files/directories
+        clean_val = container.exec_run("git clean -fd", workdir="/testbed", user="root")
+        if clean_val.exit_code != 0:
+            logger.warning("Failed to remove untracked files")
 
         # Verify clean state after reset
         git_diff_after_reset = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
@@ -554,6 +555,11 @@ def run_instance(
                 if reset_val.exit_code != 0:
                     logger.error(f"All reset attempts failed for bad patch {i}")
                     continue
+
+            # Remove untracked files/directories
+            clean_val = container.exec_run("git clean -fd", workdir="/testbed", user="root")
+            if clean_val.exit_code != 0:
+                logger.warning("Failed to remove untracked files")
 
             # Verify clean state after reset
             git_diff_after_reset = container.exec_run("git diff", workdir="/testbed").output.decode("utf-8").strip()
