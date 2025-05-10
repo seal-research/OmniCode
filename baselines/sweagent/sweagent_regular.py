@@ -35,7 +35,7 @@ logger = logging.getLogger(__name__)
 #     model_name: str,
 #     output_dir: Path,
 # ):
-    
+
 #     agent = AgentConfig(
 #         model=GenericAPIModelConfig(
 #             name=model_name,
@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 #         post_startup_commands=[],
 #     )
 
-    
+
 #     # problem_statement = TextProblemStatement(
 #     #     text=PROMPT_TEMPLATE.render(
 #     #         issue=instance['problem_statement']
@@ -69,7 +69,7 @@ logger = logging.getLogger(__name__)
 #         )
 #         fp.close()
 
-        
+
 #         problem_statement = FileProblemStatement(
 #             path=Path(fp.name),
 #             id=instance['instance_id'],
@@ -86,7 +86,7 @@ logger = logging.getLogger(__name__)
 #         RunSingle.from_config(config).run()
 
 
-#     output_file_path = output_dir / problem_statement.id / (problem_statement.id + ".pred") 
+#     output_file_path = output_dir / problem_statement.id / (problem_statement.id + ".pred")
 #     output = json.loads(output_file_path.read_text())
 
 #     return None, output
@@ -100,11 +100,11 @@ def run_sweagent_single(
     output_dir: Path,
     mode: str = "bugfixing",
 ):
-    
+
     url = f"https://github.com/{instance['repo']}"
 
     if mode not in CONFIG_FILE_MAP:
-        raise RuntimeError(f"Unknown mode: {mode}")    
+        raise RuntimeError(f"Unknown mode: {mode}")
 
     config_file = CONFIG_FILE_MAP[mode]
 
@@ -130,8 +130,8 @@ def run_sweagent_single(
         ]
 
         sweagent_main(args)
-        
-    output_file_path = output_dir / instance['instance_id'] / (instance['instance_id']  + ".pred") 
+
+    output_file_path = output_dir / instance['instance_id'] / (instance['instance_id']  + ".pred")
     output = json.loads(output_file_path.read_text())
 
     return None, output
@@ -168,7 +168,7 @@ def main(
         dataset = [d for d in dataset if d["instance_id"] in instance_ids]
 
     existing_ids = set()
-    
+
     output_dir_path.mkdir(parents=True, exist_ok=True)
     output_file_path = output_dir_path / "all_preds.jsonl"
 
@@ -183,7 +183,7 @@ def main(
     basic_args = {
         "model_name_or_path": model_name,
     }
-    
+
     with open(output_file_path, "a+") as f:
         for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
             instance_id = datum["instance_id"]
@@ -205,7 +205,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
     parser.add_argument("-k", "--api_key", type=str, required=True)
-    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java"])
+    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview"])
     args = parser.parse_args()
 
     main(
