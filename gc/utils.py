@@ -358,6 +358,13 @@ SANITY_CMD = """python codearena.py \
 --run_id sanity \
 --instance_ids $INSTANCE_ID"""
 
+STYLE_REVIEW_CMD = """python codearena.py \
+--StyleReview \
+--language python \
+--predictions_path gold \
+--instance_ids $INSTANCE_ID \
+--run_id style_check2"""
+
 
 BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
 -o logs/ \
@@ -474,7 +481,7 @@ AGENTLESS_CHECK_JAVA_CMD = """process_files() {
     mkdir -p tmp_logs
 
     # Base Google Storage path
-    BASE_PATH="gs://${BUCKET_NAME}/agentless_bad_patches_java"
+    BASE_PATH="gs://${BUCKET_NAME}/agentless_bad_patches_java2"
 
     for i in {0..2}; do
         # Construct the filename
@@ -624,8 +631,15 @@ SWEAGENT_TG_CHECK_CMD = PATCH_CHECK_CMD.format(
         --instance_ids "${INSTANCE_ID}" """,
 )
 
-
-
+SWEAGENT_SR_CHECK_CMD = PATCH_CHECK_CMD.format(
+    results_dir="sweb-sweagent-sr",
+    check_cmd="""python codearena.py \
+          --StyleReview \
+          --language python \
+          --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
+          --run_id sweagent_sr_check \
+          --instance_ids "${INSTANCE_ID}" """,
+    )
 
 SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances.json \
@@ -636,7 +650,6 @@ SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
 --instance_ids $INSTANCE_ID"""
 
 
-
 SWEAGENT_TESTGEN_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances.json \
 -o logs \
@@ -645,6 +658,14 @@ SWEAGENT_TESTGEN_CMD = """python baselines/sweagent/sweagent_regular.py \
 --mode testgen \
 --instance_ids $INSTANCE_ID"""
 
+
+SWEAGENT_STYLE_REVIEW_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m gemini/gemini-2.5-flash-preview-04-17 \
+-k $GEMINI_API_KEY \
+--mode stylereview \
+--instance_ids $INSTANCE_ID"""
 
 
 SWEAGENT_BUGFIXING_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
@@ -664,6 +685,20 @@ SWEAGENT_TESTGEN_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
 --mode testgen_java \
 --instance_ids $INSTANCE_ID"""
 
+# STYLE_REVIEW_CHECK_CMD = """python codearena.py \
+# --StyleReview \
+# --language python \
+# --predictions_path gold \
+# --instance_ids $INSTANCE_ID \
+# --run_id style_check"""
+
+# STYLE_REVIEW_CMD = """python codearena.py \
+# --StyleReview \
+# --language python \
+# --predictions_path gold \
+# --instance_ids $INSTANCE_ID \
+# --run_id style_check"""
+
 
 COMMAND_MAP = {
     "sanity": SANITY_CMD,
@@ -676,6 +711,9 @@ COMMAND_MAP = {
     "sweagent-tg-check": SWEAGENT_TG_CHECK_CMD,
     "sweagent-bf-java": SWEAGENT_BUGFIXING_JAVA_CMD,
     "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
+    "sweagent-sr": SWEAGENT_STYLE_REVIEW_CMD,
+    "sweagent-sr-check": SWEAGENT_SR_CHECK_CMD,
+    "style-review": STYLE_REVIEW_CMD,
 }
 
 def get_command(
