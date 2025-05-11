@@ -99,6 +99,7 @@ def run_sweagent_single(
     api_key: str,
     output_dir: Path,
     mode: str = "bugfixing",
+    thinking_budget: int | None = None,
 ):
     
     url = f"https://github.com/{instance['repo']}"
@@ -126,8 +127,15 @@ def run_sweagent_single(
             f"--env.repo.base_commit={instance['base_commit']}",
             f"--problem_statement.path={str(fp.name)}",
             f"--problem_statement.id={instance['instance_id']}",
-            f"--output_dir={output_dir}"
+            f"--output_dir={output_dir}",
         ]
+
+            
+        if thinking_budget is not None:
+            if model_name.startswith("gemini"):
+                args.append("""--agent.model.completion_kwargs={"thinking":{"type":"enabled","budget_tokens":""" + str(int(thinking_budget)) + """}}""")
+            else:    
+                raise RuntimeError(f"Cannot use thinking budget with non-gemini model: {model_name}")
 
         sweagent_main(args)
         
@@ -144,6 +152,7 @@ def main(
     api_key: str,
     instance_ids: list[str] | None= None,
     mode: str = "bugfixing",
+    thinking_budget: int | None = None,
 ):
     if input_tasks_path.exists():
         if input_tasks_path.suffix.endswith("json"):
@@ -191,7 +200,7 @@ def main(
                 continue
             output_dict = {"instance_id": instance_id}
             output_dict.update(basic_args)
-            full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path, api_key=api_key, mode=mode)
+            full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path, api_key=api_key, mode=mode, thinking_budget=thinking_budget)
             output_dict["full_output"] = full_output
             output_dict["model_patch"] = model_patch
             print(json.dumps(output_dict), file=f, flush=True)
@@ -206,6 +215,7 @@ if __name__ == '__main__':
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
     parser.add_argument("-k", "--api_key", type=str, required=True)
     parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java"])
+    parser.add_argument("--thinking_budget", type=int, default=0)
     args = parser.parse_args()
 
     main(
@@ -215,5 +225,6 @@ if __name__ == '__main__':
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
         api_key=args.api_key,
         mode=args.mode,
+        thinking_budget=args.thinking_budget
     )
 
