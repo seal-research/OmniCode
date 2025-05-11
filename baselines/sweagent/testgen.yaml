@@ -21,6 +21,7 @@ agent:
       2. Create a script to reproduce the error and execute it with `python <filename.py>` using the bash tool, to confirm the error
       3. Edit the the testing suite of the repo to implement a test based on this reproduction script which can be run using the repository's testing infrastructure / tooling (e.g. pytest)
       4. Ensure this test runs and successfully reproduces the problem!
+      5. Remove the reproduction script and only keep changes to the test suite that reproduce the problem.
       Your thinking should be thorough and so it's fine if it's very long.
     next_step_template: |-
       OBSERVATION:
@@ -41,7 +42,8 @@ agent:
           1. Make sure that the test you have implemented runs and successfully using the repository's testing infrastructure / tooling and reproduces the problem specified
           2. If you have modified any NON-TEST files, please revert them to the state they had before you started fixing the issue.
             You can do this with `git checkout -- /path/to/file.py`. Use below <diff> to find the files you need to revert.
-          3. Run the submit command again to confirm.
+          3. Make sure to remove any extraneous standalone reproduction scripts that you may have implemented. Only keep changes to the test suite.
+          4. Run the submit command again to confirm.
 
           Here is a list of all of your changes:
 
