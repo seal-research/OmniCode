@@ -8,7 +8,7 @@ import logging
 from google.cloud import compute_v1
 from google.api_core.exceptions import GoogleAPIError
 
-from utils import list_to_bash_array, check_vm_exists, get_vm_status, reset_vm, wait_for_operation, start_vm, get_command, create_image_wrapped, delete_vm
+from utils import list_to_bash_array, check_vm_exists, get_vm_status, reset_vm, wait_for_operation, start_vm, get_command, delete_vm
 
 # Set up logging
 logging.basicConfig(level=logging.INFO,
@@ -24,6 +24,95 @@ INITIAL_RETRY_DELAY = 5  # seconds
 MAX_RETRY_DELAY = 60  # seconds
 
 
+def wait_for_global_operation(project_id, operation_name):
+    """Wait for a global operation to complete."""
+    operation_client = compute_v1.GlobalOperationsClient()
+    
+    while True:
+        result = operation_client.get(
+            project=project_id,
+            operation=operation_name
+        )
+        
+        if result.status == compute_v1.Operation.Status.DONE:
+            if result.error:
+                logger.error(f"Operation {operation_name} failed: {result.error}")
+                return False
+            return True
+            
+        time.sleep(1)  # Wait before checking again
+
+
+def check_snapshot_exists(project_id, snapshot_name):
+    """Check if a snapshot with the given name exists."""
+    snapshot_client = compute_v1.SnapshotsClient()
+    try:
+        snapshot_client.get(project=project_id, snapshot=snapshot_name)
+        return True
+    except Exception:
+        return False
+
+
+def delete_snapshot(project_id, snapshot_name):
+    """Delete a snapshot."""
+    snapshot_client = compute_v1.SnapshotsClient()
+    try:
+        operation = snapshot_client.delete(project=project_id, snapshot=snapshot_name)
+        return wait_for_global_operation(project_id, operation.name)
+    except Exception as e:
+        logger.error(f"Failed to delete snapshot {snapshot_name}: {str(e)}")
+        return False
+
+
+def create_disk_snapshot(project_id, zone, instance_name, snapshot_name, force_update=False):
+    """Create a snapshot of a running VM's boot disk. If force_update is True, 
+    delete the snapshot if it already exists."""
+    
+    # Check if snapshot already exists
+    if check_snapshot_exists(project_id, snapshot_name):
+        if force_update:
+            logger.info(f"Snapshot {snapshot_name} already exists. Deleting it before creating a new one.")
+            if not delete_snapshot(project_id, snapshot_name):
+                logger.error(f"Failed to delete existing snapshot {snapshot_name}")
+                return None
+        else:
+            logger.info(f"Using existing snapshot {snapshot_name}")
+            return f"projects/{project_id}/global/snapshots/{snapshot_name}"
+    
+    # Get the disk name from the instance
+    instance_client = compute_v1.InstancesClient()
+    instance = instance_client.get(project=project_id, zone=zone, instance=instance_name)
+    boot_disk_name = instance.disks[0].source.split('/')[-1]
+    
+    logger.info(f"Creating snapshot {snapshot_name} from disk {boot_disk_name}")
+    
+    # Create a snapshot
+    disk_client = compute_v1.DisksClient()
+    snapshot_request = compute_v1.Snapshot()
+    snapshot_request.name = snapshot_name
+    snapshot_request.description = f"Latest snapshot of {boot_disk_name} from {instance_name}"
+    
+    try:
+        operation = disk_client.create_snapshot(
+            project=project_id,
+            zone=zone,
+            disk=boot_disk_name,
+            snapshot_resource=snapshot_request
+        )
+        
+        wait_result = wait_for_operation(operation, project_id, zone)
+        if wait_result:
+            logger.info(f"Successfully created snapshot {snapshot_name}")
+            # Return the full snapshot path
+            return f"projects/{project_id}/global/snapshots/{snapshot_name}"
+        else:
+            logger.error(f"Failed to create snapshot {snapshot_name}")
+            return None
+    except Exception as e:
+        logger.error(f"Exception creating snapshot: {str(e)}")
+        return None
+
+
 def exponential_backoff(retry_number):
     """Calculate delay with exponential backoff and jitter."""
     delay = min(MAX_RETRY_DELAY, INITIAL_RETRY_DELAY * (2 ** retry_number))
@@ -34,14 +123,14 @@ def exponential_backoff(retry_number):
 
 def process_single_vm(
     project_id: str,
-    zone: str,
+    zone: str,  # This is now the worker VM zone, which can be different
     job_prefix: str,
     vm_name: str,
     vm_instance_ids: List[str],
     startup_script: str,
     machine_type: str,
     disk_size_gb: int,
-    disk_image: str,
+    snapshot_source: str,
     data_bucket: str,
     overwrite: bool
 ) -> Tuple[str, bool]:
@@ -106,7 +195,10 @@ def process_single_vm(
 
                 initialize_params = compute_v1.AttachedDiskInitializeParams()
                 initialize_params.disk_size_gb = disk_size_gb
-                initialize_params.source_image = disk_image
+                
+                # Use snapshot source - snapshots are global resources, so this works across regions
+                initialize_params.source_snapshot = snapshot_source
+                    
                 disk.initialize_params = initialize_params
                 instance.disks = [disk]
 
@@ -145,7 +237,7 @@ def process_single_vm(
                 instance.metadata = metadata
 
                 # Create the VM
-                logger.info(f"Creating new VM {vm_name} to process {len(vm_instance_ids)} instances...")
+                logger.info(f"Creating new VM {vm_name} in zone {zone} to process {len(vm_instance_ids)} instances...")
                 operation = instance_client.insert(
                     project=project_id,
                     zone=zone,
@@ -154,10 +246,10 @@ def process_single_vm(
 
                 wait_result = wait_for_operation(operation, project_id, zone)
                 if wait_result:
-                    logger.info(f"Successfully created VM: {vm_name}")
+                    logger.info(f"Successfully created VM: {vm_name} in zone {zone}")
                     return vm_name, True
                 else:
-                    logger.error(f"Failed to create VM: {vm_name}. Retrying...")
+                    logger.error(f"Failed to create VM: {vm_name} in zone {zone}. Retrying...")
                     raise Exception(f"Failed to create VM: {vm_name}")
 
             # If we get here, something unexpected happened
@@ -166,10 +258,10 @@ def process_single_vm(
         except Exception as e:
             if retry < MAX_RETRIES - 1:
                 delay = exponential_backoff(retry)
-                logger.warning(f"Attempt {retry+1} failed for VM {vm_name}: {str(e)}. Retrying in {delay:.2f} seconds...")
+                logger.warning(f"Attempt {retry+1} failed for VM {vm_name} in zone {zone}: {str(e)}. Retrying in {delay:.2f} seconds...")
                 time.sleep(delay)
             else:
-                logger.error(f"All {MAX_RETRIES} attempts failed for VM {vm_name}: {str(e)}")
+                logger.error(f"All {MAX_RETRIES} attempts failed for VM {vm_name} in zone {zone}: {str(e)}")
                 return vm_name, False
 
     # This should not be reached, but just in case
@@ -178,7 +270,8 @@ def process_single_vm(
 
 def create_distributed_compute_vms(
     project_id: str,
-    zone: str,
+    base_zone: str,  # Zone where the base VM exists
+    worker_zone: str,  # Zone where worker VMs will be created
     job_prefix: str,
     instance_ids: list[str],
     command: str,
@@ -186,15 +279,14 @@ def create_distributed_compute_vms(
     machine_type: str = "e2-standard-4",
     disk_size_gb: int = 100,
     num_vms: int = 20,
-    disk_image: str | None = None,
+    snapshot_source: str = None,
     data_bucket: str = "your-data-bucket",
     overwrite: bool = False,
     vm_num_offset: int = 0,
-    max_workers: int = 10,  # Control parallelism
+    max_workers: int = 10,
     indices_to_run: list[int] | None = None,
 ):
     """Create or reuse multiple Compute Engine VMs in parallel to distribute the processing."""
-
     # Calculate how many instances each VM should handle
     total_instances = len(instance_ids)
     instances_per_vm = total_instances // num_vms
@@ -204,7 +296,6 @@ def create_distributed_compute_vms(
     tasks = []
 
     for vm_index in range(num_vms):
-
         if indices_to_run is not None and vm_index not in indices_to_run:
             continue
 
@@ -212,7 +303,7 @@ def create_distributed_compute_vms(
         # Distribute any remainder instances to the first few VMs
         start_index = vm_index * instances_per_vm + min(vm_index, remainder)
         extra = 1 if vm_index < remainder else 0
-        end_index  = start_index + instances_per_vm + extra
+        end_index = start_index + instances_per_vm + extra
 
         # Get the subset of instance IDs for this VM
         vm_instance_ids = instance_ids[start_index:end_index]
@@ -297,17 +388,17 @@ echo "$(date): Shutting down VM"
 poweroff
 """
 
-        # Add task for this VM
+        # Add task for this VM - use worker_zone instead of base_zone
         tasks.append((
             project_id,
-            zone,
+            worker_zone,  # Worker VMs will be created in this zone
             job_prefix,
             vm_name,
             vm_instance_ids,
             startup_script,
             machine_type,
             disk_size_gb,
-            disk_image,
+            snapshot_source,
             data_bucket,
             overwrite,
         ))
@@ -356,14 +447,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create distributed batch jobs for processing instances")
     parser.add_argument("instances_path", help="Path to file containing instance IDs")
     parser.add_argument("job_type", help="Type of job to run (e.g., 'sanity', 'bp-gen')")
-    parser.add_argument("--rebuild", action="store_true", help="Rebuild the image from the base VM")
+    parser.add_argument("--update-snapshot", action="store_true", help="Create/update the snapshot from the base VM")
     parser.add_argument("--overwrite", action="store_true", help="If specified, delete existing VMs with the same name before creating new ones")
     parser.add_argument("--dummy", action="store_true", help="Run on 4 instances with 4 VMs")
     parser.add_argument("--vm_num_offset", type=int, required=False, default=0)
     parser.add_argument("--num_vms", type=int, default=20, required=False)
     parser.add_argument("--randomise", action="store_true", help="randomise sequence of instances being processed")
     parser.add_argument("--max_parallel", type=int, default=10, help="Maximum number of VMs to create in parallel")
-    parser.add_argument("--zone", type=str, required=True, help="zone in which to create VMs")
+    parser.add_argument("--base_zone", type=str, required=True, help="Zone where the base VM is located")
+    parser.add_argument("--worker_zone", type=str, help="Zone where worker VMs will be created (defaults to base_zone if not specified)")
     parser.add_argument("--base_vm", type=str, required=True, help="Base VM name, e.g. sedsbase")
     parser.add_argument("--vm_idx_to_run", type=str, help="comma seperate list if ints indicating vms to run", default=None)
 
@@ -371,15 +463,19 @@ if __name__ == "__main__":
 
     # Parse arguments
     job_type = args.job_type
-    rebuild = args.rebuild
-    overwrite = rebuild or args.overwrite
+    update_snapshot = args.update_snapshot
+    overwrite = args.overwrite
 
     # Hardcode the base VM name
     base_vm_name = args.base_vm
     project_id = "gen-lang-client-0511233871"
-    zone = args.zone
+    base_zone = args.base_zone
+    worker_zone = args.worker_zone if args.worker_zone else args.base_zone  # Default to base_zone if not specified
 
-    # Define image family for this job type
+    # Define fixed snapshot name
+    snapshot_name = f"{base_vm_name}-latest"
+
+    # Define command for this job type
     command = get_command(job_type)
 
     if command is None:
@@ -396,16 +492,24 @@ if __name__ == "__main__":
     indices_to_run = [int(s) for s in args.vm_idx_to_run.split(',')] if args.vm_idx_to_run is not None else None
 
     try:
-        disk_image = create_image_wrapped(
-            rebuild=rebuild,
+        # Create or use existing snapshot from the base VM (in its original zone)
+        snapshot_source = create_disk_snapshot(
             project_id=project_id,
-            zone=zone,
-            source_instance=base_vm_name,
+            zone=base_zone,  # Use base_zone here
+            instance_name=base_vm_name,
+            snapshot_name=snapshot_name,
+            force_update=update_snapshot
         )
+        
+        if not snapshot_source:
+            raise RuntimeError("Failed to create or get snapshot")
+
+        logger.info(f"Using snapshot {snapshot_source} to create VMs in zone {worker_zone}")
 
         vms = create_distributed_compute_vms(
             project_id=project_id,
-            zone=zone,
+            base_zone=base_zone,  # Pass both zones
+            worker_zone=worker_zone,
             job_prefix=f"sweb-{job_type}",
             instance_ids=instances_list,
             command=command,
@@ -413,7 +517,7 @@ if __name__ == "__main__":
             machine_type="e2-standard-4",
             disk_size_gb=100,
             num_vms=len(instances_list) if args.instances_path == "dummy" else args.num_vms,
-            disk_image=disk_image,
+            snapshot_source=snapshot_source,
             data_bucket="seds-store",
             overwrite=overwrite,
             vm_num_offset=args.vm_num_offset,
@@ -424,5 +528,5 @@ if __name__ == "__main__":
         logger.info(f"Successfully managed {len(vms)} VMs to process instances")
 
     except Exception as e:
-        logger.error(f"Error creating image or submitting jobs: {e}")
+        logger.error(f"Error creating snapshot or submitting jobs: {e}")
         sys.exit(1)
