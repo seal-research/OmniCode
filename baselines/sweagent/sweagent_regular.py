@@ -24,6 +24,7 @@ CONFIG_FILE_MAP = {
     "testgen": CUR_DIR / "testgen.yaml",
     "bugfixing_java": CUR_DIR / "bugfixing_java.yaml",
     "testgen_java": CUR_DIR / "testgen_java.yaml",
+    "stylereview": CUR_DIR / "stylereview.yaml",
 }
 
 

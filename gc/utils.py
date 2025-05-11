@@ -358,6 +358,13 @@ SANITY_CMD = """python codearena.py \
 --run_id sanity \
 --instance_ids $INSTANCE_ID"""
 
+STYLE_REVIEW_CMD = """python codearena.py \
+--StyleReview \
+--language python \
+--predictions_path gold \
+--instance_ids $INSTANCE_ID \
+--run_id style_check2"""
+
 
 BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
 -o logs/ \
@@ -706,6 +713,7 @@ COMMAND_MAP = {
     "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
     "sweagent-sr": SWEAGENT_STYLE_REVIEW_CMD,
     "sweagent-sr-check": SWEAGENT_SR_CHECK_CMD,
+    "style-review": STYLE_REVIEW_CMD,
 }
 
 def get_command(
