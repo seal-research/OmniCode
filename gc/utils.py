@@ -391,6 +391,12 @@ UPLOAD_IMAGE_CMD = r"""upload_image() {
     IMAGE_NAME=$(sed -n '1s/.*Environment image \([^ ]*\) found.*/\1/p' \
     logs/run_evaluation/docker/gold/"$INSTANCE_ID"/run_instance.log)
 
+    # log in to docker
+    printf '%s\n' "$DOCKER_PAT" | docker login -u sca63 --password-stdin
+
+    # check that login succeeded
+    echo "Docker login status: $?"
+
     # tag the image with the latest version
     docker tag $IMAGE_NAME sca63/codearena:$INSTANCE_ID
 
