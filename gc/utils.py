@@ -358,6 +358,7 @@ SANITY_CMD = """python codearena.py \
 --run_id sanity \
 --instance_ids $INSTANCE_ID"""
 
+
 STYLE_REVIEW_CMD = """python codearena.py \
 --StyleReview \
 --language python \
@@ -375,6 +376,30 @@ BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
 --max_workers 4 \
 --instance_ids $INSTANCE_ID"""
 
+
+UPLOAD_IMAGE_CMD = r"""upload_image() {
+
+    # Run BugFixing to build the image, but time out immediately after image is built
+    python codearena.py \
+        --BugFixing \
+        --predictions_path gold \
+        --run_id docker \
+        --instance_ids $INSTANCE_ID \
+        --timeout 1
+
+    # parse image name from log file
+    IMAGE_NAME=$(sed -n '1s/.*Environment image \([^ ]*\) found.*/\1/p' \
+    logs/run_evaluation/docker/gold/"$INSTANCE_ID"/run_instance.log)
+
+    # tag the image with the latest version
+    docker tag $IMAGE_NAME sca63/codearena:$INSTANCE_ID
+
+    # push the image to the registry
+    docker push sca63/codearena:$INSTANCE_ID
+}
+
+# execute the function and capture all output
+upload_image"""
 
 
 AGENTLESS_CHECK_CMD_OLD = """process_files() {
@@ -702,6 +727,7 @@ SWEAGENT_TESTGEN_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
 
 COMMAND_MAP = {
     "sanity": SANITY_CMD,
+    "upload-image": UPLOAD_IMAGE_CMD,
     "bp-gen": BAD_PATCH_GEN_CMD,
     "agentless-check": AGENTLESS_CHECK_CMD,
     "agentless-check-java": AGENTLESS_CHECK_JAVA_CMD,

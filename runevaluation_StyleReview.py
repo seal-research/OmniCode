@@ -60,22 +60,22 @@ class EvaluationError(Exception):
 def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
     """
     Get ground truth tests and their corresponding patches from the FAIL_TO_PASS section.
-    
+
     Args:
         dataset_name (str): Name of the dataset
         instance_ids (list): List of instance IDs to process
         split (str): Dataset split to use
-        
+
     Returns:
         list: List of dictionaries containing instance IDs, patches, and failing test information
     """
     dataset = load_swebench_dataset(dataset_name, split)
     results = []
-    
+
     for datum in dataset:
         if datum[KEY_INSTANCE_ID] not in instance_ids:
             continue
-        
+
         # loading gold prediction results assumes direct employment of swe-bench-verified
         result = {
             KEY_INSTANCE_ID: datum[KEY_INSTANCE_ID],
@@ -88,7 +88,7 @@ def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
             "model_name_or_path": "gold"
         }
         results.append(result)
-    
+
     return results
 
 def get_dataset_from_preds(
@@ -116,10 +116,10 @@ def get_dataset_from_preds(
         missing_preds = set(instance_ids) - dataset_ids
         if missing_preds:
             print(f"Warning: Missing predictions for {len(missing_preds)} instance IDs.")
-        
+
         # Filter merged_df to only include requested instance_ids
         merged_df = merged_df[merged_df['instance_id'].isin(instance_ids)]
-    
+
     # Check which instance IDs have already been run
     completed_ids = set()
     for _, instance in merged_df.iterrows():
@@ -164,13 +164,13 @@ def make_run_report(
         run_id (str): Run ID
         min_score (float, optional): Minimum acceptable pylint score (0-10)
         max_severity (str, optional): Maximum acceptable severity level ('convention', 'warning', 'error')
-    
+
     Returns:
         Path to report file
     """
     # Severity levels in order of increasing severity
     severity_levels = ['convention', 'warning', 'error']
-    
+
     # instantiate sets to store IDs of different outcomes
     completed_ids = set()
     successful_ids = set()
@@ -195,25 +195,25 @@ def make_run_report(
             / (prediction[KEY_INSTANCE_ID]+"_styleReview")
             / "report.json"
         )
-        
+
         if report_file.exists():
             completed_ids.add(instance_id)
             report = json.loads(report_file.read_text())
             instance_report = report[instance_id]
-            
+
             # Evaluate success based on provided criteria
             is_successful = True
-            
+
             # Check minimum score if specified
             if min_score is not None:
                 score = instance_report["aggregated"].get("global_score", 0)
                 if score < min_score:
                     is_successful = False
-            
+
             # Check maximum severity if specified
             if max_severity is not None and is_successful:
                 max_severity_index = severity_levels.index(max_severity)
-                
+
                 # Check if there are any issues above the maximum allowed severity
                 for message in instance_report["error_messages"]:
                     for issue in message["messages"]:
@@ -223,7 +223,7 @@ def make_run_report(
                             break
                     if not is_successful:
                         break
-            
+
             if is_successful:
                 successful_ids.add(instance_id)
             else:
@@ -278,7 +278,7 @@ def make_run_report(
         },
         "schema_version": 2,
     }
-    
+
     report_file = Path(
         list(predictions.values())[0]["model_name_or_path"].replace("/", "__")
         + f".{run_id}"
@@ -332,7 +332,7 @@ def main(
         dataset = get_gold_predictions(dataset_name, instance_ids, split)
     else:
         dataset = get_dataset_from_preds(dataset_name, split, instance_ids, run_id=run_id, generated_tests_path=predictions_path)
-    
+
     # Load full dataset
     full_dataset = load_swebench_dataset(dataset_name, split, instance_ids, full=True)
 
@@ -349,7 +349,7 @@ def main(
     clean_images(client, existing_images, cache_level, clean)
     make_run_report(predictions, full_dataset, client, run_id, min_score=min_score, max_severity=max_severity)
 
-    
+
 def run_instance(
         test_spec: TestSpec,
         pred: dict,
@@ -409,7 +409,9 @@ def run_instance(
         repo_directory = f"/{env_name}"
         base_commit = test_spec.base_commit
         model_patch = pred.get("model_patch", "") or pred.get("gold_patch", "") or pred.get("candidate_test_patch", "")
-        
+        # hack for evaluating swe agent, which produces a linter-fixing patch on top of the gold patch
+        second_patch = pred.get("second_patch", None)
+
         # Define absolute container paths.
         container_aggregated = "/tmp/pylint_aggregated.json"
         container_errors = "/tmp/pylint_errors.json"
@@ -421,7 +423,8 @@ def run_instance(
             patch=model_patch,
             pylint_output_path=container_aggregated,
             error_output_path=container_errors,
-            env_name=env_name
+            env_name=env_name,
+            second_patch=second_patch,
         )
         linting_eval_script = "\n".join(linting_eval_script)
 
@@ -457,7 +460,7 @@ def run_instance(
                 if result.exit_code != 0:
                     logger.error(f"File {path} does not exist in container")
                     continue
-                
+
                 # Copy the file
                 if path == container_errors:
                     copy_from_container(container, Path(path), error_output_path)
@@ -620,7 +623,7 @@ if __name__ == "__main__":
         default="env",
     )
     parser.add_argument(
-        "--min_score", type=float, default=None, 
+        "--min_score", type=float, default=None,
         help="Minimum acceptable pylint score (0-10) for StyleReview"
     )
     parser.add_argument(

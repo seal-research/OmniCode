@@ -5,11 +5,9 @@ agent:
       You are a helpful assistant that can interact with a computer to solve tasks.
     instance_template: |-
       You have recenly generated a patch to resolve an issue within this repository.
-      Pylint has been run on your patch and has produced the following output:
-      {{problem_statment}}
-      Update your patch so that the Pylint errors and warnings are resolved.
-
-      For each warning or error, think about how to resolve it without changing the functionality of the code. Then, edit the patch to resolve the Pylint feedback.
+      Pylint has been run on the modified files and has produced the following feedback:
+      {{problem_statement}}
+      Please resolve the Pylint feedback to the best of your ability, while preserving the functionality of the code.
     next_step_template: |-
       OBSERVATION:
       {{observation}}
