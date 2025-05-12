@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", None)
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", None)
+DOCKER_PAT = os.environ.get("DOCKER_PAT", None)
 
 # Retry configuration
 MAX_RETRIES = 3
@@ -231,6 +232,7 @@ echo "Home directory: $HOME"
 su - ays57 << 'EOSU'
 export GEMINI_API_KEY="{GEMINI_API_KEY}"
 export GITHUB_TOKEN="{GITHUB_TOKEN}"
+export DOCKER_PAT="{DOCKER_PAT}"
 echo "Now running as $(whoami) with home directory $HOME"
 # Explicitly set PATH to include common conda locations
 export PATH="$HOME/miniconda3/bin:$HOME/anaconda3/bin:/opt/conda/bin:$PATH"
