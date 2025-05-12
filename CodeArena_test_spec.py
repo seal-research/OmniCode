@@ -64,14 +64,14 @@ class TestSpec:
         # Ensure bad_patches is a list
         if not isinstance(self.bad_patches, list):
             self.bad_patches = [self.bad_patches]
-        
+
         # Filter out empty or None patches
         self.bad_patches = [patch for patch in self.bad_patches if patch and patch != 0]
-        
+
         # Create inverted eval script lists for each bad patch
         self.bad_inverted_eval_script_list = [
             make_inverted_eval_script_list(
-                self, 
+                self,
                 MAP_REPO_VERSION_TO_SPECS[self.repo][str(self.version)],
                 "testbed",
                 f"/testbed",
@@ -360,10 +360,10 @@ def get_test_directives(instance: Union[dict, TestSpec]) -> list:
         # for objects, try attribute then fallback to .test_patch
         test_patch = getattr(instance, "candidate_test_patch",
                              getattr(instance, "test_patch", None))
-     
+
     if repo == "swe-bench/humaneval":
         return []
-    
+
     # Handle both dict and TestSpec types
     if isinstance(instance, dict):
         if "test_directives" in instance:
@@ -375,11 +375,11 @@ def get_test_directives(instance: Union[dict, TestSpec]) -> list:
             return instance.test_directives
         if hasattr(instance, "test_directive"):
             return [instance.test_directive]
-    
+
 
     # diff_pat = r"diff --git a/.* b/(.*)"
     # directives = re.findall(diff_pat, test_patch)
-    
+
     directives = get_modified_added_files(test_patch)
     directives = [
         d for d in directives if not any(d.endswith(ext) for ext in NON_TEST_EXTS)
@@ -413,11 +413,11 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
         )
     else:
         apply_issue_patch_command = ""
-    
+
     # Handle both dict and TestSpec types
     repo = instance["repo"] if isinstance(instance, dict) else instance.repo
     version = str(instance["version"] if isinstance(instance, dict) else instance.version)
-    
+
     test_command = " ".join(
         [
             MAP_REPO_VERSION_TO_SPECS[repo][version]["test_cmd"],
@@ -451,10 +451,10 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     ]
     return eval_commands
 
-def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output_path, error_output_path, env_name):
+def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output_path, error_output_path, env_name, second_patch=None):
     """
     Generate a shell script to run pylint evaluation on modified Python files.
-    
+
     Args:
         repo_directory (str): Path to the git repository
         base_commit (str): Base commit to compare against
@@ -462,11 +462,12 @@ def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output
         pylint_output_path (str): Path to save aggregated pylint results
         error_output_path (str): Path to save detailed error messages
         env_name (str): Conda environment name
-    
+        second_patch (str, optional): Second patch to apply (for sweagent eval). Defaults to None.
+
     Returns:
         list: Shell commands to execute the evaluation
     """
-    
+
     # Define the entire script as a raw string with proper substitution
     script = rf'''
     # Ensure required tools are available
@@ -501,11 +502,19 @@ def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output
     # Checkout base commit
     git fetch || true  # Try to fetch but don't fail if remote not configured
     git checkout {base_commit}
-    
+
     # Apply the patch
     if ! git apply -v /tmp/changes.patch 2>"$temp_dir/apply.err"; then
         echo "Warning: Failed to apply patch cleanly" >&2
         cat "$temp_dir/apply.err" >&2
+    fi
+
+    # Apply second patch if one is provided
+    if [ -n "{second_patch}" ]; then
+        if ! git apply -v /tmp/changes2.patch 2>"$temp_dir/apply2.err"; then
+            echo "Warning: Failed to apply second patch cleanly" >&2
+            cat "$temp_dir/apply2.err" >&2
+        fi
     fi
 
     # Get modified Python files - use both git status and patch analysis
@@ -581,7 +590,7 @@ def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output
             "total_warnings": .total_warnings,
             "total_conventions": .total_conventions
         }}' /tmp/pylint_errors.json > /tmp/pylint_aggregated.json
-        
+
         jq 'map(del(.score))' /tmp/pylint_errors.json > "$temp_dir/cleaned_errors.json" && mv "$temp_dir/cleaned_errors.json" /tmp/pylint_errors.json
     else
         echo '{{"global_score": 10.0, "total_errors": 0, "total_warnings": 0, "total_conventions": 0}}' > /tmp/pylint_aggregated.json
@@ -621,7 +630,7 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
     """
     Create a TestSpec from a CodeArena instance.
     """
-    
+
     # Extract necessary information
     instance_id = instance[KEY_INSTANCE_ID]
     repo = instance["repo"]
@@ -640,18 +649,18 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
         # for objects, try attribute then fallback to .test_patch
         test_patch = getattr(instance, "candidate_test_patch",
                              getattr(instance, "test_patch", None))
-    
+
     # Get bad patches - now using bad_patches instead of bad_patch
     bad_patches = instance.get("bad_patches", [])  # Default to empty list if not found
     if not isinstance(bad_patches, list):
         bad_patches = [bad_patches]  # Convert single patch to list if needed
-    
+
     if bad_patches == []:
         bad_patches = [{'idx': 0, 'patch': 0}]
 
     # Filter out empty or None patches
     # bad_patches = [patch for patch in bad_patches if patch and patch != 0]
-    
+
     if platform.machine() in {"aarch64", "arm64"}:
         # use arm64 unless explicitly specified
         arch = "arm64" if instance_id not in USE_X86 else "x86_64"
@@ -673,7 +682,7 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
         gold_inverted_eval_script_list=make_inverted_eval_script_list(instance, MAP_REPO_VERSION_TO_SPECS[repo][str(version)], "testbed", f"/testbed", base_commit, gold_patch, test_patch),
         bad_inverted_eval_script_list=[
             make_inverted_eval_script_list(
-                instance, 
+                instance,
                 MAP_REPO_VERSION_TO_SPECS[repo][str(version)],
                 "testbed",
                 f"/testbed",
@@ -685,5 +694,5 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
         ],
         arch=arch
     )
-    
+
     return test_spec

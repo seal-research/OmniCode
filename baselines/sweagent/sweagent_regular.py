@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import logging
 import tempfile
+import base64
 
 from datasets import load_dataset, load_from_disk
 from tqdm import tqdm
@@ -126,10 +127,21 @@ def run_sweagent_single(
             f"--agent.model.per_instance_cost_limit=2.0",
             f"--env.repo.github_url={url}",
             f"--env.repo.base_commit={instance['base_commit']}",
+            f"--env.deployment.image=threewisemonkeys/codearena:{instance['instance_id']}",
+            # override having /testbed be WORKDIR for docker image
+            '--env.deployment.docker_args=["-w","/"]',
             f"--problem_statement.path={str(fp.name)}",
             f"--problem_statement.id={instance['instance_id']}",
             f"--output_dir={output_dir}",
         ]
+
+        if mode == 'stylereview':
+            # apply gold patch upon starting env, so that agent can modify it based on pylint feedback
+            commands = apply_patch_commands(instance["patch"], repo_name=instance["repo"].replace("/", "__"))
+
+            args.append(
+                f"--env.post_startup_commands={json.dumps(commands)}",     # note: !r gives Python‑style list
+            )
 
 
         if thinking_budget is not None:
@@ -145,6 +157,23 @@ def run_sweagent_single(
 
     return None, output
 
+def apply_patch_commands(patch: str, repo_name: str) -> list[str]:
+    """
+    Return a list of commands that apply the patch to the repo.
+
+    1.  recreate /tmp/patch.diff inside the container
+    2.  try git‑apply, fallback to patch -p1 --fuzz
+    """
+    b64 = base64.b64encode(patch.encode()).decode()
+    return [
+        # write file atomically
+        f"echo '{b64}' | base64 -d > /tmp/patch.diff",
+        # cd into repo and apply
+        f"""cd /{repo_name} && (
+                git apply --allow-empty -v /tmp/patch.diff ||
+                patch --batch --fuzz=5 -p1 -i /tmp/patch.diff
+            )""",
+    ]
 
 def main(
     input_tasks_path: Path,
@@ -226,6 +255,6 @@ if __name__ == '__main__':
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
         api_key=args.api_key,
         mode=args.mode,
-        thinking_budget=args.thinking_budget
+        # thinking_budget=args.thinking_budget
     )
 
