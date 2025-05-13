@@ -50,6 +50,7 @@ def fix_and_clean():
         ("alibaba", "fastjson2"),
         ("fmtlib", "fmt"),
         ("jqlang", "jq"),
+        ("elastic", "logstash"),
         ("mockito", "mockito"),
     ]
     
@@ -63,7 +64,8 @@ def fix_and_clean():
         "jqlang/jq": os.path.join(dataset_base_path, "c/jqlang__jq_dataset.jsonl"),
         "fmtlib/fmt": os.path.join(dataset_base_path, "cpp/fmtlib__fmt_dataset.jsonl"),
         "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl"),
-        "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl")
+        "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
+        "elastic/logstash": os.path.join(dataset_base_path, "java/elastic__logstash_dataset.jsonl"),
     }
     
     # Track which repositories we've found
