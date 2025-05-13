@@ -43,14 +43,17 @@ def run_aider_single(
         
         # Clone the repository
         repo_url = f"https://github.com/{instance['repo']}"
+        logger.info(f"Cloning repository: {repo_url}")
         subprocess.run(["git", "clone", repo_url, temp_path], check=True)
         
         # Checkout the specific commit
+        logger.info(f"Checking out commit: {instance['base_commit']}")
         subprocess.run(["git", "checkout", instance['base_commit']], cwd=temp_path, check=True)
         
         # Write the problem statement to a file
         problem_file = temp_path / "problem.txt"
         problem_file.write_text(instance['problem_statement'])
+        logger.info(f"Problem statement written to: {problem_file}")
         
         # Run aider
         try:
@@ -63,14 +66,29 @@ def run_aider_single(
             
             # Run aider with the problem statement
             logger.info("Starting Aider process...")
+            logger.info(f"Using model: {model_name}")
+            
+            # First try to run aider with --version to check if it's installed correctly
+            try:
+                version_check = subprocess.run(
+                    ["aider", "--version"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                logger.info(f"Aider version: {version_check.stdout.strip()}")
+            except Exception as e:
+                logger.error(f"Error checking aider version: {str(e)}")
+            
+            # Run the actual aider command
             result = subprocess.run(
-                ["aider", "--message-file", str(problem_file)],
+                ["aider", "--message-file", str(problem_file), "--no-gitignore", "--no-pretty", "--yes"],
                 cwd=temp_path,
                 capture_output=True,
                 text=True,
                 env=env,
                 check=True,
-                timeout=1800  # Add a 5-minute timeout
+                timeout=300  # 5 minutes timeout for testing
             )
             logger.info("Aider process completed")
             logger.info(f"Aider stdout: {result.stdout[:500]}...")  # Log first 500 chars of output
@@ -111,6 +129,14 @@ def run_aider_single(
         except subprocess.CalledProcessError as e:
             error_msg = f"Error running aider: {e.stderr if e.stderr else e.stdout}"
             logger.error(error_msg)
+            return error_msg, {}
+        except subprocess.TimeoutExpired as e:
+            error_msg = f"Aider process timed out after {e.timeout} seconds"
+            logger.error(error_msg)
+            if e.stdout:
+                logger.error(f"Partial stdout: {e.stdout[:500]}...")
+            if e.stderr:
+                logger.error(f"Partial stderr: {e.stderr}")
             return error_msg, {}
         except Exception as e:
             error_msg = f"Unexpected error running aider: {str(e)}"
@@ -203,7 +229,7 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--input_tasks", type=str, required=True)
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
-    parser.add_argument("-m", "--model_name", type=str, default="gpt-4")
+    parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-pro-preview-05-06")
     parser.add_argument("-k", "--api_key", type=str, required=True)
     parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview"])
     parser.add_argument("--thinking_budget", type=int, default=0)
