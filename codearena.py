@@ -579,7 +579,7 @@ def main():
     if "StyleReview" in active_flags:
         print("Executing StyleReview...")
         execute_command(
-            StyleReviewMain,
+            PythonStyleReviewMain,
             dataset_name=args.dataset_name,
             split="test",
             instance_ids=args.instance_ids,
