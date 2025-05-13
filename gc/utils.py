@@ -691,7 +691,7 @@ SWEAGENT_TESTGEN_CMD = """python baselines/sweagent/sweagent_regular.py \
 
 
 SWEAGENT_STYLE_REVIEW_CMD = """python baselines/sweagent/sweagent_regular.py \
--i data/codearena_instances.json \
+-i data/sweagent_style_review_instances.json \
 -o logs \
 -m gemini/gemini-2.5-flash-preview-04-17 \
 -k $GEMINI_API_KEY \
