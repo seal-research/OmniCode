@@ -62,7 +62,9 @@ def load_mswebench_dataset(instance_ids: list,
                         except json.JSONDecodeError as e:
                             print(f"Error parsing JSON from {dataset_file}: {e}")
                             continue
-                        if item.get("instance_id") == instance_id:
+                        item_instance_id = item.get("org") + "__" + item.get("repo") + "_" + str(item.get("number")) 
+                        # if item.get("instance_id") == instance_id:
+                        if item_instance_id == instance_id:
                             # use the candidate test patch for this instance in 
                             item["test_patch"] = predictions[instance_id]["candidate_test_patch"]
                             print(f"Writing item to {mswebench_dataset_file}...")
@@ -170,7 +172,7 @@ def run_with_timeout(cmd, timeout_seconds=1800):
         # Monitor process
         while process.poll() is None:
             # Check for timeout
-            if time.time() - start_time > timeout_seconds:
+            if(timeout_seconds>0 and time.time() - start_time > timeout_seconds):
                 print(f"Process timed out after {timeout_seconds} seconds!")
                 process.kill()
                 return None, "Timeout exceeded", 1
@@ -271,7 +273,8 @@ def run_instance(
         instances: list,
         config_file: str, 
         timeout: int,
-        tag: str = 'singleton'):
+        tag: str = 'singleton',
+        runid: str = ''):
     with tqdm(total=len(instances), smoothing=0) as pbar:
         # Run evaluation
         if config_file and os.path.exists(config_file):
@@ -290,7 +293,7 @@ def run_instance(
                 logs_path = Path("multiswebench/data/logs")
                 output_path = Path("multiswebench/data/output")
                 if workdir_path.exists():
-                    new_workdir_path = Path("data/multiswebench/data/logs") / f"{tag}"
+                    new_workdir_path = Path(f"multiswebench_runs/TestGeneration/{runid}") / f"{tag}"
                     # handle existing directory
                     if new_workdir_path.exists():
                         print(f"Workdir path {new_workdir_path} already exists, removing...")
@@ -357,7 +360,8 @@ def run_instances(
         instances=instance_dict,
         config_file=config_file,
         timeout=timeout,
-        tag="gold"
+        tag="gold",
+        runid=run_id
     )   
     if report:
         success_dict["gold_successes"] = report.get("resolved_ids", [])
@@ -381,15 +385,28 @@ def run_instances(
             instances=instance_dict,
             config_file=config_file,
             timeout=timeout,
-            tag=f"bad_patch_{i}"
+            tag=f"bad_patch_{i}",
+            runid=run_id
         )
         if report:
             existing_success = success_dict.get(f"bad_patch_successes", [])
             existing_failures = success_dict.get(f"bad_patch_failures", [])
-            existing_failures.extend(report.get("resolved_ids", []))
-            existing_success.extend(report.get("unresolved_ids", [])) # bad patches should be unresolved
+            resolved_ids = [f"bad_patch_{i}_of_{id}" for id in report.get("resolved_ids", [])]
+            # existing_failures.extend(f"bad_patch_{i}_of{report.get("resolved_ids", [])}")
+            existing_failures.extend(resolved_ids)
+            error_ids = report.get("error_ids", [])
+            unresolved_ids = [f"bad_patch_{i}_of_{id}" for id in report.get("unresolved_ids", []) if id not in error_ids]
+            existing_success.extend(unresolved_ids)
+            # existing_success.extend(f"bad_patch_{i}_of{report.get("unresolved_ids", [])}")
+            # existing_failures.extend([f"bad_patch_{i}"] if report.get("resolved_instances", 0) > 1 else [])
+            # existing_success.extend([f"bad_patch_{i}"] if report.get("unresolved_instances", 0) > 1 else [])
             success_dict[f"bad_patch_successes"] = existing_success
             success_dict[f"bad_patch_failures"] = existing_failures
+
+            # existing_failures.extend(report.get("resolved_ids", []))
+            # existing_success.extend(report.get("unresolved_ids", [])) # bad patches should be unresolved
+            # success_dict[f"bad_patch_successes"] = existing_success
+            # success_dict[f"bad_patch_failures"] = existing_failures
     print("All instances run.")
     print("Success dictionary:", success_dict)
 
