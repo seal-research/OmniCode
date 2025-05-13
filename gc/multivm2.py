@@ -2,11 +2,10 @@ import os
 import time
 import random
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Tuple
 import logging
 
 from google.cloud import compute_v1
-from google.api_core.exceptions import GoogleAPIError
 
 from utils import list_to_bash_array, check_vm_exists, get_vm_status, reset_vm, wait_for_operation, start_vm, get_command, delete_vm
 
@@ -17,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", None)
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", None)
+DOCKER_PAT = os.environ.get("DOCKER_PAT", None)
 
 # Retry configuration
 MAX_RETRIES = 3
@@ -27,19 +27,19 @@ MAX_RETRY_DELAY = 60  # seconds
 def wait_for_global_operation(project_id, operation_name):
     """Wait for a global operation to complete."""
     operation_client = compute_v1.GlobalOperationsClient()
-    
+
     while True:
         result = operation_client.get(
             project=project_id,
             operation=operation_name
         )
-        
+
         if result.status == compute_v1.Operation.Status.DONE:
             if result.error:
                 logger.error(f"Operation {operation_name} failed: {result.error}")
                 return False
             return True
-            
+
         time.sleep(1)  # Wait before checking again
 
 
@@ -65,9 +65,9 @@ def delete_snapshot(project_id, snapshot_name):
 
 
 def create_disk_snapshot(project_id, zone, instance_name, snapshot_name, force_update=False):
-    """Create a snapshot of a running VM's boot disk. If force_update is True, 
+    """Create a snapshot of a running VM's boot disk. If force_update is True,
     delete the snapshot if it already exists."""
-    
+
     # Check if snapshot already exists
     if check_snapshot_exists(project_id, snapshot_name):
         if force_update:
@@ -78,20 +78,20 @@ def create_disk_snapshot(project_id, zone, instance_name, snapshot_name, force_u
         else:
             logger.info(f"Using existing snapshot {snapshot_name}")
             return f"projects/{project_id}/global/snapshots/{snapshot_name}"
-    
+
     # Get the disk name from the instance
     instance_client = compute_v1.InstancesClient()
     instance = instance_client.get(project=project_id, zone=zone, instance=instance_name)
     boot_disk_name = instance.disks[0].source.split('/')[-1]
-    
+
     logger.info(f"Creating snapshot {snapshot_name} from disk {boot_disk_name}")
-    
+
     # Create a snapshot
     disk_client = compute_v1.DisksClient()
     snapshot_request = compute_v1.Snapshot()
     snapshot_request.name = snapshot_name
     snapshot_request.description = f"Latest snapshot of {boot_disk_name} from {instance_name}"
-    
+
     try:
         operation = disk_client.create_snapshot(
             project=project_id,
@@ -99,7 +99,7 @@ def create_disk_snapshot(project_id, zone, instance_name, snapshot_name, force_u
             disk=boot_disk_name,
             snapshot_resource=snapshot_request
         )
-        
+
         wait_result = wait_for_operation(operation, project_id, zone)
         if wait_result:
             logger.info(f"Successfully created snapshot {snapshot_name}")
@@ -195,10 +195,10 @@ def process_single_vm(
 
                 initialize_params = compute_v1.AttachedDiskInitializeParams()
                 initialize_params.disk_size_gb = disk_size_gb
-                
+
                 # Use snapshot source - snapshots are global resources, so this works across regions
                 initialize_params.source_snapshot = snapshot_source
-                    
+
                 disk.initialize_params = initialize_params
                 instance.disks = [disk]
 
@@ -322,6 +322,9 @@ echo "Home directory: $HOME"
 su - ays57 << 'EOSU'
 export GEMINI_API_KEY="{GEMINI_API_KEY}"
 export GITHUB_TOKEN="{GITHUB_TOKEN}"
+export DOCKER_PAT="{DOCKER_PAT}"
+echo "Environment variables set including DOCKER PAT"
+echo $DOCKER_PAT
 echo "Now running as $(whoami) with home directory $HOME"
 # Explicitly set PATH to include common conda locations
 export PATH="$HOME/miniconda3/bin:$HOME/anaconda3/bin:/opt/conda/bin:$PATH"
@@ -500,7 +503,7 @@ if __name__ == "__main__":
             snapshot_name=snapshot_name,
             force_update=update_snapshot
         )
-        
+
         if not snapshot_source:
             raise RuntimeError("Failed to create or get snapshot")
 

@@ -127,7 +127,7 @@ def run_sweagent_single(
             f"--agent.model.per_instance_cost_limit=2.0",
             f"--env.repo.github_url={url}",
             f"--env.repo.base_commit={instance['base_commit']}",
-            f"--env.deployment.image=threewisemonkeys/codearena:{instance['instance_id']}",
+            f"--env.deployment.image=sca63/codearena:{instance['instance_id']}",
             # override having /testbed be WORKDIR for docker image
             '--env.deployment.docker_args=["-w","/"]',
             f"--problem_statement.path={str(fp.name)}",
