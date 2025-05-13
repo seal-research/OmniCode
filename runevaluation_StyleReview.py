@@ -573,7 +573,8 @@ def run_instances(
                     run_instance,
                     test_spec,
                     # TODO: Either optimize this lookup or find a more elegant way to pass corrected predictions
-                    next((item for item in instances if item["instance_id"] == test_spec.instance_id), None),
+                    # next((item for item in instances if item["instance_id"] == test_spec.instance_id), None),
+                    predictions[test_spec.instance_id],
                     should_remove(
                         test_spec.instance_image_key,
                         cache_level,
