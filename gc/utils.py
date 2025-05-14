@@ -739,7 +739,7 @@ SWEAGENT_TESTGEN_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
 
 OPENHANDS_BUGFIXING_CMD = r"""process() {
     cd ~/seds/OpenHands
-    rm -rf evaluations/evaluation_outputs
+    rm -rf evaluation/evaluation_outputs
     echo selected_ids = [\"${INSTANCE_ID}\"] > evaluation/benchmarks/swe_bench/config.toml
     ./evaluation/benchmarks/swe_bench/scripts/run_infer.sh llm.gemini HEAD CodeActAgent 1 100 1 ../codearena/data/codearena_instances.json
     python evaluation/benchmarks/swe_bench/convert.py --prediction_file evaluation/evaluation_outputs/outputs/..__codearena__data__codearena_instances.json-test/CodeActAgent/gemini-2.0-flash_maxiter_100_N_v0.36.0-no-hint-run_1/output.jsonl >> ../codearena/logs/all_preds.jsonl
