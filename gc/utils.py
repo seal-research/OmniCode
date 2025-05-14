@@ -737,6 +737,17 @@ SWEAGENT_TESTGEN_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
 # --run_id style_check"""
 
 
+OPENHANDS_BUGFIXING_CMD = r"""process() {
+    cd ~/seds/OpenHands
+    rm -rf evaluation/evaluation_outputs
+    echo selected_ids = [\"${INSTANCE_ID}\"] > evaluation/benchmarks/swe_bench/config.toml
+    ./evaluation/benchmarks/swe_bench/scripts/run_infer.sh llm.gemini HEAD CodeActAgent 1 100 1 ../codearena/data/codearena_instances.json
+    python evaluation/benchmarks/swe_bench/convert.py --prediction_file evaluation/evaluation_outputs/outputs/..__codearena__data__codearena_instances.json-test/CodeActAgent/gemini-2.0-flash_maxiter_100_N_v0.36.0-no-hint-run_1/output.jsonl >> ../codearena/logs/all_preds.jsonl
+    cd ../codearena 
+}
+process"""
+
+
 COMMAND_MAP = {
     "sanity": SANITY_CMD,
     "upload-image": UPLOAD_IMAGE_CMD,
@@ -753,6 +764,7 @@ COMMAND_MAP = {
     "sweagent-sr-check": SWEAGENT_SR_CHECK_CMD,
     "sweagent-sr-bf-check": SWEAGENT_SR_BF_CHECK_CMD,
     "style-review": STYLE_REVIEW_CMD,
+    "openhands-bf": OPENHANDS_BUGFIXING_CMD,
 }
 
 def get_command(

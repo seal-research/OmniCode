@@ -26,6 +26,7 @@ CONFIG_FILE_MAP = {
     "bugfixing_java": CUR_DIR / "bugfixing_java.yaml",
     "testgen_java": CUR_DIR / "testgen_java.yaml",
     "stylereview": CUR_DIR / "stylereview.yaml",
+    "reviewfix": CUR_DIR / "reviewfix.yaml",
 }
 
 
@@ -114,6 +115,22 @@ def run_sweagent_single(
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
 
         fp.write(instance['problem_statement'])
+        if mode == 'reviewfix':
+            bad_patches_text = format_list_for_prompt_plain(instance.get('bad_patches', []))
+            reviews_text = format_list_for_prompt_plain(instance.get('reviews', []))
+            
+            orig_bad = instance['bad_patches']
+            orig_rev = instance['reviews']
+            
+            instance['bad_patches'] = bad_patches_text
+            instance['reviews'] = reviews_text
+            
+            fp.write(instance['bad_patches'])
+            fp.write(instance['reviews'])
+
+            instance['bad_patches'] = orig_bad
+            instance['reviews'] = orig_rev
+
         fp.close()
 
         args = ["run"]
@@ -141,7 +158,7 @@ def run_sweagent_single(
 
             args.append(
                 f"--env.post_startup_commands={json.dumps(commands)}",     # note: !r gives Python‑style list
-            )
+            )      
 
 
         if thinking_budget is not None:
@@ -174,6 +191,10 @@ def apply_patch_commands(patch: str, repo_name: str) -> list[str]:
                 patch --batch --fuzz=5 -p1 -i /tmp/patch.diff
             )""",
     ]
+
+def format_list_for_prompt_plain(items: list[str]) -> str:
+    """Join list items with double newlines for LLM-friendly plain text rendering."""
+    return "\n\n".join(items)
 
 def main(
     input_tasks_path: Path,
@@ -244,7 +265,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
     parser.add_argument("-k", "--api_key", type=str, required=True)
-    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview"])
+    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview", "reviewfix"])
     parser.add_argument("--thinking_budget", type=int, default=0)
     args = parser.parse_args()
 
