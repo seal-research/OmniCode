@@ -367,6 +367,22 @@ STYLE_REVIEW_CMD = """python codearena.py \
 --run_id style_check2"""
 
 
+SWEAGENT_SR_CHECK_CMD = """python codearena.py \
+--StyleReview \
+--language python \
+--predictions_path "sweagent_sr_all_preds.jsonl" \
+--instance_ids $INSTANCE_ID \
+--run_id sweagent_sr_check"""
+
+
+SWEAGENT_SR_BF_CHECK_CMD = """python codearena.py \
+--BugFixing \
+--language python \
+--predictions_path "sweagent_sr_all_preds.jsonl" \
+--instance_ids $INSTANCE_ID \
+--run_id sweagent_sr_bf_check"""
+
+
 BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
 -o logs/ \
 -m gemini-2.5-flash-preview-4-17 \
@@ -662,16 +678,6 @@ SWEAGENT_TG_CHECK_CMD = PATCH_CHECK_CMD.format(
         --instance_ids "${INSTANCE_ID}" """,
 )
 
-SWEAGENT_SR_CHECK_CMD = PATCH_CHECK_CMD.format(
-    results_dir="sweb-sweagent-sr",
-    check_cmd="""python codearena.py \
-          --StyleReview \
-          --language python \
-          --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
-          --run_id sweagent_sr_check \
-          --instance_ids "${INSTANCE_ID}" """,
-    )
-
 SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances.json \
 -o logs \
@@ -745,6 +751,7 @@ COMMAND_MAP = {
     "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
     "sweagent-sr": SWEAGENT_STYLE_REVIEW_CMD,
     "sweagent-sr-check": SWEAGENT_SR_CHECK_CMD,
+    "sweagent-sr-bf-check": SWEAGENT_SR_BF_CHECK_CMD,
     "style-review": STYLE_REVIEW_CMD,
 }
 
