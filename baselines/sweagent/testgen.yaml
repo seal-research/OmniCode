@@ -1,0 +1,55 @@
+# This template is heavily inspired by anthropic's computer use demo
+agent:
+  templates:
+    system_template: |-
+      You are a helpful assistant that can interact with a computer to solve tasks.
+    instance_template: |-
+      <uploaded_files>
+      {{working_dir}}
+      </uploaded_files>
+      I've uploaded a python code repository in the directory {{working_dir}}. Consider the following problem description:
+
+      <problem_description>
+      {{problem_statement}}
+      </problem_description>
+
+      Can you help me implement a test that successfully reproduces the problem specified in the <problem_description>?
+      The test must be created in the repository's existing test suite and should be runable with the repository's testing infrastructure / tooling (e.g. pytest).
+      Do not make any changes to the non-test code in the repository since we only need to create a reproduction test.
+      Follow these steps to resolve the issue:
+      1. As a first step, it might be a good idea to find and read code relevant to the <problem_description>
+      2. Create a script to reproduce the error and execute it with `python <filename.py>` using the bash tool, to confirm the error
+      3. Edit the the testing suite of the repo to implement a test based on this reproduction script which can be run using the repository's testing infrastructure / tooling (e.g. pytest)
+      4. Ensure this test runs and successfully reproduces the problem!
+      5. Remove the reproduction script and only keep changes to the test suite that reproduce the problem.
+      Your thinking should be thorough and so it's fine if it's very long.
+    next_step_template: |-
+      OBSERVATION:
+      {{observation}}
+    next_step_no_output_template: |-
+      Your command ran successfully and did not produce any output.
+  tools:
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/review_on_submit_m
+    registry_variables:
+      USE_FILEMAP: 'true'
+      SUBMIT_REVIEW_MESSAGES:
+        - |
+          Thank you for your work on this issue. Please carefully follow the steps below to help review your changes.
+
+          1. Make sure that the test you have implemented runs and successfully using the repository's testing infrastructure / tooling and reproduces the problem specified
+          2. If you have modified any NON-TEST files, please revert them to the state they had before you started fixing the issue.
+            You can do this with `git checkout -- /path/to/file.py`. Use below <diff> to find the files you need to revert.
+          3. Make sure to remove any extraneous standalone reproduction scripts that you may have implemented. Only keep changes to the test suite.
+          4. Run the submit command again to confirm.
+
+          Here is a list of all of your changes:
+
+          <diff>
+          {{diff}}
+          </diff>
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling

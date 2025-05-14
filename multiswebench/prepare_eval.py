@@ -49,7 +49,9 @@ def fix_and_clean():
     target_repos = [
         ("alibaba", "fastjson2"),
         ("fmtlib", "fmt"),
-        ("jqlang", "jq")
+        ("jqlang", "jq"),
+        ("elastic", "logstash"),
+        ("mockito", "mockito"),
     ]
     
     # Paths to the local dataset files
@@ -61,7 +63,9 @@ def fix_and_clean():
     repo_file_map = {
         "jqlang/jq": os.path.join(dataset_base_path, "c/jqlang__jq_dataset.jsonl"),
         "fmtlib/fmt": os.path.join(dataset_base_path, "cpp/fmtlib__fmt_dataset.jsonl"),
-        "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl")
+        "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl"),
+        "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
+        "elastic/logstash": os.path.join(dataset_base_path, "java/elastic__logstash_dataset.jsonl"),
     }
     
     # Track which repositories we've found
