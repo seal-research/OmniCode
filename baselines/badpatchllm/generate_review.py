@@ -197,10 +197,23 @@ def main(
         # instance["review_author"] = model_name # Hardcoded author
             # else:
                 # print(f"  Info: No valid bad patches found for instance {instance_id}. Skipping review generation.")
+        json_path = output_dir / "modified_dataset.json"
 
-        (output_dir / "modified_instances.json").write_text(
-            json.dumps(modified_instances, indent=2)
-        )
+        if json_path.exists():
+            existing = json.loads(json_path.read_text())
+        else:
+            existing = []
+
+        # 2) Append your new record
+        existing.extend(modified_instances)
+
+        # 3) Write the updated list back (this will preserve old entries)
+        json_path.write_text(json.dumps(existing, indent=2))
+
+
+        # (output_dir / "modified_instances.json").write_text(
+        #     json.dumps(modified_instances, indent=2)
+        # )
 
 
 if __name__ == "__main__":
