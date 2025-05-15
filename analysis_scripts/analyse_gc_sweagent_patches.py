@@ -58,7 +58,8 @@ async def analyse(gcs_path: str, debug: bool = True, max_concurrency: int = 10):
         bucket, directory_prefix, instance_dirs, executor, debug
     )
     
-    print(f"Not Null: {not_null}")
+    print(f"Not Null: {list(sorted(not_null))}")
+    print(f"Null: {list(sorted(set(present) - set(not_null)))}")
     print(f"{len(present)=}, {len(generated)=}, {len(not_null)=}")
 
 

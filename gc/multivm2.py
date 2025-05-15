@@ -19,9 +19,11 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", None)
 DOCKER_PAT = os.environ.get("DOCKER_PAT", None)
 
 # Retry configuration
-MAX_RETRIES = 3
+MAX_RETRIES = 10
 INITIAL_RETRY_DELAY = 5  # seconds
 MAX_RETRY_DELAY = 60  # seconds
+
+VERTEXAI_LOCATION = "us-east5"
 
 
 def wait_for_global_operation(project_id, operation_name):
@@ -279,7 +281,7 @@ def create_distributed_compute_vms(
     machine_type: str = "e2-standard-4",
     disk_size_gb: int = 100,
     num_vms: int = 20,
-    snapshot_source: str = None,
+    snapshot_source: str | None = None,
     data_bucket: str = "your-data-bucket",
     overwrite: bool = False,
     vm_num_offset: int = 0,
@@ -323,6 +325,8 @@ su - ays57 << 'EOSU'
 export GEMINI_API_KEY="{GEMINI_API_KEY}"
 export GITHUB_TOKEN="{GITHUB_TOKEN}"
 export DOCKER_PAT="{DOCKER_PAT}"
+export VERTEXAI_LOCATION="{VERTEXAI_LOCATION}"
+export VERTEXAI_PROJECT="{project_id}"
 echo "Environment variables set including DOCKER PAT"
 echo $DOCKER_PAT
 echo "Now running as $(whoami) with home directory $HOME"

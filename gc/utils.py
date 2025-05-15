@@ -669,12 +669,33 @@ SWEAGENT_BF_CHECK_CMD = PATCH_CHECK_CMD.format(
 )
 
 
+SWEAGENT_BF_L_CHECK_CMD = PATCH_CHECK_CMD.format(
+   results_dir="sweb-sweagent-bf-llama",
+   check_cmd="""python codearena.py \
+        --BugFixing \
+        --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
+        --run_id sweagent_bf_llama_check \
+        --instance_ids "${INSTANCE_ID}" """,
+)
+
+
 SWEAGENT_TG_CHECK_CMD = PATCH_CHECK_CMD.format(
    results_dir="sweb-sweagent-tg",
    check_cmd="""python codearena.py \
         --TestGeneration \
         --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
         --run_id sweagent_tg_check \
+        --instance_ids "${INSTANCE_ID}" """,
+)
+
+
+
+SWEAGENT_TG_L_CHECK_CMD = PATCH_CHECK_CMD.format(
+   results_dir="sweb-sweagent-tg-llama",
+   check_cmd="""python codearena.py \
+        --TestGeneration \
+        --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
+        --run_id sweagent_tg_llama_check \
         --instance_ids "${INSTANCE_ID}" """,
 )
 
@@ -869,10 +890,12 @@ COMMAND_MAP = {
     "agentless-check-java": AGENTLESS_CHECK_JAVA_CMD,
     "sweagent-bf": SWEAGENT_BUGFIXING_CMD,
     "sweagent-bf-check": SWEAGENT_BF_CHECK_CMD,
+    "sweagent-bf-llama-check": SWEAGENT_BF_L_CHECK_CMD,
     "sweagent-tg": SWEAGENT_TESTGEN_CMD,
     "sweagent-bf-llama": SWEAGENT_BUGFIXING_L_CMD,
     "sweagent-tg-llama": SWEAGENT_TESTGEN_L_CMD,
     "sweagent-tg-check": SWEAGENT_TG_CHECK_CMD,
+    "sweagent-tg-llama-check": SWEAGENT_TG_L_CHECK_CMD,
     "sweagent-bf-java": SWEAGENT_BUGFIXING_JAVA_CMD,
     "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
     "sweagent-sr": SWEAGENT_STYLE_REVIEW_CMD,
