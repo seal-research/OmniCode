@@ -425,7 +425,8 @@ def main(
     open_file_limit: int,
     run_id,
     timeout: int,
-    type: str
+    type: str,
+    max_iter: int,
 ):
     if type == "java":
 
@@ -577,7 +578,6 @@ def main(
         if instance_ids is not None:
             dataset = [d for d in dataset if d["instance_id"] in instance_ids]
 
-        max_iter = 6 # make lower for faster iterations
         modified_dataset = []
 
         for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
@@ -729,6 +729,13 @@ if __name__ == '__main__':
         help="Language Type",
     )
 
+    parser.add_argument(
+        "--max_iter",
+        type=int,
+        default=6,
+        help="Number of LLM samples to try to generate a bad patch",
+    )
+
     args = parser.parse_args()
 
     api_key = args.api_key
@@ -752,5 +759,6 @@ if __name__ == '__main__':
         open_file_limit=args.open_file_limit,
         run_id=args.run_id,
         timeout=args.timeout,
-        type=args.type
+        type=args.type,
+        max_iter=args.max_iter,
     )
