@@ -279,13 +279,14 @@ def main(
 # ------------------------------ CLI entry ----------------------------------- #
 if __name__ == "__main__":
     from argparse import ArgumentParser
+    
 
     p = ArgumentParser()
     p.add_argument("-i", "--input_tasks", required=True)
     p.add_argument("-o", "--output_dir", required=True)
     p.add_argument("-m", "--model_name",
-                   default="gemini/gemini-2.5-pro-preview-05-06")
-    p.add_argument("-k", "--api_key", required=True)
+                   default="gemini/gemini/gemini-2.5-flash-preview-04-17")
+    p.add_argument("-k", "--api_key", default=None)
     p.add_argument("--model_provider", default="gemini")
     p.add_argument("--mode", default="bugfixing",
                    choices=["bugfixing", "testgen", "stylereview", "codereview"])
@@ -299,8 +300,8 @@ if __name__ == "__main__":
         output_dir_path=Path(args.output_dir),
         model_name=args.model_name,
         api_key=args.api_key,
+        mode=args.mode,
         model_provider=args.model_provider.upper(),
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
-        mode=args.mode,
         style_feedback_path=Path(args.style_feedback) if args.style_feedback else None,
     )
