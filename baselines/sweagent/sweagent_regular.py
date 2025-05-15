@@ -99,7 +99,7 @@ logger = logging.getLogger(__name__)
 def run_sweagent_single(
     instance: dict,
     model_name: str,
-    api_key: str,
+    api_key: str | None,
     output_dir: Path,
     mode: str = "bugfixing",
     thinking_budget: int | None = None,
@@ -140,7 +140,6 @@ def run_sweagent_single(
 
         args += [
             f"--agent.model.name={model_name}",
-            f"--agent.model.api_key={api_key}",
             f"--agent.model.per_instance_cost_limit=2.0",
             f"--env.repo.github_url={url}",
             f"--env.repo.base_commit={instance['base_commit']}",
@@ -151,6 +150,9 @@ def run_sweagent_single(
             f"--problem_statement.id={instance['instance_id']}",
             f"--output_dir={output_dir}",
         ]
+
+        if api_key is not None:
+            args.append(f"--agent.model.api_key={api_key}")
 
         if mode == 'stylereview':
             # apply gold patch upon starting env, so that agent can modify it based on pylint feedback
@@ -200,7 +202,7 @@ def main(
     input_tasks_path: Path,
     output_dir_path: Path,
     model_name: str,
-    api_key: str,
+    api_key: str | None,
     instance_ids: list[str] | None= None,
     mode: str = "bugfixing",
     thinking_budget: int | None = None,
@@ -264,7 +266,7 @@ if __name__ == '__main__':
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
-    parser.add_argument("-k", "--api_key", type=str, required=True)
+    parser.add_argument("-k", "--api_key", type=str, default=None)
     parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview", "reviewfix"])
     parser.add_argument("--thinking_budget", type=int, default=0)
     args = parser.parse_args()
