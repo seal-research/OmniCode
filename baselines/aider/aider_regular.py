@@ -233,8 +233,8 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--input_tasks", type=str, required=True)
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
-    parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-pro-preview-05-06")
-    parser.add_argument("-k", "--api_key", type=str, required=True)
+    parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
+    parser.add_argument("-k", "--api_key", type=str, default=None)
     parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview"])
     parser.add_argument("--thinking_budget", type=int, default=0)
     parser.add_argument("--model_provider", type=str, default="gemini")
@@ -247,6 +247,6 @@ if __name__ == '__main__':
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
         api_key=args.api_key,
         mode=args.mode,
-        thinking_budget=args.thinking_budget,
+        # thinking_budget=args.thinking_budget,
         model_provider=args.model_provider.upper(),
     ) 
