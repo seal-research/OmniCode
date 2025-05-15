@@ -704,6 +704,14 @@ SWEAGENT_STYLE_REVIEW_CMD = """python baselines/sweagent/sweagent_regular.py \
 --mode stylereview \
 --instance_ids $INSTANCE_ID"""
 
+SWEAGENT_REVIEW_FIX_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m gemini/gemini-2.5-flash-preview-04-17 \
+-k $GEMINI_API_KEY \
+--mode reviewfix \
+--instance_ids $INSTANCE_ID"""
+
 
 SWEAGENT_BUGFIXING_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances_java.json \
@@ -743,7 +751,7 @@ OPENHANDS_BUGFIXING_CMD = r"""process() {
     echo selected_ids = [\"${INSTANCE_ID}\"] > evaluation/benchmarks/swe_bench/config.toml
     ./evaluation/benchmarks/swe_bench/scripts/run_infer.sh llm.gemini HEAD CodeActAgent 1 100 1 ../codearena/data/codearena_instances.json
     python evaluation/benchmarks/swe_bench/convert.py --prediction_file evaluation/evaluation_outputs/outputs/..__codearena__data__codearena_instances.json-test/CodeActAgent/gemini-2.0-flash_maxiter_100_N_v0.36.0-no-hint-run_1/output.jsonl >> ../codearena/logs/all_preds.jsonl
-    cd ../codearena 
+    cd ../codearena
 }
 process"""
 
@@ -838,6 +846,7 @@ COMMAND_MAP = {
     "sweagent-sr": SWEAGENT_STYLE_REVIEW_CMD,
     "sweagent-sr-check": SWEAGENT_SR_CHECK_CMD,
     "sweagent-sr-bf-check": SWEAGENT_SR_BF_CHECK_CMD,
+    "sweagent-rf": SWEAGENT_REVIEW_FIX_CMD,
     "style-review": STYLE_REVIEW_CMD,
     "openhands-bf": OPENHANDS_BUGFIXING_CMD,
     "openhands-bf-check": OPENHANDS_BF_CHECK_CMD,
