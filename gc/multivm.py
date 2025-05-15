@@ -24,6 +24,7 @@ MAX_RETRIES = 3
 INITIAL_RETRY_DELAY = 5  # seconds
 MAX_RETRY_DELAY = 60  # seconds
 
+VERTEXAI_LOCATION = "us-east5"
 
 def exponential_backoff(retry_number):
     """Calculate delay with exponential backoff and jitter."""
@@ -233,6 +234,10 @@ su - ays57 << 'EOSU'
 export GEMINI_API_KEY="{GEMINI_API_KEY}"
 export GITHUB_TOKEN="{GITHUB_TOKEN}"
 export DOCKER_PAT="{DOCKER_PAT}"
+export VERTEXAI_LOCATION="{VERTEXAI_LOCATION}"
+export VERTEXAI_PROJECT="{project_id}"
+echo "Environment variables set including DOCKER PAT"
+echo $DOCKER_PAT
 echo "Now running as $(whoami) with home directory $HOME"
 # Explicitly set PATH to include common conda locations
 export PATH="$HOME/miniconda3/bin:$HOME/anaconda3/bin:/opt/conda/bin:$PATH"
