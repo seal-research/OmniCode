@@ -58,8 +58,8 @@ async def analyse(gcs_path: str, debug: bool = True, max_concurrency: int = 10):
         bucket, directory_prefix, instance_dirs, executor, debug
     )
     
-    print(f"Not Null: {list(sorted(not_null))}")
-    print(f"Null: {list(sorted(set(present) - set(not_null)))}")
+    # print(f"Not Null: {list(sorted(not_null))}")
+    # print(f"Null: {list(sorted(set(present) - set(not_null)))}")
     print(f"{len(present)=}, {len(generated)=}, {len(not_null)=}")
 
 
@@ -110,9 +110,23 @@ async def process_instance(bucket, directory_prefix, instance_id, executor, debu
     )
     
     if not exists:
-        print(f"No all_preds.jsonl for {instance_id}")
+        if debug:
+            print(f"No all_preds.jsonl for {instance_id}")
         return False, False
-    
+
+    log_file_path = f"{directory_prefix}{instance_id}/instance_{instance_id}.log" 
+    log_file_blob = bucket.blob(log_file_path)
+    error_text = "Exit due to unknown error: litellm.RateLimitError: litellm.RateLimitError"
+    exists = await asyncio.get_event_loop().run_in_executor(
+        executor, lambda: log_file_blob.exists()
+    )
+    if exists:
+        log_content = await asyncio.get_event_loop().run_in_executor(
+            executor, lambda: log_file_blob.download_as_text()
+        )
+        if error_text in log_content:
+            print(instance_id)
+
     # File exists, download and process it asynchronously
     output_content = await asyncio.get_event_loop().run_in_executor(
         executor, lambda: output_file_blob.download_as_text()
@@ -124,7 +138,7 @@ async def process_instance(bucket, directory_prefix, instance_id, executor, debu
         output_data = json.loads(first_line)
         
         has_full_output = output_data.get("model_patch", None) is not None and output_data["model_patch"]["model_patch"] is not None
-        if has_full_output:
+        if has_full_output and debug:
             print(f"Patch found for {instance_id}")
         
         return True, has_full_output
@@ -166,7 +180,7 @@ async def process_all_instances(bucket, directory_prefix, instance_dirs, executo
 if __name__ == '__main__':
     import fire
     
-    def run_analyse(gcs_path: str, debug: bool = True, max_concurrency: int = 10):
+    def run_analyse(gcs_path: str, debug: bool = False, max_concurrency: int = 10):
         """Wrapper to run the async function."""
         asyncio.run(analyse(gcs_path, debug, max_concurrency))
     
