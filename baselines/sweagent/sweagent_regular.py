@@ -95,6 +95,33 @@ logger = logging.getLogger(__name__)
 #     return None, output
 
 
+def get_reviewfix_faux_problem_statement(instance: dict) -> str:
+    bad_patch = [bp for bp in instance['bad_patches'] if bp['source'] == 'badpatchllm'][0]
+    problem_statement = instance['problem_statement']
+    bad_patch_text = bad_patch['patch']
+    review = bad_patch['review']
+
+    faux_str = f"""Consider the following PR description:
+
+      <pr_description>
+      {problem_statement}
+      </pr_description>
+
+      Additionally, here is a previous patch attempt that failed to resolve this issue.
+
+      <bad_patch>
+      {bad_patch_text}
+      </bad_patch>
+
+      And here are is a review that attempts to explain why the patch failed:
+
+      <review>
+      {review}
+      </review>
+
+      Please carefully review the failed patch and its reviews. Use insight from them to **avoid repeating the same mistakes** and to **guide your reasoning** when implementing the fix."""
+    return faux_str
+
 
 def run_sweagent_single(
     instance: dict,
@@ -114,22 +141,11 @@ def run_sweagent_single(
 
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
 
-        fp.write(instance['problem_statement'])
         if mode == 'reviewfix':
-            bad_patches_text = format_list_for_prompt_plain(instance.get('bad_patches', []))
-            reviews_text = format_list_for_prompt_plain(instance.get('reviews', []))
-            
-            orig_bad = instance['bad_patches']
-            orig_rev = instance['reviews']
-            
-            instance['bad_patches'] = bad_patches_text
-            instance['reviews'] = reviews_text
-            
-            fp.write(instance['bad_patches'])
-            fp.write(instance['reviews'])
-
-            instance['bad_patches'] = orig_bad
-            instance['reviews'] = orig_rev
+            # use the problem statement to inject prompt, hacky way to modify prompt easily
+            fp.write(get_reviewfix_faux_problem_statement(instance))
+        else:
+            fp.write(instance['problem_statement'])
 
         fp.close()
 
@@ -160,7 +176,7 @@ def run_sweagent_single(
 
             args.append(
                 f"--env.post_startup_commands={json.dumps(commands)}",     # note: !r gives Python‑style list
-            )      
+            )
 
 
         if thinking_budget is not None:
@@ -193,10 +209,6 @@ def apply_patch_commands(patch: str, repo_name: str) -> list[str]:
                 patch --batch --fuzz=5 -p1 -i /tmp/patch.diff
             )""",
     ]
-
-def format_list_for_prompt_plain(items: list[str]) -> str:
-    """Join list items with double newlines for LLM-friendly plain text rendering."""
-    return "\n\n".join(items)
 
 def main(
     input_tasks_path: Path,
