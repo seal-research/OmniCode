@@ -365,7 +365,8 @@ if __name__ == "__main__":
     parser.add_argument("--num_vms", type=int, default=20, required=False)
     parser.add_argument("--randomise", action="store_true", help="randomise sequence of instances being processed")
     parser.add_argument("--max_parallel", type=int, default=10, help="Maximum number of VMs to create in parallel")
-    parser.add_argument("--zone", type=str, required=True, help="zone in which to create VMs")
+    parser.add_argument("--zone", type=str, default=None, help="zone in which to create VMs")
+    parser.add_argument("--base_zone", type=str, required=True, help="base vm zone")
     parser.add_argument("--base_vm", type=str, required=True, help="Base VM name, e.g. sedsbase")
     parser.add_argument("--vm_idx_to_run", type=str, help="comma seperate list if ints indicating vms to run", default=None)
 
@@ -378,8 +379,11 @@ if __name__ == "__main__":
 
     # Hardcode the base VM name
     base_vm_name = args.base_vm
+    base_zone = args.base_zone
     project_id = "gen-lang-client-0511233871"
     zone = args.zone
+    if zone is None:
+        zone = base_zone
 
     # Define image family for this job type
     command = get_command(job_type)
@@ -401,7 +405,7 @@ if __name__ == "__main__":
         disk_image = create_image_wrapped(
             rebuild=rebuild,
             project_id=project_id,
-            zone=zone,
+            zone=base_zone,
             source_instance=base_vm_name,
         )
 
