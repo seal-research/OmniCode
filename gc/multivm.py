@@ -236,8 +236,6 @@ export GITHUB_TOKEN="{GITHUB_TOKEN}"
 export DOCKER_PAT="{DOCKER_PAT}"
 export VERTEXAI_LOCATION="{VERTEXAI_LOCATION}"
 export VERTEXAI_PROJECT="{project_id}"
-echo "Environment variables set including DOCKER PAT"
-echo $DOCKER_PAT
 echo "Now running as $(whoami) with home directory $HOME"
 # Explicitly set PATH to include common conda locations
 export PATH="$HOME/miniconda3/bin:$HOME/anaconda3/bin:/opt/conda/bin:$PATH"
