@@ -95,11 +95,38 @@ logger = logging.getLogger(__name__)
 #     return None, output
 
 
+def get_reviewfix_faux_problem_statement(instance: dict) -> str:
+    bad_patch = [bp for bp in instance['bad_patches'] if bp['source'] == 'badpatchllm'][0]
+    problem_statement = instance['problem_statement']
+    bad_patch_text = bad_patch['patch']
+    review = bad_patch['review']
+
+    faux_str = f"""Consider the following PR description:
+
+      <pr_description>
+      {problem_statement}
+      </pr_description>
+
+      Additionally, here is a previous patch attempt that failed to resolve this issue.
+
+      <bad_patch>
+      {bad_patch_text}
+      </bad_patch>
+
+      And here are is a review that attempts to explain why the patch failed:
+
+      <review>
+      {review}
+      </review>
+
+      Please carefully review the failed patch and its reviews. Use insight from them to **avoid repeating the same mistakes** and to **guide your reasoning** when implementing the fix."""
+    return faux_str
+
 
 def run_sweagent_single(
     instance: dict,
     model_name: str,
-    api_key: str,
+    api_key: str | None,
     output_dir: Path,
     mode: str = "bugfixing",
     thinking_budget: int | None = None,
@@ -114,22 +141,11 @@ def run_sweagent_single(
 
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
 
-        fp.write(instance['problem_statement'])
         if mode == 'reviewfix':
-            bad_patches_text = format_list_for_prompt_plain(instance.get('bad_patches', []))
-            reviews_text = format_list_for_prompt_plain(instance.get('reviews', []))
-            
-            orig_bad = instance['bad_patches']
-            orig_rev = instance['reviews']
-            
-            instance['bad_patches'] = bad_patches_text
-            instance['reviews'] = reviews_text
-            
-            fp.write(instance['bad_patches'])
-            fp.write(instance['reviews'])
-
-            instance['bad_patches'] = orig_bad
-            instance['reviews'] = orig_rev
+            # use the problem statement to inject prompt, hacky way to modify prompt easily
+            fp.write(get_reviewfix_faux_problem_statement(instance))
+        else:
+            fp.write(instance['problem_statement'])
 
         fp.close()
 
@@ -140,7 +156,6 @@ def run_sweagent_single(
 
         args += [
             f"--agent.model.name={model_name}",
-            f"--agent.model.api_key={api_key}",
             f"--agent.model.per_instance_cost_limit=2.0",
             f"--env.repo.github_url={url}",
             f"--env.repo.base_commit={instance['base_commit']}",
@@ -152,13 +167,16 @@ def run_sweagent_single(
             f"--output_dir={output_dir}",
         ]
 
+        if api_key is not None:
+            args.append(f"--agent.model.api_key={api_key}")
+
         if mode == 'stylereview':
             # apply gold patch upon starting env, so that agent can modify it based on pylint feedback
             commands = apply_patch_commands(instance["patch"], repo_name=instance["repo"].replace("/", "__"))
 
             args.append(
                 f"--env.post_startup_commands={json.dumps(commands)}",     # note: !r gives Python‑style list
-            )      
+            )
 
 
         if thinking_budget is not None:
@@ -192,15 +210,11 @@ def apply_patch_commands(patch: str, repo_name: str) -> list[str]:
             )""",
     ]
 
-def format_list_for_prompt_plain(items: list[str]) -> str:
-    """Join list items with double newlines for LLM-friendly plain text rendering."""
-    return "\n\n".join(items)
-
 def main(
     input_tasks_path: Path,
     output_dir_path: Path,
     model_name: str,
-    api_key: str,
+    api_key: str | None,
     instance_ids: list[str] | None= None,
     mode: str = "bugfixing",
     thinking_budget: int | None = None,
@@ -264,7 +278,7 @@ if __name__ == '__main__':
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
-    parser.add_argument("-k", "--api_key", type=str, required=True)
+    parser.add_argument("-k", "--api_key", type=str, default=None)
     parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview", "reviewfix"])
     parser.add_argument("--thinking_budget", type=int, default=0)
     args = parser.parse_args()
