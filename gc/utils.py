@@ -687,11 +687,27 @@ SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
 --instance_ids $INSTANCE_ID"""
 
 
+SWEAGENT_BUGFIXING_L_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+--mode bugfixing \
+--instance_ids $INSTANCE_ID"""
+
+
 SWEAGENT_TESTGEN_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances.json \
 -o logs \
 -m gemini/gemini-2.5-flash-preview-04-17 \
 -k $GEMINI_API_KEY \
+--mode testgen \
+--instance_ids $INSTANCE_ID"""
+
+
+SWEAGENT_TESTGEN_L_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
 --mode testgen \
 --instance_ids $INSTANCE_ID"""
 
@@ -830,6 +846,20 @@ OPENHANDS_BF_CHECK_CMD = PATCH_CHECK_CMD2.format(
         --instance_ids "${INSTANCE_ID}" """,
 )
 
+AIDER_BF_CMD = """python baselines/aider/aider_regular.py \
+    -i data/codearena_instances.json  \
+    -o logs \
+    --instance_ids $INSTANCE_ID \
+    -k $GEMINI_API_KEY """
+
+AIDER_BF_L_CMD = """python baselines/aider/aider_regular.py \
+    -i data/codearena_instances.json \
+    -o logs \
+    --instance_ids $INSTANCE_ID  \
+    -k $GEMINI_API_KEY \
+    -m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+    --model_provider vertex_ai"""
+
 
 COMMAND_MAP = {
     "sanity": SANITY_CMD,
@@ -840,6 +870,8 @@ COMMAND_MAP = {
     "sweagent-bf": SWEAGENT_BUGFIXING_CMD,
     "sweagent-bf-check": SWEAGENT_BF_CHECK_CMD,
     "sweagent-tg": SWEAGENT_TESTGEN_CMD,
+    "sweagent-bf-llama": SWEAGENT_BUGFIXING_L_CMD,
+    "sweagent-tg-llama": SWEAGENT_TESTGEN_L_CMD,
     "sweagent-tg-check": SWEAGENT_TG_CHECK_CMD,
     "sweagent-bf-java": SWEAGENT_BUGFIXING_JAVA_CMD,
     "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
@@ -850,6 +882,8 @@ COMMAND_MAP = {
     "style-review": STYLE_REVIEW_CMD,
     "openhands-bf": OPENHANDS_BUGFIXING_CMD,
     "openhands-bf-check": OPENHANDS_BF_CHECK_CMD,
+    "aider-bf": AIDER_BF_CMD,
+    "aider-bf-llama": AIDER_BF_L_CMD,
 }
 
 def get_command(
