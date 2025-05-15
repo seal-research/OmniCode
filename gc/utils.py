@@ -387,7 +387,7 @@ BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
 -o logs/ \
 -m gemini-2.5-flash-preview-4-17 \
 --run_id bp_gen \
--n 3 \
+-n 1 \
 -d data/codearena_instances.json \
 --max_workers 4 \
 --instance_ids $INSTANCE_ID"""
@@ -756,6 +756,81 @@ OPENHANDS_BUGFIXING_CMD = r"""process() {
 process"""
 
 
+PATCH_CHECK_CMD2 = """check_model_patch() {{
+    # Set the path to the specific file we're checking
+    gcs_path="gs://${{BUCKET_NAME}}/{results_dir}"
+    file_path="${{gcs_path}}/${{INSTANCE_ID}}/all_preds.jsonl"
+    temp_dir=$(mktemp -d)
+    temp_file="${{temp_dir}}/all_preds.jsonl"
+    
+    # Check if the file exists
+    if ! gsutil -q stat "${{file_path}}"; then
+        echo "File not found at ${{file_path}}, skipping..."
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+    
+    # File exists, download it
+    echo "File found, downloading to verify contents..."
+    gsutil cp "${{file_path}}" "${{temp_file}}"
+    
+    # Initialize variable to store content with model_patch
+    local content=""
+    
+    # Read the file and check for model_patch field
+    while IFS= read -r line; do
+        # Check if the line contains model_patch field
+        if echo "$line" | jq 'has("model_patch")' | grep -q "true"; then
+            content="$line"
+            break
+        fi
+    done < "${{temp_file}}"
+    
+    # If no content with model_patch found
+    if [ -z "${{content}}" ]; then
+        echo "No model_patch field found in ${{file_path}}, skipping..."
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+    
+    # Check if model_patch is null or empty
+    if [ "$(echo "$content" | jq '.model_patch == null')" = "true" ] || 
+       [ "$(echo "$content" | jq '.model_patch | length')" = "0" ]; then
+        echo "Model patch is null or empty for ${{INSTANCE_ID}}, skipping..."
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+    
+    # All checks passed, model_patch exists and has content
+    echo "Valid model_patch found for ${{INSTANCE_ID}}, running check command..."
+    
+    # Ensure logs directory exists
+    mkdir -p logs
+    
+    # Save prediction to logs
+    cp "${{temp_file}}" "logs/${{INSTANCE_ID}}_all_preds.jsonl"
+    
+    # Clean up temporary directory
+    rm -rf "${{temp_dir}}"
+    
+    # Run the check command
+    {check_cmd}
+}}
+
+check_model_patch"""
+
+
+
+OPENHANDS_BF_CHECK_CMD = PATCH_CHECK_CMD2.format(
+   results_dir="sweb-openhands-bf",
+   check_cmd="""python codearena.py \
+        --BugFixing \
+        --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
+        --run_id openhands_bf_check \
+        --instance_ids "${INSTANCE_ID}" """,
+)
+
+
 COMMAND_MAP = {
     "sanity": SANITY_CMD,
     "upload-image": UPLOAD_IMAGE_CMD,
@@ -774,6 +849,7 @@ COMMAND_MAP = {
     "sweagent-rf": SWEAGENT_REVIEW_FIX_CMD,
     "style-review": STYLE_REVIEW_CMD,
     "openhands-bf": OPENHANDS_BUGFIXING_CMD,
+    "openhands-bf-check": OPENHANDS_BF_CHECK_CMD,
 }
 
 def get_command(

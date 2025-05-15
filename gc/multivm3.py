@@ -4,13 +4,13 @@ import random
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Tuple, Dict, Any, Optional
 import logging
+import threading
 
 from google.cloud import compute_v1
 
 # Set up GCP region options
 DEFAULT_REGIONS = [
     "us-central1", "us-east1", "us-east4", "us-west1", "us-west2", "us-west3", "us-west4",
-    "northamerica-northeast1", "northamerica-northeast2", "southamerica-east1", "southamerica-west1",
     "europe-central2", "europe-north1", "europe-west1", "europe-west2", "europe-west3", 
     "europe-west4", "europe-west6", "europe-west8", "europe-west9", "europe-southwest1",
     "asia-east1", "asia-east2", "asia-northeast1", "asia-northeast2", "asia-northeast3",
@@ -33,6 +33,8 @@ DOCKER_PAT = os.environ.get("DOCKER_PAT", None)
 MAX_RETRIES = 3
 INITIAL_RETRY_DELAY = 5  # seconds
 MAX_RETRY_DELAY = 60  # seconds
+
+snapshot_semaphore = threading.Semaphore(5)
 
 
 def get_all_available_regions(project_id: str) -> List[str]:
@@ -505,76 +507,77 @@ def process_single_vm(
                         return vm_name, False, f"INVALID_STATE_{status}"
 
             if not vm_exists:
-                # Define the VM configuration
-                instance = compute_v1.Instance()
-                instance.name = vm_name
-                instance.machine_type = f"zones/{zone}/machineTypes/{machine_type}"
+                with snapshot_semaphore:
+                    # Define the VM configuration
+                    instance = compute_v1.Instance()
+                    instance.name = vm_name
+                    instance.machine_type = f"zones/{zone}/machineTypes/{machine_type}"
 
-                # Define the disk configuration
-                disk = compute_v1.AttachedDisk()
-                disk.auto_delete = True
-                disk.boot = True
+                    # Define the disk configuration
+                    disk = compute_v1.AttachedDisk()
+                    disk.auto_delete = True
+                    disk.boot = True
 
-                initialize_params = compute_v1.AttachedDiskInitializeParams()
-                initialize_params.disk_size_gb = disk_size_gb
+                    initialize_params = compute_v1.AttachedDiskInitializeParams()
+                    initialize_params.disk_size_gb = disk_size_gb
 
-                # Use snapshot source - snapshots are global resources, so this works across regions
-                initialize_params.source_snapshot = snapshot_source
+                    # Use snapshot source - snapshots are global resources, so this works across regions
+                    initialize_params.source_snapshot = snapshot_source
 
-                disk.initialize_params = initialize_params
-                instance.disks = [disk]
+                    disk.initialize_params = initialize_params
+                    instance.disks = [disk]
 
-                # Define the network configuration
-                network_interface = compute_v1.NetworkInterface()
-                network_interface.network = "global/networks/default"
+                    # Define the network configuration
+                    network_interface = compute_v1.NetworkInterface()
+                    network_interface.network = "global/networks/default"
 
-                access_config = compute_v1.AccessConfig()
-                access_config.name = "External NAT"
-                access_config.type_ = "ONE_TO_ONE_NAT"
-                network_interface.access_configs = [access_config]
+                    access_config = compute_v1.AccessConfig()
+                    access_config.name = "External NAT"
+                    access_config.type_ = "ONE_TO_ONE_NAT"
+                    network_interface.access_configs = [access_config]
 
-                instance.network_interfaces = [network_interface]
+                    instance.network_interfaces = [network_interface]
 
-                # Set the service account and scopes
-                service_account = compute_v1.ServiceAccount()
-                service_account.email = "default"
-                service_account.scopes = [
-                    "https://www.googleapis.com/auth/devstorage.read_write",
-                    "https://www.googleapis.com/auth/logging.write",
-                    "https://www.googleapis.com/auth/monitoring.write",
-                    "https://www.googleapis.com/auth/compute",  # Add compute scope for VM self-deletion
-                    "https://www.googleapis.com/auth/cloud-platform",  # Add cloud platform scope for Gemini API
-                ]
-                instance.service_accounts = [service_account]
+                    # Set the service account and scopes
+                    service_account = compute_v1.ServiceAccount()
+                    service_account.email = "default"
+                    service_account.scopes = [
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/logging.write",
+                        "https://www.googleapis.com/auth/monitoring.write",
+                        "https://www.googleapis.com/auth/compute",  # Add compute scope for VM self-deletion
+                        "https://www.googleapis.com/auth/cloud-platform",  # Add cloud platform scope for Gemini API
+                    ]
+                    instance.service_accounts = [service_account]
 
-                # Set up as spot/preemptible instance
-                scheduling = compute_v1.Scheduling()
-                scheduling.provisioning_model = "SPOT"
-                instance.scheduling = scheduling
+                    # Set up as spot/preemptible instance
+                    scheduling = compute_v1.Scheduling()
+                    scheduling.provisioning_model = "SPOT"
+                    instance.scheduling = scheduling
 
-                # Create metadata with startup script
-                metadata = compute_v1.Metadata()
-                item = compute_v1.Items()
-                item.key = "startup-script"
-                item.value = startup_script
-                metadata.items = [item]
-                instance.metadata = metadata
+                    # Create metadata with startup script
+                    metadata = compute_v1.Metadata()
+                    item = compute_v1.Items()
+                    item.key = "startup-script"
+                    item.value = startup_script
+                    metadata.items = [item]
+                    instance.metadata = metadata
 
-                # Create the VM
-                logger.info(f"Creating new VM {vm_name} in zone {zone} to process {len(vm_instance_ids)} instances...")
-                operation = instance_client.insert(
-                    project=project_id,
-                    zone=zone,
-                    instance_resource=instance
-                )
+                    # Create the VM
+                    logger.info(f"Creating new VM {vm_name} in zone {zone} to process {len(vm_instance_ids)} instances...")
+                    operation = instance_client.insert(
+                        project=project_id,
+                        zone=zone,
+                        instance_resource=instance
+                    )
 
-                wait_result = wait_for_operation(operation, project_id, zone)
-                if wait_result:
-                    logger.info(f"Successfully created VM: {vm_name} in zone {zone}")
-                    return vm_name, True, "SUCCESS"
-                else:
-                    logger.error(f"Failed to create VM: {vm_name} in zone {zone}. Retrying...")
-                    raise Exception(f"Failed to create VM: {vm_name}")
+                    wait_result = wait_for_operation(operation, project_id, zone)
+                    if wait_result:
+                        logger.info(f"Successfully created VM: {vm_name} in zone {zone}")
+                        return vm_name, True, "SUCCESS"
+                    else:
+                        logger.error(f"Failed to create VM: {vm_name} in zone {zone}. Retrying...")
+                        raise Exception(f"Failed to create VM: {vm_name}")
 
             # If we get here, something unexpected happened
             return vm_name, False, "UNKNOWN_ERROR"
@@ -976,8 +979,8 @@ if __name__ == "__main__":
                        help="Maximum number of VMs to create in any single region (default: no limit)")
     parser.add_argument("--base_vm", type=str, required=True, help="Base VM name, e.g. sedsbase")
     parser.add_argument("--vm_idx_to_run", type=str, help="comma seperate list if ints indicating vms to run", default=None)
-    parser.add_argument("--quota_check_workers", type=int, default=20, 
-                       help="Maximum number of parallel threads for quota queries (default: 20)")
+    parser.add_argument("--quota_check_workers", type=int, default=10, 
+                       help="Maximum number of parallel threads for quota queries (default: 10)")
 
     args = parser.parse_args()
 

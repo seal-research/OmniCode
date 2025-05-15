@@ -20,6 +20,7 @@ def run_aider_single(
     model_name: str,
     api_key: str,
     output_dir: Path,
+    model_provider: str,
     mode: str = "bugfixing",
     thinking_budget: int | None = None,
 ) -> Tuple[Optional[str], dict]:
@@ -59,8 +60,8 @@ def run_aider_single(
         try:
             # Set up environment variables for aider
             env = {
-                "AIDER_API_KEY": api_key,
-                "AIDER_MODEL": model_name,
+                f"{model_provider}_API_KEY": api_key,
+                f"{model_provider}_MODEL": model_name,
                 **os.environ
             }
             
@@ -81,8 +82,9 @@ def run_aider_single(
                 logger.error(f"Error checking aider version: {str(e)}")
             
             # Run the actual aider command
+            # logger.info(problem_file.read_text())
             result = subprocess.run(
-                ["aider", "--message-file", str(problem_file), "--no-gitignore", "--no-pretty", "--yes"],
+                ["aider", "--message-file", str(problem_file), "--model", model_name, "--no-auto-commits", "--no-gitignore", "--no-pretty", "--yes"],
                 cwd=temp_path,
                 capture_output=True,
                 text=True,
@@ -148,6 +150,7 @@ def main(
     output_dir_path: Path,
     model_name: str,
     api_key: str,
+    model_provider: str,
     instance_ids: list[str] | None = None,
     mode: str = "bugfixing",
     thinking_budget: int | None = None,
@@ -212,7 +215,8 @@ def main(
                 api_key=api_key,
                 output_dir=output_dir_path,
                 mode=mode,
-                thinking_budget=thinking_budget
+                thinking_budget=thinking_budget,
+                model_provider=model_provider,
             )
             
             if error:
@@ -233,6 +237,7 @@ if __name__ == '__main__':
     parser.add_argument("-k", "--api_key", type=str, required=True)
     parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview"])
     parser.add_argument("--thinking_budget", type=int, default=0)
+    parser.add_argument("--model_provider", type=str, default="gemini")
     args = parser.parse_args()
 
     main(
@@ -242,5 +247,6 @@ if __name__ == '__main__':
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
         api_key=args.api_key,
         mode=args.mode,
-        thinking_budget=args.thinking_budget
+        thinking_budget=args.thinking_budget,
+        model_provider=args.model_provider.upper(),
     ) 
