@@ -127,10 +127,12 @@ def process_single_vm(
                 service_account = compute_v1.ServiceAccount()
                 service_account.email = "default"
                 service_account.scopes = [
-                    "https://www.googleapis.com/auth/devstorage.read_write",
-                    "https://www.googleapis.com/auth/logging.write",
-                    "https://www.googleapis.com/auth/monitoring.write",
-                ]
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/logging.write",
+                        "https://www.googleapis.com/auth/monitoring.write",
+                        "https://www.googleapis.com/auth/compute",  # Add compute scope for VM self-deletion
+                        "https://www.googleapis.com/auth/cloud-platform",  # Add cloud platform scope for Gemini API
+                    ]
                 instance.service_accounts = [service_account]
 
                 # Set up as spot/preemptible instance
