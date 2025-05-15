@@ -7,25 +7,7 @@ agent:
       <uploaded_files>
       {{working_dir}}
       </uploaded_files>
-      I've uploaded a python code repository in the directory {{working_dir}}. Consider the following PR description:
-
-      <pr_description>
-      {{problem_statement}}
-      </pr_description>
-
-      Additionally, here are examples of three **previous patch attempts** that failed to resolve this or similar issues:
-
-      <bad_patches>
-      {{bad_patches}}
-      </bad_patches>
-
-      And here are the three corresponding **reviews explaining why those patches failed**:
-
-      <reviews>
-      {{reviews}}
-      </reviews>
-
-      Please carefully review the above failed patches and their reviews. Use these insights to **avoid repeating the same mistakes** and to **guide your reasoning** when building a correct patch.
+      I've uploaded a python code repository in the directory {{working_dir}}. {{problem_statement}}
 
       Can you help me implement the necessary changes to the repository so that the requirements specified in the <pr_description> are met?
       I've already taken care of all changes to any of the test files described in the <pr_description>. This means you DON'T have to modify the testing logic or any of the tests in any way!
