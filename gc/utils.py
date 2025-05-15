@@ -374,6 +374,13 @@ SWEAGENT_SR_CHECK_CMD = """python codearena.py \
 --instance_ids $INSTANCE_ID \
 --run_id sweagent_sr_check"""
 
+SWEAGENT_SR_CHECK_L_CMD = """python codearena.py \
+--StyleReview \
+--language python \
+--predictions_path "sweagent_sr_all_preds_llama.jsonl" \
+--instance_ids $INSTANCE_ID \
+--run_id sweagent_sr_check_llama"""
+
 
 SWEAGENT_SR_BF_CHECK_CMD = """python codearena.py \
 --BugFixing \
@@ -382,6 +389,12 @@ SWEAGENT_SR_BF_CHECK_CMD = """python codearena.py \
 --instance_ids $INSTANCE_ID \
 --run_id sweagent_sr_bf_check"""
 
+SWEAGENT_SR_BF_CHECK_L_CMD = """python codearena.py \
+--BugFixing \
+--language python \
+--predictions_path "sweagent_sr_all_preds_llama.jsonl" \
+--instance_ids $INSTANCE_ID \
+--run_id sweagent_sr_bf_check_llama"""
 
 BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
 -o logs/ \
@@ -741,6 +754,13 @@ SWEAGENT_STYLE_REVIEW_CMD = """python baselines/sweagent/sweagent_regular.py \
 --mode stylereview \
 --instance_ids $INSTANCE_ID"""
 
+SWEAGENT_STYLE_REVIEW_L_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/sweagent_style_review_instances.json \
+-o logs \
+-m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+--mode stylereview \
+--instance_ids $INSTANCE_ID"""
+
 SWEAGENT_REVIEW_FIX_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances.json \
 -o logs \
@@ -799,21 +819,21 @@ PATCH_CHECK_CMD2 = """check_model_patch() {{
     file_path="${{gcs_path}}/${{INSTANCE_ID}}/all_preds.jsonl"
     temp_dir=$(mktemp -d)
     temp_file="${{temp_dir}}/all_preds.jsonl"
-    
+
     # Check if the file exists
     if ! gsutil -q stat "${{file_path}}"; then
         echo "File not found at ${{file_path}}, skipping..."
         rm -rf "${{temp_dir}}"
         return 0
     fi
-    
+
     # File exists, download it
     echo "File found, downloading to verify contents..."
     gsutil cp "${{file_path}}" "${{temp_file}}"
-    
+
     # Initialize variable to store content with model_patch
     local content=""
-    
+
     # Read the file and check for model_patch field
     while IFS= read -r line; do
         # Check if the line contains model_patch field
@@ -822,34 +842,34 @@ PATCH_CHECK_CMD2 = """check_model_patch() {{
             break
         fi
     done < "${{temp_file}}"
-    
+
     # If no content with model_patch found
     if [ -z "${{content}}" ]; then
         echo "No model_patch field found in ${{file_path}}, skipping..."
         rm -rf "${{temp_dir}}"
         return 0
     fi
-    
+
     # Check if model_patch is null or empty
-    if [ "$(echo "$content" | jq '.model_patch == null')" = "true" ] || 
+    if [ "$(echo "$content" | jq '.model_patch == null')" = "true" ] ||
        [ "$(echo "$content" | jq '.model_patch | length')" = "0" ]; then
         echo "Model patch is null or empty for ${{INSTANCE_ID}}, skipping..."
         rm -rf "${{temp_dir}}"
         return 0
     fi
-    
+
     # All checks passed, model_patch exists and has content
     echo "Valid model_patch found for ${{INSTANCE_ID}}, running check command..."
-    
+
     # Ensure logs directory exists
     mkdir -p logs
-    
+
     # Save prediction to logs
     cp "${{temp_file}}" "logs/${{INSTANCE_ID}}_all_preds.jsonl"
-    
+
     # Clean up temporary directory
     rm -rf "${{temp_dir}}"
-    
+
     # Run the check command
     {check_cmd}
 }}
@@ -899,8 +919,11 @@ COMMAND_MAP = {
     "sweagent-bf-java": SWEAGENT_BUGFIXING_JAVA_CMD,
     "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
     "sweagent-sr": SWEAGENT_STYLE_REVIEW_CMD,
+    "sweagent-sr-llama": SWEAGENT_STYLE_REVIEW_L_CMD,
     "sweagent-sr-check": SWEAGENT_SR_CHECK_CMD,
+    "sweagent-sr-check-llama": SWEAGENT_SR_CHECK_L_CMD,
     "sweagent-sr-bf-check": SWEAGENT_SR_BF_CHECK_CMD,
+    "sweagent-sr-bf-check-llama": SWEAGENT_SR_BF_CHECK_L_CMD,
     "sweagent-rf": SWEAGENT_REVIEW_FIX_CMD,
     "style-review": STYLE_REVIEW_CMD,
     "openhands-bf": OPENHANDS_BUGFIXING_CMD,

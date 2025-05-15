@@ -36,7 +36,43 @@
     "MAP_REPO_VERSION_TO_SPECS": {
         k: {
             "python": "3.10",
-            "pip_packages": "requirements.txt",
+            "pip_packages": [
+                'namex>=0.0.8',
+                'ruff',
+                'pytest',
+                'numpy',
+                'scipy',
+                'scikit-learn',
+                'pandas',
+                'absl-py',
+                'requests',
+                'h5py',
+                'ml-dtypes',
+                'protobuf',
+                'google',
+                'tensorboard-plugin-profile',
+                'rich',
+                'build',
+                'optree',
+                'pytest-cov',
+                'packaging',
+                # for tree_test.py
+                'dm_tree',
+                'coverage!=7.6.5',  # 7.6.5 breaks CI
+                # for onnx_test.py
+                'onnxruntime',
+                # Tensorflow.
+                "tensorflow~=2.18.0",
+                'tf_keras',
+                'tf2onnx',
+                # Torch.
+                'torch>=2.1.0',
+                'torchvision>=0.16.0',
+                'torch-xla',
+                # Jax.
+                'jax[cpu]',
+                'flax',
+            ],
             # "install": "python pip_build.py --install",
             "install": "python -m pip install -e .",
             "test_cmd": "pytest -rA",
