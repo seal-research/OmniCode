@@ -1,252 +1,306 @@
+#!/usr/bin/env python
+from __future__ import annotations
+# --------------------------------------------------------------------------- #
+#  aider_runner.py – run Aider on Swe-Bench / CodeArena instances             #
+# --------------------------------------------------------------------------- #
+
+import json, logging, os, shutil, subprocess, tempfile
 from pathlib import Path
-import json
-import logging
-import tempfile
-import subprocess
-import os
 from typing import Optional, Tuple
 
+import pandas as pd
 from datasets import load_dataset
 from tqdm import tqdm
-import pandas as pd
 
-CUR_DIR = Path(__file__).parent
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+# ----------------------------- prompt builder ------------------------------ #
+def build_prompt(
+    instance: dict,
+    mode: str,
+    working_dir: str | None = None,
+    pylint_feedback: str | None = None,
+) -> str:
+    """
+    Return the appropriate prompt text for the given mode.
+    """
+    base = instance["problem_statement"].strip()
+    repo = instance["repo"]
+
+    if mode == "bugfixing":
+        return base
+
+    if mode == "testgen":
+        return f"""
+ROLE: autonomous software-engineer inside **{repo}**
+
+GOAL: write thorough pytest unit tests only.
+- Cover the behaviour / bug described below
+- Include at least one test that fails before a fix
+- Put tests in the existing suite if present.
+
+CONTEXT:
+{base}
+
+OUTPUT: add tests; finish with **ALL TESTS ADDED**.
+""".strip()
+
+    if mode == "stylereview":
+        feedback = pylint_feedback or base
+        return f"""
+You have recently generated a patch to resolve an issue within this repository.
+Pylint has been run on the modified files and has produced the following
+feedback:
+<lint_report>
+{feedback.strip()}
+</lint_report>
+
+Please resolve the Pylint feedback to the best of your ability, while
+preserving the functionality of the code.
+""".strip()
+
+    if mode == "codereview":
+        bp_raw = instance.get("bad_patches", [])
+        if isinstance(bp_raw, str):
+            try:
+                bp_raw = json.loads(bp_raw)
+            except Exception:
+                bp_raw = []
+
+        blocks = []
+        for item in bp_raw:
+            idx   = item.get("idx", "?")
+            patch = item.get("patch", "").strip()
+            blocks.append(
+                f"[Candidate patch #{idx} – did **not** fix the bug]\n"
+                "```diff\n" + patch + "\n```"
+            )
+        bad_patches = "\n\n".join(blocks) or "_none supplied_"
+        working_dir = working_dir or "<repo>"
+
+        return f"""
+<uploaded_files>
+{working_dir}
+</uploaded_files>
+I've uploaded a Python code repository in **{working_dir}**.
+
+Pull-request description
+------------------------
+{base}
+
+Failed candidate patches
+------------------------
+{bad_patches}
+
+Your job
+--------
+Analyse why the above attempts failed.
+Make the minimal changes to **non-test** files so the PR requirements are met.
+You may create and run reproduction scripts under `bash`.
+When done, apply your fix.
+""".strip()
+
+    raise ValueError(f"Unsupported mode '{mode}'")
+
+
+# -------------------------- logging / global vars -------------------------- #
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
+
+# ----------------------------- core function -------------------------------- #
 def run_aider_single(
     instance: dict,
     model_name: str,
     api_key: str,
     output_dir: Path,
     model_provider: str,
-    mode: str = "bugfixing",
-    thinking_budget: int | None = None,
+    mode: str,
+    pylint_feedback: str | None = None,
 ) -> Tuple[Optional[str], dict]:
-    """
-    Run aider on a single instance.
-    
-    Args:
-        instance: Dictionary containing instance information
-        model_name: Name of the model to use
-        api_key: API key for the model
-        output_dir: Directory to store outputs
-        mode: Mode to run in (currently unused but kept for compatibility)
-        thinking_budget: Thinking budget for the model (currently unused but kept for compatibility)
-        
-    Returns:
-        Tuple of (error message if any, output dictionary)
-    """
-    # Create a temporary directory for this instance
+
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
-        
-        # Clone the repository
-        repo_url = f"https://github.com/{instance['repo']}"
-        logger.info(f"Cloning repository: {repo_url}")
-        subprocess.run(["git", "clone", repo_url, temp_path], check=True)
-        
-        # Checkout the specific commit
-        logger.info(f"Checking out commit: {instance['base_commit']}")
-        subprocess.run(["git", "checkout", instance['base_commit']], cwd=temp_path, check=True)
-        
-        # Write the problem statement to a file
-        problem_file = temp_path / "problem.txt"
-        problem_file.write_text(instance['problem_statement'])
-        logger.info(f"Problem statement written to: {problem_file}")
-        
-        # Run aider
-        try:
-            # Set up environment variables for aider
-            env = {
-                f"{model_provider}_API_KEY": api_key,
-                f"{model_provider}_MODEL": model_name,
-                **os.environ
-            }
-            
-            # Run aider with the problem statement
-            logger.info("Starting Aider process...")
-            logger.info(f"Using model: {model_name}")
-            
-            # First try to run aider with --version to check if it's installed correctly
-            try:
-                version_check = subprocess.run(
-                    ["aider", "--version"],
-                    capture_output=True,
-                    text=True,
-                    timeout=10
-                )
-                logger.info(f"Aider version: {version_check.stdout.strip()}")
-            except Exception as e:
-                logger.error(f"Error checking aider version: {str(e)}")
-            
-            # Run the actual aider command
-            # logger.info(problem_file.read_text())
-            result = subprocess.run(
-                ["aider", "--message-file", str(problem_file), "--model", model_name, "--no-auto-commits", "--no-gitignore", "--no-pretty", "--yes"],
-                cwd=temp_path,
-                capture_output=True,
-                text=True,
-                env=env,
-                check=True,
-                timeout=300  # 5 minutes timeout for testing
-            )
-            logger.info("Aider process completed")
-            logger.info(f"Aider stdout: {result.stdout[:500]}...")  # Log first 500 chars of output
-            if result.stderr:
-                logger.warning(f"Aider stderr: {result.stderr}")
-            
-            # Get the git diff after aider's changes
-            diff_result = subprocess.run(
-                ["git", "diff"],
-                cwd=temp_path,
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            
-            # Create instance directory structure
-            instance_dir = output_dir / instance['instance_id']
-            instance_dir.mkdir(parents=True, exist_ok=True)
-            
-            # Save the patch in SWE-bench format
-            patch_file = instance_dir / "fix.patch"
-            patch_file.write_text(diff_result.stdout)
-            
-            # Save the full output for reference
-            output = {
-                "instance_id": instance['instance_id'],
-                "model_name": model_name,
-                "full_output": result.stdout,
-                "model_patch": diff_result.stdout  # The actual git patch
-            }
-            
-            # Save the output metadata
-            output_file = instance_dir / f"{instance['instance_id']}.pred"
-            output_file.write_text(json.dumps(output))
-            
-            return None, output
-            
-        except subprocess.CalledProcessError as e:
-            error_msg = f"Error running aider: {e.stderr if e.stderr else e.stdout}"
-            logger.error(error_msg)
-            return error_msg, {}
-        except subprocess.TimeoutExpired as e:
-            error_msg = f"Aider process timed out after {e.timeout} seconds"
-            logger.error(error_msg)
-            if e.stdout:
-                logger.error(f"Partial stdout: {e.stdout[:500]}...")
-            if e.stderr:
-                logger.error(f"Partial stderr: {e.stderr}")
-            return error_msg, {}
-        except Exception as e:
-            error_msg = f"Unexpected error running aider: {str(e)}"
-            logger.error(error_msg)
-            return error_msg, {}
 
+        # clone & checkout ---------------------------------------------------- #
+        repo_url = f"https://github.com/{instance['repo']}"
+        logger.info("Cloning %s", repo_url)
+        subprocess.run(["git", "clone", repo_url, temp_path], check=True)
+
+        subprocess.run(
+            ["git", "checkout", instance["base_commit"]],
+            cwd=temp_path, check=True)
+
+        # write prompt -------------------------------------------------------- #
+        prompt_path = temp_path / "problem.txt"
+        prompt_text = build_prompt(
+            instance,
+            mode,
+            working_dir=str(temp_path) if mode == "codereview" else None,
+            pylint_feedback=pylint_feedback,
+        )
+        prompt_path.write_text(prompt_text, encoding="utf-8")
+        logger.info("Prompt written to %s", prompt_path)
+
+        # build aider command ------------------------------------------------- #
+        aider_cmd = [
+            "aider",
+            "--message-file", str(prompt_path),
+            "--model", model_name,
+            "--no-auto-commits", "--no-gitignore", "--no-pretty",
+            "--yes-always",
+            "--encoding", "utf-8",
+        ]
+        if mode == "testgen":
+            aider_cmd += [
+                "--no-gui", "--no-browser", "--no-auto-test", "--verbose"
+            ]
+
+        timeout_sec = 1800 if mode == "testgen" else 300
+
+        env = {
+            f"{model_provider}_API_KEY": api_key,
+            f"{model_provider}_MODEL": model_name,
+            "PYTHONIOENCODING": "utf-8",
+            "AIDER_NO_PROMPT": "1",
+            **os.environ,
+        }
+
+        logger.info("Running Aider …")
+        try:
+            result = subprocess.run(
+                aider_cmd,
+                cwd=temp_path,
+                capture_output=True, text=True,
+                env=env, timeout=timeout_sec, check=True,
+                encoding="utf-8", errors="replace",
+            )
+        except subprocess.TimeoutExpired as e:
+            tail_out = (e.stdout or "")[-1500:]
+            tail_err = (e.stderr or "")[-500:]
+            logger.error("Timeout after %s\n…stdout…\n%s\n…stderr…\n%s",
+                         e.timeout, tail_out, tail_err)
+            return "timeout", {}
+        except subprocess.CalledProcessError as e:
+            logger.error("Aider failed: %s", e.stderr or e.stdout)
+            return "aider error", {}
+        except Exception as e:
+            logger.error("Unexpected: %s", e)
+            return "unexpected error", {}
+
+        # capture diff -------------------------------------------------------- #
+        diff = subprocess.run(
+            ["git", "diff"], cwd=temp_path,
+            capture_output=True, text=True, check=True,
+            encoding="utf-8", errors="replace",
+        ).stdout
+
+        inst_dir = output_dir / instance["instance_id"]
+        inst_dir.mkdir(parents=True, exist_ok=True)
+        (inst_dir / "fix.patch").write_text(diff)
+
+        if mode == "codereview":
+            review_src = temp_path / "REVIEW.md"
+            if review_src.exists():
+                shutil.copy(review_src, inst_dir / "REVIEW.md")
+
+        meta = {
+            "instance_id": instance["instance_id"],
+            "mode": mode,
+            "model_name": model_name,
+            "full_output": result.stdout,
+            "model_patch": diff,
+        }
+        (inst_dir / f"{instance['instance_id']}.pred").write_text(json.dumps(meta))
+        return None, meta
+
+
+# ----------------------------- batch driver --------------------------------- #
 def main(
     input_tasks_path: Path,
     output_dir_path: Path,
     model_name: str,
     api_key: str,
     model_provider: str,
-    instance_ids: list[str] | None = None,
-    mode: str = "bugfixing",
-    thinking_budget: int | None = None,
+    instance_ids: list[str] | None,
+    mode: str,
+    style_feedback_path: Path | None,
 ):
-    """
-    Main function to run aider on multiple instances.
-    
-    Args:
-        input_tasks_path: Path to input tasks file
-        output_dir_path: Path to output directory
-        model_name: Name of the model to use
-        api_key: API key for the model
-        instance_ids: Optional list of instance IDs to process
-        mode: Mode to run in (currently unused but kept for compatibility)
-        thinking_budget: Thinking budget for the model (currently unused but kept for compatibility)
-    """
-    # Load the dataset
+
+    # load dataset ----------------------------------------------------------- #
     if input_tasks_path.exists():
         if input_tasks_path.suffix.endswith("json"):
-            dataset = json.loads(input_tasks_path.read_text())
+            data = json.loads(input_tasks_path.read_text())
         elif input_tasks_path.suffix.endswith("jsonl"):
-            dataset = [json.loads(i) for i in input_tasks_path.read_text().splitlines()]
+            data = [json.loads(l) for l in input_tasks_path.read_text().splitlines()]
         elif input_tasks_path.suffix.endswith("csv"):
-            dataset = pd.read_csv(input_tasks_path).to_dict('records')
+            data = pd.read_csv(input_tasks_path).to_dict("records")
         else:
-            raise RuntimeError(f"Data type ({input_tasks_path.suffix}) not supported")
+            raise RuntimeError(f"Unsupported {input_tasks_path.suffix}")
     else:
-        dataset = load_dataset(str(input_tasks_path))
-        if isinstance(dataset, dict):
-            dataset = dataset['test']
+        data = load_dataset(str(input_tasks_path))
+        if isinstance(data, dict):
+            data = data["test"]
 
-    if not (isinstance(dataset, list) and all(isinstance(d, dict) for d in dataset)):
-        raise RuntimeError("Data follows incorrect format")
+    if instance_ids:
+        data = [d for d in data if d["instance_id"] in instance_ids]
 
-    # Filter by instance IDs if provided
-    if instance_ids is not None:
-        dataset = [d for d in dataset if d["instance_id"] in instance_ids]
+    # read pylint feedback file once ---------------------------------------- #
+    pylint_feedback = None
+    if mode == "stylereview" and style_feedback_path:
+        pylint_feedback = Path(style_feedback_path).read_text(encoding="utf-8")
 
-    # Track completed instances
-    existing_ids = set()
-    output_file_path = output_dir_path / "all_preds.jsonl"
-    
-    if output_file_path.exists():
-        with open(output_file_path) as f:
-            for line in f:
-                data = json.loads(line)
-                instance_id = data["instance_id"]
-                existing_ids.add(instance_id)
-    
-    logger.info(f"Read {len(existing_ids)} already completed ids from {output_file_path}")
+    output_dir_path.mkdir(parents=True, exist_ok=True)
+    preds_path = output_dir_path / "all_preds.jsonl"
+    done = set()
+    if preds_path.exists():
+        done = {json.loads(l)["instance_id"] for l in preds_path.read_text().splitlines()}
 
-    # Process each instance
-    with open(output_file_path, "a+") as f:
-        for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
-            instance_id = datum["instance_id"]
-            if instance_id in existing_ids:
+    # iterate ---------------------------------------------------------------- #
+    with preds_path.open("a+") as sink:
+        for inst in tqdm(data, desc=f"Inference with {model_name}"):
+            if inst["instance_id"] in done:
                 continue
-                
-            error, output = run_aider_single(
-                datum,
-                model_name=model_name,
-                api_key=api_key,
-                output_dir=output_dir_path,
-                mode=mode,
-                thinking_budget=thinking_budget,
-                model_provider=model_provider,
+
+            err, res = run_aider_single(
+                inst,
+                model_name, api_key, output_dir_path,
+                model_provider, mode,
+                pylint_feedback=pylint_feedback,
             )
-            
-            if error:
-                logger.error(f"Error processing instance {instance_id}: {error}")
+            if err:
+                logger.error("%s: %s", inst["instance_id"], err)
                 continue
-                
-            print(json.dumps(output), file=f, flush=True)
 
-if __name__ == '__main__':
-    import os
+            sink.write(json.dumps(res) + "\n")
+            sink.flush()
+
+
+# ------------------------------ CLI entry ----------------------------------- #
+if __name__ == "__main__":
     from argparse import ArgumentParser
-    
-    parser = ArgumentParser()
-    parser.add_argument("-i", "--input_tasks", type=str, required=True)
-    parser.add_argument("--instance_ids", type=str, required=False, default=None)
-    parser.add_argument("-o", "--output_dir", type=str, required=True)
-    parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-pro-preview-05-06")
-    parser.add_argument("-k", "--api_key", type=str, required=True)
-    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview"])
-    parser.add_argument("--thinking_budget", type=int, default=0)
-    parser.add_argument("--model_provider", type=str, default="gemini")
-    args = parser.parse_args()
+
+    p = ArgumentParser()
+    p.add_argument("-i", "--input_tasks", required=True)
+    p.add_argument("-o", "--output_dir", required=True)
+    p.add_argument("-m", "--model_name",
+                   default="gemini/gemini-2.5-pro-preview-05-06")
+    p.add_argument("-k", "--api_key", required=True)
+    p.add_argument("--model_provider", default="gemini")
+    p.add_argument("--mode", default="bugfixing",
+                   choices=["bugfixing", "testgen", "stylereview", "codereview"])
+    p.add_argument("--instance_ids", default=None)
+    p.add_argument("--style_feedback", default=None,
+                   help="Path to a pylint/ruff feedback file (used with --mode stylereview)")
+    args = p.parse_args()
 
     main(
         input_tasks_path=Path(args.input_tasks),
         output_dir_path=Path(args.output_dir),
         model_name=args.model_name,
-        instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
         api_key=args.api_key,
-        mode=args.mode,
-        thinking_budget=args.thinking_budget,
         model_provider=args.model_provider.upper(),
-    ) 
+        instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
+        mode=args.mode,
+        style_feedback_path=Path(args.style_feedback) if args.style_feedback else None,
+    )
