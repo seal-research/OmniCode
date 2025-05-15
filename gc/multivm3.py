@@ -18,6 +18,8 @@ DEFAULT_REGIONS = [
     "australia-southeast1", "australia-southeast2"
 ]
 
+VERTEXAI_LOCATION = "us-east5"
+
 from utils import list_to_bash_array, check_vm_exists, get_vm_status, reset_vm, wait_for_operation, start_vm, get_command, delete_vm
 
 # Set up logging
@@ -30,12 +32,11 @@ GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", None)
 DOCKER_PAT = os.environ.get("DOCKER_PAT", None)
 
 # Retry configuration
-MAX_RETRIES = 3
-INITIAL_RETRY_DELAY = 5  # seconds
+MAX_RETRIES = 10
+INITIAL_RETRY_DELAY = 10  # seconds
 MAX_RETRY_DELAY = 60  # seconds
 
-snapshot_semaphore = threading.Semaphore(5)
-
+snapshot_semaphore = threading.Semaphore(1)
 
 def get_all_available_regions(project_id: str) -> List[str]:
     """
@@ -814,6 +815,8 @@ su - ays57 << 'EOSU'
 export GEMINI_API_KEY="{GEMINI_API_KEY}"
 export GITHUB_TOKEN="{GITHUB_TOKEN}"
 export DOCKER_PAT="{DOCKER_PAT}"
+export VERTEXAI_LOCATION="{VERTEXAI_LOCATION}"
+export VERTEXAI_PROJECT="{project_id}"
 echo "Environment variables set including DOCKER PAT"
 echo $DOCKER_PAT
 echo "Now running as $(whoami) with home directory $HOME"
@@ -971,7 +974,7 @@ if __name__ == "__main__":
     parser.add_argument("--vm_num_offset", type=int, required=False, default=0)
     parser.add_argument("--num_vms", type=int, default=None, required=False, help="Maximum number of VMs to spin up in total. If not specified, it is equal to number of instances specified")
     parser.add_argument("--randomise", action="store_true", help="randomise sequence of instances being processed")
-    parser.add_argument("--max_parallel", type=int, default=10, help="Maximum number of VMs to create in parallel")
+    parser.add_argument("--max_parallel", type=int, default=5, help="Maximum number of VMs to create in parallel")
     parser.add_argument("--base_zone", type=str, required=True, help="Zone where the base VM is located")
     parser.add_argument("--regions", type=str, default="all",
                        help="Comma-separated list of regions where worker VMs will be created (e.g., 'us-central1,us-east1,us-west1') or 'all' to use all available regions")
