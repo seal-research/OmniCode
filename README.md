@@ -109,7 +109,7 @@ python baselines/sweagent/sweagent_regular.py \
 ### Adding Bad Patches
 
 #### Option 1: Agentless Generation
-Follow instructions found here: https://github.com/seal-research/codearena/blob/main/adding_tasks.md
+Follow instructions found here: https://github.com/seal-research/OmniCode/blob/main/adding_tasks.md
 
 #### Option 2: LLM Sourced Generation
 ```bash
