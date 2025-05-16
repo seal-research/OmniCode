@@ -60,22 +60,41 @@ The `add_data.py` script can be run with `streamlit run add_data.py` and allows 
 
 ### Running OmniCode SWE-Agent
 
-In this section you will find instructions on how to run bug fixing, test generation, style review, and review fixing!
+In this section you will find instructions on how to run **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Fixing**!
 
-Bug Fixing: 
-The agent receives a repository and PR description, identifies and applies minimal source code changes (excluding tests) to meet the specified requirements. It verifies the fix by reproducing the issue, applying the fix, re-running the relevant test, and ensuring completeness.
+---
 
-Test Generation: 
-This agent receives a repository and a problem description, then writes a new test in the repository’s test suite that reproduces the reported issue using the existing testing framework (e.g., pytest). 
-Style Review: 
+#### Bug Fixing
+* **Description**: The agent receives a repository and PR description, identifies and applies minimal source code changes (excluding tests) to meet the specified requirements. It verifies the fix by reproducing the issue, applying the fix, re-running the relevant test, and ensuring completeness.
+* **Evaluation**: Success is measured by the fix passing all relevant tests without introducing unintended changes.
+* **Use Case**: Ideal for evaluating a model’s ability to make minimal, correct, and test-verified code changes.
 
-Review Fixing: 
-This agent receives a problem description, a failed patch, and a review explaining at a high level the fix for the failed patch. It uses this context to implement a better fix while avoiding the mistakes identified in the review.
+---
 
-Style Review: 
-This agent runs a style check on a given instance. It then uses the results of the style check to fix as many of the stylistic issues as possible. It is then ran again on the relevant tests to ensure functionality is unaffected. 
+#### Test Generation
+* **Description**: The agent receives a repository and a problem description, then writes a new test in the repository’s test suite that reproduces the reported issue using the existing testing framework (e.g., pytest).
+* **Evaluation**: Success is measured by the test failing on incorrect implementations and passing on correct ones.
+* **Use Case**: Useful for assessing a model's ability to generate meaningful, differentiating test cases.
 
-Note: There is support for bug fixing and test generation in java as well.
+---
+
+#### Style Review
+* **Description**: The agent runs a style check on a given instance, applies fixes for detected issues, and verifies functionality remains unaffected by re-running relevant tests.
+* **Evaluation**: Success is measured by the reduction of style violations without breaking functionality.
+* **Use Case**: Designed for scenarios where code quality and adherence to style guidelines are important.
+
+---
+
+#### Review Fixing
+* **Description**: The agent receives a problem description, a failed patch, and a review explaining the failure. It uses this context to avoid repeating mistakes and implements an improved fix.
+* **Evaluation**: Success is measured by whether the improved patch resolves the issue while avoiding pitfalls highlighted in the review.
+* **Use Case**: Especially relevant for testing a model’s ability to apply reviewer feedback to refine implementations.
+
+---
+
+#### Java Support
+* **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling.
+
 
 ```bash
 python baselines/sweagent/sweagent_regular.py \
