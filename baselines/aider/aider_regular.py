@@ -158,13 +158,11 @@ def run_aider_single(
 
         timeout_sec = 1800 if mode == "testgen" else 300
 
-        env = {
-            f"{model_provider}_API_KEY": api_key,
-            f"{model_provider}_MODEL": model_name,
-            "PYTHONIOENCODING": "utf-8",
-            "AIDER_NO_PROMPT": "1",
-            **os.environ,
-        }
+        env = {**os.environ}
+        env[f"{model_provider}_API_KEY"] = api_key
+        env[f"{model_provider}_MODEL"] = model_name
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["AIDER_NO_PROMPT"] = "1"
 
         logger.info("Running Aider …")
         try:
@@ -285,7 +283,7 @@ if __name__ == "__main__":
     p.add_argument("-i", "--input_tasks", required=True)
     p.add_argument("-o", "--output_dir", required=True)
     p.add_argument("-m", "--model_name",
-                   default="gemini/gemini/gemini-2.5-flash-preview-04-17")
+                   default="gemini/gemini-2.5-flash-preview-04-17")
     p.add_argument("-k", "--api_key", default=None)
     p.add_argument("--model_provider", default="gemini")
     p.add_argument("--mode", default="bugfixing",
