@@ -66,11 +66,11 @@ async def analyse(gcs_path: str, key: str = "resolved", debug: bool = False, max
     
     skipped, all_instances, present, passed, failed = results
     
-    # print(f"Skipped: {skipped}")
-    # print(f"Failed (first 10): {failed[:10]}")
-    # print(f"{len(all_instances)=}, {len(present)=}, {len(skipped)=}, {len(passed)=}, {len(failed)=}")
+    print(f"Skipped: {skipped}")
+    print(f"Failed (first 10): {failed[:10]}")
+    print(f"{len(all_instances)=}, {len(present)=}, {len(skipped)=}, {len(passed)=}, {len(failed)=}")
     
-    print('\n'.join(sorted(passed)))
+    # print('\n'.join(sorted(passed)))
 
 
 async def find_instance_directories(bucket, directory_prefix, all_blobs, executor, debug) -> List[str]:
