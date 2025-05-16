@@ -366,36 +366,6 @@ STYLE_REVIEW_CMD = """python codearena.py \
 --instance_ids $INSTANCE_ID \
 --run_id style_check2"""
 
-
-SWEAGENT_SR_CHECK_CMD = """python codearena.py \
---StyleReview \
---language python \
---predictions_path "sweagent_sr_all_preds.jsonl" \
---instance_ids $INSTANCE_ID \
---run_id sweagent_sr_check"""
-
-SWEAGENT_SR_CHECK_L_CMD = """python codearena.py \
---StyleReview \
---language python \
---predictions_path "sweagent_sr_all_preds_llama.jsonl" \
---instance_ids $INSTANCE_ID \
---run_id sweagent_sr_check_llama"""
-
-
-SWEAGENT_SR_BF_CHECK_CMD = """python codearena.py \
---BugFixing \
---language python \
---predictions_path "sweagent_sr_all_preds.jsonl" \
---instance_ids $INSTANCE_ID \
---run_id sweagent_sr_bf_check"""
-
-SWEAGENT_SR_BF_CHECK_L_CMD = """python codearena.py \
---BugFixing \
---language python \
---predictions_path "sweagent_sr_all_preds_llama.jsonl" \
---instance_ids $INSTANCE_ID \
---run_id sweagent_sr_bf_check_llama"""
-
 BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
 -o logs/ \
 -m gemini-2.5-flash-preview-4-17 \
@@ -435,7 +405,6 @@ UPLOAD_IMAGE_CMD = r"""upload_image() {
 
 # execute the function and capture all output
 upload_image"""
-
 
 AGENTLESS_CHECK_CMD_OLD = """process_files() {
     # Create a temporary directory for logs
@@ -769,6 +738,13 @@ SWEAGENT_REVIEW_FIX_CMD = """python baselines/sweagent/sweagent_regular.py \
 --mode reviewfix \
 --instance_ids $INSTANCE_ID"""
 
+SWEAGENT_REVIEW_FIX_L_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+--mode reviewfix \
+--instance_ids $INSTANCE_ID"""
+
 
 SWEAGENT_BUGFIXING_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances_java.json \
@@ -901,6 +877,86 @@ AIDER_BF_L_CMD = """python baselines/aider/aider_regular.py \
     -m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
     --model_provider vertex_ai"""
 
+CHECK_SR_SWEAGENT_CMD = """check() {{
+
+gsutil cp gs://seds-store/sweagent_preds/{preds} .
+
+if [ -f {preds} ]; then
+  echo "File exists"
+else
+  echo "File does not exist"
+fi
+
+# need permissions to be able to read from it
+sudo chown -R "$USER":"$USER" {preds}
+
+python codearena.py \
+--StyleReview \
+--language python \
+--predictions_path {preds} \
+--instance_ids $INSTANCE_ID \
+--run_id {run_id}
+
+}}
+
+check"""
+
+# UPLOAD_IMAGE_CMD = r"""upload_image() {
+
+# Run BugFixing to build the image, but time out immediately after image is built
+CHECK_BF_SWEAGENT_CMD = """check() {{
+gsutil cp gs://seds-store/sweagent_preds/{preds} .
+
+if [ -f {preds} ]; then
+  echo "File exists"
+else
+  echo "File does not exist"
+fi
+
+# need permissions to be able to read from it
+sudo chown -R "$USER":"$USER" {preds}
+
+python codearena.py \
+  --BugFixing \
+  --language python \
+  --predictions_path {preds} \
+  --instance_ids $INSTANCE_ID \
+  --run_id {run_id}
+
+}}
+
+check"""
+
+SWEAGENT_SR_CHECK_CMD = CHECK_SR_SWEAGENT_CMD.format(
+    preds="sweagent_sr_all_preds.jsonl",
+    run_id="sweagent_sr_check",
+)
+
+SWEAGENT_SR_CHECK_L_CMD = CHECK_SR_SWEAGENT_CMD.format(
+    preds="sweagent_sr_llama_all_preds.jsonl",
+    run_id="sweagent_sr_llama_check",
+)
+
+SWEAGENT_SR_BF_CHECK_CMD = CHECK_BF_SWEAGENT_CMD.format(
+    preds="sweagent_sr_all_preds.jsonl",
+    run_id="sweagent_sr_bf_check",
+)
+
+SWEAGENT_SR_BF_CHECK_L_CMD = CHECK_BF_SWEAGENT_CMD.format(
+    preds="sweagent_sr_llama_all_preds.jsonl",
+    run_id="sweagent_sr_bf_llama_check",
+)
+
+SWEAGENT_RF_CHECK_CMD = CHECK_BF_SWEAGENT_CMD.format(
+    preds="sweagent_rf_all_preds.jsonl",
+    run_id="sweagent_rf_check",
+)
+
+SWEAGENT_RF_CHECK_L_CMD = CHECK_BF_SWEAGENT_CMD.format(
+    preds="sweagent_rf_llama_all_preds.jsonl",
+    run_id="sweagent_rf_llama_check",
+)
+
 
 COMMAND_MAP = {
     "sanity": SANITY_CMD,
@@ -918,14 +974,20 @@ COMMAND_MAP = {
     "sweagent-tg-llama-check": SWEAGENT_TG_L_CHECK_CMD,
     "sweagent-bf-java": SWEAGENT_BUGFIXING_JAVA_CMD,
     "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
+
+    "style-review": STYLE_REVIEW_CMD,
     "sweagent-sr": SWEAGENT_STYLE_REVIEW_CMD,
     "sweagent-sr-llama": SWEAGENT_STYLE_REVIEW_L_CMD,
+    "sweagent-rf": SWEAGENT_REVIEW_FIX_CMD,
+    "sweagent-rf-llama": SWEAGENT_REVIEW_FIX_L_CMD,
+
     "sweagent-sr-check": SWEAGENT_SR_CHECK_CMD,
     "sweagent-sr-check-llama": SWEAGENT_SR_CHECK_L_CMD,
     "sweagent-sr-bf-check": SWEAGENT_SR_BF_CHECK_CMD,
     "sweagent-sr-bf-check-llama": SWEAGENT_SR_BF_CHECK_L_CMD,
-    "sweagent-rf": SWEAGENT_REVIEW_FIX_CMD,
-    "style-review": STYLE_REVIEW_CMD,
+    "sweagent-rf-check": SWEAGENT_RF_CHECK_CMD,
+    "sweagent-rf-check-llama": SWEAGENT_RF_CHECK_L_CMD,
+
     "openhands-bf": OPENHANDS_BUGFIXING_CMD,
     "openhands-bf-check": OPENHANDS_BF_CHECK_CMD,
     "aider-bf": AIDER_BF_CMD,
