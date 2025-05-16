@@ -95,6 +95,7 @@ In this section you will find instructions on how to run **Bug Fixing**, **Test 
 #### Java Support
 * **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling.
 
+---
 
 ```bash
 python baselines/sweagent/sweagent_regular.py \
