@@ -355,14 +355,14 @@ poweroff
 
 VERTEXT_SETUP_DICT = {
 5: """export VERTEXAI_PROJECT="gemini-5-459920"
-export VERTEXAI_LOCATION="useast5"
-export GOOGLE_APPLICATION_CREDENTIALS="~/seds/gemini5.json" """,
+export VERTEXAI_LOCATION="us-east5"
+export GOOGLE_APPLICATION_CREDENTIALS="../gemini5.json" """,
 4: """export VERTEXAI_PROJECT="gemini-4-459920"
-export VERTEXAI_LOCATION="useast5"
-export GOOGLE_APPLICATION_CREDENTIALS="~/seds/gemini4.json" """,
-5: """export VERTEXAI_PROJECT="gemini-3-459920"
-export VERTEXAI_LOCATION="useast5"
-export GOOGLE_APPLICATION_CREDENTIALS="~/seds/gemini3.json" """,
+export VERTEXAI_LOCATION="us-east5"
+export GOOGLE_APPLICATION_CREDENTIALS="../gemini4.json" """,
+3: """export VERTEXAI_PROJECT="gemini-3-459920"
+export VERTEXAI_LOCATION="us-east5"
+export GOOGLE_APPLICATION_CREDENTIALS="../gemini3.json" """,
 }
 
 
