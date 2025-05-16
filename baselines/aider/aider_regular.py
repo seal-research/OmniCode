@@ -156,7 +156,7 @@ def run_aider_single(
                 "--no-gui", "--no-browser", "--no-auto-test", "--verbose"
             ]
 
-        timeout_sec = 1800 if mode == "testgen" else 300
+        timeout_sec = 1200
 
         env = {**os.environ}
         env[f"{model_provider}_API_KEY"] = api_key
@@ -213,6 +213,8 @@ def run_aider_single(
         return None, meta
 
 
+NUM_RETRIES = 3
+
 # ----------------------------- batch driver --------------------------------- #
 def main(
     input_tasks_path: Path,
@@ -260,12 +262,17 @@ def main(
             if inst["instance_id"] in done:
                 continue
 
-            err, res = run_aider_single(
-                inst,
-                model_name, api_key, output_dir_path,
-                model_provider, mode,
-                pylint_feedback=pylint_feedback,
-            )
+            for i in range(NUM_RETRIES):
+                err, res = run_aider_single(
+                    inst,
+                    model_name, api_key, output_dir_path,
+                    model_provider, mode,
+                    pylint_feedback=pylint_feedback,
+                )
+                if res['model_patch'] is not None and res['model_patch'] != '':
+                    break
+
+
             if err:
                 logger.error("%s: %s", inst["instance_id"], err)
                 continue
@@ -283,7 +290,7 @@ if __name__ == "__main__":
     p.add_argument("-i", "--input_tasks", required=True)
     p.add_argument("-o", "--output_dir", required=True)
     p.add_argument("-m", "--model_name",
-                   default="gemini/gemini-2.5-flash-preview-04-17")
+                   default="gemini/gemini-2.0-flash")
     p.add_argument("-k", "--api_key", default=None)
     p.add_argument("--model_provider", default="gemini")
     p.add_argument("--mode", default="bugfixing",
