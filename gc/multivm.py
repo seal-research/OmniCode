@@ -238,6 +238,8 @@ export GITHUB_TOKEN="{GITHUB_TOKEN}"
 export DOCKER_PAT="{DOCKER_PAT}"
 export VERTEXAI_LOCATION="{VERTEXAI_LOCATION}"
 export VERTEXAI_PROJECT="{project_id}"
+# for aider
+export PATH="/home/ays57/.local/bin:$PATH"
 echo "Now running as $(whoami) with home directory $HOME"
 # Explicitly set PATH to include common conda locations
 export PATH="$HOME/miniconda3/bin:$HOME/anaconda3/bin:/opt/conda/bin:$PATH"
@@ -390,7 +392,7 @@ if __name__ == "__main__":
     zone = args.zone
     if zone is None:
         zone = base_zone
-    
+
     key = args.keys if args.key is not None else os.environ.get("GEMINI_API_KEY", None)
     if key is None:
         raise RuntimeError(f"Could not fine key")

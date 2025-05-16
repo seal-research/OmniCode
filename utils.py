@@ -134,6 +134,7 @@ def load_CodeArena_prediction_dataset(
     with open(generated_tests_path, 'r') as f:
         for line in f:
             entry = json.loads(line.strip())
+            import pdb; pdb.set_trace()
             # Fix the `model_patch` if it starts with `---`
             if entry.get('model_patch', '').startswith('---'):
                 entry['model_patch'] = entry['model_patch'].replace('---', 'diff --git', 1)
