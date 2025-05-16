@@ -958,6 +958,24 @@ SWEAGENT_RF_CHECK_L_CMD = CHECK_BF_SWEAGENT_CMD.format(
 )
 
 
+AIDER_TG_CMD = """python baselines/aider/aider_regular.py \
+    -i data/codearena_instances.json  \
+    -o logs \
+    --mode testgen \
+    --instance_ids $INSTANCE_ID \
+    -k $GEMINI_API_KEY """
+
+
+AIDER_TG_L_CMD = """python baselines/aider/aider_regular.py \
+    -i data/codearena_instances.json  \
+    -o logs \
+    --mode testgen \
+    --instance_ids $INSTANCE_ID \
+    -k $GEMINI_API_KEY \
+    -m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+    --model_provider vertex_ai"""
+    
+
 COMMAND_MAP = {
     "sanity": SANITY_CMD,
     "upload-image": UPLOAD_IMAGE_CMD,
@@ -992,6 +1010,8 @@ COMMAND_MAP = {
     "openhands-bf-check": OPENHANDS_BF_CHECK_CMD,
     "aider-bf": AIDER_BF_CMD,
     "aider-bf-llama": AIDER_BF_L_CMD,
+    "aider-tg": AIDER_TG_CMD,
+    "aider-tg-llama": AIDER_TG_L_CMD,
 }
 
 def get_command(

@@ -126,15 +126,15 @@ async def process_instance(bucket, directory_prefix, instance_id, executor, debu
         log_content = await asyncio.get_event_loop().run_in_executor(
             executor, lambda: log_file_blob.download_as_text()
         )
-        lines = log_content.splitlines()
-        start_line, end_line = lines[0], lines[-1]
+        # lines = log_content.splitlines()
+        # start_line, end_line = lines[0], lines[-1]
         # if "Running python script" in start_line and "Uploading results" in end_line:
-            # try:
-            #     start_time = datetime.strptime(start_line.rsplit(':', 1)[0], "%a %b %d %H:%M:%S %Z %Y")
-            #     end_time = datetime.strptime(end_line.rsplit(':', 1)[0], "%a %b %d %H:%M:%S %Z %Y")
-            #     print((end_time - start_time).seconds)
-            # except Exception as _:
-            #     pass
+        #     try:
+        #         start_time = datetime.strptime(start_line.rsplit(':', 1)[0], "%a %b %d %H:%M:%S %Z %Y")
+        #         end_time = datetime.strptime(end_line.rsplit(':', 1)[0], "%a %b %d %H:%M:%S %Z %Y")
+        #         print((end_time - start_time).seconds)
+        #     except Exception as _:
+        #         pass
 
         # if error_text in log_content:
         #     print(instance_id)
@@ -149,7 +149,8 @@ async def process_instance(bucket, directory_prefix, instance_id, executor, debu
         first_line = output_content.splitlines()[0]
         output_data = json.loads(first_line)
         
-        has_full_output = output_data.get("model_patch", None) is not None and output_data["model_patch"]["model_patch"] is not None
+        moutput = output_data.get("model_patch", None)
+        has_full_output = moutput is not None and moutput != ""
         if has_full_output and debug:
             print(f"Patch found for {instance_id}")
         

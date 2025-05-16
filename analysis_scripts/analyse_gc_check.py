@@ -48,7 +48,8 @@ async def analyse(gcs_path: str, key: str = "resolved", debug: bool = False, max
     # Find instance directories
     instance_dirs = await find_instance_directories(bucket, directory_prefix, all_blobs, executor, debug)
     
-    print(f"Found {len(instance_dirs)} instance directories")
+    if debug:
+        print(f"Found {len(instance_dirs)} instance directories")
     if debug and instance_dirs:
         print("Instance IDs found:", instance_dirs)
     
@@ -71,6 +72,7 @@ async def analyse(gcs_path: str, key: str = "resolved", debug: bool = False, max
     print(f"{len(all_instances)=}, {len(present)=}, {len(skipped)=}, {len(passed)=}, {len(failed)=}")
     
     # print('\n'.join(sorted(passed)))
+    # print('\n'.join(list(sorted(set(all_instances) - set(passed).union(set(failed))))))
 
 
 async def find_instance_directories(bucket, directory_prefix, all_blobs, executor, debug) -> List[str]:
@@ -120,12 +122,13 @@ async def process_instance(bucket, directory_prefix, instance_id, executor, key:
     )
     
     if len(report_blobs) == 0:
-        print(f"Info: No report found for {instance_id}, skipping ...")
+        if debug:
+            print(f"Info: No report found for {instance_id}, skipping ...")
         return instance_id, False, True, False
     
     report_json_blob = report_blobs[0]
     
-    if len(report_blobs) != 1:
+    if len(report_blobs) != 1 and debug:
         print(f"Warning: Multiple reports found for {instance_id}, using {report_json_blob.name}")
     
     # Download and parse the JSON content
@@ -137,18 +140,21 @@ async def process_instance(bucket, directory_prefix, instance_id, executor, key:
         report_data = json.loads(report_content)
         
         if instance_id not in report_data:
-            print(f"Error: Could not find {instance_id} in {report_json_blob.name}, skipping ...")
+            if debug:
+                print(f"Error: Could not find {instance_id} in {report_json_blob.name}, skipping ...")
             return instance_id, True, True, False
         
         if key not in report_data[instance_id]:
-            print(f"Error: Could not find key '{key}' in {report_json_blob.name}, skipping ...")
+            if debug:
+                print(f"Error: Could not find key '{key}' in {report_json_blob.name}, skipping ...")
             return instance_id, True, True, False
         
         passed = report_data[instance_id][key]
         return instance_id, True, False, passed
     
     except json.JSONDecodeError:
-        print(f"Error: Invalid JSON in {report_json_blob.name}, skipping ...")
+        if debug:
+            print(f"Error: Invalid JSON in {report_json_blob.name}, skipping ...")
         return instance_id, True, True, False
 
 
