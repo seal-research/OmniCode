@@ -15,7 +15,6 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", None)
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", None)
 DOCKER_PAT = os.environ.get("DOCKER_PAT", None)
 
@@ -187,6 +186,7 @@ def create_distributed_compute_vms(
     instance_ids: list[str],
     command: str,
     base_vm_name: str,
+    key: str,
     machine_type: str = "e2-standard-4",
     disk_size_gb: int = 100,
     num_vms: int = 20,
@@ -233,13 +233,11 @@ echo "$(date): Script started"
 echo "Running as user: $(whoami)"
 echo "Home directory: $HOME"
 su - ays57 << 'EOSU'
-export GEMINI_API_KEY="{GEMINI_API_KEY}"
+export GEMINI_API_KEY="{key}"
 export GITHUB_TOKEN="{GITHUB_TOKEN}"
 export DOCKER_PAT="{DOCKER_PAT}"
 export VERTEXAI_LOCATION="{VERTEXAI_LOCATION}"
 export VERTEXAI_PROJECT="{project_id}"
-echo "Environment variables set including DOCKER PAT"
-echo $DOCKER_PAT
 echo "Now running as $(whoami) with home directory $HOME"
 # Explicitly set PATH to include common conda locations
 export PATH="$HOME/miniconda3/bin:$HOME/anaconda3/bin:/opt/conda/bin:$PATH"
@@ -376,6 +374,7 @@ if __name__ == "__main__":
     parser.add_argument("--base_zone", type=str, required=True, help="base vm zone")
     parser.add_argument("--base_vm", type=str, required=True, help="Base VM name, e.g. sedsbase")
     parser.add_argument("--vm_idx_to_run", type=str, help="comma seperate list if ints indicating vms to run", default=None)
+    parser.add_argument("--key", "-k", type=str, default=None)
 
     args = parser.parse_args()
 
@@ -391,6 +390,10 @@ if __name__ == "__main__":
     zone = args.zone
     if zone is None:
         zone = base_zone
+    
+    key = args.keys if args.key is not None else os.environ.get("GEMINI_API_KEY", None)
+    if key is None:
+        raise RuntimeError(f"Could not fine key")
 
     # Define image family for this job type
     command = get_command(job_type)
@@ -423,6 +426,7 @@ if __name__ == "__main__":
             instance_ids=instances_list,
             command=command,
             base_vm_name=base_vm_name,
+            key=key,
             machine_type="e2-standard-4",
             disk_size_gb=100,
             num_vms=len(instances_list) if args.instances_path == "dummy" else args.num_vms,
