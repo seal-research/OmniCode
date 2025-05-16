@@ -60,12 +60,29 @@ The `add_data.py` script can be run with `streamlit run add_data.py` and allows 
 
 ### Running OmniCode SWE-Agent
 
+In this section you will find instructions on how to run bug fixing, test generation, style review, and review fixing!
+
+Bug Fixing: 
+The agent receives a repository and PR description, identifies and applies minimal source code changes (excluding tests) to meet the specified requirements. It verifies the fix by reproducing the issue, applying the fix, re-running the relevant test, and ensuring completeness.
+
+Test Generation: 
+This agent receives a repository and a problem description, then writes a new test in the repository’s test suite that reproduces the reported issue using the existing testing framework (e.g., pytest). 
+Style Review: 
+
+Review Fixing: 
+This agent receives a problem description, a failed patch, and a review explaining at a high level the fix for the failed patch. It uses this context to implement a better fix while avoiding the mistakes identified in the review.
+
+Style Review: 
+This agent runs a style check on a given instance. It then uses the results of the style check to fix as many of the stylistic issues as possible. It is then ran again on the relevant tests to ensure functionality is unaffected. 
+
+Note: There is support for bug fixing and test generation in java as well.
+
 ```bash
 python baselines/sweagent/sweagent_regular.py \
     --input_tasks data/codearena_instances.json \
     --api_key [KEY] \
     --output_dir baselines/sweagent/logs/sweagent_outputs \
-    --instance_ids [ID] \
+    --instance_ids astropy__astropy-13033 \
     --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix]
 ```
 
@@ -78,7 +95,7 @@ Follow instructions found here: https://github.com/seal-research/codearena/blob/
 ```bash
 python baselines/badpatchllm/generate_bad.py \
     -o baselines/badpatchllm/logs/gemini_outputs \
-    --instance_ids [id] \
+    --instance_ids astropy__astropy-13033 \
     -m [gemini-2.5-flash-preview-4-17]  (recommended] \
     -k [KEY] \
     --run_id test \
@@ -93,7 +110,7 @@ python baselines/badpatchllm/generate_review.py \
     --input_tasks data/codearena_instances.json \
     --api_key [KEY] \
     --output_dir baselines/badpatchllm/logs/gemini_outputs \
-    --instance_ids [ID]
+    --instance_ids astropy__astropy-13033
 ```
 
 ## Status
