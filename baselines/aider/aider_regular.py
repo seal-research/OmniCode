@@ -148,6 +148,7 @@ def run_aider_single(
             "--message-file", str(prompt_path),
             "--model", model_name,
             "--no-auto-commits", "--no-gitignore", "--no-pretty",
+            "--no-stream",
             "--yes-always",
             "--encoding", "utf-8",
         ]
