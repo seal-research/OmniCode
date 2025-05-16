@@ -15,15 +15,15 @@ CodeArena is currently set up to work with a specific swebench version which can
 
 To run the full CodeArena benchmark you can pass the corresponding flags to the evaluation command line tool.
 
-The `codearena` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration` and `CodeReview`. You can specify flags to choose which benchmarks to execute. The command also supports running both benchmarks simultaneously and has an option for `CodeMigration` (currently not supported).
+The `codearena` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `CodeReview`. We further support CodeReview, which exposes the model to an inital bad patch and requires to incorporate external review feedback to correct this. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
 
 ### Example 1: Run `TestGeneration` with a single given value for `instance_ids`
 
 ```bash
    python codearena.py \
     --TestGeneration \
-    --dataset_name princeton-nlp/SWE-bench_Verified \
-    --predictions_path predictions.json \
+    --predictions_path gold \
+    --language python \
     --max_workers 1 \
     --run_id BadPatchTest \
     --instance_ids astropy__astropy-13033´
@@ -40,27 +40,10 @@ The `codearena` command allows you to run multiple code evaluation benchmarks, s
     --run_id MyRun
 ```
 
-### Visualisation and Data annotation
-
-The GUI based tools require the `streamlit` python package which can be installed via `pip install streamlit`
-The `viz.py` script can be run with `streamlit run viz.py` and allows for inspection of the contents of each instance as well as adding data annotations for each instance.
-The `add_data.py` script can be run with `streamlit run add_data.py` and allows for onboarding of instances from additional repositories, where the user may need to interactively provide the dependency and setup metadata for the new repositories.
-
 ### Supported Tasks
 
-#### Test Generation
-* **Description**: Write a test patch that passes for a correct (gold) patch and fails for an incorrect (bad) patch. Test Generation aims to create test cases that can effectively differentiate between working and broken implementations.
-* **Gold Predictions Support**: Test Generation can also be run using gold predictions, where the original test patch, gold patch, and base commit (as a bad patch stand-in) are used. This allows for evaluating test generation capabilities using known-good examples.
-* **Evaluation**: Success is measured by the test's ability to pass for correct implementations while failing for incorrect ones.
 
-#### Code Review
-* **Description**: A bad patch for an issue is written by a developer, and a review comment is written by another developer to guide the model toward the correct solution. This simulates real-world code review scenarios.
-* **Evaluation**: This task is evaluated using the standard SWE-bench approach, measuring the effectiveness of review comments in guiding towards correct implementations.
-* **Use Case**: Particularly useful for assessing a model's ability to understand code context and provide constructive feedback.
-
-### Running OmniCode SWE-Agent
-
-In this section you will find instructions on how to run **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Fixing**!
+In this section you will find instructions on the different specifications of our tasks **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Fixing**!
 
 ---
 
@@ -93,9 +76,34 @@ In this section you will find instructions on how to run **Bug Fixing**, **Test 
 ---
 
 #### Java Support
-* **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling.
+* **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
 
----
+0. Download data from huggingface (it is expected to be placed under multiswebench/mswebench_dataset)
+1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench/prepare_eval`
+2. From the multiswebench directory, `run python prepare_eval.py`
+3. From the codearena directory, run `python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids "INSERT YOUR INSTANCE HERE EX: elastic/logstash:17021" --mswe_phase all --force_rebuild True --clean True`
+
+For now, you should stick with the original three java repos (elastic/logstash, alibaba/fastjson, mockito/mockito), since there may be some issues with the new ones that were just added very recently.
+
+The process often takes a while. The logging is a bit different than the normal swebench btw, it instead writes to a dedicated location under multiswebench_runs.
+
+Custom preds file can look like this for example:
+```json
+[
+ {
+   "id": "mockito/mockito:3424",
+   "org": "mockito",
+   "repo": "mockito",
+   "number": 3424,
+   "patch": "diff --git a..."
+ }
+]
+```
+Should be saved in a json format and can replace gold in the example call above.
+
+### Running SWE-AGENT
+
+We have configured a basic swe-agent implementation to test on our repository, which can be used with the following call:
 
 ```bash
 python baselines/sweagent/sweagent_regular.py \
@@ -155,9 +163,9 @@ python baselines/badpatchllm/generate_review.py \
 
 |                 | Python (Tasks) | Java (Tasks) |
 |-----------------|----------------|--------------|
-| Base Instances  | 716            | 3/128            |
-| Test Generation | 0/716          | 0/128            |
-| Review Response | 0/716          | 0/128            |
+| Base Instances  | 716            | 128/128            |
+| Test Generation | 300/716          | 0/128            |
+| Review Response | 300/716          | 0/128            |
 | Style Review    | 716/716       | 0/128   |
 
 
@@ -189,34 +197,6 @@ python baselines/badpatchllm/generate_review.py \
 | celery/celery   | 12 |
 | fastapi/fastapi | 26 |
 | statsmodels/statsmodels | 23 |
-
-</div>
-
-### Baseline Results
-
-
-#### Python
-
-<div align="center">
-
-|                 | Bug Fixing | Test Generation | Review Response | Style Review |
-|-----------------|----------------|--------------|----------------|--------------|
-| Agentless       |  2/5          |   1/5       |                  |            |
-| SWE-Agent       |               |               |                  |            |
-| Aider           |               |               |                  |            |
-
-</div>
-
-
-#### Java
-
-<div align="center">
-
-|                 | Bug Fixing | Test Generation | Review Response | Style Review |
-|-----------------|----------------|--------------|----------------|--------------|
-| Agentless       |               |               |                  |            |
-| SWE-Agent       |               |               |                  |            |
-| Aider           |               |               |                  |            |
 
 </div>
 
