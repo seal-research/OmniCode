@@ -1,6 +1,6 @@
-# CodeArena
+# OmniCode
 
-Welcome to **CodeArena**! This repository allows you to evaluate performance on various Software Development Activities for different models and datasets. Below, you'll find the commands to test your setup and evaluate the results. CodeArena requires you to have docker set up and running prior to executing Evaluation.
+Welcome to **OmniCode[CodeArena]**! This repository allows you to evaluate performance on various Software Development Activities for different models and datasets. Below, you'll find the commands to test your setup and evaluate the results. CodeArena requires you to have docker set up and running prior to executing Evaluation.
 
 ### Setup
 CodeArena is currently set up to work with a specific swebench version which can be installed using
