@@ -149,7 +149,8 @@ async def process_instance(bucket, directory_prefix, instance_id, executor, debu
         first_line = output_content.splitlines()[0]
         output_data = json.loads(first_line)
         
-        has_full_output = output_data.get("model_patch", None) is not None and output_data["model_patch"]["model_patch"] is not None
+        moutput = output_data.get("model_patch", None)
+        has_full_output = moutput is not None and moutput != ""
         if has_full_output and debug:
             print(f"Patch found for {instance_id}")
         

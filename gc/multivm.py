@@ -196,6 +196,7 @@ def create_distributed_compute_vms(
     vm_num_offset: int = 0,
     max_workers: int = 10,  # Control parallelism
     indices_to_run: list[int] | None = None,
+    vertex_setup: str = ""
 ):
     """Create or reuse multiple Compute Engine VMs in parallel to distribute the processing."""
 
@@ -236,8 +237,7 @@ su - ays57 << 'EOSU'
 export GEMINI_API_KEY="{key}"
 export GITHUB_TOKEN="{GITHUB_TOKEN}"
 export DOCKER_PAT="{DOCKER_PAT}"
-export VERTEXAI_LOCATION="{VERTEXAI_LOCATION}"
-export VERTEXAI_PROJECT="{project_id}"
+{vertex_setup}
 echo "Now running as $(whoami) with home directory $HOME"
 # Explicitly set PATH to include common conda locations
 export PATH="$HOME/miniconda3/bin:$HOME/anaconda3/bin:/opt/conda/bin:$PATH"
@@ -353,6 +353,19 @@ poweroff
     return successful_vms
 
 
+VERTEXT_SETUP_DICT = {
+5: """export VERTEXAI_PROJECT="gemini-5-459920"
+export VERTEXAI_LOCATION="useast5"
+export GOOGLE_APPLICATION_CREDENTIALS="~/seds/gemini5.json" """,
+4: """export VERTEXAI_PROJECT="gemini-4-459920"
+export VERTEXAI_LOCATION="useast5"
+export GOOGLE_APPLICATION_CREDENTIALS="~/seds/gemini4.json" """,
+5: """export VERTEXAI_PROJECT="gemini-3-459920"
+export VERTEXAI_LOCATION="useast5"
+export GOOGLE_APPLICATION_CREDENTIALS="~/seds/gemini3.json" """,
+}
+
+
 if __name__ == "__main__":
     import sys
     from pathlib import Path
@@ -374,6 +387,7 @@ if __name__ == "__main__":
     parser.add_argument("--base_zone", type=str, required=True, help="base vm zone")
     parser.add_argument("--base_vm", type=str, required=True, help="Base VM name, e.g. sedsbase")
     parser.add_argument("--vm_idx_to_run", type=str, help="comma seperate list if ints indicating vms to run", default=None)
+    parser.add_argument("--vertex_setup", type=int, default=None)
     parser.add_argument("--key", "-k", type=str, default=None)
 
     args = parser.parse_args()
@@ -391,7 +405,7 @@ if __name__ == "__main__":
     if zone is None:
         zone = base_zone
     
-    key = args.keys if args.key is not None else os.environ.get("GEMINI_API_KEY", None)
+    key = args.key
     if key is None:
         raise RuntimeError(f"Could not fine key")
 
@@ -408,6 +422,8 @@ if __name__ == "__main__":
 
     if args.randomise:
         random.shuffle(instances_list)
+
+    vertex_setup = VERTEXT_SETUP_DICT[args.vertex_setup] if args.vertex_setup is not None else ""
 
     indices_to_run = [int(s) for s in args.vm_idx_to_run.split(',')] if args.vm_idx_to_run is not None else None
 
@@ -436,6 +452,7 @@ if __name__ == "__main__":
             vm_num_offset=args.vm_num_offset,
             max_workers=args.max_parallel,
             indices_to_run=indices_to_run,
+            vertex_setup=vertex_setup,
         )
 
         logger.info(f"Successfully managed {len(vms)} VMs to process instances")
