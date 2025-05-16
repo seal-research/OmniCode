@@ -58,6 +58,43 @@ The `add_data.py` script can be run with `streamlit run add_data.py` and allows 
 * **Evaluation**: This task is evaluated using the standard SWE-bench approach, measuring the effectiveness of review comments in guiding towards correct implementations.
 * **Use Case**: Particularly useful for assessing a model's ability to understand code context and provide constructive feedback.
 
+### Running OmniCode SWE-Agent
+
+```bash
+python baselines/sweagent/sweagent_regular.py \
+    --input_tasks data/codearena_instances.json \
+    --api_key [KEY] \
+    --output_dir baselines/sweagent/logs/sweagent_outputs \
+    --instance_ids [ID] \
+    --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix]
+```
+
+### Adding Bad Patches
+
+#### Option 1: Agentless Generation
+Follow instructions found here: https://github.com/seal-research/codearena/blob/main/adding_tasks.md
+
+#### Option 2: LLM Sourced Generation
+```bash
+python baselines/badpatchllm/generate_bad.py \
+    -o baselines/badpatchllm/logs/gemini_outputs \
+    --instance_ids [id] \
+    -m [gemini-2.5-flash-preview-4-17]  (recommended] \
+    -k [KEY] \
+    --run_id test \
+    -n 3 \
+    -d data/codearena_instances.json \
+```
+
+Note: Raw diff files will also be outputted and found under the user specified output directory for ease of use.
+### Generating Reviews
+```bash
+python baselines/badpatchllm/generate_review.py \
+    --input_tasks data/codearena_instances.json \
+    --api_key [KEY] \
+    --output_dir baselines/badpatchllm/logs/gemini_outputs \
+    --instance_ids [ID]
+```
 
 ## Status
 
