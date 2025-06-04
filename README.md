@@ -3,13 +3,13 @@
 Welcome to **OmniCode[CodeArena]**! This repository allows you to evaluate performance on various Software Development Activities for different models and datasets. Below, you'll find the commands to test your setup and evaluate the results. CodeArena requires you to have docker set up and running prior to executing Evaluation.
 
 ### Setup
+
+CodeArena requires `Python 3.13` and its dependecies can be installed via `pip install -r requirements.txt`
+
 CodeArena is currently set up to work with a specific swebench version which can be installed using
 
 `pip install git+https://github.com/swe-bench/SWE-bench@e0b9bf9#egg=swebench`
 
-### Command to Test Setup for Test Generation
-
-> **Note**: If you omit the `--instance_ids` parameter, the evaluation will run on the full dataset. However, keep in mind that this may take a significant amount of time, especially for larger datasets.
 
 ### CodeArena Evaluation
 
@@ -17,7 +17,24 @@ To run the full CodeArena benchmark you can pass the corresponding flags to the 
 
 The `codearena` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `CodeReview`. We further support CodeReview, which exposes the model to an inital bad patch and requires to incorporate external review feedback to correct this. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
 
-### Example 1: Run `TestGeneration` with a single given value for `instance_ids`
+### Example 1: Running `BugFixing` for a single instance
+
+CodeArena with the `--BugFixing` flag can be used to evaluate whether a patch resolves the test for a particular issue.
+In the following command, we pass in the `--predictions_patch gold` to indicate that we want to evaluate on the correct patch as a sanity check. 
+Passing in the path to actual predictions here will enable evaluting on generated patches.
+
+```bash
+python codearena.py \
+--BugFixing \
+--predictions_path gold \
+--run_id BugFixing \
+--instance_ids astropy__astropy-13033
+```
+
+
+### Example 2: Running `TestGeneration` for single instance
+
+The following command with the `--TestGeneration` flag can be used to evaulated generated tests. The path to generated tests can be specified with `--predictions_path` 
 
 ```bash
    python codearena.py \
@@ -29,16 +46,6 @@ The `codearena` command allows you to run multiple code evaluation benchmarks, s
     --instance_ids astropy__astropy-13033´
 ```
 
-### Example 2: Run both `TestGeneration` and `CodeReview` on the whole dataset (by passing no instance_ids)
-
-```bash
-   python codearena.py \
-    --TestGeneration --CodeReview \
-    --dataset_name princeton-nlp/SWE-bench_Verified \
-    --predictions_path predictions_tg.json predictions_cr.json \
-    --max_workers 2 \
-    --run_id MyRun
-```
 
 ### Supported Tasks
 
@@ -47,29 +54,29 @@ In this section you will find instructions on the different specifications of ou
 
 ---
 
-#### Bug Fixing
+#### Bug Fixing (`--BugFixing`)
 * **Description**: The agent receives a repository and PR description, identifies and applies minimal source code changes (excluding tests) to meet the specified requirements. It verifies the fix by reproducing the issue, applying the fix, re-running the relevant test, and ensuring completeness.
 * **Evaluation**: Success is measured by the fix passing all relevant tests without introducing unintended changes.
 * **Use Case**: Ideal for evaluating a model’s ability to make minimal, correct, and test-verified code changes.
 
 ---
 
-#### Test Generation
+#### Test Generation (`--TestGeneration`)
 * **Description**: The agent receives a repository and a problem description, then writes a new test in the repository’s test suite that reproduces the reported issue using the existing testing framework (e.g., pytest).
 * **Evaluation**: Success is measured by the test failing on incorrect implementations and passing on correct ones.
 * **Use Case**: Useful for assessing a model's ability to generate meaningful, differentiating test cases.
 
 ---
 
-#### Style Review
+#### Style Review (`--StyleReview`)
 * **Description**: The agent runs a style check on a given instance, applies fixes for detected issues, and verifies functionality remains unaffected by re-running relevant tests.
 * **Evaluation**: Success is measured by the reduction of style violations without breaking functionality.
 * **Use Case**: Designed for scenarios where code quality and adherence to style guidelines are important.
 
 ---
 
-#### Review Fixing
-* **Description**: The agent receives a problem description, a failed patch, and a review explaining the failure. It uses this context to avoid repeating mistakes and implements an improved fix.
+#### Review Fixing (`--BugFixing`)
+* **Description**: The agent receives a problem description, a failed patch, and a review explaining the failure. It uses this context to avoid repeating mistakes and implements an improved fix. The evaluation is the same as BugFixing since we check whether the predicted patch passes the final tests.
 * **Evaluation**: Success is measured by whether the improved patch resolves the issue while avoiding pitfalls highlighted in the review.
 * **Use Case**: Especially relevant for testing a model’s ability to apply reviewer feedback to refine implementations.
 
@@ -78,7 +85,7 @@ In this section you will find instructions on the different specifications of ou
 #### Java Support
 * **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
 
-0. Download data from huggingface (it is expected to be placed under multiswebench/mswebench_dataset)
+0. Download data from huggingfaec (it is expected to be placed under multiswebench/mswebench_dataset)
 1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench/prepare_eval`
 2. From the multiswebench directory, `run python prepare_eval.py`
 3. From the codearena directory, run `python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids "INSERT YOUR INSTANCE HERE EX: elastic/logstash:17021" --mswe_phase all --force_rebuild True --clean True`
@@ -103,7 +110,13 @@ Should be saved in a json format and can replace gold in the example call above.
 
 ### Running SWE-AGENT
 
-We have configured a basic swe-agent implementation to test on our repository, which can be used with the following call:
+We have configured a basic swe-agent implementation to test on our repository.
+
+Install SWE-agent with the following command - 
+
+```
+pip install git+https://github.com/SWE-agent/SWE-agent@bb80cbe#egg=sweagent
+```
 
 ```bash
 python baselines/sweagent/sweagent_regular.py \
