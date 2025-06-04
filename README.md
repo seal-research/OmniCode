@@ -154,6 +154,24 @@ python baselines/badpatchllm/generate_review.py \
     --instance_ids astropy__astropy-13033
 ```
 
+### Deploying experiments on Google Cloud
+
+To enable more reproducable and parallel evaluation, we also provide experimental support for launching jobs in Google Cloud via `gc/multivm.py`. For example the following command will run SWE-agent on instances specified in the `instances_to_run.txt` file. Details about available modes can be found at the end of `gc/utils.py`
+
+Note that this requires a base vm to be set up with the CodeArena and SWE-agent dependencies in your Google Cloud project.
+
+```bash
+python gc/multivm.py \
+   instances_to_run.txt \
+   sweagent-bf \
+   --base_vm sedsbase \
+   --base_zone us-east1-b \
+   --zone us-east1-b \
+   --num_vms 1 \
+   --key <api key>
+```
+
+
 ## Status
 
 ### Benchmark Construction Infrastructure
