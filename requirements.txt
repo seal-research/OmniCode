@@ -6,3 +6,5 @@ python-dotenv
 fire
 google-generativeai
 multi-swe-bench
+tree-sitter
+tree-sitter-python

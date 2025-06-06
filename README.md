@@ -21,29 +21,20 @@ The `codearena` command allows you to run multiple code evaluation benchmarks, s
 
 CodeArena with the `--BugFixing` flag can be used to evaluate whether a patch resolves the test for a particular issue.
 In the following command, we pass in the `--predictions_patch gold` to indicate that we want to evaluate on the correct patch as a sanity check. 
-Passing in the path to actual predictions here will enable evaluting on generated patches.
+Passing in the path to actual predictions here will enable evaluating on generated patches.
+This command with build the docker image and run the evaluation on the instance `astropy__astropy-13033` (which is a bug in the astropy library).
 
 ```bash
-python codearena.py \
---BugFixing \
---predictions_path gold \
---run_id BugFixing \
---instance_ids astropy__astropy-13033
+python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13033
 ```
 
 
 ### Example 2: Running `TestGeneration` for single instance
 
-The following command with the `--TestGeneration` flag can be used to evaulated generated tests. The path to generated tests can be specified with `--predictions_path` 
+The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path` 
 
 ```bash
-   python codearena.py \
-    --TestGeneration \
-    --predictions_path gold \
-    --language python \
-    --max_workers 1 \
-    --run_id BadPatchTest \
-    --instance_ids astropy__astropy-13033´
+   python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --instance_ids astropy__astropy-13033
 ```
 
 
@@ -108,6 +99,10 @@ Custom preds file can look like this for example:
 ```
 Should be saved in a json format and can replace gold in the example call above.
 
+### LLM API Key
+
+You can generate a free API key for the Gemini LLM by following the instructions at https://ai.google.dev/gemini-api/docs/api-key. This key is required to run the evaluation tasks that involve LLMs. Note that the free tier has rate limits, so don't run too many tasks in parallel.
+
 ### Running SWE-AGENT
 
 We have configured a basic swe-agent implementation to test on our repository.
@@ -115,16 +110,11 @@ We have configured a basic swe-agent implementation to test on our repository.
 Install SWE-agent with the following command - 
 
 ```
-pip install git+https://github.com/SWE-agent/SWE-agent@bb80cbe#egg=sweagent
+pip install -e git+https://github.com/SWE-agent/SWE-agent@bb80cbe#egg=sweagent
 ```
 
 ```bash
-python baselines/sweagent/sweagent_regular.py \
-    --input_tasks data/codearena_instances.json \
-    --api_key [KEY] \
-    --output_dir baselines/sweagent/logs/sweagent_outputs \
-    --instance_ids astropy__astropy-13033 \
-    --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix]
+python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix]
 ```
 
 ### Adding Bad Patches
