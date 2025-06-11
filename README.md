@@ -34,7 +34,7 @@ python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --ins
 The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path` 
 
 ```bash
-   python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --instance_ids astropy__astropy-13033
+   python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --instance_ids astropy__astropy-14995
 ```
 
 
