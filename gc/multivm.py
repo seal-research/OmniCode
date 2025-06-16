@@ -15,14 +15,15 @@ logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", None)
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", None)
+DOCKER_PAT = os.environ.get("DOCKER_PAT", None)
 
 # Retry configuration
 MAX_RETRIES = 3
 INITIAL_RETRY_DELAY = 5  # seconds
 MAX_RETRY_DELAY = 60  # seconds
 
+VERTEXAI_LOCATION = "us-east5"
 
 def exponential_backoff(retry_number):
     """Calculate delay with exponential backoff and jitter."""
@@ -125,10 +126,12 @@ def process_single_vm(
                 service_account = compute_v1.ServiceAccount()
                 service_account.email = "default"
                 service_account.scopes = [
-                    "https://www.googleapis.com/auth/devstorage.read_write",
-                    "https://www.googleapis.com/auth/logging.write",
-                    "https://www.googleapis.com/auth/monitoring.write",
-                ]
+                        "https://www.googleapis.com/auth/devstorage.read_write",
+                        "https://www.googleapis.com/auth/logging.write",
+                        "https://www.googleapis.com/auth/monitoring.write",
+                        "https://www.googleapis.com/auth/compute",  # Add compute scope for VM self-deletion
+                        "https://www.googleapis.com/auth/cloud-platform",  # Add cloud platform scope for Gemini API
+                    ]
                 instance.service_accounts = [service_account]
 
                 # Set up as spot/preemptible instance
@@ -183,15 +186,17 @@ def create_distributed_compute_vms(
     instance_ids: list[str],
     command: str,
     base_vm_name: str,
+    key: str,
     machine_type: str = "e2-standard-4",
     disk_size_gb: int = 100,
     num_vms: int = 20,
-    disk_image: str = None,
+    disk_image: str | None = None,
     data_bucket: str = "your-data-bucket",
     overwrite: bool = False,
     vm_num_offset: int = 0,
     max_workers: int = 10,  # Control parallelism
     indices_to_run: list[int] | None = None,
+    vertex_setup: str = ""
 ):
     """Create or reuse multiple Compute Engine VMs in parallel to distribute the processing."""
 
@@ -229,8 +234,12 @@ echo "$(date): Script started"
 echo "Running as user: $(whoami)"
 echo "Home directory: $HOME"
 su - ays57 << 'EOSU'
-export GEMINI_API_KEY="{GEMINI_API_KEY}"
+export GEMINI_API_KEY="{key}"
 export GITHUB_TOKEN="{GITHUB_TOKEN}"
+export DOCKER_PAT="{DOCKER_PAT}"
+# for aider
+export PATH="/home/ays57/.local/bin:$PATH"
+{vertex_setup}
 echo "Now running as $(whoami) with home directory $HOME"
 # Explicitly set PATH to include common conda locations
 export PATH="$HOME/miniconda3/bin:$HOME/anaconda3/bin:/opt/conda/bin:$PATH"
@@ -346,6 +355,19 @@ poweroff
     return successful_vms
 
 
+VERTEXT_SETUP_DICT = {
+5: """export VERTEXAI_PROJECT="gemini-5-459920"
+export VERTEXAI_LOCATION="us-east5"
+export GOOGLE_APPLICATION_CREDENTIALS="../gemini5.json" """,
+4: """export VERTEXAI_PROJECT="gemini-4-459920"
+export VERTEXAI_LOCATION="us-east5"
+export GOOGLE_APPLICATION_CREDENTIALS="../gemini4.json" """,
+3: """export VERTEXAI_PROJECT="gemini-3-459920"
+export VERTEXAI_LOCATION="us-east5"
+export GOOGLE_APPLICATION_CREDENTIALS="../gemini3.json" """,
+}
+
+
 if __name__ == "__main__":
     import sys
     from pathlib import Path
@@ -363,9 +385,12 @@ if __name__ == "__main__":
     parser.add_argument("--num_vms", type=int, default=20, required=False)
     parser.add_argument("--randomise", action="store_true", help="randomise sequence of instances being processed")
     parser.add_argument("--max_parallel", type=int, default=10, help="Maximum number of VMs to create in parallel")
-    parser.add_argument("--zone", type=str, required=True, help="zone in which to create VMs")
+    parser.add_argument("--zone", type=str, default=None, help="zone in which to create VMs")
+    parser.add_argument("--base_zone", type=str, required=True, help="base vm zone")
     parser.add_argument("--base_vm", type=str, required=True, help="Base VM name, e.g. sedsbase")
     parser.add_argument("--vm_idx_to_run", type=str, help="comma seperate list if ints indicating vms to run", default=None)
+    parser.add_argument("--vertex_setup", type=int, default=None)
+    parser.add_argument("--key", "-k", type=str, default=None)
 
     args = parser.parse_args()
 
@@ -376,8 +401,15 @@ if __name__ == "__main__":
 
     # Hardcode the base VM name
     base_vm_name = args.base_vm
+    base_zone = args.base_zone
     project_id = "gen-lang-client-0511233871"
     zone = args.zone
+    if zone is None:
+        zone = base_zone
+
+    key = args.key
+    if key is None:
+        raise RuntimeError(f"Could not fine key")
 
     # Define image family for this job type
     command = get_command(job_type)
@@ -393,13 +425,15 @@ if __name__ == "__main__":
     if args.randomise:
         random.shuffle(instances_list)
 
+    vertex_setup = VERTEXT_SETUP_DICT[args.vertex_setup] if args.vertex_setup is not None else ""
+
     indices_to_run = [int(s) for s in args.vm_idx_to_run.split(',')] if args.vm_idx_to_run is not None else None
 
     try:
         disk_image = create_image_wrapped(
             rebuild=rebuild,
             project_id=project_id,
-            zone=zone,
+            zone=base_zone,
             source_instance=base_vm_name,
         )
 
@@ -410,6 +444,7 @@ if __name__ == "__main__":
             instance_ids=instances_list,
             command=command,
             base_vm_name=base_vm_name,
+            key=key,
             machine_type="e2-standard-4",
             disk_size_gb=100,
             num_vms=len(instances_list) if args.instances_path == "dummy" else args.num_vms,
@@ -419,6 +454,7 @@ if __name__ == "__main__":
             vm_num_offset=args.vm_num_offset,
             max_workers=args.max_parallel,
             indices_to_run=indices_to_run,
+            vertex_setup=vertex_setup,
         )
 
         logger.info(f"Successfully managed {len(vms)} VMs to process instances")

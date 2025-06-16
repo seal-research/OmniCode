@@ -6,7 +6,7 @@ import concurrent.futures
 from typing import List, Tuple, Set, Dict, Optional
 
 
-async def analyse(gcs_path: str, debug: bool = False, max_concurrency: int = 10):
+async def analyse(gcs_path: str, key: str = "resolved", debug: bool = False, max_concurrency: int = 10):
     """
     Analyze reports from Google Cloud Storage using async for improved performance.
     
@@ -48,7 +48,8 @@ async def analyse(gcs_path: str, debug: bool = False, max_concurrency: int = 10)
     # Find instance directories
     instance_dirs = await find_instance_directories(bucket, directory_prefix, all_blobs, executor, debug)
     
-    print(f"Found {len(instance_dirs)} instance directories")
+    if debug:
+        print(f"Found {len(instance_dirs)} instance directories")
     if debug and instance_dirs:
         print("Instance IDs found:", instance_dirs)
     
@@ -62,12 +63,16 @@ async def analyse(gcs_path: str, debug: bool = False, max_concurrency: int = 10)
                 print(f"  - {report.name}")
     
     # Process all instances concurrently
-    results = await process_instances(bucket, directory_prefix, instance_dirs, executor, debug)
+    results = await process_instances(bucket, directory_prefix, instance_dirs, executor, key, debug)
     
     skipped, all_instances, present, passed, failed = results
     
     print(f"Skipped: {skipped}")
+    print(f"Failed (first 10): {failed[:10]}")
     print(f"{len(all_instances)=}, {len(present)=}, {len(skipped)=}, {len(passed)=}, {len(failed)=}")
+    
+    # print('\n'.join(sorted(passed)))
+    # print('\n'.join(list(sorted(set(all_instances) - set(passed).union(set(failed))))))
 
 
 async def find_instance_directories(bucket, directory_prefix, all_blobs, executor, debug) -> List[str]:
@@ -103,7 +108,7 @@ async def find_instance_directories(bucket, directory_prefix, all_blobs, executo
     return list(instance_dirs)
 
 
-async def process_instance(bucket, directory_prefix, instance_id, executor, debug) -> Tuple[str, bool, bool, bool]:
+async def process_instance(bucket, directory_prefix, instance_id, executor, key: str = "resolved", debug: bool = False) -> Tuple[str, bool, bool, bool]:
     """Process a single instance and return results."""
     instance_prefix = f"{directory_prefix}{instance_id}/"
     
@@ -117,12 +122,13 @@ async def process_instance(bucket, directory_prefix, instance_id, executor, debu
     )
     
     if len(report_blobs) == 0:
-        print(f"Info: No report found for {instance_id}, skipping ...")
+        if debug:
+            print(f"Info: No report found for {instance_id}, skipping ...")
         return instance_id, False, True, False
     
     report_json_blob = report_blobs[0]
     
-    if len(report_blobs) != 1:
+    if len(report_blobs) != 1 and debug:
         print(f"Warning: Multiple reports found for {instance_id}, using {report_json_blob.name}")
     
     # Download and parse the JSON content
@@ -134,22 +140,25 @@ async def process_instance(bucket, directory_prefix, instance_id, executor, debu
         report_data = json.loads(report_content)
         
         if instance_id not in report_data:
-            print(f"Error: Could not find {instance_id} in {report_json_blob.name}, skipping ...")
+            if debug:
+                print(f"Error: Could not find {instance_id} in {report_json_blob.name}, skipping ...")
             return instance_id, True, True, False
         
-        if "resolved" not in report_data[instance_id]:
-            print(f"Error: Could not find 'resolved' in {report_json_blob.name}, skipping ...")
+        if key not in report_data[instance_id]:
+            if debug:
+                print(f"Error: Could not find key '{key}' in {report_json_blob.name}, skipping ...")
             return instance_id, True, True, False
         
-        passed = report_data[instance_id]['resolved']
+        passed = report_data[instance_id][key]
         return instance_id, True, False, passed
     
     except json.JSONDecodeError:
-        print(f"Error: Invalid JSON in {report_json_blob.name}, skipping ...")
+        if debug:
+            print(f"Error: Invalid JSON in {report_json_blob.name}, skipping ...")
         return instance_id, True, True, False
 
 
-async def process_instances(bucket, directory_prefix, instance_dirs, executor, debug) -> Tuple[List[str], List[str], List[str], List[str], List[str]]:
+async def process_instances(bucket, directory_prefix, instance_dirs, executor, key: str = "resolved", debug: bool = False) -> Tuple[List[str], List[str], List[str], List[str], List[str]]:
     """Process all instances concurrently and collect results."""
     skipped, all_instances, present, passed, failed = [], [], [], [], []
     
@@ -157,7 +166,7 @@ async def process_instances(bucket, directory_prefix, instance_dirs, executor, d
     tasks = []
     for instance_id in instance_dirs:
         all_instances.append(instance_id)
-        tasks.append(process_instance(bucket, directory_prefix, instance_id, executor, debug))
+        tasks.append(process_instance(bucket, directory_prefix, instance_id, executor, key, debug))
     
     # Run all tasks concurrently and collect results
     results = await asyncio.gather(*tasks)
@@ -180,8 +189,8 @@ async def process_instances(bucket, directory_prefix, instance_dirs, executor, d
 if __name__ == '__main__':
     import fire
     
-    def run_analyse(gcs_path: str, debug: bool = False, max_concurrency: int = 10):
+    def run_analyse(gcs_path: str, key: str = "resolved", debug: bool = False, max_concurrency: int = 10):
         """Wrapper to run the async function."""
-        asyncio.run(analyse(gcs_path, debug, max_concurrency))
+        asyncio.run(analyse(gcs_path, key, debug, max_concurrency))
     
     fire.Fire(run_analyse)

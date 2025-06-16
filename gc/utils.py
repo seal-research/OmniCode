@@ -359,16 +359,52 @@ SANITY_CMD = """python codearena.py \
 --instance_ids $INSTANCE_ID"""
 
 
+STYLE_REVIEW_CMD = """python codearena.py \
+--StyleReview \
+--language python \
+--predictions_path gold \
+--instance_ids $INSTANCE_ID \
+--run_id style_check2"""
+
 BAD_PATCH_GEN_CMD = """python baselines/badpatchllm/generate_bad.py \
 -o logs/ \
 -m gemini-2.5-flash-preview-4-17 \
 --run_id bp_gen \
--n 3 \
+-n 1 \
 -d data/codearena_instances.json \
 --max_workers 4 \
 --instance_ids $INSTANCE_ID"""
 
 
+UPLOAD_IMAGE_CMD = r"""upload_image() {
+
+    # Run BugFixing to build the image, but time out immediately after image is built
+    python codearena.py \
+        --BugFixing \
+        --predictions_path gold \
+        --run_id docker \
+        --instance_ids $INSTANCE_ID \
+        --timeout 1
+
+    # parse image name from log file
+    IMAGE_NAME=$(sed -n '1s/.*Environment image \([^ ]*\) found.*/\1/p' \
+    logs/run_evaluation/docker/gold/"$INSTANCE_ID"/run_instance.log)
+
+    # log in to docker
+    printf '%s\n' "$DOCKER_PAT" | docker login -u sca63 --password-stdin
+
+    # check that login succeeded
+    echo "Docker login status: $?"
+
+    # tag the image with the latest version
+    docker tag $IMAGE_NAME sca63/codearena:$INSTANCE_ID
+
+    # push the image to the registry
+    docker push sca63/codearena:$INSTANCE_ID
+}
+
+# execute the function and capture all output
+upload_image"""
 
 AGENTLESS_CHECK_CMD_OLD = """process_files() {
     # Create a temporary directory for logs
@@ -474,7 +510,7 @@ AGENTLESS_CHECK_JAVA_CMD = """process_files() {
     mkdir -p tmp_logs
 
     # Base Google Storage path
-    BASE_PATH="gs://${BUCKET_NAME}/agentless_bad_patches_java"
+    BASE_PATH="gs://${BUCKET_NAME}/agentless_bad_patches_java2"
 
     for i in {0..2}; do
         # Construct the filename
@@ -615,6 +651,16 @@ SWEAGENT_BF_CHECK_CMD = PATCH_CHECK_CMD.format(
 )
 
 
+SWEAGENT_BF_L_CHECK_CMD = PATCH_CHECK_CMD.format(
+   results_dir="sweb-sweagent-bf-llama",
+   check_cmd="""python codearena.py \
+        --BugFixing \
+        --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
+        --run_id sweagent_bf_llama_check \
+        --instance_ids "${INSTANCE_ID}" """,
+)
+
+
 SWEAGENT_TG_CHECK_CMD = PATCH_CHECK_CMD.format(
    results_dir="sweb-sweagent-tg",
    check_cmd="""python codearena.py \
@@ -626,6 +672,14 @@ SWEAGENT_TG_CHECK_CMD = PATCH_CHECK_CMD.format(
 
 
 
+SWEAGENT_TG_L_CHECK_CMD = PATCH_CHECK_CMD.format(
+   results_dir="sweb-sweagent-tg-llama",
+   check_cmd="""python codearena.py \
+        --TestGeneration \
+        --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
+        --run_id sweagent_tg_llama_check \
+        --instance_ids "${INSTANCE_ID}" """,
+)
 
 SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances.json \
@@ -636,6 +690,13 @@ SWEAGENT_BUGFIXING_CMD = """python baselines/sweagent/sweagent_regular.py \
 --instance_ids $INSTANCE_ID"""
 
 
+SWEAGENT_BUGFIXING_L_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+--mode bugfixing \
+--instance_ids $INSTANCE_ID"""
+
 
 SWEAGENT_TESTGEN_CMD = """python baselines/sweagent/sweagent_regular.py \
 -i data/codearena_instances.json \
@@ -645,6 +706,44 @@ SWEAGENT_TESTGEN_CMD = """python baselines/sweagent/sweagent_regular.py \
 --mode testgen \
 --instance_ids $INSTANCE_ID"""
 
+
+SWEAGENT_TESTGEN_L_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+--mode testgen \
+--instance_ids $INSTANCE_ID"""
+
+
+SWEAGENT_STYLE_REVIEW_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/sweagent_style_review_instances.json \
+-o logs \
+-m gemini/gemini-2.5-flash-preview-04-17 \
+-k $GEMINI_API_KEY \
+--mode stylereview \
+--instance_ids $INSTANCE_ID"""
+
+SWEAGENT_STYLE_REVIEW_L_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/sweagent_style_review_instances.json \
+-o logs \
+-m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+--mode stylereview \
+--instance_ids $INSTANCE_ID"""
+
+SWEAGENT_REVIEW_FIX_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m gemini/gemini-2.5-flash-preview-04-17 \
+-k $GEMINI_API_KEY \
+--mode reviewfix \
+--instance_ids $INSTANCE_ID"""
+
+SWEAGENT_REVIEW_FIX_L_CMD = """python baselines/sweagent/sweagent_regular.py \
+-i data/codearena_instances.json \
+-o logs \
+-m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+--mode reviewfix \
+--instance_ids $INSTANCE_ID"""
 
 
 SWEAGENT_BUGFIXING_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
@@ -664,18 +763,255 @@ SWEAGENT_TESTGEN_JAVA_CMD = """python baselines/sweagent/sweagent_regular.py \
 --mode testgen_java \
 --instance_ids $INSTANCE_ID"""
 
+# STYLE_REVIEW_CHECK_CMD = """python codearena.py \
+# --StyleReview \
+# --language python \
+# --predictions_path gold \
+# --instance_ids $INSTANCE_ID \
+# --run_id style_check"""
+
+# STYLE_REVIEW_CMD = """python codearena.py \
+# --StyleReview \
+# --language python \
+# --predictions_path gold \
+# --instance_ids $INSTANCE_ID \
+# --run_id style_check"""
+
+
+OPENHANDS_BUGFIXING_CMD = r"""process() {
+    cd ~/seds/OpenHands
+    rm -rf evaluation/evaluation_outputs
+    echo selected_ids = [\"${INSTANCE_ID}\"] > evaluation/benchmarks/swe_bench/config.toml
+    ./evaluation/benchmarks/swe_bench/scripts/run_infer.sh llm.gemini HEAD CodeActAgent 1 100 1 ../codearena/data/codearena_instances.json
+    python evaluation/benchmarks/swe_bench/convert.py --prediction_file evaluation/evaluation_outputs/outputs/..__codearena__data__codearena_instances.json-test/CodeActAgent/gemini-2.0-flash_maxiter_100_N_v0.36.0-no-hint-run_1/output.jsonl >> ../codearena/logs/all_preds.jsonl
+    cd ../codearena
+}
+process"""
+
+
+PATCH_CHECK_CMD2 = """check_model_patch() {{
+    # Set the path to the specific file we're checking
+    gcs_path="gs://${{BUCKET_NAME}}/{results_dir}"
+    file_path="${{gcs_path}}/${{INSTANCE_ID}}/all_preds.jsonl"
+    temp_dir=$(mktemp -d)
+    temp_file="${{temp_dir}}/all_preds.jsonl"
+
+    # Check if the file exists
+    if ! gsutil -q stat "${{file_path}}"; then
+        echo "File not found at ${{file_path}}, skipping..."
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+
+    # File exists, download it
+    echo "File found, downloading to verify contents..."
+    gsutil cp "${{file_path}}" "${{temp_file}}"
+
+    # Initialize variable to store content with model_patch
+    local content=""
+
+    # Read the file and check for model_patch field
+    while IFS= read -r line; do
+        # Check if the line contains model_patch field
+        if echo "$line" | jq 'has("model_patch")' | grep -q "true"; then
+            content="$line"
+            break
+        fi
+    done < "${{temp_file}}"
+
+    # If no content with model_patch found
+    if [ -z "${{content}}" ]; then
+        echo "No model_patch field found in ${{file_path}}, skipping..."
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+
+    # Check if model_patch is null or empty
+    if [ "$(echo "$content" | jq '.model_patch == null')" = "true" ] ||
+       [ "$(echo "$content" | jq '.model_patch | length')" = "0" ]; then
+        echo "Model patch is null or empty for ${{INSTANCE_ID}}, skipping..."
+        rm -rf "${{temp_dir}}"
+        return 0
+    fi
+
+    # All checks passed, model_patch exists and has content
+    echo "Valid model_patch found for ${{INSTANCE_ID}}, running check command..."
+
+    # Ensure logs directory exists
+    mkdir -p logs
+
+    # Save prediction to logs
+    cp "${{temp_file}}" "logs/${{INSTANCE_ID}}_all_preds.jsonl"
+
+    # Clean up temporary directory
+    rm -rf "${{temp_dir}}"
+
+    # Run the check command
+    {check_cmd}
+}}
+
+check_model_patch"""
+
+
+
+OPENHANDS_BF_CHECK_CMD = PATCH_CHECK_CMD2.format(
+   results_dir="sweb-openhands-bf",
+   check_cmd="""python codearena.py \
+        --BugFixing \
+        --predictions_path "logs/${INSTANCE_ID}_all_preds.jsonl" \
+        --run_id openhands_bf_check \
+        --instance_ids "${INSTANCE_ID}" """,
+)
+
+AIDER_BF_CMD = """python baselines/aider/aider_regular.py \
+    -i data/codearena_instances.json  \
+    -o logs \
+    --instance_ids $INSTANCE_ID \
+    -k $GEMINI_API_KEY """
+
+AIDER_BF_L_CMD = """python baselines/aider/aider_regular.py \
+    -i data/codearena_instances.json \
+    -o logs \
+    --instance_ids $INSTANCE_ID  \
+    -k $GEMINI_API_KEY \
+    -m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+    --model_provider vertex_ai"""
+
+CHECK_SR_SWEAGENT_CMD = """check() {{
+
+gsutil cp gs://seds-store/sweagent_preds/{preds} .
+
+if [ -f {preds} ]; then
+  echo "File exists"
+else
+  echo "File does not exist"
+fi
+
+# need permissions to be able to read from it
+sudo chown -R "$USER":"$USER" {preds}
+
+python codearena.py \
+--StyleReview \
+--language python \
+--predictions_path {preds} \
+--instance_ids $INSTANCE_ID \
+--run_id {run_id}
+
+}}
+
+check"""
+
+# UPLOAD_IMAGE_CMD = r"""upload_image() {
+
+# Run BugFixing to build the image, but time out immediately after image is built
+CHECK_BF_SWEAGENT_CMD = """check() {{
+gsutil cp gs://seds-store/sweagent_preds/{preds} .
+
+if [ -f {preds} ]; then
+  echo "File exists"
+else
+  echo "File does not exist"
+fi
+
+# need permissions to be able to read from it
+sudo chown -R "$USER":"$USER" {preds}
+
+python codearena.py \
+  --BugFixing \
+  --language python \
+  --predictions_path {preds} \
+  --instance_ids $INSTANCE_ID \
+  --run_id {run_id}
+
+}}
+
+check"""
+
+SWEAGENT_SR_CHECK_CMD = CHECK_SR_SWEAGENT_CMD.format(
+    preds="sweagent_sr_all_preds.jsonl",
+    run_id="sweagent_sr_check",
+)
+
+SWEAGENT_SR_CHECK_L_CMD = CHECK_SR_SWEAGENT_CMD.format(
+    preds="sweagent_sr_llama_all_preds.jsonl",
+    run_id="sweagent_sr_llama_check",
+)
+
+SWEAGENT_SR_BF_CHECK_CMD = CHECK_BF_SWEAGENT_CMD.format(
+    preds="sweagent_sr_all_preds.jsonl",
+    run_id="sweagent_sr_bf_check",
+)
+
+SWEAGENT_SR_BF_CHECK_L_CMD = CHECK_BF_SWEAGENT_CMD.format(
+    preds="sweagent_sr_llama_all_preds.jsonl",
+    run_id="sweagent_sr_bf_llama_check",
+)
+
+SWEAGENT_RF_CHECK_CMD = CHECK_BF_SWEAGENT_CMD.format(
+    preds="sweagent_rf_all_preds.jsonl",
+    run_id="sweagent_rf_check",
+)
+
+SWEAGENT_RF_CHECK_L_CMD = CHECK_BF_SWEAGENT_CMD.format(
+    preds="sweagent_rf_llama_all_preds.jsonl",
+    run_id="sweagent_rf_llama_check",
+)
+
+
+AIDER_TG_CMD = """python baselines/aider/aider_regular.py \
+    -i data/codearena_instances.json  \
+    -o logs \
+    --mode testgen \
+    --instance_ids $INSTANCE_ID \
+    -k $GEMINI_API_KEY """
+
+
+AIDER_TG_L_CMD = """python baselines/aider/aider_regular.py \
+    -i data/codearena_instances.json  \
+    -o logs \
+    --mode testgen \
+    --instance_ids $INSTANCE_ID \
+    -k $GEMINI_API_KEY \
+    -m vertex_ai/meta/llama-4-scout-17b-16e-instruct-maas \
+    --model_provider vertex_ai"""
+    
 
 COMMAND_MAP = {
     "sanity": SANITY_CMD,
+    "upload-image": UPLOAD_IMAGE_CMD,
     "bp-gen": BAD_PATCH_GEN_CMD,
     "agentless-check": AGENTLESS_CHECK_CMD,
     "agentless-check-java": AGENTLESS_CHECK_JAVA_CMD,
     "sweagent-bf": SWEAGENT_BUGFIXING_CMD,
     "sweagent-bf-check": SWEAGENT_BF_CHECK_CMD,
+    "sweagent-bf-llama-check": SWEAGENT_BF_L_CHECK_CMD,
     "sweagent-tg": SWEAGENT_TESTGEN_CMD,
+    "sweagent-bf-llama": SWEAGENT_BUGFIXING_L_CMD,
+    "sweagent-tg-llama": SWEAGENT_TESTGEN_L_CMD,
     "sweagent-tg-check": SWEAGENT_TG_CHECK_CMD,
+    "sweagent-tg-llama-check": SWEAGENT_TG_L_CHECK_CMD,
     "sweagent-bf-java": SWEAGENT_BUGFIXING_JAVA_CMD,
     "sweagent-tg-java": SWEAGENT_TESTGEN_JAVA_CMD,
+
+    "style-review": STYLE_REVIEW_CMD,
+    "sweagent-sr": SWEAGENT_STYLE_REVIEW_CMD,
+    "sweagent-sr-llama": SWEAGENT_STYLE_REVIEW_L_CMD,
+    "sweagent-rf": SWEAGENT_REVIEW_FIX_CMD,
+    "sweagent-rf-llama": SWEAGENT_REVIEW_FIX_L_CMD,
+
+    "sweagent-sr-check": SWEAGENT_SR_CHECK_CMD,
+    "sweagent-sr-check-llama": SWEAGENT_SR_CHECK_L_CMD,
+    "sweagent-sr-bf-check": SWEAGENT_SR_BF_CHECK_CMD,
+    "sweagent-sr-bf-check-llama": SWEAGENT_SR_BF_CHECK_L_CMD,
+    "sweagent-rf-check": SWEAGENT_RF_CHECK_CMD,
+    "sweagent-rf-check-llama": SWEAGENT_RF_CHECK_L_CMD,
+
+    "openhands-bf": OPENHANDS_BUGFIXING_CMD,
+    "openhands-bf-check": OPENHANDS_BF_CHECK_CMD,
+    "aider-bf": AIDER_BF_CMD,
+    "aider-bf-llama": AIDER_BF_L_CMD,
+    "aider-tg": AIDER_TG_CMD,
+    "aider-tg-llama": AIDER_TG_L_CMD,
 }
 
 def get_command(

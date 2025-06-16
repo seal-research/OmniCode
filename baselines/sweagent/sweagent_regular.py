@@ -2,6 +2,7 @@ from pathlib import Path
 import json
 import logging
 import tempfile
+import base64
 
 from datasets import load_dataset, load_from_disk
 from tqdm import tqdm
@@ -24,6 +25,8 @@ CONFIG_FILE_MAP = {
     "testgen": CUR_DIR / "testgen.yaml",
     "bugfixing_java": CUR_DIR / "bugfixing_java.yaml",
     "testgen_java": CUR_DIR / "testgen_java.yaml",
+    "stylereview": CUR_DIR / "stylereview.yaml",
+    "reviewfix": CUR_DIR / "reviewfix.yaml",
 }
 
 
@@ -35,7 +38,7 @@ logger = logging.getLogger(__name__)
 #     model_name: str,
 #     output_dir: Path,
 # ):
-    
+
 #     agent = AgentConfig(
 #         model=GenericAPIModelConfig(
 #             name=model_name,
@@ -53,7 +56,7 @@ logger = logging.getLogger(__name__)
 #         post_startup_commands=[],
 #     )
 
-    
+
 #     # problem_statement = TextProblemStatement(
 #     #     text=PROMPT_TEMPLATE.render(
 #     #         issue=instance['problem_statement']
@@ -69,7 +72,7 @@ logger = logging.getLogger(__name__)
 #         )
 #         fp.close()
 
-        
+
 #         problem_statement = FileProblemStatement(
 #             path=Path(fp.name),
 #             id=instance['instance_id'],
@@ -86,31 +89,64 @@ logger = logging.getLogger(__name__)
 #         RunSingle.from_config(config).run()
 
 
-#     output_file_path = output_dir / problem_statement.id / (problem_statement.id + ".pred") 
+#     output_file_path = output_dir / problem_statement.id / (problem_statement.id + ".pred")
 #     output = json.loads(output_file_path.read_text())
 
 #     return None, output
 
 
+def get_reviewfix_faux_problem_statement(instance: dict) -> str:
+    bad_patch = [bp for bp in instance['bad_patches'] if bp['source'] == 'badpatchllm'][0]
+    problem_statement = instance['problem_statement']
+    bad_patch_text = bad_patch['patch']
+    review = bad_patch['review']
+
+    faux_str = f"""Consider the following PR description:
+
+      <pr_description>
+      {problem_statement}
+      </pr_description>
+
+      Additionally, here is a previous patch attempt that failed to resolve this issue.
+
+      <bad_patch>
+      {bad_patch_text}
+      </bad_patch>
+
+      And here are is a review that attempts to explain why the patch failed:
+
+      <review>
+      {review}
+      </review>
+
+      Please carefully review the failed patch and its reviews. Use insight from them to **avoid repeating the same mistakes** and to **guide your reasoning** when implementing the fix."""
+    return faux_str
+
 
 def run_sweagent_single(
     instance: dict,
     model_name: str,
-    api_key: str,
+    api_key: str | None,
     output_dir: Path,
     mode: str = "bugfixing",
+    thinking_budget: int | None = None,
 ):
-    
+
     url = f"https://github.com/{instance['repo']}"
 
     if mode not in CONFIG_FILE_MAP:
-        raise RuntimeError(f"Unknown mode: {mode}")    
+        raise RuntimeError(f"Unknown mode: {mode}")
 
     config_file = CONFIG_FILE_MAP[mode]
 
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
 
-        fp.write(instance['problem_statement'])
+        if mode == 'reviewfix':
+            # use the problem statement to inject prompt, hacky way to modify prompt easily
+            fp.write(get_reviewfix_faux_problem_statement(instance))
+        else:
+            fp.write(instance['problem_statement'])
+
         fp.close()
 
         args = ["run"]
@@ -120,30 +156,68 @@ def run_sweagent_single(
 
         args += [
             f"--agent.model.name={model_name}",
-            f"--agent.model.api_key={api_key}",
             f"--agent.model.per_instance_cost_limit=2.0",
             f"--env.repo.github_url={url}",
             f"--env.repo.base_commit={instance['base_commit']}",
+            f"--env.deployment.image=sca63/codearena:{instance['instance_id']}",
+            # override having /testbed be WORKDIR for docker image
+            '--env.deployment.docker_args=["-w","/"]',
             f"--problem_statement.path={str(fp.name)}",
             f"--problem_statement.id={instance['instance_id']}",
-            f"--output_dir={output_dir}"
+            f"--output_dir={output_dir}",
         ]
 
+        if api_key is not None:
+            args.append(f"--agent.model.api_key={api_key}")
+
+        if mode == 'stylereview':
+            # apply gold patch upon starting env, so that agent can modify it based on pylint feedback
+            commands = apply_patch_commands(instance["patch"], repo_name=instance["repo"].replace("/", "__"))
+
+            args.append(
+                f"--env.post_startup_commands={json.dumps(commands)}",     # note: !r gives Python‑style list
+            )
+
+
+        if thinking_budget is not None:
+            if model_name.startswith("gemini"):
+                args.append("""--agent.model.completion_kwargs={"thinking":{"type":"enabled","budget_tokens":""" + str(int(thinking_budget)) + """}}""")
+            else:
+                raise RuntimeError(f"Cannot use thinking budget with non-gemini model: {model_name}")
+
         sweagent_main(args)
-        
-    output_file_path = output_dir / instance['instance_id'] / (instance['instance_id']  + ".pred") 
+
+    output_file_path = output_dir / instance['instance_id'] / (instance['instance_id']  + ".pred")
     output = json.loads(output_file_path.read_text())
 
     return None, output
 
+def apply_patch_commands(patch: str, repo_name: str) -> list[str]:
+    """
+    Return a list of commands that apply the patch to the repo.
+
+    1.  recreate /tmp/patch.diff inside the container
+    2.  try git‑apply, fallback to patch -p1 --fuzz
+    """
+    b64 = base64.b64encode(patch.encode()).decode()
+    return [
+        # write file atomically
+        f"echo '{b64}' | base64 -d > /tmp/patch.diff",
+        # cd into repo and apply
+        f"""cd /{repo_name} && (
+                git apply --allow-empty -v /tmp/patch.diff ||
+                patch --batch --fuzz=5 -p1 -i /tmp/patch.diff
+            )""",
+    ]
 
 def main(
     input_tasks_path: Path,
     output_dir_path: Path,
     model_name: str,
-    api_key: str,
+    api_key: str | None,
     instance_ids: list[str] | None= None,
     mode: str = "bugfixing",
+    thinking_budget: int | None = None,
 ):
     if input_tasks_path.exists():
         if input_tasks_path.suffix.endswith("json"):
@@ -168,7 +242,7 @@ def main(
         dataset = [d for d in dataset if d["instance_id"] in instance_ids]
 
     existing_ids = set()
-    
+
     output_dir_path.mkdir(parents=True, exist_ok=True)
     output_file_path = output_dir_path / "all_preds.jsonl"
 
@@ -183,7 +257,7 @@ def main(
     basic_args = {
         "model_name_or_path": model_name,
     }
-    
+
     with open(output_file_path, "a+") as f:
         for datum in tqdm(dataset, desc=f"Inference for {model_name}"):
             instance_id = datum["instance_id"]
@@ -191,7 +265,7 @@ def main(
                 continue
             output_dict = {"instance_id": instance_id}
             output_dict.update(basic_args)
-            full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path, api_key=api_key, mode=mode)
+            full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path, api_key=api_key, mode=mode, thinking_budget=thinking_budget)
             output_dict["full_output"] = full_output
             output_dict["model_patch"] = model_patch
             print(json.dumps(output_dict), file=f, flush=True)
@@ -204,8 +278,9 @@ if __name__ == '__main__':
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
-    parser.add_argument("-k", "--api_key", type=str, required=True)
-    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java"])
+    parser.add_argument("-k", "--api_key", type=str, default=None)
+    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview", "reviewfix"])
+    parser.add_argument("--thinking_budget", type=int, default=0)
     args = parser.parse_args()
 
     main(
@@ -215,5 +290,6 @@ if __name__ == '__main__':
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
         api_key=args.api_key,
         mode=args.mode,
+        # thinking_budget=args.thinking_budget
     )
 

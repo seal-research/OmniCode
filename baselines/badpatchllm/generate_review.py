@@ -6,7 +6,7 @@ How to run this script:
 3. Run the script with the following command:
 python [PATH to /codearena/baselines/badpatchllm/generate_review.py] \
     --input_tasks [PATH to codearena_instances.json or desired file] \
-    --api_key [API_KEY] 
+    --api_key [API_KEY]
 
 Optionally, you can specify the model name and the number of reviews per patch:
     --model_name [MODEL_NAME] \
@@ -42,13 +42,13 @@ def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_e
     prompt = (
         "You are an experienced software engineer tasked with reviewing code patches. "
         "Below is a problem statement, a correct patch example, and a submitted patch which is likely incorrect or incomplete. "
-        "Please provide a detailed review that identify of issues with the submitted patch (e.g., missing context, incorrect modifications, or potential bugs) and specify suggestions for improvements the new patch"
-        "would solve the problem statement. You can create these suggestions via a comparison of the submitted incorrect patch against the correct"
-        "patch example, but try to come up with original suggestions on your own (as there can be multiple ways to fix th problem. DO NOT justify with reasoning along the line of: the correct patch does this. Some example reviews you"
-        "should output include: \"object passed to as_scalar_or_list_str can be a single element list. I this case, should extract "
-        "element and display instead of printing list\" or \"Using incorrect shape for cright. It should be of shape (noutp, right.shape[1])\""
-        "or \"arguments list passed convert to world values should be unrolled instead of a list\" which you can see are concise and to the point,"
-        "you should keep your recommendation/response under 50 words and make sure to not give away the actual answer as code from correct patch example should not be shared.\n\n"
+        "Please provide a detailed review of the submitted patch that identify issues (e.g., missing context, incorrect modifications, or potential bugs) and specifies suggestions for improving the submitted patch so that it correctly solves the problem statement (as the correct patch examples does). "
+        "You can create these suggestions via a comparison of the submitted incorrect patch against the correct"
+        "patch example, but try to come up with original suggestions on your own (as there can be multiple ways to fix the problem. DO NOT justify with reasoning along the line of: \"the correct patch does this\". Some examples of good reviews are: "
+        "\"object passed to as_scalar_or_list_str can be a single element list. In this case, you should extract "
+        "element and display instead of printing list\" or \"Using incorrect shape for cright. It should be of shape (noutp, right.shape[1])\" "
+        "or \"arguments list passed convert to world values should be unrolled instead of a list\" which you can see are concise and to the point. "
+        "Keep your review under 50 words and make sure to not give away the actual answer as code from correct patch example should not be shared.\n\n"
         "Problem Statement:\n"
         f"{problem_statement}\n\n"
         "Correct Patch Example:\n"
@@ -137,22 +137,25 @@ def main(
     output_dir: Path,
     instance_ids: list[str] = None,
 ):
+    with open(f'{output_dir}/results.txt', 'w') as f:
+        f.write('\n'.join(instance_ids))
+
     genai.configure(api_key=secret_key)
-    # ... (setup code like genai.configure, load_instances) ...
-    instances = load_instances(json_file_path)
-    if not instances:
+
+    all_instances = load_instances(json_file_path)
+    if not all_instances:
         return
-    
+
     if instance_ids is not None:
-        instances = [i for i in instances if i['instance_id'] in instance_ids]
+        modified_instances = [i for i in all_instances if i['instance_id'] in instance_ids]
 
-    modified_instances = copy.deepcopy(instances) # Work on a copy
-
-    for instance in modified_instances[:3]: # Example: process first 3
+    for instance in modified_instances:
+        print(f'Running instance {instance["instance_id"]}')
         instance_id = instance.get("instance_id")
         problem_statement = instance.get("problem_statement", "No problem statement provided.")
         correct_patch_example = instance.get("patch", "No correct patch example provided.")
         bad_patches_input = instance.get("bad_patches")
+        bad_patches_input = [bp for bp in bad_patches_input if bp['source'] == 'badpatchllm']
         reviews_input = instance.get("reviews")
 
         if not instance_id:
@@ -184,23 +187,27 @@ def main(
 
         new_reviews = []
         for bad_patch_content in bad_patches_list:
-            if isinstance(bad_patch_content, str) and bad_patch_content.strip():
-                review = query_llm_for_review(
-                    bad_patch=bad_patch_content,
-                    problem_statement=problem_statement,
-                    correct_patch_example=correct_patch_example,
-                    model_name=model_name
-                )
-                new_reviews.append(review)
+            if type(bad_patch_content) == dict:
+                bad_patch_str = bad_patch_content['patch']
+            elif type(bad_patch_content) == str:
+                bad_patch_str = bad_patch_content
+            else:
+                print(f"  Warning: Bad patch content for instance {instance_id} is not a valid string or dict. Skipping.")
+                continue
+
+            review = query_llm_for_review(
+                bad_patch=bad_patch_str,
+                problem_statement=problem_statement,
+                correct_patch_example=correct_patch_example,
+                model_name=model_name
+            )
+            new_reviews.append(review)
         # Update the instance dictionary
         instance["reviews"] = new_reviews
-        # instance["review_author"] = model_name # Hardcoded author
-            # else:
-                # print(f"  Info: No valid bad patches found for instance {instance_id}. Skipping review generation.")
 
-        (output_dir / "modified_instances.json").write_text(
-            json.dumps(modified_instances, indent=2)
-        )
+    # 3) Write the updated list back (this will preserve old entries)
+    json_path = output_dir / "modified_dataset.json"
+    json_path.write_text(json.dumps(all_instances, indent=2))
 
 
 if __name__ == "__main__":
