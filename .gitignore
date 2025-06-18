@@ -177,17 +177,16 @@ github_tokens.sh
 
 # Exclude specific directories in multiswebench
 multiswebench/mswebench_dataset/
-multiswebench/repos/
 multiswebench/multi_swe_bench.egg-info/
 multiswebench/data/
 multiswebench/build/
 multiswebench/.github/
 multiswebench/docs/
-multiswebench/multi_swe_bench
 # Exclude specific files in multiswebench
 multiswebench/.vscode/
 multiswebench/LICENSE
 multiswebench/README.md
 multiswebench/clean_config.json
 logs/
+multiswebench_runs/
 gemini-2.0-flash.test*.json

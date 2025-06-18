@@ -23,7 +23,7 @@ from CodeArena_grading import get_eval_report_test_generation, get_fail_to_fail
 from CodeArena_test_spec import make_test_spec, TestSpec
 from swebench.harness.utils import str2bool
 from utils import load_swebench_dataset, load_CodeArena_prediction_dataset, update_test_spec_with_specific_test_names
-from run_evaluation_GenTests import get_dataset_from_preds, get_gold_predictions
+from run_evaluation_GenTests import get_dataset_from_preds
 
 from swebench.harness.constants import (
     APPLY_PATCH_FAIL,
@@ -33,6 +33,45 @@ from swebench.harness.constants import (
     RUN_EVALUATION_LOG_DIR,
 )
 
+def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
+    """
+    Get ground truth tests and their corresponding patches from the FAIL_TO_PASS section.
+    
+    Args:
+        dataset_name (str): Name of the dataset
+        instance_ids (list): List of instance IDs to process
+        split (str): Dataset split to use
+        
+    Returns:
+        list: List of dictionaries containing instance IDs, patches, and failing test information
+    """
+    dataset = load_swebench_dataset(dataset_name, split)
+    results = []
+    
+    for datum in dataset:
+        if datum[KEY_INSTANCE_ID] not in instance_ids:
+            continue
+        
+        # loading gold prediction results assumes direct employment of swe-bench-verified
+        result = {
+            KEY_INSTANCE_ID: datum[KEY_INSTANCE_ID],
+            "repo": datum["repo"],
+            "base_commit": datum["base_commit"],
+            "gold_patch": datum["patch"],
+            "candidate_test_patch": datum["test_patch"], # gold test patch
+            "version": datum["version"],
+            "model_name_or_path": "gold"
+        }
+        
+        # Add bad patches if they exist
+        if "bad_patches" in datum:
+            result["bad_patches"] = datum["bad_patches"]
+        elif "bad_patch" in datum:
+            result["bad_patches"] = [datum["bad_patch"]]
+            
+        results.append(result)
+    
+    return results
 
 def load_mswebench_dataset(instance_ids: list, 
                            predictions: dict,
@@ -138,16 +177,6 @@ def create_multiswebench_config(predictions, dataset_path, max_workers, force_re
     
     print(f"Configuration saved to {config_file}")
     return str(config_file)
-
-# def run_with_timeout(cmd, timeout):
-#     """Helper function to run a subprocess with timeout."""
-#     try:
-#         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-#         stdout, stderr = proc.communicate(timeout=timeout)
-#         return stdout.decode(), stderr.decode(), proc.returncode
-#     except TimeoutExpired:
-#         proc.kill()
-#         return "", "Process timed out", -1
     
 def run_with_timeout(cmd, timeout_seconds=1800):
     """Run a command with timeout and real-time output streaming."""
@@ -273,6 +302,7 @@ def run_instance(
         instances: list,
         config_file: str, 
         timeout: int,
+        predictions_path,
         tag: str = 'singleton',
         runid: str = ''):
     with tqdm(total=len(instances), smoothing=0) as pbar:
@@ -288,20 +318,21 @@ def run_instance(
 
                 workdir_path = Path("multiswebench/data/workdir")
                 config_path = Path(config_file)
-                dataset_path = Path("multiswebench/data/datasets/dataset.jsonl")
-                patch_path = Path("multiswebench/data/patches/MSWE_testgenTest_patches.jsonl")
+                dataset_path = Path("multiswebench/data/datasets")
+                patch_path = Path(f"multiswebench/data/patches")
                 logs_path = Path("multiswebench/data/logs")
                 output_path = Path("multiswebench/data/output")
                 if workdir_path.exists():
-                    new_workdir_path = Path(f"multiswebench_runs/TestGeneration/{runid}") / f"{tag}"
+                    new_workdir_path = Path(f"multiswebench_runs/TestGeneration/{runid}/{os.path.splitext(predictions_path)[0]}") / f"{tag}"
+                    
                     # handle existing directory
                     if new_workdir_path.exists():
                         print(f"Workdir path {new_workdir_path} already exists, removing...")
                         shutil.rmtree(new_workdir_path)
                     shutil.copytree(workdir_path, new_workdir_path)
                     shutil.copy(config_path, new_workdir_path / config_path.name)
-                    shutil.copy(dataset_path, new_workdir_path / dataset_path.name)
-                    shutil.copy(patch_path, new_workdir_path / patch_path.name)
+                    shutil.copytree(dataset_path, new_workdir_path / dataset_path.name)
+                    shutil.copytree(patch_path, new_workdir_path / patch_path.name)
                     shutil.copytree(logs_path, new_workdir_path / logs_path.name)
                     shutil.copytree(output_path, new_workdir_path / output_path.name)
                     print(f"Copied workdir to {new_workdir_path}")
@@ -324,6 +355,7 @@ def run_instances(
         max_workers: int,
         run_id: str,
         timeout: int,
+        predictions_path,
         dataset_path: str = "./multiswebench/data/datasets/dataset.jsonl",
     ):
     """
@@ -361,7 +393,8 @@ def run_instances(
         config_file=config_file,
         timeout=timeout,
         tag="gold",
-        runid=run_id
+        runid=run_id,
+        predictions_path=predictions_path
     )   
     if report:
         success_dict["gold_successes"] = report.get("resolved_ids", [])
@@ -386,29 +419,34 @@ def run_instances(
             config_file=config_file,
             timeout=timeout,
             tag=f"bad_patch_{i}",
-            runid=run_id
+            runid=run_id,
+            predictions_path=predictions_path
         )
         if report:
             existing_success = success_dict.get(f"bad_patch_successes", [])
             existing_failures = success_dict.get(f"bad_patch_failures", [])
             resolved_ids = [f"bad_patch_{i}_of_{id}" for id in report.get("resolved_ids", [])]
-            # existing_failures.extend(f"bad_patch_{i}_of{report.get("resolved_ids", [])}")
             existing_failures.extend(resolved_ids)
             error_ids = report.get("error_ids", [])
             unresolved_ids = [f"bad_patch_{i}_of_{id}" for id in report.get("unresolved_ids", []) if id not in error_ids]
             existing_success.extend(unresolved_ids)
-            # existing_success.extend(f"bad_patch_{i}_of{report.get("unresolved_ids", [])}")
-            # existing_failures.extend([f"bad_patch_{i}"] if report.get("resolved_instances", 0) > 1 else [])
-            # existing_success.extend([f"bad_patch_{i}"] if report.get("unresolved_instances", 0) > 1 else [])
             success_dict[f"bad_patch_successes"] = existing_success
             success_dict[f"bad_patch_failures"] = existing_failures
-
-            # existing_failures.extend(report.get("resolved_ids", []))
-            # existing_success.extend(report.get("unresolved_ids", [])) # bad patches should be unresolved
-            # success_dict[f"bad_patch_successes"] = existing_success
-            # success_dict[f"bad_patch_failures"] = existing_failures
-    print("All instances run.")
-    print("Success dictionary:", success_dict)
+    
+    report = {"bad_patches_results": 
+              {"EXPECTED_FAIL": 
+               {"success": success_dict[f"bad_patch_failures"],
+                "failure": success_dict[f"bad_patch_successes"]}},
+                "gold_tests_status": {
+                    "EXPECTED_PASS": {
+                        "success": success_dict["gold_successes"],
+                        "failure": success_dict["gold_failures"]
+                    }
+                }}
+    print("Report:", report)
+    print("Saving final report")
+    with open(f"multiswebench_runs/TestGeneration/{run_id}/{os.path.splitext(predictions_path)[0]}/report.json", "w") as f:
+        json.dump(report, f, indent=2)
 
     
 
@@ -492,14 +530,14 @@ def main(
     else:
         dataset = get_gold_predictions(dataset_name, instance_ids, split)
 
-    full_dataset = load_swebench_dataset(dataset_name, split, instance_ids, full=True) # if using local jsonl, this is just the same as gold predictions but with original labels
+    # full_dataset = load_swebench_dataset(dataset_name, split, instance_ids, full=True) # if using local jsonl, this is just the same as gold predictions but with original labels
     load_mswebench_dataset(instance_ids, predictions) # if using local jsonl, this is just the same as gold predictions but with original labels
     
     if not dataset:
         print("No instances to run.")
     else:
         # dataset => instances in function
-        run_instances(predictions, dataset, cache_level, clean, force_rebuild, max_workers, run_id, timeout)
+        run_instances(predictions, dataset, cache_level, clean, force_rebuild, max_workers, run_id, timeout, predictions_path=predictions_path)
 
 
 
