@@ -53,6 +53,7 @@ def fix_and_clean():
         ("elastic", "logstash"),
         ("mockito", "mockito"),
         ("spring-projects", "spring-boot"),
+        ("google", "guava"),
     ]
     
     # Paths to the local dataset files
@@ -68,6 +69,7 @@ def fix_and_clean():
         "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
         "elastic/logstash": os.path.join(dataset_base_path, "java/elastic__logstash_dataset.jsonl"),
         "spring-projects/spring-boot": os.path.join(dataset_base_path, "java/spring-projects__spring-boot_dataset.jsonl"),
+        "google/guava": os.path.join(dataset_base_path, "java/google__guava_dataset.jsonl"),
     }
     
     # Track which repositories we've found

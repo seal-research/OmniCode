@@ -27,6 +27,7 @@ from multi_swe_bench.utils.args_util import ArgumentParser
 from multi_swe_bench.utils.fs_utils import copy_source_code
 from multi_swe_bench.utils.logger import get_non_propagate_logger, setup_logger
 from repos.java.springprojects.springboot import *
+from repos.java.google.guava import *
 
 
 def get_parser() -> ArgumentParser:
