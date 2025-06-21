@@ -52,6 +52,7 @@ def fix_and_clean():
         ("jqlang", "jq"),
         ("elastic", "logstash"),
         ("mockito", "mockito"),
+        ("spring-projects", "spring-boot"),
     ]
     
     # Paths to the local dataset files
@@ -66,6 +67,7 @@ def fix_and_clean():
         "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl"),
         "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
         "elastic/logstash": os.path.join(dataset_base_path, "java/elastic__logstash_dataset.jsonl"),
+        "spring-projects/spring-boot": os.path.join(dataset_base_path, "java/spring-projects__spring-boot_dataset.jsonl"),
     }
     
     # Track which repositories we've found
