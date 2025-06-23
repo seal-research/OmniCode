@@ -259,11 +259,14 @@ def run_multiswebench_phase(config_file, phase="all", timeout=1800):
             return None
 
         # Prepare the command
-        module_name = "multi_swe_bench.harness.run_evaluation"
-        cmd = [
-            sys.executable, "-m", module_name,
-            "--config", config_file
-        ]
+        
+        script_path = "./multi_swe_bench/harness/run_evaluation.py"
+        cmd = [sys.executable, script_path, "--config", config_file]
+        # module_name = "multi_swe_bench.harness.run_evaluation"
+        # cmd = [
+        #     sys.executable, "-m", module_name,
+        #     "--config", config_file
+        # ]
 
         env = os.environ.copy()
         env["PYTHONPATH"] = str(current_dir)  # Ensure Python can find the modules
@@ -323,7 +326,7 @@ def run_instance(
                 logs_path = Path("multiswebench/data/logs")
                 output_path = Path("multiswebench/data/output")
                 if workdir_path.exists():
-                    new_workdir_path = Path(f"multiswebench_runs/TestGeneration/{runid}/{os.path.splitext(predictions_path)[0]}") / f"{tag}"
+                    new_workdir_path = Path(f"multiswebench_runs/TestGeneration/{runid}/{Path(predictions_path).stem}") / f"{tag}"
                     
                     # handle existing directory
                     if new_workdir_path.exists():
@@ -435,17 +438,17 @@ def run_instances(
     
     report = {"bad_patches_results": 
               {"EXPECTED_FAIL": 
-               {"success": success_dict[f"bad_patch_failures"],
-                "failure": success_dict[f"bad_patch_successes"]}},
+               {"success": success_dict.get("bad_patch_failures", []),
+                "failure": success_dict.get("bad_patch_successes", [])}},
                 "gold_tests_status": {
                     "EXPECTED_PASS": {
-                        "success": success_dict["gold_successes"],
-                        "failure": success_dict["gold_failures"]
+                        "success": success_dict.get("gold_successes", []),
+                        "failure": success_dict.get("gold_failures", [])
                     }
                 }}
     print("Report:", report)
     print("Saving final report")
-    with open(f"multiswebench_runs/TestGeneration/{run_id}/{os.path.splitext(predictions_path)[0]}/report.json", "w") as f:
+    with open(f"multiswebench_runs/TestGeneration/{run_id}/{Path(predictions_path).stem}/report.json", "w") as f:
         json.dump(report, f, indent=2)
 
     

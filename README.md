@@ -113,12 +113,12 @@ Use the `--MSWETestGeneration` flag to run test generation for Java repos suppor
 You can run test generation testing as follows. The tags work how they work for python test generation.
 
 ```bash
-python codearena.py --MSWETestGeneration --dataset_name updated_mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
+python codearena.py --MSWETestGeneration --dataset_name mswebench_instances_example.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
 ```
 
 #### File Formats
 
-The format for any prediction path other than `gold` should be as follows. There is an example included in the `carterMultiSWEBench` branch under the filename `mswebench_generated_tests_example.jsonl`
+The format for any prediction path other than `gold` should be as follows.
 
 ```Java
 {"instance_id": "alibaba__fastjson2_2775",
@@ -127,7 +127,7 @@ The format for any prediction path other than `gold` should be as follows. There
 "model_patch": ...}
 ```
 
-An example for a java instance in the same codearena format as the python example would be as follows. The `carterMultiSWEBench` branch has an example file will the elipses filled in called `mswebench_instances_example.json`. While the format is shared with the python instances, most of the fields are unused for the Multi-SWE-Bench instances. Additionally, all instances must also exist inside the Multi-SWE-Bench dataset.
+An example for a java instance in the same codearena format as the python example would be as follows. While the format is shared with the python instances, most of the fields are unused for the Multi-SWE-Bench instances. Additionally, all instances must also exist inside the Multi-SWE-Bench dataset.
 
 ```Java
 [
