@@ -8,7 +8,11 @@ CodeArena requires `Python 3.13` and its dependecies can be installed via `pip i
 
 CodeArena is currently set up to work with a specific swebench version which can be installed using
 
-`pip install git+https://github.com/swe-bench/SWE-bench@e0b9bf9#egg=swebench`
+```bash
+git clone https://github.com/seal-research/SWE-bench.git
+cd SWE-bench
+pip install -e .
+```
 
 
 ### CodeArena Evaluation
