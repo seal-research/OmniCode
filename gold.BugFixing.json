@@ -1,0 +1,28 @@
+{
+    "total_instances": 1,
+    "submitted_instances": 1,
+    "completed_instances": 1,
+    "pylint_success": 1,
+    "pylint_failure": 0,
+    "error_instances": 0,
+    "unstopped_instances": 0,
+    "completed_ids": [
+        "astropy__astropy-13033"
+    ],
+    "incomplete_ids": [],
+    "submitted_ids": [
+        "astropy__astropy-13033"
+    ],
+    "successful_ids": [
+        "astropy__astropy-13033"
+    ],
+    "unsuccessful_ids": [],
+    "error_ids": [],
+    "unstopped_containers": [],
+    "unremoved_images": [],
+    "evaluation_criteria": {
+        "min_score": null,
+        "max_severity": null
+    },
+    "schema_version": 2
+}

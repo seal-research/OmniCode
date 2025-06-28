@@ -56,12 +56,14 @@ def fix_and_clean():
         ("spring-projects", "spring-boot"),
     ]
     
+    
     # Paths to the local dataset files
     # Assumes you've cloned the repository using:
     # git clone https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench
     dataset_base_path = "./mswebench_dataset"  # Adjust this to your actual path
     
     # Mapping of repo types to their dataset files
+<<<<<<< HEAD
     repo_file_map = {
         # "jqlang/jq": os.path.join(dataset_base_path, "c/jqlang__jq_dataset.jsonl"),
         # "fmtlib/fmt": os.path.join(dataset_base_path, "cpp/fmtlib__fmt_dataset.jsonl"),
@@ -71,6 +73,21 @@ def fix_and_clean():
         "google/guava": os.path.join(dataset_base_path, "java/google__guava_dataset.jsonl"),
         "spring-projects/spring-boot": os.path.join(dataset_base_path, "java/spring-projects__spring-boot_dataset.jsonl"),
     }
+=======
+    '''repo_file_map = {
+        "jqlang/jq": os.path.join(dataset_base_path, "c/jqlang__jq_dataset.jsonl"),
+        "fmtlib/fmt": os.path.join(dataset_base_path, "cpp/fmtlib__fmt_dataset.jsonl"),
+        "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl"),
+        "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
+        "elastic/logstash": os.path.join(dataset_base_path, "java/elastic__logstash_dataset.jsonl"),
+    }'''
+    repo_file_map = {
+    "elastic/logstash": "Multi-SWE-bench/java/elastic__logstash_dataset.jsonl",
+    "alibaba/fastjson": "Multi-SWE-bench/java/alibaba__fastjson2_dataset.jsonl",
+    "mockito/mockito": "Multi-SWE-bench/java/mockito__mockito_dataset.jsonl"
+	}
+
+>>>>>>> 40c9956 (Add complete local OmniCode setup with dataset, scripts, and outputs)
     
     # Track which repositories we've found
     found_repos = set()

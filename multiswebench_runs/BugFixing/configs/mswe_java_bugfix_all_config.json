@@ -1,0 +1,25 @@
+{
+  "mode": "evaluation",
+  "workdir": "multiswebench_runs/BugFixing/workdir/run_mswe_java_bugfix",
+  "patch_files": [
+    "multiswebench_runs/BugFixing/patches/run_mswe_java_bugfix/patches.jsonl"
+  ],
+  "dataset_files": [
+    "./multiswebench/mswebench_dataset/elastic__logstash_dataset.jsonl"
+  ],
+  "force_build": true,
+  "output_dir": "multiswebench_runs/BugFixing/output/run_mswe_java_bugfix",
+  "specifics": [],
+  "skips": [],
+  "repo_dir": "multiswebench_runs/BugFixing/repos",
+  "need_clone": true,
+  "global_env": [],
+  "clear_env": true,
+  "stop_on_error": false,
+  "max_workers": 1,
+  "max_workers_build_image": 1,
+  "max_workers_run_instance": 1,
+  "log_dir": "multiswebench_runs/BugFixing/logs/run_mswe_java_bugfix",
+  "log_level": "DEBUG",
+  "log_to_console": true
+}

@@ -34,7 +34,14 @@ from urllib.parse import urlparse
 from typing import List, Dict, Optional
 
 GITHUB_API = "https://api.github.com"
-TOKEN  = os.getenv("GITHUB_TOKEN")
+token_envs = {k: v for k, v in os.environ.items() if re.match(r"GITHUB.*TOKEN", k)}
+TOKEN = next(iter(token_envs.values()), None)
+
+if TOKEN is None:
+    raise EnvironmentError("No GitHub token found. Please export a variable like GITHUB_TOKEN or GITHUB_API_TOKEN.")
+else:
+    print(f"[DEBUG] Using token from env var: {list(token_envs.keys())[0]}")
+#TOKEN  = os.getenv("GITHUB_API_TOKEN")
 
 
 def execute_command(func, **kwargs):
@@ -152,6 +159,8 @@ def fetch_file_at_ref(owner: str, repo: str, path: str, ref: str, token: str) ->
 
 def get_changed_and_previous_files(pr_url: str, token: str) -> Dict[str, Optional[bytes]]:
     owner, repo, pr_number = parse_pr_url(pr_url)
+    print("[DEBUG] TOKEN = ", token)
+
     pr_meta  = get_pr_metadata(owner, repo, pr_number, token)
     base_sha = pr_meta["base"]["sha"]
 
@@ -167,6 +176,8 @@ def get_changed_and_current_files(pr_url: str, token: str) -> Dict[str, Optional
     Returns a dict mapping filepath -> bytes (or None if the file is missing).
     """
     owner, repo, pr_number = parse_pr_url(pr_url)
+    print("[DEBUG] TOKEN = ", token)
+
     pr_meta  = get_pr_metadata(owner, repo, pr_number, token)
     head_sha = pr_meta["head"]["sha"]
 
@@ -340,6 +351,7 @@ def generate_incorrect_diff(
     diff_str += "\n"
 
     return output_diff_path, diff_str
+
 
 def check_multi_patch(patch, instance_id, item, force_rebuild, run_id, max_workers, timeout):
 
