@@ -375,6 +375,8 @@ def main():
     parser.add_argument("--language", type=str, choices=['auto', 'python', 'java'],
                         default='auto', help="Language for StyleReview, auto for automatic detection")
 
+    parser.add_argument("--use_apptainer", type=str2bool, default=False, help="run with docker or apptainer")
+
     args = parser.parse_args()
 
     # Collect active flags
@@ -419,7 +421,8 @@ def main():
             swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
             swebench.harness.constants.MAP_REPO_VERSION_TO_SPECS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
 
-            from swebench.harness.log_parsers import parse_log_pytest, parse_log_pytest_options, parse_log_pytest_v2
+            # from swebench.harness.log_parsers import parse_log_pytest, parse_log_pytest_options, parse_log_pytest_v2
+            from swebench.harness.log_parsers.python import parse_log_pytest, parse_log_pytest_options, parse_log_pytest_v2
             if "MAP_REPO_TO_PARSER" in REPO_DATA[instance_repo]:
                 repo_log_parser = eval(REPO_DATA[instance_repo]["MAP_REPO_TO_PARSER"])
             else:
@@ -443,7 +446,13 @@ def main():
             clean=args.clean,
             open_file_limit=args.open_file_limit,
             run_id=args.run_id,
-            timeout=args.timeout
+            timeout=args.timeout,
+            # namespace=,
+            # rewrite_reports=,
+            # modal=,
+            # instance_image_tag=,
+            # report_dir=,
+            use_apptainer=args.use_apptainer
         )
 
     if "TestGeneration" in active_flags:
@@ -477,7 +486,13 @@ def main():
             clean=args.clean,
             open_file_limit=args.open_file_limit,
             run_id=args.run_id,
-            timeout=args.timeout
+            timeout=args.timeout,
+            # namespace=,
+            # rewrite_reports=,
+            # modal=,
+            # instance_image_tag=,
+            # report_dir=,
+            use_apptainer=args.use_apptainer
         )
 
     if "CodeMigration" in active_flags:

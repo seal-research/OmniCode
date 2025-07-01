@@ -17,7 +17,8 @@ from swebench.harness.constants import (
     TestStatus,
 )
 from utils import merge_and_unpack
-from swebench.harness.test_spec import TestSpec
+# from swebench.harness.test_spec import TestSpec
+from swebench.harness.test_spec import test_spec as TestSpec
 from swebench.harness.log_parsers import MAP_REPO_TO_PARSER
 
 class TestedStatus(Enum):
