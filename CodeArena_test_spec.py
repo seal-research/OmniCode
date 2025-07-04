@@ -25,7 +25,7 @@ from swebench.harness.dockerfiles import (
     get_dockerfile_env,
     get_dockerfile_instance,
 )
-from swebench.harness.test_spec.python import (
+from swebench.harness.utils import (
     get_requirements,
     get_environment_yml
 )
