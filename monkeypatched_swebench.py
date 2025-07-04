@@ -14,7 +14,7 @@ def monkey_patch_swebench():
         swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
         swebench.harness.constants.MAP_REPO_VERSION_TO_SPECS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_VERSION_TO_SPECS"]
 
-        from swebench.harness.log_parsers import parse_log_pytest
+        from swebench.harness.log_parsers.python import parse_log_pytest
         if "MAP_REPO_TO_PARSER" in REPO_DATA[instance_repo]:
             repo_log_parser = eval(REPO_DATA[instance_repo]["MAP_REPO_TO_PARSER"])
         else:
