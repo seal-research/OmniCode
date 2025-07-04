@@ -17,7 +17,7 @@ from swebench.harness.constants import (
     TestStatus,
 )
 from utils import merge_and_unpack
-from swebench.harness.test_spec import test_spec
+from swebench.harness.test_spec import TestSpec
 from swebench.harness.log_parsers import MAP_REPO_TO_PARSER
 
 class TestedStatus(Enum):
@@ -279,7 +279,7 @@ def evaluate_report_TestGeneration(report: dict[str, dict[str, Any]]) -> str:
 
 
 def get_eval_report(
-    test_spec: test_spec,
+    test_spec: TestSpec,
     prediction: dict[str, str],
     log_path: str,
     include_tests_status: bool,
@@ -385,7 +385,7 @@ def get_eval_tests_report_TestGeneration(
     return results
 
 def get_eval_report_test_generation(
-    test_spec: test_spec,
+    test_spec: TestSpec,
     prediction: dict[str, str],
     log_paths: list[str],
     include_tests_status: bool,
