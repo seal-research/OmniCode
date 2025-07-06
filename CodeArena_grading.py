@@ -75,7 +75,7 @@ def test_failed(case: str, sm: dict[str, str]) -> bool:
 
 
 # MARK: Evaluation report functions
-def get_logs_eval(log_fp: str) -> tuple[dict[str, str], bool]:
+def get_logs_eval(test_spec: TestSpec, log_fp: str) -> tuple[dict[str, str], bool]:
     """
     Retrieve evaluation results for a task instance from its corresponding log file
 
@@ -88,8 +88,7 @@ def get_logs_eval(log_fp: str) -> tuple[dict[str, str], bool]:
     TODO(john-b-yang): Check this is working properly...
     """
     # Convert e.g. "logs/scikit-learn__scikit-learn-12421/test_output.txt" to "scikit-learn/scikit-learn"
-    sample_id = str(Path(log_fp).parent.stem)  # e.g. scikit-learn__scikit-learn-12421
-    repo = "-".join(sample_id.replace("__", "/").split("-")[:-1])  # e.g. scikit-learn/scikit-learn
+    repo = test_spec.repo
     log_parser = MAP_REPO_TO_PARSER[repo]
 
     with open(log_fp) as f:
@@ -116,7 +115,7 @@ def get_logs_eval(log_fp: str) -> tuple[dict[str, str], bool]:
 
         # Get status map of evaluation results
         content = content.split(f"{APPLY_PATCH_PASS} (pred)")[-1]
-        return log_parser(content), True
+        return log_parser(content, test_spec), True
 
 
 def get_eval_tests_report(
@@ -314,7 +313,7 @@ def get_eval_report(
     report_map[instance_id]["patch_exists"] = True
 
     # Get evaluation logs
-    eval_sm, found = get_logs_eval(log_path)
+    eval_sm, found = get_logs_eval(test_spec, log_path)
 
     if not found:
         return report_map
@@ -423,7 +422,7 @@ def get_eval_report_test_generation(
     report_map[instance_id]["patch_exists"] = True
 
     # Get evaluation logs for gold patch
-    eval_sm_gold, found_gold = get_logs_eval(log_paths[0])
+    eval_sm_gold, found_gold = get_logs_eval(test_spec, log_paths[0])
     if not found_gold:
         return report_map
 
@@ -432,7 +431,7 @@ def get_eval_report_test_generation(
 
     # Process each bad patch result
     for i, bad_patch_log in enumerate(log_paths[1:]):
-        eval_sm_bad, found_bad = get_logs_eval(bad_patch_log)
+        eval_sm_bad, found_bad = get_logs_eval(test_spec, bad_patch_log)
         
         bad_patch_result = {
             "patch_index": i,
@@ -471,6 +470,7 @@ def get_eval_report_test_generation(
     return report_map
 
 def get_fail_to_fail(
+        test_spec: TestSpec,
         gold_log_path: str
 ) -> list[str]:
     """
@@ -485,7 +485,7 @@ def get_fail_to_fail(
 
     fail_to_fail_tests = []
 
-    eval_sm_gold, found_gold = get_logs_eval(gold_log_path)
+    eval_sm_gold, found_gold = get_logs_eval(test_spec, gold_log_path)
 
     if not found_gold:
             return []

@@ -398,7 +398,7 @@ def run_instance(
                 raise EvaluationError(instance_id, f"Test timed out after {timeout} seconds.", logger)
 
         # Get F2F tests
-        fail_to_fail = get_fail_to_fail(test_output_path_f2f)
+        fail_to_fail = get_fail_to_fail(test_spec, test_output_path_f2f)
 
         # Step 2: Apply and test candidate test patch
         # Get initial git diff before applying test patch
