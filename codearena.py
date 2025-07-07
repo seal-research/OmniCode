@@ -470,6 +470,7 @@ def main():
             open_file_limit=args.open_file_limit,
             run_id=args.run_id,
             timeout=args.timeout,
+            use_apptainer=args.use_apptainer,
         )
 
     if "CodeReview" in active_flags:

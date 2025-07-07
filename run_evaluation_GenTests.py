@@ -9,6 +9,7 @@ from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from tqdm import tqdm
+import subprocess, shutil, time, os
 
 from swebench.harness.constants import (
     APPLY_PATCH_FAIL,
@@ -16,6 +17,10 @@ from swebench.harness.constants import (
     INSTANCE_IMAGE_BUILD_DIR,
     KEY_INSTANCE_ID,
     RUN_EVALUATION_LOG_DIR,
+    DEF_IMAGE_BUILD_DIR,
+    LOG_REPORT, 
+    LOG_INSTANCE,
+    APPTAINER_BASH, 
 )
 from swebench.harness.docker_utils import (
     remove_image,
@@ -26,6 +31,7 @@ from swebench.harness.docker_utils import (
     should_remove,
     clean_images,
 )
+
 from docker_build import (
     BuildImageError,
     build_container,
@@ -33,10 +39,11 @@ from docker_build import (
     close_logger,
     setup_logger,
 )
+from apptainer_build import build_sandbox
 from CodeArena_grading import get_eval_report_test_generation, get_fail_to_fail
 #from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
 from CodeArena_test_spec import make_test_spec, TestSpec
-from swebench.harness.utils import str2bool
+from swebench.harness.utils import str2bool, run_threadpool
 from utils import load_swebench_dataset, load_CodeArena_prediction_dataset, update_test_spec_with_specific_test_names
 
 class EvaluationError(Exception):
@@ -215,16 +222,17 @@ def make_run_report(
             error_ids.add(instance_id)
 
     # get remaining images and containers
-    images = list_images(client)
-    test_specs = list(map(make_test_spec, full_dataset))
-    for spec in test_specs:
-        image_name = spec.instance_image_key
-        if image_name in images:
-            unremoved_images.add(image_name)
-    containers = client.containers.list(all=True)
-    for container in containers:
-        if run_id in container.name:
-            unstopped_containers.add(container.name)
+    if client:
+        images = list_images(client)
+        test_specs = list(map(make_test_spec, full_dataset))
+        for spec in test_specs:
+            image_name = spec.instance_image_key
+            if image_name in images:
+                unremoved_images.add(image_name)
+        containers = client.containers.list(all=True)
+        for container in containers:
+            if run_id in container.name:
+                unstopped_containers.add(container.name)
 
     # print final report
     dataset_ids = {i[KEY_INSTANCE_ID] for i in full_dataset}
@@ -282,6 +290,7 @@ def main(
         open_file_limit: int,
         run_id: str,
         timeout: int,
+        use_apptainer: bool = False,
     ):
     """
     Run evaluation harness for the given dataset and predictions.
@@ -289,7 +298,7 @@ def main(
     # set open file limit
     assert len(run_id) > 0, "Run ID must be provided"
     resource.setrlimit(resource.RLIMIT_NOFILE, (open_file_limit, open_file_limit))
-    client = docker.from_env()
+    client = None
 
     # load predictions as map of instance_id to prediction
     if predictions_path == 'gold':
@@ -312,17 +321,25 @@ def main(
     else:
         dataset = get_gold_predictions(dataset_name, instance_ids, split)
     full_dataset = load_swebench_dataset(dataset_name, split, instance_ids, full=True)
-    existing_images = list_images(client)
+    
     print(f"Running {len(dataset)} unevaluated instances...")
     if not dataset:
         print("No instances to run.")
+    elif use_apptainer:
+        # pull .sif + build sandbox with apptainer
+        build_sandbox(dataset)
+        run_instance_apptainers(predictions, dataset, cache_level, clean, force_rebuild, max_workers, run_id, timeout)
     else:
+        client = docker.from_env()
+        existing_images = list_images(client)
+
         # build environment images + run instances
         build_env_images(client, dataset, force_rebuild, max_workers)
         run_instances(predictions, dataset, cache_level, clean, force_rebuild, max_workers, run_id, timeout)
+        
+        clean_images(client, existing_images, cache_level, clean)
 
-    # clean images + make final report
-    clean_images(client, existing_images, cache_level, clean)
+    # make final report
     make_run_report(predictions, dataset, client, run_id)
 
 def run_instance(
@@ -360,10 +377,10 @@ def run_instance(
             image_build_link.symlink_to(build_dir.absolute(), target_is_directory=True)
         except:
             pass
-    log_file = log_dir / "run_instance.log"
+    log_file = log_dir / LOG_INSTANCE
 
     # Set up report file + logger
-    report_path = log_dir / "report.json"
+    report_path = log_dir / LOG_REPORT
     if report_path.exists():
         return instance_id, json.loads(report_path.read_text())
     logger = setup_logger(instance_id, log_file)
@@ -651,43 +668,566 @@ def run_instances(
     if not force_rebuild and len(existing_images):
         print(f"Found {len(existing_images)} existing instance images. Will reuse them.")
 
+    # # run instances in parallel
+    # print(f"Running {len(instances)} instances...")
+    # with tqdm(total=len(instances), smoothing=0) as pbar:
+    #     with ThreadPoolExecutor(max_workers=max_workers) as executor:
+    #         # Create a future for running each instance
+    #         futures = {
+    #             executor.submit(
+    #                 run_instance,
+    #                 test_spec,
+    #                 # TODO: Either optimize this lookup or find a more elegant way to pass corrected predictions
+    #                 next((item for item in instances if item["instance_id"] == test_spec.instance_id), None),
+    #                 should_remove(
+    #                     test_spec.instance_image_key,
+    #                     cache_level,
+    #                     clean,
+    #                     existing_images,
+    #                 ),
+    #                 force_rebuild,
+    #                 client,
+    #                 run_id,
+    #                 timeout,
+    #             ): None
+    #             for test_spec in test_specs
+    #         }
+    #         # Wait for each future to complete
+    #         for future in as_completed(futures):
+    #             pbar.update(1)
+    #             try:
+    #                 # Update progress bar, check if instance ran successfully
+    #                 future.result()
+    #             except Exception as e:
+    #                 traceback.print_exc()
+    #                 continue
+    # print("All instances run.")
+
+    # run instances in parallel
+    payloads = []
+    for test_spec in test_specs:
+        payloads.append(
+            (
+                test_spec,
+                # TODO: Either optimize this lookup or find a more elegant way to pass corrected predictions
+                next((item for item in instances if item["instance_id"] == test_spec.instance_id), None),
+                should_remove(
+                    test_spec.instance_image_key,
+                    cache_level,
+                    clean,
+                    existing_images,
+                ),
+                force_rebuild,
+                client,
+                run_id,
+                timeout,
+            )
+        )
+
     # run instances in parallel
     print(f"Running {len(instances)} instances...")
-    with tqdm(total=len(instances), smoothing=0) as pbar:
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Create a future for running each instance
-            futures = {
-                executor.submit(
-                    run_instance,
-                    test_spec,
-                    # TODO: Either optimize this lookup or find a more elegant way to pass corrected predictions
-                    next((item for item in instances if item["instance_id"] == test_spec.instance_id), None),
-                    should_remove(
-                        test_spec.instance_image_key,
-                        cache_level,
-                        clean,
-                        existing_images,
-                    ),
-                    force_rebuild,
-                    client,
-                    run_id,
-                    timeout,
-                ): None
-                for test_spec in test_specs
-            }
-            # Wait for each future to complete
-            for future in as_completed(futures):
-                pbar.update(1)
-                try:
-                    # Update progress bar, check if instance ran successfully
-                    future.result()
-                except Exception as e:
-                    traceback.print_exc()
-                    continue
+    run_threadpool(run_instance, payloads, max_workers)
     print("All instances run.")
 
+def run_instance_apptainer(
+        test_spec: TestSpec,
+        pred: dict,
+        run_id: str,
+        timeout: int | None = None,
+        rm_image: bool = True,
+        ):
+    # Set up logging directory
+    instance_id = test_spec.instance_id
+    model_name_or_path = pred.get("model_name_or_path", "None").replace("/", "__")
+    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / (instance_id+"_testGeneration")
+    log_dir.mkdir(parents=True, exist_ok=True)
 
+    # Link the image build dir in the log dir
+    build_dir = DEF_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
+    image_build_link = log_dir / "image_build_dir"
+    if not image_build_link.exists():
+        try:
+            # link the image build dir in the log dir
+            image_build_link.symlink_to(build_dir.absolute(), target_is_directory=True)
+        except:
+            # some error, idk why
+            pass
 
+    # Set up report file + logger
+    report_path = log_dir / LOG_REPORT
+    if report_path.exists():
+        return instance_id, json.loads(report_path.read_text())
+    log_file = log_dir / LOG_INSTANCE
+    logger = setup_logger(instance_id, log_file)
+    try:
+        update_test_spec_with_specific_test_names(test_spec=test_spec, repo_path=build_dir / "apptainer_sandbox/testbed")
+
+        # Step 1: Run F2F check with gold patch
+        test_output_path_f2f = log_dir / "f2f_check.txt"
+        eval_file = Path(log_dir / "gold_eval.sh")
+        eval_file.write_text(test_spec.inverted_eval_script_gold)
+        logger.info(f"Eval script for Gold Evaluation written to {eval_file}")
+        shutil.copy(eval_file, build_dir / "apptainer_sandbox/gold_eval.sh")
+
+        # Run F2F check
+        start_time = time.time()
+        try:
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox && bash gold_eval.sh"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+        except subprocess.TimeoutExpired as e:
+            with open(test_output_path_f2f, "w") as f:
+                f.write(result.stderr)
+                f.write(result.stdout)
+                f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
+                raise EvaluationError(instance_id, f"Test timed out after {timeout} seconds.", logger)
+        except Exception as e:
+            logger.error(f"Error during process execution: {e}")
+            raise
+        end_time = time.time()
+        process_time = end_time - start_time
+        logger.info(f'F2F check runtime: {process_time:_.2f} seconds')
+        with open(test_output_path_f2f, "w") as f:
+            if result.stderr:
+                f.write(result.stderr)
+            f.write(result.stdout)
+        
+        # Get F2F tests
+        fail_to_fail = get_fail_to_fail(test_spec, test_output_path_f2f)
+
+        # Step 2: Apply and test candidate test patch
+        # Get initial git diff before applying test patch
+        result = subprocess.run(
+            [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                "cd apptainer_sandbox/testbed && git diff"],
+            cwd=str(build_dir),
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        git_diff_output_before = result.stdout.strip()
+        logger.info(f"Git diff before test patch:\n{git_diff_output_before}")
+
+        patch_file = Path(log_dir / "patch.diff")
+        patch_content = pred.get("candidate_test_patch") or pred.get("model_patch") or ""
+        patch_file.write_text(patch_content)
+        logger.info(f"Candidate Test Patch written to {patch_file}")
+        shutil.copy(patch_file, build_dir / "apptainer_sandbox/testbed/patch.diff")
+
+        # Apply patch
+        result = subprocess.run(
+            [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                "cd apptainer_sandbox/testbed && git apply --allow-empty -v patch.diff"],
+            cwd=str(build_dir),
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        if result.returncode != 0:
+            logger.info("First patch attempt failed, trying with more permissive options...")
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox/testbed && patch --batch --fuzz=5 -p1 -i patch.diff"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            if result.returncode != 0:
+                logger.info(f"{APPLY_PATCH_FAIL}:\n{result.stderr}")
+                raise EvaluationError(instance_id, f"{APPLY_PATCH_FAIL}:\n{result.stderr}", logger)
+            else:
+                logger.info(f"{APPLY_PATCH_PASS}:\n{result.stdout}")
+        else:
+            logger.info(f"{APPLY_PATCH_PASS}:\n{result.stdout}")
+        
+        # Step 3: Run gold patch evaluation
+        # Get git diff before running gold eval
+        result = subprocess.run(
+            [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                "cd apptainer_sandbox/testbed && git diff"],
+            cwd=str(build_dir),
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        git_diff_before_gold = result.stdout.strip()
+        logger.info(f"Git diff before gold evaluation:\n{git_diff_before_gold}")
+
+        test_output_path_gold = log_dir / "gold_test_output.txt"
+        start_time = time.time()
+        try:
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox && bash gold_eval.sh"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            end_time = time.time()
+            process_time = end_time - start_time
+            logger.info(f'Gold evaluation runtime: {process_time:_.2f} seconds')
+        except subprocess.TimeoutExpired as e:
+            with open(test_output_path_gold, "w") as f:
+                f.write(result.stderr)
+                f.write(result.stdout)
+                f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
+                raise EvaluationError(instance_id, f"Test timed out after {timeout} seconds.", logger)
+        except Exception as e:
+            logger.error(f"Error during process execution: {e}")
+            raise
+        
+        # Get git diff after running gold eval
+        result2 = subprocess.run(
+            [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                "cd apptainer_sandbox/testbed && git diff"],
+            cwd=str(build_dir),
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        git_diff_after_gold = result2.stdout.strip()
+        logger.info(f"Git diff after gold evaluation:\n{git_diff_after_gold}")
+
+        with open(test_output_path_gold, "w") as f:
+            if result.stderr:
+                f.write(result.stderr)
+            f.write(result.stdout)
+        
+        # Reset to clean state before bad patches
+        result = subprocess.run(
+            [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                "cd apptainer_sandbox/testbed && git reset --hard HEAD"],
+            cwd=str(build_dir),
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        if result.returncode != 0:
+            logger.warning("Failed to reset before bad patches")
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox/testbed && git checkout -- ."],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            if result.returncode != 0:
+                logger.error("All reset attempts failed before bad patches")
+                raise EvaluationError(instance_id, "Failed to reset before bad patches", logger)
+        
+        # Remove untracked files/directories
+        result = subprocess.run(
+            [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                "cd apptainer_sandbox/testbed && git clean -fd"],
+            cwd=str(build_dir),
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        if result.returncode != 0:
+            logger.warning("Failed to remove untracked files")
+        
+        # Verify clean state after reset
+        result = subprocess.run(
+            [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                "cd apptainer_sandbox/testbed && git diff"],
+            cwd=str(build_dir),
+            capture_output=True,
+            text=True,
+            timeout=timeout
+        )
+        git_diff_after_reset = result.stdout.strip()
+        if git_diff_after_reset:
+            logger.warning(f"Codebase not clean after reset before bad patches:\n{git_diff_after_reset}")
+        
+        # Step 4: Run bad patch evaluations
+        test_output_paths_bad = []
+        bad_patches = []
+
+        # Get all bad patches
+        if 'bad_patches' in pred:
+            bad_patches = pred['bad_patches']
+        elif 'bad_patch' in pred:
+            bad_patches = [pred['bad_patch']]
+        
+        if bad_patches == []:
+            bad_patches = [{'idx': 0, 'patch': 0}]
+        
+        # Create the base bad eval script
+        base_eval_script = test_spec.inverted_eval_script_bad
+
+        # Create and copy eval script for each bad patch
+        for bad_patch_d in bad_patches:
+            i, bad_patch = bad_patch_d['idx'], bad_patch_d['patch']
+        # for i, bad_patch in enumerate(bad_patches):
+
+            # Apply and test candidate test patch
+            # Get initial git diff before applying test patch
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox/testbed && git diff"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            git_diff_output_before = result.stdout.strip()
+            logger.info(f"Git diff before test patch:\n{git_diff_output_before}")
+
+            patch_file = Path(log_dir / "patch.diff")
+            patch_content = pred.get("candidate_test_patch") or pred.get("model_patch") or ""
+            patch_file.write_text(patch_content)
+            logger.info(f"Candidate Test Patch written to {patch_file}")
+            shutil.copy(patch_file, build_dir / "apptainer_sandbox/testbed/patch.diff")
+
+            # Apply patch
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox/testbed && git apply --allow-empty -v patch.diff"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            if result.returncode != 0:
+                logger.info("First patch attempt failed, trying with more permissive options...")
+                result = subprocess.run(
+                    [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                        "cd apptainer_sandbox/testbed && patch --batch --fuzz=5 -p1 -i patch.diff"],
+                    cwd=str(build_dir),
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout
+                )
+                if result.returncode != 0:
+                    logger.info(f"{APPLY_PATCH_FAIL}:\n{result.stderr}")
+                    raise EvaluationError(instance_id, f"{APPLY_PATCH_FAIL}:\n{result.stderr}", logger)
+                else:
+                    logger.info(f"{APPLY_PATCH_PASS}:\n{result.stdout}")
+            else:
+                logger.info(f"{APPLY_PATCH_PASS}:\n{result.stdout}")
+
+            # Get git diff after applying test patch
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox/testbed && git diff"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            git_diff_after_test = result.stdout.strip()
+            logger.info(f"Git diff after test patch and before applying the bad patch:\n{git_diff_after_test}")
+
+            # Create a new eval script for this specific bad patch
+            eval_script = base_eval_script.replace(
+                f"EOF_{test_spec.instance_id}",
+                f"EOF_{test_spec.instance_id}_bad_{i}"
+            )
+            if bad_patches != [{'idx': 0, 'patch': 0}]:
+                eval_script = eval_script.replace(
+                    test_spec.bad_patches[0]["patch"],  # Replace the first bad patch
+                    bad_patch  # With the current bad patch
+                )
+            
+            eval_file = Path(log_dir / f"bad_eval_{i}.sh")
+            eval_file.write_text(eval_script)
+            logger.info(f"Bad patch {i} evaluation script written to {eval_file}")
+            shutil.copy(eval_file, build_dir / f"apptainer_sandbox/bad_eval_{i}.sh")
+
+            # Run evaluation for this bad patch
+            test_output_path_bad = log_dir / f"bad_test_output_{i}.txt"
+            test_output_paths_bad.append(test_output_path_bad)
+
+            start_time = time.time()
+            try:
+                result = subprocess.run(
+                    [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                        f"cd apptainer_sandbox && bash bad_eval_{i}.sh"],
+                    cwd=str(build_dir),
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout
+                )
+                end_time = time.time()
+                process_time = end_time - start_time
+                logger.info(f'Bad patch {i} evaluation runtime: {process_time:_.2f} seconds')
+            except subprocess.TimeoutExpired as e:
+                with open(test_output_path_bad, "w") as f:
+                    f.write(result.stderr)
+                    f.write(result.stdout)
+                    f.write(f"\n\nTimeout error: {timeout} seconds exceeded.")
+                    logger.warning(f"Bad patch {i} evaluation timed out after {timeout} seconds")
+                    continue
+
+            # Get git diff after running the evaluation
+            result2 = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox/testbed && git diff"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            git_diff_after = result2.stdout.strip()
+            logger.info(f"Git diff after bad patch {i}:\n{git_diff_after}")
+
+            with open(test_output_path_bad, "w") as f:
+                if result.stderr:
+                    f.write(result.stderr)
+                f.write(result.stdout)
+            
+            # Reset to clean state for next patch
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox/testbed && git reset --hard HEAD"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            if result.returncode != 0:
+                logger.warning(f"Failed to reset after bad patch {i}")
+                # Try alternative reset method
+                result = subprocess.run(
+                    [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                        "cd apptainer_sandbox/testbed && git checkout -- ."],
+                    cwd=str(build_dir),
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout
+                )
+                if result.returncode != 0:
+                    logger.error(f"All reset attempts failed for bad patch {i}")
+                    continue
+            
+            # Remove untracked files/directories
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox/testbed && git clean -fd"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            if result.returncode != 0:
+                logger.warning("Failed to remove untracked files")
+            
+            # Verify clean state after reset
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
+                    "cd apptainer_sandbox/testbed && git diff"],
+                cwd=str(build_dir),
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            git_diff_after_reset = result.stdout.strip()
+            if git_diff_after_reset:
+                logger.warning(f"Codebase not clean after reset for bad patch {i}:\n{git_diff_after_reset}")
+            
+        # Step 5: Generate final report
+        logger.info("Generating evaluation report...")
+        if test_output_paths_bad:
+            report = get_eval_report_test_generation(
+                test_spec=test_spec,
+                prediction=pred,
+                log_paths=[test_output_path_gold] + test_output_paths_bad,
+                include_tests_status=True,
+                fail_to_fail_tests=fail_to_fail
+            )
+            logger.info(f"Result: Test Accepted: {report[instance_id]['Test_Accept']}")
+        else:
+            logger.warning("No bad patch evaluations completed successfully")
+            report = {
+                instance_id: {
+                    "patch_is_None": False,
+                    "patch_exists": True,
+                    "gold_patch_successfully_applied": True,
+                    "Test_Accept": False,
+                    "error": "No bad patch evaluations completed successfully"
+                }
+            }
+        
+        # Save report
+        with open(report_path, "w") as f:
+            f.write(json.dumps(report, indent=4))
+        return instance_id, report
+    
+    except EvaluationError as e:
+        error_msg = traceback.format_exc()
+        logger.info(error_msg)
+        print(e)
+    except BuildImageError as e:
+        error_msg = traceback.format_exc()
+        logger.info(error_msg)
+        print(e)
+    except Exception as e:
+        error_msg = (f"Error in evaluating model for {instance_id}: {e}\n"
+                     f"{traceback.format_exc()}\n"
+                     f"Check ({logger.log_file}) for more information.")
+        logger.error(error_msg)
+    finally:
+        if rm_image:
+            # Cleaning sandbox
+            logger.info("Cleaning up Apptainer sandbox...")
+            # Remove the Apptainer sandbox directory
+            apptainer_base_file = build_dir / "apptainer_base.sif"
+            sandbox_path = build_dir / "apptainer_sandbox"
+            try:
+                if sandbox_path.exists():
+                    shutil.rmtree(sandbox_path, ignore_errors=True)
+                    logger.info(f"Removed Apptainer sandbox: {sandbox_path}")
+                else:
+                    logger.info(f"Apptainer sandbox not found: {sandbox_path}")
+                if apptainer_base_file.exists():
+                    os.remove(apptainer_base_file)
+                    logger.info(f"Removed Apptainer base image file: {apptainer_base_file}")
+                else:
+                    logger.info(f"Apptainer base image file not found: {apptainer_base_file}")
+            except Exception as e:
+                logger.error(f"Failed to remove Apptainer sandbox or base image file: {e}")
+        # close the logger
+        close_logger(logger)
+    return
+
+def run_instance_apptainers(
+        predictions: dict,
+        instances: list,
+        cache_level: str,
+        clean: bool,
+        force_rebuild: bool,
+        max_workers: int,
+        run_id: str,
+        timeout: int,
+        ):
+    test_specs = list(map(make_test_spec, instances))
+    # run instances in parallel
+    print(f"Running {len(instances)} instances...")
+    # run instances in parallel
+    payloads = []
+    for test_spec in test_specs:
+        payloads.append(
+            (
+                test_spec,
+                predictions[test_spec.instance_id],
+                run_id,
+                timeout,
+            )
+        )
+
+    # run instances in parallel
+    print(f"Running {len(instances)} instances...")
+    run_threadpool(run_instance_apptainer, payloads, max_workers)
+    print("All instances run.")
 
 if __name__ == "__main__":
     parser = ArgumentParser()
