@@ -736,7 +736,8 @@ def main():
                 run_id=args.run_id,
                 timeout=args.timeout,
                 min_score=args.min_score,
-                max_severity=args.max_severity
+                max_severity=args.max_severity,
+                use_apptainer=args.use_apptainer,
             )
 
 if __name__ == "__main__":
