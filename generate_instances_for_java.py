@@ -49,6 +49,25 @@ def main():
     with open(out_path, "w") as out_f:
         json.dump(instances, out_f, indent=2)
     print(f"Wrote {len(instances)} instances to {out_path}")
+    codearena_instance_path = "data/codearena_instances_java.json"
+    # Load existing instances if file exists
+    if os.path.isfile(codearena_instance_path):
+        with open(codearena_instance_path, "r") as f:
+            try:
+                existing_instances = json.load(f)
+            except Exception:
+                existing_instances = []
+    else:
+        existing_instances = []
+    # Build a dict for fast lookup
+    id_to_instance = {inst.get("instance_id", ""): inst for inst in existing_instances}
+    # Update or add new instances
+    for inst in instances:
+        id_to_instance[inst["instance_id"]] = inst
+    # Write back to file
+    with open(codearena_instance_path, "w") as out_f:
+        json.dump(list(id_to_instance.values()), out_f, indent=2)
+    print(f"Wrote {len(instances)} new/updated instances to {codearena_instance_path}")
 
 if __name__ == "__main__":
     main()
