@@ -1,9 +1,12 @@
 # Newly Onboarded Instances
-Due to the large size of each dataset, the newly onboarded Java datasets for MSWEBugFixing are zipped and provided here. 
-
 ### To use these datasets: 
-1. Move the *_dataset.jsonl file(s) to the multiswebench/mswebench_dataset under its language directory
-2. Verify that prepare_eval.py correctly prepares the onboarded instances
+1. Verify that prepare_eval.py correctly prepares the onboarded instances
 
-## Preparing new Java instances for onboarding
-Reference: https://github.com/JamesTu-jtjt/multi-swe-bench/blob/main/docs/build-dataset-quick-start.md
+### Preparing new Java instances for onboarding:
+#### Prerequisites:
+- Select a new repo to onboard
+- Draft the script for image/instance generation (take into account sweagent requirements: python, pip, swerex)
+
+Follow steps in multiswebench data collection pipeline. 
+
+Reference: https://github.com/seal-research/multi-swe-bench/blob/main/docs/build-dataset-quick-start.md
