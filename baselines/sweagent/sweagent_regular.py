@@ -23,8 +23,8 @@ DOTENV_PATH = CUR_DIR / '.env'
 CONFIG_FILE_MAP = {
     "bugfixing": CUR_DIR / "bugfixing.yaml",
     "testgen": CUR_DIR / "testgen.yaml",
-    "bugfixing_java": CUR_DIR / "bugfixing_java.yaml",
-    "testgen_java": CUR_DIR / "testgen_java.yaml",
+    "bugfixing-java": CUR_DIR / "bugfixing_java.yaml",
+    "testgen-java": CUR_DIR / "testgen_java.yaml",
     "stylereview": CUR_DIR / "stylereview.yaml",
     "reviewfix": CUR_DIR / "reviewfix.yaml",
 }
