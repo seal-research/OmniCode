@@ -62,6 +62,10 @@ RUN curl -s https://repos.azul.com/azul-repo.key | gpg --dearmor -o /usr/share/k
     && echo "deb [signed-by=/usr/share/keyrings/azul.gpg] https://repos.azul.com/zulu/deb stable main" | tee /etc/apt/sources.list.d/zulu.list
 RUN apt update && apt install -y zulu21-jdk
 
+# install swe-agent/swe-rex dependencies:
+RUN apt-get update && apt-get install -y python3 python3-pip
+RUN pip3 install swe-rex
+
 {code}
 
 {copy_commands}

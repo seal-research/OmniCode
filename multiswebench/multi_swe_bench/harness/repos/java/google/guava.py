@@ -52,6 +52,9 @@ ENV LC_ALL=C.UTF-8
 
 WORKDIR /home/
 RUN apt-get update && apt-get install -y git openjdk-17-jdk maven
+# install swe-agent/swe-rex dependencies:
+RUN apt-get update && apt-get install -y python3 python3-pip
+RUN pip3 install swe-rex
 
 {code}
 
