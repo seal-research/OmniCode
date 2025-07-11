@@ -661,6 +661,10 @@ class CliArgs:
         with open(fix_patch_path, "w", encoding="utf-8", newline="\n") as f:
             f.write(self.patches[instance.pr.id].fix_patch)
 
+        test_patch_path = instance_dir.absolute() / "test.patch"
+        with open(test_patch_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(self.dataset[instance.pr.id].test_patch)
+
         report_path = instance_dir / REPORT_FILE
         if report_path.exists():
             self.logger.info(
@@ -682,6 +686,10 @@ class CliArgs:
                 volumes={
                     fix_patch_path: {
                         "bind": instance.dependency().fix_patch_path(),
+                        "mode": "rw",
+                    },
+                    test_patch_path: {
+                        "bind": "/home/test.patch",
                         "mode": "rw",
                     }
                 },
