@@ -14,13 +14,13 @@ cd SWE-bench
 pip install -e .
 ```
 
-### CodeArena Evaluation
+## CodeArena Evaluation
 
 To run the full CodeArena benchmark you can pass the corresponding flags to the evaluation command line tool.
 
 The `codearena` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `CodeReview`. We further support CodeReview, which exposes the model to an inital bad patch and requires to incorporate external review feedback to correct this. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
 
-## Example 1: Running `BugFixing` for a single instance
+### Example 1: Running `BugFixing` for a single instance
 
 CodeArena with the `--BugFixing` flag can be used to evaluate whether a patch resolves the test for a particular issue.
 In the following command, we pass in the `--predictions_patch gold` to indicate that we want to evaluate on the correct patch as a sanity check.
@@ -39,7 +39,7 @@ The following command with the `--TestGeneration` flag can be used to evaluate g
    python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --instance_ids astropy__astropy-14995
 ```
 
-### Supported Tasks
+## Supported Tasks
 
 In this section you will find instructions on the different specifications of our tasks **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Fixing**!
 
@@ -77,10 +77,7 @@ In this section you will find instructions on the different specifications of ou
 
 ---
 
-### Java Support
-
-- **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
-### Java Support
+## Java Support
 * **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
 
 0. Download data from huggingfaec (it is expected to be placed under multiswebench/mswebench_dataset)
@@ -107,6 +104,18 @@ Custom preds file can look like this for example:
 ```
 
 Should be saved in a json format and can replace gold in the example call above.
+
+### MSWEBugFixing for newly onboarded Java Tasks
+Prerequisites:
+
+0. Multiswebench `[org]__[repo]_dataset.jsonl` for new instance should be present
+1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench/prepare_eval`
+2. From the multiswebench directory, `run python prepare_eval.py`
+
+Example Command:
+```bash
+python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids google/guava:6586 --mswe_phase all --force_rebuild True --clean True
+```
 
 ### Java Test Generation
 
@@ -179,18 +188,6 @@ Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each 
 
    - Theoretically, the pipeline should not need to be changed to work for other languages supported by Multi-SWE-Bench. However, this remains untested.
 
-### LLM API Key
-#### Running codearena MSWEBugFixing for newly onboarded Java Tasks
-Prerequisites:
-
-0. Multiswebench `[org]__[repo]_dataset.jsonl` for new instance should be present
-1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench/prepare_eval`
-2. From the multiswebench directory, `run python prepare_eval.py`
-
-Example Command:
-```bash
-python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids google/guava:6586 --mswe_phase all --force_rebuild True --clean True
-```
 
 ## LLM API Key
 
@@ -224,12 +221,8 @@ python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_insta
 
 ## Adding Bad Patches
 
-#### Option 1: Agentless Generation
-
 ### Option 1: Agentless Generation
 Follow instructions found here: https://github.com/seal-research/OmniCode/blob/main/adding_tasks.md
-
-#### Option 2: LLM Sourced Generation
 
 ### Option 2: LLM Sourced Generation
 ```bash
@@ -246,8 +239,6 @@ python baselines/badpatchllm/generate_bad.py \
 Note: Raw diff files will also be outputted and found under the user specified output directory for ease of use.
 
 ### Generating Reviews
-
-## Generating Reviews
 ```bash
 python baselines/badpatchllm/generate_review.py \
     --input_tasks data/codearena_instances.json \
