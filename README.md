@@ -14,8 +14,7 @@ cd SWE-bench
 pip install -e .
 ```
 
-
-## CodeArena Evaluation
+### CodeArena Evaluation
 
 To run the full CodeArena benchmark you can pass the corresponding flags to the evaluation command line tool.
 
@@ -24,7 +23,7 @@ The `codearena` command allows you to run multiple code evaluation benchmarks, s
 ## Example 1: Running `BugFixing` for a single instance
 
 CodeArena with the `--BugFixing` flag can be used to evaluate whether a patch resolves the test for a particular issue.
-In the following command, we pass in the `--predictions_patch gold` to indicate that we want to evaluate on the correct patch as a sanity check. 
+In the following command, we pass in the `--predictions_patch gold` to indicate that we want to evaluate on the correct patch as a sanity check.
 Passing in the path to actual predictions here will enable evaluating on generated patches.
 This command with build the docker image and run the evaluation on the instance `astropy__astropy-13033` (which is a bug in the astropy library).
 
@@ -32,51 +31,55 @@ This command with build the docker image and run the evaluation on the instance 
 python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13033
 ```
 
+### Example 2: Running `TestGeneration` for single instance
 
-## Example 2: Running `TestGeneration` for single instance
-
-The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path` 
+The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path`
 
 ```bash
    python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --instance_ids astropy__astropy-14995
 ```
 
-
-## Supported Tasks
-
+### Supported Tasks
 
 In this section you will find instructions on the different specifications of our tasks **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Fixing**!
 
 ---
 
 ### Bug Fixing (`--BugFixing`)
-* **Description**: The agent receives a repository and PR description, identifies and applies minimal source code changes (excluding tests) to meet the specified requirements. It verifies the fix by reproducing the issue, applying the fix, re-running the relevant test, and ensuring completeness.
-* **Evaluation**: Success is measured by the fix passing all relevant tests without introducing unintended changes.
-* **Use Case**: Ideal for evaluating a model’s ability to make minimal, correct, and test-verified code changes.
+
+- **Description**: The agent receives a repository and PR description, identifies and applies minimal source code changes (excluding tests) to meet the specified requirements. It verifies the fix by reproducing the issue, applying the fix, re-running the relevant test, and ensuring completeness.
+- **Evaluation**: Success is measured by the fix passing all relevant tests without introducing unintended changes.
+- **Use Case**: Ideal for evaluating a model’s ability to make minimal, correct, and test-verified code changes.
 
 ---
 
 ### Test Generation (`--TestGeneration`)
-* **Description**: The agent receives a repository and a problem description, then writes a new test in the repository’s test suite that reproduces the reported issue using the existing testing framework (e.g., pytest).
-* **Evaluation**: Success is measured by the test failing on incorrect implementations and passing on correct ones.
-* **Use Case**: Useful for assessing a model's ability to generate meaningful, differentiating test cases.
+
+- **Description**: The agent receives a repository and a problem description, then writes a new test in the repository’s test suite that reproduces the reported issue using the existing testing framework (e.g., pytest).
+- **Evaluation**: Success is measured by the test failing on incorrect implementations and passing on correct ones.
+- **Use Case**: Useful for assessing a model's ability to generate meaningful, differentiating test cases.
 
 ---
 
 ### Style Review (`--StyleReview`)
-* **Description**: The agent runs a style check on a given instance, applies fixes for detected issues, and verifies functionality remains unaffected by re-running relevant tests.
-* **Evaluation**: Success is measured by the reduction of style violations without breaking functionality.
-* **Use Case**: Designed for scenarios where code quality and adherence to style guidelines are important.
+
+- **Description**: The agent runs a style check on a given instance, applies fixes for detected issues, and verifies functionality remains unaffected by re-running relevant tests.
+- **Evaluation**: Success is measured by the reduction of style violations without breaking functionality.
+- **Use Case**: Designed for scenarios where code quality and adherence to style guidelines are important.
 
 ---
 
 ### Review Fixing (`--BugFixing`)
-* **Description**: The agent receives a problem description, a failed patch, and a review explaining the failure. It uses this context to avoid repeating mistakes and implements an improved fix. The evaluation is the same as BugFixing since we check whether the predicted patch passes the final tests.
-* **Evaluation**: Success is measured by whether the improved patch resolves the issue while avoiding pitfalls highlighted in the review.
-* **Use Case**: Especially relevant for testing a model’s ability to apply reviewer feedback to refine implementations.
+
+- **Description**: The agent receives a problem description, a failed patch, and a review explaining the failure. It uses this context to avoid repeating mistakes and implements an improved fix. The evaluation is the same as BugFixing since we check whether the predicted patch passes the final tests.
+- **Evaluation**: Success is measured by whether the improved patch resolves the issue while avoiding pitfalls highlighted in the review.
+- **Use Case**: Especially relevant for testing a model’s ability to apply reviewer feedback to refine implementations.
 
 ---
 
+### Java Support
+
+- **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
 ### Java Support
 * **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
 
@@ -90,19 +93,93 @@ For now, you should stick with the original three java repos (elastic/logstash, 
 The process often takes a while. The logging is a bit different than the normal swebench btw, it instead writes to a dedicated location under multiswebench_runs.
 
 Custom preds file can look like this for example:
+
 ```json
 [
- {
-   "id": "mockito/mockito:3424",
-   "org": "mockito",
-   "repo": "mockito",
-   "number": 3424,
-   "patch": "diff --git a..."
- }
+  {
+    "id": "mockito/mockito:3424",
+    "org": "mockito",
+    "repo": "mockito",
+    "number": 3424,
+    "patch": "diff --git a..."
+  }
 ]
 ```
+
 Should be saved in a json format and can replace gold in the example call above.
 
+### Java Test Generation
+
+Test Generation for Java follows mostly the same format as Test Generation for python. However, the output files are in a different format and all instances must also exist in Multi-SWE-Bench's dataset.
+
+Use the `--MSWETestGeneration` flag to run test generation for Java repos supported by multiswebench.
+
+#### Example Command
+
+You can run test generation testing as follows. The tags work how they work for python test generation.
+
+```bash
+python codearena.py --MSWETestGeneration --dataset_name mswebench_instances_example.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
+```
+
+#### File Formats
+
+The format for any prediction path other than `gold` should be as follows.
+
+```Java
+{"instance_id": "alibaba__fastjson2_2775",
+"model_name_or_path": "gpt",
+"full_output": "",
+"model_patch": ...}
+```
+
+An example for a java instance in the same codearena format as the python example would be as follows. While the format is shared with the python instances, most of the fields are unused for the Multi-SWE-Bench instances. Additionally, all instances must also exist inside the Multi-SWE-Bench dataset.
+
+```Java
+[
+  {
+    "repo": "alibaba/fastjson2",
+    "pull_number": 2775,
+    "instance_id": "alibaba__fastjson2_2775",
+    "issue_numbers": [],
+    "base_commit": "12b40c7ba3e7c30e35977195770c80beb34715c5",
+    "patch": ...,
+    "test_patch": ...,
+    "hints_text": "",
+    "created_at": "",
+    "version": "",
+    "PASS_TO_PASS": [],
+    "FAIL_TO_PASS": [],
+    "bad_patches": [...]
+  }
+]
+```
+
+#### Result Breakdown
+
+Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each patch in the codearena instance (gold, and each bad patch in the bad patches list). Each of these folders has the files from a multiswebench run, as generated by multiswebench. Additionally, outside of the folders is a `report.json` file. This gives an overall report on which test cases passed and failed for each instance, all in one place.
+
+#### Overall Status and Notes for Future Work
+
+1. Multiple Instance at once
+
+   - The current pipeline hasn't been tested with multiple instances being passed at the same time. It is not clear that this will work as intended with the current format.
+   - Additionally, the `report.json` is not setup to work well in that case either.
+
+2. Create `codearena.json` file for Multi_SWE instances.
+
+   - In the current pipeline, you need a `codearena.json`-like file with all the instances you want to run. However, these instance are limited to existing ones inside multi-SWE-Bench. Thus, it would make sense to transfer all existing instance ids to a `.json` file to be used.
+
+3. Ensuring generalizability inside Multi-SWE-Bench
+
+   - The system hasn't been tested on a variety of instances. It is not clear that it will work on repositories other than `alibaba/fastjson2` or even with instance ids other than `alibaba__fastjson2_2775`.
+   - This is largely due to the difficulty in creating generated test cases in Java.
+
+4. Language Expansion
+
+   - Theoretically, the pipeline should not need to be changed to work for other languages supported by Multi-SWE-Bench. However, this remains untested.
+
+### LLM API Key
 #### Running codearena MSWEBugFixing for newly onboarded Java Tasks
 Prerequisites:
 
@@ -123,7 +200,7 @@ You can generate a free API key for the Gemini LLM by following the instructions
 
 We have configured a basic swe-agent implementation to test on our repository.
 
-Install SWE-agent with the following command - 
+Install SWE-agent with the following command -
 
 ```
 pip install -e git+https://github.com/SWE-agent/SWE-agent@bb80cbe#egg=sweagent
@@ -147,8 +224,12 @@ python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_insta
 
 ## Adding Bad Patches
 
+#### Option 1: Agentless Generation
+
 ### Option 1: Agentless Generation
 Follow instructions found here: https://github.com/seal-research/OmniCode/blob/main/adding_tasks.md
+
+#### Option 2: LLM Sourced Generation
 
 ### Option 2: LLM Sourced Generation
 ```bash
@@ -163,6 +244,9 @@ python baselines/badpatchllm/generate_bad.py \
 ```
 
 Note: Raw diff files will also be outputted and found under the user specified output directory for ease of use.
+
+### Generating Reviews
+
 ## Generating Reviews
 ```bash
 python baselines/badpatchllm/generate_review.py \
@@ -189,7 +273,6 @@ python gc/multivm.py \
    --key <api key>
 ```
 
-
 ## Status
 
 ### Benchmark Construction Infrastructure
@@ -197,12 +280,11 @@ python gc/multivm.py \
 <div align="center">
 
 |                 | Python (Tasks) | Java (Tasks) |
-|-----------------|----------------|--------------|
+| --------------- | -------------- | ------------ |
 | Base Instances  | Complete       | Complete     |
-| Test Generation | Complete      | In progress    |
-| Code Review     | Complete       | In progress   |
-| Style Review    | Complete       | In progress   |
-
+| Test Generation | Complete       | In progress  |
+| Code Review     | Complete       | In progress  |
+| Style Review    | Complete       | In progress  |
 
 </div>
 
@@ -211,42 +293,38 @@ python gc/multivm.py \
 <div align="center">
 
 |                 | Python (Tasks) | Java (Tasks) |
-|-----------------|----------------|--------------|
-| Base Instances  | 716            | 128/128            |
-| Test Generation | 300/716          | 0/128            |
-| Review Response | 300/716          | 0/128            |
-| Style Review    | 716/716       | 0/128   |
-
+| --------------- | -------------- | ------------ |
+| Base Instances  | 716            | 128/128      |
+| Test Generation | 300/716        | 0/128        |
+| Review Response | 300/716        | 0/128        |
+| Style Review    | 716/716        | 0/128        |
 
 </div>
-
 
 #### Python Instances Breakdown
 
 <div align="center">
 
-| Repo | Count |
-|------|-------|
-| astropy/astropy | 22 |
-| django/django  | 231 |
-| matplotlib/matplotlib |  34 |
-| mwaskom/seaborn | 2 |
-| pallets/flask |  1 |
-| psf/requests  |  8 | 
-| pydata/xarray |  22 |
-| pylint-dev/pylint     |  10 |
-| pytest-dev/pytest    |   19 |
-| scikit-learn/scikit-learn |      32| 
-| sphinx-doc/sphinx   |    44 |
-| sympy/sympy   |  75 | 
-| ytdl-org/youtube-dl  |    10 |
-| scrapy/scrapy  | 41 | 
-| keras-team/keras    |    83 |
-| camel-ai/camel |  21 |
-| celery/celery   | 12 |
-| fastapi/fastapi | 26 |
-| statsmodels/statsmodels | 23 |
+| Repo                      | Count |
+| ------------------------- | ----- |
+| astropy/astropy           | 22    |
+| django/django             | 231   |
+| matplotlib/matplotlib     | 34    |
+| mwaskom/seaborn           | 2     |
+| pallets/flask             | 1     |
+| psf/requests              | 8     |
+| pydata/xarray             | 22    |
+| pylint-dev/pylint         | 10    |
+| pytest-dev/pytest         | 19    |
+| scikit-learn/scikit-learn | 32    |
+| sphinx-doc/sphinx         | 44    |
+| sympy/sympy               | 75    |
+| ytdl-org/youtube-dl       | 10    |
+| scrapy/scrapy             | 41    |
+| keras-team/keras          | 83    |
+| camel-ai/camel            | 21    |
+| celery/celery             | 12    |
+| fastapi/fastapi           | 26    |
+| statsmodels/statsmodels   | 23    |
 
 </div>
-
-

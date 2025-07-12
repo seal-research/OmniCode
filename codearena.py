@@ -11,6 +11,7 @@ import select
 
 from run_evaluation_GenTests import main as GenTestMain
 from runevaluation_StyleReview import main as PythonStyleReviewMain
+from mswebench_run_evaluation_GenTests import main as MSWEGenTestMain
 # imports and monkey patches swebench
 from monkeypatched_swebench import swebench
 from swebench.harness.utils import str2bool
@@ -558,10 +559,22 @@ def main():
 
     if "MSWETestGeneration" in active_flags:
         print("Executing Multi-SWE-Bench TestGeneration...")
-        if predictions_map["MSWETestGeneration"] == "gold":
-            print("Using gold test cases from the dataset is not supported for TestGeneration")
-        else:
-            print("Multi-SWE-Bench TestGeneration is not yet implemented")
+        execute_command(
+            MSWEGenTestMain,
+            dataset_name=args.dataset_name,
+            split="test",
+            instance_ids=args.instance_ids,
+            predictions_path=predictions_map["MSWETestGeneration"],
+            max_workers=args.max_workers,
+            force_rebuild=args.force_rebuild,
+            cache_level=args.cache_level,
+            clean=args.clean,
+            open_file_limit=args.open_file_limit,
+            run_id=args.run_id,
+            timeout=args.timeout,
+        )
+
+
 
     if "StyleReview" in active_flags:
         print("Executing StyleReview...")
