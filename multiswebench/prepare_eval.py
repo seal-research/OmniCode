@@ -60,7 +60,6 @@ def fix_and_clean():
     # Assumes you've cloned the repository using:
     # git clone https://huggingface.co/datasets/ByteDance-Seed/Multi-SWE-bench
     dataset_base_path = "./mswebench_dataset"  # Adjust this to your actual path
-    onboarded_dataset_path ="./onboarded_dataset"
     
     # Mapping of repo types to their dataset files
     repo_file_map = {
@@ -69,8 +68,8 @@ def fix_and_clean():
         "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl"),
         "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
         "elastic/logstash": os.path.join(dataset_base_path, "java/elastic__logstash_dataset.jsonl"),
-        "google/guava": os.path.join(onboarded_dataset_path, "java/google__guava_dataset.jsonl"),
-        "spring-projects/spring-boot": os.path.join(onboarded_dataset_path, "java/spring-projects__spring-boot_dataset.jsonl"),
+        "google/guava": os.path.join(dataset_base_path, "java/google__guava_dataset.jsonl"),
+        "spring-projects/spring-boot": os.path.join(dataset_base_path, "java/spring-projects__spring-boot_dataset.jsonl"),
     }
     
     # Track which repositories we've found
