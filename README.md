@@ -131,6 +131,11 @@ You can run test generation testing as follows. The tags work how they work for 
 python codearena.py --MSWETestGeneration --dataset_name mswebench_instances_example.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
 ```
 
+#### Example Command to run MSWETestGeneration on newly onboarded instances: 
+```bash
+python codearena.py --MSWETestGeneration --dataset_name data/codearena_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586
+```
+
 #### File Formats
 
 The format for any prediction path other than `gold` should be as follows.
