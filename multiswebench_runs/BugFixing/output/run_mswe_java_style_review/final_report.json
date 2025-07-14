@@ -1,0 +1,23 @@
+{
+    "total_instances": 1,
+    "submitted_instances": 1,
+    "completed_instances": 1,
+    "incomplete_instances": 0,
+    "resolved_instances": 1,
+    "unresolved_instances": 0,
+    "empty_patch_instances": 0,
+    "error_instances": 0,
+    "submitted_ids": [
+        "alibaba/fastjson2:pr-2775"
+    ],
+    "completed_ids": [
+        "alibaba/fastjson2:pr-2775"
+    ],
+    "incomplete_ids": [],
+    "resolved_ids": [
+        "alibaba/fastjson2:pr-2775"
+    ],
+    "unresolved_ids": [],
+    "empty_patch_ids": [],
+    "error_ids": []
+}

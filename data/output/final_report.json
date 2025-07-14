@@ -1,0 +1,17 @@
+{
+    "total_instances": 0,
+    "submitted_instances": 0,
+    "completed_instances": 0,
+    "incomplete_instances": 0,
+    "resolved_instances": 0,
+    "unresolved_instances": 0,
+    "empty_patch_instances": 0,
+    "error_instances": 0,
+    "submitted_ids": [],
+    "completed_ids": [],
+    "incomplete_ids": [],
+    "resolved_ids": [],
+    "unresolved_ids": [],
+    "empty_patch_ids": [],
+    "error_ids": []
+}

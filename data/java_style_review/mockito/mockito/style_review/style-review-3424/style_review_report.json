@@ -1,0 +1,18 @@
+{
+  "org": "mockito",
+  "repo": "mockito",
+  "number": 3424,
+  "original_score": {
+    "global_score": 10.0,
+    "total_errors": 0,
+    "total_warnings": 0
+  },
+  "patched_score": {
+    "global_score": 10.0,
+    "total_errors": 0,
+    "total_warnings": 0
+  },
+  "original_issues": [],
+  "patched_issues": [],
+  "improvement": 0.0
+}

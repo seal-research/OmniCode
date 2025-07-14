@@ -682,11 +682,19 @@ def main():
 
             try:
 <<<<<<< HEAD
+<<<<<<< HEAD
                 # Use the exact path provided
                 script_path = "multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review.py"
 =======
                 script_path = "multiswebench/multi_swe_bench/harness/style_review/run_java_style_review.py"
 >>>>>>> 70bba81 (Update codearena.py with latest changes)
+=======
+                style_choice=input('Enter pmd or checkstyle:\n')
+                if style_choice=='pmd':
+                    script_path = "multiswebench/multi_swe_bench/harness/style_review/run_java_style_review_pmd.py"
+                else:
+                    script_path = "multiswebench/multi_swe_bench/harness/style_review/run_java_style_review.py"
+>>>>>>> afa0f62 (WIP: saving all current changes before switching branch)
 
                 if not os.path.exists(script_path):
                     print(f"Error: Java style review script not found at: {script_path}")

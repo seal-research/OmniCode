@@ -1,0 +1,16 @@
+{
+  "bad_patches_results": {
+    "EXPECTED_FAIL": {
+      "success": [],
+      "failure": []
+    }
+  },
+  "gold_tests_status": {
+    "EXPECTED_PASS": {
+      "success": [],
+      "failure": [
+        "elastic/logstash:pr-17021"
+      ]
+    }
+  }
+}

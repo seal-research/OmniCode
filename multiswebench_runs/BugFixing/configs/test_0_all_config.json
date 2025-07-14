@@ -1,0 +1,25 @@
+{
+  "mode": "evaluation",
+  "workdir": "multiswebench_runs/BugFixing/workdir/run_test_0",
+  "patch_files": [
+    "multiswebench_runs/BugFixing/patches/run_test_0/patches.jsonl"
+  ],
+  "dataset_files": [
+    "./multiswebench/mswebench_dataset/mockito__mockito_dataset.jsonl"
+  ],
+  "force_build": false,
+  "output_dir": "multiswebench_runs/BugFixing/output/run_test_0",
+  "specifics": [],
+  "skips": [],
+  "repo_dir": "multiswebench_runs/BugFixing/repos",
+  "need_clone": true,
+  "global_env": [],
+  "clear_env": true,
+  "stop_on_error": false,
+  "max_workers": 1,
+  "max_workers_build_image": 1,
+  "max_workers_run_instance": 1,
+  "log_dir": "multiswebench_runs/BugFixing/logs/run_test_0",
+  "log_level": "DEBUG",
+  "log_to_console": true
+}
