@@ -13,10 +13,12 @@ from typing import Any, Union, cast
 from CodeArenaInstance import CodeArenaInstance
 
 from swebench.harness.constants import (
+    DEFAULT_DOCKER_SPECS,
     KEY_INSTANCE_ID,
     FAIL_TO_PASS,
     PASS_TO_PASS,
     MAP_REPO_TO_INSTALL,
+    MAP_REPO_TO_EXT,
     MAP_REPO_VERSION_TO_SPECS,
     USE_X86,
 )
@@ -25,7 +27,11 @@ from swebench.harness.dockerfiles import (
     get_dockerfile_env,
     get_dockerfile_instance,
 )
-from swebench.harness.utils import (
+# from swebench.harness.utils import (
+#     get_requirements,
+#     get_environment_yml
+# )
+from swebench.harness.test_spec.python import (
     get_requirements,
     get_environment_yml
 )
@@ -56,6 +62,8 @@ class TestSpec:
     gold_inverted_eval_script_list: list[str]
     bad_inverted_eval_script_list: list[list[str]]  # Changed to list of lists to handle multiple bad patches
     arch: str
+    language: str
+    docker_specs: dict
 
     def __post_init__(self):
         """
@@ -142,15 +150,26 @@ class TestSpec:
 
     @property
     def base_dockerfile(self):
-        return get_dockerfile_base(self.platform, self.arch)
+        return get_dockerfile_base(
+            self.platform,
+            self.arch,
+            self.language,
+            **{**DEFAULT_DOCKER_SPECS, **self.docker_specs},
+        )
 
     @property
     def env_dockerfile(self):
-        return get_dockerfile_env(self.platform, self.arch)
+        return get_dockerfile_env(
+            self.platform,
+            self.arch,
+            self.language,
+            self.base_image_key,
+            **{**DEFAULT_DOCKER_SPECS, **self.docker_specs},
+        )
 
     @property
     def instance_dockerfile(self):
-        return get_dockerfile_instance(self.platform, self.env_image_key)
+        return get_dockerfile_instance(self.platform, self.language, self.env_image_key)
 
     @property
     def platform(self):
@@ -692,7 +711,9 @@ def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
             )
             for bad_patch in bad_patches
         ],
-        arch=arch
+        arch=arch,
+        language=MAP_REPO_TO_EXT[repo],
+        docker_specs=MAP_REPO_VERSION_TO_SPECS[repo][version].get("docker_specs", {})
     )
 
     return test_spec
