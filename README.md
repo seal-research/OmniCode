@@ -80,7 +80,8 @@ In this section you will find instructions on the different specifications of ou
 ## Java Support
 * **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
 
-0. Download data from huggingfaec (it is expected to be placed under multiswebench/mswebench_dataset)
+<!-- Datasets are currently included in repo -->
+<!-- 0. Download data from huggingface (it is expected to be placed under multiswebench/mswebench_dataset) --> 
 1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench/prepare_eval`
 2. From the multiswebench directory, `run python prepare_eval.py`
 3. From the codearena directory, run `python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids "INSERT YOUR INSTANCE HERE EX: elastic/logstash:17021" --mswe_phase all --force_rebuild True --clean True`
@@ -128,7 +129,7 @@ Use the `--MSWETestGeneration` flag to run test generation for Java repos suppor
 You can run test generation testing as follows. The tags work how they work for python test generation.
 
 ```bash
-python codearena.py --MSWETestGeneration --dataset_name mswebench_instances_example.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
+python codearena.py --MSWETestGeneration --dataset_name data/multiswebench_data/mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
 ```
 
 #### Example Command to run MSWETestGeneration on newly onboarded instances: 
