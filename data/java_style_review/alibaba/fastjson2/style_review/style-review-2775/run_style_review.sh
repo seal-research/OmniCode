@@ -9,8 +9,12 @@ run_style_review() {
     echo "Patch file: $patch_file"
     echo "Output directory: $output_dir"
     echo "Current working directory: $(pwd)"
-    echo "Workspace contents:"
+    echo "Workspace contents (ls -la /workspace):"
     ls -la /workspace/ 2>/dev/null || echo "No /workspace directory"
+    echo "Full directory tree (find /workspace):"
+    find /workspace -type d 2>/dev/null || echo "No directories found"
+    echo "All files in /workspace (ls -lR /workspace):"
+    ls -lR /workspace 2>/dev/null || echo "No files found"
 
     # Make a safe directory derived from output_dir — never use raw input path directly
     safe_output_dir="/workspace/output_dir_$(date +%s%N)"
@@ -59,8 +63,14 @@ run_style_review() {
     if [ "$patch_file" = "/dev/null" ]; then
         echo "Original state analysis - looking for all Java files in repository..."
         # Search for all Java files in the repository
-        modified_files=$(find . -name "*.java" -type f 2>/dev/null | head -100 || true)
-        echo "Found Java files in repository: $modified_files"
+        modified_files=$(find /workspace -name "*.java" -type f 2>/dev/null | head -100 || true)
+        echo "Found Java files in /workspace: $modified_files"
+        # If still no files, try /workspace/repo as a fallback
+        if [ -z "$modified_files" ]; then
+            echo "No Java files found in /workspace, searching /workspace/repo..."
+            modified_files=$(find /workspace/repo -name "*.java" -type f 2>/dev/null | head -100 || true)
+            echo "Found Java files in /workspace/repo: $modified_files"
+        fi
     else
         # For patched state, first try to find modified files
         modified_files=$(git diff --name-only HEAD | grep -E '\.java$' || true)
@@ -70,15 +80,15 @@ run_style_review() {
         if [ -z "$modified_files" ]; then
             echo "No modified files found, searching for existing Java files..."
             # Search in common Java source directories
-            modified_files=$(find . -name "*.java" -type f 2>/dev/null | head -50 || true)
-            echo "Found existing Java files: $modified_files"
+            modified_files=$(find /workspace -name "*.java" -type f 2>/dev/null | head -50 || true)
+            echo "Found existing Java files in /workspace: $modified_files"
         fi
         
-        # If still no files, try a broader search
+        # If still no files, try /workspace/repo as a fallback
         if [ -z "$modified_files" ]; then
-            echo "No Java files found in current directory, searching more broadly..."
-            modified_files=$(find /workspace -name "*.java" -type f 2>/dev/null | head -20 || true)
-            echo "Found Java files in workspace: $modified_files"
+            echo "No Java files found in /workspace, searching /workspace/repo..."
+            modified_files=$(find /workspace/repo -name "*.java" -type f 2>/dev/null | head -50 || true)
+            echo "Found Java files in /workspace/repo: $modified_files"
         fi
     fi
 
@@ -97,7 +107,8 @@ run_style_review() {
     if [ -z "$modified_files" ]; then
         echo "No existing Java files found for analysis - using default results"
         echo "Directory structure for debugging:"
-        find . -type f -name "*.java" 2>/dev/null | head -20 || echo "No Java files found in current directory"
+        find /workspace -type f -name "*.java" 2>/dev/null | head -20 || echo "No Java files found in /workspace"
+        find /workspace/repo -type f -name "*.java" 2>/dev/null | head -20 || echo "No Java files found in /workspace/repo"
         # Keep the default results we set earlier
     else
         echo "Analyzing files: $modified_files"
