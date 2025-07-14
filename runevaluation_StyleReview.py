@@ -9,6 +9,7 @@ from argparse import ArgumentParser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from tqdm import tqdm
+import subprocess, shutil, time, os
 
 from swebench.harness.constants import (
     APPLY_PATCH_FAIL,
@@ -16,6 +17,10 @@ from swebench.harness.constants import (
     INSTANCE_IMAGE_BUILD_DIR,
     KEY_INSTANCE_ID,
     RUN_EVALUATION_LOG_DIR,
+    DEF_IMAGE_BUILD_DIR,
+    LOG_REPORT, 
+    LOG_INSTANCE,
+    APPTAINER_BASH, 
 )
 from swebench.harness.docker_utils import (
     remove_image,
@@ -33,10 +38,11 @@ from docker_build import (
     close_logger,
     setup_logger,
 )
+from apptainer_build import build_sandbox
 from CodeArena_grading import get_eval_report_test_generation, get_fail_to_fail
 #from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
 from CodeArena_test_spec import make_test_spec, TestSpec, generate_patch_lint_script
-from swebench.harness.utils import str2bool
+from swebench.harness.utils import str2bool, run_threadpool
 from utils import load_swebench_dataset, load_CodeArena_prediction_dataset, copy_from_container
 
 import os
@@ -232,16 +238,17 @@ def make_run_report(
             error_ids.add(instance_id)
 
     # get remaining images and containers
-    images = list_images(client)
-    test_specs = list(map(make_test_spec, full_dataset))
-    for spec in test_specs:
-        image_name = spec.instance_image_key
-        if image_name in images:
-            unremoved_images.add(image_name)
-    containers = client.containers.list(all=True)
-    for container in containers:
-        if run_id in container.name:
-            unstopped_containers.add(container.name)
+    if client:
+        images = list_images(client)
+        test_specs = list(map(make_test_spec, full_dataset))
+        for spec in test_specs:
+            image_name = spec.instance_image_key
+            if image_name in images:
+                unremoved_images.add(image_name)
+        containers = client.containers.list(all=True)
+        for container in containers:
+            if run_id in container.name:
+                unstopped_containers.add(container.name)
 
     # print final report
     dataset_ids = {i[KEY_INSTANCE_ID] for i in full_dataset}
@@ -302,7 +309,8 @@ def main(
         run_id: str = None,
         timeout: int = 1800,
         min_score: int = None,
-        max_severity: int = None
+        max_severity: int = None,
+        use_apptainer: bool = False,
     ):
     """
     Run evaluation harness for the given dataset and predictions.
@@ -310,7 +318,7 @@ def main(
     # set open file limit
     assert len(run_id) > 0, "Run ID must be provided"
     resource.setrlimit(resource.RLIMIT_NOFILE, (open_file_limit, open_file_limit))
-    client = docker.from_env()
+    client = None
 
     # load predictions as map of instance_id to prediction
     if predictions_path == 'gold':
@@ -336,17 +344,25 @@ def main(
     # Load full dataset
     full_dataset = load_swebench_dataset(dataset_name, split, instance_ids, full=True)
 
-    existing_images = list_images(client)
+    
     print(f"Running {len(dataset)} unevaluated instances...")
     if not dataset:
         print("No instances to run.")
+    elif use_apptainer:
+        # pull .sif + build sandbox with apptainer
+        build_sandbox(dataset)
+        run_instance_apptainers(predictions, dataset, cache_level, clean, force_rebuild, max_workers, run_id, timeout)
     else:
+        client = docker.from_env()
+        existing_images = list_images(client)
+
         # build environment images + run instances
         build_env_images(client, dataset, force_rebuild, max_workers)
         run_instances(predictions, dataset, cache_level, clean, force_rebuild, max_workers, run_id, timeout)
 
-    # clean images + make final report
-    clean_images(client, existing_images, cache_level, clean)
+        # clean images + make final report
+        clean_images(client, existing_images, cache_level, clean)
+
     make_run_report(predictions, full_dataset, client, run_id, min_score=min_score, max_severity=max_severity)
 
 
@@ -386,8 +402,8 @@ def run_instance(
         except Exception as e:
             print(f"Error creating symlink: {e}")
 
-    log_file = log_dir / "run_instance.log"
-    report_path = log_dir / "report.json"
+    log_file = log_dir / LOG_INSTANCE
+    report_path = log_dir / LOG_REPORT
 
     # Define local files for aggregated report and error messages.
     aggregated_report_path = log_dir / "pylint_report.json"
@@ -564,42 +580,254 @@ def run_instances(
         print(f"Found {len(existing_images)} existing instance images. Will reuse them.")
 
     # run instances in parallel
+    payloads = []
+    for test_spec in test_specs:
+        payloads.append(
+            (
+                test_spec,
+                # TODO: Either optimize this lookup or find a more elegant way to pass corrected predictions
+                # next((item for item in instances if item["instance_id"] == test_spec.instance_id), None),
+                predictions[test_spec.instance_id],
+                should_remove(
+                    test_spec.instance_image_key,
+                    cache_level,
+                    clean,
+                    existing_images,
+                ),
+                force_rebuild,
+                client,
+                run_id,
+                timeout,
+            )
+        )
+
+    # run instances in parallel
     print(f"Running {len(instances)} instances...")
-    with tqdm(total=len(instances), smoothing=0) as pbar:
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Create a future for running each instance
-            futures = {
-                executor.submit(
-                    run_instance,
-                    test_spec,
-                    # TODO: Either optimize this lookup or find a more elegant way to pass corrected predictions
-                    # next((item for item in instances if item["instance_id"] == test_spec.instance_id), None),
-                    predictions[test_spec.instance_id],
-                    should_remove(
-                        test_spec.instance_image_key,
-                        cache_level,
-                        clean,
-                        existing_images,
-                    ),
-                    force_rebuild,
-                    client,
-                    run_id,
-                    timeout,
-                ): None
-                for test_spec in test_specs
-            }
-            # Wait for each future to complete
-            for future in as_completed(futures):
-                pbar.update(1)
-                try:
-                    # Update progress bar, check if instance ran successfully
-                    future.result()
-                except Exception as e:
-                    traceback.print_exc()
-                    continue
+    run_threadpool(run_instance, payloads, max_workers)
     print("All instances run.")
 
+def run_instance_apptainer(
+        test_spec: TestSpec,
+        pred: dict,
+        run_id: str,
+        timeout: int | None = None,
+        rm_image: bool = True,
+        ):
+    # Set up logging directory
+    instance_id = test_spec.instance_id
+    model_name_or_path = pred.get("model_name_or_path", "None").replace("/", "__")
+    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / (instance_id+"_styleReview")
+    log_dir.mkdir(parents=True, exist_ok=True)
 
+    # Link the image build dir in the log dir
+    build_dir = DEF_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
+    image_build_link = log_dir / "image_build_dir"
+    if not image_build_link.exists():
+        try:
+            image_build_link.symlink_to(build_dir.absolute(), target_is_directory=True)
+        except Exception as e:
+            print(f"Error creating symlink: {e}")
+
+    # Set up report file + logger
+    report_path = log_dir / LOG_REPORT
+    if report_path.exists():
+        return instance_id, json.loads(report_path.read_text())
+    log_file = log_dir / LOG_INSTANCE
+    logger = setup_logger(instance_id, log_file)
+
+    # Define local files for aggregated report and error messages.
+    aggregated_report_path = log_dir / "pylint_report.json"
+    error_output_path = log_dir / "pylint_errors.json"
+
+    try:
+        env_name = "testbed"  # Fixed environment name.
+        repo_directory = f"/{env_name}"
+        base_commit = test_spec.base_commit
+        model_patch = pred.get("model_patch", "") or pred.get("gold_patch", "") or pred.get("candidate_test_patch", "")
+        # hack for evaluating swe agent, which produces a linter-fixing patch on top of the gold patch
+        second_patch = pred.get("second_patch", None)
+
+        # Define absolute container paths.
+        container_aggregated = "pylint_aggregated.json"
+        container_errors = "pylint_errors.json"
+
+        # Generate evaluation script with container paths.
+        linting_eval_script = generate_patch_lint_script(
+            repo_directory=repo_directory,
+            base_commit=base_commit,
+            patch=model_patch,
+            pylint_output_path=container_aggregated,
+            error_output_path=container_errors,
+            env_name=env_name,
+            second_patch=second_patch,
+        )
+        linting_eval_script = "\n".join(linting_eval_script)
+        remove_sh = """# Create temporary directory for intermediate files
+    temp_dir=$(mktemp -d)
+    trap 'rm -rf "$temp_dir"' EXIT"""
+        linting_eval_script = linting_eval_script.replace(remove_sh, "")
+        linting_eval_script = linting_eval_script.replace("mkdir -p /tmp", "")
+        linting_eval_script = linting_eval_script.replace("chmod 777 /tmp", "")
+        linting_eval_script = linting_eval_script.replace("/tmp", "")
+        linting_eval_script = linting_eval_script.replace("/tmp", "")
+        linting_eval_script = linting_eval_script.replace("$temp_dir", "")
+
+        # Write the generated script to the log directory and copy it to the container.
+        lint_eval_file = Path(log_dir / "lint_eval.sh")
+        lint_eval_file.write_text(linting_eval_script)
+        logger.info(f"Linting eval script written to {lint_eval_file}; copying to sandbox...")
+        shutil.copy(lint_eval_file, build_dir / "apptainer_sandbox/lint_eval.sh")
+
+        # Run the evaluation script inside the sandbox.
+        start = time.time()
+        try:
+            result = subprocess.run(
+                [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c",
+                    "cd apptainer_sandbox && bash lint_eval.sh"],
+                cwd=build_dir,
+                capture_output=True,
+                text=True,
+                timeout=timeout
+            )
+            end = time.time()
+            lint_runtime = end - start
+            local_lint_output = log_dir / "lint_output.txt"
+            with open(local_lint_output, "w") as f:
+                f.write(result.stderr)
+                f.write(result.stdout)
+            logger.info(f"Linting runtime: {lint_runtime:_.2f} seconds")
+        except subprocess.TimeoutExpired:
+            end = time.time()
+            lint_runtime = end - start
+            raise EvaluationError(
+                instance_id,
+                f"Linting evaluation timed out after {timeout} seconds.",
+                logger,
+            )
+        
+        # Copy error messages files from the sandbox.
+        try:
+            # First check if the files exist in the sandbox
+            for path in [container_errors, container_aggregated]:
+                result = subprocess.run(
+                    ["test", "-f", path],
+                    cwd=build_dir / "apptainer_sandbox",
+                    capture_output=True,
+                    text=True,
+                )
+                if result.returncode != 0:
+                    logger.error(f"File {path} does not exist in sandbox")
+                    continue
+
+                # Copy the file
+                if path == container_errors:
+                    shutil.copy(build_dir / f"apptainer_sandbox/{path}", error_output_path)
+                else:
+                    shutil.copy(build_dir / f"apptainer_sandbox/{path}", aggregated_report_path)
+        except Exception as e:
+            logger.error(f"Copy failed: {str(e)}")
+        
+        # Parse the aggregated report
+        aggregated_report = {}
+        try:
+            if aggregated_report_path.exists():
+                aggregated_report = json.loads(aggregated_report_path.read_text())
+            else:
+                logger.error("Aggregated report file not found")
+        except json.JSONDecodeError:
+            logger.error(f"Invalid JSON in aggregated report output from sandbox")
+        except Exception as e:
+            logger.error(f"Failed to read aggregated report: {str(e)}")
+        
+        # Parse error messages.
+        error_messages = []
+        if error_output_path.exists():
+            try:
+                error_messages = json.loads(error_output_path.read_text())
+            except json.JSONDecodeError:
+                logger.error(f"Invalid JSON in error messages file {error_output_path}")
+        else:
+            logger.error("Error messages file not found")
+        
+        # Build final report.
+        report = {
+            instance_id: {
+                "model_name": pred.get("model_name_or_path", "None"),
+                "aggregated": aggregated_report,
+                "error_messages": error_messages,
+                "linting_runtime": lint_runtime,
+                "timed_out": False  # No timeout in this case
+            }
+        }
+        logger.info(f"Report for {instance_id}: {report}")
+
+        with open(report_path, "w") as f:
+            f.write(json.dumps(report, indent=4))
+        return instance_id, report
+    except EvaluationError as e:
+        error_msg = traceback.format_exc()
+        logger.info(error_msg)
+        print(e)
+    except Exception as e:
+        error_msg = (f"Error in evaluating model for {instance_id}: {e}\n"
+                     f"{traceback.format_exc()}\n"
+                     f"Check ({logger.log_file}) for more information.")
+        logger.error(error_msg)
+    finally:
+        if rm_image:
+            # Cleaning sandbox
+            logger.info("Cleaning up Apptainer sandbox...")
+            # Remove the Apptainer sandbox directory
+            apptainer_base_file = build_dir / "apptainer_base.sif"
+            sandbox_path = build_dir / "apptainer_sandbox"
+            try:
+                if sandbox_path.exists():
+                    shutil.rmtree(sandbox_path, ignore_errors=True)
+                    logger.info(f"Removed Apptainer sandbox: {sandbox_path}")
+                else:
+                    logger.info(f"Apptainer sandbox not found: {sandbox_path}")
+                if apptainer_base_file.exists():
+                    os.remove(apptainer_base_file)
+                    logger.info(f"Removed Apptainer base image file: {apptainer_base_file}")
+                else:
+                    logger.info(f"Apptainer base image file not found: {apptainer_base_file}")
+            except Exception as e:
+                logger.error(f"Failed to remove Apptainer sandbox or base image file: {e}")
+        # close the logger
+        close_logger(logger)
+    return
+
+
+
+def run_instance_apptainers(
+        predictions: dict,
+        instances: list,
+        cache_level: str,
+        clean: bool,
+        force_rebuild: bool,
+        max_workers: int,
+        run_id: str,
+        timeout: int,
+        ):
+    test_specs = list(map(make_test_spec, instances))
+    # run instances in parallel
+    print(f"Running {len(instances)} instances...")
+    # run instances in parallel
+    payloads = []
+    for test_spec in test_specs:
+        payloads.append(
+            (
+                test_spec,
+                predictions[test_spec.instance_id],
+                run_id,
+                timeout,
+            )
+        )
+
+    # run instances in parallel
+    print(f"Running {len(instances)} instances...")
+    run_threadpool(run_instance_apptainer, payloads, max_workers)
+    print("All instances run.")
 
 
 if __name__ == "__main__":

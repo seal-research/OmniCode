@@ -11,7 +11,8 @@ CodeArena is currently set up to work with a specific swebench version which can
 ```bash
 git clone https://github.com/seal-research/SWE-bench.git
 cd SWE-bench
-pip install -e .
+# pip install -e .
+pip install .
 ```
 
 ### CodeArena Evaluation

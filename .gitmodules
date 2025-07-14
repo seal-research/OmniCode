@@ -1,3 +1,7 @@
-[submodule "swe-bench"]
-	path = swe-bench
-	url = git@github.com:princeton-nlp/SWE-bench.git
+# [submodule "swe-bench"]
+# 	path = swe-bench
+# 	url = git@github.com:princeton-nlp/SWE-bench.git
+
+[submodule "SWE-bench"]
+	path = SWE-bench
+	url = git@github.com:seal-research/SWE-bench.git
