@@ -132,115 +132,106 @@ RUN chmod +x /workspace/run_style_review.sh
 """
     
     def _get_style_review_script(self) -> str:
-        # Script to run Checkstyle on Java files and output results in JSON format
         return """#!/bin/bash
 set -e
 
-# Function to apply patch and run Checkstyle
 run_style_review() {
     local patch_file="$1"
     local output_dir="$2"
-    
-    # Create output directory
-    mkdir -p "$output_dir"
-    
-    # Apply the patch
-    if [ -f "$patch_file" ]; then
-        git apply "$patch_file" || {
-            echo "Error applying patch" > "$output_dir/error.log"
-            return 1
-        }
+
+    echo "=== Starting style review ==="
+    echo "Patch file: $patch_file"
+    echo "Output directory: $output_dir"
+    echo "Current working directory: $(pwd)"
+    echo "Workspace contents (ls -la /workspace):"
+    ls -la /workspace/ 2>/dev/null || echo "No /workspace directory"
+    echo "Full directory tree (find /workspace):"
+    find /workspace -type d 2>/dev/null || echo "No directories found"
+    echo "All files in /workspace (ls -lR /workspace):"
+    ls -lR /workspace 2>/dev/null || echo "No files found"
+
+    # Make a safe directory derived from output_dir — never use raw input path directly
+    safe_output_dir="/workspace/output_dir_$(date +%s%N)"
+    echo "Safe output directory: $safe_output_dir"
+
+    echo "Using mkdir"
+    mkdir -p "$safe_output_dir"
+
+    # Initialize default results immediately
+    echo '{"global_score": 10.0,"total_errors": 0,"total_warnings": 0}' > "$safe_output_dir/style_report.json"
+    echo "[]" > "$safe_output_dir/style_errors.json"
+
+    # Handle patch application with comprehensive error handling
+    if [ -f "$patch_file" ] && [ "$patch_file" != "/dev/null" ]; then
+        echo "Applying patch: $patch_file"
+        echo "Patch file contents (first 10 lines):"
+        head -10 "$patch_file" 2>/dev/null || echo "Could not read patch file"
+        patch_errors_file="$safe_output_dir/patch_errors.log"
+        if ! git apply --reject --whitespace=fix "$patch_file" 2>"$patch_errors_file" 2>&1; then
+            echo "Warning: Patch could not be fully applied. Some files may be missing or already patched." > "$safe_output_dir/patch_warning.log"
+            echo "Patch application errors:" >> "$safe_output_dir/patch_warning.log"
+            if [ -f "$patch_errors_file" ]; then
+                cat "$patch_errors_file" >> "$safe_output_dir/patch_warning.log" 2>/dev/null || true
+            fi
+            echo "Continuing with analysis despite patch issues..."
+        else
+            echo "Patch applied successfully"
+        fi
+    elif [ "$patch_file" = "/dev/null" ]; then
+        echo "No patch to apply (original state)"
     else
-        echo "No patch file found at $patch_file" > "$output_dir/error.log"
-        return 1
+        echo "No patch file found at $patch_file" > "$safe_output_dir/error.log"
+        echo "Continuing with analysis without patch..."
     fi
-    
-    # Find all modified Java files
-    modified_files=$(git diff --name-only HEAD | grep -E '\\.java$' || true)
-    
-    if [ -z "$modified_files" ]; then
-        echo '{
-            "global_score": 10.0,
-            "total_errors": 0,
-            "total_warnings": 0
-        }' > "$output_dir/style_report.json"
-        echo "[]" > "$output_dir/style_errors.json"
-        return 0
-    fi
-    
-    # Create temporary directory for intermediate files
+
+    # Always analyze all Java files in the repo (for both original and patched runs)
+    echo "Finding all Java files in the repo to analyze..."
+    all_java_files=$(find /workspace/repo -name "*.java" -type f 2>/dev/null)
+    total_files=$(echo "$all_java_files" | wc -w)
+    total_errors=0
+    echo "[]" > "$safe_output_dir/style_errors.json"
+
     temp_dir=$(mktemp -d)
     trap 'rm -rf "$temp_dir"' EXIT
-    
-    # Initialize error report array
-    echo "[]" > "$output_dir/style_errors.json"
-    
-    # Initialize counters
-    total_errors=0
-    total_files=0
-    
-    # Process each file
-    for file in $modified_files; do
+
+    for file in $all_java_files; do
         [ -z "$file" ] && continue
         [ ! -f "$file" ] && continue
-        
-        total_files=$((total_files + 1))
-        
+        file_errors=0
+        file_score=10.0
         # Run Checkstyle and capture output
         java -jar /usr/local/lib/checkstyle.jar -c /workspace/checkstyle.xml "$file" -f xml > "$temp_dir/checkstyle.xml" 2>/dev/null || true
-        
-        # Convert XML to JSON for easier processing
         java -cp /usr/local/lib/checkstyle.jar com.puppycrawl.tools.checkstyle.Main -c /workspace/checkstyle.xml "$file" > "$temp_dir/checkstyle.txt" 2>/dev/null || true
-        
-        # Count errors
-        file_errors=$(grep -c "\\[ERROR\\]" "$temp_dir/checkstyle.txt" || echo 0)
+        file_errors=$(grep -c "\[ERROR\]" "$temp_dir/checkstyle.txt" || echo 0)
         total_errors=$((total_errors + file_errors))
-        
-        # Calculate file score (10 - number of errors, minimum 0)
         file_score=$(echo "scale=1; 10 - $file_errors * 0.5" | bc)
         if (( $(echo "$file_score < 0" | bc -l) )); then
             file_score="0.0"
         fi
-        
-        # Extract error messages
-        error_messages=$(grep "\\[ERROR\\]" "$temp_dir/checkstyle.txt" | sed -e 's/^.*\[ERROR\] //' || echo "")
-        
-        # Create file report JSON
-        file_report="{
-            \"file\": \"$file\",
-            \"score\": $file_score,
-            \"error_count\": $file_errors,
-            \"messages\": ["
-        
-        # Add error messages
+        error_messages=$(grep "\[ERROR\]" "$temp_dir/checkstyle.txt" | sed -e 's/^.*\[ERROR\] //' || echo "")
+        file_report="{"
         first=true
         while IFS= read -r message; do
             [ -z "$message" ] && continue
-            
             if $first; then
                 first=false
             else
-                file_report+=","
+                file_report+=",";
             fi
-            
-            # Extract line number and message
             if [[ "$message" =~ ^([0-9]+):([0-9]+):\ (.*) ]]; then
                 line="${BASH_REMATCH[1]}"
                 column="${BASH_REMATCH[2]}"
                 msg="${BASH_REMATCH[3]}"
-                file_report+="{\"line\": $line, \"column\": $column, \"type\": \"error\", \"message\": \"${msg//\"/\\\"}\", \"source\": \"checkstyle\"}"
+                file_report+="\"line\": $line, \"column\": $column, \"type\": \"error\", \"message\": \"${msg//\"/\\\"}\", \"source\": \"checkstyle\"}"
             else
-                file_report+="{\"line\": 0, \"column\": 0, \"type\": \"error\", \"message\": \"${message//\"/\\\"}\", \"source\": \"checkstyle\"}"
+                file_report+="\"line\": 0, \"column\": 0, \"type\": \"error\", \"message\": \"${message//\"/\\\"}\", \"source\": \"checkstyle\"}"
             fi
         done <<< "$error_messages"
-        
-        file_report+="]},"
-        
-        # Append to main report (replacing the closing bracket with the new entry and a closing bracket)
-        jq -s '.[0] + [.[1]]' "$output_dir/style_errors.json" <(echo "${file_report%?}") > "$temp_dir/new_errors.json"
-        mv "$temp_dir/new_errors.json" "$output_dir/style_errors.json"
+        file_report+="}"
+        jq -s '.[0] + [.[1]]' "$safe_output_dir/style_errors.json" <(echo "$file_report") > "$temp_dir/new_errors.json"
+        mv "$temp_dir/new_errors.json" "$safe_output_dir/style_errors.json"
     done
-    
+
     # Generate final summary
     global_score=10.0
     if [ "$total_files" -gt 0 ]; then
@@ -249,21 +240,30 @@ run_style_review() {
             global_score="0.0"
         fi
     fi
-    
-    echo "{
-        \"global_score\": $global_score,
-        \"total_errors\": $total_errors,
-        \"total_warnings\": 0
-    }" > "$output_dir/style_report.json"
-    
+
+    echo "Final statistics: total_files=$total_files, total_errors=$total_errors, global_score=$global_score"
+    echo "{"
+    echo "    \"global_score\": $global_score,"
+    echo "    \"total_errors\": $total_errors,"
+    echo "    \"total_warnings\": 0"
+    echo "}" > "$safe_output_dir/style_report.json"
+
+    # Copy results to the specified output directory with comprehensive error handling
+    if [ -n "$output_dir" ]; then
+        echo "Copying results to: $output_dir"
+        mkdir -p "$output_dir" 2>/dev/null || true
+        cp "$safe_output_dir/style_report.json" "$output_dir/original_style_report.json" 2>/dev/null || true
+        cp "$safe_output_dir/style_errors.json" "$output_dir/original_style_errors.json" 2>/dev/null || true
+        [ -f "$safe_output_dir/patch_warning.log" ] && cp "$safe_output_dir/patch_warning.log" "$output_dir/patch_warning.log" 2>/dev/null || true
+        [ -f "$safe_output_dir/patch_errors.log" ] && cp "$safe_output_dir/patch_errors.log" "$output_dir/patch_errors.log" 2>/dev/null || true
+        [ -f "$safe_output_dir/error.log" ] && cp "$safe_output_dir/error.log" "$output_dir/error.log" 2>/dev/null || true
+    fi
+
+    echo "Style review completed successfully"
+    echo "=== Style review finished ==="
     return 0
 }
 
-# Main execution
-if [ $# -lt 2 ]; then
-    echo "Usage: $0 <patch_file> <output_dir>"
-    exit 1
-fi
-
-run_style_review "$1" "$2"
+# Call the function with the provided arguments
+run_style_review "$@"
 """

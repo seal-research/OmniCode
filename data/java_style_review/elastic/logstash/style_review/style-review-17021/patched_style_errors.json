@@ -1,1 +1,6022 @@
-[]
+[
+  {
+    "file": "/workspace/repo/qa/integration/src/test/java/org/logstash/integration/RSpecTests.java",
+    "score": 7.0,
+    "error_count": 6,
+    "messages": [
+      {
+        "line": 40,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 47,
+        "column": 47,
+        "type": "error",
+        "message": "This statement should have braces",
+        "source": "ControlStatementBraces"
+      },
+      {
+        "line": 60,
+        "column": 18,
+        "type": "error",
+        "message": "Array initialization can be written shorter",
+        "source": "UseShortArrayInitializer"
+      },
+      {
+        "line": 60,
+        "column": 18,
+        "type": "error",
+        "message": "Local variable 'args' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 61,
+        "column": 14,
+        "type": "error",
+        "message": "Local variable 'runtime' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 62,
+        "column": 39,
+        "type": "error",
+        "message": "This statement should have braces",
+        "source": "ControlStatementBraces"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/BenchmarkMeta.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 32,
+        "column": 14,
+        "type": "error",
+        "message": "The class 'BenchmarkMeta' is suspected to be a Data Class (WOC=12.500%, NOPA=0, NOAM=7, WMC=11)",
+        "source": "DataClass"
+      },
+      {
+        "line": 48,
+        "column": 5,
+        "type": "error",
+        "message": "Missing commented default access modifier on constructor 'BenchmarkMeta(String, Path, Path, String, LsVersionType, int, int)'",
+        "source": "CommentDefaultAccessModifier"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/DataStore.java",
+    "score": 9.5,
+    "error_count": 1,
+    "messages": [
+      {
+        "line": 79,
+        "column": 9,
+        "type": "error",
+        "message": "Missing commented default access modifier on constructor 'ElasticSearch(String, int, String, Map<String, Object>)'",
+        "source": "CommentDefaultAccessModifier"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/JRubyInstallation.java",
+    "score": 7.5,
+    "error_count": 5,
+    "messages": [
+      {
+        "line": 33,
+        "column": 33,
+        "type": "error",
+        "message": "Avoid excessively long variable names like JRUBY_DEFAULT_VERSION",
+        "source": "LongVariable"
+      },
+      {
+        "line": 33,
+        "column": 57,
+        "type": "error",
+        "message": "Do not hard code the IP address JRUBY_DEFAULT_VERSION",
+        "source": "AvoidUsingHardCodedIP"
+      },
+      {
+        "line": 38,
+        "column": 24,
+        "type": "error",
+        "message": "Field gem has the same name as a method",
+        "source": "AvoidFieldNameMatchingMethodName"
+      },
+      {
+        "line": 43,
+        "column": 24,
+        "type": "error",
+        "message": "Field rake has the same name as a method",
+        "source": "AvoidFieldNameMatchingMethodName"
+      },
+      {
+        "line": 48,
+        "column": 24,
+        "type": "error",
+        "message": "Field jruby has the same name as a method",
+        "source": "AvoidFieldNameMatchingMethodName"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/LogstashInstallation.java",
+    "score": 2.5,
+    "error_count": 15,
+    "messages": [
+      {
+        "line": 119,
+        "column": 26,
+        "type": "error",
+        "message": "Avoid variables with short names like os",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 138,
+        "column": 51,
+        "type": "error",
+        "message": "Avoid variables with short names like s",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 138,
+        "column": 51,
+        "type": "error",
+        "message": "Parameter 's' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 138,
+        "column": 61,
+        "type": "error",
+        "message": "Avoid variables with short names like t",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 138,
+        "column": 61,
+        "type": "error",
+        "message": "Parameter 't' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 151,
+        "column": 21,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 153,
+        "column": 21,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 161,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'osName' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 163,
+        "column": 17,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 166,
+        "column": 17,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 178,
+        "column": 21,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 180,
+        "column": 21,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 248,
+        "column": 22,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'out': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 292,
+        "column": 22,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'file': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 348,
+        "column": 45,
+        "type": "error",
+        "message": "The method 'setup(JRubyInstallation, Path)' has a cyclomatic complexity of 12.",
+        "source": "CyclomaticComplexity"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/LsBenchSettings.java",
+    "score": 9.5,
+    "error_count": 1,
+    "messages": [
+      {
+        "line": 32,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like APACHE_DATASET_URL",
+        "source": "LongVariable"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/LsMetricsMonitor.java",
+    "score": 3.5,
+    "error_count": 13,
+    "messages": [
+      {
+        "line": 42,
+        "column": 14,
+        "type": "error",
+        "message": "Class cannot be instantiated and does not provide any static methods or fields",
+        "source": "MissingStaticMethodInNonInstantiatableClass"
+      },
+      {
+        "line": 42,
+        "column": 57,
+        "type": "error",
+        "message": "Avoid using implementation types like 'EnumMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 70,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid using literals in if statements",
+        "source": "AvoidLiteralsInIfCondition"
+      },
+      {
+        "line": 76,
+        "column": 21,
+        "type": "error",
+        "message": "Unnecessary cast (double)",
+        "source": "UnnecessaryCast"
+      },
+      {
+        "line": 77,
+        "column": 25,
+        "type": "error",
+        "message": "Unnecessary cast (double)",
+        "source": "UnnecessaryCast"
+      },
+      {
+        "line": 88,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'EnumMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 102,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'client': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 104,
+        "column": 18,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'response': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 108,
+        "column": 17,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 140,
+        "column": 52,
+        "type": "error",
+        "message": "Parameter 'data' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 142,
+        "column": 102,
+        "type": "error",
+        "message": "The String literal \"events\" appears 4 times in this file; the first occurrence is on line 142",
+        "source": "AvoidDuplicateLiterals"
+      },
+      {
+        "line": 157,
+        "column": 30,
+        "type": "error",
+        "message": "Avoid using implementation types like 'EnumMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 181,
+        "column": 16,
+        "type": "error",
+        "message": "Avoid using implementation types like 'EnumMap'; use the interface instead",
+        "source": "LooseCoupling"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/Main.java",
+    "score": 5.0,
+    "error_count": 10,
+    "messages": [
+      {
+        "line": 52,
+        "column": 14,
+        "type": "error",
+        "message": "Avoid short class names like Main",
+        "source": "ShortClassName"
+      },
+      {
+        "line": 65,
+        "column": 24,
+        "type": "error",
+        "message": "The method 'main(String[])' has a cyclomatic complexity of 12.",
+        "source": "CyclomaticComplexity"
+      },
+      {
+        "line": 71,
+        "column": 33,
+        "type": "error",
+        "message": "Avoid excessively long variable names like distributionbuilder",
+        "source": "LongVariable"
+      },
+      {
+        "line": 139,
+        "column": 14,
+        "type": "error",
+        "message": "Avoid excessively long variable names like testCaseConfigPath",
+        "source": "LongVariable"
+      },
+      {
+        "line": 141,
+        "column": 13,
+        "type": "error",
+        "message": "Position literals first in String comparisons",
+        "source": "LiteralsFirstInComparisons"
+      },
+      {
+        "line": 197,
+        "column": 13,
+        "type": "error",
+        "message": "Position literals first in String comparisons",
+        "source": "LiteralsFirstInComparisons"
+      },
+      {
+        "line": 215,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'store': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 219,
+        "column": 19,
+        "type": "error",
+        "message": "Avoid using implementation types like 'AbstractMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 251,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 263,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'settings': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/cases/ApacheLogsComplex.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 85,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'monitor': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 88,
+        "column": 18,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'cfg': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/cases/Case.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 30,
+        "column": 8,
+        "type": "error",
+        "message": "Avoid short class names like Case",
+        "source": "ShortClassName"
+      },
+      {
+        "line": 36,
+        "column": 5,
+        "type": "error",
+        "message": "Avoid using implementation types like 'AbstractMap'; use the interface instead",
+        "source": "LooseCoupling"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/cases/CustomTestCase.java",
+    "score": 5.0,
+    "error_count": 10,
+    "messages": [
+      {
+        "line": 23,
+        "column": 1,
+        "type": "error",
+        "message": "Unused import 'org.logstash.benchmark.cli.*'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 36,
+        "column": 8,
+        "type": "error",
+        "message": "The class 'CustomTestCase' might be a test class, but it contains no test cases.",
+        "source": "TestClassWithoutTestCases"
+      },
+      {
+        "line": 45,
+        "column": 37,
+        "type": "error",
+        "message": "Parameter 'store' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 45,
+        "column": 65,
+        "type": "error",
+        "message": "Parameter 'logstash' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 45,
+        "column": 80,
+        "type": "error",
+        "message": "Avoid unused constructor parameters such as 'cwd'.",
+        "source": "UnusedFormalParameter"
+      },
+      {
+        "line": 45,
+        "column": 96,
+        "type": "error",
+        "message": "Parameter 'settings' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 46,
+        "column": 24,
+        "type": "error",
+        "message": "Avoid unused constructor parameters such as 'output'.",
+        "source": "UnusedFormalParameter"
+      },
+      {
+        "line": 46,
+        "column": 46,
+        "type": "error",
+        "message": "Parameter 'runConfig' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 61,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'monitor': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 65,
+        "column": 18,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'cfg': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/cases/GeneratorToStdout.java",
+    "score": 9.5,
+    "error_count": 1,
+    "messages": [
+      {
+        "line": 68,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'monitor': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/ui/UserInput.java",
+    "score": 2.0,
+    "error_count": 16,
+    "messages": [
+      {
+        "line": 29,
+        "column": 14,
+        "type": "error",
+        "message": "The class 'UserInput' is suspected to be a Data Class (WOC=0.000%, NOPA=26, NOAM=0, WMC=1)",
+        "source": "DataClass"
+      },
+      {
+        "line": 45,
+        "column": 30,
+        "type": "error",
+        "message": "Avoid excessively long variable names like WORKING_DIRECTORY_DEFAULT",
+        "source": "LongVariable"
+      },
+      {
+        "line": 61,
+        "column": 29,
+        "type": "error",
+        "message": "Avoid excessively long variable names like LS_BATCHSIZE_DEFAULT",
+        "source": "LongVariable"
+      },
+      {
+        "line": 63,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like LS_BATCH_SIZE_HELP",
+        "source": "LongVariable"
+      },
+      {
+        "line": 66,
+        "column": 29,
+        "type": "error",
+        "message": "Avoid excessively long variable names like LS_WORKER_THREADS_DEFAULT",
+        "source": "LongVariable"
+      },
+      {
+        "line": 68,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like LS_WORKER_THREADS_HELP",
+        "source": "LongVariable"
+      },
+      {
+        "line": 74,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like DISTRIBUTION_VERSION_PARAM",
+        "source": "LongVariable"
+      },
+      {
+        "line": 76,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like DISTRIBUTION_VERSION_HELP",
+        "source": "LongVariable"
+      },
+      {
+        "line": 92,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like LOCAL_VERSION_PARAM",
+        "source": "LongVariable"
+      },
+      {
+        "line": 94,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like LOCAL_VERSION_HELP",
+        "source": "LongVariable"
+      },
+      {
+        "line": 97,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like WORKING_DIRECTORY_PARAM",
+        "source": "LongVariable"
+      },
+      {
+        "line": 99,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like WORKING_DIRECTORY_HELP",
+        "source": "LongVariable"
+      },
+      {
+        "line": 102,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like TEST_CASE_CONFIG_PARAM",
+        "source": "LongVariable"
+      },
+      {
+        "line": 103,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like TEST_CASE_CONFIG_HELP",
+        "source": "LongVariable"
+      },
+      {
+        "line": 106,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like TEST_CASE_DATA_PARAM",
+        "source": "LongVariable"
+      },
+      {
+        "line": 107,
+        "column": 32,
+        "type": "error",
+        "message": "Avoid excessively long variable names like TEST_CASE_DATA_HELP",
+        "source": "LongVariable"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/ui/UserOutput.java",
+    "score": 9.5,
+    "error_count": 1,
+    "messages": [
+      {
+        "line": 50,
+        "column": 44,
+        "type": "error",
+        "message": "Avoid excessively long variable names like DATE_TIME_FORMATTER",
+        "source": "LongVariable"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/util/LsBenchCompressUtil.java",
+    "score": 8.0,
+    "error_count": 4,
+    "messages": [
+      {
+        "line": 60,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'tar': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 81,
+        "column": 22,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'fos': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 91,
+        "column": 13,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'uncompressed': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 92,
+        "column": 13,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'archive': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/util/LsBenchDownloader.java",
+    "score": 8.5,
+    "error_count": 3,
+    "messages": [
+      {
+        "line": 50,
+        "column": 18,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'target': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 51,
+        "column": 22,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'client': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 53,
+        "column": 26,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'response': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/main/java/org/logstash/benchmark/cli/util/LsBenchJsonUtil.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 53,
+        "column": 16,
+        "type": "error",
+        "message": "Unnecessary qualifier 'LsBenchJsonUtil': 'OBJECT_MAPPER' is already in scope because it is declared in an enclosing type",
+        "source": "UnnecessaryFullyQualifiedName"
+      },
+      {
+        "line": 53,
+        "column": 62,
+        "type": "error",
+        "message": "Unnecessary qualifier 'LsBenchJsonUtil': 'LS_METRIC_TYPE' is already in scope because it is declared in an enclosing type",
+        "source": "UnnecessaryFullyQualifiedName"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/test/java/org/logstash/benchmark/cli/LsMetricsMonitorTest.java",
+    "score": 7.5,
+    "error_count": 5,
+    "messages": [
+      {
+        "line": 41,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 52,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'monitor': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 60,
+        "column": 70,
+        "type": "error",
+        "message": "Number 170250.0D should separate every third digit with an underscore",
+        "source": "UseUnderscoresInNumericLiterals"
+      },
+      {
+        "line": 70,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'monitor': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 84,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'input': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/test/java/org/logstash/benchmark/cli/MainEsStorageTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 32,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 41,
+        "column": 17,
+        "type": "error",
+        "message": "JUnit tests should include assert() or fail()",
+        "source": "JUnitTestsShouldIncludeAssert"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/benchmark-cli/src/test/java/org/logstash/benchmark/cli/MainTest.java",
+    "score": 4.0,
+    "error_count": 12,
+    "messages": [
+      {
+        "line": 30,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.hamcrest.CoreMatchers.is'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 31,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.hamcrest.MatcherAssert.assertThat'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 39,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 45,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 47,
+        "column": 33,
+        "type": "error",
+        "message": "The String literal \"--workdir=%s\" appears 6 times in this file; the first occurrence is on line 47",
+        "source": "AvoidDuplicateLiterals"
+      },
+      {
+        "line": 61,
+        "column": 17,
+        "type": "error",
+        "message": "JUnit tests should include assert() or fail()",
+        "source": "JUnitTestsShouldIncludeAssert"
+      },
+      {
+        "line": 73,
+        "column": 17,
+        "type": "error",
+        "message": "JUnit tests should include assert() or fail()",
+        "source": "JUnitTestsShouldIncludeAssert"
+      },
+      {
+        "line": 76,
+        "column": 27,
+        "type": "error",
+        "message": "The String literal \"--%s=5.5.0\" appears 4 times in this file; the first occurrence is on line 76",
+        "source": "AvoidDuplicateLiterals"
+      },
+      {
+        "line": 85,
+        "column": 17,
+        "type": "error",
+        "message": "JUnit tests should include assert() or fail()",
+        "source": "JUnitTestsShouldIncludeAssert"
+      },
+      {
+        "line": 98,
+        "column": 17,
+        "type": "error",
+        "message": "JUnit tests should include assert() or fail()",
+        "source": "JUnitTestsShouldIncludeAssert"
+      },
+      {
+        "line": 111,
+        "column": 17,
+        "type": "error",
+        "message": "JUnit tests should include assert() or fail()",
+        "source": "JUnitTestsShouldIncludeAssert"
+      },
+      {
+        "line": 125,
+        "column": 17,
+        "type": "error",
+        "message": "JUnit tests should include assert() or fail()",
+        "source": "JUnitTestsShouldIncludeAssert"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/dependencies-report/src/main/java/org/logstash/dependencies/Dependency.java",
+    "score": 0.0,
+    "error_count": 46,
+    "messages": [
+      {
+        "line": 35,
+        "column": 1,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 35,
+        "column": 52,
+        "type": "error",
+        "message": "This class has too many methods, consider refactoring it.",
+        "source": "TooManyMethods"
+      },
+      {
+        "line": 37,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'name'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 38,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'version'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 39,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'url'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 40,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'spdxLicense'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 41,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'sourceURL'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 42,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'copyright'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 48,
+        "column": 14,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'toCsvReportRecord()'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 56,
+        "column": 17,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'addDependenciesFromRubyReport(InputStream, SortedSet<Dependency>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 56,
+        "column": 59,
+        "type": "error",
+        "message": "Parameter 'stream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 89,
+        "type": "error",
+        "message": "Parameter 'dependencies' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 58,
+        "column": 16,
+        "type": "error",
+        "message": "Avoid variables with short names like in",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 58,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'in' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 59,
+        "column": 24,
+        "type": "error",
+        "message": "Local variable 'record' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 60,
+        "column": 30,
+        "type": "error",
+        "message": "Unnecessary qualifier 'Dependency': 'fromRubyCsvRecord' is already in scope",
+        "source": "UnnecessaryFullyQualifiedName"
+      },
+      {
+        "line": 68,
+        "column": 17,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'addDependenciesFromJavaReport(InputStream, SortedSet<Dependency>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 68,
+        "column": 59,
+        "type": "error",
+        "message": "Parameter 'stream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 68,
+        "column": 89,
+        "type": "error",
+        "message": "Parameter 'dependencies' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 70,
+        "column": 16,
+        "type": "error",
+        "message": "Avoid variables with short names like in",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 70,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'in' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 71,
+        "column": 24,
+        "type": "error",
+        "message": "Local variable 'record' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 72,
+        "column": 30,
+        "type": "error",
+        "message": "Unnecessary qualifier 'Dependency': 'fromJavaCsvRecord' is already in scope",
+        "source": "UnnecessaryFullyQualifiedName"
+      },
+      {
+        "line": 76,
+        "column": 59,
+        "type": "error",
+        "message": "Parameter 'record' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 77,
+        "column": 20,
+        "type": "error",
+        "message": "Avoid variables with short names like d",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 77,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'd' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 82,
+        "column": 29,
+        "type": "error",
+        "message": "Avoid using literals in if statements",
+        "source": "AvoidLiteralsInIfCondition"
+      },
+      {
+        "line": 85,
+        "column": 29,
+        "type": "error",
+        "message": "Avoid using literals in if statements",
+        "source": "AvoidLiteralsInIfCondition"
+      },
+      {
+        "line": 91,
+        "column": 59,
+        "type": "error",
+        "message": "Parameter 'record' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 92,
+        "column": 20,
+        "type": "error",
+        "message": "Avoid variables with short names like d",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 92,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'd' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 96,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'nameAndVersion' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 99,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'err' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 104,
+        "column": 18,
+        "type": "error",
+        "message": "Local variable 'split' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 105,
+        "column": 29,
+        "type": "error",
+        "message": "Avoid using literals in if statements",
+        "source": "AvoidLiteralsInIfCondition"
+      },
+      {
+        "line": 106,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'err' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 120,
+        "column": 34,
+        "type": "error",
+        "message": "Avoid variables with short names like o",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 120,
+        "column": 34,
+        "type": "error",
+        "message": "Parameter 'o' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 122,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 125,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 127,
+        "column": 20,
+        "type": "error",
+        "message": "Avoid variables with short names like d",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 127,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'd' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 137,
+        "column": 37,
+        "type": "error",
+        "message": "Avoid variables with short names like o",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 137,
+        "column": 37,
+        "type": "error",
+        "message": "Parameter 'o' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 138,
+        "column": 16,
+        "type": "error",
+        "message": "Useless parentheses.",
+        "source": "UselessParentheses"
+      },
+      {
+        "line": 170,
+        "column": 29,
+        "type": "error",
+        "message": "This statement should have braces",
+        "source": "ControlStatementBraces"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/dependencies-report/src/main/java/org/logstash/dependencies/Main.java",
+    "score": 0.0,
+    "error_count": 26,
+    "messages": [
+      {
+        "line": 29,
+        "column": 1,
+        "type": "error",
+        "message": "Unused import 'java.nio.file.Path'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 36,
+        "column": 8,
+        "type": "error",
+        "message": "Avoid short class names like Main",
+        "source": "ShortClassName"
+      },
+      {
+        "line": 36,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 38,
+        "column": 25,
+        "type": "error",
+        "message": "Avoid excessively long variable names like LICENSE_MAPPING_PATH",
+        "source": "LongVariable"
+      },
+      {
+        "line": 38,
+        "column": 25,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'LICENSE_MAPPING_PATH'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 39,
+        "column": 25,
+        "type": "error",
+        "message": "Avoid excessively long variable names like ACCEPTABLE_LICENSES_PATH",
+        "source": "LongVariable"
+      },
+      {
+        "line": 39,
+        "column": 25,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'ACCEPTABLE_LICENSES_PATH'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 41,
+        "column": 38,
+        "type": "error",
+        "message": "Parameter 'args' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 42,
+        "column": 27,
+        "type": "error",
+        "message": "Avoid using literals in if statements",
+        "source": "AvoidLiteralsInIfCondition"
+      },
+      {
+        "line": 43,
+        "column": 13,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 48,
+        "column": 21,
+        "type": "error",
+        "message": "Avoid excessively long variable names like rubyDependenciesStream",
+        "source": "LongVariable"
+      },
+      {
+        "line": 48,
+        "column": 21,
+        "type": "error",
+        "message": "Ensure that resources like this FileInputStream object are closed after use",
+        "source": "CloseResource"
+      },
+      {
+        "line": 48,
+        "column": 21,
+        "type": "error",
+        "message": "Local variable 'rubyDependenciesStream' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 49,
+        "column": 22,
+        "type": "error",
+        "message": "Avoid excessively long variable names like javaDependencyReports",
+        "source": "LongVariable"
+      },
+      {
+        "line": 49,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'javaDependencyReports' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 50,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid excessively long variable names like javaDependenciesStreams",
+        "source": "LongVariable"
+      },
+      {
+        "line": 50,
+        "column": 23,
+        "type": "error",
+        "message": "Local variable 'javaDependenciesStreams' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 54,
+        "column": 20,
+        "type": "error",
+        "message": "Ensure that resources like this FileWriter object are closed after use",
+        "source": "CloseResource"
+      },
+      {
+        "line": 54,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'licenseCSVWriter' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 20,
+        "type": "error",
+        "message": "Ensure that resources like this FileWriter object are closed after use",
+        "source": "CloseResource"
+      },
+      {
+        "line": 55,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'noticeWriter' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 22,
+        "type": "error",
+        "message": "Avoid excessively long variable names like unusedLicenseWriter",
+        "source": "LongVariable"
+      },
+      {
+        "line": 56,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'unusedLicenseWriter' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 58,
+        "column": 17,
+        "type": "error",
+        "message": "Local variable 'reportResult' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 72,
+        "column": 24,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'getResourceAsStream(String)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 72,
+        "column": 51,
+        "type": "error",
+        "message": "Parameter 'resourcePath' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/dependencies-report/src/main/java/org/logstash/dependencies/ReportGenerator.java",
+    "score": 0.0,
+    "error_count": 123,
+    "messages": [
+      {
+        "line": 48,
+        "column": 8,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 48,
+        "column": 30,
+        "type": "error",
+        "message": "This class has too many methods, consider refactoring it.",
+        "source": "TooManyMethods"
+      },
+      {
+        "line": 50,
+        "column": 18,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'UNKNOWN_LICENSE'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 50,
+        "column": 18,
+        "type": "error",
+        "message": "The final field name 'UNKNOWN_LICENSE' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "FieldNamingConventions"
+      },
+      {
+        "line": 50,
+        "column": 18,
+        "type": "error",
+        "message": "This final field could be made static",
+        "source": "FinalFieldCouldBeStatic"
+      },
+      {
+        "line": 51,
+        "column": 34,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'UNKNOWN_LICENSES'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 51,
+        "column": 34,
+        "type": "error",
+        "message": "The final field name 'UNKNOWN_LICENSES' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "FieldNamingConventions"
+      },
+      {
+        "line": 52,
+        "column": 20,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'CSV_HEADERS'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 52,
+        "column": 20,
+        "type": "error",
+        "message": "The final field name 'CSV_HEADERS' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "FieldNamingConventions"
+      },
+      {
+        "line": 53,
+        "column": 34,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'MISSING_NOTICE'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 53,
+        "column": 34,
+        "type": "error",
+        "message": "The final field name 'MISSING_NOTICE' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "FieldNamingConventions"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'generateReport(InputStream, InputStream, InputStream, InputStream[], Writer, Writer, Writer)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 56,
+        "column": 25,
+        "type": "error",
+        "message": "Avoid excessively long variable names like licenseMappingStream",
+        "source": "LongVariable"
+      },
+      {
+        "line": 56,
+        "column": 25,
+        "type": "error",
+        "message": "Parameter 'licenseMappingStream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 57,
+        "column": 25,
+        "type": "error",
+        "message": "Avoid excessively long variable names like acceptableLicensesStream",
+        "source": "LongVariable"
+      },
+      {
+        "line": 57,
+        "column": 25,
+        "type": "error",
+        "message": "Parameter 'acceptableLicensesStream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 58,
+        "column": 25,
+        "type": "error",
+        "message": "Avoid excessively long variable names like rubyDependenciesStream",
+        "source": "LongVariable"
+      },
+      {
+        "line": 58,
+        "column": 25,
+        "type": "error",
+        "message": "Parameter 'rubyDependenciesStream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 59,
+        "column": 27,
+        "type": "error",
+        "message": "Avoid excessively long variable names like javaDependenciesStreams",
+        "source": "LongVariable"
+      },
+      {
+        "line": 59,
+        "column": 27,
+        "type": "error",
+        "message": "Parameter 'javaDependenciesStreams' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 60,
+        "column": 20,
+        "type": "error",
+        "message": "Parameter 'licenseOutput' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 61,
+        "column": 20,
+        "type": "error",
+        "message": "Parameter 'noticeOutput' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 62,
+        "column": 20,
+        "type": "error",
+        "message": "Avoid excessively long variable names like unusedLicenseOutput",
+        "source": "LongVariable"
+      },
+      {
+        "line": 62,
+        "column": 20,
+        "type": "error",
+        "message": "Parameter 'unusedLicenseOutput' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 63,
+        "column": 31,
+        "type": "error",
+        "message": "Local variable 'dependencies' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 68,
+        "column": 34,
+        "type": "error",
+        "message": "Local variable 'licenseMapping' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 74,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'msg' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 75,
+        "column": 9,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 87,
+        "column": 48,
+        "type": "error",
+        "message": "Parameter 'noticeOutput' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 87,
+        "column": 84,
+        "type": "error",
+        "message": "Parameter 'dependencies' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 88,
+        "column": 25,
+        "type": "error",
+        "message": "Local variable 'dependency' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 93,
+        "column": 54,
+        "type": "error",
+        "message": "Avoid excessively long variable names like licenseMappingStream",
+        "source": "LongVariable"
+      },
+      {
+        "line": 93,
+        "column": 54,
+        "type": "error",
+        "message": "Parameter 'licenseMappingStream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 93,
+        "column": 88,
+        "type": "error",
+        "message": "Avoid excessively long variable names like acceptableLicensesStream",
+        "source": "LongVariable"
+      },
+      {
+        "line": 93,
+        "column": 88,
+        "type": "error",
+        "message": "Parameter 'acceptableLicensesStream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 94,
+        "column": 67,
+        "type": "error",
+        "message": "Parameter 'licenseMapping' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 94,
+        "column": 105,
+        "type": "error",
+        "message": "Parameter 'dependencies' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 96,
+        "column": 22,
+        "type": "error",
+        "message": "Avoid excessively long variable names like acceptableLicenses",
+        "source": "LongVariable"
+      },
+      {
+        "line": 96,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'acceptableLicenses' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 99,
+        "column": 25,
+        "type": "error",
+        "message": "Local variable 'dependency' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 104,
+        "column": 41,
+        "type": "error",
+        "message": "Parameter 'output' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 104,
+        "column": 71,
+        "type": "error",
+        "message": "Parameter 'dependencies' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 107,
+        "column": 29,
+        "type": "error",
+        "message": "Local variable 'dependency' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 116,
+        "column": 13,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 117,
+        "column": 29,
+        "type": "error",
+        "message": "Local variable 'dependency' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 118,
+        "column": 17,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 125,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'errMsg' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 129,
+        "column": 13,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 130,
+        "column": 29,
+        "type": "error",
+        "message": "Local variable 'dependency' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 131,
+        "column": 17,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 137,
+        "column": 53,
+        "type": "error",
+        "message": "Avoid excessively long variable names like unusedLicenseWriter",
+        "source": "LongVariable"
+      },
+      {
+        "line": 137,
+        "column": 53,
+        "type": "error",
+        "message": "Parameter 'unusedLicenseWriter' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 137,
+        "column": 99,
+        "type": "error",
+        "message": "Parameter 'licenseMapping' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 138,
+        "column": 27,
+        "type": "error",
+        "message": "Avoid excessively long variable names like unusedDependencies",
+        "source": "LongVariable"
+      },
+      {
+        "line": 138,
+        "column": 27,
+        "type": "error",
+        "message": "Local variable 'unusedDependencies' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 140,
+        "column": 45,
+        "type": "error",
+        "message": "Local variable 'entry' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 146,
+        "column": 13,
+        "type": "error",
+        "message": "Substitute calls to size() == 0 (or size() != 0, size() > 0, size() < 1) with calls to isEmpty()",
+        "source": "UseCollectionIsEmpty"
+      },
+      {
+        "line": 147,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'msg' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 148,
+        "column": 13,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 151,
+        "column": 25,
+        "type": "error",
+        "message": "Local variable 'dep' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 152,
+        "column": 17,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 158,
+        "column": 52,
+        "type": "error",
+        "message": "Avoid excessively long variable names like javaDependenciesStreams",
+        "source": "LongVariable"
+      },
+      {
+        "line": 158,
+        "column": 52,
+        "type": "error",
+        "message": "Parameter 'javaDependenciesStreams' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 158,
+        "column": 99,
+        "type": "error",
+        "message": "Parameter 'dependencies' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 159,
+        "column": 26,
+        "type": "error",
+        "message": "Ensure that resources like this InputStream object are closed after use",
+        "source": "CloseResource"
+      },
+      {
+        "line": 159,
+        "column": 26,
+        "type": "error",
+        "message": "Local variable 'stream' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 164,
+        "column": 47,
+        "type": "error",
+        "message": "Parameter 'noticeOutput' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 164,
+        "column": 72,
+        "type": "error",
+        "message": "Parameter 'dependency' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 166,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'notice' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 168,
+        "column": 21,
+        "type": "error",
+        "message": "Local variable 'noticeIsBlank' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 169,
+        "column": 13,
+        "type": "error",
+        "message": "Avoid if (x != y) ..; else ..;",
+        "source": "ConfusingTernary"
+      },
+      {
+        "line": 180,
+        "column": 18,
+        "type": "error",
+        "message": "The method 'checkDependencyLicense(Map<String, LicenseInfo>, List<String>, Dependency)' has a cognitive complexity of 16, current threshold is 15",
+        "source": "CognitiveComplexity"
+      },
+      {
+        "line": 180,
+        "column": 66,
+        "type": "error",
+        "message": "Parameter 'licenseMapping' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 180,
+        "column": 95,
+        "type": "error",
+        "message": "Avoid excessively long variable names like acceptableLicenses",
+        "source": "LongVariable"
+      },
+      {
+        "line": 180,
+        "column": 95,
+        "type": "error",
+        "message": "Parameter 'acceptableLicenses' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 180,
+        "column": 126,
+        "type": "error",
+        "message": "Parameter 'dependency' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 182,
+        "column": 25,
+        "type": "error",
+        "message": "Local variable 'licenseInfo' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 184,
+        "column": 22,
+        "type": "error",
+        "message": "Avoid excessively long variable names like dependencyLicenses",
+        "source": "LongVariable"
+      },
+      {
+        "line": 184,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'dependencyLicenses' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 185,
+        "column": 21,
+        "type": "error",
+        "message": "Avoid excessively long variable names like hasAcceptableLicense",
+        "source": "LongVariable"
+      },
+      {
+        "line": 186,
+        "column": 45,
+        "type": "error",
+        "message": "Position literals first in String comparisons",
+        "source": "LiteralsFirstInComparisons"
+      },
+      {
+        "line": 195,
+        "column": 17,
+        "type": "error",
+        "message": "Access to field `spdxLicense` on foreign value `dependency` (degree 1)",
+        "source": "LawOfDemeter"
+      },
+      {
+        "line": 196,
+        "column": 17,
+        "type": "error",
+        "message": "Access to field `url` on foreign value `dependency` (degree 1)",
+        "source": "LawOfDemeter"
+      },
+      {
+        "line": 197,
+        "column": 17,
+        "type": "error",
+        "message": "Access to field `sourceURL` on foreign value `dependency` (degree 1)",
+        "source": "LawOfDemeter"
+      },
+      {
+        "line": 198,
+        "column": 17,
+        "type": "error",
+        "message": "Access to field `copyright` on foreign value `dependency` (degree 1)",
+        "source": "LawOfDemeter"
+      },
+      {
+        "line": 205,
+        "column": 13,
+        "type": "error",
+        "message": "Access to field `spdxLicense` on foreign value `dependency` (degree 1)",
+        "source": "LawOfDemeter"
+      },
+      {
+        "line": 210,
+        "column": 53,
+        "type": "error",
+        "message": "Parameter 'stream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 210,
+        "column": 74,
+        "type": "error",
+        "message": "Avoid excessively long variable names like acceptableLicenses",
+        "source": "LongVariable"
+      },
+      {
+        "line": 210,
+        "column": 74,
+        "type": "error",
+        "message": "Parameter 'acceptableLicenses' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 212,
+        "column": 16,
+        "type": "error",
+        "message": "Avoid variables with short names like in",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 212,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'in' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 213,
+        "column": 24,
+        "type": "error",
+        "message": "Local variable 'record' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 214,
+        "column": 20,
+        "type": "error",
+        "message": "Avoid excessively long variable names like acceptableLicenseId",
+        "source": "LongVariable"
+      },
+      {
+        "line": 214,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'acceptableLicenseId' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 215,
+        "column": 49,
+        "type": "error",
+        "message": "Position literals first in String comparisons",
+        "source": "LiteralsFirstInComparisons"
+      },
+      {
+        "line": 221,
+        "column": 49,
+        "type": "error",
+        "message": "Parameter 'stream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 221,
+        "column": 82,
+        "type": "error",
+        "message": "Parameter 'licenseMapping' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 223,
+        "column": 16,
+        "type": "error",
+        "message": "Avoid variables with short names like in",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 223,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'in' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 224,
+        "column": 24,
+        "type": "error",
+        "message": "Local variable 'record' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 225,
+        "column": 20,
+        "type": "error",
+        "message": "Avoid excessively long variable names like dependencyNameAndVersion",
+        "source": "LongVariable"
+      },
+      {
+        "line": 225,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'dependencyNameAndVersion' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 226,
+        "column": 54,
+        "type": "error",
+        "message": "Position literals first in String comparisons",
+        "source": "LiteralsFirstInComparisons"
+      },
+      {
+        "line": 227,
+        "column": 21,
+        "type": "error",
+        "message": "Local variable 'lastIndex' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 228,
+        "column": 24,
+        "type": "error",
+        "message": "Local variable 'depName' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 237,
+        "column": 65,
+        "type": "error",
+        "message": "Parameter 'licenses' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 237,
+        "column": 82,
+        "type": "error",
+        "message": "Parameter 'depName' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 237,
+        "column": 103,
+        "type": "error",
+        "message": "Parameter 'lup' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 239,
+        "column": 25,
+        "type": "error",
+        "message": "Local variable 'existingLicense' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 244,
+        "column": 24,
+        "type": "error",
+        "message": "Local variable 'err' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 256,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'license'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 257,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'url'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 258,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'sourceURL'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 259,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'copyright'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 260,
+        "column": 13,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'isUnused'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 262,
+        "column": 5,
+        "type": "error",
+        "message": "Missing commented default access modifier on constructor 'LicenseInfo(String, String)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 262,
+        "column": 24,
+        "type": "error",
+        "message": "Parameter 'license' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 262,
+        "column": 40,
+        "type": "error",
+        "message": "Parameter 'url' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 267,
+        "column": 24,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'fromCSVRecord(CSVRecord)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 267,
+        "column": 48,
+        "type": "error",
+        "message": "Parameter 'record' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 268,
+        "column": 21,
+        "type": "error",
+        "message": "Local variable 'info' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 269,
+        "column": 29,
+        "type": "error",
+        "message": "Avoid using literals in if statements",
+        "source": "AvoidLiteralsInIfCondition"
+      },
+      {
+        "line": 272,
+        "column": 29,
+        "type": "error",
+        "message": "Avoid using literals in if statements",
+        "source": "AvoidLiteralsInIfCondition"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/dependencies-report/src/test/java/org/logstash/dependencies/ReportGeneratorTest.java",
+    "score": 0.0,
+    "error_count": 58,
+    "messages": [
+      {
+        "line": 21,
+        "column": 1,
+        "type": "error",
+        "message": "Too many static imports may lead to messy code",
+        "source": "TooManyStaticImports"
+      },
+      {
+        "line": 34,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.hamcrest.CoreMatchers.containsString'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 35,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.hamcrest.CoreMatchers.is'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 36,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.hamcrest.CoreMatchers.not'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 37,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.hamcrest.MatcherAssert.assertThat'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 38,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.Assert.assertEquals'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 39,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.Assert.assertFalse'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 40,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.Assert.assertTrue'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 41,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.logstash.dependencies.Main.ACCEPTABLE_LICENSES_PATH'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 43,
+        "column": 8,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 43,
+        "column": 34,
+        "type": "error",
+        "message": "This class has too many methods, consider refactoring it.",
+        "source": "TooManyMethods"
+      },
+      {
+        "line": 46,
+        "column": 26,
+        "type": "error",
+        "message": "Avoid excessively long variable names like unusedLicenseWriter",
+        "source": "LongVariable"
+      },
+      {
+        "line": 47,
+        "column": 29,
+        "type": "error",
+        "message": "Avoid variables with short names like rg",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 58,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 59,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'expectedOutput' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 61,
+        "column": 16,
+        "type": "error",
+        "message": "Avoid excessively long variable names like expectedNoticeOutput",
+        "source": "LongVariable"
+      },
+      {
+        "line": 61,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'expectedNoticeOutput' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 63,
+        "column": 17,
+        "type": "error",
+        "message": "Local variable 'result' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 68,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'unusedLicenses' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 73,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 74,
+        "column": 17,
+        "type": "error",
+        "message": "Local variable 'result' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 82,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'unusedLicenses' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 87,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 89,
+        "column": 21,
+        "type": "error",
+        "message": "Avoid unused local variables such as 'result'.",
+        "source": "UnusedLocalVariable"
+      },
+      {
+        "line": 98,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 99,
+        "column": 17,
+        "type": "error",
+        "message": "Local variable 'result' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 105,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'csvString' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 108,
+        "column": 17,
+        "type": "error",
+        "message": "Local variable 'bundlerPattern' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 110,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'unusedLicenses' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 115,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 116,
+        "column": 17,
+        "type": "error",
+        "message": "Local variable 'result' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 124,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'unusedLicenses' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 129,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 130,
+        "column": 17,
+        "type": "error",
+        "message": "Local variable 'result' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 141,
+        "column": 30,
+        "type": "error",
+        "message": "Local variable 'found' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 141,
+        "column": 38,
+        "type": "error",
+        "message": "Access to field `MISSING_NOTICE` on foreign value `rg` (degree 1)",
+        "source": "LawOfDemeter"
+      },
+      {
+        "line": 141,
+        "column": 77,
+        "type": "error",
+        "message": "Position literals first in String comparisons",
+        "source": "LiteralsFirstInComparisons"
+      },
+      {
+        "line": 141,
+        "column": 125,
+        "type": "error",
+        "message": "Position literals first in String comparisons",
+        "source": "LiteralsFirstInComparisons"
+      },
+      {
+        "line": 143,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'unusedLicenses' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 148,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 149,
+        "column": 17,
+        "type": "error",
+        "message": "Local variable 'result' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 158,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'unusedLicenses' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 164,
+        "column": 47,
+        "type": "error",
+        "message": "Avoid excessively long variable names like licenseMappingPath",
+        "source": "LongVariable"
+      },
+      {
+        "line": 164,
+        "column": 47,
+        "type": "error",
+        "message": "Parameter 'licenseMappingPath' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 164,
+        "column": 80,
+        "type": "error",
+        "message": "Parameter 'csvOutput' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 164,
+        "column": 104,
+        "type": "error",
+        "message": "Parameter 'noticeOutput' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 164,
+        "column": 131,
+        "type": "error",
+        "message": "Avoid excessively long variable names like unusedLicenseWriter",
+        "source": "LongVariable"
+      },
+      {
+        "line": 164,
+        "column": 131,
+        "type": "error",
+        "message": "Parameter 'unusedLicenseWriter' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 178,
+        "column": 20,
+        "type": "error",
+        "message": "Avoid excessively long variable names like licenseMappingPath",
+        "source": "LongVariable"
+      },
+      {
+        "line": 178,
+        "column": 20,
+        "type": "error",
+        "message": "Parameter 'licenseMappingPath' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 178,
+        "column": 54,
+        "type": "error",
+        "message": "Parameter 'javaLicenses' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 178,
+        "column": 81,
+        "type": "error",
+        "message": "Parameter 'csvOutput' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 179,
+        "column": 26,
+        "type": "error",
+        "message": "Parameter 'noticeOutput' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 179,
+        "column": 53,
+        "type": "error",
+        "message": "Avoid excessively long variable names like unusedLicenseWriter",
+        "source": "LongVariable"
+      },
+      {
+        "line": 179,
+        "column": 53,
+        "type": "error",
+        "message": "Parameter 'unusedLicenseWriter' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 192,
+        "column": 59,
+        "type": "error",
+        "message": "Parameter 'stream' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 196,
+        "column": 47,
+        "type": "error",
+        "message": "Avoid variables with short names like s",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 196,
+        "column": 47,
+        "type": "error",
+        "message": "Parameter 's' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/Date.java",
+    "score": 9.5,
+    "error_count": 1,
+    "messages": [
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Avoid short class names like Date",
+        "source": "ShortClassName"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/Grok.java",
+    "score": 9.5,
+    "error_count": 1,
+    "messages": [
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Avoid short class names like Grok",
+        "source": "ShortClassName"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/Gsub.java",
+    "score": 9.5,
+    "error_count": 1,
+    "messages": [
+      {
+        "line": 25,
+        "column": 14,
+        "type": "error",
+        "message": "Avoid short class names like Gsub",
+        "source": "ShortClassName"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestAppend.java",
+    "score": 0.0,
+    "error_count": 21,
+    "messages": [
+      {
+        "line": 31,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 37,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 37,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 39,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 49,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 54,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'appendHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 54,
+        "column": 47,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'append_json' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'append_json' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 56,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'value' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 57,
+        "column": 16,
+        "type": "error",
+        "message": "The local variable name 'value_contents' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 63,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'mutate_contents' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 63,
+        "column": 16,
+        "type": "error",
+        "message": "The local variable name 'mutate_contents' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 69,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_append' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 69,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestConvert.java",
+    "score": 0.5,
+    "error_count": 19,
+    "messages": [
+      {
+        "line": 31,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 37,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 37,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 39,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 49,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 54,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'convertHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 54,
+        "column": 48,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'convert_json' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'convert_json' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 57,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'mutate_contents' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 57,
+        "column": 16,
+        "type": "error",
+        "message": "The local variable name 'mutate_contents' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 63,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_convert' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 63,
+        "column": 59,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestConverter.java",
+    "score": 0.0,
+    "error_count": 35,
+    "messages": [
+      {
+        "line": 29,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 29,
+        "column": 30,
+        "type": "error",
+        "message": "This class has too many methods, consider refactoring it.",
+        "source": "TooManyMethods"
+      },
+      {
+        "line": 38,
+        "column": 54,
+        "type": "error",
+        "message": "Parameter 'content' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 41,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'tokens' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 60,
+        "type": "error",
+        "message": "Parameter 'content' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 69,
+        "column": 45,
+        "type": "error",
+        "message": "Parameter 'content' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 73,
+        "column": 45,
+        "type": "error",
+        "message": "Parameter 'content' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 77,
+        "column": 45,
+        "type": "error",
+        "message": "Parameter 'fieldName' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 77,
+        "column": 63,
+        "type": "error",
+        "message": "Parameter 'content' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 81,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'fieldName' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 81,
+        "column": 62,
+        "type": "error",
+        "message": "Parameter 'content' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 90,
+        "column": 51,
+        "type": "error",
+        "message": "Parameter 'fields' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 100,
+        "column": 43,
+        "type": "error",
+        "message": "Parameter 'content' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 119,
+        "column": 41,
+        "type": "error",
+        "message": "Parameter 'content' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 119,
+        "column": 54,
+        "type": "error",
+        "message": "Parameter 'shifts' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 120,
+        "column": 23,
+        "type": "error",
+        "message": "Local variable 'spacing' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 133,
+        "column": 55,
+        "type": "error",
+        "message": "Parameter 'patterns' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 141,
+        "column": 51,
+        "type": "error",
+        "message": "Parameter 'ingestArray' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 156,
+        "column": 62,
+        "type": "error",
+        "message": "Parameter 'patterns' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 162,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'contents' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 166,
+        "column": 50,
+        "type": "error",
+        "message": "Parameter 'filters' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 177,
+        "column": 57,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 177,
+        "column": 75,
+        "type": "error",
+        "message": "Parameter 'name' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 183,
+        "column": 72,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 183,
+        "column": 90,
+        "type": "error",
+        "message": "Parameter 'name' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 193,
+        "column": 54,
+        "type": "error",
+        "message": "Parameter 'tag' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 193,
+        "column": 66,
+        "type": "error",
+        "message": "Parameter 'onFailurePipeline' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 222,
+        "column": 55,
+        "type": "error",
+        "message": "Parameter 'filtersPipeline' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 222,
+        "column": 80,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 224,
+        "column": 16,
+        "type": "error",
+        "message": "Avoid excessively long variable names like filtersPipelineStr",
+        "source": "LongVariable"
+      },
+      {
+        "line": 224,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'filtersPipelineStr' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 226,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 226,
+        "column": 38,
+        "type": "error",
+        "message": "Unnecessary qualifier 'IngestConverter': 'getStdinInput' is already in scope",
+        "source": "UnnecessaryFullyQualifiedName"
+      },
+      {
+        "line": 226,
+        "column": 91,
+        "type": "error",
+        "message": "Unnecessary qualifier 'IngestConverter': 'getStdoutOutput' is already in scope",
+        "source": "UnnecessaryFullyQualifiedName"
+      },
+      {
+        "line": 228,
+        "column": 58,
+        "type": "error",
+        "message": "Unnecessary qualifier 'IngestConverter': 'getElasticsearchOutput' is already in scope",
+        "source": "UnnecessaryFullyQualifiedName"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestDate.java",
+    "score": 0.0,
+    "error_count": 25,
+    "messages": [
+      {
+        "line": 32,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 38,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 41,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 43,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 43,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 50,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'dateHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 55,
+        "column": 45,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'date_json' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'date_json' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 57,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'formats' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 60,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'match_contents' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 60,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'match_contents' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 62,
+        "column": 21,
+        "type": "error",
+        "message": "Local variable 'f' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 65,
+        "column": 16,
+        "type": "error",
+        "message": "The local variable name 'date_contents' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 69,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'target' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 78,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'timezone' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 85,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'locale' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 94,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_date' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 94,
+        "column": 56,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestGeoIp.java",
+    "score": 0.5,
+    "error_count": 19,
+    "messages": [
+      {
+        "line": 31,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 38,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 41,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 43,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 43,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 50,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'geoIpHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 55,
+        "column": 46,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'geoip_data' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'geoip_data' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 72,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'fields' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 76,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 82,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_geoip' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 82,
+        "column": 57,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestGrok.java",
+    "score": 0.0,
+    "error_count": 24,
+    "messages": [
+      {
+        "line": 32,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 38,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 41,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 43,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 43,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 50,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'grokHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 55,
+        "column": 45,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'grok_data' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'grok_data' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 57,
+        "column": 16,
+        "type": "error",
+        "message": "The local variable name 'grok_contents' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 71,
+        "column": 50,
+        "type": "error",
+        "message": "Parameter 'name' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 71,
+        "column": 63,
+        "type": "error",
+        "message": "Parameter 'content' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 75,
+        "column": 75,
+        "type": "error",
+        "message": "Parameter 'definitions' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 76,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'content' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 77,
+        "column": 39,
+        "type": "error",
+        "message": "Local variable 'entry' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 92,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_grok' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 92,
+        "column": 56,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 96,
+        "column": 26,
+        "type": "error",
+        "message": "The static method name 'get_name' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestGsub.java",
+    "score": 1.5,
+    "error_count": 17,
+    "messages": [
+      {
+        "line": 31,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 37,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 37,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 39,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 49,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 54,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'gsubHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 54,
+        "column": 45,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'gsub_data' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'gsub_data' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 64,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_gsub' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 64,
+        "column": 56,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestJson.java",
+    "score": 0.5,
+    "error_count": 19,
+    "messages": [
+      {
+        "line": 32,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 38,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 41,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 43,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 43,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 50,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'jsonHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 55,
+        "column": 45,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'json_data' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'json_data' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 58,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'parts' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 58,
+        "column": 34,
+        "type": "error",
+        "message": "Raw type use may be avoided by using a diamond: `new ArrayList<>()`",
+        "source": "UseDiamondOperator"
+      },
+      {
+        "line": 76,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_json' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 76,
+        "column": 56,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestLowercase.java",
+    "score": 1.5,
+    "error_count": 17,
+    "messages": [
+      {
+        "line": 31,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 37,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 37,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 39,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 49,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 54,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'lowercaseHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 54,
+        "column": 50,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'lowercase_data' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'lowercase_data' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 64,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_lowercase' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 64,
+        "column": 61,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestPipeline.java",
+    "score": 0.0,
+    "error_count": 24,
+    "messages": [
+      {
+        "line": 33,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 39,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 41,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 41,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 41,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 42,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 44,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 44,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 46,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'logstash_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 46,
+        "column": 16,
+        "type": "error",
+        "message": "The local variable name 'logstash_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 54,
+        "column": 27,
+        "type": "error",
+        "message": "The method 'mapProcessor(Map)' has a cyclomatic complexity of 13.",
+        "source": "CyclomaticComplexity"
+      },
+      {
+        "line": 54,
+        "column": 27,
+        "type": "error",
+        "message": "The method 'mapProcessor(Map)' has an NPath complexity of 3072, current threshold is 200",
+        "source": "NPathComplexity"
+      },
+      {
+        "line": 54,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filter_blocks' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filter_blocks' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 83,
+        "column": 48,
+        "type": "error",
+        "message": "The String literal \"mutate\" appears 6 times in this file; the first occurrence is on line 83",
+        "source": "AvoidDuplicateLiterals"
+      },
+      {
+        "line": 124,
+        "column": 13,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 130,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'handle_on_failure_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 130,
+        "column": 64,
+        "type": "error",
+        "message": "Parameter 'on_failure_json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 130,
+        "column": 64,
+        "type": "error",
+        "message": "The method parameter name 'on_failure_json' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "FormalParameterNamingConventions"
+      },
+      {
+        "line": 130,
+        "column": 88,
+        "type": "error",
+        "message": "Parameter 'tag_name' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 130,
+        "column": 88,
+        "type": "error",
+        "message": "The method parameter name 'tag_name' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "FormalParameterNamingConventions"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestRename.java",
+    "score": 1.5,
+    "error_count": 17,
+    "messages": [
+      {
+        "line": 31,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 37,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 37,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 39,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 49,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 54,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'renameHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 54,
+        "column": 47,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'rename_json' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'rename_json' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 63,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_rename' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 63,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/IngestSet.java",
+    "score": 0.0,
+    "error_count": 25,
+    "messages": [
+      {
+        "line": 31,
+        "column": 8,
+        "type": "error",
+        "message": "This utility class has a non-private constructor",
+        "source": "UseUtilityClass"
+      },
+      {
+        "line": 37,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'json' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 37,
+        "column": 58,
+        "type": "error",
+        "message": "Parameter 'appendStdio' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 38,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'mapper' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 39,
+        "column": 48,
+        "type": "error",
+        "message": "Local variable 'typeRef' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 39,
+        "column": 76,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 40,
+        "column": 15,
+        "type": "error",
+        "message": "Avoid using implementation types like 'HashMap'; use the interface instead",
+        "source": "LooseCoupling"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "Local variable 'filters_pipeline' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 42,
+        "column": 22,
+        "type": "error",
+        "message": "The local variable name 'filters_pipeline' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 49,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 54,
+        "column": 19,
+        "type": "error",
+        "message": "Linguistics Antipattern - The setter 'setHash' should not return any type except void linguistically",
+        "source": "LinguisticNaming"
+      },
+      {
+        "line": 54,
+        "column": 19,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'setHash(Map<String, Map>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 54,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'set_json' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 55,
+        "column": 13,
+        "type": "error",
+        "message": "The local variable name 'set_json' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 57,
+        "column": 22,
+        "type": "error",
+        "message": "The final local variable name 'value_contents' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 64,
+        "column": 20,
+        "type": "error",
+        "message": "Avoid excessively long variable names like painless_condition",
+        "source": "LongVariable"
+      },
+      {
+        "line": 64,
+        "column": 20,
+        "type": "error",
+        "message": "Local variable 'painless_condition' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 64,
+        "column": 20,
+        "type": "error",
+        "message": "The local variable name 'painless_condition' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 66,
+        "column": 17,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 71,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'mutate_contents' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 71,
+        "column": 16,
+        "type": "error",
+        "message": "The local variable name 'mutate_contents' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "LocalVariableNamingConventions"
+      },
+      {
+        "line": 77,
+        "column": 27,
+        "type": "error",
+        "message": "The static method name 'has_set' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 77,
+        "column": 55,
+        "type": "error",
+        "message": "Parameter 'processor' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/JsUtil.java",
+    "score": 6.0,
+    "error_count": 8,
+    "messages": [
+      {
+        "line": 30,
+        "column": 1,
+        "type": "error",
+        "message": "Unused import 'javax.script.Invocable'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 78,
+        "column": 24,
+        "type": "error",
+        "message": "The method 'convert(String[], String)' has a cyclomatic complexity of 17.",
+        "source": "CyclomaticComplexity"
+      },
+      {
+        "line": 174,
+        "column": 11,
+        "type": "error",
+        "message": "Exception thrown at line 99 is caught in this block.",
+        "source": "ExceptionAsFlowControl"
+      },
+      {
+        "line": 186,
+        "column": 13,
+        "type": "error",
+        "message": "Avoid using literals in if statements",
+        "source": "AvoidLiteralsInIfCondition"
+      },
+      {
+        "line": 196,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'reader': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 207,
+        "column": 20,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'isNotEmpty(String)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 207,
+        "column": 38,
+        "type": "error",
+        "message": "Avoid variables with short names like s",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 207,
+        "column": 38,
+        "type": "error",
+        "message": "Parameter 's' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/Json.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 28,
+        "column": 8,
+        "type": "error",
+        "message": "Avoid short class names like Json",
+        "source": "ShortClassName"
+      },
+      {
+        "line": 28,
+        "column": 8,
+        "type": "error",
+        "message": "This class has only private constructors and may be final",
+        "source": "ClassWithOnlyPrivateConstructorsShouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/Rename.java",
+    "score": 9.5,
+    "error_count": 1,
+    "messages": [
+      {
+        "line": 25,
+        "column": 8,
+        "type": "error",
+        "message": "This class has only private constructors and may be final",
+        "source": "ClassWithOnlyPrivateConstructorsShouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/main/java/org/logstash/ingest/Set.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 28,
+        "column": 8,
+        "type": "error",
+        "message": "Avoid short class names like Set",
+        "source": "ShortClassName"
+      },
+      {
+        "line": 28,
+        "column": 8,
+        "type": "error",
+        "message": "This class has only private constructors and may be final",
+        "source": "ClassWithOnlyPrivateConstructorsShouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/AppendTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/ConvertTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/DateTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/GeoIpTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/GrokTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/GsubTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/IngestTest.java",
+    "score": 6.0,
+    "error_count": 8,
+    "messages": [
+      {
+        "line": 35,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.hamcrest.CoreMatchers.is'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 36,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.hamcrest.MatcherAssert.assertThat'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 37,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameter'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 43,
+        "column": 17,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 43,
+        "column": 17,
+        "type": "error",
+        "message": "This abstract class does not have any abstract methods",
+        "source": "AbstractClassWithoutAbstractMethod"
+      },
+      {
+        "line": 62,
+        "column": 72,
+        "type": "error",
+        "message": "A method/constructor should not explicitly throw java.lang.Exception",
+        "source": "SignatureDeclareThrowsException"
+      },
+      {
+        "line": 85,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary modifier 'final' on resource specification 'input': resource specifications are implicitly final",
+        "source": "UnnecessaryModifier"
+      },
+      {
+        "line": 99,
+        "column": 54,
+        "type": "error",
+        "message": "Parameter 'temp' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/JsonTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/LowercaseTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/PipelineTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 27,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 29,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/RenameTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/ingest-converter/src/test/java/org/logstash/ingest/SetTest.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 26,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.runners.Parameterized.Parameters'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 28,
+        "column": 14,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/jvm-options-parser/src/main/java/org/logstash/launchers/JavaVersion.java",
+    "score": 3.0,
+    "error_count": 14,
+    "messages": [
+      {
+        "line": 30,
+        "column": 8,
+        "type": "error",
+        "message": "This class has only private constructors and may be final",
+        "source": "ClassWithOnlyPrivateConstructorsShouldBeFinal"
+      },
+      {
+        "line": 36,
+        "column": 39,
+        "type": "error",
+        "message": "Parameter 'version' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 40,
+        "column": 24,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'parse(String)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 41,
+        "column": 56,
+        "type": "error",
+        "message": "Avoid unnecessary comparisons in boolean expressions",
+        "source": "SimplifyBooleanExpressions"
+      },
+      {
+        "line": 45,
+        "column": 52,
+        "type": "error",
+        "message": "Explicit type arguments can be replaced by a diamond: `new ArrayList<>()`",
+        "source": "UseDiamondOperator"
+      },
+      {
+        "line": 55,
+        "column": 42,
+        "type": "error",
+        "message": "Avoid using literals in if statements",
+        "source": "AvoidLiteralsInIfCondition"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 63,
+        "column": 23,
+        "type": "error",
+        "message": "Local variable 'left' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 64,
+        "column": 23,
+        "type": "error",
+        "message": "Local variable 'right' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 68,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid variables with short names like l",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 69,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid variables with short names like r",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 71,
+        "column": 17,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 74,
+        "column": 17,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 81,
+        "column": 38,
+        "type": "error",
+        "message": "Parameter 'other' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/jvm-options-parser/src/main/java/org/logstash/launchers/JvmOptionsParser.java",
+    "score": 0.0,
+    "error_count": 63,
+    "messages": [
+      {
+        "line": 35,
+        "column": 1,
+        "type": "error",
+        "message": "Unused import 'java.util.HashSet'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 53,
+        "column": 8,
+        "type": "error",
+        "message": "Possible God Class (WMC=50, ATFD=12, TCC=0.000%)",
+        "source": "GodClass"
+      },
+      {
+        "line": 53,
+        "column": 31,
+        "type": "error",
+        "message": "This class has too many methods, consider refactoring it.",
+        "source": "TooManyMethods"
+      },
+      {
+        "line": 55,
+        "column": 35,
+        "type": "error",
+        "message": "Array initialization can be written shorter",
+        "source": "UseShortArrayInitializer"
+      },
+      {
+        "line": 55,
+        "column": 35,
+        "type": "error",
+        "message": "Avoid excessively long variable names like MANDATORY_JVM_OPTIONS",
+        "source": "LongVariable"
+      },
+      {
+        "line": 72,
+        "column": 12,
+        "type": "error",
+        "message": "Missing commented default access modifier on nested class 'JvmOptionsFileParserException'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 76,
+        "column": 28,
+        "type": "error",
+        "message": "Field jvmOptionsFile has the same name as a method",
+        "source": "AvoidFieldNameMatchingMethodName"
+      },
+      {
+        "line": 78,
+        "column": 14,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'jvmOptionsFile()'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 82,
+        "column": 50,
+        "type": "error",
+        "message": "Field invalidLines has the same name as a method",
+        "source": "AvoidFieldNameMatchingMethodName"
+      },
+      {
+        "line": 82,
+        "column": 50,
+        "type": "error",
+        "message": "Fields should be declared at the top of the class, before any method declarations, constructors, initializers or inner classes.",
+        "source": "FieldDeclarationsShouldBeAtStartOfClass"
+      },
+      {
+        "line": 84,
+        "column": 36,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'invalidLines()'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 88,
+        "column": 9,
+        "type": "error",
+        "message": "It is a good practice to call super() in a constructor",
+        "source": "CallSuperInConstructor"
+      },
+      {
+        "line": 88,
+        "column": 9,
+        "type": "error",
+        "message": "Missing commented default access modifier on constructor 'JvmOptionsFileParserException(Path, SortedMap<Integer, String>)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 95,
+        "column": 26,
+        "type": "error",
+        "message": "Fields should be declared at the top of the class, before any method declarations, constructors, initializers or inner classes.",
+        "source": "FieldDeclarationsShouldBeAtStartOfClass"
+      },
+      {
+        "line": 97,
+        "column": 5,
+        "type": "error",
+        "message": "Missing commented default access modifier on constructor 'JvmOptionsParser(String)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 97,
+        "column": 29,
+        "type": "error",
+        "message": "Parameter 'logstashHome' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 117,
+        "column": 17,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'bailOnOldJava()'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 124,
+        "column": 13,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 125,
+        "column": 13,
+        "type": "error",
+        "message": "System.exit() should not be used in J2EE/JEE apps",
+        "source": "DoNotTerminateVM"
+      },
+      {
+        "line": 128,
+        "column": 17,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'handleJvmOptions(String[], String)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 128,
+        "column": 43,
+        "type": "error",
+        "message": "Parameter 'args' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 128,
+        "column": 56,
+        "type": "error",
+        "message": "Parameter 'lsJavaOpts' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 132,
+        "column": 28,
+        "type": "error",
+        "message": "Local variable 'jvmOptions' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 135,
+        "column": 13,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 143,
+        "column": 17,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 151,
+        "column": 13,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 152,
+        "column": 13,
+        "type": "error",
+        "message": "System.exit() should not be used in J2EE/JEE apps",
+        "source": "DoNotTerminateVM"
+      },
+      {
+        "line": 156,
+        "column": 56,
+        "type": "error",
+        "message": "Parameter 'jvmOpts' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 158,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 168,
+        "column": 50,
+        "type": "error",
+        "message": "Parameter 'jvmOptionsFile' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 168,
+        "column": 73,
+        "type": "error",
+        "message": "Parameter 'lsJavaOpts' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 169,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'javaMajorVersion' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 177,
+        "column": 17,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 188,
+        "column": 9,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 198,
+        "column": 62,
+        "type": "error",
+        "message": "Parameter 'options' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 199,
+        "column": 17,
+        "type": "error",
+        "message": "Avoid excessively long variable names like maxOrderAlreadyContained",
+        "source": "LongVariable"
+      },
+      {
+        "line": 199,
+        "column": 17,
+        "type": "error",
+        "message": "Local variable 'maxOrderAlreadyContained' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 201,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 215,
+        "column": 32,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'getMandatoryJvmOptions(int)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 215,
+        "column": 59,
+        "type": "error",
+        "message": "Parameter 'javaMajorVersion' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 224,
+        "column": 13,
+        "type": "error",
+        "message": "Usage of System.out/err",
+        "source": "SystemPrintln"
+      },
+      {
+        "line": 225,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 230,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 236,
+        "column": 26,
+        "type": "error",
+        "message": "Avoid variables with short names like is",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 238,
+        "column": 29,
+        "type": "error",
+        "message": "Avoid variables with short names like br",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 251,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 260,
+        "column": 18,
+        "type": "error",
+        "message": "Missing commented default access modifier on nested class 'ParseResult'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 264,
+        "column": 14,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'appendOption(String)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 264,
+        "column": 34,
+        "type": "error",
+        "message": "Parameter 'option' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 268,
+        "column": 14,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'appendError(int, String)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 268,
+        "column": 30,
+        "type": "error",
+        "message": "Parameter 'lineNumber' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 268,
+        "column": 49,
+        "type": "error",
+        "message": "Parameter 'malformedLine' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 285,
+        "column": 34,
+        "type": "error",
+        "message": "Fields should be declared at the top of the class, before any method declarations, constructors, initializers or inner classes.",
+        "source": "FieldDeclarationsShouldBeAtStartOfClass"
+      },
+      {
+        "line": 298,
+        "column": 24,
+        "type": "error",
+        "message": "Missing commented default access modifier on method 'parse(int, BufferedReader)'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 298,
+        "column": 79,
+        "type": "error",
+        "message": "Avoid variables with short names like br",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 311,
+        "column": 14,
+        "type": "error",
+        "message": "Unnecessary semicolon",
+        "source": "UnnecessarySemicolon"
+      },
+      {
+        "line": 370,
+        "column": 37,
+        "type": "error",
+        "message": "The method 'jvmOptionFromLine(int, String)' has a cognitive complexity of 21, current threshold is 15",
+        "source": "CognitiveComplexity"
+      },
+      {
+        "line": 370,
+        "column": 37,
+        "type": "error",
+        "message": "The method 'jvmOptionFromLine(int, String)' has a cyclomatic complexity of 12.",
+        "source": "CyclomaticComplexity"
+      },
+      {
+        "line": 373,
+        "column": 13,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 381,
+        "column": 17,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 398,
+        "column": 21,
+        "type": "error",
+        "message": "A method should have only one exit point, and that should be the last statement in the method",
+        "source": "OnlyOneReturn"
+      },
+      {
+        "line": 407,
+        "column": 34,
+        "type": "error",
+        "message": "Fields should be declared at the top of the class, before any method declarations, constructors, initializers or inner classes.",
+        "source": "FieldDeclarationsShouldBeAtStartOfClass"
+      },
+      {
+        "line": 411,
+        "column": 23,
+        "type": "error",
+        "message": "Avoid excessively long variable names like specVersionMatcher",
+        "source": "LongVariable"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/tools/jvm-options-parser/src/test/java/org/logstash/launchers/JvmOptionsParserTest.java",
+    "score": 0.0,
+    "error_count": 40,
+    "messages": [
+      {
+        "line": 21,
+        "column": 1,
+        "type": "error",
+        "message": "Unused static import 'org.junit.Assert.*'",
+        "source": "UnnecessaryImport"
+      },
+      {
+        "line": 23,
+        "column": 8,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 23,
+        "column": 35,
+        "type": "error",
+        "message": "This class has too many methods, consider refactoring it.",
+        "source": "TooManyMethods"
+      },
+      {
+        "line": 28,
+        "column": 31,
+        "type": "error",
+        "message": "This final field could be made static",
+        "source": "FinalFieldCouldBeStatic"
+      },
+      {
+        "line": 29,
+        "column": 41,
+        "type": "error",
+        "message": "Avoid excessively long variable names like outputStreamCaptor",
+        "source": "LongVariable"
+      },
+      {
+        "line": 42,
+        "column": 17,
+        "type": "error",
+        "message": "The JUnit 4 test method name 'test_LS_JAVA_OPTS_isUsedWhenNoJvmOptionsIsAvailable' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 51,
+        "column": 17,
+        "type": "error",
+        "message": "The JUnit 4 test method name 'givenLS_JAVA_OPTS_containingMultipleDefinitionsWithAlsoMaxOrderThenNoDuplicationOfMaxOrderOptionShouldHappen' doesn't match '[a-z][a-zA-Z0-9]*'",
+        "source": "MethodNamingConventions"
+      },
+      {
+        "line": 56,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'firstMatch' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 57,
+        "column": 13,
+        "type": "error",
+        "message": "Local variable 'lastMatch' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 62,
+        "column": 41,
+        "type": "error",
+        "message": "Parameter 'name' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 62,
+        "column": 54,
+        "type": "error",
+        "message": "Parameter 'val' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 63,
+        "column": 29,
+        "type": "error",
+        "message": "Local variable 'env' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 64,
+        "column": 15,
+        "type": "error",
+        "message": "Local variable 'field' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 65,
+        "column": 9,
+        "type": "error",
+        "message": "You should not modify visibility of constructors, methods or fields using setAccessible()",
+        "source": "AvoidAccessibilityAlteration"
+      },
+      {
+        "line": 71,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 72,
+        "column": 30,
+        "type": "error",
+        "message": "Ensure that resources like this BufferedReader object are closed after use",
+        "source": "CloseResource"
+      },
+      {
+        "line": 72,
+        "column": 98,
+        "type": "error",
+        "message": "The String literal \"-XX:+UseConcMarkSweepGC\" appears 7 times in this file; the first occurrence is on line 72",
+        "source": "AvoidDuplicateLiterals"
+      },
+      {
+        "line": 80,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 90,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 99,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 120,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 129,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 134,
+        "column": 38,
+        "type": "error",
+        "message": "Local variable 'res' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 142,
+        "column": 17,
+        "type": "error",
+        "message": "Unit tests should not contain more than 1 assert(s).",
+        "source": "JUnitTestContainsTooManyAsserts"
+      },
+      {
+        "line": 143,
+        "column": 14,
+        "type": "error",
+        "message": "Local variable 'optionsFile' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 155,
+        "column": 14,
+        "type": "error",
+        "message": "Local variable 'optionsFile' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 167,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'regex' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 168,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'expected' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 169,
+        "column": 14,
+        "type": "error",
+        "message": "Local variable 'optionsFile' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 175,
+        "column": 33,
+        "type": "error",
+        "message": "Local variable 'pattern' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 176,
+        "column": 16,
+        "type": "error",
+        "message": "Local variable 'lastMatch' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 185,
+        "column": 65,
+        "type": "error",
+        "message": "Parameter 'writer' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 186,
+        "column": 14,
+        "type": "error",
+        "message": "Local variable 'optionsFile' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 187,
+        "column": 21,
+        "type": "error",
+        "message": "Ensure that resources like this PrintWriter object are closed after use",
+        "source": "CloseResource"
+      },
+      {
+        "line": 187,
+        "column": 21,
+        "type": "error",
+        "message": "Local variable 'optionsWriter' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 193,
+        "column": 39,
+        "type": "error",
+        "message": "Parameter 'message' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 193,
+        "column": 55,
+        "type": "error",
+        "message": "Parameter 'expected' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 193,
+        "column": 94,
+        "type": "error",
+        "message": "Parameter 'res' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      },
+      {
+        "line": 197,
+        "column": 44,
+        "type": "error",
+        "message": "Avoid variables with short names like s",
+        "source": "ShortVariable"
+      },
+      {
+        "line": 197,
+        "column": 44,
+        "type": "error",
+        "message": "Parameter 's' is not assigned and could be declared final",
+        "source": "MethodArgumentCouldBeFinal"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/x-pack/src/test/java/org/logstash/xpack/test/RSpecIntegrationTests.java",
+    "score": 9.0,
+    "error_count": 2,
+    "messages": [
+      {
+        "line": 15,
+        "column": 8,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 24,
+        "column": 17,
+        "type": "error",
+        "message": "JUnit tests should include assert() or fail()",
+        "source": "JUnitTestsShouldIncludeAssert"
+      }
+    ]
+  },
+  {
+    "file": "/workspace/repo/x-pack/src/test/java/org/logstash/xpack/test/RSpecTests.java",
+    "score": 6.5,
+    "error_count": 7,
+    "messages": [
+      {
+        "line": 26,
+        "column": 8,
+        "type": "error",
+        "message": "Each class should declare at least one constructor",
+        "source": "AtLeastOneConstructor"
+      },
+      {
+        "line": 28,
+        "column": 23,
+        "type": "error",
+        "message": "Missing commented default access modifier on field 'LS_HOME'",
+        "source": "CommentDefaultAccessModifier"
+      },
+      {
+        "line": 35,
+        "column": 42,
+        "type": "error",
+        "message": "This statement should have braces",
+        "source": "ControlStatementBraces"
+      },
+      {
+        "line": 49,
+        "column": 18,
+        "type": "error",
+        "message": "Array initialization can be written shorter",
+        "source": "UseShortArrayInitializer"
+      },
+      {
+        "line": 49,
+        "column": 18,
+        "type": "error",
+        "message": "Local variable 'args' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 50,
+        "column": 14,
+        "type": "error",
+        "message": "Local variable 'runtime' could be declared final",
+        "source": "LocalVariableCouldBeFinal"
+      },
+      {
+        "line": 51,
+        "column": 39,
+        "type": "error",
+        "message": "This statement should have braces",
+        "source": "ControlStatementBraces"
+      }
+    ]
+  }
+]

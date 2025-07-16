@@ -128,6 +128,29 @@ def run_style_review(
             logger.error(f"Error building image {image_name}: {e}")
             return None
     
+    # Clone the repo if not already present
+    repo_dir = instance_dir / "repo"
+    if not repo_dir.exists():
+        clone_url = f"https://github.com/{instance.pr.org}/{instance.pr.repo}.git"
+        try:
+            subprocess.run(["git", "clone", clone_url, str(repo_dir)], check=True)
+            subprocess.run(["git", "checkout", instance.pr.base.sha], cwd=repo_dir, check=True)
+        except Exception as e:
+            logger.error(f"Error cloning or checking out repo: {e}")
+            return None
+    else:
+        # Optionally, check if the repo is at the correct commit, and reset if not
+        try:
+            current_sha = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=repo_dir
+            ).decode().strip()
+            if current_sha != instance.pr.base.sha:
+                subprocess.run(["git", "fetch"], cwd=repo_dir, check=True)
+                subprocess.run(["git", "checkout", instance.pr.base.sha], cwd=repo_dir, check=True)
+        except Exception as e:
+            logger.error(f"Error ensuring repo is at correct commit: {e}")
+            return None
+    
     # Run style review
     logger.info(f"Running style review for {instance.pr.id}...")
     
@@ -153,6 +176,10 @@ def run_style_review(
                     str(fix_patch_path.absolute()): {
                         "bind": instance.dependency().fix_patch_path(),
                         "mode": "rw",
+                    },
+                    str(repo_dir): {
+                        "bind": "/workspace/repo",
+                        "mode": "rw",
                     }
                 }
             )
@@ -170,6 +197,10 @@ def run_style_review(
                 volumes={
                     str(fix_patch_path.absolute()): {
                         "bind": instance.dependency().fix_patch_path(),
+                        "mode": "rw",
+                    },
+                    str(repo_dir): {
+                        "bind": "/workspace/repo",
                         "mode": "rw",
                     }
                 }

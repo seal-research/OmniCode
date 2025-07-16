@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 import concurrent.futures
 from typing import Dict, Optional
+import xml.etree.ElementTree as ET
 
 from tqdm import tqdm
 
@@ -116,6 +117,48 @@ def run_style_review(
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(file.content)
 
+    # Clone the repo if not already present or if empty
+    import shutil
+    repo_dir = instance_dir / "repo"
+    clone_url = f"https://github.com/{instance.pr.org}/{instance.pr.repo}.git"
+    base_sha = instance.pr.base.sha
+
+    if repo_dir.exists():
+        # Remove if empty or to ensure a clean state
+        if not any(repo_dir.iterdir()):
+            shutil.rmtree(repo_dir)
+    
+    if not repo_dir.exists():
+        try:
+            logger.info(f"Cloning repo from {clone_url} into {repo_dir}")
+            result = subprocess.run(
+                ["git", "clone", clone_url, str(repo_dir)],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            logger.info(result.stdout)
+            if result.returncode != 0:
+                logger.error(f"Git clone failed: {result.stderr}")
+                return None
+
+            logger.info(f"Checking out base SHA {base_sha}")
+            result = subprocess.run(
+                ["git", "checkout", base_sha],
+                cwd=repo_dir,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+            logger.info(result.stdout)
+            if result.returncode != 0:
+                logger.error(f"Git checkout failed: {result.stderr}")
+                return None
+        except Exception as e:
+            logger.error(f"Error cloning or checking out repo: {e}")
+            return None
+
+    # Check if repo_dir is non-empty
+    if not any(repo_dir.iterdir()):
+        logger.error(f"Repo directory {repo_dir} is empty after clone/checkout!")
+        return None
+
     try:
         docker_util.build(instance_dir, "Dockerfile", image_name, logger)
     except Exception as e:
@@ -124,136 +167,247 @@ def run_style_review(
 
     logger.info(f"Running style review for {instance.pr.id}...")
 
-    try:
+    # Only create default files if they do not exist, never overwrite after the run
+    if not original_report_path.exists():
         with open(original_report_path, "w") as f:
             f.write(create_default_style_report_json())
+    if not original_errors_path.exists():
         with open(original_errors_path, "w") as f:
             f.write(create_default_style_errors_json())
+    if not patched_report_path.exists():
         with open(patched_report_path, "w") as f:
             f.write(create_default_style_report_json())
+    if not patched_errors_path.exists():
         with open(patched_errors_path, "w") as f:
             f.write(create_default_style_errors_json())
 
-        
-        logger.info("Running initial style check (without patch)...")
-        try:
-            original_output = docker_util.run(
-                image_name,
-                instance.run(),
-                instance_dir / "original_run.log",
-                volumes=[f"{str(fix_patch_path.absolute())}:{instance.dependency().fix_patch_path()}:rw"]
-            )
-            logger.info("Original style check completed successfully")
-        except Exception as e:
-            logger.error(f"Error running original style check: {e}")
+    logger.info("Running initial style check (without patch)...")
+    try:
+        original_output = docker_util.run(
+            image_name,
+            instance.run(),
+            instance_dir / "original_run.log",
+            volumes=[
+                f"{str(fix_patch_path.absolute())}:{instance.dependency().fix_patch_path()}:rw",
+                f"{str((instance_dir / 'repo').absolute())}:/workspace/repo:rw",
+                f"{str((instance_dir / 'output').absolute())}:/workspace/output:rw"
+            ]
+        )
+        logger.info("Original style check completed successfully")
+    except Exception as e:
+        logger.error(f"Error running original style check: {e}")
 
-        logger.info("Running style check with patch applied...")
-        try:
-            patched_output = docker_util.run(
-                image_name,
-                instance.fix_patch_run(),
-                instance_dir / "patched_run.log",
-                volumes=[f"{str(fix_patch_path.absolute())}:{instance.dependency().fix_patch_path()}:rw"]
-            )
-            logger.info("Patched style check completed successfully")
-        except Exception as e:
-            logger.error(f"Error running patched style check: {e}")
+    logger.info("Running style check with patch applied...")
+    try:
+        patched_output = docker_util.run(
+            image_name,
+            instance.fix_patch_run(),
+            instance_dir / "patched_run.log",
+            volumes=[
+                f"{str(fix_patch_path.absolute())}:{instance.dependency().fix_patch_path()}:rw",
+                f"{str((instance_dir / 'repo').absolute())}:/workspace/repo:rw",
+                f"{str((instance_dir / 'output').absolute())}:/workspace/output:rw"
+            ]
+        )
+        logger.info("Patched style check completed successfully")
+    except Exception as e:
+        logger.error(f"Error running patched style check: {e}")
 
-        logger.info("Processing style review results...")
-        try:
-            # Ensure the report files exist, create defaults if they don't
-            if not os.path.exists(original_report_path):
-                logger.warning(f"Original report file not found at {original_report_path}, creating default")
-                with open(original_report_path, "w") as f:
-                    f.write(create_default_style_report_json())
-            
-            if not os.path.exists(patched_report_path):
-                logger.warning(f"Patched report file not found at {patched_report_path}, creating default")
-                with open(patched_report_path, "w") as f:
-                    f.write(create_default_style_report_json())
-            
-            with open(original_report_path, "r") as f:
-                original_summary = StyleReviewSummary(**json.load(f))
-            with open(patched_report_path, "r") as f:
-                patched_summary = StyleReviewSummary(**json.load(f))
-
-            # Ensure the error files exist, create defaults if they don't
-            if not os.path.exists(original_errors_path):
-                logger.warning(f"Original errors file not found at {original_errors_path}, creating default")
-                with open(original_errors_path, "w") as f:
-                    f.write(create_default_style_errors_json())
-            
-            if not os.path.exists(patched_errors_path):
-                logger.warning(f"Patched errors file not found at {patched_errors_path}, creating default")
-                with open(patched_errors_path, "w") as f:
-                    f.write(create_default_style_errors_json())
-            
-            with open(original_errors_path, "r") as f:
-                original_issues_data = json.load(f)
-                original_issues = []
-                for issue_data in original_issues_data:
-                    file_issues = []
-                    for msg in issue_data.get("messages", []):
-                        file_issues.append(StyleIssue(
-                            line=msg.get("line", 0),
-                            column=msg.get("column", 0),
-                            type=msg.get("type", "error"),
-                            message=msg.get("message", ""),
-                            source=msg.get("source", "pmd")
-                        ))
-                    original_issues.append(StyleFileReport(
-                        file=issue_data.get("file", ""),
-                        score=issue_data.get("score", 0.0),
-                        error_count=issue_data.get("error_count", 0),
-                        messages=file_issues
-                    ))
-
-            with open(patched_errors_path, "r") as f:
-                patched_issues_data = json.load(f)
-                patched_issues = []
-                for issue_data in patched_issues_data:
-                    file_issues = []
-                    for msg in issue_data.get("messages", []):
-                        file_issues.append(StyleIssue(
-                            line=msg.get("line", 0),
-                            column=msg.get("column", 0),
-                            type=msg.get("type", "error"),
-                            message=msg.get("message", ""),
-                            source=msg.get("source", "pmd")
-                        ))
-                    patched_issues.append(StyleFileReport(
-                        file=issue_data.get("file", ""),
-                        score=issue_data.get("score", 0.0),
-                        error_count=issue_data.get("error_count", 0),
-                        messages=file_issues
-                    ))
-
-            report = JavaStyleReviewReport(
-                org=instance.pr.org,
-                repo=instance.pr.repo,
-                number=instance.pr.number,
-                original_score=original_summary,
-                patched_score=patched_summary,
-                original_issues=original_issues,
-                patched_issues=patched_issues
-            )
-            report.calculate_improvement()
-
-            with open(instance_dir / "style_review_report.json", "w", encoding="utf-8") as f:
-                f.write(json.dumps(report.__dict__, indent=2))
-
-            logger.info(f"Style review completed for {instance.pr.id}")
-            logger.info(f"Original score: {original_summary.global_score}, Patched score: {patched_summary.global_score}")
-            logger.info(f"Improvement: {report.improvement}")
-
-            return report
-
-        except Exception as e:
-            logger.error(f"Error processing style review results: {e}")
+    logger.info("Processing style review results...")
+    try:
+        # Instead of parsing from output/pmd_output.xml, parse from the log files
+        def extract_pmd_xml_from_log(log_path):
+            if not os.path.exists(log_path):
+                return None
+            with open(log_path, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            start, end = None, None
+            for i, line in enumerate(lines):
+                if '==== FULL PMD VIOLATION XML OUTPUT ====' in line:
+                    start = i + 1
+                if '==== END OF PMD VIOLATION XML OUTPUT ====' in line:
+                    end = i
+                    break
+            if start is not None and end is not None and start < end:
+                xml_str = ''.join(lines[start:end]).strip()
+                return xml_str
             return None
 
+        def parse_pmd_xml_string_to_json(xml_str):
+            import xml.etree.ElementTree as ET
+            if not xml_str:
+                return []
+            root = ET.fromstring(xml_str)
+            ns = ''
+            if root.tag.startswith('{'):
+                ns = root.tag.split('}')[0] + '}'
+            files = []
+            for file_elem in root.findall(f"{ns}file"):
+                file_path = file_elem.get("name", "")
+                messages = []
+                for v in file_elem.findall(f"{ns}violation"):
+                    messages.append({
+                        "line": int(v.get("beginline", 0)),
+                        "column": int(v.get("begincolumn", 0)),
+                        "type": "error",
+                        "message": (v.text or "").strip(),
+                        "source": v.get("rule", "")
+                    })
+                files.append({
+                    "file": file_path,
+                    "score": max(0.0, 10 - 0.5 * len(messages)),
+                    "error_count": len(messages),
+                    "messages": messages
+                })
+            return files
+
+        # Parse from original_run.log
+        orig_log_path = instance_dir / "original_run.log"
+        orig_xml = extract_pmd_xml_from_log(orig_log_path)
+        orig_json = parse_pmd_xml_string_to_json(orig_xml)
+        with open(instance_dir / "original_style_errors.json", "w") as f:
+            json.dump(orig_json, f, indent=2)
+
+        # Compute and write correct summary for original
+        def compute_summary(file_json):
+            total_errors = sum(f["error_count"] for f in file_json)
+            total_files = len(file_json)
+            if total_files > 0:
+                global_score = 10 - (total_errors / total_files) * 0.5
+                if global_score < 0:
+                    global_score = 0.0
+            else:
+                global_score = 10.0
+            return {
+                "global_score": round(global_score, 4),
+                "total_errors": total_errors,
+                "total_warnings": 0
+            }
+        orig_summary = compute_summary(orig_json)
+        with open(instance_dir / "original_style_report.json", "w") as f:
+            json.dump(orig_summary, f, indent=2)
+
+        # Parse from patched_run.log
+        patched_log_path = instance_dir / "patched_run.log"
+        patched_xml = extract_pmd_xml_from_log(patched_log_path)
+        patched_json = parse_pmd_xml_string_to_json(patched_xml)
+        with open(instance_dir / "patched_style_errors.json", "w") as f:
+            json.dump(patched_json, f, indent=2)
+
+        # Compute and write correct summary for patched
+        patched_summary = compute_summary(patched_json)
+        with open(instance_dir / "patched_style_report.json", "w") as f:
+            json.dump(patched_summary, f, indent=2)
+
+        # --- NEW: Overwrite *_style_report.json with values from log if present ---
+        import re
+        def extract_stats_from_log(log_path):
+            if not os.path.exists(log_path):
+                return None
+            with open(log_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if line.startswith('Final statistics:'):
+                        # Example: Final statistics: total_files=271, total_errors=5649, global_score=0.0
+                        m = re.search(r'total_files=(\d+), total_errors=(\d+), global_score=([0-9.]+)', line)
+                        if m:
+                            return {
+                                "total_files": int(m.group(1)),
+                                "total_errors": int(m.group(2)),
+                                "global_score": float(m.group(3)),
+                                "total_warnings": 0
+                            }
+            return None
+        orig_stats = extract_stats_from_log(orig_log_path)
+        if orig_stats:
+            with open(instance_dir / "original_style_report.json", "w") as f:
+                json.dump({
+                    "global_score": orig_stats["global_score"],
+                    "total_errors": orig_stats["total_errors"],
+                    "total_warnings": orig_stats["total_warnings"]
+                }, f, indent=2)
+        patched_stats = extract_stats_from_log(patched_log_path)
+        if patched_stats:
+            with open(instance_dir / "patched_style_report.json", "w") as f:
+                json.dump({
+                    "global_score": patched_stats["global_score"],
+                    "total_errors": patched_stats["total_errors"],
+                    "total_warnings": patched_stats["total_warnings"]
+                }, f, indent=2)
+        # --- END NEW ---
+
+        # Now load the error files as before
+        with open(original_report_path, "r") as f:
+            original_summary = StyleReviewSummary(**json.load(f))
+        with open(patched_report_path, "r") as f:
+            patched_summary = StyleReviewSummary(**json.load(f))
+        with open(original_errors_path, "r") as f:
+            original_issues_data = json.load(f)
+            original_issues = []
+            for issue_data in original_issues_data:
+                file_issues = []
+                for msg in issue_data.get("messages", []):
+                    file_issues.append(StyleIssue(
+                        line=msg.get("line", 0),
+                        column=msg.get("column", 0),
+                        type=msg.get("type", "error"),
+                        message=msg.get("message", ""),
+                        source=msg.get("source", "pmd")
+                    ))
+                original_issues.append(StyleFileReport(
+                    file=issue_data.get("file", ""),
+                    score=issue_data.get("score", 0.0),
+                    error_count=issue_data.get("error_count", 0),
+                    messages=file_issues
+                ))
+        with open(patched_errors_path, "r") as f:
+            patched_issues_data = json.load(f)
+            patched_issues = []
+            for issue_data in patched_issues_data:
+                file_issues = []
+                for msg in issue_data.get("messages", []):
+                    file_issues.append(StyleIssue(
+                        line=msg.get("line", 0),
+                        column=msg.get("column", 0),
+                        type=msg.get("type", "error"),
+                        message=msg.get("message", ""),
+                        source=msg.get("source", "pmd")
+                    ))
+                patched_issues.append(StyleFileReport(
+                    file=issue_data.get("file", ""),
+                    score=issue_data.get("score", 0.0),
+                    error_count=issue_data.get("error_count", 0),
+                    messages=file_issues
+                ))
+
+        # Log per-file violations for visibility
+        logger.info("Per-file violations (original):")
+        for file_report in original_issues:
+            logger.info(f"{file_report.file}: {file_report.error_count} violations")
+            for msg in file_report.messages:  # Log all violations for each file
+                logger.info(f"  Line {msg.line}, Col {msg.column}: {msg.message} [{msg.source}]")
+
+        report = JavaStyleReviewReport(
+            org=instance.pr.org,
+            repo=instance.pr.repo,
+            number=instance.pr.number,
+            original_score=original_summary,
+            patched_score=patched_summary,
+            original_issues=original_issues,
+            patched_issues=patched_issues
+        )
+        report.calculate_improvement()
+
+        with open(instance_dir / "style_review_report.json", "w", encoding="utf-8") as f:
+            f.write(json.dumps(report.__dict__, indent=2))
+
+        logger.info(f"Style review completed for {instance.pr.id}")
+        logger.info(f"Original score: {original_summary.global_score}, Patched score: {patched_summary.global_score}")
+        logger.info(f"Improvement: {report.improvement}")
+
+        return report
+
     except Exception as e:
-        logger.error(f"Error running style review: {e}")
+        logger.error(f"Error processing style review results: {e}")
         return None
 
 def main(
