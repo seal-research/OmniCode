@@ -154,7 +154,7 @@ def setup_multiswebench_config(
             f.write(json.dumps(patch_data) + "\n")
 
     # Find dataset files matching our repos
-    dataset_base_path = "./multiswebench/mswebench_dataset"
+    dataset_base_path = "./multiswebench_local/mswebench_dataset"
     dataset_files = []
 
     print(f"Finding relevant dataset files...")
@@ -267,7 +267,7 @@ def run_with_timeout(cmd, timeout_seconds=10000):
 
 def run_multiswebench_phase(config_file, phase="all", timeout=10000):
     """Run a specific phase of Multi-SWE-Bench evaluation."""
-    script_path = "./multiswebench/multi_swe_bench/harness/run_evaluation.py"
+    script_path = "./multiswebench_local/multi_swe_bench/harness/run_evaluation.py"
 
     # Validate inputs
     if not os.path.exists(script_path):
@@ -404,7 +404,7 @@ def main():
     # Special case: just list instances
     if args.list_instances and "MSWEBugFixing" in active_flags:
         print("Listing available instances...")
-        dataset_base_path = "./multiswebench/mswebench_dataset"
+        dataset_base_path = "./multiswebench_local/mswebench_dataset"
         dataset_files = []
         for root, _, files in os.walk(dataset_base_path):
             for file in files:
@@ -510,7 +510,7 @@ def main():
         # Process predictions
         if predictions_map["MSWEBugFixing"] == "gold":
             print("Using gold patches from the dataset...")
-            dataset_base_path = "./multiswebench/mswebench_dataset"
+            dataset_base_path = "./multiswebench_local/mswebench_dataset"
             dataset_files = []
             for root, _, files in os.walk(dataset_base_path):
                 for file in files:
@@ -616,7 +616,7 @@ def main():
             # Process predictions exactly like MSWEBugFixing
             if predictions_map["StyleReview"] == "gold":
                 print("Using gold patches from the dataset...")
-                dataset_base_path = "./multiswebench/mswebench_dataset"
+                dataset_base_path = "./multiswebench_local/mswebench_dataset"
                 dataset_files = []
                 for root, _, files in os.walk(dataset_base_path):
                     for file in files:
@@ -656,7 +656,7 @@ def main():
             # which we already know works with these predictions
 
             # Find dataset files matching our repos
-            dataset_base_path = "./multiswebench/mswebench_dataset"
+            dataset_base_path = "./multiswebench_local/mswebench_dataset"
             dataset_files = []
 
             # Get unique repos for finding datasets
@@ -690,7 +690,7 @@ def main():
 
             try:
                 # Use the exact path provided
-                script_path = "multiswebench/multi_swe_bench/harness/style_review/run_java_style_review.py"
+                script_path = "multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review.py"
 
                 if not os.path.exists(script_path):
                     print(f"Error: Java style review script not found at: {script_path}")

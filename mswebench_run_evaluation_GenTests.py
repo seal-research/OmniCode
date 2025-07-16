@@ -75,8 +75,8 @@ def get_gold_predictions(dataset_name: str, instance_ids: list, split: str):
 
 def load_mswebench_dataset(instance_ids: list, 
                            predictions: dict,
-                           dataset_base_path: str = "./multiswebench/mswebench_dataset",
-                           mswebench_dataset_path: str = "./multiswebench/data/datasets"):
+                           dataset_base_path: str = "./multiswebench_local/mswebench_dataset",
+                           mswebench_dataset_path: str = "./multiswebench_local/data/datasets"):
     dataset_files = []
     for root, _, files in os.walk(dataset_base_path):
         for file in files:
@@ -112,7 +112,7 @@ def load_mswebench_dataset(instance_ids: list,
 
 def create_multiswebench_config(predictions, dataset_path, max_workers, force_rebuild, run_id, timeout, bad_patch_index = -1, phase="all"):
     """Set up configuration for Multi-SWE-Bench evaluation."""
-    data_dir = Path("./multiswebench/data")
+    data_dir = Path("./multiswebench_local/data")
     
     patch_file_sub_path = Path("patches") / f"{run_id}_patches.jsonl"
     patch_path = Path("data") / patch_file_sub_path
@@ -249,7 +249,7 @@ def run_multiswebench_phase(config_file, phase="all", timeout=1800):
     config_file = os.path.abspath(config_file)
     try:
         # CHange into the multiswebench directory
-        os.chdir("./multiswebench")
+        os.chdir("./multiswebench_local")
         print(f"Now in: {os.getcwd()}")
         current_dir = os.getcwd()
 
@@ -319,12 +319,12 @@ def run_instance(
                 print(f"Resolved instances: {report.get('resolved_instances', 0)}")
                 print(f"Unresolved instances: {report.get('unresolved_instances', 0)}")
 
-                workdir_path = Path("multiswebench/data/workdir")
+                workdir_path = Path("multiswebench_local/data/workdir")
                 config_path = Path(config_file)
-                dataset_path = Path("multiswebench/data/datasets")
-                patch_path = Path(f"multiswebench/data/patches")
-                logs_path = Path("multiswebench/data/logs")
-                output_path = Path("multiswebench/data/output")
+                dataset_path = Path("multiswebench_local/data/datasets")
+                patch_path = Path(f"multiswebench_local/data/patches")
+                logs_path = Path("multiswebench_local/data/logs")
+                output_path = Path("multiswebench_local/data/output")
                 if workdir_path.exists():
                     new_workdir_path = Path(f"multiswebench_runs/TestGeneration/{runid}/{Path(predictions_path).stem}") / f"{tag}"
                     
@@ -359,7 +359,7 @@ def run_instances(
         run_id: str,
         timeout: int,
         predictions_path,
-        dataset_path: str = "./multiswebench/data/datasets/dataset.jsonl",
+        dataset_path: str = "./multiswebench_local/data/datasets/dataset.jsonl",
     ):
     """
     Run all instances for the given predictions in parallel.
@@ -454,7 +454,7 @@ def run_instances(
     
 
 def clean_directories():
-    data_dir = Path("./multiswebench/data")
+    data_dir = Path("./multiswebench_local/data")
     dirs_to_remove = [
         "workdir",
         "logs",

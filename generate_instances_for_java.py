@@ -45,11 +45,12 @@ def main():
         print(f"File not found: {dataset_path}")
         sys.exit(1)
     instances = process_dataset_file(dataset_path)
-    out_path = dataset_path.replace("_dataset.jsonl", "_instances.json")
-    with open(out_path, "w") as out_f:
-        json.dump(instances, out_f, indent=2)
-    print(f"Wrote {len(instances)} instances to {out_path}")
-    codearena_instance_path = "data/codearena_instances_java.json"
+    # out_path = dataset_path.replace("_dataset.jsonl", "_instances.json")
+    # with open(out_path, "w") as out_f:
+    #     json.dump(instances, out_f, indent=2)
+    # print(f"Wrote {len(instances)} instances to {out_path}")
+    # codearena_instance_path = "data/codearena_instances_java.json"
+    codearena_instance_path = "data/multiswebench_data/multiswebench_instances.json"
     # Load existing instances if file exists
     if os.path.isfile(codearena_instance_path):
         with open(codearena_instance_path, "r") as f:
