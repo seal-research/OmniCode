@@ -6,14 +6,29 @@ Welcome to **OmniCode[CodeArena]**! This repository allows you to evaluate perfo
 
 CodeArena requires `Python 3.13` and its dependecies can be installed via `pip install -r requirements.txt`
 
-CodeArena is currently set up to work with a specific swebench version which can be installed using
+CodeArena is currently set up to work with a specific swebench and multiswebench version which can be installed using: 
 
 ```bash
 git clone https://github.com/seal-research/SWE-bench.git
 cd SWE-bench
 # pip install -e .
 pip install .
+``` 
+
+```bash
+git clone https://github.com/seal-research/multi-swe-bench.git
+cd multi-swe-bench
+pip install .
 ```
+
+or if you are comfortable using git submodules you can use:
+
+```bash
+git submodule update --init --recursive
+cd <submodule_path>
+pip install .
+```
+> NOTE: Running `pip install .` in multi-swe-bench installs multi=swe-bench as package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local CodeArena. 
 
 ## CodeArena Evaluation
 
