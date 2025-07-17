@@ -170,14 +170,14 @@ def run_style_review(
         try:
             original_output = docker_util.run(
                 image_name,
-                "mkdir -p /workspace/output && " + instance.run(),
+                instance.run(),
                 instance_dir / "original_run.log",
                 volumes={
                     str(fix_patch_path.absolute()): {
                         "bind": instance.dependency().fix_patch_path(),
                         "mode": "rw",
                     },
-                    str(repo_dir): {
+                    str(repo_dir.absolute()): {
                         "bind": "/workspace/repo",
                         "mode": "rw",
                     }
@@ -192,14 +192,14 @@ def run_style_review(
         try:
             patched_output = docker_util.run(
                 image_name,
-                "mkdir -p /workspace/output && " + instance.fix_patch_run(),
+                instance.fix_patch_run(),
                 instance_dir / "patched_run.log",
                 volumes={
                     str(fix_patch_path.absolute()): {
                         "bind": instance.dependency().fix_patch_path(),
                         "mode": "rw",
                     },
-                    str(repo_dir): {
+                    str(repo_dir.absolute()): {
                         "bind": "/workspace/repo",
                         "mode": "rw",
                     }

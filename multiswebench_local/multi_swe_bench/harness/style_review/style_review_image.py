@@ -150,11 +150,9 @@ run_style_review() {
     echo "All files in /workspace (ls -lR /workspace):"
     ls -lR /workspace 2>/dev/null || echo "No files found"
 
-    # Make a safe directory derived from output_dir — never use raw input path directly
+    # Make a safe directory for all intermediate output
     safe_output_dir="/workspace/output_dir_$(date +%s%N)"
     echo "Safe output directory: $safe_output_dir"
-
-    echo "Using mkdir"
     mkdir -p "$safe_output_dir"
 
     # Initialize default results immediately
@@ -193,44 +191,53 @@ run_style_review() {
 
     temp_dir=$(mktemp -d)
     trap 'rm -rf "$temp_dir"' EXIT
+    checkstyle_xml="$temp_dir/checkstyle_output.xml"
+    checkstyle_error_log="$safe_output_dir/checkstyle_error.log"
 
-    for file in $all_java_files; do
-        [ -z "$file" ] && continue
-        [ ! -f "$file" ] && continue
-        file_errors=0
-        file_score=10.0
-        # Run Checkstyle and capture output
-        java -jar /usr/local/lib/checkstyle.jar -c /workspace/checkstyle.xml "$file" -f xml > "$temp_dir/checkstyle.xml" 2>/dev/null || true
-        java -cp /usr/local/lib/checkstyle.jar com.puppycrawl.tools.checkstyle.Main -c /workspace/checkstyle.xml "$file" > "$temp_dir/checkstyle.txt" 2>/dev/null || true
-        file_errors=$(grep -c "\[ERROR\]" "$temp_dir/checkstyle.txt" || echo 0)
-        total_errors=$((total_errors + file_errors))
-        file_score=$(echo "scale=1; 10 - $file_errors * 0.5" | bc)
-        if (( $(echo "$file_score < 0" | bc -l) )); then
-            file_score="0.0"
-        fi
-        error_messages=$(grep "\[ERROR\]" "$temp_dir/checkstyle.txt" | sed -e 's/^.*\[ERROR\] //' || echo "")
-        file_report="{"
-        first=true
-        while IFS= read -r message; do
-            [ -z "$message" ] && continue
-            if $first; then
-                first=false
-            else
-                file_report+=",";
+    # Run Checkstyle on the entire repo at once, output XML
+    echo "Running Checkstyle on /workspace/repo ..."
+    if ! java -jar /usr/local/lib/checkstyle.jar -c /workspace/checkstyle.xml /workspace/repo -f xml > "$checkstyle_xml" 2> "$checkstyle_error_log"; then
+        echo "Checkstyle failed to analyze some files. See $checkstyle_error_log for details."
+    fi
+
+    # Parse Checkstyle XML output and build style_errors.json (per-file breakdown)
+    if [ -s "$checkstyle_xml" ]; then
+        # Use xmllint to extract all <file> nodes and their errors
+        xmllint --xpath '//file' "$checkstyle_xml" 2>/dev/null | \
+        awk -v q="\"" 'BEGIN{RS="<file ";FS="</file>"} NR>1{print "<file " $1}' | while read -r file_block; do
+            file_path=$(echo "$file_block" | grep -o 'name="[^"]*"' | head -1 | cut -d'"' -f2)
+            error_count=$(echo "$file_block" | grep -c '<error ')
+            file_score=$(echo "scale=1; 10 - $error_count * 0.5" | bc 2>/dev/null || echo "10.0")
+            if (( $(echo "$file_score < 0" | bc -l 2>/dev/null || echo "0") )); then
+                file_score="0.0"
             fi
-            if [[ "$message" =~ ^([0-9]+):([0-9]+):\ (.*) ]]; then
-                line="${BASH_REMATCH[1]}"
-                column="${BASH_REMATCH[2]}"
-                msg="${BASH_REMATCH[3]}"
-                file_report+="\"line\": $line, \"column\": $column, \"type\": \"error\", \"message\": \"${msg//\"/\\\"}\", \"source\": \"checkstyle\"}"
-            else
-                file_report+="\"line\": 0, \"column\": 0, \"type\": \"error\", \"message\": \"${message//\"/\\\"}\", \"source\": \"checkstyle\"}"
+            # Extract all error details for this file
+            error_json="["
+            while read -r eline; do
+                # Extract attributes and message
+                line=$(echo "$eline" | grep -o 'line="[^"]*"' | cut -d'"' -f2)
+                column=$(echo "$eline" | grep -o 'column="[^"]*"' | cut -d'"' -f2)
+                message=$(echo "$eline" | grep -o 'message="[^"]*"' | sed 's/message="\([^"]*\)"/\1/' | sed 's/"/\\"/g')
+                source=$(echo "$eline" | grep -o 'source="[^"]*"' | cut -d'"' -f2)
+                if [ -n "$error_json" ] && [ "$error_json" != "[" ]; then
+                    error_json+=",";
+                fi
+                error_json+="{\"line\": ${line:-0}, \"column\": ${column:-0}, \"type\": \"error\", \"message\": \"${message}\", \"source\": \"${source}\"}"
+            done < <(echo "$file_block" | grep '<error ')
+            error_json+="]"
+            # Write file report JSON
+            file_report="{\n  \"file\": \"$file_path\", \"score\": $file_score, \"error_count\": $error_count, \"messages\": $error_json\n}"
+            jq -s '.[0] + [.[1]]' "$safe_output_dir/style_errors.json" <(echo "$file_report") > "$temp_dir/tmp.json" 2>/dev/null || true
+            if [ -f "$temp_dir/tmp.json" ]; then
+                mv "$temp_dir/tmp.json" "$safe_output_dir/style_errors.json" 2>/dev/null || true
             fi
-        done <<< "$error_messages"
-        file_report+="}"
-        jq -s '.[0] + [.[1]]' "$safe_output_dir/style_errors.json" <(echo "$file_report") > "$temp_dir/new_errors.json"
-        mv "$temp_dir/new_errors.json" "$safe_output_dir/style_errors.json"
-    done
+        done
+    fi
+
+    # Count total errors directly from the XML for robust scoring
+    if [ -s "$checkstyle_xml" ]; then
+        total_errors=$(grep -c '<error ' "$checkstyle_xml")
+    fi
 
     # Generate final summary
     global_score=10.0
@@ -249,7 +256,7 @@ run_style_review() {
     echo "}" > "$safe_output_dir/style_report.json"
 
     # Copy results to the specified output directory with comprehensive error handling
-    if [ -n "$output_dir" ]; then
+    if [ -n "$output_dir" ] && [ "$output_dir" != "/dev/null" ]; then
         echo "Copying results to: $output_dir"
         mkdir -p "$output_dir" 2>/dev/null || true
         cp "$safe_output_dir/style_report.json" "$output_dir/original_style_report.json" 2>/dev/null || true
@@ -257,7 +264,17 @@ run_style_review() {
         [ -f "$safe_output_dir/patch_warning.log" ] && cp "$safe_output_dir/patch_warning.log" "$output_dir/patch_warning.log" 2>/dev/null || true
         [ -f "$safe_output_dir/patch_errors.log" ] && cp "$safe_output_dir/patch_errors.log" "$output_dir/patch_errors.log" 2>/dev/null || true
         [ -f "$safe_output_dir/error.log" ] && cp "$safe_output_dir/error.log" "$output_dir/error.log" 2>/dev/null || true
+        [ -f "$checkstyle_error_log" ] && cp "$checkstyle_error_log" "$output_dir/checkstyle_error.log" 2>/dev/null || true
+        [ -f "$checkstyle_xml" ] && cp "$checkstyle_xml" "$output_dir/checkstyle_output.xml" 2>/dev/null || true
     fi
+
+    echo "\n==== FULL CHECKSTYLE VIOLATION XML OUTPUT ===="
+    if [ -f "$checkstyle_xml" ]; then
+        cat "$checkstyle_xml"
+    else
+        echo "No Checkstyle XML output found."
+    fi
+    echo "==== END OF CHECKSTYLE VIOLATION XML OUTPUT ===="
 
     echo "Style review completed successfully"
     echo "=== Style review finished ==="
