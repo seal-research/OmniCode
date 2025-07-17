@@ -1,0 +1,23 @@
+{
+    "total_instances": 1,
+    "submitted_instances": 1,
+    "completed_instances": 1,
+    "incomplete_instances": 0,
+    "resolved_instances": 0,
+    "unresolved_instances": 1,
+    "empty_patch_instances": 0,
+    "error_instances": 0,
+    "submitted_ids": [
+        "elastic/logstash:pr-17021"
+    ],
+    "completed_ids": [
+        "elastic/logstash:pr-17021"
+    ],
+    "incomplete_ids": [],
+    "resolved_ids": [],
+    "unresolved_ids": [
+        "elastic/logstash:pr-17021"
+    ],
+    "empty_patch_ids": [],
+    "error_ids": []
+}

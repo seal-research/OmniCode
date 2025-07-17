@@ -8,15 +8,15 @@
     "empty_patch_instances": 0,
     "error_instances": 0,
     "submitted_ids": [
-        "apache/dubbo:pr-10638"
+        "google/gson:pr-1787"
     ],
     "completed_ids": [
-        "apache/dubbo:pr-10638"
+        "google/gson:pr-1787"
     ],
     "incomplete_ids": [],
     "resolved_ids": [],
     "unresolved_ids": [
-        "apache/dubbo:pr-10638"
+        "google/gson:pr-1787"
     ],
     "empty_patch_ids": [],
     "error_ids": []

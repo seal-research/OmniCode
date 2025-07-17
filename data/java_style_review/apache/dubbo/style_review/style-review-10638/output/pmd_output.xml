@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pmd xmlns="http://pmd.sourceforge.net/report/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pmd.sourceforge.net/report/2.0.0 http://pmd.sourceforge.net/report_2_0_0.xsd" version="7.0.0" timestamp="2025-07-16T14:00:27.494">
+<pmd xmlns="http://pmd.sourceforge.net/report/2.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pmd.sourceforge.net/report/2.0.0 http://pmd.sourceforge.net/report_2_0_0.xsd" version="7.0.0" timestamp="2025-07-17T15:35:34.074">
 <file name="/workspace/repo/dubbo-remoting/dubbo-remoting-api/src/main/java/org/apache/dubbo/remoting/Codec.java">
 <violation beginline="48" endline="48" begincolumn="16" endcolumn="35" rule="LawOfDemeter" ruleset="Design" package="org.apache.dubbo.remoting" class="Codec" method="encode" externalInfoUrl="https://docs.pmd-code.org/pmd-doc-7.0.0/pmd_rules_java_design.html#lawofdemeter" priority="3">
 Access to field `CODEC_KEY` on foreign value `` (degree 1)

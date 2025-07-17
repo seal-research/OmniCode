@@ -118,28 +118,34 @@ run_style_review() {
     echo "[]" > "$safe_output_dir/style_errors.json"
 
     # Handle patch application with comprehensive error handling
+    PATCH_STATUS="not_attempted"
     if [ -f "$patch_file" ] && [ "$patch_file" != "/dev/null" ]; then
         echo "Applying patch: $patch_file"
         echo "Patch file contents (first 10 lines):"
         head -10 "$patch_file" 2>/dev/null || echo "Could not read patch file"
-        
-        # Apply patch and capture any errors, but never fail the script
         patch_errors_file="$safe_output_dir/patch_errors.log"
-        if ! git apply --reject --whitespace=fix "$patch_file" 2>"$patch_errors_file" 2>&1; then
-            echo "Warning: Patch could not be fully applied. Some files may be missing or already patched." > "$safe_output_dir/patch_warning.log"
-            echo "Patch application errors:" >> "$safe_output_dir/patch_warning.log"
-            if [ -f "$patch_errors_file" ]; then
-                cat "$patch_errors_file" >> "$safe_output_dir/patch_warning.log" 2>/dev/null || true
+        if (cd /workspace/repo && git apply --check "$patch_file" 2>"$patch_errors_file"); then
+            if (cd /workspace/repo && git apply --reject --whitespace=fix "$patch_file" 2>>"$patch_errors_file"); then
+                echo "Patch applied successfully" | tee -a "$safe_output_dir/patch_status.log"
+                PATCH_STATUS="applied"
+            else
+                echo "Patch partially applied or with warnings. See $patch_errors_file for details." | tee -a "$safe_output_dir/patch_status.log"
+                PATCH_STATUS="partial"
             fi
-            echo "Continuing with analysis despite patch issues..."
         else
-            echo "Patch applied successfully"
-        fi
+            echo "Patch could NOT be applied at all. See $patch_errors_file for details." | tee -a "$safe_output_dir/patch_status.log"
+            PATCH_STATUS="failed"
+            fi
+        echo "PATCH_STATUS=$PATCH_STATUS" | tee -a "$safe_output_dir/patch_status.log"
     elif [ "$patch_file" = "/dev/null" ]; then
-        echo "No patch to apply (original state)"
+        echo "No patch to apply (original state)" | tee -a "$safe_output_dir/patch_status.log"
+        PATCH_STATUS="none"
+        echo "PATCH_STATUS=$PATCH_STATUS" | tee -a "$safe_output_dir/patch_status.log"
     else
         echo "No patch file found at $patch_file" > "$safe_output_dir/error.log"
-        echo "Continuing with analysis without patch..."
+        echo "Continuing with analysis without patch..." | tee -a "$safe_output_dir/patch_status.log"
+        PATCH_STATUS="missing"
+        echo "PATCH_STATUS=$PATCH_STATUS" | tee -a "$safe_output_dir/patch_status.log"
     fi
 
     # Find Java files to analyze - try multiple approaches
@@ -239,6 +245,7 @@ run_style_review() {
         [ -f "$pmd_error_log" ] && cp "$pmd_error_log" "$output_dir/pmd_error.log" 2>/dev/null || true
         # Copy the full PMD XML output
         [ -f "$pmd_output_xml" ] && cp "$pmd_output_xml" "$output_dir/pmd_output.xml" 2>/dev/null || true
+        [ -f "$safe_output_dir/patch_status.log" ] && cp "$safe_output_dir/patch_status.log" "$output_dir/patch_status.log" 2>/dev/null || true
     fi
 
     echo "\n==== FULL PMD VIOLATION XML OUTPUT ===="
@@ -257,4 +264,7 @@ run_style_review() {
 # Call the function with the provided arguments
 run_style_review "$@"
 """
+
+    def fix_patch_path(self) -> str:
+        return "/home/fix.patch"
 

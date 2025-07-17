@@ -54,7 +54,7 @@ class JavaStyleReviewImage(Image):
 {self.global_env}
 
 # Install necessary tools
-RUN apt-get update && apt-get install -y wget unzip git jq
+RUN apt-get update && apt-get install -y wget unzip git jq bc
 
 # Install Checkstyle
 RUN wget -q https://github.com/checkstyle/checkstyle/releases/download/checkstyle-10.12.1/checkstyle-10.12.1-all.jar -O /usr/local/lib/checkstyle.jar
@@ -131,8 +131,11 @@ RUN chmod +x /workspace/run_style_review.sh
 </module>
 """
     
+    def fix_patch_path(self) -> str:
+        return "/home/fix.patch"
+    
     def _get_style_review_script(self) -> str:
-        return """#!/bin/bash
+        return r"""#!/bin/bash
 set -e
 
 run_style_review() {
@@ -160,26 +163,59 @@ run_style_review() {
     echo "[]" > "$safe_output_dir/style_errors.json"
 
     # Handle patch application with comprehensive error handling
+    PATCH_STATUS="not_attempted"
     if [ -f "$patch_file" ] && [ "$patch_file" != "/dev/null" ]; then
+        echo "[DEBUG] Directory tree under /workspace before patch:"
+        find /workspace | sort
+        echo "[DEBUG] Directory tree under /workspace/repo before patch:"
+        find /workspace/repo | sort
+        echo "[DEBUG] Listing /workspace/repo before patch:"
+        ls -l /workspace/repo
+        echo "[DEBUG] Current working directory: $(pwd)"
+        echo "[DEBUG] Patch file contents (first 20 lines):"
+        head -20 "$patch_file" 2>/dev/null || echo "Could not read patch file"
+        # Print first 20 lines of each file the patch will touch (if exists)
+        echo "[DEBUG] Attempting to print first 20 lines of each file to be patched:"
+        grep '^+++ ' "$patch_file" | awk '{print $2}' | sed 's|^b/||' | while read -r f; do
+            if [ -f "/workspace/repo/$f" ]; then
+                echo "[DEBUG] File: /workspace/repo/$f (first 20 lines):"
+                head -20 "/workspace/repo/$f"
+            else
+                echo "[DEBUG] File: /workspace/repo/$f does not exist."
+            fi
+        done
         echo "Applying patch: $patch_file"
         echo "Patch file contents (first 10 lines):"
         head -10 "$patch_file" 2>/dev/null || echo "Could not read patch file"
         patch_errors_file="$safe_output_dir/patch_errors.log"
-        if ! git apply --reject --whitespace=fix "$patch_file" 2>"$patch_errors_file" 2>&1; then
-            echo "Warning: Patch could not be fully applied. Some files may be missing or already patched." > "$safe_output_dir/patch_warning.log"
-            echo "Patch application errors:" >> "$safe_output_dir/patch_warning.log"
-            if [ -f "$patch_errors_file" ]; then
-                cat "$patch_errors_file" >> "$safe_output_dir/patch_warning.log" 2>/dev/null || true
+        if (cd /workspace/repo && git apply --check "$patch_file" 2>"$patch_errors_file"); then
+            if (cd /workspace/repo && git apply --reject --whitespace=fix "$patch_file" 2>>"$patch_errors_file"); then
+                echo "Patch applied successfully" | tee -a "$safe_output_dir/patch_status.log"
+                PATCH_STATUS="applied"
+            else
+                echo "Patch partially applied or with warnings. See $patch_errors_file for details." | tee -a "$safe_output_dir/patch_status.log"
+                PATCH_STATUS="partial"
+                echo "--- PATCH ERRORS BEGIN ---"
+                cat "$patch_errors_file"
+                echo "--- PATCH ERRORS END ---"
             fi
-            echo "Continuing with analysis despite patch issues..."
         else
-            echo "Patch applied successfully"
+            echo "Patch could NOT be applied at all. See $patch_errors_file for details." | tee -a "$safe_output_dir/patch_status.log"
+            PATCH_STATUS="failed"
+            echo "--- PATCH ERRORS BEGIN ---"
+            cat "$patch_errors_file"
+            echo "--- PATCH ERRORS END ---"
         fi
+        echo "PATCH_STATUS=$PATCH_STATUS" | tee -a "$safe_output_dir/patch_status.log"
     elif [ "$patch_file" = "/dev/null" ]; then
-        echo "No patch to apply (original state)"
+        echo "No patch to apply (original state)" | tee -a "$safe_output_dir/patch_status.log"
+        PATCH_STATUS="none"
+        echo "PATCH_STATUS=$PATCH_STATUS" | tee -a "$safe_output_dir/patch_status.log"
     else
         echo "No patch file found at $patch_file" > "$safe_output_dir/error.log"
-        echo "Continuing with analysis without patch..."
+        echo "Continuing with analysis without patch..." | tee -a "$safe_output_dir/patch_status.log"
+        PATCH_STATUS="missing"
+        echo "PATCH_STATUS=$PATCH_STATUS" | tee -a "$safe_output_dir/patch_status.log"
     fi
 
     # Always analyze all Java files in the repo (for both original and patched runs)
@@ -217,7 +253,7 @@ run_style_review() {
                 # Extract attributes and message
                 line=$(echo "$eline" | grep -o 'line="[^"]*"' | cut -d'"' -f2)
                 column=$(echo "$eline" | grep -o 'column="[^"]*"' | cut -d'"' -f2)
-                message=$(echo "$eline" | grep -o 'message="[^"]*"' | sed 's/message="\([^"]*\)"/\1/' | sed 's/"/\\"/g')
+                message=$(echo "$eline" | grep -o 'message="[^"]*"' | sed 's/message=\"\([^\"]*\)\"/\1/' | sed 's/"/\\"/g')
                 source=$(echo "$eline" | grep -o 'source="[^"]*"' | cut -d'"' -f2)
                 if [ -n "$error_json" ] && [ "$error_json" != "[" ]; then
                     error_json+=",";
@@ -266,6 +302,7 @@ run_style_review() {
         [ -f "$safe_output_dir/error.log" ] && cp "$safe_output_dir/error.log" "$output_dir/error.log" 2>/dev/null || true
         [ -f "$checkstyle_error_log" ] && cp "$checkstyle_error_log" "$output_dir/checkstyle_error.log" 2>/dev/null || true
         [ -f "$checkstyle_xml" ] && cp "$checkstyle_xml" "$output_dir/checkstyle_output.xml" 2>/dev/null || true
+        [ -f "$safe_output_dir/patch_status.log" ] && cp "$safe_output_dir/patch_status.log" "$output_dir/patch_status.log" 2>/dev/null || true
     fi
 
     echo "\n==== FULL CHECKSTYLE VIOLATION XML OUTPUT ===="

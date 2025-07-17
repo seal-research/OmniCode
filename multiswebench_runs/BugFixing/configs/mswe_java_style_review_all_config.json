@@ -5,7 +5,7 @@
     "multiswebench_runs/BugFixing/patches/run_mswe_java_style_review/patches.jsonl"
   ],
   "dataset_files": [
-    "./multiswebench/mswebench_dataset/apache__dubbo_dataset.jsonl"
+    "./multiswebench/mswebench_dataset/java/google__gson_dataset.jsonl"
   ],
   "force_build": true,
   "output_dir": "multiswebench_runs/BugFixing/output/run_mswe_java_style_review",
