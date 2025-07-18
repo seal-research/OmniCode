@@ -9,3 +9,7 @@
 [submodule "SWE-ReX"]
 	path = SWE-ReX
 	url = git@github.com:seal-research/SWE-ReX.git
+	
+[submodule "multi-swe-bench"]
+	path = multi-swe-bench
+	url = git@github.com:seal-research/multi-swe-bench.git
