@@ -15,6 +15,12 @@ pip install .
 cd ..
 ```
 
+```bash
+git clone https://github.com/seal-research/multi-swe-bench.git
+cd multi-swe-bench
+pip install .
+```
+
 or if you are comfortable using git submodules you can use:
 
 ```bash
