@@ -5,3 +5,7 @@
 [submodule "SWE-bench"]
 	path = SWE-bench
 	url = git@github.com:seal-research/SWE-bench.git
+
+[submodule "multi-swe-bench"]
+	path = multi-swe-bench
+	url = git@github.com:seal-research/multi-swe-bench.git

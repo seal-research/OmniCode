@@ -432,7 +432,7 @@ def main(
 
         instance_id = instance_ids[0] # TODO extend functionality for list of instances
 
-        dataset_base_path = "./multiswebench/mswebench_dataset"
+        dataset_base_path = "./multiswebench_local/mswebench_dataset"
         dataset_files = []
         for root, _, files in os.walk(dataset_base_path):
             for file in files:

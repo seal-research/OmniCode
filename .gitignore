@@ -176,18 +176,18 @@ cython_debug/
 github_tokens.sh
 
 # Exclude specific directories in multiswebench
-# multiswebench/mswebench_dataset/
-multiswebench/repos/
-multiswebench/multi_swe_bench.egg-info/
-multiswebench/data/
-multiswebench/build/
-multiswebench/.github/
-multiswebench/docs/
+# multiswebench_local/mswebench_dataset/
+multiswebench_local/repos/
+multiswebench_local/multi_swe_bench.egg-info/
+multiswebench_local/data/
+multiswebench_local/build/
+multiswebench_local/.github/
+multiswebench_local/docs/
 # Exclude specific files in multiswebench
-multiswebench/.vscode/
-multiswebench/LICENSE
-multiswebench/README.md
-multiswebench/clean_config.json
+multiswebench_local/.vscode/
+multiswebench_local/LICENSE
+multiswebench_local/README.md
+multiswebench_local/clean_config.json
 logs/
 multiswebench_runs/
 gemini-2.0-flash.test*.json
