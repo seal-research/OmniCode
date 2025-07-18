@@ -159,7 +159,7 @@ def fetch_file_at_ref(owner: str, repo: str, path: str, ref: str, token: str) ->
 
 def get_changed_and_previous_files(pr_url: str, token: str) -> Dict[str, Optional[bytes]]:
     owner, repo, pr_number = parse_pr_url(pr_url)
-    print("[DEBUG] TOKEN = ", token)
+    
 
     pr_meta  = get_pr_metadata(owner, repo, pr_number, token)
     base_sha = pr_meta["base"]["sha"]
