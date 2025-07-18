@@ -358,8 +358,6 @@ def main():
                         help="Run the TestGeneration benchmark")
     parser.add_argument("--CodeReview", action="store_true",
                         help="Run the CodeReview benchmark")
-    parser.add_argument("--JavaCodeReview", action="store_true",
-                        help="Run the JavaCodeReview benchmark")
     parser.add_argument("--CodeMigration", action="store_true",
                         help="Run the CodeMigration benchmark")
     parser.add_argument("--MSWEBugFixing", action="store_true",
@@ -384,7 +382,7 @@ def main():
 
     # Collect active flags
     active_flags = []
-    for flag in ["BugFixing", "TestGeneration", "CodeReview", "JavaCodeReview","CodeMigration",
+    for flag in ["BugFixing", "TestGeneration", "CodeReview", "CodeMigration",
                 "MSWEBugFixing", "MSWETestGeneration", "StyleReview"]:
         if getattr(args, flag):
             active_flags.append(flag)
@@ -598,18 +596,24 @@ def main():
         print("Executing StyleReview...")
         language = args.language
 
+        # Determine language if auto-detection is selected
         if language == 'auto':
+            # Simple auto-detection logic based on file extensions
             if args.instance_ids and len(args.instance_ids) > 0:
+                # For now just defaulting to Java if instance_ids are specified
                 language = 'java'
             else:
-                language = 'python'
+                language = 'python'  # Default to Python if unsure
             print(f"Auto-detected language: {language}")
 
         if language == 'java':
             print("Using Java StyleReview...")
 
+            # Use the exact same data loading approach as MSWEBugFixing
+            # Create image prefix consistent with MSWEBugFixing
             mswe_image_prefix = f"mswebench_{args.run_id}"
 
+            # Process predictions exactly like MSWEBugFixing
             if predictions_map["StyleReview"] == "gold":
                 print("Using gold patches from the dataset...")
                 dataset_base_path = "./multiswebench_local/mswebench_dataset"
@@ -635,6 +639,7 @@ def main():
 
                 print(f"Generated {len(predictions)} predictions from gold patches")
             else:
+                # Load predictions from file
                 try:
                     with open(predictions_map["StyleReview"], 'r') as f:
                         predictions = json.load(f)
@@ -646,17 +651,15 @@ def main():
                     print(f"Error loading predictions file: {e}")
                     return
 
-<<<<<<< HEAD
             # Here's a major change: instead of using a fixed dataset name,
             # use the dataset files from the same location as MSWEBugFixing
             # which we already know works with these predictions
 
             # Find dataset files matching our repos
             dataset_base_path = "./multiswebench_local/mswebench_dataset"
-=======
-            dataset_base_path = "./multiswebench/mswebench_dataset"
->>>>>>> 70bba81 (Update codearena.py with latest changes)
             dataset_files = []
+
+            # Get unique repos for finding datasets
             unique_repos = {f"{pred['org']}/{pred['repo']}" for pred in predictions}
 
             print(f"Finding relevant dataset files...")
@@ -674,27 +677,24 @@ def main():
                 print("Error: No matching dataset files found")
                 return
 
+            # Join dataset files with commas for command line argument
             dataset_files_arg = ",".join(dataset_files)
-            temp_predictions_path = f"temp_{args.run_id}_java_style_predictions.json"
 
+            # Directly call Java style review script with the predictions
+            print("Running Java StyleReview directly...")
+
+            # Convert predictions to a temporary file path
+            temp_predictions_path = f"temp_{args.run_id}_java_style_predictions.json"
             with open(temp_predictions_path, 'w') as f:
                 json.dump(predictions, f)
 
             try:
-<<<<<<< HEAD
-<<<<<<< HEAD
                 # Use the exact path provided
-                script_path = "multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review.py"
-=======
-                script_path = "multiswebench/multi_swe_bench/harness/style_review/run_java_style_review.py"
->>>>>>> 70bba81 (Update codearena.py with latest changes)
-=======
-                style_choice=input('Enter pmd or checkstyle:\n')
-                if style_choice=='pmd':
-                    script_path = "multiswebench/multi_swe_bench/harness/style_review/run_java_style_review_pmd.py"
+                style_type=input('Enter Style Review Type pmd or checkstyle')
+                if style_type=='pmd':
+                    script_path="multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review.py"
                 else:
-                    script_path = "multiswebench/multi_swe_bench/harness/style_review/run_java_style_review.py"
->>>>>>> afa0f62 (WIP: saving all current changes before switching branch)
+                    script_path = "multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review.py"
 
                 if not os.path.exists(script_path):
                     print(f"Error: Java style review script not found at: {script_path}")
@@ -702,10 +702,11 @@ def main():
 
                 print(f"Found Java style review script at: {script_path}")
 
+                # Build command
                 cmd = [
                     sys.executable,
                     script_path,
-                    "--dataset_name", dataset_files_arg,
+                    "--dataset_name", dataset_files_arg,  # Use the found dataset files
                     "--split", "test",
                     "--predictions_path", temp_predictions_path,
                     "--max_workers", str(args.max_workers),
@@ -717,6 +718,7 @@ def main():
                     "--timeout", str(args.timeout)
                 ]
 
+                # Add optional arguments if they're set
                 if args.min_score is not None:
                     cmd.extend(["--min_score", str(args.min_score)])
                 if args.max_severity is not None:
@@ -724,45 +726,17 @@ def main():
                 if args.instance_ids:
                     cmd.extend(["--instance_ids"] + args.instance_ids)
 
+                # Run the command
                 print(f"Executing command: {' '.join(cmd)}")
                 result = run_with_timeout(cmd, args.timeout)
                 if result and result[2] == 0:
                     print("Java StyleReview completed successfully")
                 else:
                     print("Java StyleReview failed")
-
-                # === Now run BugFixing ===
-                print("Now running BugFixing on the same predictions used for Java StyleReview...")
-                predictions_map["MSWEBugFixing"] = temp_predictions_path
-
-                if args.force_rebuild:
-                    clean_docker_images(mswe_image_prefix)
-
-                config_file = setup_multiswebench_config(
-                    predictions=predictions,
-                    max_workers=args.max_workers,
-                    force_rebuild=args.force_rebuild,
-                    run_id=args.run_id,
-                    timeout=args.timeout,
-                    phase=args.mswe_phase
-                )
-
-                if config_file and os.path.exists(config_file):
-                    print(f"BugFixing config file created at: {config_file}")
-                    report = run_multiswebench_phase(config_file, args.mswe_phase, args.timeout)
-                    if report:
-                        print("BugFixing evaluation completed!")
-                        print(f"Total instances: {report.get('total_instances', 0)}")
-                        print(f"Resolved instances: {report.get('resolved_instances', 0)}")
-                        print(f"Unresolved instances: {report.get('unresolved_instances', 0)}")
-                    else:
-                        print("BugFixing evaluation failed to produce a report")
-                else:
-                    print("Failed to create BugFixing config file, cannot run evaluation")
             finally:
+                # Clean up temporary file
                 if os.path.exists(temp_predictions_path):
                     os.remove(temp_predictions_path)
-
         else:
             print("Using Python StyleReview...")
             execute_command(
@@ -782,96 +756,6 @@ def main():
                 max_severity=args.max_severity,
                 use_apptainer=args.use_apptainer,
             )
-            print("Now using BugFixing")
-            print("Executing BugFixing...")
-            predictions_map["BugFixing"] = predictions_map["StyleReview"]
-
-            execute_command(
-                RegularEval,
-                dataset_name=args.dataset_name,
-                split="test",
-                instance_ids=args.instance_ids,
-                predictions_path=predictions_map["BugFixing"],
-                max_workers=args.max_workers,
-                force_rebuild=args.force_rebuild,
-                cache_level=args.cache_level,
-                clean=args.clean,
-                open_file_limit=args.open_file_limit,
-                run_id=args.run_id,
-                timeout=args.timeout
-            )
-
-    if "JavaCodeReview" in active_flags:
-        print("Executing Multi-SWE-Bench BugFixing...")
-
-        # Create image prefix
-        mswe_image_prefix = f"mswebench_{args.run_id}"
-
-        # Process predictions
-        if predictions_map["JavaCodeReview"] == "gold":
-            print("Using gold patches from the dataset...")
-            dataset_base_path = "./multiswebench/mswebench_dataset"
-            dataset_files = []
-            for root, _, files in os.walk(dataset_base_path):
-                for file in files:
-                    if file.endswith("_dataset.jsonl"):
-                        dataset_files.append(os.path.join(root, file))
-
-            if not dataset_files:
-                print("Error: No dataset files found in", dataset_base_path)
-                return
-
-            predictions = generate_gold_patch_predictions(
-                dataset_files,
-                args.instance_ids,
-                args.max_instances
-            )
-
-            if not predictions:
-                print("Error: No valid predictions could be generated from gold patches")
-                return
-
-            print(f"Generated {len(predictions)} predictions from gold patches")
-        else:
-            try:
-                with open(predictions_map["JavaCodeReview"], 'r') as f:
-                    predictions = json.load(f)
-
-                if args.max_instances > 0 and len(predictions) > args.max_instances:
-                    print(f"Limiting to {args.max_instances} instances out of {len(predictions)}")
-                    predictions = predictions[:args.max_instances]
-            except Exception as e:
-                print(f"Error loading predictions file: {e}")
-                return
-
-        # Clean existing images if needed
-        if args.force_rebuild:
-            clean_docker_images(mswe_image_prefix)
-
-        # Set up config
-        config_file = setup_multiswebench_config(
-            predictions=predictions,
-            max_workers=args.max_workers,
-            force_rebuild=args.force_rebuild,
-            run_id=args.run_id,
-            timeout=args.timeout,
-            phase=args.mswe_phase
-        )
-
-        # Run evaluation
-        if config_file and os.path.exists(config_file):
-            print(f"Config file created at: {config_file}")
-            report = run_multiswebench_phase(config_file, args.mswe_phase, args.timeout)
-
-            if report:
-                print("Multi-SWE-Bench BugFixing evaluation completed!")
-                print(f"Total instances: {report.get('total_instances', 0)}")
-                print(f"Resolved instances: {report.get('resolved_instances', 0)}")
-                print(f"Unresolved instances: {report.get('unresolved_instances', 0)}")
-            else:
-                print("Multi-SWE-Bench BugFixing evaluation failed to produce a report")
-        else:
-            print("Failed to create config file, cannot run evaluation")
 
 if __name__ == "__main__":
     main()
