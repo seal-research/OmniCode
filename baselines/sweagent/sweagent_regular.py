@@ -23,8 +23,8 @@ DOTENV_PATH = CUR_DIR / '.env'
 CONFIG_FILE_MAP = {
     "bugfixing": CUR_DIR / "bugfixing.yaml",
     "testgen": CUR_DIR / "testgen.yaml",
-    "bugfixing_java": CUR_DIR / "bugfixing_java.yaml",
-    "testgen_java": CUR_DIR / "testgen_java.yaml",
+    "bugfixing-java": CUR_DIR / "bugfixing_java.yaml",
+    "testgen-java": CUR_DIR / "testgen_java.yaml",
     "stylereview": CUR_DIR / "stylereview.yaml",
     "reviewfix": CUR_DIR / "reviewfix.yaml",
 }
@@ -153,6 +153,11 @@ def run_sweagent_single(
 
     if mode not in CONFIG_FILE_MAP:
         raise RuntimeError(f"Unknown mode: {mode}")
+    
+    if 'java' in mode:
+        image = f"mswebench/{instance['repo'].replace('/', '_m_')}:base"
+    else:
+        image = f"sca63/codearena:{instance['instance_id']}"
 
     config_file = CONFIG_FILE_MAP[mode]
 
@@ -176,7 +181,7 @@ def run_sweagent_single(
             f"--agent.model.per_instance_cost_limit=2.0",
             f"--env.repo.github_url={url}",
             f"--env.repo.base_commit={instance['base_commit']}",
-            f"--env.deployment.image=sca63/codearena:{instance['instance_id']}",
+            f"--env.deployment.image={image}",
             # override having /testbed be WORKDIR for docker image
             '--env.deployment.docker_args=["-w","/"]',
             f"--problem_statement.path={str(fp.name)}",

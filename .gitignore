@@ -176,7 +176,7 @@ cython_debug/
 github_tokens.sh
 
 # Exclude specific directories in multiswebench
-multiswebench/mswebench_dataset/
+# multiswebench/mswebench_dataset/
 multiswebench/repos/
 multiswebench/multi_swe_bench.egg-info/
 multiswebench/data/

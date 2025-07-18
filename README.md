@@ -2,7 +2,7 @@
 
 Welcome to **OmniCode[CodeArena]**! This repository allows you to evaluate performance on various Software Development Activities for different models and datasets. Below, you'll find the commands to test your setup and evaluate the results. CodeArena requires you to have docker set up and running prior to executing Evaluation.
 
-### Setup
+## Setup
 
 CodeArena requires `Python 3.13` and its dependecies can be installed via `pip install -r requirements.txt`
 
@@ -15,7 +15,7 @@ cd SWE-bench
 pip install .
 ```
 
-### CodeArena Evaluation
+## CodeArena Evaluation
 
 To run the full CodeArena benchmark you can pass the corresponding flags to the evaluation command line tool.
 
@@ -40,13 +40,13 @@ The following command with the `--TestGeneration` flag can be used to evaluate g
    python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --instance_ids astropy__astropy-14995
 ```
 
-### Supported Tasks
+## Supported Tasks
 
 In this section you will find instructions on the different specifications of our tasks **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Fixing**!
 
 ---
 
-#### Bug Fixing (`--BugFixing`)
+### Bug Fixing (`--BugFixing`)
 
 - **Description**: The agent receives a repository and PR description, identifies and applies minimal source code changes (excluding tests) to meet the specified requirements. It verifies the fix by reproducing the issue, applying the fix, re-running the relevant test, and ensuring completeness.
 - **Evaluation**: Success is measured by the fix passing all relevant tests without introducing unintended changes.
@@ -54,7 +54,7 @@ In this section you will find instructions on the different specifications of ou
 
 ---
 
-#### Test Generation (`--TestGeneration`)
+### Test Generation (`--TestGeneration`)
 
 - **Description**: The agent receives a repository and a problem description, then writes a new test in the repository’s test suite that reproduces the reported issue using the existing testing framework (e.g., pytest).
 - **Evaluation**: Success is measured by the test failing on incorrect implementations and passing on correct ones.
@@ -62,7 +62,7 @@ In this section you will find instructions on the different specifications of ou
 
 ---
 
-#### Style Review (`--StyleReview`)
+### Style Review (`--StyleReview`)
 
 - **Description**: The agent runs a style check on a given instance, applies fixes for detected issues, and verifies functionality remains unaffected by re-running relevant tests.
 - **Evaluation**: Success is measured by the reduction of style violations without breaking functionality.
@@ -70,7 +70,7 @@ In this section you will find instructions on the different specifications of ou
 
 ---
 
-#### Review Fixing (`--BugFixing`)
+### Review Fixing (`--BugFixing`)
 
 - **Description**: The agent receives a problem description, a failed patch, and a review explaining the failure. It uses this context to avoid repeating mistakes and implements an improved fix. The evaluation is the same as BugFixing since we check whether the predicted patch passes the final tests.
 - **Evaluation**: Success is measured by whether the improved patch resolves the issue while avoiding pitfalls highlighted in the review.
@@ -78,11 +78,11 @@ In this section you will find instructions on the different specifications of ou
 
 ---
 
-### Java Support
+## Java Support
+* **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
 
-- **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
-
-0. Download data from huggingfaec (it is expected to be placed under multiswebench/mswebench_dataset)
+<!-- Datasets are currently included in repo -->
+<!-- 0. Download data from huggingface (it is expected to be placed under multiswebench/mswebench_dataset) --> 
 1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench/prepare_eval`
 2. From the multiswebench directory, `run python prepare_eval.py`
 3. From the codearena directory, run `python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids "INSERT YOUR INSTANCE HERE EX: elastic/logstash:17021" --mswe_phase all --force_rebuild True --clean True`
@@ -107,6 +107,18 @@ Custom preds file can look like this for example:
 
 Should be saved in a json format and can replace gold in the example call above.
 
+### MSWEBugFixing for newly onboarded Java Tasks
+Prerequisites:
+
+0. Multiswebench `[org]__[repo]_dataset.jsonl` for new instance should be present
+1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench/prepare_eval`
+2. From the multiswebench directory, `run python prepare_eval.py`
+
+Example Command:
+```bash
+python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids google/guava:6586 --mswe_phase all --force_rebuild True --clean True
+```
+
 ### Java Test Generation
 
 Test Generation for Java follows mostly the same format as Test Generation for python. However, the output files are in a different format and all instances must also exist in Multi-SWE-Bench's dataset.
@@ -118,7 +130,12 @@ Use the `--MSWETestGeneration` flag to run test generation for Java repos suppor
 You can run test generation testing as follows. The tags work how they work for python test generation.
 
 ```bash
-python codearena.py --MSWETestGeneration --dataset_name mswebench_instances_example.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
+python codearena.py --MSWETestGeneration --dataset_name data/multiswebench_data/mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
+```
+
+#### Example Command to run MSWETestGeneration on newly onboarded instances: 
+```bash
+python codearena.py --MSWETestGeneration --dataset_name data/codearena_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586
 ```
 
 #### File Formats
@@ -178,11 +195,12 @@ Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each 
 
    - Theoretically, the pipeline should not need to be changed to work for other languages supported by Multi-SWE-Bench. However, this remains untested.
 
-### LLM API Key
+
+## LLM API Key
 
 You can generate a free API key for the Gemini LLM by following the instructions at https://ai.google.dev/gemini-api/docs/api-key. This key is required to run the evaluation tasks that involve LLMs. Note that the free tier has rate limits, so don't run too many tasks in parallel.
 
-### Running SWE-AGENT
+## Running SWE-AGENT
 
 We have configured a basic swe-agent implementation to test on our repository.
 
@@ -196,14 +214,24 @@ pip install -e git+https://github.com/SWE-agent/SWE-agent@bb80cbe#egg=sweagent
 python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix]
 ```
 
-### Adding Bad Patches
+### Running SWE-Agent for Java Instances
 
-#### Option 1: Agentless Generation
+Prerequisites:
+- Instance should be present in `data/codearena_instances_java.json`
+- Base image should already built in your local docker (e.g. MSWEBugFixing)
 
+Example command:
+
+```bash
+python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java]
+```
+
+## Adding Bad Patches
+
+### Option 1: Agentless Generation
 Follow instructions found here: https://github.com/seal-research/OmniCode/blob/main/adding_tasks.md
 
-#### Option 2: LLM Sourced Generation
-
+### Option 2: LLM Sourced Generation
 ```bash
 python baselines/badpatchllm/generate_bad.py \
     -o baselines/badpatchllm/logs/gemini_outputs \
@@ -218,7 +246,6 @@ python baselines/badpatchllm/generate_bad.py \
 Note: Raw diff files will also be outputted and found under the user specified output directory for ease of use.
 
 ### Generating Reviews
-
 ```bash
 python baselines/badpatchllm/generate_review.py \
     --input_tasks data/codearena_instances.json \
@@ -227,7 +254,7 @@ python baselines/badpatchllm/generate_review.py \
     --instance_ids astropy__astropy-13033
 ```
 
-### Deploying experiments on Google Cloud
+## Deploying experiments on Google Cloud
 
 To enable more reproducable and parallel evaluation, we also provide experimental support for launching jobs in Google Cloud via `gc/multivm.py`. For example the following command will run SWE-agent on instances specified in the `instances_to_run.txt` file. Details about available modes can be found at the end of `gc/utils.py`
 
