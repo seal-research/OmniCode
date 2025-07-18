@@ -692,7 +692,7 @@ def main():
                 # Use the exact path provided
                 style_type=input('Enter Style Review Type pmd or checkstyle')
                 if style_type=='pmd':
-                    script_path="multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review.py"
+                    script_path="multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review_pmd.py"
                 else:
                     script_path = "multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review.py"
 
