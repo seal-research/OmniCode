@@ -668,41 +668,6 @@ def run_instances(
     if not force_rebuild and len(existing_images):
         print(f"Found {len(existing_images)} existing instance images. Will reuse them.")
 
-    # # run instances in parallel
-    # print(f"Running {len(instances)} instances...")
-    # with tqdm(total=len(instances), smoothing=0) as pbar:
-    #     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-    #         # Create a future for running each instance
-    #         futures = {
-    #             executor.submit(
-    #                 run_instance,
-    #                 test_spec,
-    #                 # TODO: Either optimize this lookup or find a more elegant way to pass corrected predictions
-    #                 next((item for item in instances if item["instance_id"] == test_spec.instance_id), None),
-    #                 should_remove(
-    #                     test_spec.instance_image_key,
-    #                     cache_level,
-    #                     clean,
-    #                     existing_images,
-    #                 ),
-    #                 force_rebuild,
-    #                 client,
-    #                 run_id,
-    #                 timeout,
-    #             ): None
-    #             for test_spec in test_specs
-    #         }
-    #         # Wait for each future to complete
-    #         for future in as_completed(futures):
-    #             pbar.update(1)
-    #             try:
-    #                 # Update progress bar, check if instance ran successfully
-    #                 future.result()
-    #             except Exception as e:
-    #                 traceback.print_exc()
-    #                 continue
-    # print("All instances run.")
-
     # run instances in parallel
     payloads = []
     for test_spec in test_specs:

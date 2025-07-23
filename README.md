@@ -9,11 +9,11 @@ CodeArena requires `Python 3.13` and its dependecies can be installed via `pip i
 CodeArena is currently set up to work with a specific swebench and multiswebench version which can be installed using: 
 
 ```bash
-git clone https://github.com/seal-research/SWE-bench.git
+git clone git@github.com:seal-research/SWE-bench.git
 cd SWE-bench
-# pip install -e .
 pip install .
-``` 
+cd ..
+```
 
 ```bash
 git clone https://github.com/seal-research/multi-swe-bench.git
@@ -44,7 +44,7 @@ Passing in the path to actual predictions here will enable evaluating on generat
 This command with build the docker image and run the evaluation on the instance `astropy__astropy-13033` (which is a bug in the astropy library).
 
 ```bash
-python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13033
+python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --use_apptainer False --instance_ids astropy__astropy-13033
 ```
 
 ### Example 2: Running `TestGeneration` for single instance
@@ -52,7 +52,7 @@ python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --ins
 The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path`
 
 ```bash
-   python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --instance_ids astropy__astropy-14995
+   python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995
 ```
 
 ## Supported Tasks
@@ -221,12 +221,19 @@ We have configured a basic swe-agent implementation to test on our repository.
 
 Install SWE-agent with the following command -
 
-```
-pip install -e git+https://github.com/SWE-agent/SWE-agent@bb80cbe#egg=sweagent
+```bash
+git clone git@github.com:seal-research/SWE-agent.git
+cd SWE-agent
+pip install -e .
+cd ..
+git clone git@github.com:seal-research/SWE-ReX.git
+cd SWE-ReX
+pip install -e .
+cd ..
 ```
 
 ```bash
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix]
+python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix]
 ```
 
 ### Running SWE-Agent for Java Instances
@@ -238,7 +245,7 @@ Prerequisites:
 Example command:
 
 ```bash
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java]
+python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java]
 ```
 
 ## Adding Bad Patches
