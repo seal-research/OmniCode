@@ -155,7 +155,7 @@ def main(
         problem_statement = instance.get("problem_statement", "No problem statement provided.")
         correct_patch_example = instance.get("patch", "No correct patch example provided.")
         bad_patches_input = instance.get("bad_patches")
-        bad_patches_input = [bp for bp in bad_patches_input if bp['source'] == 'badpatchllm']
+        bad_patches_input = [bp for bp in bad_patches_input if bp['source'] == 'gemini']
         reviews_input = instance.get("reviews")
 
         if not instance_id:

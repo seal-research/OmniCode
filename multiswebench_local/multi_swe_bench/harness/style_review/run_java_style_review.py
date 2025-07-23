@@ -18,6 +18,9 @@ from swebench.harness.utils import str2bool
 from style_review_instance import JavaStyleReviewInstance
 from style_review_report import JavaStyleReviewReport, StyleReviewSummary, StyleFileReport, StyleIssue
 
+import xml.etree.ElementTree as ET
+import re
+
 def load_predictions(predictions_path: str) -> Dict[str, dict]:
     """Load predictions from a file."""
     predictions = {}
@@ -74,12 +77,76 @@ def create_default_style_errors_json():
     """Create a default style errors JSON"""
     return json.dumps([])
 
+def extract_checkstyle_xml_from_log(log_path):
+    """Extract Checkstyle XML output from the log file."""
+    if not os.path.exists(log_path):
+        return None
+    with open(log_path, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+    start, end = None, None
+    for i, line in enumerate(lines):
+        if '==== FULL CHECKSTYLE VIOLATION XML OUTPUT ====' in line:
+            start = i + 1
+        if '==== END OF CHECKSTYLE VIOLATION XML OUTPUT ====' in line:
+            end = i
+            break
+    if start is not None and end is not None and start < end:
+        xml_str = ''.join(lines[start:end]).strip()
+        return xml_str
+    return None
+
+def parse_checkstyle_xml_string_to_json(xml_str):
+    """Parse Checkstyle XML string to the expected JSON format."""
+    if not xml_str:
+        return []
+    try:
+        root = ET.fromstring(xml_str)
+    except ET.ParseError:
+        return []
+    files = []
+    for file_elem in root.findall('file'):
+        file_path = file_elem.get('name', '')
+        messages = []
+        for err in file_elem.findall('error'):
+            messages.append({
+                "line": int(err.get("line", 0)),
+                "column": int(err.get("column", 0)),
+                "type": "error",
+                "message": err.get("message", ""),
+                "source": err.get("source", "checkstyle")
+            })
+        files.append({
+            "file": file_path,
+            "score": max(0.0, 10 - 0.5 * len(messages)),
+            "error_count": len(messages),
+            "messages": messages
+        })
+    return files
+
+def extract_checkstyle_stats_from_log(log_path):
+    """Extract total_files, total_errors, and global_score from the log file."""
+    if not os.path.exists(log_path):
+        return None
+    with open(log_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            if line.startswith('Final statistics:'):
+                # Example: Final statistics: total_files=271, total_errors=5649, global_score=0.0
+                m = re.search(r'total_files=(\d+), total_errors=(\d+), global_score=([0-9.]+)', line)
+                if m:
+                    return {
+                        "global_score": float(m.group(3)),
+                        "total_errors": int(m.group(2)),
+                        "total_warnings": 0
+                    }
+    return None
+
 def run_style_review(
     instance: JavaStyleReviewInstance, 
     workdir: Path, 
     log_dir: Path, 
     run_id: str,
-    timeout: int
+    timeout: int,
+    force_rebuild: bool
 ) -> Optional[JavaStyleReviewReport]:
     """Run style review for a single instance."""
     # Create a safe file name by replacing special characters
@@ -105,9 +172,9 @@ def run_style_review(
     with open(fix_patch_path, "w", encoding="utf-8", newline="\n") as f:
         f.write(instance.pr.fix_patch)
     
-    # Check if Docker image exists, build if not
+    # Check if Docker image exists, build if not or if force_rebuild is True
     image_name = instance.dependency().image_full_name()
-    if not docker_util.exists(image_name):
+    if force_rebuild or not docker_util.exists(image_name):
         logger.info(f"Building image {image_name}...")
         # Build Dockerfile
         dockerfile_path = instance_dir / "Dockerfile"
@@ -128,33 +195,67 @@ def run_style_review(
             logger.error(f"Error building image {image_name}: {e}")
             return None
     
+    # Clone the repo if not already present
+    repo_dir = instance_dir / "repo"
+    if not repo_dir.exists():
+        clone_url = f"https://github.com/{instance.pr.org}/{instance.pr.repo}.git"
+        try:
+            subprocess.run(["git", "clone", clone_url, str(repo_dir)], check=True)
+            subprocess.run(["git", "checkout", instance.pr.base.sha], cwd=repo_dir, check=True)
+        except Exception as e:
+            logger.error(f"Error cloning or checking out repo: {e}")
+            return None
+    else:
+        # Optionally, check if the repo is at the correct commit, and reset if not
+        try:
+            current_sha = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], cwd=repo_dir
+            ).decode().strip()
+            if current_sha != instance.pr.base.sha:
+                subprocess.run(["git", "fetch"], cwd=repo_dir, check=True)
+                subprocess.run(["git", "checkout", instance.pr.base.sha], cwd=repo_dir, check=True)
+        except Exception as e:
+            logger.error(f"Error ensuring repo is at correct commit: {e}")
+            return None
+    
     # Run style review
     logger.info(f"Running style review for {instance.pr.id}...")
     
     try:
-        # Create default files
-        with open(original_report_path, "w") as f:
-            f.write(create_default_style_report_json())
-        with open(original_errors_path, "w") as f:
-            f.write(create_default_style_errors_json())
-        with open(patched_report_path, "w") as f:
-            f.write(create_default_style_report_json())
-        with open(patched_errors_path, "w") as f:
-            f.write(create_default_style_errors_json())
-            
+        # Always extract and overwrite error JSONs from logs for Checkstyle
+        orig_log_path = instance_dir / "original_run.log"
+        patched_log_path = instance_dir / "patched_run.log"
+        orig_xml = extract_checkstyle_xml_from_log(orig_log_path)
+        patched_xml = extract_checkstyle_xml_from_log(patched_log_path)
+        orig_json = parse_checkstyle_xml_string_to_json(orig_xml)
+        patched_json = parse_checkstyle_xml_string_to_json(patched_xml)
+        with open(original_errors_path, "w", encoding="utf-8") as f:
+            json.dump(orig_json, f, indent=2)
+        with open(patched_errors_path, "w", encoding="utf-8") as f:
+            json.dump(patched_json, f, indent=2)
+
+        # Always extract and overwrite report JSONs from logs for Checkstyle
+        orig_stats = extract_checkstyle_stats_from_log(orig_log_path)
+        patched_stats = extract_checkstyle_stats_from_log(patched_log_path)
+        if orig_stats:
+            with open(original_report_path, "w", encoding="utf-8") as f:
+                json.dump(orig_stats, f, indent=2)
+        if patched_stats:
+            with open(patched_report_path, "w", encoding="utf-8") as f:
+                json.dump(patched_stats, f, indent=2)
+        
         # Run original style check
         logger.info("Running initial style check (without patch)...")
         try:
             original_output = docker_util.run(
                 image_name,
-                "mkdir -p /workspace/output && " + instance.run(),
+                instance.run(),
                 instance_dir / "original_run.log",
-                volumes={
-                    str(fix_patch_path.absolute()): {
-                        "bind": instance.dependency().fix_patch_path(),
-                        "mode": "rw",
-                    }
-                }
+                volumes=[
+                    f"{str(fix_patch_path.absolute())}:{instance.dependency().fix_patch_path()}:rw",
+                    f"{str(repo_dir.absolute())}:/workspace/repo:rw",
+                    f"{str((instance_dir / 'output').absolute())}:/workspace/output:rw"
+                ]
             )
             logger.info("Original style check completed successfully")
         except Exception as e:
@@ -165,14 +266,13 @@ def run_style_review(
         try:
             patched_output = docker_util.run(
                 image_name,
-                "mkdir -p /workspace/output && " + instance.fix_patch_run(),
+                instance.fix_patch_run(),
                 instance_dir / "patched_run.log",
-                volumes={
-                    str(fix_patch_path.absolute()): {
-                        "bind": instance.dependency().fix_patch_path(),
-                        "mode": "rw",
-                    }
-                }
+                volumes=[
+                    f"{str(fix_patch_path.absolute())}:{instance.dependency().fix_patch_path()}:rw",
+                    f"{str(repo_dir.absolute())}:/workspace/repo:rw",
+                    f"{str((instance_dir / 'output').absolute())}:/workspace/output:rw"
+                ]
             )
             logger.info("Patched style check completed successfully")
         except Exception as e:
@@ -182,67 +282,68 @@ def run_style_review(
         
         # Load and parse reports
         try:
-            with open(original_report_path, "r") as f:
-                original_summary = StyleReviewSummary.from_dict(json.load(f))
-            
-            with open(patched_report_path, "r") as f:
-                patched_summary = StyleReviewSummary.from_dict(json.load(f))
-            
-            with open(original_errors_path, "r") as f:
-                original_issues_data = json.load(f)
-                original_issues = []
-                for issue_data in original_issues_data:
-                    file_issues = []
-                    for msg in issue_data.get("messages", []):
-                        file_issues.append(StyleIssue(
-                            line=msg.get("line", 0),
-                            column=msg.get("column", 0),
-                            type=msg.get("type", "error"),
-                            message=msg.get("message", ""),
-                            source=msg.get("source", "checkstyle")
+            # After writing original_report_path and patched_report_path, always update style_review_report.json
+            try:
+                with open(original_report_path, "r") as f:
+                    original_summary = StyleReviewSummary(**json.load(f))
+                with open(patched_report_path, "r") as f:
+                    patched_summary = StyleReviewSummary(**json.load(f))
+                with open(original_errors_path, "r") as f:
+                    original_issues_data = json.load(f)
+                    original_issues = []
+                    for issue_data in original_issues_data:
+                        file_issues = []
+                        for msg in issue_data.get("messages", []):
+                            file_issues.append(StyleIssue(
+                                line=msg.get("line", 0),
+                                column=msg.get("column", 0),
+                                type=msg.get("type", "error"),
+                                message=msg.get("message", ""),
+                                source=msg.get("source", "checkstyle")
+                            ))
+                        original_issues.append(StyleFileReport(
+                            file=issue_data.get("file", ""),
+                            score=issue_data.get("score", 0.0),
+                            error_count=issue_data.get("error_count", 0),
+                            messages=file_issues
                         ))
-                    original_issues.append(StyleFileReport(
-                        file=issue_data.get("file", ""),
-                        score=issue_data.get("score", 0.0),
-                        error_count=issue_data.get("error_count", 0),
-                        messages=file_issues
-                    ))
-            
-            with open(patched_errors_path, "r") as f:
-                patched_issues_data = json.load(f)
-                patched_issues = []
-                for issue_data in patched_issues_data:
-                    file_issues = []
-                    for msg in issue_data.get("messages", []):
-                        file_issues.append(StyleIssue(
-                            line=msg.get("line", 0),
-                            column=msg.get("column", 0),
-                            type=msg.get("type", "error"),
-                            message=msg.get("message", ""),
-                            source=msg.get("source", "checkstyle")
+                with open(patched_errors_path, "r") as f:
+                    patched_issues_data = json.load(f)
+                    patched_issues = []
+                    for issue_data in patched_issues_data:
+                        file_issues = []
+                        for msg in issue_data.get("messages", []):
+                            file_issues.append(StyleIssue(
+                                line=msg.get("line", 0),
+                                column=msg.get("column", 0),
+                                type=msg.get("type", "error"),
+                                message=msg.get("message", ""),
+                                source=msg.get("source", "checkstyle")
+                            ))
+                        patched_issues.append(StyleFileReport(
+                            file=issue_data.get("file", ""),
+                            score=issue_data.get("score", 0.0),
+                            error_count=issue_data.get("error_count", 0),
+                            messages=file_issues
                         ))
-                    patched_issues.append(StyleFileReport(
-                        file=issue_data.get("file", ""),
-                        score=issue_data.get("score", 0.0),
-                        error_count=issue_data.get("error_count", 0),
-                        messages=file_issues
-                    ))
-            
-            # Create report
-            report = JavaStyleReviewReport(
-                org=instance.pr.org,
-                repo=instance.pr.repo,
-                number=instance.pr.number,
-                original_score=original_summary,
-                patched_score=patched_summary,
-                original_issues=original_issues,
-                patched_issues=patched_issues
-            )
-            report.calculate_improvement()
+                report = JavaStyleReviewReport(
+                    org=instance.pr.org,
+                    repo=instance.pr.repo,
+                    number=instance.pr.number,
+                    original_score=original_summary,
+                    patched_score=patched_summary,
+                    original_issues=original_issues,
+                    patched_issues=patched_issues
+                )
+                report.calculate_improvement()
+                with open(instance_dir / "style_review_report.json", "w", encoding="utf-8") as f:
+                    f.write(json.dumps(report.__dict__, indent=2))
+            except Exception as e:
+                logger.error(f"Error updating style_review_report.json: {e}")
             
             # Save report
             with open(instance_dir / "style_review_report.json", "w", encoding="utf-8") as f:
-                f.write(report.to_json(indent=2))
+                f.write(json.dumps(report.__dict__, indent=2))
             
             logger.info(f"Style review completed for {instance.pr.id}")
             logger.info(f"Original score: {original_summary.global_score}, Patched score: {patched_summary.global_score}")
@@ -319,9 +420,9 @@ def main(
                 
                 # Create PullRequest object
                 pr = PullRequest(
-                    org=data.get("org"),
-                    repo=data.get("repo"),
-                    number=data.get("number"),
+                    org=str(data.get("org", "")),
+                    repo=str(data.get("repo", "")),
+                    number=int(data.get("number", 0)),
                     state=data.get("state", ""),
                     title=data.get("title", ""),
                     body=data.get("body", ""),
@@ -350,7 +451,8 @@ def main(
                 workdir, 
                 log_dir, 
                 run_id,
-                timeout
+                timeout,
+                force_rebuild
             ): instance
             for instance in instances
         }
