@@ -111,7 +111,8 @@ def setup_multiswebench_config(
     force_rebuild,
     run_id,
     timeout,
-    phase="all"
+    phase="all",
+    use_apptainer=False
 ):
     """Set up configuration for Multi-SWE-Bench evaluation."""
     data_dir = Path("multiswebench_runs/BugFixing")
@@ -192,7 +193,8 @@ def setup_multiswebench_config(
         "max_workers_run_instance": max(1, max_workers // 2),
         "log_dir": str(data_dir / "logs" / f"run_{run_id}"),
         "log_level": "DEBUG",
-        "log_to_console": True
+        "log_to_console": True,
+        "use_apptainer": use_apptainer
     }
 
     config_file = data_dir / "configs" / f"{run_id}_{phase}_config.json"
@@ -555,7 +557,8 @@ def main():
             force_rebuild=args.force_rebuild,
             run_id=args.run_id,
             timeout=args.timeout,
-            phase=args.mswe_phase
+            phase=args.mswe_phase,
+            use_apptainer=args.use_apptainer
         )
 
         # Run evaluation

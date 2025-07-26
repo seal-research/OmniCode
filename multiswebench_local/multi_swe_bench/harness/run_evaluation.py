@@ -901,7 +901,7 @@ class CliArgs:
 
     def run_mode_instance(self):
         if self.use_apptainer:
-            # self.run_mode_image_apptainer()
+            self.run_mode_image_apptainer()
             self.run_mode_instance_only_apptainer()
         else:
             self.run_mode_image()
