@@ -14,50 +14,6 @@ from CodeArena_test_spec import get_test_specs_from_dataset
 
 from swebench.harness.docker_build import BuildImageError
 
-
-# test x86 first
-APPTAINER_DEF_FORMAT = r"""
-Bootstrap: docker
-From: ubuntu:22.04
-
-%environment
-    export TZ=Etc/UTC
-    export PATH=/opt/miniconda3/bin:$PATH
-
-%files
-    setup_env.sh /root/setup_env.sh
-    setup_repo.sh /root/setup_repo.sh
-
-%post
-    # 1. Basic setup
-    export DEBIAN_FRONTEND=noninteractive
-    apt update && apt install -y \
-        wget git build-essential libffi-dev libtiff-dev \
-        python3 python3-pip python-is-python3 jq curl \
-        locales locales-all tzdata \
-        && rm -rf /var/lib/apt/lists/*
-
-    # 2. Install conda
-    wget 'https://repo.anaconda.com/miniconda/Miniconda3-py311_23.11.0-2-Linux-x86_64.sh' -O miniconda.sh
-    bash miniconda.sh -b -p /opt/miniconda3
-    /opt/miniconda3/bin/conda init --all
-    /opt/miniconda3/bin/conda config --append channels conda-forge
-
-    # 3. Create non-root user
-    adduser --disabled-password --gecos 'dog' nonroot
-
-    # 4. Setup testbed conda environment
-    chmod +x /root/setup_env.sh
-    bash /root/setup_env.sh
-
-    # 5. Clone and configure astropy repo
-    chmod +x /root/setup_repo.sh
-    bash /root/setup_repo.sh
-
-    # Optional: Activate env in bashrc
-    echo "source /opt/miniconda3/etc/profile.d/conda.sh && conda activate testbed" >> ~/.bashrc
-"""
-
 def build_sandbox(dataset):
     test_specs = get_test_specs_from_dataset(dataset)
     for test_spec in test_specs:

@@ -94,6 +94,22 @@ logger = logging.getLogger(__name__)
 
 #     return None, output
 
+class ArgumentTypeError(Exception):
+    """An error from trying to convert a command line string to a type."""
+    pass
+
+def str2bool(v):
+    """
+    Minor helper function to convert string to boolean
+    """
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ("yes", "true", "t", "y", "1"):
+        return True
+    elif v.lower() in ("no", "false", "f", "n", "0"):
+        return False
+    else:
+        raise ArgumentTypeError("Boolean value expected.")
 
 def get_reviewfix_faux_problem_statement(instance: dict) -> str:
     bad_patch = [bp for bp in instance['bad_patches'] if bp['source'] == 'badpatchllm'][0]
@@ -130,6 +146,7 @@ def run_sweagent_single(
     output_dir: Path,
     mode: str = "bugfixing",
     thinking_budget: int | None = None,
+    use_apptainer: bool = False,
 ):
 
     url = f"https://github.com/{instance['repo']}"
@@ -189,6 +206,8 @@ def run_sweagent_single(
                 args.append("""--agent.model.completion_kwargs={"thinking":{"type":"enabled","budget_tokens":""" + str(int(thinking_budget)) + """}}""")
             else:
                 raise RuntimeError(f"Cannot use thinking budget with non-gemini model: {model_name}")
+        
+        args.append(f"--use_apptainer={str(use_apptainer).lower()}")
 
         sweagent_main(args)
 
@@ -223,6 +242,7 @@ def main(
     instance_ids: list[str] | None= None,
     mode: str = "bugfixing",
     thinking_budget: int | None = None,
+    use_apptainer: bool = False,
 ):
     if input_tasks_path.exists():
         if input_tasks_path.suffix.endswith("json"):
@@ -270,7 +290,7 @@ def main(
                 continue
             output_dict = {"instance_id": instance_id}
             output_dict.update(basic_args)
-            full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path, api_key=api_key, mode=mode, thinking_budget=thinking_budget)
+            full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path, api_key=api_key, mode=mode, thinking_budget=thinking_budget, use_apptainer=use_apptainer)
             output_dict["full_output"] = full_output
             output_dict["model_patch"] = model_patch
             print(json.dumps(output_dict), file=f, flush=True)
@@ -286,6 +306,7 @@ if __name__ == '__main__':
     parser.add_argument("-k", "--api_key", type=str, default=None)
     parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview", "reviewfix"])
     parser.add_argument("--thinking_budget", type=int, default=0)
+    parser.add_argument("--use_apptainer", type=str2bool, default=False, help="run with docker or apptainer")
     args = parser.parse_args()
 
     main(
@@ -295,6 +316,7 @@ if __name__ == '__main__':
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
         api_key=args.api_key,
         mode=args.mode,
-        # thinking_budget=args.thinking_budget
+        # thinking_budget=args.thinking_budget,
+        use_apptainer=args.use_apptainer,
     )
 
