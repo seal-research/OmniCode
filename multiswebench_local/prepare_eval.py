@@ -47,12 +47,17 @@ def fix_and_clean():
     
     # Target repositories to find
     target_repos = [
+        ("apache", "dubbo"),
         ("alibaba", "fastjson2"),
         # ("fmtlib", "fmt"), # cpp dataset
         # ("jqlang", "jq"), # c dataset
         ("elastic", "logstash"),
+        ("fasterxml", "jackson-core"),
+        ("fasterxml", "jackson-databind"),
+        ("fasterxml", "jackson-dataformat-xml"),
         ("mockito", "mockito"),
         ("google", "guava"),
+        ("google", "gson"),
         ("spring-projects", "spring-boot"),
     ]
     
@@ -63,31 +68,20 @@ def fix_and_clean():
     dataset_base_path = "./mswebench_dataset"  # Adjust this to your actual path
     
     # Mapping of repo types to their dataset files
-<<<<<<< HEAD
     repo_file_map = {
         # "jqlang/jq": os.path.join(dataset_base_path, "c/jqlang__jq_dataset.jsonl"),
         # "fmtlib/fmt": os.path.join(dataset_base_path, "cpp/fmtlib__fmt_dataset.jsonl"),
+        "apache/dubbo": os.path.join(dataset_base_path, "java/apache__dubbo_dataset.jsonl"),
         "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl"),
         "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
         "elastic/logstash": os.path.join(dataset_base_path, "java/elastic__logstash_dataset.jsonl"),
+        "fasterxml/jackson-core": os.path.join(dataset_base_path, "java/fasterxml__jackson-core_dataset.jsonl"),
+        "fasterxml/jackson-databind": os.path.join(dataset_base_path, "java/fasterxml__jackson-databind_dataset.jsonl"),
+        "fasterxml/jackson-dataformat-xml": os.path.join(dataset_base_path, "java/fasterxml__jackson-dataformat-xml_dataset.jsonl"),
         "google/guava": os.path.join(dataset_base_path, "java/google__guava_dataset.jsonl"),
+        "google/gson": os.path.join(dataset_base_path, "java/google__gson_dataset.jsonl"),
         "spring-projects/spring-boot": os.path.join(dataset_base_path, "java/spring-projects__spring-boot_dataset.jsonl"),
     }
-=======
-    '''repo_file_map = {
-        "jqlang/jq": os.path.join(dataset_base_path, "c/jqlang__jq_dataset.jsonl"),
-        "fmtlib/fmt": os.path.join(dataset_base_path, "cpp/fmtlib__fmt_dataset.jsonl"),
-        "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl"),
-        "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
-        "elastic/logstash": os.path.join(dataset_base_path, "java/elastic__logstash_dataset.jsonl"),
-    }'''
-    repo_file_map = {
-    "elastic/logstash": "Multi-SWE-bench/java/elastic__logstash_dataset.jsonl",
-    "alibaba/fastjson": "Multi-SWE-bench/java/alibaba__fastjson2_dataset.jsonl",
-    "mockito/mockito": "Multi-SWE-bench/java/mockito__mockito_dataset.jsonl"
-	}
-
->>>>>>> 40c9956 (Add complete local OmniCode setup with dataset, scripts, and outputs)
     
     # Track which repositories we've found
     found_repos = set()
