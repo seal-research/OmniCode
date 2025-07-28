@@ -489,42 +489,40 @@ preserving the functionality of the code.
             elif mode == "codereview":
                 # For codereview, we need to handle bad patches like Aider does
                 bp_raw = task.get("bad_patches", [])
+                
+                # Handle different formats of bad_patches data
                 if isinstance(bp_raw, str):
                     try:
                         bp_raw = json.loads(bp_raw)
                     except Exception:
+                        log.warning(f"Failed to parse bad_patches JSON for {task_id}")
                         bp_raw = []
+                elif not isinstance(bp_raw, list):
+                    log.warning(f"bad_patches is not a list or string for {task_id}: {type(bp_raw)}")
+                    bp_raw = []
 
-                blocks = []
+                # Simplify the codereview format to avoid complexity issues
+                # Extract key insights from failed patches without including full diffs
+                failed_insights = []
                 for item in bp_raw:
-                    idx   = item.get("idx", "?")
-                    patch = item.get("patch", "").strip()
-                    blocks.append(
-                        f"[Candidate patch #{idx} – did **not** fix the bug]\n"
-                        "```diff\n" + patch + "\n```"
-                    )
-                bad_patches = "\n\n".join(blocks) or "_none supplied_"
-
+                    if isinstance(item, dict):
+                        idx = item.get("idx", "?")
+                        review = item.get("review", "").strip()
+                        if review:
+                            failed_insights.append(f"Patch #{idx}: {review}")
+                    else:
+                        failed_insights.append(f"Patch: Failed to apply correctly")
+                
+                failed_summary = "\n".join(failed_insights) if failed_insights else "No specific feedback available"
+                
+                # Create a simplified issue that includes review context but avoids complex formatting
                 modified_issue = f"""
-<uploaded_files>
-{str(repo_dir)}
-</uploaded_files>
-I've uploaded a Python code repository in **{str(repo_dir)}**.
-
-Pull-request description
-------------------------
 {task["problem_statement"].strip()}
 
-Failed candidate patches
-------------------------
-{bad_patches}
+Note: Previous attempts to fix this issue have failed. Key feedback from those attempts:
+{failed_summary}
 
-Your job
---------
-Analyse why the above attempts failed.
-Make the minimal changes to **non-test** files so the PR requirements are met.
-You may create and run reproduction scripts under `bash`.
-When done, apply your fix.
+Please create a solution that addresses the root cause of the issue.
 """.strip()
                 issue_txt.write_text(modified_issue)
             # For bugfixing mode, use the original issue statement
@@ -630,32 +628,12 @@ When done, apply your fix.
                 if acr_run_dir.exists():
                     for item in acr_run_dir.iterdir():
                         log.info(f"  - {item.name}")
-            if log_file.exists():
-                log.info(f"Log file contents for {task_id}:\n{log_file.read_text()}")
+                if log_file.exists():
+                    log.info(f"Log file contents for {task_id}:\n{log_file.read_text()}")
                 return None
             
-            # Create Aider-compatible output directory
-            aider_output_dir = out_dir / task_id
-            aider_output_dir.mkdir(exist_ok=True)
-            
-            # Generate fix.patch file (Aider format)
-            if patch_content:
-                patch_file = aider_output_dir / "fix.patch"
-                patch_file.write_text(patch_content)
-                log.info(f"Generated Aider-compatible patch: {patch_file}")
-            
-            # Generate .pred file (Aider format)
-            pred_data = {
-                "instance_id": task_id,
-                "mode": mode,
-                "model_name": model_id,
-                "full_output": proc.stdout + "\n" + proc.stderr,
-                "model_patch": patch_content or ""
-            }
-            pred_file = aider_output_dir / f"{task_id}.pred"
-            pred_file.write_text(json.dumps(pred_data))
-            log.info(f"Generated Aider-compatible prediction: {pred_file}")
-            
+            # ACR already writes all results to its own results directory
+            # No need to duplicate output to the output directory
             return {"patch": patch_content}
     except Exception as e:
         log.error(f"Exception occurred in run_single for {task_id}: {e}", exc_info=True)
