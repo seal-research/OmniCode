@@ -51,13 +51,17 @@ def fix_and_clean():
         ("alibaba", "fastjson2"),
         # ("fmtlib", "fmt"), # cpp dataset
         # ("jqlang", "jq"), # c dataset
+        # JAVA repositories
+        # ("alibaba", "fastjson2"),
+        ("apache", "dubbo"),
         ("elastic", "logstash"),
         ("fasterxml", "jackson-core"),
         ("fasterxml", "jackson-databind"),
         ("fasterxml", "jackson-dataformat-xml"),
-        ("mockito", "mockito"),
-        ("google", "guava"),
         ("google", "gson"),
+        ("google", "guava"),
+        ("googlecontainertools", "jib"),
+        ("mockito", "mockito"),
         ("spring-projects", "spring-boot"),
     ]
     
@@ -78,11 +82,13 @@ def fix_and_clean():
         "fasterxml/jackson-core": os.path.join(dataset_base_path, "java/fasterxml__jackson-core_dataset.jsonl"),
         "fasterxml/jackson-databind": os.path.join(dataset_base_path, "java/fasterxml__jackson-databind_dataset.jsonl"),
         "fasterxml/jackson-dataformat-xml": os.path.join(dataset_base_path, "java/fasterxml__jackson-dataformat-xml_dataset.jsonl"),
-        "google/guava": os.path.join(dataset_base_path, "java/google__guava_dataset.jsonl"),
         "google/gson": os.path.join(dataset_base_path, "java/google__gson_dataset.jsonl"),
+        "google/guava": os.path.join(dataset_base_path, "java/google__guava_dataset.jsonl"),
+        "googlecontainertools/jib": os.path.join(dataset_base_path, "java/googlecontainertools__jib_dataset.jsonl"),
+        "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
         "spring-projects/spring-boot": os.path.join(dataset_base_path, "java/spring-projects__spring-boot_dataset.jsonl"),
     }
-    
+
     # Track which repositories we've found
     found_repos = set()
     
