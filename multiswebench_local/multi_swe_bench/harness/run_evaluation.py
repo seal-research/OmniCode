@@ -598,8 +598,12 @@ class CliArgs:
         for file in image.files():
             file_path = image_dir / file.dir / file.name
             file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_content = file.content.replace("/home", str(absolute_image_dir / "apptainer_sandbox/home"))
+            # if the test instance is java and it use gradle, we need to set the GRADLE_USER_HOME environment variable
+            if "gradlew" in file_content:
+                file_content = f'export GRADLE_USER_HOME="{absolute_image_dir}/apptainer_sandbox/root"\n' + file_content
             with open(file_path, "w", encoding="utf-8", newline="\n") as f:
-                f.write(file.content.replace("/home", str(absolute_image_dir / "apptainer_sandbox/home")))
+                f.write(file_content)
             files.append(file_path)
                 
         self.logger.info(f"building image {image.image_full_name()}...")
