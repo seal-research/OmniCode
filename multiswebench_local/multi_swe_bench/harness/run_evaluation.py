@@ -5,6 +5,7 @@ import sys
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Dict, Literal, Optional
+import shutil
 
 from dataclasses_json import dataclass_json
 from tqdm import tqdm
@@ -22,7 +23,7 @@ from multi_swe_bench.harness.gen_report import CliArgs as ReportBuilder
 from multi_swe_bench.harness.image import Config, Image
 from multi_swe_bench.harness.instance import Instance
 from multi_swe_bench.harness.pull_request import PullRequestBase, Repository
-from multi_swe_bench.utils import docker_util, git_util
+from multi_swe_bench.utils import docker_util, git_util, apptainer_util
 from multi_swe_bench.utils.args_util import ArgumentParser
 from multi_swe_bench.utils.fs_utils import copy_source_code
 from multi_swe_bench.utils.logger import get_non_propagate_logger, setup_logger
@@ -163,6 +164,13 @@ def get_parser() -> ArgumentParser:
         default=True,
         help="Whether to log to the console.",
     )
+    parser.add_argument(
+        "--use_apptainer",
+        type=parser.bool,
+        required=False,
+        default=False,
+        help="Whether use apptainer to run multi-swe-bench.",
+    )
 
     return parser
 
@@ -205,6 +213,7 @@ class CliArgs:
     log_dir: Path
     log_level: str
     log_to_console: bool
+    use_apptainer: bool
 
     def __post_init__(self):
         self._check_mode()
@@ -327,6 +336,10 @@ class CliArgs:
             raise ValueError(
                 f"Invalid max_workers_run_instance: {self.max_workers_run_instance}"
             )
+    
+    def _check_use_apptainer(self):
+        if not isinstance(self.use_apptainer, bool):
+            raise ValueError(f"Invalid use_apptainer: {self.use_apptainer}")
 
     @property
     def logger(self) -> logging.Logger:
@@ -424,7 +437,7 @@ class CliArgs:
 
             for pr in self.dataset.values():
                 try:
-                    instance: Instance = Instance.create(pr, config)
+                    instance: Instance = Instance.create(pr, config, self.use_apptainer)
                     if not self.check_specific(instance.pr.id):
                         continue
                     if self.check_skip(instance.pr.id):
@@ -571,6 +584,42 @@ class CliArgs:
             ),
         )
         self.logger.info(f"Image {image.image_full_name()} built successfully.")
+    
+    def build_image_apptainer(self, image: Image):
+        workdir = self.workdir / image.pr.org / image.pr.repo / BUILD_IMAGE_WORKDIR
+        image_dir = workdir / image.workdir()
+        image_dir.mkdir(parents=True, exist_ok=True)
+        absolute_image_dir = image_dir.absolute()
+
+        if self.repo_dir and image.need_copy_code:
+            copy_source_code(self.repo_dir, image, image_dir)
+        
+        files = []
+        for file in image.files():
+            file_path = image_dir / file.dir / file.name
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_content = file.content.replace("/home", str(absolute_image_dir / "apptainer_sandbox/home"))
+            # if the test instance is java and it use gradle, we need to set the GRADLE_USER_HOME environment variable
+            if "gradlew" in file_content:
+                file_content = f'export GRADLE_USER_HOME="{absolute_image_dir}/apptainer_sandbox/root"\n' + file_content
+            with open(file_path, "w", encoding="utf-8", newline="\n") as f:
+                f.write(file_content)
+            files.append(file_path)
+                
+        self.logger.info(f"building image {image.image_full_name()}...")
+        apptainer_util.pull_build(
+            image_dir,
+            "apptainer_base.sif", 
+            image.dependency(),
+            files,
+            get_non_propagate_logger(
+                image_dir,
+                BUILD_IMAGE_LOG_FILE,
+                self.log_level,
+                False,
+            ),
+        )
+        self.logger.info(f"Image {image.image_full_name()} built successfully.")
 
     def run_mode_image(self):
         self.logger.info("Building images...")
@@ -579,6 +628,7 @@ class CliArgs:
         # construct the dependency graph
         external_images: set[str] = set()
         images: dict[str, set[Image]] = {}
+        print("self.instances:", self.instances)
         for instance in self.instances:
             required_image = instance.dependency()
             while isinstance(required_image, Image):
@@ -595,9 +645,13 @@ class CliArgs:
                 images[parent_image_name].add(required_image)
 
                 required_image = parent_image
+            print(f"Instance {instance.name()}")
 
         image_count = sum(len(images) for images in images.values())
         self.logger.info(f"Total images: {image_count}")
+
+        print("images:", images)
+        print("external_images:", external_images)
 
         # build images
         building_images: set[Image] = set()
@@ -642,6 +696,48 @@ class CliArgs:
                     for new_image in images[image.image_full_name()]:
                         new_building_images.add(new_image)
                 building_images = new_building_images
+
+        self.logger.info("Images built successfully.")
+
+    def run_mode_image_apptainer(self):
+        self.logger.info("Building images...")
+        self.check_commit_hashes()
+
+        # construct the dependency graph
+        building_images: set[str] = set()
+        for instance in self.instances:
+            image = instance.dependency()
+            building_images.add(image)
+            print(f"Instance {instance.name()}")
+        print("building_images:", building_images)
+
+        image_count = len(building_images)
+        self.logger.info(f"Total images: {image_count}")
+
+        with tqdm(total=image_count, desc="Building images") as building_bar:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=self.max_workers_build_image
+            ) as executor:
+                futures = {
+                    executor.submit(self.build_image_apptainer, image): image
+                    for image in building_images
+                }
+
+                failed_images: set[Image] = set()
+                for future in concurrent.futures.as_completed(futures):
+                    image = futures[future]
+                    try:
+                        future.result()
+                    except Exception as e:
+                        self.logger.error(
+                            f"Error building image {image}: {e}"
+                        )
+                        failed_images.add(image)
+                        if self.stop_on_error:
+                            executor.shutdown(wait=False)
+                            sys.exit(1)
+                    finally:
+                        building_bar.update(1)
 
         self.logger.info("Images built successfully.")
 
@@ -700,6 +796,57 @@ class CliArgs:
             instance_dir / FIX_PATCH_RUN_LOG_FILE,
         )
 
+    def run_instance_apptainer(self, instance: Instance):
+        instance_dir = (
+            self.workdir
+            / instance.pr.org
+            / instance.pr.repo
+            / EVALUATION_WORKDIR
+            / instance.dependency().workdir()
+        )
+        instance_dir.mkdir(parents=True, exist_ok=True)
+
+        workdir = self.workdir / instance.dependency().pr.org / instance.dependency().pr.repo / BUILD_IMAGE_WORKDIR
+        image_dir = workdir / instance.dependency().workdir()
+        image_dir_absolute = image_dir.absolute()
+
+        fix_patch_path = instance_dir.absolute() / "fix.patch"
+        with open(fix_patch_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(self.patches[instance.pr.id].fix_patch)
+
+        test_patch_path = instance_dir.absolute() / "test.patch"
+        with open(test_patch_path, "w", encoding="utf-8", newline="\n") as f:
+            f.write(self.dataset[instance.pr.id].test_patch)
+
+        report_path = instance_dir / REPORT_FILE
+        if report_path.exists():
+            self.logger.info(
+                f"Report already exists for {instance.name()}, skipping..."
+            )
+            return
+
+        shutil.copy(fix_patch_path, image_dir / "apptainer_sandbox/home/")
+        shutil.copy(test_patch_path, image_dir / "apptainer_sandbox/home/")
+
+        def run_and_save_output(
+            image_dir: Path, run_command: str, output_path: Path
+        ):
+            self.logger.info(
+                f"Running command: {run_command}..."
+            )
+            output = apptainer_util.run(
+                image_dir,
+                run_command,
+                output_path,
+            )
+            return output
+
+        run_and_save_output(
+            image_dir,
+            instance.fix_patch_run().replace("/home", str(image_dir_absolute / "apptainer_sandbox/home")),
+            instance_dir / FIX_PATCH_RUN_LOG_FILE,
+        )
+
     def run_mode_instance_only(self):
         self.logger.info("Running instances...")
 
@@ -727,10 +874,42 @@ class CliArgs:
                         running_bar.update(1)
 
         self.logger.info("Instances run successfully.")
+    
+    def run_mode_instance_only_apptainer(self):
+        self.logger.info("Running instances with Apptainer...")
+
+        with tqdm(total=len(self.instances), desc="Running instances") as running_bar:
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=self.max_workers_run_instance
+            ) as executor:
+                futures = {
+                    executor.submit(self.run_instance_apptainer, instance): instance
+                    for instance in self.instances
+                }
+
+                for future in concurrent.futures.as_completed(futures):
+                    instance = futures[future]
+                    try:
+                        future.result()
+                    except Exception as e:
+                        self.logger.error(
+                            f"Error running instance {instance.pr.id}: {e}"
+                        )
+                        if self.stop_on_error:
+                            executor.shutdown(wait=False)
+                            sys.exit(1)
+                    finally:
+                        running_bar.update(1)
+
+        self.logger.info("Instances run successfully.")
 
     def run_mode_instance(self):
-        self.run_mode_image()
-        self.run_mode_instance_only()
+        if self.use_apptainer:
+            self.run_mode_image_apptainer()
+            self.run_mode_instance_only_apptainer()
+        else:
+            self.run_mode_image()
+            self.run_mode_instance_only()
 
     def run_mode_evaluation(self):
         self.run_mode_instance()
@@ -747,13 +926,20 @@ class CliArgs:
             log_dir=self.log_dir,
             log_level=self.log_level,
             log_to_console=self.log_to_console,
+            use_apptainer=self.use_apptainer,
         ).run()
 
     def run(self):
         if self.mode == "image":
-            self.run_mode_image()
+            if self.use_apptainer:
+                self.run_mode_image_apptainer()
+            else:
+                self.run_mode_image()
         elif self.mode == "instance_only":
-            self.run_mode_instance_only()
+            if self.use_apptainer:
+                self.run_mode_instance_only_apptainer()
+            else:
+                self.run_mode_instance_only()
         elif self.mode == "instance":
             self.run_mode_instance()
         elif self.mode == "evaluation":
