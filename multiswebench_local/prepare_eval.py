@@ -48,12 +48,10 @@ def fix_and_clean():
     # Target repositories to find
     target_repos = [
         ("apache", "dubbo"),
-        ("alibaba", "fastjson2"),
         # ("fmtlib", "fmt"), # cpp dataset
         # ("jqlang", "jq"), # c dataset
         # JAVA repositories
         # ("alibaba", "fastjson2"),
-        ("apache", "dubbo"),
         ("elastic", "logstash"),
         ("fasterxml", "jackson-core"),
         ("fasterxml", "jackson-databind"),
@@ -85,7 +83,6 @@ def fix_and_clean():
         "google/gson": os.path.join(dataset_base_path, "java/google__gson_dataset.jsonl"),
         "google/guava": os.path.join(dataset_base_path, "java/google__guava_dataset.jsonl"),
         "googlecontainertools/jib": os.path.join(dataset_base_path, "java/googlecontainertools__jib_dataset.jsonl"),
-        "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
         "spring-projects/spring-boot": os.path.join(dataset_base_path, "java/spring-projects__spring-boot_dataset.jsonl"),
     }
 
