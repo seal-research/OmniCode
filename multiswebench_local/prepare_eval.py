@@ -47,11 +47,11 @@ def fix_and_clean():
     
     # Target repositories to find
     target_repos = [
+        ("apache", "dubbo"),
         # ("fmtlib", "fmt"), # cpp dataset
         # ("jqlang", "jq"), # c dataset
         # JAVA repositories
         # ("alibaba", "fastjson2"),
-        ("apache", "dubbo"),
         ("elastic", "logstash"),
         ("fasterxml", "jackson-core"),
         ("fasterxml", "jackson-databind"),
@@ -73,9 +73,9 @@ def fix_and_clean():
     repo_file_map = {
         # "jqlang/jq": os.path.join(dataset_base_path, "c/jqlang__jq_dataset.jsonl"),
         # "fmtlib/fmt": os.path.join(dataset_base_path, "cpp/fmtlib__fmt_dataset.jsonl"),
-        # JAVA repositories
-        # "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl"),
         "apache/dubbo": os.path.join(dataset_base_path, "java/apache__dubbo_dataset.jsonl"),
+        "alibaba/fastjson2": os.path.join(dataset_base_path, "java/alibaba__fastjson2_dataset.jsonl"),
+        "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
         "elastic/logstash": os.path.join(dataset_base_path, "java/elastic__logstash_dataset.jsonl"),
         "fasterxml/jackson-core": os.path.join(dataset_base_path, "java/fasterxml__jackson-core_dataset.jsonl"),
         "fasterxml/jackson-databind": os.path.join(dataset_base_path, "java/fasterxml__jackson-databind_dataset.jsonl"),
@@ -83,7 +83,6 @@ def fix_and_clean():
         "google/gson": os.path.join(dataset_base_path, "java/google__gson_dataset.jsonl"),
         "google/guava": os.path.join(dataset_base_path, "java/google__guava_dataset.jsonl"),
         "googlecontainertools/jib": os.path.join(dataset_base_path, "java/googlecontainertools__jib_dataset.jsonl"),
-        "mockito/mockito": os.path.join(dataset_base_path, "java/mockito__mockito_dataset.jsonl"),
         "spring-projects/spring-boot": os.path.join(dataset_base_path, "java/spring-projects__spring-boot_dataset.jsonl"),
     }
 
