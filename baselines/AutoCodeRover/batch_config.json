@@ -1,0 +1,12 @@
+{
+  "input_tasks": "../../data/filtered_dataset/instances.json",
+  "output_dir": "../../results/acr_batch_results",
+  "model_name": "openrouter/meta-llama/llama-4-scout",
+  "acr_root": ".",
+  "modes": ["bugfixing", "testgen", "stylereview", "codereview"],
+  "intermediate_save_interval": 5,
+  "save_intermediate": true,
+  "log_level": "INFO",
+  "max_retries": 3,
+  "timeout_seconds": 3600
+} 

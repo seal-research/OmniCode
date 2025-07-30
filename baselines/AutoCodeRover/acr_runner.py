@@ -85,17 +85,27 @@ def normalise_model(model: str) -> str:
         gemini/gemini-1.5-pro     → gemini/gemini-1.5-pro (keep as is)
         vertex/gemini-2.0-flash   → gemini/gemini-2.0-flash (convert provider)
         openai/gpt-4o-2024-05-13  → gpt-4o-2024-05-13 (strip provider)
+        openrouter/google/gemini-2.5-flash → openrouter/google/gemini-2.5-flash (keep as is)
+        openrouter/meta-llama/llama-4-scout → openrouter/meta-llama/llama-4-scout (keep as is)
     """
-    # For Gemini models, convert vertex to gemini provider
+    # For Gemini models, convert vertex to gemini provider but keep the prefix
     if model.startswith("vertex/gemini"):
         return model.replace("vertex/", "gemini/")
+    
+    # Keep gemini/ prefix as ACR expects it
+    if model.startswith("gemini/"):
+        return model
+    
+    # Keep openrouter/ prefix as ACR expects it
+    if model.startswith("openrouter/"):
+        return model
     
     # For OpenAI models, strip the provider prefix
     if model.startswith("openai/"):
         return model.split("/", 1)[1]
     
     # For other models with providers, strip the prefix
-    if "/" in model and not model.startswith("gemini/"):
+    if "/" in model and not model.startswith("gemini/") and not model.startswith("openrouter/"):
         return model.split("/", 1)[1]
     
     return model
@@ -673,14 +683,9 @@ def main(args):
     mode_output_dir = args.output_dir / f"acr_{args.mode}_outputs"
     mode_output_dir.mkdir(parents=True, exist_ok=True)
     
-    done = set()
     all_preds = mode_output_dir / "all_preds.jsonl"
-    if all_preds.exists():
-        done = {json.loads(l)["instance_id"] for l in all_preds.read_text().splitlines()}
 
     for t in tasks:
-        if t["instance_id"] in done:
-            continue
         
         # Get style feedback from dataset for stylereview mode
         style_feedback = None
