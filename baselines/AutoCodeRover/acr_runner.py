@@ -400,6 +400,7 @@ def run_single(task: dict, model: str, out_dir: Path, acr_root: Path, mode: str 
     repo_dir = work / "repo"
     issue_txt = work / "issue.txt"
 
+    print(f"DEBUG: Starting task: {task_id} (mode: {mode})")  # Direct print for debugging
     log.info(f"=== Starting task: {task_id} (mode: {mode}) ===")
     log.info(f"Temporary work dir: {work}")
     log.info(f"Task details: repo={task.get('repo')}, base_commit={task.get('base_commit')}, has_patch={bool(task.get('patch'))}")
@@ -584,9 +585,15 @@ Please create a solution that addresses the root cause of the issue.
                 
                 # Make paths relative to auto-code-rover directory since that's where ACR runs from
                 acr_working_dir = acr_root / "auto-code-rover"
-                relative_repo_dir = repo_dir.relative_to(acr_working_dir)
-                relative_issue_file = issue_txt.relative_to(acr_working_dir)
-                relative_output_dir = acr_output_dir.relative_to(acr_working_dir)
+                # Ensure we're working with absolute paths for relative_to calculation
+                acr_working_dir_abs = acr_working_dir.absolute()
+                repo_dir_abs = repo_dir.absolute()
+                issue_txt_abs = issue_txt.absolute()
+                acr_output_dir_abs = acr_output_dir.absolute()
+                
+                relative_repo_dir = repo_dir_abs.relative_to(acr_working_dir_abs)
+                relative_issue_file = issue_txt_abs.relative_to(acr_working_dir_abs)
+                relative_output_dir = acr_output_dir_abs.relative_to(acr_working_dir_abs)
                 
                 cmd = ["python", "-m", "app.main", "local-issue",
                        "--output-dir", str(relative_output_dir),
@@ -619,6 +626,7 @@ Please create a solution that addresses the root cause of the issue.
             log.info("GEMINI_API_KEY not set (using OpenRouter instead)")
 
         log.info(f"Prepared ACR command: {' '.join(cmd)} (cwd={acr_root / 'auto-code-rover'})")
+        print(f"DEBUG: About to run ACR subprocess for {task_id}")  # Direct print for debugging
         log.info(f"Working directory exists: {(acr_root / 'auto-code-rover').exists()}")
         log.info(f"Working directory contents: {list((acr_root / 'auto-code-rover').iterdir()) if (acr_root / 'auto-code-rover').exists() else 'Directory does not exist'}")
         log.info(f"About to run ACR subprocess. Checking if repo still exists: {repo_dir.exists()}")
@@ -626,6 +634,7 @@ Please create a solution that addresses the root cause of the issue.
             log.info(f"Repo directory contents before ACR: {list(repo_dir.iterdir())}")
         proc = subprocess.run(cmd, cwd=acr_root / "auto-code-rover",
                               capture_output=True, text=True, env=env)
+        print(f"DEBUG: ACR subprocess completed for {task_id} with return code {proc.returncode}")  # Direct print for debugging
 
         log_file = out_dir / f"{task_id}.log"
         log.info(f"Writing subprocess output to {log_file}")
@@ -683,11 +692,22 @@ Please create a solution that addresses the root cause of the issue.
             log.info(f"ACR run directory exists: {acr_run_dir.exists()}")
             if acr_run_dir.exists():
                 log.info(f"ACR run directory contents: {list(acr_run_dir.iterdir())}")
+                # Also check all subdirectories recursively
+                for item in acr_run_dir.rglob("*"):
+                    if item.is_file():
+                        log.info(f"Found file: {item}")
+                    elif item.is_dir():
+                        log.info(f"Found directory: {item}")
+                log.info(f"ACR run directory contents: {list(acr_run_dir.iterdir())}")
             
             # Search recursively for the task directory
+            log.info(f"Searching for task {task_id} in {acr_run_dir}")
+            found_dirs = []
             for item in acr_run_dir.rglob("*"):
-                if item.is_dir() and task_id in item.name:
-                    log.info(f"Found potential task directory: {item}")
+                if item.is_dir():
+                    found_dirs.append(item.name)
+                    if task_id in item.name:
+                        log.info(f"Found potential task directory: {item}")
                     # Look for patch files
                     for patch_file in item.rglob("*.diff"):
                         log.info(f"Found patch file: {patch_file}")
@@ -698,6 +718,7 @@ Please create a solution that addresses the root cause of the issue.
                             break
                         except Exception as e:
                             log.warning(f"Failed to read patch file {patch_file}: {e}")
+                    
                     if task_found:
                         break
                     
@@ -714,6 +735,39 @@ Please create a solution that addresses the root cause of the issue.
                                 break
                         except Exception as e:
                             log.warning(f"Failed to read selected_patch.json {selected_patch_file}: {e}")
+                    
+                    # Also look for any JSON files that might contain patch data
+                    for json_file in item.rglob("*.json"):
+                        if json_file.name != "selected_patch.json" and json_file.name != "meta.json":  # Skip the ones we already checked
+                            log.info(f"Found JSON file: {json_file}")
+                            try:
+                                json_data = json.loads(json_file.read_text())
+                                # Check for simple patch field first
+                                if "patch" in json_data:
+                                    patch_content = json_data["patch"]
+                                    task_found = True
+                                    log.info(f"Successfully read patch from {json_file}")
+                                    break
+                                # Check for conversation format (like conv_patch_*.json)
+                                elif isinstance(json_data, list) and len(json_data) > 0:
+                                    # Look for the last assistant message that contains a patch
+                                    for message in reversed(json_data):
+                                        if (isinstance(message, dict) and 
+                                            message.get("role") == "assistant" and 
+                                            "content" in message and 
+                                            "<file>" in message["content"] and 
+                                            "<patched>" in message["content"]):
+                                            patch_content = message["content"]
+                                            task_found = True
+                                            log.info(f"Successfully read patch from conversation in {json_file}")
+                                            break
+                                    if task_found:
+                                        break
+                            except Exception as e:
+                                log.warning(f"Failed to read JSON file {json_file}: {e}")
+                    
+                    if task_found:
+                        break
             
             # Fallback: Check the old directory structure
             if not task_found:
@@ -754,6 +808,7 @@ Please create a solution that addresses the root cause of the issue.
             
             if not task_found:
                 log.error(f"Task {task_id} not found in any ACR output directory")
+                log.info(f"All directories found in {acr_run_dir}: {found_dirs}")
                 log.info(f"Available directories in {acr_run_dir}:")
                 if acr_run_dir.exists():
                     for item in acr_run_dir.iterdir():
