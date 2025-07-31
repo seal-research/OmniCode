@@ -641,17 +641,11 @@ Please create a solution that addresses the root cause of the issue.
                 log.info(f"... (stderr truncated, total length: {len(proc.stderr)})")
         
         # Check if ACR created any output at all
-        log.info(f"Checking if ACR created any output in {acr_run_dir}")
-        if acr_run_dir.exists():
-            log.info(f"ACR run directory exists and contains: {list(acr_run_dir.iterdir())}")
+        results_dir = acr_root / "auto-code-rover" / "results"
+        if results_dir.exists():
+            log.info(f"Results directory exists and contains: {list(results_dir.iterdir())}")
         else:
-            log.warning(f"ACR run directory does not exist: {acr_run_dir}")
-            # Check if the parent results directory exists
-            results_dir = acr_root / "auto-code-rover" / "results"
-            if results_dir.exists():
-                log.info(f"Results directory exists and contains: {list(results_dir.iterdir())}")
-            else:
-                log.warning(f"Results directory does not exist: {results_dir}")
+            log.warning(f"Results directory does not exist: {results_dir}")
 
         if proc.returncode != 0:
             log.error(f"ACR exited {proc.returncode} on {task_id} (see {log_file})")
@@ -664,6 +658,13 @@ Please create a solution that addresses the root cause of the issue.
             # Agentic mode: Look for ACR's generated patches in the specific run directory we created
             acr_run_dir = acr_output_dir
             log.info(f"Looking for ACR results in {acr_run_dir}")
+            
+            # Check if ACR created any output at all
+            log.info(f"Checking if ACR created any output in {acr_run_dir}")
+            if acr_run_dir.exists():
+                log.info(f"ACR run directory exists and contains: {list(acr_run_dir.iterdir())}")
+            else:
+                log.warning(f"ACR run directory does not exist: {acr_run_dir}")
             
             if not acr_run_dir.exists():
                 log.error(f"ACR run directory {acr_run_dir} does not exist")
