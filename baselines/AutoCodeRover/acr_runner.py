@@ -619,6 +619,8 @@ Please create a solution that addresses the root cause of the issue.
             log.info("GEMINI_API_KEY not set (using OpenRouter instead)")
 
         log.info(f"Prepared ACR command: {' '.join(cmd)} (cwd={acr_root / 'auto-code-rover'})")
+        log.info(f"Working directory exists: {(acr_root / 'auto-code-rover').exists()}")
+        log.info(f"Working directory contents: {list((acr_root / 'auto-code-rover').iterdir()) if (acr_root / 'auto-code-rover').exists() else 'Directory does not exist'}")
         log.info(f"About to run ACR subprocess. Checking if repo still exists: {repo_dir.exists()}")
         if repo_dir.exists():
             log.info(f"Repo directory contents before ACR: {list(repo_dir.iterdir())}")
@@ -651,6 +653,9 @@ Please create a solution that addresses the root cause of the issue.
             log.error(f"ACR exited {proc.returncode} on {task_id} (see {log_file})")
             log.error(f"ACR stdout (first 1000 chars): {proc.stdout[:1000] if proc.stdout else 'None'}")
             log.error(f"ACR stderr (first 1000 chars): {proc.stderr[:1000] if proc.stderr else 'None'}")
+            # Check if the log file was created and show its contents
+            if log_file.exists():
+                log.error(f"Log file contents for {task_id}:\n{log_file.read_text()}")
             # Don't return None immediately, let the exception handling take care of it
             raise Exception(f"ACR subprocess failed with return code {proc.returncode}. Check {log_file} for details.")
 
