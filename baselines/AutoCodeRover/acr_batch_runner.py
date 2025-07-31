@@ -260,7 +260,9 @@ def run_batch_processing(
                         )
                         # Check if run_single returned a valid result (not None)
                         success = patch_result is not None
+                        log.info(f"Attempt {attempt + 1} for {instance_id}: patch_result is not None = {success}")
                         if success:
+                            log.info(f"✅ Task {instance_id} succeeded on attempt {attempt + 1}")
                             break
                         else:
                             error_msg = "run_single returned None (ACR failed)"
@@ -289,6 +291,7 @@ def run_batch_processing(
             
             # Log the result
             log.info(f"Task {instance_id} final status - success: {success}, patch_result: {patch_result is not None}, error_msg: {error_msg}")
+            log.info(f"Task {instance_id} - patch_result type: {type(patch_result)}, patch_result content: {patch_result}")
             if success:
                 log.info(f"✅ Task {instance_id} completed successfully")
             else:
@@ -309,12 +312,15 @@ def run_batch_processing(
             results.append(result)
             
             # Update progress
+            log.info(f"Updating progress for {instance_id}: success={success}")
             if success:
                 progress["mode_progress"][mode]["completed"] += 1
                 progress["completed_tasks"] += 1
+                log.info(f"✅ Progress updated: completed_tasks={progress['completed_tasks']}, failed_tasks={progress['failed_tasks']}")
             else:
                 progress["mode_progress"][mode]["failed"] += 1
                 progress["failed_tasks"] += 1
+                log.info(f"❌ Progress updated: completed_tasks={progress['completed_tasks']}, failed_tasks={progress['failed_tasks']}")
             
             # Save intermediate results periodically
             if save_intermediate and (i + 1) % intermediate_save_interval == 0:

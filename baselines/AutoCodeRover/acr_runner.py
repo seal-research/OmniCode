@@ -621,7 +621,10 @@ Please create a solution that addresses the root cause of the issue.
 
         if proc.returncode != 0:
             log.error(f"ACR exited {proc.returncode} on {task_id} (see {log_file})")
-            return None
+            log.error(f"ACR stdout (first 1000 chars): {proc.stdout[:1000] if proc.stdout else 'None'}")
+            log.error(f"ACR stderr (first 1000 chars): {proc.stderr[:1000] if proc.stderr else 'None'}")
+            # Don't return None immediately, let the exception handling take care of it
+            raise Exception(f"ACR subprocess failed with return code {proc.returncode}. Check {log_file} for details.")
 
         if agentic:
             # Agentic mode: Look for ACR's generated patches in the specific run directory we created
@@ -630,7 +633,7 @@ Please create a solution that addresses the root cause of the issue.
             
             if not acr_run_dir.exists():
                 log.error(f"ACR run directory {acr_run_dir} does not exist")
-                return None
+                raise Exception(f"ACR run directory {acr_run_dir} does not exist. ACR may have failed to create output.")
             
             # Look for the task in different possible locations
             task_found = False
@@ -678,7 +681,7 @@ Please create a solution that addresses the root cause of the issue.
                         log.info(f"  - {item.name}")
                 if log_file.exists():
                     log.info(f"Log file contents for {task_id}:\n{log_file.read_text()}")
-                return None
+                raise Exception(f"Task {task_id} not found in any ACR output directory. ACR may have failed silently.")
             
             # ACR already writes all results to its own results directory
             # No need to duplicate output to the output directory
