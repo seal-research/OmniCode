@@ -392,9 +392,11 @@ def run_single(task: dict, model: str, out_dir: Path, acr_root: Path, mode: str 
     # Setup temporary directories
     # Create temp dir relative to auto-code-rover directory since that's where ACR will run from
     tmp_root = acr_root / "auto-code-rover" / "acr_tmp"
+    log.info(f"Creating tmp_root: {tmp_root} (absolute: {tmp_root.absolute()})")
     tmp_root.mkdir(parents=True, exist_ok=True)
     task_id = task["instance_id"]
     work = Path(tempfile.mkdtemp(prefix=f"acr_{task_id}_", dir=tmp_root))
+    log.info(f"Created work directory: {work}")
     repo_dir = work / "repo"
     issue_txt = work / "issue.txt"
 
@@ -403,8 +405,12 @@ def run_single(task: dict, model: str, out_dir: Path, acr_root: Path, mode: str 
     
     try:
         log.info(f"Task repo: {task['repo']}, base_commit: {task['base_commit']}")
+        log.info(f"About to clone repo to: {repo_dir}")
+        log.info(f"Repo directory exists before clone: {repo_dir.exists()}")
         clone_repo(f"https://github.com/{task['repo']}", task["base_commit"], repo_dir)
         log.info(f"Repo ready at {repo_dir}")
+        log.info(f"Repo directory exists after clone: {repo_dir.exists()}")
+        log.info(f"Repo directory contents: {list(repo_dir.iterdir()) if repo_dir.exists() else 'Directory does not exist'}")
         if task.get("patch"):
             log.info(f"Applying patch to repo {repo_dir}")
             apply_patch(repo_dir, task["patch"])
@@ -412,6 +418,20 @@ def run_single(task: dict, model: str, out_dir: Path, acr_root: Path, mode: str 
         log.info(f"Writing issue statement to {issue_txt}")
         issue_txt.write_text(textwrap.dedent(task["problem_statement"]))
         log.info(f"Issue statement written.")
+        
+        # Additional debug: Check repository state before ACR execution
+        log.info(f"Final repo directory check before ACR: {repo_dir}")
+        log.info(f"Repo directory exists: {repo_dir.exists()}")
+        if repo_dir.exists():
+            log.info(f"Repo directory contents: {list(repo_dir.iterdir())}")
+            astropy_dir = repo_dir / "astropy"
+            if astropy_dir.exists():
+                log.info(f"Astropy directory exists: {astropy_dir}")
+                log.info(f"Astropy directory contents: {list(astropy_dir.iterdir())}")
+            else:
+                log.warning(f"Astropy directory does not exist: {astropy_dir}")
+        else:
+            log.error(f"Repo directory does not exist before ACR execution: {repo_dir}")
 
         # Normalize model name
         model_id = normalise_model(model)
@@ -582,6 +602,9 @@ Please create a solution that addresses the root cause of the issue.
             log.info("GEMINI_API_KEY not set (using OpenRouter instead)")
 
         log.info(f"Prepared ACR command: {' '.join(cmd)} (cwd={acr_root / 'auto-code-rover'})")
+        log.info(f"About to run ACR subprocess. Checking if repo still exists: {repo_dir.exists()}")
+        if repo_dir.exists():
+            log.info(f"Repo directory contents before ACR: {list(repo_dir.iterdir())}")
         proc = subprocess.run(cmd, cwd=acr_root / "auto-code-rover",
                               capture_output=True, text=True, env=env)
 
@@ -590,6 +613,7 @@ Please create a solution that addresses the root cause of the issue.
         log_file.write_text(proc.stdout + "\n" + proc.stderr)
 
         log.info(f"ACR return code: {proc.returncode}")
+        log.info(f"After ACR subprocess. Checking if repo still exists: {repo_dir.exists()}")
         if proc.stdout:
             log.info(f"ACR stdout:\n{proc.stdout}")
         if proc.stderr:
@@ -660,8 +684,12 @@ Please create a solution that addresses the root cause of the issue.
             # No need to duplicate output to the output directory
             return {"patch": patch_content}
     except Exception as e:
-        log.error(f"Exception occurred in run_single for {task_id}: {e}", exc_info=True)
-        return None
+        import traceback
+        error_details = traceback.format_exc()
+        log.error(f"Exception occurred in run_single for {task_id}: {e}")
+        log.error(f"Exception details: {error_details}")
+        # Re-raise the exception with more context for the batch runner
+        raise Exception(f"run_single failed for {task_id}: {e}\n{error_details}") from e
     finally:
         # Always clean up the temporary directory
         try:

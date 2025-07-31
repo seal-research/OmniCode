@@ -227,8 +227,16 @@ def run_batch_processing(
             patch_result = None
             success = False
             error_msg = None
+            attempts_made = 0
+            
+            # Debug: Log the acr_root path
+            log.info(f"ACR root path: {acr_root} (absolute: {acr_root.absolute()})")
+            log.info(f"Current working directory: {Path.cwd()}")
+            log.info(f"Expected auto-code-rover path: {acr_root / 'auto-code-rover'}")
+            log.info(f"Expected tmp path: {acr_root / 'auto-code-rover' / 'acr_tmp'}")
             
             for attempt in range(max_retries):
+                attempts_made = attempt + 1
                 try:
                     # Set a timeout for the task
                     import signal
@@ -264,9 +272,13 @@ def run_batch_processing(
                 except TimeoutError as e:
                     error_msg = f"Timeout after {timeout_seconds} seconds"
                     log.warning(f"Attempt {attempt + 1} failed for {instance_id}: {error_msg}")
+                    success = False
                 except Exception as e:
-                    error_msg = str(e)
+                    import traceback
+                    error_msg = str(e) if str(e) else f"Exception of type {type(e).__name__}"
                     log.warning(f"Attempt {attempt + 1} failed for {instance_id}: {error_msg}")
+                    log.warning(f"Exception details: {traceback.format_exc()}")
+                    success = False
                 
                 if attempt < max_retries - 1:
                     log.info(f"Retrying {instance_id} (attempt {attempt + 2}/{max_retries})")
@@ -276,6 +288,7 @@ def run_batch_processing(
             patch_saved = save_patch_to_file(patch_result, instance_id, mode_dir)
             
             # Log the result
+            log.info(f"Task {instance_id} final status - success: {success}, patch_result: {patch_result is not None}, error_msg: {error_msg}")
             if success:
                 log.info(f"✅ Task {instance_id} completed successfully")
             else:
@@ -290,7 +303,7 @@ def run_batch_processing(
                 "patch_content": patch_result,
                 "success": success,
                 "processing_time": time.time() - task_start_time,
-                "attempts": attempt + 1 if not success else 1,
+                "attempts": attempts_made,  # Use actual number of attempts made
                 "error": error_msg if not success else None
             }
             results.append(result)
