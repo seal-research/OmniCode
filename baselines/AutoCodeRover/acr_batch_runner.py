@@ -250,8 +250,13 @@ def run_batch_processing(
                             style_feedback, 
                             agentic=True  # Always use agentic mode as required
                         )
-                        success = True
-                        break
+                        # Check if run_single returned a valid result (not None)
+                        success = patch_result is not None
+                        if success:
+                            break
+                        else:
+                            error_msg = "run_single returned None (ACR failed)"
+                            log.warning(f"Attempt {attempt + 1} failed for {instance_id}: {error_msg}")
                     finally:
                         # Cancel the alarm
                         signal.alarm(0)
@@ -269,6 +274,12 @@ def run_batch_processing(
             
             # Save patch to file
             patch_saved = save_patch_to_file(patch_result, instance_id, mode_dir)
+            
+            # Log the result
+            if success:
+                log.info(f"✅ Task {instance_id} completed successfully")
+            else:
+                log.warning(f"❌ Task {instance_id} failed: {error_msg}")
             
             # Record result
             result = {

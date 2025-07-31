@@ -390,7 +390,8 @@ def run_single(task: dict, model: str, out_dir: Path, acr_root: Path, mode: str 
     log = logging.getLogger(__name__)
     
     # Setup temporary directories
-    tmp_root = Path('./acr_tmp')
+    # Create temp dir relative to auto-code-rover directory since that's where ACR will run from
+    tmp_root = acr_root / "auto-code-rover" / "acr_tmp"
     tmp_root.mkdir(parents=True, exist_ok=True)
     task_id = task["instance_id"]
     work = Path(tempfile.mkdtemp(prefix=f"acr_{task_id}_", dir=tmp_root))
@@ -544,12 +545,18 @@ Please create a solution that addresses the root cause of the issue.
                 run_name = f"acr-run-{timestamp}"
                 acr_output_dir = acr_root / "auto-code-rover" / "results" / run_name
                 
+                # Make paths relative to auto-code-rover directory since that's where ACR runs from
+                acr_working_dir = acr_root / "auto-code-rover"
+                relative_repo_dir = repo_dir.relative_to(acr_working_dir)
+                relative_issue_file = issue_txt.relative_to(acr_working_dir)
+                relative_output_dir = acr_output_dir.relative_to(acr_working_dir)
+                
                 cmd = ["python", "-m", "app.main", "local-issue",
-                       "--output-dir", str(acr_output_dir),
+                       "--output-dir", str(relative_output_dir),
                        "--model", model_id,
                        "--task-id", task_id,
-                       "--local-repo", str(repo_dir),
-                       "--issue-file", str(issue_txt),
+                       "--local-repo", str(relative_repo_dir),
+                       "--issue-file", str(relative_issue_file),
                        "--model-temperature", "0.2"]
         else:
             # Pure prompting mode is not supported - only agentic mode
@@ -560,12 +567,19 @@ Please create a solution that addresses the root cause of the issue.
         env = os.environ.copy()
         env["LITELLM_DEBUG"] = "1"
         
-        # Check if GEMINI_API_KEY is set
+        # Check if OPENROUTER_API_KEY is set (for OpenRouter models)
+        if "OPENROUTER_API_KEY" in env:
+            log.info(f"OPENROUTER_API_KEY is set (length: {len(env['OPENROUTER_API_KEY'])})")
+            log.info(f"OPENROUTER_API_KEY starts with: {env['OPENROUTER_API_KEY'][:10]}...")
+        else:
+            log.warning("OPENROUTER_API_KEY is not set in environment!")
+            
+        # Check if GEMINI_API_KEY is set (for direct Gemini models)
         if "GEMINI_API_KEY" in env:
             log.info(f"GEMINI_API_KEY is set (length: {len(env['GEMINI_API_KEY'])})")
             log.info(f"GEMINI_API_KEY starts with: {env['GEMINI_API_KEY'][:10]}...")
         else:
-            log.error("GEMINI_API_KEY is not set in environment!")
+            log.info("GEMINI_API_KEY not set (using OpenRouter instead)")
 
         log.info(f"Prepared ACR command: {' '.join(cmd)} (cwd={acr_root / 'auto-code-rover'})")
         proc = subprocess.run(cmd, cwd=acr_root / "auto-code-rover",
