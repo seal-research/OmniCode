@@ -402,6 +402,9 @@ def run_single(task: dict, model: str, out_dir: Path, acr_root: Path, mode: str 
 
     log.info(f"=== Starting task: {task_id} (mode: {mode}) ===")
     log.info(f"Temporary work dir: {work}")
+    log.info(f"Task details: repo={task.get('repo')}, base_commit={task.get('base_commit')}, has_patch={bool(task.get('patch'))}")
+    if task.get('patch'):
+        log.info(f"Patch length: {len(task['patch'])} characters")
     
     try:
         log.info(f"Task repo: {task['repo']}, base_commit: {task['base_commit']}")
@@ -432,6 +435,20 @@ def run_single(task: dict, model: str, out_dir: Path, acr_root: Path, mode: str 
                 log.warning(f"Astropy directory does not exist: {astropy_dir}")
         else:
             log.error(f"Repo directory does not exist before ACR execution: {repo_dir}")
+        
+        # Check if the specific file mentioned in the error exists
+        test_file = repo_dir / "astropy" / "stats" / "tests" / "test_funcs.py"
+        if test_file.exists():
+            log.info(f"✅ Test file exists: {test_file}")
+        else:
+            log.warning(f"❌ Test file does not exist: {test_file}")
+            # Check if the path exists
+            stats_dir = repo_dir / "astropy" / "stats"
+            if stats_dir.exists():
+                log.info(f"Stats directory exists: {stats_dir}")
+                log.info(f"Stats directory contents: {list(stats_dir.iterdir())}")
+            else:
+                log.warning(f"Stats directory does not exist: {stats_dir}")
 
         # Normalize model name
         model_id = normalise_model(model)
@@ -615,9 +632,26 @@ Please create a solution that addresses the root cause of the issue.
         log.info(f"ACR return code: {proc.returncode}")
         log.info(f"After ACR subprocess. Checking if repo still exists: {repo_dir.exists()}")
         if proc.stdout:
-            log.info(f"ACR stdout:\n{proc.stdout}")
+            log.info(f"ACR stdout (first 2000 chars):\n{proc.stdout[:2000]}")
+            if len(proc.stdout) > 2000:
+                log.info(f"... (stdout truncated, total length: {len(proc.stdout)})")
         if proc.stderr:
-            log.info(f"ACR stderr:\n{proc.stderr}")
+            log.info(f"ACR stderr (first 2000 chars):\n{proc.stderr[:2000]}")
+            if len(proc.stderr) > 2000:
+                log.info(f"... (stderr truncated, total length: {len(proc.stderr)})")
+        
+        # Check if ACR created any output at all
+        log.info(f"Checking if ACR created any output in {acr_run_dir}")
+        if acr_run_dir.exists():
+            log.info(f"ACR run directory exists and contains: {list(acr_run_dir.iterdir())}")
+        else:
+            log.warning(f"ACR run directory does not exist: {acr_run_dir}")
+            # Check if the parent results directory exists
+            results_dir = acr_root / "auto-code-rover" / "results"
+            if results_dir.exists():
+                log.info(f"Results directory exists and contains: {list(results_dir.iterdir())}")
+            else:
+                log.warning(f"Results directory does not exist: {results_dir}")
 
         if proc.returncode != 0:
             log.error(f"ACR exited {proc.returncode} on {task_id} (see {log_file})")
@@ -639,39 +673,78 @@ Please create a solution that addresses the root cause of the issue.
             task_found = False
             patch_content = None
             
-            # Check applicable_patch directory first
-            applicable_dir = acr_run_dir / "applicable_patch"
-            if applicable_dir.exists():
-                for task_dir in applicable_dir.iterdir():
-                    if task_dir.name.startswith(f"{task_id}_"):
-                        log.info(f"Found task in applicable_patch: {task_dir}")
-                        # Look for selected_patch.json
-                        selected_patch_file = task_dir / "selected_patch.json"
-                        if selected_patch_file.exists():
+            log.info(f"Searching for task {task_id} in ACR run directory: {acr_run_dir}")
+            log.info(f"ACR run directory exists: {acr_run_dir.exists()}")
+            if acr_run_dir.exists():
+                log.info(f"ACR run directory contents: {list(acr_run_dir.iterdir())}")
+            
+            # Search recursively for the task directory
+            for item in acr_run_dir.rglob("*"):
+                if item.is_dir() and task_id in item.name:
+                    log.info(f"Found potential task directory: {item}")
+                    # Look for patch files
+                    for patch_file in item.rglob("*.diff"):
+                        log.info(f"Found patch file: {patch_file}")
+                        try:
+                            patch_content = patch_file.read_text()
+                            task_found = True
+                            log.info(f"Successfully read patch from {patch_file}")
+                            break
+                        except Exception as e:
+                            log.warning(f"Failed to read patch file {patch_file}: {e}")
+                    if task_found:
+                        break
+                    
+                    # Also look for selected_patch.json
+                    selected_patch_file = item / "selected_patch.json"
+                    if selected_patch_file.exists():
+                        log.info(f"Found selected_patch.json: {selected_patch_file}")
+                        try:
                             acr_patch_data = json.loads(selected_patch_file.read_text())
                             if "patch" in acr_patch_data:
                                 patch_content = acr_patch_data["patch"]
                                 task_found = True
+                                log.info(f"Successfully read patch from selected_patch.json")
                                 break
+                        except Exception as e:
+                            log.warning(f"Failed to read selected_patch.json {selected_patch_file}: {e}")
             
-            # If not found in applicable_patch, check other directories
+            # Fallback: Check the old directory structure
             if not task_found:
-                for subdir in ["raw_patch_but_unparsed", "raw_patch_but_unmatched"]:
-                    check_dir = acr_run_dir / subdir
-                    if check_dir.exists():
-                        for task_dir in check_dir.iterdir():
-                            if task_dir.name.startswith(f"{task_id}_"):
-                                log.info(f"Found task in {subdir}: {task_dir}")
-                                # Look for selected_patch.json
-                                selected_patch_file = task_dir / "selected_patch.json"
-                                if selected_patch_file.exists():
-                                    acr_patch_data = json.loads(selected_patch_file.read_text())
-                                    if "patch" in acr_patch_data:
-                                        patch_content = acr_patch_data["patch"]
-                                        task_found = True
-                                        break
-                        if task_found:
-                            break
+                log.info("Trying fallback directory structure...")
+                # Check applicable_patch directory first
+                applicable_dir = acr_run_dir / "applicable_patch"
+                if applicable_dir.exists():
+                    for task_dir in applicable_dir.iterdir():
+                        if task_dir.name.startswith(f"{task_id}_"):
+                            log.info(f"Found task in applicable_patch: {task_dir}")
+                            # Look for selected_patch.json
+                            selected_patch_file = task_dir / "selected_patch.json"
+                            if selected_patch_file.exists():
+                                acr_patch_data = json.loads(selected_patch_file.read_text())
+                                if "patch" in acr_patch_data:
+                                    patch_content = acr_patch_data["patch"]
+                                    task_found = True
+                                    break
+                
+                # If not found in applicable_patch, check other directories
+                if not task_found:
+                    for subdir in ["raw_patch_but_unparsed", "raw_patch_but_unmatched"]:
+                        check_dir = acr_run_dir / subdir
+                        if check_dir.exists():
+                            for task_dir in check_dir.iterdir():
+                                if task_dir.name.startswith(f"{task_id}_"):
+                                    log.info(f"Found task in {subdir}: {task_dir}")
+                                    # Look for selected_patch.json
+                                    selected_patch_file = task_dir / "selected_patch.json"
+                                    if selected_patch_file.exists():
+                                        acr_patch_data = json.loads(selected_patch_file.read_text())
+                                        if "patch" in acr_patch_data:
+                                            patch_content = acr_patch_data["patch"]
+                                            task_found = True
+                                            break
+                            if task_found:
+                                break
             
             if not task_found:
                 log.error(f"Task {task_id} not found in any ACR output directory")
