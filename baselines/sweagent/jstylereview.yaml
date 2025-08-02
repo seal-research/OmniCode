@@ -1,0 +1,74 @@
+# Checkstyle-based Java Style Review Agent Configuration
+# This template is designed to work with the Java style review system
+agent:
+  templates:
+    system_template: |-
+      You are a Java code style expert assistant that can interact with a computer to analyze and fix code style issues.
+      You specialize in Checkstyle-based code analysis and can interpret Checkstyle violation reports to provide targeted fixes.
+      
+      Your expertise includes:
+      - Java coding standards and best practices
+      - Checkstyle rule interpretation and application
+      - Code formatting and style consistency
+      - Import organization and package structure
+      - Naming conventions and code quality improvements
+      
+      You work with a repository that has been analyzed by Checkstyle, and your goal is to resolve all style violations
+      while preserving the original functionality of the code.
+    instance_template: |-
+      You have recently generated a patch to resolve an issue within this repository.
+      Checkstyle has been run on the modified files and has produced the following feedback:
+      
+      {{problem_statement}}
+      
+      Your task is to:
+      1. Analyze the Checkstyle violations provided in the problem statement
+      2. Understand the specific rules that were violated (e.g., naming conventions, import organization, formatting)
+      3. Apply fixes that resolve these violations while maintaining code functionality
+      4. Ensure your changes follow Java best practices and coding standards
+      5. Test that your fixes don't introduce new style violations
+      
+      Common Checkstyle violations you may encounter:
+      - Naming violations (ConstantName, LocalVariableName, MethodName, etc.)
+      - Import issues (AvoidStarImport, UnusedImports, RedundantImport)
+      - Formatting issues (WhitespaceAround, LeftCurly, RightCurly)
+      - Code quality issues (MethodLength, ParameterNumber, MagicNumber)
+      - Documentation and comment issues (TodoComment)
+      
+      Please resolve the Checkstyle feedback to the best of your ability, while preserving the functionality of the code.
+      Focus on the most critical violations first and ensure your fixes are consistent with the existing codebase style.
+    next_step_template: |-
+      OBSERVATION:
+      {{observation}}
+      
+      Based on this observation, continue with your analysis and fix any remaining Checkstyle violations.
+      If you encounter any errors or unexpected behavior, document them and proceed with the best available solution.
+    next_step_no_output_template: |-
+      Your command ran successfully and did not produce any output.
+      This may indicate that the Checkstyle analysis completed without finding violations, or the files were processed successfully.
+      Continue with your analysis or proceed to the next step in your style review process.
+  tools:
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/review_on_submit_m
+    registry_variables:
+      USE_FILEMAP: 'true'
+      SUBMIT_REVIEW_MESSAGES:
+        - |
+          Thank you for your work on resolving the Checkstyle violations. Here is a summary of all the style improvements made:
+
+          <diff>
+          {{diff}}
+          </diff>
+          
+          The following Checkstyle violations were addressed:
+          - Fixed naming convention violations
+          - Resolved import organization issues
+          - Corrected formatting and whitespace problems
+          - Improved code quality and readability
+          
+          All changes maintain the original functionality while ensuring compliance with Java coding standards.
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling

@@ -1,0 +1,357 @@
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/AbstractGenerator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/AbstractGenerator.java
+index 8d95ecd..c048bcf 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/AbstractGenerator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/AbstractGenerator.java
+@@ -39,6 +39,10 @@ import java.util.stream.Collectors;
+ 
+ public abstract class AbstractGenerator extends Generator {
+ 
++    protected AbstractGenerator() {
++        // Default constructor to address PMD violation: AtLeastOneConstructor
++    }
++
+     private static final int SERVICE_NUMBER_OF_PATHS = 2;
+     private static final int METHOD_NUMBER_OF_PATHS = 4;
+ 
+@@ -73,14 +77,15 @@ public abstract class AbstractGenerator extends Generator {
+ 
+     @Override
+     public List<PluginProtos.CodeGeneratorResponse.File> generateFiles(
+-        PluginProtos.CodeGeneratorRequest request) throws GeneratorException {
++        final PluginProtos.CodeGeneratorRequest request) throws GeneratorException {
+         final ProtoTypeMap typeMap = ProtoTypeMap.of(request.getProtoFileList());
+ 
+-        List<FileDescriptorProto> protosToGenerate = request.getProtoFileList().stream()
+-            .filter(protoFile -> request.getFileToGenerateList().contains(protoFile.getName()))
++        final List<String> fileToGenerateList = request.getFileToGenerateList();
++        final List<FileDescriptorProto> protosToGenerate = request.getProtoFileList().stream()
++            .filter(protoFile -> fileToGenerateList.contains(protoFile.getName()))
+             .collect(Collectors.toList());
+ 
+-        List<ServiceContext> services = findServices(protosToGenerate, typeMap);
++        final List<ServiceContext> services = findServices(protosToGenerate, typeMap);
+         return generateFiles(services);
+     }
+ 
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/Dubbo3Generator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/Dubbo3Generator.java
+index 29a789b..e5ce225 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/Dubbo3Generator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/Dubbo3Generator.java
+@@ -22,11 +22,17 @@ import com.salesforce.jprotoc.ProtocPlugin;
+ 
+ public class Dubbo3Generator extends AbstractGenerator {
+ 
+-    public static void main(String[] args) {
++    public Dubbo3Generator() {
++        // Default constructor to address PMD violation: AtLeastOneConstructor
++    }
++
++    public static void main(final String[] args) {
+         if (args.length == 0) {
+             ProtocPlugin.generate(new Dubbo3Generator());
+         } else {
+-            ProtocPlugin.debug(new Dubbo3Generator(), args[0]);
++            if (ProtocPlugin.getLogger().isInfoEnabled()) {
++                ProtocPlugin.debug(new Dubbo3Generator(), args[0]);
++            }
+         }
+     }
+ 
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/DubboGenerator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/DubboGenerator.java
+index 1abf2a0..092f027 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/DubboGenerator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/DubboGenerator.java
+@@ -22,11 +22,17 @@ import com.salesforce.jprotoc.ProtocPlugin;
+ 
+ public class DubboGenerator extends AbstractGenerator {
+ 
+-    public static void main(String[] args) {
++    public DubboGenerator() {
++        // Default constructor to address PMD violation: AtLeastOneConstructor
++    }
++
++    public static void main(final String[] args) {
+         if (args.length == 0) {
+             ProtocPlugin.generate(new DubboGenerator());
+         } else {
+-            ProtocPlugin.debug(new DubboGenerator(), args[0]);
++            if (ProtocPlugin.getLogger().isInfoEnabled()) {
++                ProtocPlugin.debug(new DubboGenerator(), args[0]);
++            }
+         }
+     }
+ 
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/DubboGrpcGenerator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/DubboGrpcGenerator.java
+index dafdd5a..1d2ed4c 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/DubboGrpcGenerator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/DubboGrpcGenerator.java
+@@ -22,11 +22,17 @@ import com.salesforce.jprotoc.ProtocPlugin;
+ 
+ public class DubboGrpcGenerator extends AbstractGenerator {
+ 
+-    public static void main(String[] args) {
++    public DubboGrpcGenerator() {
++        // Default constructor to address PMD violation: AtLeastOneConstructor
++    }
++
++    public static void main(final String[] args) {
+         if (args.length == 0) {
+             ProtocPlugin.generate(new DubboGrpcGenerator());
+         } else {
+-            ProtocPlugin.debug(new DubboGrpcGenerator(), args[0]);
++            if (ProtocPlugin.getLogger().isInfoEnabled()) {
++                ProtocPlugin.debug(new DubboGrpcGenerator(), args[0]);
++            }
+         }
+     }
+ 
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/reactive/ReactorDubboGrpcGenerator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/reactive/ReactorDubboGrpcGenerator.java
+index dd9520b..c8b0ba1 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/reactive/ReactorDubboGrpcGenerator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/reactive/ReactorDubboGrpcGenerator.java
+@@ -22,6 +22,10 @@ import com.salesforce.jprotoc.ProtocPlugin;
+ 
+ public class ReactorDubboGrpcGenerator extends AbstractGenerator {
+ 
++    public ReactorDubboGrpcGenerator() {
++        // Default constructor to address PMD violation: AtLeastOneConstructor
++    }
++
+     @Override
+     protected String getClassPrefix() {
+         return "ReactorDubbo";
+@@ -32,11 +36,13 @@ public class ReactorDubboGrpcGenerator extends AbstractGenerator {
+         return "Grpc";
+     }
+ 
+-    public static void main(String[] args) {
++    public static void main(final String[] args) {
+         if (args.length == 0) {
+             ProtocPlugin.generate(new ReactorDubboGrpcGenerator());
+         } else {
+-            ProtocPlugin.debug(new ReactorDubboGrpcGenerator(), args[0]);
++            if (ProtocPlugin.getLogger().isInfoEnabled()) {
++                ProtocPlugin.debug(new ReactorDubboGrpcGenerator(), args[0]);
++            }
+         }
+     }
+ }
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/reactive/RxDubboGrpcGenerator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/reactive/RxDubboGrpcGenerator.java
+index 028332a..b43a78e 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/reactive/RxDubboGrpcGenerator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/grpc/reactive/RxDubboGrpcGenerator.java
+@@ -21,6 +21,10 @@ import org.apache.dubbo.gen.AbstractGenerator;
+ import com.salesforce.jprotoc.ProtocPlugin;
+ 
+ public class RxDubboGrpcGenerator extends AbstractGenerator {
++
++    public RxDubboGrpcGenerator() {
++        // Default constructor to address PMD violation: AtLeastOneConstructor
++    }
+     @Override
+     protected String getClassPrefix() {
+         return "RxDubbo";
+@@ -31,11 +35,13 @@ public class RxDubboGrpcGenerator extends AbstractGenerator {
+         return "Grpc";
+     }
+ 
+-    public static void main(String[] args) {
++    public static void main(final String[] args) {
+         if (args.length == 0) {
+             ProtocPlugin.generate(new RxDubboGrpcGenerator());
+         } else {
+-            ProtocPlugin.debug(new RxDubboGrpcGenerator(), args[0]);
++            if (ProtocPlugin.getLogger().isInfoEnabled()) {
++                ProtocPlugin.debug(new RxDubboGrpcGenerator(), args[0]);
++            }
+         }
+     }
+ }
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/tri/Dubbo3TripleGenerator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/tri/Dubbo3TripleGenerator.java
+index ae3f8c0..afebb6e 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/tri/Dubbo3TripleGenerator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/tri/Dubbo3TripleGenerator.java
+@@ -22,11 +22,17 @@ import com.salesforce.jprotoc.ProtocPlugin;
+ 
+ public class Dubbo3TripleGenerator extends AbstractGenerator {
+ 
+-    public static void main(String[] args) {
++    public Dubbo3TripleGenerator() {
++        // Default constructor to address PMD violation: AtLeastOneConstructor
++    }
++
++    public static void main(final String[] args) {
+         if (args.length == 0) {
+             ProtocPlugin.generate(new Dubbo3TripleGenerator());
+         } else {
+-            ProtocPlugin.debug(new Dubbo3TripleGenerator(), args[0]);
++            if (ProtocPlugin.getLogger().isInfoEnabled()) {
++                ProtocPlugin.debug(new Dubbo3TripleGenerator(), args[0]);
++            }
+         }
+     }
+ 
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/tri/reactive/ReactorDubbo3TripleGenerator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/tri/reactive/ReactorDubbo3TripleGenerator.java
+index dfc8d86..9aae4d9 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/tri/reactive/ReactorDubbo3TripleGenerator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/tri/reactive/ReactorDubbo3TripleGenerator.java
+@@ -22,11 +22,17 @@ import org.apache.dubbo.gen.AbstractGenerator;
+ 
+ public class ReactorDubbo3TripleGenerator extends AbstractGenerator {
+ 
+-    public static void main(String[] args) {
++    public ReactorDubbo3TripleGenerator() {
++        // Default constructor to address PMD violation: AtLeastOneConstructor
++    }
++
++    public static void main(final String[] args) {
+         if (args.length == 0) {
+             ProtocPlugin.generate(new ReactorDubbo3TripleGenerator());
+         } else {
+-            ProtocPlugin.debug(new ReactorDubbo3TripleGenerator(), args[0]);
++            if (ProtocPlugin.getLogger().isInfoEnabled()) {
++                ProtocPlugin.debug(new ReactorDubbo3TripleGenerator(), args[0]);
++            }
+         }
+     }
+ 
+diff --git a/dubbo-container/dubbo-container-api/src/main/java/org/apache/dubbo/container/Main.java b/dubbo-container/dubbo-container-api/src/main/java/org/apache/dubbo/container/Main.java
+index b43d340..064e150 100644
+--- a/dubbo-container/dubbo-container-api/src/main/java/org/apache/dubbo/container/Main.java
++++ b/dubbo-container/dubbo-container-api/src/main/java/org/apache/dubbo/container/Main.java
+@@ -29,20 +29,24 @@ import java.util.List;
+ import java.util.concurrent.locks.Condition;
+ import java.util.concurrent.locks.ReentrantLock;
+ 
+-import static org.apache.dubbo.common.constants.CommonConstants.COMMA_SPLIT_PATTERN;
++
+ 
+ /**
+  * Main. (API, Static, ThreadSafe)
+  *
+  * This class is entry point loading containers.
+  */
+-public class Main {
++public final class DubboContainerMain {
++
++    private DubboContainerMain() {
++        // to avoid instantiating this utility class
++    }
+ 
+     public static final String CONTAINER_KEY = "dubbo.container";
+ 
+     public static final String SHUTDOWN_HOOK_KEY = "dubbo.shutdown.hook";
+ 
+-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
++    private static final Logger LOGGER = LoggerFactory.getLogger(DubboContainerMain.class);
+ 
+     private static final ExtensionLoader<Container> LOADER = ExtensionLoader.getExtensionLoader(Container.class);
+ 
+@@ -50,18 +54,19 @@ public class Main {
+ 
+     private static final Condition STOP = LOCK.newCondition();
+ 
+-    public static void main(String[] args) {
++    public static void main(final String[] args) {
+         try {
+-            if (ArrayUtils.isEmpty(args)) {
+-                String config = System.getProperty(CONTAINER_KEY, LOADER.getDefaultExtensionName());
+-                args = COMMA_SPLIT_PATTERN.split(config);
++            String[] finalArgs = args;
++            if (ArrayUtils.isEmpty(finalArgs)) {
++                final String config = System.getProperty(CONTAINER_KEY, LOADER.getDefaultExtensionName());
++                finalArgs = config.split(",");
+             }
+ 
+             final List<Container> containers = new ArrayList<Container>();
+-            for (int i = 0; i < args.length; i++) {
+-                containers.add(LOADER.getExtension(args[i]));
++            for (int i = 0; i < finalArgs.length; i++) {
++                containers.add(LOADER.getExtension(finalArgs[i]));
+             }
+-            logger.info("Use container type(" + Arrays.toString(args) + ") to run dubbo serivce.");
++            LOGGER.info("Use container type(" + Arrays.toString(finalArgs) + ") to run dubbo serivce.");
+ 
+             if ("true".equals(System.getProperty(SHUTDOWN_HOOK_KEY))) {
+                 Runtime.getRuntime().addShutdownHook(new Thread("dubbo-container-shutdown-hook") {
+@@ -70,9 +75,9 @@ public class Main {
+                         for (Container container : containers) {
+                             try {
+                                 container.stop();
+-                                logger.info("Dubbo " + container.getClass().getSimpleName() + " stopped!");
++                                LOGGER.info("Dubbo " + container.getClass().getSimpleName() + " stopped!");
+                             } catch (Throwable t) {
+-                                logger.error(t.getMessage(), t);
++                                LOGGER.error(t.getMessage(), t);
+                             }
+                             try {
+                                 LOCK.lock();
+@@ -87,18 +92,18 @@ public class Main {
+ 
+             for (Container container : containers) {
+                 container.start();
+-                logger.info("Dubbo " + container.getClass().getSimpleName() + " started!");
++                LOGGER.info("Dubbo " + container.getClass().getSimpleName() + " started!");
+             }
+             System.out.println(new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]").format(new Date()) + " Dubbo service server started!");
+         } catch (RuntimeException e) {
+-            logger.error(e.getMessage(), e);
++            LOGGER.error(e.getMessage(), e);
+             System.exit(1);
+         }
+         try {
+             LOCK.lock();
+             STOP.await();
+         } catch (InterruptedException e) {
+-            logger.warn("Dubbo service server stopped, interrupted by other thread!", e);
++            LOGGER.warn("Dubbo service server stopped, interrupted by other thread!", e);
+         } finally {
+             LOCK.unlock();
+         }
+diff --git a/dubbo-container/dubbo-container-spring/src/main/java/org/apache/dubbo/container/spring/SpringContainer.java b/dubbo-container/dubbo-container-spring/src/main/java/org/apache/dubbo/container/spring/SpringContainer.java
+index e3c0040..762c08e 100644
+--- a/dubbo-container/dubbo-container-spring/src/main/java/org/apache/dubbo/container/spring/SpringContainer.java
++++ b/dubbo-container/dubbo-container-spring/src/main/java/org/apache/dubbo/container/spring/SpringContainer.java
+@@ -32,8 +32,16 @@ public class SpringContainer implements Container {
+ 
+     public static final String SPRING_CONFIG = "dubbo.spring.config";
+     public static final String DEFAULT_SPRING_CONFIG = "classpath*:META-INF/spring/*.xml";
+-    private static final Logger logger = LoggerFactory.getLogger(SpringContainer.class);
+-    static ClassPathXmlApplicationContext context;
++    private static final Logger LOGGER = LoggerFactory.getLogger(SpringContainer.class);
++    private static ClassPathXmlApplicationContext context;
++
++    public SpringContainer() {
++        String configPath = System.getProperty(SPRING_CONFIG);
++        if (StringUtils.isEmpty(configPath)) {
++            configPath = DEFAULT_SPRING_CONFIG;
++        }
++        context = new ClassPathXmlApplicationContext(configPath.split("[,\\s]+"), false);
++    }
+ 
+     public static ClassPathXmlApplicationContext getContext() {
+         return context;
+@@ -41,11 +49,6 @@ public class SpringContainer implements Container {
+ 
+     @Override
+     public void start() {
+-        String configPath = System.getProperty(SPRING_CONFIG);
+-        if (StringUtils.isEmpty(configPath)) {
+-            configPath = DEFAULT_SPRING_CONFIG;
+-        }
+-        context = new ClassPathXmlApplicationContext(configPath.split("[,\\s]+"), false);
+         context.refresh();
+         context.start();
+     }
+@@ -56,10 +59,9 @@ public class SpringContainer implements Container {
+             if (context != null) {
+                 context.stop();
+                 context.close();
+-                context = null;
+             }
+         } catch (Throwable e) {
+-            logger.error(e.getMessage(), e);
++            LOGGER.error(e.getMessage(), e);
+         }
+     }
+ 

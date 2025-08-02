@@ -3,6 +3,7 @@ import json
 import logging
 import tempfile
 import base64
+import subprocess
 
 from datasets import load_dataset, load_from_disk
 from tqdm import tqdm
@@ -27,6 +28,12 @@ CONFIG_FILE_MAP = {
     "testgen-java": CUR_DIR / "testgen_java.yaml",
     "stylereview": CUR_DIR / "stylereview.yaml",
     "reviewfix": CUR_DIR / "reviewfix.yaml",
+}
+
+# Add style review config map for Java
+STYLE_REVIEW_CONFIG_MAP = {
+    "checkstyle": CUR_DIR / "jstylereview.yaml",
+    "pmd": CUR_DIR / "jstylereview_pmd.yaml",
 }
 
 
@@ -234,6 +241,91 @@ def apply_patch_commands(patch: str, repo_name: str) -> list[str]:
             )""",
     ]
 
+def run_style_review_single(
+    instance: dict,
+    model_name: str,
+    api_key: str | None,
+    output_dir: Path,
+    style_tool: str = "checkstyle",
+    thinking_budget: int | None = None,
+    timeout: int | None = None,
+):
+    """
+    Run style review for a single instance using the specified tool (PMD or Checkstyle).
+    """
+    if style_tool not in STYLE_REVIEW_CONFIG_MAP:
+        raise RuntimeError(f"Unknown style tool: {style_tool}. Must be 'checkstyle' or 'pmd'")
+
+    # Correctly construct repo_path from instance_id
+    if ":" in instance.get("instance_id", ""):
+        repo_path = instance["instance_id"].split(":")[0]
+    else:
+        repo_path = instance.get("repo", "")
+
+    repo_path = repo_path.strip()  # Ensure no leading/trailing whitespace
+    
+    
+    
+    url = f"https://github.com/{repo_path}"
+    
+    image = f"omnicodeorg/omnicode:"+repo_path.replace('/','_')+"_base"
+    print(f"DEBUG: About to use Docker image: '{image}'")
+    config_file = STYLE_REVIEW_CONFIG_MAP[style_tool]
+
+    # Check if the Docker image exists locally
+    try:
+        result = subprocess.run([
+            "docker", "images", "-q", image
+        ], capture_output=True, text=True)
+        if not result.stdout.strip():
+            print(f"\nERROR: Required Docker image '{image}' does not exist locally.")
+            print(f"Please build or pull the image before running the agent.")
+            print(f"You can try: docker pull {image}")
+            raise RuntimeError(f"Docker image '{image}' not found locally.")
+    except Exception as e:
+        print(f"\nERROR: Failed to check for Docker image '{image}': {e}")
+        raise
+
+    with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
+        fp.write(instance['problem_statement'])
+        fp.close()
+
+        args = ["run"]
+        if config_file is not None:
+            args.extend([f"--config", str(config_file)])
+        args += [
+            f"--agent.model.name={model_name}",
+            f"--agent.model.per_instance_cost_limit=2.0",
+            f"--env.repo.github_url={url}",
+            f"--env.repo.base_commit={instance['base_commit']}",
+            f"--env.deployment.image={image}",
+            f"--problem_statement.path={str(fp.name)}",
+            f"--problem_statement.id={instance['instance_id']}",
+            f"--output_dir={output_dir}",
+        ]
+        if api_key is not None:
+            args.append(f"--agent.model.api_key={api_key}")
+        if thinking_budget is not None:
+            if model_name.startswith("gemini"):
+                args.append("""--agent.model.completion_kwargs={\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":""" + str(int(thinking_budget)) + """}}""")
+            else:
+                raise RuntimeError(f"Cannot use thinking budget with non-gemini model: {model_name}")
+        # Apply the patch for style review if present
+        if "patch" in instance:
+            commands = apply_patch_commands(instance["patch"], repo_name=repo_path.replace("/", "__"))
+            if commands:
+                docker_args = ["-w", "/"] + commands
+            else:
+                docker_args = ["-w", "/"]
+            args.append(f"--env.deployment.docker_args={json.dumps(docker_args)}")
+        else:
+            args.append(f"--env.deployment.docker_args={json.dumps(['-w', '/'])}")
+        print("DEBUG: Full args to sweagent_main:", args)
+        sweagent_main(args)
+    output_file_path = output_dir / instance['instance_id'] / (instance['instance_id'] + ".pred")
+    output = json.loads(output_file_path.read_text())
+    return None, output
+
 def main(
     input_tasks_path: Path,
     output_dir_path: Path,
@@ -294,7 +386,8 @@ def main(
             output_dict["full_output"] = full_output
             output_dict["model_patch"] = model_patch
             print(json.dumps(output_dict), file=f, flush=True)
-
+# Update main to support style review via --mode stylereview or --style_tool
+from argparse import ArgumentParser
 if __name__ == '__main__':
 
     from argparse import ArgumentParser
@@ -306,17 +399,70 @@ if __name__ == '__main__':
     parser.add_argument("-k", "--api_key", type=str, default=None)
     parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview", "reviewfix"])
     parser.add_argument("--thinking_budget", type=int, default=0)
+    parser.add_argument("--style_tool", type=str, default=None, choices=["checkstyle", "pmd"], help="Style review tool to use (Java)")
     parser.add_argument("--use_apptainer", type=str2bool, default=False, help="run with docker or apptainer")
     args = parser.parse_args()
+    
+    # Determine if we are in style review mode
+    style_review_modes = ["stylereview", "stylereview-java"]
+    is_style_review = (args.mode in style_review_modes) or (args.style_tool is not None)
 
-    main(
-        input_tasks_path=Path(args.input_tasks),
-        output_dir_path=Path(args.output_dir),
-        model_name=args.model_name,
-        instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
-        api_key=args.api_key,
-        mode=args.mode,
-        # thinking_budget=args.thinking_budget,
-        use_apptainer=args.use_apptainer,
-    )
+    # Determine style_tool from mode or argument
+    style_tool = args.style_tool
+    if is_style_review and style_tool is None:
+        # Try to infer style_tool from input file or default to checkstyle
+        style_tool = "checkstyle"
 
+    if is_style_review:
+        # Load dataset
+        input_tasks_path = Path(args.input_tasks)
+        if input_tasks_path.exists():
+            if input_tasks_path.suffix.endswith("json"):
+                dataset = json.loads(input_tasks_path.read_text())
+            elif input_tasks_path.suffix.endswith("jsonl"):
+                dataset = [json.loads(i) for i in input_tasks_path.read_text().splitlines()]
+            elif input_tasks_path.suffix.endswith("csv"):
+                dataset = pd.read_csv(input_tasks_path).to_dict('records')
+            else:
+                raise RuntimeError(f"Data type ({input_tasks_path.suffix}) not supported")
+        else:
+            dataset = load_dataset(str(input_tasks_path))
+        if isinstance(dataset, dict):
+            dataset = dataset['test']
+        if not (isinstance(dataset, list) and all(isinstance(d, dict) for d in dataset)):
+            raise RuntimeError(f"Data follows incorrect format")
+        if args.instance_ids:
+            instance_ids = args.instance_ids.split(",")
+            dataset = [d for d in dataset if d["instance_id"] in instance_ids]
+        # If mode is in the instance, filter for those with mode stylereview
+        dataset = [d for d in dataset if d.get("mode", args.mode) in style_review_modes]
+        output_dir_path = Path(args.output_dir)
+        output_dir_path.mkdir(parents=True, exist_ok=True)
+        output_file_path = output_dir_path / f"style_review_{style_tool}_results.jsonl"
+        existing_ids = set()
+        if output_file_path.exists():
+            with open(output_file_path) as f:
+                for line in f:
+                    data = json.loads(line)
+                    instance_id = data["instance_id"]
+                    existing_ids.add(instance_id)
+        dataset = [d for d in dataset if d["instance_id"] not in existing_ids]
+        with open(output_file_path, "a+") as f:
+            for datum in tqdm(dataset, desc=f"Style review with {style_tool}"):
+                instance_id = datum["instance_id"]
+                output_dict = {"instance_id": instance_id, "style_tool": style_tool, "model_name": args.model_name}
+                full_output, model_patch = run_style_review_single(datum, model_name=args.model_name, api_key=args.api_key, output_dir=output_dir_path, style_tool=style_tool, thinking_budget=args.thinking_budget)
+                output_dict["full_output"] = full_output
+                output_dict["model_patch"] = model_patch
+                print(json.dumps(output_dict), file=f, flush=True)
+    else:
+        main(
+            input_tasks_path=Path(args.input_tasks),
+            output_dir_path=Path(args.output_dir),
+            model_name=args.model_name,
+            instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
+            api_key=args.api_key,
+            mode=args.mode,
+            # thinking_budget=args.thinking_budget,
+            use_apptainer=args.use_apptainer,
+        )
