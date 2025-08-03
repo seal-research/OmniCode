@@ -372,6 +372,7 @@ def main():
     # Style review specific parameters
     parser.add_argument("--min_score", type=float, default=None,
                         help="Minimum acceptable style score (0-10) for StyleReview")
+    parser.add_argument("--review_type",type=str,default="checkstyle",help="Please enter checkstyle or pmd")
     parser.add_argument("--max_severity", type=str,
                         choices=['convention', 'warning', 'error'], default=None,
                         help="Maximum acceptable severity level for StyleReview")
@@ -693,8 +694,7 @@ def main():
 
             try:
                 # Use the exact path provided
-                style_type=input('Enter Style Review Type pmd or checkstyle')
-                if style_type=='pmd':
+                if args.review_type=='pmd':
                     script_path="multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review_pmd.py"
                 else:
                     script_path = "multiswebench_local/multi_swe_bench/harness/style_review/run_java_style_review.py"
@@ -719,6 +719,7 @@ def main():
                     "--open_file_limit", str(args.open_file_limit),
                     "--run_id", args.run_id,
                     "--timeout", str(args.timeout)
+                   
                 ]
 
                 # Add optional arguments if they're set
@@ -728,6 +729,7 @@ def main():
                     cmd.extend(["--max_severity", args.max_severity])
                 if args.instance_ids:
                     cmd.extend(["--instance_ids"] + args.instance_ids)
+                
 
                 # Run the command
                 print(f"Executing command: {' '.join(cmd)}")
