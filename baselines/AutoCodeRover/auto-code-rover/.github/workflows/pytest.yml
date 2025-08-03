@@ -1,0 +1,77 @@
+name: Run PyTest with Coverage
+
+on:
+  push:
+    branches:
+      - main
+      - pytest-latest
+      - pytest-integration
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Miniconda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          environment-file: environment.yml
+          activate-environment: auto-code-rover
+          python-version: 3.12
+          auto-update-conda: false
+          auto-activate-base: false
+      - run: |
+          conda info
+          conda list
+
+      - name: Set PYTHONPATH
+        # Mimic the Dockerfile's ENV setting
+        run: echo "PYTHONPATH=$(pwd)" >> $GITHUB_ENV
+
+      - name: Install tox
+        # Install tox inside the conda environment
+        run: conda install -y tox
+
+      - name: Run tox tests
+        run: |
+          branch="${{ github.ref_name }}"
+          echo "Current branch: $branch"
+          if [[ "$branch" =~ ^(main(-.*)?|feat/.*/integration-.*)$ ]]; then
+            echo "Running unit + integration tests."
+            tox -e unit,integration
+          else
+            echo "Running unit tests only."
+            tox -e unit
+          fi
+
+      - name: Check Coverage Report Exists
+        run: |
+          if [ ! -f coverage.xml ]; then
+            echo "coverage.xml not found! Aborting SonarQube scan."
+            exit 1
+          fi
+
+      - name: Print Branch Coverage
+        run: |
+          echo "Branch Coverage Details:"
+          echo "Total Branches: $(grep -o 'branches-valid="[0-9]*"' coverage.xml | sed 's/branches-valid="//;s/"//')"
+          echo "Branches Covered: $(grep -o 'branches-covered="[0-9]*"' coverage.xml | sed 's/branches-covered="//;s/"//')"
+          echo "Branch Rate: $(grep -o 'branch-rate="[0-9\.]*"' coverage.xml | sed 's/branch-rate="//;s/"//')"
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
