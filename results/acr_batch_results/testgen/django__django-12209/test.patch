@@ -1,0 +1,50 @@
+--- a/tests/test_models.py
++++ b/tests/test_models.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import models
++from uuid import uuid4
++from django.test import TestCase
++
++class Sample(models.Model):
++    id = models.UUIDField(primary_key=True, default=uuid4)
++    name = models.CharField(blank=True, max_length=100)
++
++class TestModelSave(TestCase):
++
++    def test_save_with_explicit_pk(self):
++        s0 = Sample.objects.create()
++        s1 = Sample(pk=s0.pk, name='Test 1')
++        s1.save()
++        self.assertEqual(s0.pk, s1.pk)
++
++    def test_save_with_explicit_pk_and_default(self):
++        s0 = Sample.objects.create()
++        s1 = Sample(pk=s0.pk, name='Test 1')
++        s1.save()
++        self.assertEqual(s0.pk, s1.pk)
++
++    def test_create_with_explicit_pk(self):
++        s0 = Sample.objects.create()
++        s1 = Sample.objects.create(pk=s0.pk, name='Test 1')
++        self.assertEqual(s0.pk, s1.pk)
++
++class TestModelSaveWithDefaultPk:
++
++    @pytest.fixture
++    def sample(self):
++        return Sample.objects.create()
++
++    def test_save_with_explicit_pk(self, sample):
++        s1 = Sample(pk=sample.pk, name='Test 1')
++        s1.save()
++        assert sample.pk == s1.pk
++
++    def test_save_with_explicit_pk_and_default(self, sample):
++        s1 = Sample(pk=sample.pk, name='Test 1')
++        s1.save()
++        assert sample.pk == s1.pk
++
++    def test_create_with_explicit_pk(self, sample):
++        s1 = Sample.objects.create(pk=sample.pk, name='Test 1')
++        assert sample.pk == s1.pk

@@ -1,0 +1,70 @@
+--- a/tests/test_genspider.py
++++ b/tests/test_genspider.py
+-# Empty if creating new file
++import pytest
++from scrapy.commands.genspider import extract_domain
++from scrapy.utils.url import add_http_if_no_scheme
++from urllib.parse import urlparse
++
++def test_extract_domain_with_http_scheme():
++    url = "http://example.com"
++    domain = extract_domain(url)
++    assert domain == "example.com"
++
++def test_extract_domain_with_https_scheme():
++    url = "https://example.com"
++    domain = extract_domain(url)
++    assert domain == "example.com"
++
++def test_extract_domain_without_scheme():
++    url = "example.com"
++    domain = extract_domain(url)
++    assert domain == "example.com"
++
++def test_extract_domain_with_invalid_url():
++    url = "invalid_url"
++    with pytest.raises(ValueError):
++        extract_domain(url)
++
++def test_add_http_if_no_scheme():
++    url = "example.com"
++    new_url = add_http_if_no_scheme(url)
++    assert new_url == "http://example.com"
++
++def test_extract_domain_preserves_scheme():
++    url = "https://example.com"
++    domain = extract_domain(url)
++    assert domain == "example.com"
++
++def test_genspider_domain_handling():
++    # Test that genspider handles domains correctly
++    url = "https://example.com"
++    domain = extract_domain(url)
++    assert domain == "example.com"
++    assert urlparse(domain).scheme == "https"
++
++    url = "http://example.com"
++    domain = extract_domain(url)
++    assert domain == "example.com"
++    assert urlparse(domain).scheme == "http"
++
++    url = "example.com"
++    domain = extract_domain(url)
++    assert domain == "example.com"
+
+--- a/scrapy/commands/genspider.py
++++ b/scrapy/commands/genspider.py
+-def extract_domain(url):
+-    """Extract domain name from URL string"""
+-    o = urlparse(url)
+-    if o.scheme == "" and o.netloc == "":
+-        return ""
+-    return o.netloc
++from scrapy.utils.url import add_http_if_no_scheme
++
++def extract_domain(url):
++    """Extract domain name from URL string"""
++    o = urlparse(url)
++    if not o.scheme:
++        url = add_http_if_no_scheme(url)
++    return urlparse(url).netloc

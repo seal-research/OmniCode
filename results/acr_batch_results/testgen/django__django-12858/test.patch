@@ -1,0 +1,42 @@
+--- a/tests/test_modeling.py
++++ b/tests/test_modeling.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.core.checks import Messages
++
++@pytest.mark.test_modeling
++class TestModelOrdering:
++
++    def test_valid_ordering(self):
++        class Stock(models.Model):
++            supply = models.ForeignKey('Supply', on_delete=models.CASCADE)
++        
++        class Supply(models.Model):
++            product = models.ForeignKey('Product', on_delete=models.CASCADE)
++        
++        class Product(models.Model):
++            parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True)
++
++        Stock._meta.ordering = ('supply__product__parent__isnull',)
++        errors = Stock.check()
++        assert not errors
++
++    def test_invalid_ordering(self):
++        class Stock(models.Model):
++            supply = models.ForeignKey('Supply', on_delete=models.CASCADE)
++            class Meta:
++                ordering = ('supply__product__parent__invalid',)
++
++        errors = Stock.check()
++        assert len(errors) == 1
++        assert errors[0].id == 'models.E015'
++
++    def test_ordering_with_transform(self):
++        class Stock(models.Model):
++            supply = models.ForeignKey('Supply', on_delete=models.CASCADE)
++            class Meta:
++                ordering = ('supply__product__parent__isnull',)
++
++        errors = Stock.check()
++        assert not errors

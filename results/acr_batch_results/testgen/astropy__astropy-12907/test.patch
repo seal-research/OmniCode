@@ -1,0 +1,45 @@
+--- a/tests/test_modeling_separable.py
++++ b/tests/test_modeling_separable.py
+-# Original code here, if any
++import pytest
++import numpy as np
++from astropy.modeling import models as m
++from astropy.modeling.separable import separability_matrix
++
++def test_separability_matrix_nested_compound():
++    """Test that separability_matrix handles nested CompoundModel correctly."""
++    cm = m.Linear1D(10) & m.Linear1D(5)
++    result = separability_matrix(cm)
++    expected = np.array([[ True, False],
++                         [False,  True]])
++    assert np.array_equal(result, expected)
++
++def test_separability_matrix_deep_nested_compound():
++    """Test that separability_matrix handles deep nested CompoundModel correctly."""
++    cm = m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5)
++    result = separability_matrix(cm)
++    expected = np.array([[ True,  True, False, False],
++                         [ True,  True, False, False],
++                         [False, False,  True, False],
++                         [False, False, False,  True]])
++    assert np.array_equal(result, expected)
++
++def test_separability_matrix_multiple_nested_compounds():
++    """Test that separability_matrix handles multiple nested CompoundModels correctly."""
++    cm1 = m.Linear1D(10) & m.Linear1D(5)
++    cm2 = m.Shift(1) & m.Shift(2)
++    result = separability_matrix(cm1 & cm2)
++    expected = np.array([[ True, False,  True, False],
++                         [False,  True, False,  True],
++                         [ True, False,  True, False],
++                         [False,  True, False,  True]])
++    assert np.array_equal(result, expected)
++
++def test_separability_matrix_compound_with_other_models():
++    """Test that separability_matrix handles CompoundModel with other models correctly."""
++    result = separability_matrix(m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5))
++    expected = np.array([[ True,  True, False, False],
++                         [ True,  True, False, False],
++                         [False, False,  True, False],
++                         [False, False, False,  True]])
++    assert np.array_equal(result, expected)

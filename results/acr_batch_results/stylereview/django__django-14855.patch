@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/admin/helpers.py b/django/contrib/admin/helpers.py\nindex dd154f72ee..a410e0117b 100644\n--- a/django/contrib/admin/helpers.py\n+++ b/django/contrib/admin/helpers.py\n@@ -409,6 +409,7 @@ class InlineAdminForm(AdminForm):\n \n     def deletion_field(self):\n         from django.forms.formsets import DELETION_FIELD_NAME\n+        from django.db.models import get_model\n         return AdminField(self.form, DELETION_FIELD_NAME, False)\n \n     def ordering_field(self):\n"
+}

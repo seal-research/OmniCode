@@ -1,0 +1,36 @@
+--- a/tests/test_sitemaps.py
++++ b/tests/test_sitemaps.py
+-# Empty if creating new file
++import pytest
++from django.contrib.sitemaps import Sitemap
++
++class TestSitemap:
++ def test_get_latest_lastmod_with_items(self):
++ sitemap = Sitemap()
++ sitemap.items = lambda: ["item1", "item2"]
++ sitemap.lastmod = lambda item: "2022-01-01"
++ assert sitemap.get_latest_lastmod() == "2022-01-01"
++
++ def test_get_latest_lastmod_without_items(self):
++ sitemap = Sitemap()
++ sitemap.items = lambda: []
++ sitemap.lastmod = lambda item: "2022-01-01"
++ assert sitemap.get_latest_lastmod() is None
++
++ def test_get_latest_lastmod_with_callable_lastmod(self):
++ sitemap = Sitemap()
++ sitemap.items = lambda: ["item1", "item2"]
++ sitemap.lastmod = lambda item: "2022-01-01"
++ assert sitemap.get_latest_lastmod() == "2022-01-01"
++
++ def test_get_latest_lastmod_with_empty_sitemap_and_callable_lastmod(self):
++ sitemap = Sitemap()
++ sitemap.items = lambda: []
++ sitemap.lastmod = lambda item: "2022-01-01"
++ assert sitemap.get_latest_lastmod() is None
++
++ def test_get_latest_lastmod_with_non_callable_lastmod(self):
++ sitemap = Sitemap()
++ sitemap.items = lambda: ["item1", "item2"]
++ sitemap.lastmod = "2022-01-01"
++ assert sitemap.get_latest_lastmod() == "2022-01-01"

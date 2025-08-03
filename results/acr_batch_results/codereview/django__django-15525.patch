@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/management/commands/loaddata.py b/django/core/management/commands/loaddata.py\nindex ac97f13161..2e9dcbf70d 100644\n--- a/django/core/management/commands/loaddata.py\n+++ b/django/core/management/commands/loaddata.py\n@@ -138,6 +138,8 @@ class Command(BaseCommand):\n \n     def loaddata(self, fixture_labels):\n         connection = connections[self.using]\n+        # Ensure the correct database router is used\n+        router = get_db_router(connection.alias)\n \n         # Keep a count of the installed objects and fixtures\n         self.fixture_count = 0\n"
+}

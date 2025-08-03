@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/fastapi/encoders.py b/fastapi/encoders.py\nindex 26ceb214..744949f7 100644\n--- a/fastapi/encoders.py\n+++ b/fastapi/encoders.py\n@@ -71,6 +71,14 @@ def jsonable_encoder(\n                 by_alias=by_alias,\n                 skip_defaults=bool(exclude_unset or skip_defaults),\n             )\n+        if \"__root__\" in obj_dict:\n+            return jsonable_encoder(\n+                obj_dict[\"__root__\"],\n+                exclude_none=exclude_none,\n+                exclude_defaults=exclude_defaults,\n+                custom_encoder=encoder,\n+                sqlalchemy_safe=sqlalchemy_safe,\n+            )\n         return jsonable_encoder(\n             obj_dict,\n             exclude_none=exclude_none,\n"
+}

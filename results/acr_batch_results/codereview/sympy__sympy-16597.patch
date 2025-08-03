@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/core/numbers.py b/sympy/core/numbers.py\nindex aa717b97ef..c8b87a56d9 100644\n--- a/sympy/core/numbers.py\n+++ b/sympy/core/numbers.py\n@@ -1919,6 +1919,7 @@ class Integer(Rational):\n     q = 1\n     is_integer = True\n     is_number = True\n+    is_finite = True\n \n     is_Integer = True\n \n"
+}

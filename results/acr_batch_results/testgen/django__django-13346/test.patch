@@ -1,0 +1,133 @@
+--- a/tests/test_json_field.py
++++ b/tests/test_json_field.py
+-# Empty if creating new file
++import pytest
++from django.db.models import JSONField, Q
++from django.test import TestCase
++
++@pytest.mark.django_db
++class TestJSONFieldKeyTransformInLookup:
++    @pytest.fixture
++    def client(self):
++        # Setup test data
++        self.model = JSONModel.objects.create(json_field={'key': 0})
++        self.model2 = JSONModel.objects.create(json_field={'key': 1})
++        self.model3 = JSONModel.objects.create(json_field={'key': 0})
++
++    def test_json_field_key_transform_in_lookup(self):
++        # Test __in lookup
++        result = JSONModel.objects.filter(json_field__key__in=[0])
++        assert len(result) == 2
++
++    def test_json_field_key_transform_equal_lookup(self):
++        # Test direct key lookup
++        result = JSONModel.objects.filter(json_field__key=0)
++        assert len(result) == 2
++
++    def test_json_field_key_transform_in_lookup_empty(self):
++        # Test __in lookup with empty result
++        result = JSONModel.objects.filter(json_field__key__in=[2])
++        assert len(result) == 0
++
++    def test_json_field_key_transform_in_lookup_multiple(self):
++        # Test __in lookup with multiple values
++        result = JSONModel.objects.filter(json_field__key__in=[0, 1])
++        assert len(result) == 3
++
++</class>
+
+--- a/rom django.db
++++ b/rom django.db
++j
+
+--- a/
++++ b/
++b im
+
+--- a/ass JSONMod
++++ b/ass JSONMod
++ mo
+
+--- a/(mod
++++ b/(mod
+-mp
++ls
+
+--- a/s.Mod
++++ b/s.Mod
+-t m
++ss JSONMo
+
+--- a/):
+    json_
++++ b/):
+    json_
+-s
+-
+-c
++l(mo
+
+--- a/
++++ b/
+-ss JSONM
++ls.Mo
+
+--- a/d = mod
++++ b/d = mod
+-(m
++l):
++    json_fi
+
+--- a/s.JSONF
++++ b/s.JSONF
+-s.M
++ = mo
+
+--- a/
++++ b/
+-):
+-    js
++ls.JSONFi
+
+--- a/tests/test_json_field.py
++++ b/tests/test_json_field.py
++import pytest
++from django.db.models import JSONField, Q
++from django.test import TestCase
++from yourapp.models import JSONModel
++
++@pytest.mark.django_db
++class TestJSONFieldKeyTransformInLookup:
++    @pytest.fixture
++    def json_model(self):
++        return JSONModel.objects.create(json_field={'key': 0})
++
++    @pytest.fixture
++    def json_model2(self):
++        return JSONModel.objects.create(json_field={'key': 1})
++
++    @pytest.fixture
++    def json_model3(self):
++        return JSONModel.objects.create(json_field={'key': 0})
++
++    def test_json_field_key_transform_in_lookup(self, json_model, json_model2, json_model3):
++        # Test __in lookup
++        result = JSONModel.objects.filter(json_field__key__in=[0])
++        assert len(result) == 2
++
++    def test_json_field_key_transform_equal_lookup(self, json_model, json_model2, json_model3):
++        # Test direct key lookup
++        result = JSONModel.objects.filter(json_field__key=0)
++        assert len(result) == 2
++
++    def test_json_field_key_transform_in_lookup_empty(self, json_model, json_model2, json_model3):
++        # Test __in lookup with empty result
++        result = JSONModel.objects.filter(json_field__key__in=[2])
++        assert len(result) == 0
++
++    def test_json_field_key_transform_in_lookup_multiple(self, json_model, json_model2, json_model3):
++        # Test __in lookup with multiple values
++        result = JSONModel.objects.filter(json_field__key__in=[0, 1])
++        assert len(result) == 3
++
++</class>

@@ -1,0 +1,53 @@
+--- a/tests/test_admindocs_utils.py
++++ b/tests/test_admindocs_utils.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admindocs.utils import replace_named_groups, replace_unnamed_groups
++
++def test_replace_named_groups():
++    # Test replacing named groups
++    pattern = r'^(?P<a>\w+)/b/(?P<c>\w+)/$'
++    expected = r'^<a>/b/<c>/$'
++    assert replace_named_groups(pattern) == expected
++
++def test_replace_named_groups_trailing_group():
++    # Test replacing named groups with trailing group
++    pattern = r'^(?P<a>\w+)/b/(?P<c>\w+)'
++    expected = r'^<a>/b/<c>'
++    assert replace_named_groups(pattern) == expected
++
++def test_replace_named_groups_no_trailing_slash():
++    # Test replacing named groups without trailing slash
++    pattern = r'^(?P<a>\w+)/b/(?P<c>\w+)'
++    expected = r'^<a>/b/<c>'
++    assert replace_named_groups(pattern) == expected
++
++def test_simplify_regex():
++    # Test simplify_regex function
++    pattern = r'^(?P<a>\w+)/b/(?P<c>\w+)/$'
++    expected = r'/<a>/b/<c>/'
++    assert simplify_regex(pattern) == expected
++
++def test_simplify_regex_trailing_group():
++    # Test simplify_regex with trailing group
++    pattern = r'^(?P<a>\w+)/b/(?P<c>\w+)'
++    expected = r'/<a>/b/<c>'
++    assert simplify_regex(pattern) == expected
++
++def test_simplify_regex_no_trailing_slash():
++    # Test simplify_regex without trailing slash
++    pattern = r'^(?P<a>\w+)/b/(?P<c>\w+)'
++    expected = r'/<a>/b/<c>'
++    assert simplify_regex(pattern) == expected
+
+--- a/tests/test_admindocs_views.py
++++ b/tests/test_admindocs_views.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admindocs.views import simplify_regex
++
++def test_simplify_regex_views():
++    # Test simplify_regex function in views
++    pattern = r'^(?P<a>\w+)/b/(?P<c>\w+)/$'
++    expected = r'/<a>/b/<c>/'
++    assert simplify_regex(pattern) == expected

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/builders/html/transforms.py b/sphinx/builders/html/transforms.py\nindex c91da57e9..f5b58a07e 100644\n--- a/sphinx/builders/html/transforms.py\n+++ b/sphinx/builders/html/transforms.py\n@@ -40,7 +40,7 @@ class KeyboardTransform(SphinxPostTransform):\n     pattern = re.compile(r'(-|\\+|\\^|\\s+)')\n \n     def run(self, **kwargs: Any) -> None:\n-        matcher = NodeMatcher(nodes.literal, classes=[\"kbd\"])\n+        matcher = NodeMatcher(nodes.literal, classes=(\"kbd\",))\n         for node in self.document.traverse(matcher):  # type: nodes.literal\n             parts = self.pattern.split(node[-1].astext())\n             if len(parts) == 1:\n"
+}

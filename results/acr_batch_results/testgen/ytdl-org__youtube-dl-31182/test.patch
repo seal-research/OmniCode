@@ -1,0 +1,47 @@
+--- a/tests/test_jsinterp.py
++++ b/tests/test_jsinterp.py
+-# Empty if creating new file
++import pytest
++from youtube_dl.jsinterp import JSInterpreter
++
++def test_operator_comparison_with_none():
++    interpreter = JSInterpreter('0 > None')
++    result, _ = interpreter.interpret_statement('0 > None', {})
++    assert result is False
++
++def test_operator_comparison_with_integer():
++    interpreter = JSInterpreter('0 > 1')
++    result, _ = interpreter.interpret_statement('0 > 1', {})
++    assert result is False
++
++def test_operator_equality_with_none():
++    interpreter = JSInterpreter('0 == None')
++    result, _ = interpreter.interpret_statement('0 == None', {})
++    assert result is False
++
++def test_operator_inequality_with_none():
++    interpreter = JSInterpreter('0 != None')
++    result, _ = interpreter.interpret_statement('0 != None', {})
++    assert result is True
++
++def test_interpret_expression():
++    interpreter = JSInterpreter('0 > 1')
++    result = interpreter.interpret_expression('0 > 1', {})
++    assert result is False
++
++def test_interpret_statement():
++    interpreter = JSInterpreter('0 > 1;')
++    result, _ = interpreter.interpret_statement('0 > 1;', {})
++    assert result is False
+
+--- a/tests/test_youtube_dl.py
++++ b/tests/test_youtube_dl.py
+-# Empty if creating new file
++import pytest
++from youtube_dl import YoutubeDL
++
++def test_youtube_dl():
++    ydl_opts = {}
++    with YoutubeDL(ydl_opts) as ydl:
++        result = ydl.download(['https://www.youtube.com/watch?v=t-hR-TZJT2U'])
++        assert result == 0

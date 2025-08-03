@@ -1,0 +1,37 @@
+--- a/tests/test_utils_formats.py
++++ b/tests/test_utils_formats.py
+-# Empty if creating new file
++import pytest
++from django.utils.formats import get_format
++from django.utils.translation import gettext_lazy as _
++
++def test_get_format_with_lazy_parameter():
++    # Test that get_format works with a lazy string
++    format_type = _('DATE_FORMAT')
++    result = get_format(format_type)
++    assert result is not None
++
++def test_get_format_with_non_lazy_parameter():
++    # Test that get_format works with a non-lazy string
++    format_type = 'DATE_FORMAT'
++    result = get_format(format_type)
++    assert result is not None
++
++def test_get_format_with_invalid_parameter():
++    # Test that get_format raises an error with an invalid parameter
++    format_type = 123
++    with pytest.raises(AttributeError):
++        get_format(format_type)
++
++def test_get_format_cache():
++    # Test that get_format uses caching correctly
++    format_type = 'DATE_FORMAT'
++    result1 = get_format(format_type)
++    result2 = get_format(format_type)
++    assert result1 is result2
++
++def test_get_format_l10n():
++    # Test that get_format works with localization
++    format_type = _('DATE_FORMAT')
++    result = get_format(format_type, use_l10n=True)
++    assert result is not None

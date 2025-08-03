@@ -1,0 +1,52 @@
+--- a/tests/test_models.py
++++ b/tests/test_models.py
++import pytest
++from django.db import models
++
++def test_get_display_override():
++    class FooBar(models.Model):
++        foo_bar = models.CharField(_("foo"), choices=[(1, 'foo'), (2, 'bar')])
++
++        def get_foo_bar_display(self):
++            return "something"
++
++    instance = FooBar.objects.create(foo_bar=1)
++    assert instance.get_foo_bar_display() == "something"
++
++def test_get_display_no_override():
++    class FooBar(models.Model):
++        foo_bar = models.CharField(_("foo"), choices=[(1, 'foo'), (2, 'bar')])
++
++    instance = FooBar.objects.create(foo_bar=1)
++    assert instance.get_foo_bar_display() == 'foo'
+
+--- a/tests/test_models_inheritance.py
++++ b/tests/test_models_inheritance.py
++import pytest
++from django.db import models
++
++class BaseModel(models.Model):
++    base_field = models.CharField(max_length=100)
++
++    def get_base_field_display(self):
++        return self.base_field.upper()
++
++class InheritedModel(BaseModel):
++    inherited_field = models.CharField(max_length=100)
++
++def test_inherited_get_display():
++    instance = InheritedModel.objects.create(base_field="lower", inherited_field="inherited")
++    assert instance.get_base_field_display() == "LOWER"
++    assert instance.get_inherited_field_display() == None
+
+--- a/tests/test_modeling.py
++++ b/tests/test_modeling.py
++import pytest
++from django.db.models import CharField, Model
++
++def test_dynamic_display_methods():
++    class TestModel(Model):
++        field_with_choices = CharField(choices=[(1, 'one'), (2, 'two')])
++
++    instance = TestModel(field_with_choices=1)
++    assert instance.get_field_with_choices_display() == 'one'

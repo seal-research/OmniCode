@@ -1,0 +1,58 @@
+--- a/tests/test_template_filters.py
++++ b/tests/test_template_filters.py
+-# Assume this file exists and has some tests
++import pytest
++from django.template import Context, Template
++
++def test_add_filter_strings():
++    """Test adding two strings."""
++    template = Template("{{ 'hello' | add:'world' }}")
++    context = Context({})
++    assert template.render(context) == "helloworld"
++
++def test_add_filter_lazy_strings():
++    """Test adding a string with a lazy string."""
++    from django.utils.functional import lazy
++    def lazy_string():
++        return "lazy"
++    template = Template("{{ 'hello' | add:lazy_string }}")
++    context = Context({"lazy_string": lazy(lazy_string)})
++    assert template.render(context) == "hellolazy"
++
++def test_add_filter_edge_cases():
++    """Test edge cases."""
++    template = Template("{{ '' | add:'' }}")
++    context = Context({})
++    assert template.render(context) == ""
++
++    template = Template("{{ None | add:'world' }}")
++    assert template.render(context) == "Noneworld"
+
+--- a/tests/test_template_filters.py
++++ b/tests/test_template_filters.py
++import pytest
++from django.template import Context, Template
++from django.utils.functional import lazy
++
++def test_add_filter_strings():
++    """Test adding two strings."""
++    template = Template("{{ 'hello' | add:'world' }}")
++    context = Context({})
++    assert template.render(context) == "helloworld"
++
++def test_add_filter_lazy_strings():
++    """Test adding a string with a lazy string."""
++    def lazy_string():
++        return "lazy"
++    template = Template("{{ 'hello' | add:lazy_string }}")
++    context = Context({"lazy_string": lazy(lazy_string)})
++    assert template.render(context) == "hellolazy"
++
++def test_add_filter_edge_cases():
++    """Test edge cases."""
++    template = Template("{{ '' | add:'' }}")
++    context = Context({})
++    assert template.render(context) == ""
++
++    template = Template("{{ None | add:'world' }}")
++    assert template.render(context) == "Noneworld"

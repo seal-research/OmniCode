@@ -1,0 +1,38 @@
+--- a/tests/test_crv_types.py
++++ b/tests/test_crv_types.py
+-# Empty if creating new file
++import pytest
++from sympy.stats import ArcsinDistribution, DagumDistribution, FrechetDistribution, GammaDistribution, GammaInverseDistribution, KumaraswamyDistribution, LaplaceDistribution, LogisticDistribution, NakagamiDistribution, StudentTDistribution, UniformSumDistribution
++
++def test_arcsin_distribution_cdf():
++    assert ArcsinDistribution(0, 3)._cdf(1) is not None
++
++def test_dagum_distribution_cdf():
++    assert DagumDistribution(S(1)/3, S(1)/5, 2)._cdf(3) is not None
++
++def test_frechet_distribution_cdf():
++    assert FrechetDistribution(S(4)/3, 1, 2)._cdf(3) is not None
++
++def test_gamma_distribution_cdf():
++    assert GammaDistribution(0.1, 2)._cdf(3) is not None
++
++def test_gamma_inverse_distribution_cdf():
++    assert GammaInverseDistribution(S(5)/7, 2)._cdf(3) is not None
++
++def test_kumaraswamy_distribution_cdf():
++    assert KumaraswamyDistribution(S(1)/123, 5)._cdf(S(1)/3) is not None
++
++def test_laplace_distribution_cdf():
++    assert LaplaceDistribution(2, 3)._cdf(5) is not None
++
++def test_logistic_distribution_cdf():
++    assert LogisticDistribution(1, 0.1)._cdf(2) is not None
++
++def test_nakagami_distribution_cdf():
++    assert NakagamiDistribution(S(7)/3, 1)._cdf(2) is not None
++
++def test_student_t_distribution_cdf():
++    assert StudentTDistribution(10)._cdf(2) is not None
++
++def test_uniform_sum_distribution_cdf():
++    assert UniformSumDistribution(5)._cdf(2) is not None

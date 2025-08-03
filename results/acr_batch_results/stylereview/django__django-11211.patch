@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py\nindex 2307dcae25..387db2f423 100644\n--- a/django/db/models/fields/__init__.py\n+++ b/django/db/models/fields/__init__.py\n@@ -632,7 +632,8 @@ class Field(RegisterLookupMixin):\n         return value\n \n     def db_type_parameters(self, connection):\n-        return DictWrapper(self.__dict__, connection.ops.quote_name, 'qn_')\n+        qn = connection.ops.quote_name\n+        return DictWrapper(self.__dict__, qn, 'qn_')\n \n     def db_check(self, connection):\n         \"\"\"\n"
+}

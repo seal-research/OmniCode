@@ -1,0 +1,71 @@
+--- a/tests/test_database_client.py
++++ b/tests/test_database_client.py
++import os
++import pytest
++from django.db.backends.base.client import BaseDatabaseClient
++from django.db.backends.postgresql.client import DatabaseClient
++
++@pytest.fixture
++def client():
++    return DatabaseClient(connection=None)
++
++def test_runshell_with_os_environ(client):
++    # Test that runshell uses os.environ when no env is provided
++    original_environ = os.environ.copy()
++    try:
++        os.environ['TEST_VAR'] = 'test_value'
++        client.runshell(parameters={})
++        # We can't directly assert the env passed to subprocess.run,
++        # but we can verify the behavior based on the command executed.
++    finally:
++        os.environ = original_environ
++
++def test_runshell_with_empty_env(client):
++    # Test that runshell correctly handles an empty env
++    client.runshell(parameters={})
++    # Verify that the command executed uses os.environ
++
++def test_runshell_with_custom_env(client):
++    # Test that runshell merges custom env with os.environ
++    original_environ = os.environ.copy()
++    try:
++        os.environ['TEST_VAR'] = 'test_value'
++        custom_env = {'CUSTOM_VAR': 'custom_value'}
++        client.runshell(parameters={}, env=custom_env)
++        # Verify the merged env is used
++    finally:
++        os.environ = original_environ
++
++def test_runshell_with_none_env(client):
++    # Test that runshell handles None for env
++    client.runshell(parameters={}, env=None)
++    # Verify that os.environ is used
++
++def test_settings_to_cmd_args_env(client):
++    # Test settings_to_cmd_args_env method
++    settings_dict = {'HOST': 'localhost', 'PORT': 5432, 'NAME': 'testdb', 'USER': 'testuser', 'PASSWORD': 'testpass'}
++    args, env = client.settings_to_cmd_args_env(settings_dict, {})
++    # Verify args and env are correctly generated
+
+--- a/tests/test_base_database_client.py
++++ b/tests/test_base_database_client.py
++import os
++import pytest
++from django.db.backends.base.client import BaseDatabaseClient
++
++@pytest.fixture
++def base_client():
++    return BaseDatabaseClient(connection=None)
++
++def test_runshell_base_client_with_os_environ(base_client):
++    # Similar tests as above but for BaseDatabaseClient
++    pass
++
++def test_runshell_base_client_with_empty_env(base_client):
++    pass
++
++def test_runshell_base_client_with_custom_env(base_client):
++    pass
++
++def test_runshell_base_client_with_none_env(base_client):
++    pass

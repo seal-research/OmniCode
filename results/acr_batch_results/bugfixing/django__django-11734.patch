@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex 2b59dd301a..0d6a9a7e8d 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -1082,6 +1082,14 @@ class Exists(Subquery):\n         self.negated = negated\n         super().__init__(queryset, **kwargs)\n \n+    def as_sql(self, compiler, connection, template=None, **extra_context):\n+        sql, params = super().as_sql(compiler, connection, template, **extra_context)\n+        if self.negated:\n+            sql = 'NOT EXISTS(%s)' % sql\n+        else:\n+            sql = 'EXISTS(%s)' % sql\n+        return sql, params\n+\n     def __invert__(self):\n         clone = self.copy()\n         clone.negated = not self.negated\n"
+}

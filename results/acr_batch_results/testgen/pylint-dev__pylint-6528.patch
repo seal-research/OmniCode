@@ -1,0 +1,6 @@
+{
+  "instance_id": "pylint-dev__pylint-6528",
+  "status": "success",
+  "patch_file": "../../results/acr_batch_results/testgen/pylint-dev__pylint-6528/test.patch",
+  "pred_file": "../../results/acr_batch_results/testgen/pylint-dev__pylint-6528/pylint-dev__pylint-6528.pred"
+}

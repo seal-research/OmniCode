@@ -1,0 +1,40 @@
+--- a/tests/test_sessions.py
++++ b/tests/test_sessions.py
+-# Original code here (if modifying existing file)
++import pytest
++import requests
++
++def test_session_header_removal():
++    session = requests.Session()
++    session.headers['Accept-Encoding'] = 'gzip, deflate'
++    assert 'Accept-Encoding' in session.headers
++
++    session.headers['Accept-Encoding'] = None
++    assert 'Accept-Encoding' not in session.headers
++
++def test_session_header_override_with_none():
++    session = requests.Session()
++    session.headers['Accept-Encoding'] = 'gzip, deflate'
++
++    # Simulate sending a request with headers set to None
++    # This should not send the 'Accept-Encoding' header
++    response = session.get('http://httpbin.org/get', headers={'Accept-Encoding': None})
++    assert 'Accept-Encoding' not in response.request.headers
++
++def test_default_header_removal():
++    session = requests.Session()
++    session.headers['Accept-Encoding'] = None
++    assert 'Accept-Encoding' not in session.headers
++
++def test_header_setting_to_none():
++    session = requests.Session()
++    session.headers['Test-Header'] = 'test-value'
++    assert 'Test-Header' in session.headers
++
++    session.headers['Test-Header'] = None
++    assert 'Test-Header' not in session.headers
+
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+-# Original code here (if modifying existing file)
++# No changes needed here

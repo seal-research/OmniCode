@@ -1,0 +1,72 @@
+--- a/tests/test_management_commands.py
++++ b/tests/test_management_commands.py
+-# Original code here
++import argparse
++import io
++import pytest
++from django.core.management.base import BaseCommand
++from django.test import TestCase
++
++class TestSubparsersErrorFormatting(TestCase):
++    def test_subparsers_retain_error_formatting(self):
++        class Command(BaseCommand):
++            def add_arguments(self, parser):
++                subparsers = parser.add_subparsers(required=True)
++                create = subparsers.add_parser("create")
++                create.add_argument("name")
++
++        command = Command()
++        parser = command.create_parser("test", "subparsers")
++        subparsers = parser.add_subparsers(required=True)
++        create = subparsers.add_parser("create")
++        create.add_argument("name")
++
++        with io.StringIO() as out:
++            with pytest.raises(SystemExit):
++                command.run_from_argv(["test", "create", "create"])
++
++        self.assertIn("the following arguments are required: name", out.getvalue())
++
++    def test_subparsers_retain_error_formatting_with_missing_subparser(self):
++        class Command(BaseCommand):
++            def add_arguments(self, parser):
++                subparsers = parser.add_subparsers(required=True)
++                create = subparsers.add_parser("create")
++                create.add_argument("name")
++
++        command = Command()
++        parser = command.create_parser("test", "subparsers")
++        subparsers = parser.add_subparsers(required=True)
++        create = subparsers.add_parser("create")
++        create.add_argument("name")
++
++        with io.StringIO() as out:
++            with pytest.raises(SystemExit):
++                command.run_from_argv(["test"])
++
++        self.assertIn("subparsers: {create} ...")
++
++    def test_subparsers_error_message(self):
++        class Command(BaseCommand):
++            def add_arguments(self, parser):
++                subparsers = parser.add_subparsers(required=True)
++                create = subparsers.add_parser("create")
++                create.add_argument("name")
++
++        command = Command()
++        parser = command.create_parser("test", "subparsers")
++        subparsers = parser.add_subparsers(required=True)
++        create = subparsers.add_parser("create")
++        create.add_argument("name")
++
++        with io.StringIO() as out:
++            with pytest.raises(SystemExit):
++                command.run_from_argv(["test", "create"])
++
++        self.assertIn("usage: test subparsers subparsers <create>")
++
++        with io.StringIO() as out:
++            with pytest.raises(SystemExit):
++                command.run_from_argv(["test", "create", "create", "name"])
++
++        self.assertIn("the following arguments are required: name")

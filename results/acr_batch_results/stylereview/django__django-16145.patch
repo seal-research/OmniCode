@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/management/commands/runserver.py b/django/core/management/commands/runserver.py\nindex 3c39f57e4d..c29f523055 100644\n--- a/django/core/management/commands/runserver.py\n+++ b/django/core/management/commands/runserver.py\n@@ -73,7 +73,7 @@ class Command(BaseCommand):\n             os.environ[\"DJANGO_COLORS\"] = \"nocolor\"\n         super().execute(*args, **options)\n \n-    def get_handler(self, *args, **options):\n+    def get_handler(self):\n         \"\"\"Return the default WSGI handler for the runner.\"\"\"\n         return get_internal_wsgi_application()\n \n"
+}

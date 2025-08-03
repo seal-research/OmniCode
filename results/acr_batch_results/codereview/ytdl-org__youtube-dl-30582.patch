@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/youtube_dl/extractor/youtube.py b/youtube_dl/extractor/youtube.py\nindex 63918924d..62f65fda2 100644\n--- a/youtube_dl/extractor/youtube.py\n+++ b/youtube_dl/extractor/youtube.py\n@@ -1392,7 +1392,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):\n     # 3. https://github.com/ytdl-org/youtube-dl/issues/30097#issuecomment-950157377\n     def _extract_n_function_name(self, jscode):\n         return self._search_regex(\n-            (r'\\.get\\(\"n\"\\)\\)&&\\(b=(?P<nfunc>[a-zA-Z0-9$]{3})\\([a-zA-Z0-9]\\)',),\n+            (r'\\.get\\(\"n\"\\)\\)&&\\(b=(?P<nfunc>[a-zA-Z0-9$]{3,})\\([a-zA-Z0-9]\\)',),\n             jscode, 'Initial JS player n function name', group='nfunc')\n \n     def _extract_n_function(self, video_id, player_url):\n"
+}

@@ -1,0 +1,64 @@
+--- a/scrapy/utils/reactor.py
++++ b/scrapy/utils/reactor.py
+-event_loop = asyncio.get_event_loop()
++try:
++    event_loop = asyncio.get_running_loop()
++except RuntimeError:
++    event_loop = asyncio.new_event_loop()
++    asyncio.set_event_loop(event_loop)
+
+--- a/scrapy/utils/defer.py
++++ b/scrapy/utils/defer.py
+-return Deferred.fromFuture(asyncio.ensure_future(o))
++return asyncio.create_task(o)
+
+--- a/scrapy/utils/defer.py
++++ b/scrapy/utils/defer.py
+-return d.asFuture(asyncio.get_event_loop())
++return d
+
+--- a/tests/test_utils_defer.py
++++ b/tests/test_utils_defer.py
++import pytest
++from scrapy.utils.defer import deferred_from_coro, deferred_to_future
++
++@pytest.mark.asyncio
++async def test_deferred_from_coro():
++    async def my_coro():
++        return "Hello, World!"
++    result = await deferred_from_coro(my_coro())
++    assert result == "Hello, World!"
++
++@pytest.mark.asyncio
++async def test_deferred_to_future():
++    d = deferred_to_future("Hello, World!")
++    result = await d
++    assert result == "Hello, World!"
+
+--- a/tests/test_utils_reactor.py
++++ b/tests/test_utils_reactor.py
++import pytest
++from scrapy.utils.reactor import install_reactor
++
++@pytest.mark.asyncio
++async def test_install_reactor():
++    install_reactor()
++    # Add assertions here
+
+--- a/tests/test_utils_defer.py
++++ b/tests/test_utils_defer.py
++import pytest
++from scrapy.utils.defer import deferred_from_coro, deferred_to_future
++
++@pytest.mark.asyncio
++async def test_deferred_from_coro():
++    async def my_coro():
++        return "Hello, World!"
++    result = await deferred_from_coro(my_coro())
++    assert result == "Hello, World!"
++
++@pytest.mark.asyncio
++async def test_deferred_to_future():
++    d = deferred_to_future("Hello, World!")
++    result = await d
++    assert result == "Hello, World!"

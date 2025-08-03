@@ -1,0 +1,38 @@
+--- a/tests/test_stackplot.py
++++ b/tests/test_stackplot.py
+-# Original code here (if modifying existing file)
++import pytest
++import matplotlib.pyplot as plt
++import numpy as np
++from matplotlib.stackplot import stackplot
++
++def test_stackplot_color_alias():
++    """Test that stackplot accepts color aliases."""
++    my_data = np.array([[1, 1, 1], [1, 2, 3], [4, 3, 2]])
++    fig, ax = plt.subplots()
++    ax.plot([1, 3], [1, 3], color='C0')
++    stackplot([1, 2, 3], my_data, colors=['C1', 'C2', 'C3'])
++    plt.close()
++
++def test_stackplot_colors():
++    """Test that stackplot produces correct colors."""
++    my_data = np.array([[1, 1, 1], [1, 2, 3], [4, 3, 2]])
++    fig, ax = plt.subplots()
++    lines = stackplot([1, 2, 3], my_data, colors=['C1', 'C2', 'C3'])
++    for i, line in enumerate(lines):
++        assert line.get_facecolor() == plt.cm.tab10(i)
++
++def test_stackplot_cycle():
++    """Test that stackplot does not change the Axes cycle."""
++    my_data = np.array([[1, 1, 1], [1, 2, 3], [4, 3, 2]])
++    fig, ax = plt.subplots()
++    ax.plot([1, 3], [1, 3], color='C0')
++    stackplot([1, 2, 3], my_data, colors=['C1', 'C2', 'C3'])
++    assert ax._get_lines.get_next_color() == 'C0'
++
++def test_stackplot_fails():
++    """Test that stackplot fails with invalid colors."""
++    my_data = np.array([[1, 1, 1], [1, 2, 3], [4, 3, 2]])
++    fig, ax = plt.subplots()
++    with pytest.raises(ValueError):
++        stackplot([1, 2, 3], my_data, colors='invalid')

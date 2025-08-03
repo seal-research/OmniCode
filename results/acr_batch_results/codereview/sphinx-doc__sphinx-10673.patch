@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/directives/other.py b/sphinx/directives/other.py\nindex 35e16e623..d1cc873ee 100644\n--- a/sphinx/directives/other.py\n+++ b/sphinx/directives/other.py\n@@ -81,6 +81,7 @@ class TocTree(SphinxDirective):\n \n         # glob target documents\n         all_docnames = self.env.found_docs.copy()\n+        all_docnames.update(['genindex', 'modindex', 'search'])\n         all_docnames.remove(self.env.docname)  # remove current document\n \n         ret: List[Node] = []\n"
+}

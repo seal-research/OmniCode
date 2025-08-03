@@ -1,0 +1,24 @@
+--- a/tests/test_functions.py
++++ b/tests/test_functions.py
+-# Empty if creating new file
++import pytest
++from django.db.models import DecimalField, IntegerField
++from django.db.models.functions import Mod
++
++@pytest.mark.testcases
++def test_mod_output_field():
++    # Test that the output field of MOD is DecimalField when inputs are Decimal and Integer
++    mod_expr = Mod(DecimalField(), IntegerField())
++    assert mod_expr.resolve_output_field().__class__ == DecimalField
++
++@pytest.mark.testcases
++def test_mod_output_field_both_decimal():
++    # Test that the output field of MOD is DecimalField when inputs are both Decimal
++    mod_expr = Mod(DecimalField(), DecimalField())
++    assert mod_expr.resolve_output_field().__class__ == DecimalField
++
++@pytest.mark.testcases
++def test_mod_output_field_both_integer():
++    # Test that the output field of MOD is DecimalField when inputs are both Integer
++    mod_expr = Mod(IntegerField(), IntegerField())
++    assert mod_expr.resolve_output_field().__class__ == DecimalField

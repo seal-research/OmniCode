@@ -1,0 +1,76 @@
+--- a/tests/test_autodoc_typehints.py
++++ b/tests/test_autodoc_typehints.py
+-# Empty if creating new file
++import pytest
++from sphinx import __version__ as sphinx_version
++from sphinx.testing import TestApp
++from sphinx.ext.autodoc import AutodocReporter
++
++@pytest.fixture
++def app():
++    return TestApp.builder('html', freshenv=True)
++
++def test_autodoc_typehints_signature(app):
++    # Test that 'None' in a type hint links to the documentation for the None singleton
++    # when autodoc_typehints='signature'
++    app.config.autodoc_typehints = 'signature'
++    app.add_source_file('type_hint_test.py', 'type_hint_test.py')
++    app.add_source_file('index.rst', 'index.rst')
++    app.build()
++    with open(app.outdir / 'index.html', 'r') as f:
++        html = f.read()
++    assert '→ <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)">None</a>' in html
++
++def test_autodoc_typehints_description(app):
++    # Test that 'None' in a type hint links to the documentation for the None singleton
++    # when autodoc_typehints='description'
++    app.config.autodoc_typehints = 'description'
++    app.add_source_file('type_hint_test.py', 'type_hint_test.py')
++    app.add_source_file('index.rst', 'index.rst')
++    app.build()
++    with open(app.outdir / 'index.html', 'r') as f:
++        html = f.read()
++    assert '→ <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)">None</a>' in html
++
++def test_autodoc_typehints_none_link(app):
++    # Test that 'None' in a type hint links to the documentation for the None singleton
++    # regardless of autodoc_typehints mode
++    app.config.autodoc_typehints = 'signature'
++    app.add_source_file('type_hint_test.py', 'type_hint_test.py')
++    app.add_source_file('index.rst', 'index.rst')
++    app.build()
++    with open(app.outdir / 'index.html', 'r') as f:
++        html = f.read()
++    assert '→ <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)">None</a>' in html
++
++    app.config.autodoc_typehints = 'description'
++    app.build()
++    with open(app.outdir / 'index.html', 'r') as f:
++        html = f.read()
++    assert '→ <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)">None</a>' in html
+
+--- a/tests/test_type_hint_test.py
++++ b/tests/test_type_hint_test.py
+-# type_hint_test.py
+-
+-def f1() -> None:
+-    return None
+-
+-def f2() -> int:
+-    return 42
++# type_hint_test.py
++
++def f1() -> None:
++    return None
++
++def f2() -> int:
++    return 42
+
+--- a/tests/index.rst
++++ b/tests/index.rst
+-.. automodule:: type_hint_test
+-.. autofunction:: f1
+-.. autofunction:: f2
++.. automodule:: type_hint_test
++.. autofunction:: f1
++.. autofunction:: f2

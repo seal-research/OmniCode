@@ -1,0 +1,44 @@
+--- a/tests/test_expressions.py
++++ b/tests/test_expressions.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db.models import F
++from django.db.models.fields import DurationField
++from django.test import TestCase
++
++class TestDurationExpressions(TestCase):
++    @classmethod
++    def setUpTestData(cls):
++        class Experiment(models.Model):
++            estimated_time = DurationField()
++        cls.Experiment = Experiment
++
++    def test_duration_expressions(self):
++        experiment = self.Experiment.objects.create(estimated_time='00:01:00')
++        result = self.Experiment.objects.annotate(
++            duration=F('estimated_time') + timedelta(days=1)
++        ).get()
++        assert result.duration == timedelta(days=1, seconds=3600)
++
++    def test_duration_expressions_fails(self):
++        with pytest.raises(Exception):
++            self.Experiment.objects.annotate(
++                duration=F('estimated_time') + timedelta(days=1)
++            ).get()
++
++    def test_duration_expressions_with_database(self):
++        # Test with SQLite
++        with self.settings(DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3'}}):
++            experiment = self.Experiment.objects.create(estimated_time='00:01:00')
++            result = self.Experiment.objects.annotate(
++                duration=F('estimated_time') + timedelta(days=1)
++            ).get()
++            assert result.duration == timedelta(days=1, seconds=3600)
++
++        # Test with MySQL
++        with self.settings(DATABASES={'default': {'ENGINE': 'django.db.backends.mysql'}}):
++            experiment = self.Experiment.objects.create(estimated_time='00:01:00')
++            result = self.Experiment.objects.annotate(
++                duration=F('estimated_time') + timedelta(days=1)
++            ).get()
++            assert result.duration == timedelta(days=1, seconds=3600)

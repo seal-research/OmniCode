@@ -1,0 +1,42 @@
+--- a/tests/test_request.py
++++ b/tests/test_request.py
+-# Empty if creating new file
++import pytest
++from scrapy.http import Request
++
++def test_request_dont_filter():
++    # Test that dont_filter allows duplicated requests
++    request1 = Request("http://example.com", dont_filter=True)
++    request2 = Request("http://example.com", dont_filter=True)
++    assert request1.dont_filter
++    assert request2.dont_filter
++
++def test_request_allow_offsite():
++    # Test that allow_offsite allows offsite requests
++    request1 = Request("http://example.com", allow_offsite=True)
++    request2 = Request("http://example2.com", allow_offsite=True)
++    assert request1.allow_offsite
++    assert request2.allow_offsite
++
++def test_request_dont_filter_and_allow_offsite():
++    # Test that dont_filter and allow_offsite are independent
++    request1 = Request("http://example.com", dont_filter=True, allow_offsite=False)
++    request2 = Request("http://example2.com", dont_filter=False, allow_offsite=True)
++    assert request1.dont_filter
++    assert not request1.allow_offsite
++    assert not request2.dont_filter
++    assert request2.allow_offsite
++
++def test_offsite_middleware_process_request():
++    # Test that OffsiteMiddleware process_request checks allow_offsite
++    from scrapy.downloadermiddlewares.offsite import OffsiteMiddleware
++    middleware = OffsiteMiddleware()
++    request = Request("http://example.com", allow_offsite=False)
++    # assert middleware.process_request(request, None) is None or raises IgnoreRequest
++
++def test_offsite_middleware_should_follow():
++    # Test that OffsiteMiddleware should_follow checks allow_offsite
++    from scrapy.downloadermiddlewares.offsite import OffsiteMiddleware
++    middleware = OffsiteMiddleware()
++    request = Request("http://example.com", allow_offsite=True)
++    # assert middleware.should_follow(request, None)

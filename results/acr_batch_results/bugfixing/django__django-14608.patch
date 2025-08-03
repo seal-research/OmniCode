@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/forms/formsets.py b/django/forms/formsets.py\nindex a89c35599f..2c7565925e 100644\n--- a/django/forms/formsets.py\n+++ b/django/forms/formsets.py\n@@ -295,6 +295,7 @@ class BaseFormSet:\n         \"\"\"\n         if self._non_form_errors is None:\n             self.full_clean()\n+        self._non_form_errors.css_classes = ['nonform']\n         return self._non_form_errors\n \n     @property\n@@ -333,7 +334,7 @@ class BaseFormSet:\n         self._non_form_errors.\n         \"\"\"\n         self._errors = []\n-        self._non_form_errors = self.error_class()\n+        self._non_form_errors = self.error_class(css_classes=['nonform'])\n         empty_forms_count = 0\n \n         if not self.is_bound:  # Stop further processing.\n"
+}

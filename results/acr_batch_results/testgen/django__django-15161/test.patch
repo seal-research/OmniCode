@@ -1,0 +1,27 @@
+--- a/tests/test_expressions.py
++++ b/tests/test_expressions.py
+-# Empty if creating new file
++import pytest
++from django.db.models.expressions import F
++from django.db.models import models
++
++def test_f_deconstruct_simplified_path():
++    f = F('test')
++    assert f.deconstruct()[0] == 'django.db.models.F'
++
++def test_f_deconstruct_with_name():
++    f = F('test')
++    assert f.deconstruct()[2]['name'] == 'test'
++
++def test_other_expressions_deconstruct_simplified_path():
++    # Assuming other expressions like Func, FuncExpr, etc., follow similar pattern
++    # This test can be expanded to cover more expressions
++    pass
++
++def test_deconstructible_import_path():
++    # Test that the import path is correctly simplified
++    f = F('test')
++    path, args, kwargs = f.deconstruct()
++    assert path == 'django.db.models.F'
++    assert args == ()
++    assert kwargs == {'name': 'test'}

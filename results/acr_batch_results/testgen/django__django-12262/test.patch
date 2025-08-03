@@ -1,0 +1,76 @@
+--- a/tests/test_template_tags.py
++++ b/tests/test_template_tags.py
++import pytest
++from django.template import Context, Template
++from django.template.exceptions import TemplateSyntaxError
++
++def test_simple_tag_with_keyword_only_argument():
++    # Test a simple tag with a keyword-only argument
++    template = Template("{% load simple_tags %}{% hello greeting='hi' %}")
++    context = Context()
++    rendered = template.render(context)
++    assert rendered == "hi world"
++
++def test_simple_tag_with_keyword_only_argument_and_default():
++    # Test a simple tag with a keyword-only argument and a default value
++    template = Template("{% load simple_tags %}{% hello %}")
++    context = Context()
++    rendered = template.render(context)
++    assert rendered == "hello world"
++
++def test_simple_tag_with_multiple_values_for_keyword_argument():
++    # Test a simple tag with multiple values for a keyword argument
++    template = Template("{% load simple_tags %}{% hello greeting='hi' greeting='hello' %}")
++    context = Context()
++    with pytest.raises(TemplateSyntaxError) as e:
++        template.render(context)
++    assert "received multiple values for keyword argument" in str(e.value)
++
++def test_inclusion_tag_with_keyword_only_argument():
++    # Test an inclusion tag with a keyword-only argument
++    template = Template("{% load inclusion_tags %}{% hi greeting='hi' %}")
++    context = Context()
++    rendered = template.render(context)
++    assert rendered == "hi world"
++
++def test_inclusion_tag_with_multiple_values_for_keyword_argument():
++    # Test an inclusion tag with multiple values for a keyword argument
++    template = Template("{% load inclusion_tags %}{% hi greeting='hi' greeting='hello' %}")
++    context = Context()
++    with pytest.raises(TemplateSyntaxError) as e:
++        template.render(context)
++    assert "received multiple values for keyword argument" in str(e.value)
+
+--- a/tests/test_template_library.py
++++ b/tests/test_template_library.py
++import pytest
++from django.template.library import parse_bits
++
++def test_parse_bits_with_keyword_only_argument():
++    # Test parse_bits with a keyword-only argument
++    bits = ["greeting='hi'"]
++    params = []
++    varargs = None
++    varkw = None
++    defaults = None
++    kwonly = ["greeting"]
++    kwonly_defaults = {}
++    takes_context = False
++    name = "hello"
++    args, kwargs = parse_bits(None, bits, params, varargs, varkw, defaults, kwonly, kwonly_defaults, takes_context, name)
++    assert kwargs == {"greeting": "hi"}
++
++def test_parse_bits_with_multiple_values_for_keyword_argument():
++    # Test parse_bits with multiple values for a keyword argument
++    bits = ["greeting='hi'", "greeting='hello'"]
++    params = []
++    varargs = None
++    varkw = None
++    defaults = None
++    kwonly = ["greeting"]
++    kwonly_defaults = {}
++    takes_context = False
++    name = "hello"
++    with pytest.raises(TemplateSyntaxError) as e:
++        parse_bits(None, bits, params, varargs, varkw, defaults, kwonly, kwonly_defaults, takes_context, name)
++    assert "received multiple values for keyword argument" in str(e.value)

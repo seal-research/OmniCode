@@ -1,0 +1,37 @@
+--- a/tests/test_admindocs_utils.py
++++ b/tests/test_admindocs_utils.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admindocs.utils import trim_docstring
++
++def test_trim_docstring_empty():
++    docstring = ""
++    assert trim_docstring(docstring) == ""
++
++def test_trim_docstring_single_line():
++    docstring = "This is a single-line docstring."
++    assert trim_docstring(docstring) == "This is a single-line docstring."
++
++def test_trim_docstring_multi_line():
++    docstring = """
++    This is a multi-line docstring.
++
++    It has multiple lines.
++    """
++    assert trim_docstring(docstring) == "This is a multi-line docstring.\n\nIt has multiple lines."
++
++def test_trim_docstring_first_line_not_empty():
++    docstring = "This is a docstring.\nIt has multiple lines."
++    assert trim_docstring(docstring) == "This is a docstring.\nIt has multiple lines."
++
++def test_trim_docstring_indentation():
++    docstring = """
++        This is an indented docstring.
++
++        It has multiple lines.
++    """
++    assert trim_docstring(docstring) == "This is an indented docstring.\n\nIt has multiple lines."
++
++def test_trim_docstring_trailing_whitespace():
++    docstring = "This is a docstring with trailing whitespace.\n\n"
++    assert trim_docstring(docstring) == "This is a docstring with trailing whitespace."

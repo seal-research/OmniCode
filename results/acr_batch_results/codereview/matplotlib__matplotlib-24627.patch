@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/axes/_base.py b/lib/matplotlib/axes/_base.py\nindex 90b0bf117e..96e249c9e5 100644\n--- a/lib/matplotlib/axes/_base.py\n+++ b/lib/matplotlib/axes/_base.py\n@@ -1409,6 +1409,10 @@ class _AxesBase(martist.Artist):\n             self.__clear()\n         else:\n             self.clear()\n+        # Iterate over all child artists and explicitly unset their .axes and .figure attributes\n+        for artist in self.get_children():\n+            artist.axes = None\n+            artist.figure = None\n \n     class ArtistList(MutableSequence):\n         \"\"\"\n"
+}

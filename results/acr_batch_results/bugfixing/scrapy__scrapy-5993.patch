@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/utils/conf.py b/scrapy/utils/conf.py\nindex 43a8b65a5..b7975d97c 100644\n--- a/scrapy/utils/conf.py\n+++ b/scrapy/utils/conf.py\n@@ -55,6 +55,7 @@ def build_component_list(compdict, custom=None, convert=update_classpath):\n         return type(custom)(convert(c) for c in custom)\n \n     if custom is not None:\n+        # If custom is provided, update the compdict with it\n         compdict.update(custom)\n \n     _validate_values(compdict)\n"
+}

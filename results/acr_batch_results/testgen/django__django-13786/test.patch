@@ -1,0 +1,61 @@
+--- a/tests/test_migrations/test_squashmigrations.py
++++ b/tests/test_migrations/test_squashmigrations.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations
++
++@pytest.mark.testcases
++class TestSquashMigrations:
++    def test_squash_create_model_alter_model_options(self):
++        # Test that squashmigrations unsets model options when optimizing CreateModel and AlterModelOptions
++        create_model = migrations.operations.models.CreateModel(
++            name="TestModel",
++            fields=[
++                ("id", migrations.AutoField()),
++            ],
++            options={
++                "verbose_name": "Test Model",
++                "verbose_name_plural": "Test Models",
++            },
++        )
++        alter_model_options = migrations.operations.models.AlterModelOptions(
++            name="TestModel",
++            options={},
++        )
++
++        # Squash the operations
++        squashed_operations = create_model.reduce(alter_model_options, "app_label")
++
++        # Check that the resulting CreateModel operation has no options
++        assert len(squashed_operations) == 1
++        assert squashed_operations[0].options == {}
++
++    def test_squash_alter_model_options_create_model(self):
++        # Test that squashmigrations sets model options when optimizing AlterModelOptions and CreateModel
++        alter_model_options = migrations.operations.models.AlterModelOptions(
++            name="TestModel",
++            options={
++                "verbose_name": "New Test Model",
++                "verbose_name_plural": "New Test Models",
++            },
++        )
++        create_model = migrations.operations.models.CreateModel(
++            name="TestModel",
++            fields=[
++                ("id", migrations.AutoField()),
++            ],
++            options={
++                "verbose_name": "Test Model",
++                "verbose_name_plural": "Test Models",
++            },
++        )
++
++        # Squash the operations
++        squashed_operations = alter_model_options.reduce(create_model, "app_label")
++
++        # Check that the resulting CreateModel operation has the correct options
++        assert len(squashed_operations) == 1
++        assert squashed_operations[0].options == {
++            "verbose_name": "New Test Model",
++            "verbose_name_plural": "New Test Models",
++        }

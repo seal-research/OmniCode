@@ -1,0 +1,66 @@
+--- a/src/_pytest/pathlib.py
++++ b/src/_pytest/pathlib.py
+-    entries = sorted(os.scandir(path), key=lambda entry: entry.name)
+-    yield from entries
+-    for entry in entries:
+-        if entry.is_dir(follow_symlinks=False) and recurse(entry):
+-            yield from visit(entry.path, recurse)
++    entries = sorted(os.scandir(path), key=lambda entry: entry.name)
++    yield from entries
++    for entry in entries:
++        if entry.is_dir(follow_symlinks=True) and recurse(entry):
++            yield from visit(entry.path, recurse)
+
+--- a/testing/test_collection.py
++++ b/testing/test_collection.py
++import os
++import pytest
++import py.path
++
++@pytest.fixture
++def temp_dir(tmp_path):
++    return tmp_path
++
++def test_collect_symlink_directory(temp_dir):
++    # Create a directory and a symlink to it
++    dir_path = temp_dir.join("dir")
++    dir_path.mkdir()
++    symlink_path = temp_dir.join("symlink")
++    os.symlink(str(dir_path), str(symlink_path))
++
++    # Create a collector and collect the symlink
++    class Collector:
++        def __init__(self, path):
++            self.path = py.path.local(path)
++
++        def collect(self):
++            yield from visit(str(self.path), recurse=True)
++
++    collector = Collector(str(temp_dir))
++    collected = list(collector.collect())
++
++    # Check if the symlink was collected
++    assert len(collected) > 0
++    assert any(item.path == str(dir_path) for item in collected)
++
++def test_collect_symlink_file(temp_dir):
++    # Create a file and a symlink to it
++    file_path = temp_dir.join("file")
++    file_path.write("content")
++    symlink_path = temp_dir.join("symlink")
++    os.symlink(str(file_path), str(symlink_path))
++
++    # Create a collector and collect the symlink
++    class Collector:
++        def __init__(self, path):
++            self.path = py.path.local(path)
++
++        def collect(self):
++            yield from visit(str(self.path), recurse=True)
++
++    collector = Collector(str(temp_dir))
++    collected = list(collector.collect())
++
++    # Check if the symlink was collected
++    assert len(collected) > 0
++    assert any(item.path == str(file_path) for item in collected)

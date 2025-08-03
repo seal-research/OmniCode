@@ -1,0 +1,121 @@
+--- a/tests/test_query_utils.py
++++ b/tests/test_query_utils.py
+-# Original code here (if modifying)
++import pytest
++from django.db.models import Q, Exists
++from django.db.models.expressions import Value
++
++@pytest.mark.testcases
++class TestQExists:
++    def test_q_and_exists(self):
++        # Test that Q & Exists works
++        q = Q(price__gt=0)
++        exists = Exists(Product.objects.all())
++        combined = q & exists
++        assert combined is not None
++
++    def test_exists_and_q(self):
++        # Test that Exists & Q works
++        exists = Exists(Product.objects.all())
++        q = Q(price__gt=0)
++        combined = exists & q
++        assert combined is not None
++
++    def test_q_and_q(self):
++        # Test that Q & Q works
++        q1 = Q(price__gt=0)
++        q2 = Q(name__startswith='A')
++        combined = q1 & q2
++        assert combined is not None
++
++    def test_exists_and_exists(self):
++        # Test that Exists & Exists works
++        exists1 = Exists(Product.objects.all())
++        exists2 = Exists(Product.objects.all())
++        combined = exists1 & exists2
++        assert combined is not None
++
++    def test_q_or_exists(self):
++        # Test that Q | Exists works
++        q = Q(price__gt=0)
++        exists = Exists(Product.objects.all())
++        combined = q | exists
++        assert combined is not None
++
++    def test_exists_or_q(self):
++        # Test that Exists | Q works
++        exists = Exists(Product.objects.all())
++        q = Q(price__gt=0)
++        combined = exists | q
++        assert combined is not None
++
++    def test_q_and_exists_raises_typeerror_before_fix(self, mocker):
++        # Mock the __and__ method of Q to raise TypeError
++        mocker.patch.object(Q, '__and__', side_effect=TypeError)
++        exists = Exists(Product.objects.all())
++        q = Q()
++        with pytest.raises(TypeError):
++            q & exists
++
++    def test_q_and_exists_works_after_fix(self):
++        # Test that Q & Exists works after the fix
++        exists = Exists(Product.objects.all())
++        q = Q(price__gt=0)
++        combined = q & exists
++        assert combined is not None
++
++    def test_exists_and_q_works_after_fix(self):
++        # Test that Exists & Q works after the fix
++        exists = Exists(Product.objects.all())
++        q = Q(price__gt=0)
++        combined = exists & q
++        assert combined is not None
+
+--- a/tests/test_query_utils.py
++++ b/tests/test_query_utils.py
+-# Empty if creating new file
++import pytest
++from django.db.models import Q, Exists
++from .models import Product
++
++@pytest.mark.testcases
++class TestQExists:
++    @pytest.fixture
++    def product(self):
++        return Product.objects.create(name='Test Product', price=10.0)
++
++    def test_q_and_exists(self, product):
++        q = Q(price__gt=0)
++        exists = Exists(Product.objects.all())
++        combined = q & exists
++        assert combined is not None
++
++    def test_exists_and_q(self, product):
++        exists = Exists(Product.objects.all())
++        q = Q(price__gt=0)
++        combined = exists & q
++        assert combined is not None
++
++    def test_q_and_q(self, product):
++        q1 = Q(price__gt=0)
++        q2 = Q(name__startswith='A')
++        combined = q1 & q2
++        assert combined is not None
++
++    def test_exists_and_exists(self, product):
++        exists1 = Exists(Product.objects.all())
++        exists2 = Exists(Product.objects.all())
++        combined = exists1 & exists2
++        assert combined is not None
++
++    def test_q_or_exists(self, product):
++        q = Q(price__gt=0)
++        exists = Exists(Product.objects.all())
++        combined = q | exists
++        assert combined is not None
++
++    def test_exists_or_q(self, product):
++        exists = Exists(Product.objects.all())
++        q = Q(price__gt=0)
++        combined = exists | q
++        assert combined is not None

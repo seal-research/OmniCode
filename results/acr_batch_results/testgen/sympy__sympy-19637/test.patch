@@ -1,0 +1,57 @@
+--- a/tests/test_sympify.py
++++ b/tests/test_sympify.py
+-# Original content, if any
++import pytest
++from sympy.core.sympify import kernS, sympify
++from sympy.abc import x, y
++
++def test_kernS_basic():
++    """Test kernS with a basic expression."""
++    expr = kernS("(2*x)/(x-1)")
++    assert expr == "(2*x)/(x-1)"
++
++def test_kernS_with_spaces():
++    """Test kernS with an expression containing spaces."""
++    expr = kernS("(2 * x) / (x - 1)")
++    assert expr == "(2*x)/(x-1)"
++
++def test_kernS_with_parentheses():
++    """Test kernS with an expression containing parentheses."""
++    expr = kernS("-(x + 1)")
++    assert expr == -(x + 1)
++
++def test_kernS_with_quote():
++    """Test kernS with a quoted expression."""
++    expr = kernS("'-(x + 1)'")
++    assert expr == '-(x + 1)'
++
++def test_kernS_sympify_fails():
++    """Test kernS when sympify fails."""
++    with pytest.raises(Exception):
++        kernS("Invalid expression")
++
++def test_kernS_multiple_spaces():
++    """Test kernS with an expression containing multiple spaces."""
++    expr = kernS("(2 * x) / (x - 1 * y)")
++    assert expr == "(2*x)/(x-y)"
++
++def test_kernS_nested_expressions():
++    """Test kernS with nested expressions."""
++    expr = kernS("(2 * (x + y)) / (x - 1)")
++    assert expr == "(2*(x+y))/(x-1)"
++
++def test_kernS_edge_case_empty_string():
++    """Test kernS with an empty string."""
++    with pytest.raises(Exception):
++        kernS("")
++
++def test_kernS_edge_case_only_spaces():
++    """Test kernS with a string containing only spaces."""
++    with pytest.raises(Exception):
++        kernS("   ")
++
++def test_sympify_vs_kernS():
++    """Compare sympify and kernS results."""
++    expressions = ["(2*x)/(x-1)", "(2 * x) / (x - 1)", "- (x + 1)"]
++    for expr in expressions:
++        assert sympify(expr) == kernS(expr)

@@ -1,0 +1,33 @@
+--- a/tests/test_management_commands.py
++++ b/tests/test_management_commands.py
+-# Empty if creating new file
++import pytest
++from django.core.management import call_command
++from django.core.management.base import CommandError
++from io import StringIO
++import sys
++
++def test_runserver_with_address():
++    out = StringIO()
++    sys.stdout = out
++    call_command('runserver', '0:8000')
++    sys.stdout = sys.__stdout__
++    assert out.getvalue().startswith("Starting development server at http://0.0.0.0:8000/")
++
++def test_runserver_without_address():
++    out = StringIO()
++    sys.stdout = out
++    call_command('runserver')
++    sys.stdout = sys.__stdout__
++    assert out.getvalue().startswith("Starting development server at http://127.0.0.1:8000/")
++
++def test_runserver_with_ipv6_address():
++    out = StringIO()
++    sys.stdout = out
++    call_command('runserver', '::1:8000')
++    sys.stdout = sys.__stdout__
++    assert out.getvalue().startswith("Starting development server at http://[::1]:8000/")
++
++def test_runserver_invalid_address():
++    with pytest.raises(CommandError):
++        call_command('runserver', 'invalid:8000')

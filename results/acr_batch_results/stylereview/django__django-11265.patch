@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py\nindex d69c24419b..b539431813 100644\n--- a/django/db/models/sql/query.py\n+++ b/django/db/models/sql/query.py\n@@ -142,7 +142,7 @@ class RawQuery:\n         self.cursor.execute(self.sql, params)\n \n \n-class Query(BaseExpression):\n+class Query:\n     \"\"\"A single SQL query.\"\"\"\n \n     alias_prefix = 'T'\n"
+}

@@ -1,0 +1,27 @@
+--- a/tests/test_utils_numberformat.py
++++ b/tests/test_utils_numberformat.py
+-# Empty if creating new file
++import pytest
++from decimal import Decimal
++from django.utils.numberformat import format as nformat
++
++def test_format_small_decimals():
++    assert nformat(Decimal('1e-200'), '.', decimal_pos=2) == '0.00'
++    assert nformat(Decimal('1e-201'), '.', decimal_pos=2) == '0.00'
++
++def test_format_large_decimals():
++    assert nformat(Decimal('1e-100'), '.', decimal_pos=2) == '0.00'
++    assert nformat(Decimal('1e100'), '.', decimal_pos=2) == 'inf'
++
++def test_format_with_decimal_pos():
++    assert nformat(Decimal('0.000001'), '.', decimal_pos=4) == '0.0010'
++    assert nformat(Decimal('0.000001'), '.', decimal_pos=6) == '0.000001'
++
++def test_format_without_decimal_pos():
++    assert nformat(Decimal('0.000001')) == '0.000001'
++
++def test_format_int():
++    assert nformat(10) == '10'
++
++def test_format_float():
++    assert nformat(10.5) == '10.5'

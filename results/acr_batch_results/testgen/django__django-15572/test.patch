@@ -1,0 +1,55 @@
+--- a/tests/test_autoreload.py
++++ b/tests/test_autoreload.py
+-# Empty if creating new file
++import os
++import pathlib
++
++import pytest
++from django.template.autoreload import get_template_directories, template_changed
++
++@pytest.fixture
++def settings():
++    # Set up the TEMPLATES setting with an empty string in DIRS
++    os.environ['TEMPLATES_DIRS'] = ''
++    yield {
++        'TEMPLATES': [
++            {
++                'BACKEND': 'django.template.backends.django.DjangoTemplates',
++                'DIRS': [os.getenv('TEMPLATES_DIRS', '').split(',')],
++                'APP_DIRS': False,
++                'OPTIONS': {
++                    'loaders': [
++                        ('django.template.loaders.filesystem.Loader', ['']),
++                    ],
++                },
++            },
++        ],
++    }
++
++def test_get_template_directories(settings):
++    # Test that get_template_directories filters out empty strings
++    template_dirs = get_template_directories()
++    assert len(template_dirs) == 0
++
++def test_template_changed(settings):
++    # Test that template_changed returns False when the template directory is empty
++    file_path = pathlib.Path('test.txt')
++    assert template_changed(None, file_path) is False
++
++def test_template_changed_with_valid_template_dir(settings):
++    # Test that template_changed returns True when the template directory is valid
++    os.environ['TEMPLATES_DIRS'] = '/path/to/template/dir'
++    settings['TEMPLATES'][0]['DIRS'] = [os.getenv('TEMPLATES_DIRS', '').split(',')]
++    file_path = pathlib.Path('/path/to/template/dir/test.txt')
++    assert template_changed(None, file_path) is True
+
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+-# Empty if creating new file
++import pytest
++from django.utils._os import to_path
++
++def test_to_path():
++    # Test that to_path handles empty strings correctly
++    assert to_path('') == pathlib.Path('')
++    assert to_path(None) == pathlib.Path.cwd()

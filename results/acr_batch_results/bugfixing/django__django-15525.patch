@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/serializers/base.py b/django/core/serializers/base.py\nindex da85cb4b92..a02c7142c9 100644\n--- a/django/core/serializers/base.py\n+++ b/django/core/serializers/base.py\n@@ -336,7 +336,8 @@ def build_instance(Model, data, db):\n         and hasattr(default_manager, \"get_by_natural_key\")\n         and hasattr(Model, \"natural_key\")\n     ):\n-        natural_key = Model(**data).natural_key()\n+        using = self.using\n+        natural_key = Model(using=using, **data).natural_key()\n         try:\n             data[Model._meta.pk.attname] = Model._meta.pk.to_python(\n                 default_manager.db_manager(db).get_by_natural_key(*natural_key).pk\n"
+}

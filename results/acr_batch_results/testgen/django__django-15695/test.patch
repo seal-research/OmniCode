@@ -1,0 +1,49 @@
+--- a/tests/migrations/test_operations.py
++++ b/tests/migrations/test_operations.py
++import pytest
++from django.db import connections, models
++from django.db.migrations import RunPython
++from django.test import skipUnlessDBFeature
++
++class OperationTests(OperationTestBase):
++    @skipUnlessDBFeature('supports_index_name_reset')
++    def test_rename_unnamed_index(self):
++        # Create a model with a unique constraint
++        class MyModel(models.Model):
++            field1 = models.IntegerField()
++            field2 = models.IntegerField()
++
++            class Meta:
++                unique_together = [("field1", "field2")]
++
++        # Create a migration that renames the unnamed index
++        old_state = self.state
++        new_state = self.state
++
++        # Add a unique constraint and an unnamed index
++        old_state.models["app", "mymodel"].options["unique_together"] = [("field1", "field2")]
++        index = models.Index(fields=["field1", "field2"])
++        old_state.models["app", "mymodel"].add_index(index)
++
++        # Create a RenameIndex operation
++        operation = RenameIndex(
++            model_name="mymodel",
++            new_name="new_pony_test_idx",
++        )
++
++        # Apply the migration
++        with connections["default"].schema_editor() as editor:
++            operation.database_forwards("app", editor, old_state, new_state)
++
++        # Verify that the index was renamed
++        self.assertIndexNameExists("mymodel", "new_pony_test_idx")
++
++        # Move backward and forward again
++        with connections["default"].schema_editor() as editor:
++            operation.database_backwards("app", editor, new_state, old_state)
++
++        with connections["default"].schema_editor() as editor:
++            operation.database_forwards("app", editor, old_state, new_state)
++
++        # Verify that the index name was correctly restored
++        self.assertIndexNameExists("mymodel", "new_pony_test_idx")

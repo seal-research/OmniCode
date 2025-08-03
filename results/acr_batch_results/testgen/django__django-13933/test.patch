@@ -1,0 +1,46 @@
+--- a/tests/test_forms/test_models.py
++++ b/tests/test_forms/test_models.py
+-# Original code here
++import pytest
++from django.core.exceptions import ValidationError
++from django.forms import ModelChoiceField
++from .models import Author
++
++def test_modelchoicefield_invalid_choice():
++    field = ModelChoiceField(queryset=Author.objects.all())
++    with pytest.raises(ValidationError) as e:
++        field.clean('invalid')
++    assert 'Select a valid choice. That choice is not one of the available choices.' in str(e.value)
++    # The above test will fail before the fix is applied
++
++def test_modelchoicefield_invalid_choice_with_value():
++    field = ModelChoiceField(queryset=Author.objects.all(), 
++                             default_error_messages={
++                                 'invalid_choice': _('Select a valid choice. %(value)s is not one of the'
++                                                     ' available choices.'),
++                             })
++    with pytest.raises(ValidationError) as e:
++        field.clean('invalid')
++    assert 'Select a valid choice. invalid is not one of the available choices.' in str(e.value)
++    # This test will pass after the fix is applied
++
++def test_modelmultiplechoicefield_invalid_choice_with_value():
++    field = ModelMultipleChoiceField(queryset=Author.objects.all())
++    with pytest.raises(ValidationError) as e:
++        field.clean(['invalid'])
++    assert 'Select a valid choice. %(value)s is not one of the available choices.' in str(e.value)
++    # This test will pass as it already works
+
+--- a/tests/test_forms/test_fields.py
++++ b/tests/test_forms/test_fields.py
+-# Original code here
++import pytest
++from django.core.exceptions import ValidationError
++from django.forms.fields import Field
++
++def test_field_invalid_choice():
++    field = Field()
++    field.choices = [(1, 'Choice 1'), (2, 'Choice 2')]
++    with pytest.raises(ValidationError) as e:
++        field.validate('invalid')
++    assert 'Value "invalid" is not a valid choice.' in str(e.value)

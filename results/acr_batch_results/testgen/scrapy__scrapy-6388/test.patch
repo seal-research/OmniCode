@@ -1,0 +1,65 @@
+--- a/tests/test_contracts.py
++++ b/tests/test_contracts.py
+-# Empty if creating new file
++import pytest
++from scrapy.contracts import ContractsManager
++from scrapy.utils.testproc import ProcessTest
++
++def test_extract_contracts_valid():
++    # Test with a valid docstring
++    class TestSpider:
++        def test_method(self):
++            """@foo arg1 arg2
++            @bar arg3 arg4"""
++            pass
++
++    contracts_manager = ContractsManager([])
++    contracts = contracts_manager.extract_contracts(TestSpider.test_method)
++    assert len(contracts) == 2
++
++def test_extract_contracts_invalid():
++    # Test with an invalid docstring
++    class TestSpider:
++        def test_method(self):
++            """Invalid docstring"""
++            pass
++
++    contracts_manager = ContractsManager([])
++    contracts = contracts_manager.extract_contracts(TestSpider.test_method)
++    assert len(contracts) == 0
++
++def test_extract_contracts_unmatched_regex():
++    # Test with a docstring that contains unmatched regex
++    class TestSpider:
++        def test_method(self):
++            """@foo arg1 arg2
++            Invalid line
++            @bar arg3 arg4"""
++            pass
++
++    contracts_manager = ContractsManager([])
++    contracts = contracts_manager.extract_contracts(TestSpider.test_method)
++    assert len(contracts) == 2
++
++def test_from_method_valid():
++    # Test from_method with valid contracts
++    class TestSpider:
++        def test_method(self):
++            """@foo arg1 arg2
++            @bar arg3 arg4"""
++            pass
++
++    contracts_manager = ContractsManager([])
++    request = contracts_manager.from_method(TestSpider().test_method, None)
++    assert request is not None
++
++def test_from_method_invalid():
++    # Test from_method with invalid contracts
++    class TestSpider:
++        def test_method(self):
++            """Invalid docstring"""
++            pass
++
++    contracts_manager = ContractsManager([])
++    request = contracts_manager.from_method(TestSpider().test_method, None)
++    assert request is None

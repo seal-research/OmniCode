@@ -1,0 +1,48 @@
+--- a/tests/test_forms.py
++++ b/tests/test_forms.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.contrib.auth.forms import UserCreationForm
++from django.contrib.auth.models import User
++from django.forms import ModelForm
++from django.db import models
++
++# Define a custom User model with a ManyToManyField
++class CustomUser(models.Model):
++    groups = models.ManyToManyField('auth.Group')
++
++class CustomUserCreationForm(UserCreationForm):
++    class Meta:
++        model = CustomUser
++        fields = ('username',)
++
++def test_user_creation_form_save_m2m():
++    # Test that UserCreationForm saves ManyToMany fields
++    user = CustomUser.objects.create_user('testuser', email='test@example.com')
++    group = models.Group.objects.create(name='testgroup')
++    user.groups.add(group)
++
++    form = CustomUserCreationForm({'username': 'testuser', 'password1': 'password', 'password2': 'password', 'groups': [group.id]})
++    form.save()
++
++    saved_user = CustomUser.objects.get(username='testuser')
++    assert saved_user.groups.count() == 1
++
++def test_user_creation_form_save_m2m_commit_false():
++    # Test that UserCreationForm does not save ManyToMany fields when commit=False
++    form = CustomUserCreationForm({'username': 'testuser', 'password1': 'password', 'password2': 'password'})
++    user = form.save(commit=False)
++    user.save()
++    assert user.groups.count() == 0
++
++def test_model_form_save_m2m():
++    # Test that ModelForm saves ManyToMany fields
++    class TestModelForm(ModelForm):
++        class Meta:
++            model = CustomUser
++            fields = ('username', 'groups')
++
++    form = TestModelForm({'username': 'testuser', 'groups': [1]})
++    form.save()
++    saved_user = CustomUser.objects.get(username='testuser')
++    assert saved_user.groups.count() == 1

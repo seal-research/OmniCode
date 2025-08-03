@@ -1,0 +1,61 @@
+--- a/tests/test_http_response.py
++++ b/tests/test_http_response.py
+-# Empty if creating new file
++import pytest
++from django.http.response import FileResponse
++import mimetypes
++import os
++
++@pytest.fixture
++def test_file(tmp_path):
++    file_path = tmp_path / "test.html"
++    file_path.write_text("Hello, World!")
++    return file_path
++
++@pytest.fixture
++def test_file_br(tmp_path):
++    file_path = tmp_path / "test.html.br"
++    file_path.write_text("Hello, World!")
++    return file_path
++
++@pytest.fixture
++def test_file_Z(tmp_path):
++    file_path = tmp_path / "test.html.Z"
++    file_path.write_text("Hello, World!")
++    return file_path
++
++def test_file_response_content_type(test_file):
++    response = FileResponse(open(test_file, 'rb'))
++    assert response.get('Content-Type') == 'text/html; charset=utf-8'
++
++def test_file_response_content_type_br(test_file_br):
++    response = FileResponse(open(test_file_br, 'rb'))
++    # The mimetypes module does not guess the type for .br files by default
++    # so we check if it's 'application/octet-stream'
++    assert response.get('Content-Type') == 'application/octet-stream'
++
++def test_file_response_content_type_Z(test_file_Z):
++    response = FileResponse(open(test_file_Z, 'rb'))
++    # The mimetypes module does not guess the type for .Z files by default
++    # so we check if it's 'application/octet-stream'
++    assert response.get('Content-Type') == 'application/octet-stream'
++
++def test_file_response_content_type_fixed(test_file_br):
++    # Mock the mimetypes.guess_type function to return the correct type for .br files
++    original_guess_type = mimetypes.guess_type
++    def mock_guess_type(filename):
++        if filename.endswith('.br'):
++            return ('application/gzip', None)
++        elif filename.endswith('.Z'):
++            return ('application/compress', None)
++        else:
++            return original_guess_type(filename)
++
++    mimetypes.guess_type = mock_guess_type
++    response = FileResponse(open(test_file_br, 'rb'))
++    assert response.get('Content-Type') == 'application/gzip'
++
++    response = FileResponse(open(test_file_Z, 'rb'))
++    assert response.get('Content-Type') == 'application/compress'
++
++    mimetypes.guess_type = original_guess_type

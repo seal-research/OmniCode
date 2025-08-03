@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/crawler.py b/scrapy/crawler.py\nindex 69ff07bb7..ab3e947d2 100644\n--- a/scrapy/crawler.py\n+++ b/scrapy/crawler.py\n@@ -57,7 +57,7 @@ class Crawler:\n         spidercls: Type[Spider],\n         settings: Union[None, dict, Settings] = None,\n         init_reactor: bool = False,\n-    ):\n+    ) -> None:\n         if isinstance(spidercls, Spider):\n             raise ValueError(\"The spidercls argument must be a class, not an object\")\n \n"
+}

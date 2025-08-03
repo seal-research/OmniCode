@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/astropy/table/connect.py b/astropy/table/connect.py\nindex 4f8f8982a9..6b6719415e 100644\n--- a/astropy/table/connect.py\n+++ b/astropy/table/connect.py\n@@ -127,3 +127,6 @@ class TableWrite(registry.UnifiedReadWrite):\n         instance = self._instance\n         with serialize_method_as(instance, serialize_method):\n             self.registry.write(instance, *args, **kwargs)\n+        # Forward formats argument\n+        if 'formats' in kwargs:\n+            instance.formats = kwargs['formats']\n"
+}

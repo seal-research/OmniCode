@@ -1,0 +1,38 @@
+--- a/tests/test_management_commands.py
++++ b/tests/test_management_commands.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.core.management import call_command
++from django.db import connections
++
++@pytest.mark.skipif(
++    not connections.allowed_names,
++    reason="No database configured",
++)
++def test_dbshell_passes_parameters_before_dbname():
++    # Arrange
++    database = connections.allowed_names[0]
++    params = ["-c", "SELECT * FROM some_table;"]
++
++    # Act
++    try:
++        call_command("dbshell", *params, database)
++    except Exception as e:
++        pytest.fail(f"Command failed: {e}")
++
++    # Assert
++    # We can't directly assert the output, but we can check if the command runs without errors
++    pass
++
++@pytest.mark.skipif(
++    not connections.allowed_names,
++    reason="No database configured",
++)
++def test_dbshell_fails_with_extra_command_line_arguments():
++    # Arrange
++    database = connections.allowed_names[0]
++    params = ["--", "-c", "SELECT * FROM some_table;"]
++
++    # Act and Assert
++    with pytest.raises(SystemExit):
++        call_command("dbshell", *params, database)

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/aggregates.py b/django/db/models/aggregates.py\nindex da4ff928aa..945d18a15c 100644\n--- a/django/db/models/aggregates.py\n+++ b/django/db/models/aggregates.py\n@@ -13,7 +13,7 @@ __all__ = [\n ]\n \n \n-class Aggregate(Func):\n+class Aggregate(Func, Combinable):\n     template = '%(function)s(%(distinct)s%(expressions)s)'\n     contains_aggregate = True\n     name = None\n"
+}

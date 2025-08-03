@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/colorbar.py b/lib/matplotlib/colorbar.py\nindex c59b0ac815..dee1aca422 100644\n--- a/lib/matplotlib/colorbar.py\n+++ b/lib/matplotlib/colorbar.py\n@@ -652,7 +652,7 @@ class Colorbar:\n                 if len(self._y) >= self.n_rasterize:\n                     self.solids.set_rasterized(True)\n         self.dividers.set_segments(\n-            np.dstack([X, Y])[1:-1] if self.drawedges else [])\n+            np.dstack([X, Y]) if self.drawedges else [])\n \n     def _add_solids_patches(self, X, Y, C, mappable):\n         hatches = mappable.hatches * len(C)  # Have enough hatches.\n"
+}

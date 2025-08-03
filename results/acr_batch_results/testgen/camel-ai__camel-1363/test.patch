@@ -1,0 +1,53 @@
+--- a/tests/test_firecrawl.py
++++ b/tests/test_firecrawl.py
+-# Empty if creating new file
++import pytest
++from camel.loaders import Firecrawl
++
++def test_firecrawl_init():
++    """Test that Firecrawl initializes correctly."""
++    firecrawl = Firecrawl()
++    assert firecrawl is not None
++
++def test_firecrawl_crawl():
++    """Test that Firecrawl can crawl a URL."""
++    firecrawl = Firecrawl()
++    response = firecrawl.crawl(url="https://www.camel-ai.org/about")
++    assert response is not None
++
++def test_firecrawl_crawl_exception():
++    """Test that Firecrawl handles crawl exceptions."""
++    firecrawl = Firecrawl()
++    with pytest.raises(RuntimeError):
++        firecrawl.crawl(url="https://www.invalidurl.com")
++
++def test_firecrawl_markdown_crawl():
++    """Test that Firecrawl can crawl a URL and return markdown."""
++    firecrawl = Firecrawl()
++    response = firecrawl.markdown_crawl(url="https://www.camel-ai.org/about")
++    assert response is not None
++
++def test_firecrawl_check_crawl_job():
++    """Test that Firecrawl can check a crawl job."""
++    firecrawl = Firecrawl()
++    job_id = "test_job_id"
++    response = firecrawl.check_crawl_job(job_id)
++    assert response is not None
++
++def test_firecrawl_scrape():
++    """Test that Firecrawl can scrape a URL."""
++    firecrawl = Firecrawl()
++    response = firecrawl.scrape(url="https://www.camel-ai.org/about")
++    assert response is not None
++
++def test_firecrawl_structured_scrape():
++    """Test that Firecrawl can scrape a URL and return structured data."""
++    firecrawl = Firecrawl()
++    response = firecrawl.structured_scrape(url="https://www.camel-ai.org/about", response_format=dict)
++    assert response is not None
++
++def test_firecrawl_map_site():
++    """Test that Firecrawl can map a site."""
++    firecrawl = Firecrawl()
++    response = firecrawl.map_site(url="https://www.camel-ai.org/about")
++    assert response is not None

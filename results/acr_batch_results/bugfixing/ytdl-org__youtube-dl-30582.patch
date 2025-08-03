@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/youtube_dl/extractor/youtube.py b/youtube_dl/extractor/youtube.py\nindex 63918924d..2762528ad 100644\n--- a/youtube_dl/extractor/youtube.py\n+++ b/youtube_dl/extractor/youtube.py\n@@ -1453,6 +1453,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):\n                 qs['n'] = [n_response]\n                 fmt['url'] = compat_urlparse.urlunparse(\n                     parsed_fmt_url._replace(query=compat_urllib_parse_urlencode(qs, True)))\n+            # Add additional throttling handling if needed\n \n     def _mark_watched(self, video_id, player_response):\n         playback_url = url_or_none(try_get(\n"
+}

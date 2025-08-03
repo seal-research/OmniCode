@@ -1,0 +1,32 @@
+--- a/tests/test_locks.py
++++ b/tests/test_locks.py
+-# Empty if creating new file
++import pytest
++import fcntl
++from django.core.files.locks import lock, unlock
++from tempfile import TemporaryFile
++
++def test_lock_unlock():
++ f = TemporaryFile()
++ assert lock(f, fcntl.LOCK_EX) is True
++ assert unlock(f) is True
++
++def test_lock_failure():
++ f = TemporaryFile()
++ fcntl.flock(f.fileno(), fcntl.LOCK_EX)
++ assert lock(f, fcntl.LOCK_EX) is False
++ unlock(f)
++ assert lock(f, fcntl.LOCK_EX) is True
++
++def test_unlock_failure():
++ f = TemporaryFile()
++ assert unlock(f) is False
++ lock(f, fcntl.LOCK_EX)
++ assert unlock(f) is True
++
++def test_non_blocking_lock():
++ f = TemporaryFile()
++ assert lock(f, fcntl.LOCK_EX | fcntl.LOCK_NB) is True
++ assert lock(f, fcntl.LOCK_EX | fcntl.LOCK_NB) is False
++ unlock(f)
++ assert lock(f, fcntl.LOCK_EX | fcntl.LOCK_NB) is True

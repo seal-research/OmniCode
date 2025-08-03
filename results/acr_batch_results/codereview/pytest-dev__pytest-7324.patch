@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/src/_pytest/mark/expression.py b/src/_pytest/mark/expression.py\nindex 04c73411a..f789fc24c 100644\n--- a/src/_pytest/mark/expression.py\n+++ b/src/_pytest/mark/expression.py\n@@ -129,7 +129,7 @@ class Scanner:\n \n def expression(s: Scanner) -> ast.Expression:\n     if s.accept(TokenType.EOF):\n-        ret = ast.NameConstant(False)  # type: ast.expr\n+        ret = ast.Name(id=\"False\", ctx=ast.Load())\n     else:\n         ret = expr(s)\n         s.accept(TokenType.EOF, reject=True)\n"
+}

@@ -1,0 +1,94 @@
+--- a/tests/test_migrations/test_optimize.py
++++ b/tests/test_migrations/test_optimize.py
+-# No original code here
++import pytest
++from django.db import migrations
++
++def test_optimize_consecutive_operations():
++    # Test that consecutive operations are optimized
++    class Migration(migrations.Migration):
++
++        dependencies = [
++            ("testapp", "0001_initial"),
++        ]
++
++        operations = [
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together=set(),
++            ),
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together={("col",)},
++            ),
++        ]
++
++        def test_optimize(self):
++            # Test that the operations are optimized
++            pass
+
+--- a/tests/test_migrations/test_optimize.py
++++ b/tests/test_migrations/test_optimize.py
+-# No original code here
++import pytest
++from django.db import migrations
++
++def test_optimize_consecutive_operations():
++    operations = [
++        migrations.AlterUniqueTogether(
++            name='mymodel',
++            unique_together=set(),
++        ),
++        migrations.AlterUniqueTogether(
++            name='mymodel',
++            unique_together={("col",)},
++        )
++    ]
++
++    optimized_operations = [
++        migrations.AlterUniqueTogether(
++            name='mymodel',
++            unique_together={("col",)},
++        )
++    ]
++
++    assert operations == optimized_operations
+
+--- a/tests/test_migrations/test_optimize.py
++++ b/tests/test_migrations/test_optimize.py
+-# No original code here
++import pytest
++from django.db import migrations
++
++def test_optimize_consecutive_operations():
++    operations = [
++        migrations.AlterUniqueTogether(
++            name='mymodel',
++            unique_together=set(),
++        ),
++        migrations.AlterIndexTogether(
++            name='mymodel',
++            index_together=set(),
++        ),
++        migrations.AlterUniqueTogether(
++            name='mymodel',
++            unique_together={("col",)},
++        ),
++        migrations.AlterIndexTogether(
++            name='mymodel',
++            index_together={("col",)},
++        )
++    ]
++
++    optimized_operations = [
++        migrations.AlterUniqueTogether(
++            name='mymodel',
++            unique_together={("col",)},
++        ),
++        migrations.AlterIndexTogether(
++            name='mymodel',
++            index_together={("col",)},
++        )
++    ]
++
++    assert operations == optimized_operations

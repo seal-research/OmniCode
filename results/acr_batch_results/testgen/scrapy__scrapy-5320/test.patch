@@ -1,0 +1,57 @@
+--- a/tests/test_utils_response.py
++++ b/tests/test_utils_response.py
+-# Empty if creating new file
++import pytest
++from scrapy.utils.response import open_in_browser
++from scrapy.http import HtmlResponse
++import webbrowser
++from unittest.mock import patch
++
++@pytest.fixture
++def mock_open():
++    with patch('webbrowser.open') as mock_open:
++        yield mock_open
++
++def test_open_in_browser_html_response(mock_open):
++    # Create a simple HTML response
++    body = '<html><head></head><body>Test</body></html>'
++    response = HtmlResponse(url='http://example.com', body=body.encode())
++
++    # Open the response in the browser
++    open_in_browser(response)
++
++    # Check that the browser was opened with the correct file
++    mock_open.assert_called_once()
++
++def test_open_in_browser_with_base_tag(mock_open):
++    # Create an HTML response with a <base> tag
++    body = '<html><head><base href="https://example.com"></head><body>Test</body></html>'
++    response = HtmlResponse(url='http://example.com', body=body.encode())
++
++    # Open the response in the browser
++    open_in_browser(response)
++
++    # Check that the browser was opened with the correct file
++    mock_open.assert_called_once()
++
++def test_open_in_browser_with_head_attributes(mock_open):
++    # Create an HTML response with a <head> tag that has attributes
++    body = '<html><head id="test"></head><body>Test</body></html>'
++    response = HtmlResponse(url='http://example.com', body=body.encode())
++
++    # Open the response in the browser
++    open_in_browser(response)
++
++    # Check that the browser was opened with the correct file
++    mock_open.assert_called_once()
++
++def test_open_in_browser_with_external_resources(mock_open):
++    # Create an HTML response with external resources
++    body = '<html><head></head><body><img src="image.jpg"></body></html>'
++    response = HtmlResponse(url='http://example.com', body=body.encode())
++
++    # Open the response in the browser
++    open_in_browser(response)
++
++    # Check that the browser was opened with the correct file
++    mock_open.assert_called_once()

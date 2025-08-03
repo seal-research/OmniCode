@@ -1,0 +1,51 @@
+--- a/tests/test_backends_mysql.py
++++ b/tests/test_backends_mysql.py
+-# Empty if creating new file
++import pytest
++from django.db.backends.mysql.base import DatabaseWrapper
++
++@pytest.fixture
++def settings_dict():
++    return {
++        'USER': 'test_user',
++        'NAME': 'test_database',
++        'PASSWORD': 'test_password',
++        'HOST': 'localhost',
++        'PORT': '3306',
++    }
++
++def test_get_connection_params_deprecated(settings_dict):
++    # Test that get_connection_params uses deprecated 'db' and 'passwd' kwargs
++    db_wrapper = DatabaseWrapper(settings_dict)
++    with pytest.warns(DeprecationWarning):
++        params = db_wrapper.get_connection_params()
++    assert params['db'] == settings_dict['NAME']
++    assert params['passwd'] == settings_dict['PASSWORD']
++
++def test_get_connection_params_new(settings_dict):
++    # Test that get_connection_params uses new 'database' and 'password' kwargs
++    db_wrapper = DatabaseWrapper(settings_dict)
++    # Mock the mysqlclient to support 'database' and 'password'
++    db_wrapper.get_connection_params = lambda: {
++        'database': settings_dict['NAME'],
++        'password': settings_dict['PASSWORD'],
++        # Other params...
++    }
++    params = db_wrapper.get_connection_params()
++    assert params['database'] == settings_dict['NAME']
++    assert params['password'] == settings_dict['PASSWORD']
++
++def test_get_connection_params_equivalence(settings_dict):
++    # Test that both deprecated and new kwargs produce the same connection params
++    db_wrapper = DatabaseWrapper(settings_dict)
++    deprecated_params = db_wrapper.get_connection_params()
++    # Mock the mysqlclient to support 'database' and 'password'
++    db_wrapper.get_connection_params = lambda: {
++        'database': settings_dict['NAME'],
++        'password': settings_dict['PASSWORD'],
++        # Other params...
++    }
++    new_params = db_wrapper.get_connection_params()
++    assert deprecated_params['user'] == new_params['user']
++    assert deprecated_params['host'] == new_params['host']
++    # ... Other params ...

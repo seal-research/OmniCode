@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/downloadermiddlewares/retry.py b/scrapy/downloadermiddlewares/retry.py\nindex 081642a4b..142db4923 100644\n--- a/scrapy/downloadermiddlewares/retry.py\n+++ b/scrapy/downloadermiddlewares/retry.py\n@@ -91,7 +91,7 @@ def get_retry_request(\n         max_retry_times = request.meta.get(\"max_retry_times\")\n         if max_retry_times is None:\n             max_retry_times = settings.getint(\"RETRY_TIMES\")\n-    if retry_times <= max_retry_times:\n+    if retry_times < max_retry_times:\n         logger.debug(\n             \"Retrying %(request)s (failed %(retry_times)d times): %(reason)s\",\n             {\"request\": request, \"retry_times\": retry_times, \"reason\": reason},\n"
+}

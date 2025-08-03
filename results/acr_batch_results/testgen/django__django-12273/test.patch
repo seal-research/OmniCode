@@ -1,0 +1,53 @@
+--- a/tests/test_models.py
++++ b/tests/test_models.py
++import pytest
++from django.test import TestCase
++from .models import Item, Derived
++
++class TestItemModel(TestCase):
++
++    def setUp(self):
++        self.item = Item.objects.create(f=True)
++
++    def test_reset_and_save(self):
++        self.item.reset()
++        self.item.save()
++        assert Item.objects.count() == 1
++
++    def test_derived_item_reset_and_save(self):
++        derived_item = Derived.objects.create(f=True)
++        derived_item.reset()
++        derived_item.save()
++        assert Derived.objects.count() == 1
++
++    def test_item_save_without_reset(self):
++        item = Item.objects.get(pk=self.item.pk)
++        assert item.f == True
++
++    def test_derived_item_save_without_reset(self):
++        derived_item = Derived.objects.get(pk=self.item.pk)
++        assert derived_item.f == True
++
++class TestItemModelFixtures:
++
++    @pytest.fixture
++    def item(self):
++        return Item.objects.create(f=True)
++
++    def test_reset_and_save(self, item):
++        item.reset()
++        item.save()
++        assert Item.objects.count() == 1
++
++    def test_derived_item_reset_and_save(self, item):
++        derived_item = Derived.objects.create(f=True)
++        derived_item.reset()
++        derived_item.save()
++        assert Derived.objects.count() == 1
++
++    def test_item_save_without_reset(self, item):
++        assert item.f == True
++
++    def test_derived_item_save_without_reset(self, item):
++        derived_item = Derived.objects.get(pk=item.pk)
++        assert derived_item.f == True

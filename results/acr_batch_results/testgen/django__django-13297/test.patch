@@ -1,0 +1,48 @@
+--- a/tests/test_views.py
++++ b/tests/test_views.py
+-# Empty if creating new file
++import pytest
++from django.test import RequestFactory
++from django.views.generic import TemplateView
++from django.urls import path, reverse
++
++class OfferView(TemplateView):
++    template_name = "offers/offer.html"
++    def get_context_data(self, **kwargs):
++        offer_slug = kwargs.get("offer_slug", "")
++        offer = get_object_or_404(Account, slug=offer_slug)
++        return {"offer": offer, "offer_slug": offer_slug}
++
++@pytest.mark.django_db
++def test_offer_view_get_context_data():
++    request = RequestFactory().get(reverse("offer_view", kwargs={"offer_slug": "test-offer"}))
++    response = OfferView.as_view()(request)
++    assert response.status_code == 200
++
++@pytest.mark.django_db
++def test_offer_view_get_context_data_fails():
++    # This test should fail before the fix is applied
++    request = RequestFactory().get(reverse("offer_view", kwargs={"offer_slug": SimpleLazyObject(lambda: "test-offer")}))
++    with pytest.raises(Exception):
++        OfferView.as_view()(request)
++
++@pytest.mark.django_db
++def test_offer_view_get_context_data_passes_after_fix():
++    # This test should pass after the fix is applied
++    request = RequestFactory().get(reverse("offer_view", kwargs={"offer_slug": SimpleLazyObject(lambda: "test-offer")}))
++    response = OfferView.as_view()(request)
++    assert response.status_code == 200
+
+--- a/django/views/generic/base.py
++++ b/django/views/generic/base.py
+-    def get_context_data(self, **kwargs):
+-        kwargs.setdefault('view', self)
+-        if self.extra_context is not None:
+-            kwargs.update(self.extra_context)
+-        return kwargs
++    def get_context_data(self, **kwargs):
++        kwargs = {k: v if not isinstance(v, SimpleLazyObject) else str(v) for k, v in kwargs.items()}
++        kwargs.setdefault('view', self)
++        if self.extra_context is not None:
++            kwargs.update(self.extra_context)
++        return kwargs

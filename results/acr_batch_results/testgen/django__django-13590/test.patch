@@ -1,0 +1,83 @@
+--- a/tests/test_sql_query.py
++++ b/tests/test_sql_query.py
+-# Empty if creating new file
++import pytest
++from django.db.models.sql.query import Query
++from collections import namedtuple
++
++def test_resolve_lookup_value_namedtuple():
++    # Create a namedtuple class
++    Point = namedtuple('Point', ['x', 'y'])
++
++    # Create a Query object
++    query = Query()
++
++    # Test that resolve_lookup_value works with namedtuples
++    point = Point(x=1, y=2)
++    resolved_point = query.resolve_lookup_value(point, can_reuse=False, allow_joins=True)
++
++    assert resolved_point == point
++
++def test_resolve_lookup_value_tuple():
++    # Create a tuple
++    point = (1, 2)
++
++    # Create a Query object
++    query = Query()
++
++    # Test that resolve_lookup_value works with tuples
++    resolved_point = query.resolve_lookup_value(point, can_reuse=False, allow_joins=True)
++
++    assert resolved_point == point
++
++def test_resolve_lookup_value_list():
++    # Create a list
++    points = [(1, 2), (3, 4)]
++
++    # Create a Query object
++    query = Query()
++
++    # Test that resolve_lookup_value works with lists
++    resolved_points = query.resolve_lookup_value(points, can_reuse=False, allow_joins=True)
++
++    assert resolved_points == points
++
++def test_resolve_lookup_value_iterator():
++    # Create an iterator
++    points = [(1, 2), (3, 4)]
++
++    # Create a Query object
++    query = Query()
++
++    # Test that resolve_lookup_value works with iterators
++    resolved_points = query.resolve_lookup_value(iter(points), can_reuse=False, allow_joins=True)
++
++    assert list(resolved_points) == points
++
++def test_resolve_lookup_value_namedtuple_subclass():
++    # Create a namedtuple subclass
++    class Point(namedtuple('Point', ['x', 'y'])):
++        pass
++
++    # Create a Query object
++    query = Query()
++
++    # Test that resolve_lookup_value works with namedtuple subclasses
++    point = Point(x=1, y=2)
++    resolved_point = query.resolve_lookup_value(point, can_reuse=False, allow_joins=True)
++
++    assert resolved_point == point
++
++def test_resolve_lookup_value_broken_namedtuple():
++    # Create a namedtuple class with __new__ that does not accept iterator
++    class BrokenPoint(namedtuple('BrokenPoint', ['x', 'y'])):
++        def __new__(cls, x, y):
++            return super().__new__(cls, x, y)
++
++    # Create a Query object
++    query = Query()
++
++    # Test that resolve_lookup_value raises TypeError
++    point = BrokenPoint(x=1, y=2)
++    with pytest.raises(TypeError):
++        query.resolve_lookup_value(point, can_reuse=False, allow_joins=True)

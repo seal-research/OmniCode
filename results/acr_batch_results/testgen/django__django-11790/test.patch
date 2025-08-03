@@ -1,0 +1,38 @@
+--- a/tests/test_forms.py
++++ b/tests/test_forms.py
+-# Original code here (if modifying existing file)
++import pytest
++from django import forms
++from django.contrib.auth.forms import AuthenticationForm, UsernameField
++
++def test_authentication_form_username_maxlength():
++    # Test that the username field in AuthenticationForm has a maxlength attribute
++    form = AuthenticationForm()
++    assert 'maxlength' in form.fields['username'].widget.attrs
++
++def test_username_field_maxlength():
++    # Test that the UsernameField has a maxlength attribute
++    field = UsernameField(max_length=100)
++    assert 'maxlength' in field.widget.attrs
++
++def test_authentication_form_username_maxlength_value():
++    # Test that the maxlength attribute value is correct
++    form = AuthenticationForm()
++    max_length = form.fields['username'].max_length
++    assert form.fields['username'].widget.attrs['maxlength'] == str(max_length)
++
++def test_username_field_maxlength_value():
++    # Test that the maxlength attribute value is correct for UsernameField
++    field = UsernameField(max_length=100)
++    assert field.widget.attrs['maxlength'] == '100'
+
+--- a/tests/test_widgets.py
++++ b/tests/test_widgets.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.forms.widgets import TextInput
++
++def test_textinput_maxlength():
++    # Test that the TextInput widget handles maxlength attribute
++    widget = TextInput(attrs={'maxlength': 100})
++    assert widget.attrs['maxlength'] == '100'

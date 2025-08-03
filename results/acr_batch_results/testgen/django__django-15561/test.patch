@@ -1,0 +1,62 @@
+--- a/tests/test_optimizations.py
++++ b/tests/test_optimizations.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations, models
++from django.db.migrations.operations import AlterField
++from django.db.migrations.state import ProjectState
++from django.test import TestCase
++
++@pytest.mark.test_utils
++class TestAlterFieldOptimization(TestCase):
++    def test_alter_field_noop_on_sqlite(self):
++        # Test that AlterField is a no-op on SQLite when adding/changing choices
++        project_state = ProjectState()
++        model = models.Model(
++            'TestModel',
++            [
++                models.Field('id', models.AutoField, primary_key=True),
++                models.Field('name', models.CharField, max_length=255, choices=[('a', 'A')]),
++            ]
++        )
++        project_state.add_model(model)
++
++        # Create an AlterField operation that adds a choice
++        operation = AlterField(
++            'TestModel',
++            'name',
++            models.CharField(max_length=255, choices=[('a', 'A'), ('b', 'B')]),
++        )
++
++        # Apply the operation on a SQLite database
++        with self.settings(DATABASES={'default': {'ENGINE': 'django.db.backends.sqlite3'}}):
++            operation.database_forwards('app_label', None, project_state, project_state)
++
++        # Assert that no SQL was executed (i.e., it's a no-op)
++        self.assertNoSQLExecuted()
++
++    def test_alter_field_optimized_on_postgres(self):
++        # Test that AlterField is optimized on Postgres when adding/changing choices
++        project_state = ProjectState()
++        model = models.Model(
++            'TestModel',
++            [
++                models.Field('id', models.AutoField, primary_key=True),
++                models.Field('name', models.CharField, max_length=255, choices=[('a', 'A')]),
++            ]
++        )
++        project_state.add_model(model)
++
++        # Create an AlterField operation that adds a choice
++        operation = AlterField(
++            'TestModel',
++            'name',
++            models.CharField(max_length=255, choices=[('a', 'A'), ('b', 'B')]),
++        )
++
++        # Apply the operation on a Postgres database
++        with self.settings(DATABASES={'default': {'ENGINE': 'django.db.backends.postgresql'}}):
++            operation.database_forwards('app_label', None, project_state, project_state)
++
++        # Assert that no SQL was executed (i.e., it's optimized)
++        self.assertNoSQLExecuted()

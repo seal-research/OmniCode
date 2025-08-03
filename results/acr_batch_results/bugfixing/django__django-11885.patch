@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/deletion.py b/django/db/models/deletion.py\nindex ae82d26340..43ca098e37 100644\n--- a/django/db/models/deletion.py\n+++ b/django/db/models/deletion.py\n@@ -310,9 +310,9 @@ class Collector:\n                     )\n \n             # fast deletes\n-            for qs in self.fast_deletes:\n-                count = qs._raw_delete(using=self.using)\n-                deleted_counter[qs.model._meta.label] += count\n+            for model, query in self.fast_deletes.items():\n+                count = query.delete_batch(self.using)\n+                deleted_counter[model._meta.label] += count\n \n             # update fields\n             for model, instances_for_fieldvalues in self.field_updates.items():\n"
+}

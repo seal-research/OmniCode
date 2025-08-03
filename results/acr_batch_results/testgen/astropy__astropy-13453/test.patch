@@ -1,0 +1,55 @@
+--- a/tests/test_ascii.py
++++ b/tests/test_ascii.py
+-# Original code here
++import pytest
++from astropy.table import Table
++from astropy.io import ascii
++from io import StringIO
++
++def test_write_html_with_formats():
++    # generate table
++    t = Table([(1.23875234858e-24, 3.2348748432e-15), (2, 4)], names=('a', 'b'))
++
++    # print HTML table with "a" column formatted to show 2 decimal places
++    with StringIO() as sp:
++        t.write(sp, format="html", formats={"a": lambda x: f"{x:.2e}"})
++        result = sp.getvalue()
++
++    assert "1.24e-24" in result
++    assert "3.23e-15" not in result  # This should not be formatted
++
++def test_write_html_without_formats():
++    # generate table
++    t = Table([(1.23875234858e-24, 3.2348748432e-15), (2, 4)], names=('a', 'b'))
++
++    # print HTML table without formats
++    with StringIO() as sp:
++        t.write(sp, format="html")
++        result = sp.getvalue()
++
++    assert "1.23875234858e-24" in result
++    assert "3.2348748432e-15" in result
++
++def test_write_csv_with_formats():
++    # generate table
++    t = Table([(1.23875234858e-24, 3.2348748432e-15), (2, 4)], names=('a', 'b'))
++
++    # print CSV table with "a" column formatted to show 2 decimal places
++    with StringIO() as sp:
++        t.write(sp, format="csv", formats={"a": lambda x: f"{x:.2e}"})
++        result = sp.getvalue()
++
++    assert "1.24e-24" in result
++    assert "2,4" in result
++
++def test_write_rst_with_formats():
++    # generate table
++    t = Table([(1.23875234858e-24, 3.2348748432e-15), (2, 4)], names=('a', 'b'))
++
++    # print rst table with "a" column formatted to show 2 decimal places
++    with StringIO() as sp:
++        t.write(sp, format="ascii.rst", formats={"a": lambda x: f"{x:.2e}"})
++        result = sp.getvalue()
++
++    assert "1.24e-24" in result
++    assert "2           4" in result

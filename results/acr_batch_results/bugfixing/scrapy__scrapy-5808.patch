@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/commands/genspider.py b/scrapy/commands/genspider.py\nindex c1565a138..38d26647f 100644\n--- a/scrapy/commands/genspider.py\n+++ b/scrapy/commands/genspider.py\n@@ -91,7 +91,7 @@ class Command(ScrapyCommand):\n             raise UsageError()\n \n         name, url = args[0:2]\n-        domain = extract_domain(url)\n+        domain = extract_domain(add_http_if_no_scheme(url))\n         module = sanitize_module_name(name)\n \n         if self.settings.get(\"BOT_NAME\") == module:\n"
+}

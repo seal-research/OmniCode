@@ -1,0 +1,77 @@
+--- a/tests/test_feedexport.py
++++ b/tests/test_feedexport.py
++import pytest
++from scrapy.crawler import CrawlerProcess
++from scrapy.exceptions import ScrapyException
++from scrapy.utils.testproc import ProcessTest
++
++class TestFeedExport:
++    @pytest.fixture
++    def crawler_process(self):
++        return CrawlerProcess(settings_dict={"FEED_FORMAT": "json"})
++
++    def test_store_empty(self, tmp_path):
++        # Test that store_empty=False does not create an empty file
++        process = CrawlerProcess(
++            settings_dict={
++                "FEED_FORMAT": "json",
++                "FEED_FILE": str(tmp_path / "empty.json"),
++                "FEED_STORE_EMPTY": False,
++            }
++        )
++        process.crawl(DummySpider)
++        process.start()
++
++        assert not (tmp_path / "empty.json").exists()
++
++    def test_store_non_empty(self, tmp_path):
++        # Test that store_empty=True creates a non-empty file
++        process = CrawlerProcess(
++            settings_dict={
++                "FEED_FORMAT": "json",
++                "FEED_FILE": str(tmp_path / "non_empty.json"),
++                "FEED_STORE_EMPTY": True,
++            }
++        )
++        process.crawl(ItemSpider)
++        process.start()
++
++        assert (tmp_path / "non_empty.json").exists()
++
++    def test_default_store_empty(self, tmp_path):
++        # Test that default store_empty=False does not create an empty file
++        process = CrawlerProcess(
++            settings_dict={
++                "FEED_FORMAT": "json",
++                "FEED_FILE": str(tmp_path / "default_empty.json"),
++            }
++        )
++        process.crawl(DummySpider)
++        process.start()
++
++        assert not (tmp_path / "default_empty.json").exists()
++
++
++class DummySpider:
++    def start_requests(self):
++        yield {"dummy": "item"}
++
++
++class ItemSpider:
++    def start_requests(self):
++        yield {"item": "1"}
++        yield {"item": "2"}
+
+--- a/tests/test_filefeedstorage.py
++++ b/tests/test_filefeedstorage.py
++import pytest
++from scrapy.storage import FileFeedStorage
++
++def test_file_feed_storage_cleanup(tmp_path):
++    # Test that FileFeedStorage cleanup removes empty files
++    storage = FileFeedStorage(str(tmp_path / "test.json"))
++    file = storage.open(None)
++    storage.store(file)
++    storage.cleanup()
++
++    assert not (tmp_path / "test.json").exists()

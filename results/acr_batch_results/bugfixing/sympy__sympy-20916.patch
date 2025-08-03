@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/printing/pretty/pretty_symbology.py b/sympy/printing/pretty/pretty_symbology.py\nindex 3f7c4a2dc7..480d09970a 100644\n--- a/sympy/printing/pretty/pretty_symbology.py\n+++ b/sympy/printing/pretty/pretty_symbology.py\n@@ -182,7 +182,7 @@ def xstr(*args):\n for l in 'in':\n     sup[l] = LSUP(l)\n \n-for gl in ['beta', 'gamma', 'rho', 'phi', 'chi']:\n+for gl in ['beta', 'gamma', 'rho', 'phi', 'chi', 'omega', 'tau']:\n     sub[gl] = GSUB(gl)\n \n for d in [str(i) for i in range(10)]:\n"
+}

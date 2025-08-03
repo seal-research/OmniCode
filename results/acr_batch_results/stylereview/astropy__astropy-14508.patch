@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/astropy/io/fits/card.py b/astropy/io/fits/card.py\nindex 118bfced89..2c96698358 100644\n--- a/astropy/io/fits/card.py\n+++ b/astropy/io/fits/card.py\n@@ -1255,11 +1255,11 @@ def _int_or_float(s):\n \n     try:\n         return int(s)\n-    except (ValueError, TypeError):\n+    except (ValueError, TypeError) as exc:\n         try:\n             return float(s)\n-        except (ValueError, TypeError) as e:\n-            raise ValueError(str(e))\n+        except (ValueError, TypeError) as exc:\n+            raise ValueError(f\"Failed to convert {s} to int or float\") from exc\n \n \n def _format_value(value):\n"
+}

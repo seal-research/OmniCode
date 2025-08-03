@@ -1,0 +1,92 @@
+--- a/tests/test_handlers.py
++++ b/tests/test_handlers.py
++import pytest
++from django.core.exceptions import MiddlewareNotUsed
++from django.core.handlers.base import BaseHandler
++from django.middleware import MiddlewareMixin
++
++class SyncMiddleware(MiddlewareMixin):
++    def process_request(self, request):
++        return None
++
++class AsyncMiddleware(MiddlewareMixin):
++    async def process_request(self, request):
++        return None
++
++@pytest.fixture
++def base_handler():
++    return BaseHandler()
++
++def test_load_middleware_sync(base_handler):
++    class TestMiddleware:
++        sync_capable = True
++        async_capable = False
++
++    base_handler.load_middleware(is_async=False)
++    assert base_handler._middleware_chain is not None
++
++def test_load_middleware_async(base_handler):
++    class TestMiddleware:
++        sync_capable = False
++        async_capable = True
++
++    base_handler.load_middleware(is_async=True)
++    assert base_handler._middleware_chain is not None
++
++def test_middleware_not_used_sync(base_handler):
++    class TestMiddleware:
++        sync_capable = True
++        async_capable = False
++
++        def __init__(self, get_response):
++            raise MiddlewareNotUsed
++
++    base_handler.load_middleware(is_async=False)
++    assert base_handler._middleware_chain is not None
++
++def test_middleware_not_used_async(base_handler):
++    class TestMiddleware:
++        sync_capable = False
++        async_capable = True
++
++        def __init__(self, get_response):
++            raise MiddlewareNotUsed
++
++    base_handler.load_middleware(is_async=True)
++    assert base_handler._middleware_chain is not None
++
++def test_middleware_chain_poisoning(base_handler):
++    # Arrange
++    class TestMiddleware:
++        sync_capable = True
++        async_capable = False
++
++        def __init__(self, get_response):
++            pass
++
++        def process_request(self, request):
++            return 'Invalid response'
++
++    base_handler.settings.MIDDLEWARE = ['tests.test_handlers.TestMiddleware']
++
++    # Act and Assert
++    with pytest.raises(RuntimeError):
++        base_handler.load_middleware(is_async=True)
+
+--- a/tests/test_integration.py
++++ b/tests/test_integration.py
++import pytest
++from django.test import RequestFactory
++from django.core.handlers.asgi import ASGIHandler
++
++@pytest.mark.asyncio
++async def test_asgi_middleware_chain():
++    # Arrange
++    request = RequestFactory().get('/test')
++    handler = ASGIHandler()
++
++    # Act
++    response = await handler(request)
++
++    # Assert
++    assert response.status_code == 200

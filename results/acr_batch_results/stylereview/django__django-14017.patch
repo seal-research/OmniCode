@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/query_utils.py b/django/db/models/query_utils.py\nindex c957ffa564..6c76b07042 100644\n--- a/django/db/models/query_utils.py\n+++ b/django/db/models/query_utils.py\n@@ -70,7 +70,7 @@ class Q(tree.Node):\n         obj.negate()\n         return obj\n \n-    def resolve_expression(self, query=None, allow_joins=True, reuse=None, summarize=False, for_save=False):\n+    def resolve_expression(self, query=None, allow_joins=True, reuse=None, **extra):\n         # We must promote any new joins to left outer joins so that when Q is\n         # used as an expression, rows aren't filtered due to joins.\n         clause, joins = query._add_q(\n"
+}

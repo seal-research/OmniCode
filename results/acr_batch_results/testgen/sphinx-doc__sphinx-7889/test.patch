@@ -1,0 +1,216 @@
+--- a/tests/test_mock.py
++++ b/tests/test_mock.py
+-# Empty if creating new file
++import pytest
++from sphinx.ext.autodoc import mock
++from typing import TypeVar, Generic
++
++T = TypeVar('T')
++
++class GenericClass(Generic[T]):
++    pass
++
++def test_make_subclass_with_generic_type():
++    # Given
++    name = 'GenericClass'
++    module = 'tests.test_mock'
++    superclass = GenericClass
++
++    # When
++    subclass = mock._make_subclass(name, module, superclass)
++
++    # Then
++    assert subclass.__module__ == module
++    assert subclass.__display_name__ == f'{module}.{name}'
++
++def test_make_subclass_with_non_generic_type():
++    # Given
++    name = 'NonGenericClass'
++    module = 'tests.test_mock'
++    superclass = object
++
++    # When
++    subclass = mock._make_subclass(name, module, superclass)
++
++    # Then
++    assert subclass.__module__ == module
++    assert subclass.__display_name__ == f'{module}.{name}'
++
++def test_make_subclass_with_typevar():
++    # Given
++    name = 'TypeVarClass'
++    module = 'tests.test_mock'
++    superclass = T
++
++    # When
++    with pytest.raises(TypeError):
++        mock._make_subclass(name, module, superclass)
++
++    # After the fix
++    # When
++    subclass = mock._make_subclass(name, module, str)
++
++    # Then
++    assert subclass.__module__ == module
++    assert subclass.__display_name__ == f'{module}.{name}'
+
+--- a/doc/conf.py
++++ b/doc/conf.py
+-extensions = ['sphinx.ext.autodoc']
++extensions = ['sphinx.ext.autodoc']
++
++autodoc_mock_imports = ['screenpy']
+
+--- a/tests/test_docs.py
++++ b/tests/test_docs.py
+-# Empty if creating new file
++import pytest
++from docutils.nodes import document
++from sphinx.addnodes import only
++from sphinx.builders.html import HTMLBuilder
++from sphinx.cmd.build import build_main
++from sphinx.config import Config
++
++@pytest.mark.sphinx
++def test_build_docs(app: Config, builder: HTMLBuilder):
++    # Given
++    app.config.html_per_page = 0
++
++    # When
++    build_main(['-b', 'html', '-d', 'build/doctrees', 'doc'], app)
++
++    # Then
++    assert only.has_content(builder.result)
+
+--- a/
++++ b/
+-ke_subc
++
+
+--- a/_subc
++++ b/_subc
+-ss(
++k
+
+--- a/: str, modu
++++ b/: str, modu
+-me: st
++l
+
+--- a/: str, sup
++++ b/: str, sup
+-du
++m
+
+--- a/ass: Any = _MockObj
++++ b/ass: Any = _MockObj
+-, supe
++r, mo
+
+--- a/but
++++ b/but
++: s
+
+--- a/) -> Any:
++++ b/) -> Any:
+-y = _M
++
+
+--- a/hasattr(sup
++++ b/hasattr(sup
+-tt
++l
+
+--- a/ass, '__or
++++ b/ass, '__or
+-butes: A
++kObj
+
+--- a/n__'): # ch
++++ b/n__'): # ch
++
+
+--- a/
++++ b/
+-y:
+-    
++
+
+--- a/rc
++++ b/rc
+-s
++ribu
+
+--- a/s a typ
++++ b/s a typ
+-(supe
++s: Any = Non
+
+--- a/n
++++ b/n
++
+
+--- a/cA
++++ b/cA
++
+
+--- a/as
+        modu
++++ b/as
+        modu
++r(su
+
+--- a/= str(sup
++++ b/= str(sup
++r
+
+--- a/ass.__or
++++ b/ass.__or
+-f supe
++ss, '__origin__'): # 
+
+--- a/n__)
+    attrs = {'__modu
++++ b/n__)
+    attrs = {'__modu
++
+
+--- a/__': modu
++++ b/__': modu
+-s 
++k if su
+
+--- a/, '__d
++++ b/, '__d
++r
+
+--- a/ay_nam
++++ b/ay_nam
+-._Ge
++ss is 
+
+--- a/
++++ b/
++y
+
+--- a/}
+    attrs.updat
++++ b/}
+    attrs.updat
++n
+
+--- a/but
++++ b/but
+-s
+-        m
++Ali
+
+--- a/turn typ
++++ b/turn typ
+-e = st
++ul
+
+--- a/, (sup
++++ b/, (sup
+-c
++r(su

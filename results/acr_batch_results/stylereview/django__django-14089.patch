@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/datastructures.py b/django/utils/datastructures.py\nindex 871b016715..d696b077d3 100644\n--- a/django/utils/datastructures.py\n+++ b/django/utils/datastructures.py\n@@ -74,8 +74,8 @@ class MultiValueDict(dict):\n         \"\"\"\n         try:\n             list_ = super().__getitem__(key)\n-        except KeyError:\n-            raise MultiValueDictKeyError(key)\n+        except KeyError as exc:\n+            raise MultiValueDictKeyError(key) from exc\n         try:\n             return list_[-1]\n         except IndexError:\n"
+}

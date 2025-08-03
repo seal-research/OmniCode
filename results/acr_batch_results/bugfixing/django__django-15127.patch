@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/messages/storage/base.py b/django/contrib/messages/storage/base.py\nindex 01422066a6..6eea42702b 100644\n--- a/django/contrib/messages/storage/base.py\n+++ b/django/contrib/messages/storage/base.py\n@@ -1,7 +1,12 @@\n from django.conf import settings\n from django.contrib.messages import constants, utils\n \n-LEVEL_TAGS = utils.get_level_tags()\n+from django.conf import settings\n+\n+def get_level_tags():\n+    return utils.get_level_tags()\n+\n+LEVEL_TAGS = get_level_tags()\n \n \n class Message:\n@@ -38,7 +43,7 @@ class Message:\n \n     @property\n     def level_tag(self):\n-        return LEVEL_TAGS.get(self.level, '')\n+        return utils.get_level_tags().get(self.level, '')\n \n \n class BaseStorage:\n"
+}

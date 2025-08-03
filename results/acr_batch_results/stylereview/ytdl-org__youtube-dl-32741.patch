@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/youtube_dl/compat.py b/youtube_dl/compat.py\nindex 818ccebd0..1903a247d 100644\n--- a/youtube_dl/compat.py\n+++ b/youtube_dl/compat.py\n@@ -4,14 +4,14 @@ from __future__ import division\n \n import base64\n import binascii\n-import collections\n+\n import ctypes\n import datetime\n import email\n import getpass\n import io\n import itertools\n-import optparse\n+import argparse as optparse\n import os\n import platform\n import re\n"
+}

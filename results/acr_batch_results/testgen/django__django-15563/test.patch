@@ -1,0 +1,58 @@
+--- a/tests/test_query.py
++++ b/tests/test_query.py
++import pytest
++from django.db.models import Model, AutoField, IntegerField
++from django.db import models
++
++class Base(models.Model):
++    base_id = AutoField(primary_key=True)
++    field_base = IntegerField()
++
++class OtherBase(models.Model):
++    otherbase_id = AutoField(primary_key=True)
++    field_otherbase = IntegerField()
++
++class Child(Base, OtherBase):
++    pass
++
++def test_update_child():
++    # Create instances
++    OtherBase.objects.create(field_otherbase=100)
++    OtherBase.objects.create(field_otherbase=101)
++    Child.objects.create(field_base=0, field_otherbase=0)
++    Child.objects.create(field_base=1, field_otherbase=1)
++
++    # Update Child instances
++    Child.objects.update(field_otherbase=55)
++
++    # Check the results
++    assert Child.objects.values('field_otherbase') == [{'field_otherbase': 55}, {'field_otherbase': 55}]
++    assert OtherBase.objects.filter(otherbase_id__in=[1,2]).values('field_otherbase') == [{'field_otherbase': 55}, {'field_otherbase': 55}]
++
++def test_update_child_not_affect_base():
++    # Create instances
++    OtherBase.objects.create(field_otherbase=100)
++    OtherBase.objects.create(field_otherbase=101)
++    Child.objects.create(field_base=0, field_otherbase=0)
++    Child.objects.create(field_base=1, field_otherbase=1)
++
++    # Update Child instances
++    Child.objects.update(field_base=55)
++
++    # Check the results
++    assert Child.objects.values('field_base') == [{'field_base': 55}, {'field_base': 55}]
++    assert OtherBase.objects.values('field_otherbase') == [{'field_otherbase': 100}, {'field_otherbase': 101}]
++
++def test_update_base():
++    # Create instances
++    Base.objects.create(field_base=100)
++    Base.objects.create(field_base=101)
++    Child.objects.create(field_base=0, field_otherbase=0)
++    Child.objects.create(field_base=1, field_otherbase=1)
++
++    # Update Base instances
++    Base.objects.update(field_base=55)
++
++    # Check the results
++    assert Base.objects.values('field_base') == [{'field_base': 55}, {'field_base': 55}]
++    assert Child.objects.values('field_base') == [{'field_base': 0}, {'field_base': 1}]

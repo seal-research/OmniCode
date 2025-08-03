@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/related.py b/django/db/models/fields/related.py\nindex d517d7269b..a856169cfe 100644\n--- a/django/db/models/fields/related.py\n+++ b/django/db/models/fields/related.py\n@@ -914,8 +914,8 @@ class ForeignKey(ForeignObject):\n             return\n \n         using = router.db_for_read(self.remote_field.model, instance=model_instance)\n-        qs = self.remote_field.model._default_manager.using(using).filter(\n-            **{self.remote_field.field_name: value}\n+        qs = self.remote_field.model._base_manager.using(using).filter(\n+        **{self.remote_field.field_name: value}\n         )\n         qs = qs.complex_filter(self.get_limit_choices_to())\n         if not qs.exists():\n"
+}

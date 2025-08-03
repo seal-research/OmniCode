@@ -1,0 +1,47 @@
+--- a/tests/test_headers.py
++++ b/tests/test_headers.py
+-# Empty if creating new file
++import pytest
++from scrapy.http import Headers, Response
++
++def test_headers_getlist():
++    # Test that getlist returns all values for a given header
++    headers = Headers([("a", "b"), ("a", "c")])
++    assert headers.getlist("a") == [b"b", b"c"]
++
++def test_headers_getlist_default_value():
++    # Test that getlist returns default value if header is not found
++    headers = Headers()
++    assert headers.getlist("a", def_val="default") == "default"
++
++def test_headers_getlist_empty_list():
++    # Test that getlist returns empty list if header is not found
++    headers = Headers()
++    assert headers.getlist("a") == []
++
++def test_response_headers_getlist():
++    # Test that Response.headers.getlist returns all values for a given header
++    response = Response("https://example.com", headers=[("a", "b"), ("a", "c")])
++    assert response.headers.getlist("a") == [b"b", b"c"]
++
++def test_response_headers_getlist_default_value():
++    # Test that Response.headers.getlist returns default value if header is not found
++    response = Response("https://example.com")
++    assert response.headers.getlist("a", def_val="default") == "default"
++
++def test_response_headers_getlist_empty_list():
++    # Test that Response.headers.getlist returns empty list if header is not found
++    response = Response("https://example.com")
++    assert response.headers.getlist("a") == []
+
+--- a/tests/test_response.py
++++ b/tests/test_response.py
+-# Empty if creating new file
++import pytest
++from scrapy.http import Response
++
++def test_response_headers():
++    # Test that Response.headers handles multiple values for the same header
++    response = Response("https://example.com", headers=[("a", "b"), ("a", "c")])
++    assert response.headers["a"] == b"c"  # Test that last value is stored
++    assert response.headers.getlist("a") == [b"b", b"c"]  # Test that getlist returns all values

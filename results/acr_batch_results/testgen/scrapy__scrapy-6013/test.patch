@@ -1,0 +1,39 @@
+--- a/tests/test_settings.py
++++ b/tests/test_settings.py
+-# Original code here (if modifying existing file)
++import pytest
++from scrapy.settings import BaseSettings
++
++def test_getdictorlist_tuple():
++    settings = BaseSettings()
++    settings.set("FEED_EXPORT_FIELDS", ("field1", "field2"))
++    assert settings.getdictorlist("FEED_EXPORT_FIELDS") == ["field1", "field2"]
++
++def test_getdictorlist_dict():
++    settings = BaseSettings()
++    settings.set("FEED_EXPORT_FIELDS", {"field1": "value1", "field2": "value2"})
++    assert settings.getdictorlist("FEED_EXPORT_FIELDS") == {"field1": "value1", "field2": "value2"}
++
++def test_getdictorlist_list():
++    settings = BaseSettings()
++    settings.set("FEED_EXPORT_FIELDS", ["field1", "field2"])
++    assert settings.getdictorlist("FEED_EXPORT_FIELDS") == ["field1", "field2"]
++
++def test_getdictorlist_string_json():
++    settings = BaseSettings()
++    settings.set("FEED_EXPORT_FIELDS", '["field1", "field2"]')
++    assert settings.getdictorlist("FEED_EXPORT_FIELDS") == ["field1", "field2"]
++
++def test_getdictorlist_string_comma_separated():
++    settings = BaseSettings()
++    settings.set("FEED_EXPORT_FIELDS", "field1,field2")
++    assert settings.getdictorlist("FEED_EXPORT_FIELDS") == ["field1", "field2"]
++
++def test_getdictorlist_default():
++    settings = BaseSettings()
++    assert settings.getdictorlist("FEED_EXPORT_FIELDS") == {}
++
++def test_getdictorlist_none():
++    settings = BaseSettings()
++    settings.set("FEED_EXPORT_FIELDS", None)
++    assert settings.getdictorlist("FEED_EXPORT_FIELDS") == {}

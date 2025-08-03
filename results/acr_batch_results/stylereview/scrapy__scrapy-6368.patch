@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/pipelines/media.py b/scrapy/pipelines/media.py\nindex 5f6c5cb07..0b5a888c8 100644\n--- a/scrapy/pipelines/media.py\n+++ b/scrapy/pipelines/media.py\n@@ -133,7 +133,7 @@ class MediaPipeline:\n \n     def _log_exception(self, result):\n         logger.exception(result)\n-        return result\n+        return None\n \n     def _modify_media_request(self, request):\n         if self.handle_httpstatus_list:\n"
+}

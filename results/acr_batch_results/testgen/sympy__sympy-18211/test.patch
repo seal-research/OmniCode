@@ -1,0 +1,24 @@
+--- a/tests/solvers/test_solveset.py
++++ b/tests/solvers/test_solveset.py
+-# Original content of test_solveset.py
++# Import necessary modules
++import pytest
++from sympy import Eq, cos, sin, solveset, ConditionSet, Reals
++
++# Test function to check solveset behavior for Eq(n*cos(n) - 3*sin(n), 0)
++def test_solveset_trig_eq():
++    n = pytest.symbols('n')
++    equation = Eq(n*cos(n) - 3*sin(n), 0)
++    result = solveset(equation, n, Reals)
++    # Assert that the result is a ConditionSet
++    assert isinstance(result, ConditionSet)
++    # Optionally, verify the condition within the ConditionSet
++    assert result.condition == Eq(n*cos(n) - 3*sin(n), 0)
++
++# Additional test for edge cases or other related scenarios
++def test_solveset_trig_eq_edge_case():
++    x = pytest.symbols('x')
++    equation = Eq(cos(x), 0)
++    result = solveset(equation, x, Reals)
++    # Verify the result for a known trigonometric equation
++    assert result.is_Union

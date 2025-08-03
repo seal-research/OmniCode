@@ -1,0 +1,32 @@
+--- a/tests/test_queryset.py
++++ b/tests/test_queryset.py
++import pytest
++from django.db import models
++
++class TestModel(models.Model):
++    id = models.AutoField(primary_key=True)
++    name = models.CharField(max_length=100, db_column="test_name")
++
++class ActivityBlackListed(models.Model):
++    blacklistid = models.IntegerField(primary_key=True, db_column="BlacklistID")
++    sectorid = models.IntegerField(null=True, blank=True, db_column="SectorID")
++
++@pytest.mark.django_db
++def test_bulk_create_on_conflict_do_nothing():
++    test_obj = TestModel(name="Test")
++    TestModel.objects.bulk_create([test_obj])
++
++@pytest.mark.django_db
++def test_bulk_create_on_conflict_update_fields():
++    test_obj = TestModel(name="Test")
++    TestModel.objects.bulk_create([test_obj], update_conflicts=True, unique_fields=["id"], update_fields=["name"])
++
++@pytest.mark.django_db
++def test_bulk_create_on_conflict_update_fields_with_db_column():
++    activity_listed_obj = ActivityBlackListed(blacklistid=1, sectorid=1)
++    ActivityBlackListed.objects.bulk_create([activity_listed_obj], update_conflicts=True, unique_fields=["blacklistid"], update_fields=["sectorid"])
++
++@pytest.mark.django_db
++def test_bulk_create_on_conflict_update_fields_with_mixed_case_db_column():
++    activity_listed_obj = ActivityBlackListed(blacklistid=1, sectorid=1)
++    qs = ActivityBlackListed.objects.bulk_create([activity_listed_obj], update_conflicts=True, unique_fields=["blacklistid"], update_fields=["sectorid"])

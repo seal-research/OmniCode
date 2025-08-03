@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/forms/forms.py b/django/forms/forms.py\nindex d14037bfe9..af6e341a76 100644\n--- a/django/forms/forms.py\n+++ b/django/forms/forms.py\n@@ -387,9 +387,9 @@ class BaseForm:\n         self._post_clean()\n \n     def _clean_fields(self):\n-        for name, field in self.fields.items():\n-            if field.disabled:\n-                value = self.get_initial_for_field(field, name)\n+        for name, bf in self._bound_items():\n+            if bf.field.disabled:\n+                value = bf.initial\n             else:\n                 value = self._field_data_value(field, self.add_prefix(name))\n             try:\n"
+}

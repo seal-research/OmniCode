@@ -1,0 +1,61 @@
+--- a/tests/test_autodoc_typehints.py
++++ b/tests/test_autodoc_typehints.py
++import pytest
++from sphinx import __version__ as sphinx_version
++from sphinx.ext.autodoc import autodoc_typehints
++
++def test_autodoc_typehints_description():
++    # Given
++    app = pytest.MonkeyPatch()
++    app.config.autodoc_typehints = "description"
++
++    # When
++    typehints = autodoc_typehints(app)
++
++    # Then
++    assert typehints == "description"
++
++def test_autodoc_typehints_both():
++    # Given
++    app = pytest.MonkeyPatch()
++    app.config.autodoc_typehints = "both"
++
++    # When
++    typehints = autodoc_typehints(app)
++
++    # Then
++    assert typehints == "both"
++
++def test_autodoc_typehints_class_return_type():
++    # Given
++    class Square:
++        """A class representing a square figure."""
++
++        def __init__(self, width: int, height: int) -> None:
++            self.width = width
++            self.height = height
++
++    app = pytest.MonkeyPatch()
++    app.config.autodoc_typehints = "description"
++
++    # When
++    with pytest.raises(Exception) as excinfo:
++        autodoc_typehints(app, Square)
++
++    # Then
++    assert "return type" not in str(excinfo.value)
++
++def test_autodoc_typehints_function_return_type():
++    # Given
++    def greet(name: str) -> str:
++        return f"Hello, {name}!"
++
++    app = pytest.MonkeyPatch()
++    app.config.autodoc_typehints = "description"
++
++    # When
++    with pytest.raises(Exception) as excinfo:
++        autodoc_typehints(app, greet)
++
++    # Then
++    assert "return type" in str(excinfo.value)

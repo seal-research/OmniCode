@@ -1,0 +1,31 @@
+--- a/tests/test_fields.py
++++ b/tests/test_fields.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.core.exceptions import ValidationError
++from django.db.models.fields import DecimalField
++
++def test_decimalfield_to_python_valid():
++    field = DecimalField()
++    assert field.to_python(10) == decimal.Decimal('10')
++    assert field.to_python('10') == decimal.Decimal('10')
++    assert field.to_python(decimal.Decimal('10')) == decimal.Decimal('10')
++
++def test_decimalfield_to_python_invalid():
++    field = DecimalField()
++    with pytest.raises(ValidationError):
++        field.to_python('invalid')
++    with pytest.raises(ValidationError):
++        field.to_python([1, 2, 3])
++    with pytest.raises(ValidationError):
++        field.to_python({'a': 1})
++
++def test_decimalfield_to_python_dict():
++    field = DecimalField()
++    with pytest.raises(ValidationError) as e:
++        field.to_python({'a': 1})
++    assert 'value must be a decimal number' in str(e.value)
++
++def test_decimalfield_to_python_none():
++    field = DecimalField()
++    assert field.to_python(None) is None

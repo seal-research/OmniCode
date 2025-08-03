@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/core/sympify.py b/sympy/core/sympify.py\nindex a3f1ce2851..5844dac9a3 100644\n--- a/sympy/core/sympify.py\n+++ b/sympy/core/sympify.py\n@@ -469,6 +469,7 @@ def kernS(s):\n     from random import choice\n     from sympy.core.symbol import Symbol\n     hit = False\n+    hit = False\n     quoted = '\"' in s or \"'\" in s\n     if '(' in s and not quoted:\n         if s.count('(') != s.count(\")\"):\n"
+}

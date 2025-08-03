@@ -1,0 +1,36 @@
+--- a/tests/test_autodoc.py
++++ b/tests/test_autodoc.py
+-# Original code here (if modifying existing file)
++import pytest
++from sphinx import addnodes
++from sphinx.ext.autodoc import ModuleDocumenter
++from sphinx.testing.util import SphinxTestApp
++
++@pytest.fixture
++def app():
++    return SphinxTestApp()
++
++def test_empty_all_members(app):
++    # Test that an empty __all__ attribute is respected
++    module = type('module', (), {'__all__': []})
++    doc = ModuleDocumenter(app, module, 'module')
++    doc.import_object()
++    members = doc.get_object_members(True)[1]
++    assert not members
++
++def test_nonempty_all_members(app):
++    # Test that a non-empty __all__ attribute is respected
++    module = type('module', (), {'__all__': ['foo', 'bar']})
++    doc = ModuleDocumenter(app, module, 'module')
++    doc.import_object()
++    members = doc.get_object_members(True)[1]
++    assert len(members) == 2
++
++def test_no_all_members(app):
++    # Test that the absence of __all__ attribute is handled correctly
++    module = type('module', (), {})
++    doc = ModuleDocumenter(app, module, 'module')
++    doc.import_object()
++    members = doc.get_object_members(True)[1]
++    # The default behavior is to include all members if __all__ is not defined
++    assert len(members) > 0

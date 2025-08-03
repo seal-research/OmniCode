@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/core/relational.py b/sympy/core/relational.py\nindex f581bfa3c4..27cfd157ca 100644\n--- a/sympy/core/relational.py\n+++ b/sympy/core/relational.py\n@@ -84,6 +84,7 @@ def __new__(cls, lhs, rhs, rop=None, **assumptions):\n             # acceptable here.\n             from sympy.core.symbol import Symbol\n             from sympy.logic.boolalg import Boolean\n+            from sympy.logic.boolalg import Boolean\n             def unacceptable(side):\n                 return isinstance(side, Boolean) and not isinstance(side, Symbol)\n \n"
+}

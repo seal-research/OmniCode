@@ -1,0 +1,71 @@
+--- a/tests/test_reverse_related.py
++++ b/tests/test_reverse_related.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import models
++from django.db.models.fields.reverse_related import ManyToManyRel
++
++def test_many_to_many_rel_hashability():
++ class Parent(models.Model):
++  name = models.CharField(max_length=256)
++
++ class ProxyParent(Parent):
++ class Meta:
++ proxy = True
++
++ class Child(models.Model):
++ parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
++ many_to_many_field = models.ManyToManyField(
++ to=Parent,
++ through="ManyToManyModel",
++ through_fields=['child', 'parent'],
++ related_name="something"
++ )
++
++ class ManyToManyModel(models.Model):
++ parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='+')
++ child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='+')
++
++ # Test that the identity property of ManyToManyRel is hashable
++ rel = ManyToManyRel(field=models.Field(), to=Parent, through_fields=['child', 'parent'])
++ assert hash(rel.identity) is not None
++
++ # Test with a list for through_fields
++ rel = ManyToManyRel(field=models.Field(), to=Parent, through_fields=['a', 'b'])
++ assert hash(rel.identity) is not None
++
++ # Test through_fields with different types
++ rel = ManyToManyRel(field=models.Field(), to=Parent, through_fields=('x', 'y'))
++ assert hash(rel.identity) is not None
++
++def test_foreign_object_rel_hashability():
++ # Arrange
++ class T(models.Model):
++ f = models.ForeignKey(Parent, on_delete=models.CASCADE)
++
++ rel = ManyToManyRel(field=models.Field(), to=Parent)
++
++ # Act and Assert
++ assert hasattr(rel, '__hash__')
++
++ # Test hashability
++ hash(rel)
++
++ # Test in a set
++ rels = {rel}
++ assert rel in rels
++
++ # Test with equal objects
++ rel2 = ManyToManyRel(field=models.Field(), to=Parent)
++ are_equal = rel == rel2
++ assert are_equal
++ assert hash(rel) == hash(rel2)
++
++ # Test with not equal objects
++ rel3 = ManyToManyRel(field=models.Field(), to=ProxyParent)
++ are_equal = rel == rel3
++ assert not are_equal
++ try:
++ assert hash(rel) != hash(rel3)
++ except TypeError:
++ pytest.fail("TypeError raised unexpectedly")

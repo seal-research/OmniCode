@@ -1,0 +1,71 @@
+--- a/tests/test_logging.py
++++ b/tests/test_logging.py
+-# Original code here (if modifying existing file)
++import logging
++import pytest
++from _pytest.logging import LogCaptureFixture
++
++def test_caplog_clear():
++    """Test that caplog.clear() resets the log records and text."""
++    caplog = LogCaptureFixture()
++    caplog._item = pytest.Item.from_parent(
++        pytest.Module("test_logging.py"), f"test_{'a' * 30}"
++    )
++    caplog._initial_handler_level = None
++    caplog._initial_logger_levels = {}
++
++    logging.warning("test")
++    assert len(caplog.get_records("call")) == 1
++
++    caplog.clear()
++    assert len(caplog.get_records("call")) == 0
++
++def test_caplog_get_records():
++    """Test that caplog.get_records() returns the correct records."""
++    caplog = LogCaptureFixture()
++    caplog._item = pytest.Item.from_parent(
++        pytest.Module("test_logging.py"), f"test_{'a' * 30}"
++    )
++    caplog._initial_handler_level = None
++    caplog._initial_logger_levels = {}
++
++    logging.warning("test")
++    records = caplog.get_records("call")
++    assert len(records) == 1
++    assert records[0].getMessage() == "test"
++
++def test_caplog_clear_and_get_records():
++    """Test that caplog.clear() and caplog.get_records() work together."""
++    caplog = LogCaptureFixture()
++    caplog._item = pytest.Item.from_parent(
++        pytest.Module("test_logging.py"), f"test_{'a' * 30}"
++    )
++    caplog._initial_handler_level = None
++    caplog._initial_logger_levels = {}
++
++    logging.warning("test")
++    assert len(caplog.get_records("call")) == 1
++
++    caplog.clear()
++    assert len(caplog.get_records("call")) == 0
++
++def test_caplog_multiple_clear():
++    """Test that multiple caplog.clear() calls work correctly."""
++    caplog = LogCaptureFixture()
++    caplog._item = pytest.Item.from_parent(
++        pytest.Module("test_logging.py"), f"test_{'a' * 30}"
++    )
++    caplog._initial_handler_level = None
++    caplog._initial_logger_levels = {}
++
++    logging.warning("test")
++    assert len(caplog.get_records("call")) == 1
++
++    caplog.clear()
++    assert len(caplog.get_records("call")) == 0
++
++    logging.warning("test again")
++    assert len(caplog.get_records("call")) == 1
++
++    caplog.clear()
++    assert len(caplog.get_records("call")) == 0

@@ -1,0 +1,109 @@
+--- a/tests/test_docstring.py
++++ b/tests/test_docstring.py
+-# Empty if creating new file
++import pytest
++from sphinx.ext.napoleon.docstring import GoogleDocstring
++
++def test_single_parameter():
++    docstring = '''One line summary.
++    ...
++    Args:
++      arg1(int): Description of `arg1`
++    Returns:
++      str: Description of return value.
++    '''
++    parsed_docstring = GoogleDocstring(docstring)
++    assert str(parsed_docstring) == """One line summary.
++
++    Args:
++        arg1 : int
++            Description of `arg1`
++
++    Returns:
++        str
++            Description of return value.
++    """
++
++def test_multiple_parameters():
++    docstring = '''One line summary.
++    ...
++    Args:
++      x1, x2 : array_like
++        Input arrays, description of `x1`, `x2`.
++    Returns:
++      str: Description of return value.
++    '''
++    parsed_docstring = GoogleDocstring(docstring)
++    assert str(parsed_docstring) == """One line summary.
++
++    Args:
++        x1, x2 : array_like
++            Input arrays, description of `x1`, `x2`.
++
++    Returns:
++        str
++            Description of return value.
++    """
++
++def test_optional_parameters():
++    docstring = '''One line summary.
++    ...
++    Args:
++      x1, x2 : array_like, optional
++        Input arrays, description of `x1`, `x2`.
++    Returns:
++      str: Description of return value.
++    '''
++    parsed_docstring = GoogleDocstring(docstring)
++    assert str(parsed_docstring) == """One line summary.
++
++    Args:
++        x1, x2 : array_like, optional
++            Input arrays, description of `x1`, `x2`.
++
++    Returns:
++        str
++            Description of return value.
++    """
++
++def test_multiple_parameters_with_description():
++    docstring = '''One line summary.
++    ...
++    Args:
++      x1, x2 : array_like
++        Input arrays. Description of x1 and x2.
++    Returns:
++      str: Description of return value.
++    '''
++    parsed_docstring = GoogleDocstring(docstring)
++    assert str(parsed_docstring) == """One line summary.
++
++    Args:
++        x1, x2 : array_like
++            Input arrays. Description of x1 and x2.
++
++    Returns:
++        str
++            Description of return value.
++    """
++
++def test_failing_case():
++    docstring = '''One line summary.
++    ...
++    Args:
++      x1, x2 : array_like
++        Description of `x1`, `x2`.
++    Returns:
++      str: Description of return value.
++    '''
++    parsed_docstring = GoogleDocstring(docstring)
++    assert str(parsed_docstring) == """One line summary.
++
++    Args:
++        x1, x2 : array_like
++            Description of `x1`, `x2`.
++
++    Returns:
++        str
++            Description of return value.
++    """

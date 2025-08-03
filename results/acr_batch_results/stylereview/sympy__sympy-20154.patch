@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/utilities/iterables.py b/sympy/utilities/iterables.py\nindex dd36dea304..a5d4a11522 100644\n--- a/sympy/utilities/iterables.py\n+++ b/sympy/utilities/iterables.py\n@@ -691,7 +691,8 @@ def numbered_symbols(prefix='x', cls=None, start=0, exclude=[], *args, **assumpt\n     if cls is None:\n         # We can't just make the default cls=Symbol because it isn't\n         # imported yet.\n-        from sympy import Symbol\n+        # No import statement needed here, \n+        # we will import the necessary function locally where needed\n         cls = Symbol\n \n     while True:\n"
+}

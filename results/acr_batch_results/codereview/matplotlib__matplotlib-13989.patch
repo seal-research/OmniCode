@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/axes/_axes.py b/lib/matplotlib/axes/_axes.py\nindex 4b73d52293..56f1f19645 100644\n--- a/lib/matplotlib/axes/_axes.py\n+++ b/lib/matplotlib/axes/_axes.py\n@@ -6686,7 +6686,7 @@ optional.\n \n         density = bool(density) or bool(normed)\n         if density and not stacked:\n-            hist_kwargs = dict(density=density)\n+            hist_kwargs = dict(density=density, range=hist_kwargs.get('range'))\n \n         # List to store all the top coordinates of the histograms\n         tops = []\n"
+}

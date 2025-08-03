@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/physics/quantum/tensorproduct.py b/sympy/physics/quantum/tensorproduct.py\nindex 9dd10d219e..0085fd108a 100644\n--- a/sympy/physics/quantum/tensorproduct.py\n+++ b/sympy/physics/quantum/tensorproduct.py\n@@ -148,7 +148,7 @@ def _eval_rewrite(self, pattern, rule, **hints):\n         terms = [t._eval_rewrite(pattern, rule, **hints) for t in sargs]\n         return TensorProduct(*terms).expand(tensorproduct=True)\n \n-    def _sympystr(self, printer, *args):\n+    def _sympystr(self):\n         from sympy.printing.str import sstr\n         length = len(self.args)\n         s = ''\n"
+}

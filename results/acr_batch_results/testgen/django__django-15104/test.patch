@@ -1,0 +1,44 @@
+--- a/tests/test_migration_autodetector.py
++++ b/tests/test_migration_autodetector.py
++import pytest
++from django.db import models
++from django.db.migrations.autodetector import MigrationAutodetector
++from django.db.migrations.state import ModelState, ProjectState
++
++class CustomFKField(models.ForeignKey):
++    def __init__(self, *args, **kwargs):
++        kwargs['to'] = 'testapp.HardcodedModel'
++        super().__init__(*args, **kwargs)
++
++    def deconstruct(self):
++        name, path, args, kwargs = super().deconstruct()
++        del kwargs["to"]
++        return name, path, args, kwargs
++
++@pytest.mark.test_reproduction
++def test_reproduction():
++    before = ProjectState()
++    before.add_model(ModelState('testapp', 'HardcodedModel', []))
++
++    after = ProjectState()
++    after.add_model(ModelState('testapp', 'HardcodedModel', []))
++    after.add_model(ModelState('testapp', 'TestModel', [('custom', CustomFKField(on_delete=models.CASCADE))]))
++
++    autodetector = MigrationAutodetector(before, after)
++    changes = autodetector.changes(graph=autodetector.loader.graph)
++
++    assert len(changes['testapp']) == 1
++
++@pytest.mark.test_fix
++def test_fix():
++    before = ProjectState()
++    before.add_model(ModelState('testapp', 'HardcodedModel', []))
++
++    after = ProjectState()
++    after.add_model(ModelState('testapp', 'HardcodedModel', []))
++    after.add_model(ModelState('testapp', 'TestModel', [('custom', CustomFKField(on_delete=models.CASCADE))]))
++
++    autodetector = MigrationAutodetector(before, after)
++    changes = autodetector.changes(graph=autodetector.loader.graph)
++
++    assert len(changes['testapp']) == 1

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/astropy/utils/misc.py b/astropy/utils/misc.py\nindex de3fb01d18..2417c2e151 100644\n--- a/astropy/utils/misc.py\n+++ b/astropy/utils/misc.py\n@@ -528,9 +528,9 @@ class InheritDocstrings(type):\n                 not key.startswith('_'))\n \n         for key, val in dct.items():\n-            if (inspect.isfunction(val) and\n-                is_public_member(key) and\n-                val.__doc__ is None):\n+             if (inspect.isroutine(val) and\n+                 is_public_member(key) and\n+                 val.__doc__ is None):\n                 for base in cls.__mro__[1:]:\n                     super_method = getattr(base, key, None)\n                     if super_method is not None:\n"
+}

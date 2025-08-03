@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/base.py b/django/db/models/base.py\nindex 0a5e5ff673..1d45f021ca 100644\n--- a/django/db/models/base.py\n+++ b/django/db/models/base.py\n@@ -939,6 +939,8 @@ class Model(metaclass=ModelBase):\n     delete.alters_data = True\n \n     def _get_FIELD_display(self, field):\n+        if hasattr(self, f\"get_{field.name}_display\"):\n+            return getattr(self, f\"get_{field.name}_display\")()\n         value = getattr(self, field.attname)\n         # force_str() to coerce lazy strings.\n         return force_str(dict(field.flatchoices).get(value, value), strings_only=True)\n"
+}

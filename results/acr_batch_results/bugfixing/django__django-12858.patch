@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/base.py b/django/db/models/base.py\nindex 6c9e9d3707..d0de31292c 100644\n--- a/django/db/models/base.py\n+++ b/django/db/models/base.py\n@@ -7,6 +7,7 @@ from itertools import chain\n from django.apps import apps\n from django.conf import settings\n from django.core import checks\n+from django.db.models import LOOKUP_SEP\n from django.core.exceptions import (\n     NON_FIELD_ERRORS, FieldDoesNotExist, FieldError, MultipleObjectsReturned,\n     ObjectDoesNotExist, ValidationError,\n"
+}

@@ -1,0 +1,41 @@
+--- a/tests/parsing/test_sympy_parser.py
++++ b/tests/parsing/test_sympy_parser.py
+-# Original code here
++import pytest
++from sympy.parsing.sympy_parser import parse_expr
++
++def test_parse_expr_evaluate_False():
++    # Test that parse_expr with evaluate=False returns a symbolic expression
++    expr = parse_expr('1 < 2', evaluate=False)
++    assert str(expr) == '1 < 2'
++
++def test_parse_expr_evaluate_True():
++    # Test that parse_expr with evaluate=True returns the evaluated result
++    expr = parse_expr('1 < 2', evaluate=True)
++    assert expr == True
++
++def test_parse_expr_relational_evaluate_False():
++    # Test relational expressions with evaluate=False
++    expr = parse_expr('1 < 2', evaluate=False)
++    assert isinstance(expr, Relational)
++
++def test_parse_expr_relational_evaluate_True():
++    # Test relational expressions with evaluate=True
++    expr = parse_expr('1 < 2', evaluate=True)
++    assert expr == True
+
+--- a/tests/core/test_relational.py
++++ b/tests/core/test_relational.py
+-# Original code here
++import pytest
++from sympy.core.relational import Relational, Lt
++
++def test_relational_evaluate_False():
++    # Test that Relational with evaluate=False returns a symbolic expression
++    expr = Lt(1, 2, evaluate=False)
++    assert str(expr) == '1 < 2'
++
++def test_relational_evaluate_True():
++    # Test that Relational with evaluate=True returns the evaluated result
++    expr = Lt(1, 2, evaluate=True)
++    assert expr == True

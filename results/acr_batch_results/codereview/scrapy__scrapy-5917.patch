@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/responsetypes.py b/scrapy/responsetypes.py\nindex f01e9096c..8c42c84e2 100644\n--- a/scrapy/responsetypes.py\n+++ b/scrapy/responsetypes.py\n@@ -51,7 +51,7 @@ class ResponseTypes:\n         header\"\"\"\n         if content_encoding:\n             return Response\n-        mimetype = to_unicode(content_type).split(\";\")[0].strip().lower()\n+        mimetype = to_unicode(content_type, encoding=\"latin-1\").split(\";\")[0].strip().lower()\n         return self.from_mimetype(mimetype)\n \n     def from_content_disposition(self, content_disposition):\n"
+}

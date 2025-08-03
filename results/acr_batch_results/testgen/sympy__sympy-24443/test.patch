@@ -1,0 +1,48 @@
+--- a/tests/test_homomorphisms.py
++++ b/tests/test_homomorphisms.py
+-# Empty if creating new file
++import pytest
++from sympy.combinatorics import Permutation, PermutationGroup, DihedralGroup
++
++def test_homomorphism_permutation_group():
++    # Create a permutation group
++    D3 = DihedralGroup(3)
++
++    # Test homomorphism with correct images
++    images = [D3.generators[0], D3.generators[1]]
++    T = PermutationGroup(images)
++    assert T.is_subgroup(D3)
++
++    # Test homomorphism with incorrect images
++    images = [D3.generators[1], D3.generators[0]]
++    T = PermutationGroup(images)
++    assert not T.is_subgroup(D3)
++
++def test_check_homomorphism_permutation_group():
++    D3 = DihedralGroup(3)
++    gens = D3.generators
++
++    # Test _check_homomorphism with correct images
++    images = {gens[0]: D3.generators[0], gens[1]: D3.generators[1]}
++    assert _check_homomorphism(D3, D3, images)
++
++    # Test _check_homomorphism with incorrect images
++    images = {gens[0]: D3.generators[1], gens[1]: D3.generators[0]}
++    assert not _check_homomorphism(D3, D3, images)
++
++def test_homomorphism_images_do_not_define_homomorphism():
++    D3 = DihedralGroup(3)
++    gens = D3.generators
++
++    # Test homomorphism with images that do not define a homomorphism
++    with pytest.raises(ValueError):
++        homomorphism(D3, D3, gens, [gens[1], gens[0]])
++
++def test_homomorphism_trivial():
++    D3 = DihedralGroup(3)
++    gens = D3.generators
++
++    # Test trivial homomorphism
++    images = [D3.identity] * len(gens)
++    T = homomorphism(D3, D3, gens, images)
++    assert T.is_trivial

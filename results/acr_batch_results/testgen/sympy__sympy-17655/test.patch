@@ -1,0 +1,37 @@
+--- a/tests/test_geometry.py
++++ b/tests/test_geometry.py
+-# Original code here (if modifying existing file)
++import pytest
++from sympy import geometry as ge
++import sympy
++
++def test_point_addition_order():
++    """Test that addition of points and scalars works regardless of order."""
++    point1 = ge.Point(0,0)
++    point2 = ge.Point(1,1)
++    
++    # Test with scalar on the left
++    result1 = point1 + point2 * sympy.sympify(2.0)
++    expected1 = ge.Point(2, 2)
++    assert result1 == expected1
++    
++    # Test with scalar on the right
++    result2 = point1 + sympy.sympify(2.0) * point2
++    expected2 = ge.Point(2, 2)
++    assert result2 == expected2
++
++def test_point_scalar_multiplication():
++    """Test that multiplying a point by a scalar works."""
++    point = ge.Point(1, 1)
++    scalar = sympy.sympify(2.0)
++    result = point * scalar
++    expected = ge.Point(2, 2)
++    assert result == expected
++
++def test_point_rmul():
++    """Test that right multiplication of a point by a scalar works."""
++    point = ge.Point(1, 1)
++    scalar = sympy.sympify(2.0)
++    result = scalar * point
++    expected = ge.Point(2, 2)
++    assert result == expected

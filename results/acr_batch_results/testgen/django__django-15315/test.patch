@@ -1,0 +1,38 @@
+--- a/tests/test_modeling.py
++++ b/tests/test_modeling.py
++import pytest
++from django.db import models
++
++def test_field_hash_immutable():
++    f = models.CharField(max_length=200)
++    d = {f: 1}
++    class Book(models.Model):
++        title = f
++    assert f in d
++
++def test_field_hash_consistency():
++    f1 = models.CharField(max_length=200)
++    f2 = models.CharField(max_length=200)
++    assert hash(f1) == hash(f2)
++
++def test_field_in_dict_before_assignment():
++    f = models.CharField(max_length=200)
++    d = {f: 1}
++    class Book(models.Model):
++        title = f
++    assert f in d
++
++def test_field_hash_after_assignment():
++    f = models.CharField(max_length=200)
++    class Book(models.Model):
++        title = f
++    assert hash(f) == hash(f)
++
++def test_multiple_fields_same_hash():
++    f1 = models.CharField(max_length=200)
++    f2 = models.CharField(max_length=200)
++    assert hash(f1) == hash(f2)
++    class Book(models.Model):
++        title1 = f1
++        title2 = f2
++    assert hash(f1) == hash(f1)

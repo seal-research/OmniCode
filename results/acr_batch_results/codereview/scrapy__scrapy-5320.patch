@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/utils/response.py b/scrapy/utils/response.py\nindex b3ef7b463..33a4821e2 100644\n--- a/scrapy/utils/response.py\n+++ b/scrapy/utils/response.py\n@@ -80,8 +80,8 @@ def open_in_browser(\n     body = response.body\n     if isinstance(response, HtmlResponse):\n         if b'<base' not in body:\n-            repl = f'<head><base href=\"{response.url}\">'\n-            body = body.replace(b'<head>', to_bytes(repl))\n+             repl = f'\\\\1<base href=\"{response.url}\">' \n+             body = re.sub(b\"(<head.*?>)\", to_bytes(repl), body)\n         ext = '.html'\n     elif isinstance(response, TextResponse):\n         ext = '.txt'\n"
+}

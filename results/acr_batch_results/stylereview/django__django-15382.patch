@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex 81f8f79c71..931e96a122 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -55,12 +55,12 @@ class Combinable:\n     BITRIGHTSHIFT = '>>'\n     BITXOR = '#'\n \n-    def _combine(self, other, connector, reversed):\n+    def _combine(self, other, connector, reverse):\n         if not hasattr(other, 'resolve_expression'):\n             # everything must be resolvable to an expression\n             other = Value(other)\n \n-        if reversed:\n+        if reverse:\n             return CombinedExpression(other, connector, self)\n         return CombinedExpression(self, connector, other)\n \n"
+}

@@ -1,0 +1,17 @@
+--- a/tests/test_models.py
++++ b/tests/test_models.py
+-# Empty if creating new file
++import pytest
++from .models import Client, ClientOffice
++
++@pytest.mark.django_db
++class TestModels:
++    def test_client_model(self):
++        c = Client.objects.create(name='Test1', name2='Test2')
++        assert c.name == 'Test1'
++        assert c.name2 == 'Test2'
++
++    def test_client_office_model(self):
++        c = Client.objects.create(name='Test1', name2='Test2')
++        co = ClientOffice.objects.create(client=c)
++        assert co.client == c

@@ -1,0 +1,56 @@
+--- a/tests/test_migrations.py
++++ b/tests/test_migrations.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import migrations
++from django.db.migrations.recorder import MigrationRecorder
++
++@pytest.fixture
++def recorder():
++    return MigrationRecorder(connection)
++
++def test_ensure_schema_allow_migrate(recorder):
++    # Test that ensure_schema creates the migration table if allow_migrate returns True
++    recorder.connection.alias = 'default'
++    recorder.ensure_schema()
++    assert recorder.has_table()
++
++def test_ensure_schema_disallow_migrate(recorder):
++    # Test that ensure_schema does not create the migration table if allow_migrate returns False
++    recorder.connection.alias = 'other'
++    recorder.ensure_schema()
++    assert not recorder.has_table()
++
++def test_record_applied_allow_migrate(recorder):
++    # Test that record_applied records the migration if allow_migrate returns True
++    recorder.connection.alias = 'default'
++    recorder.record_applied('app', 'migration')
++    assert recorder.migration_qs.filter(app='app', name='migration').exists()
++
++def test_record_applied_disallow_migrate(recorder):
++    # Test that record_applied does not record the migration if allow_migrate returns False
++    recorder.connection.alias = 'other'
++    recorder.record_applied('app', 'migration')
++    assert not recorder.migration_qs.filter(app='app', name='migration').exists()
+
+--- a/tests/test_migrations/test_recorder.py
++++ b/tests/test_migrations/test_recorder.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db.migrations.recorder import MigrationRecorder
++
++@pytest.mark.test_utils
++class TestMigrationRecorder:
++    @pytest.fixture
++    def recorder(self):
++        return MigrationRecorder(connection)
++
++    def test_allow_migrate(self, recorder):
++        # Test that allow_migrate returns True if the database router allows migration
++        recorder.connection.alias = 'default'
++        assert recorder.allow_migrate() is True
++
++    def test_disallow_migrate(self, recorder):
++        # Test that allow_migrate returns False if the database router does not allow migration
++        recorder.connection.alias = 'other'
++        assert recorder.allow_migrate() is False

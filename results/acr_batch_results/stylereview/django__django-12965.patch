@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py\nindex 29e33c075f..05091e8034 100644\n--- a/django/db/models/sql/compiler.py\n+++ b/django/db/models/sql/compiler.py\n@@ -157,7 +157,7 @@ class SQLCompiler:\n             for expr in expressions:\n                 # Is this a reference to query's base table primary key? If the\n                 # expression isn't a Col-like, then skip the expression.\n-                if (getattr(expr, 'target', None) == self.query.model._meta.pk and\n+                if (getattr(expr, 'target', None) == self.query.model.get_meta().pk and\n                         getattr(expr, 'alias', None) == self.query.base_table):\n                     pk = expr\n                     break\n"
+}

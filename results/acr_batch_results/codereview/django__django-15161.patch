@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex 8642e1f151..028a93c726 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -651,6 +651,7 @@ class OuterRef(F):\n         return self\n \n \n+@deconstructible\n class Func(SQLiteNumericMixin, Expression):\n     \"\"\"An SQL function call.\"\"\"\n     function = None\n@@ -731,6 +732,7 @@ class Func(SQLiteNumericMixin, Expression):\n         return copy\n \n \n+@deconstructible\n class Value(SQLiteNumericMixin, Expression):\n     \"\"\"Represent a wrapped value as a node within an expression.\"\"\"\n     # Provide a default value for `for_save` in order to allow unresolved\n"
+}

@@ -1,0 +1,80 @@
+--- a/tests/test_migrations.py
++++ b/tests/test_migrations.py
+-# Empty if creating new file
++import os
++import sys
++import pytest
++from django.db import migrations
++from django.db.migrations.loader import MigrationLoader
++from django.test import TestCase
++
++@pytest.fixture
++def tmpdir(tmp_path):
++    return tmp_path
++
++def test_load_disk_namespace_package(tmpdir):
++    # Create a namespace package
++    package_path = tmpdir / 'package'
++    package_path.mkdir()
++    init_path = package_path / '__init__.py'
++    init_path.touch()
++
++    # Create a migrations module
++    migrations_path = package_path / 'migrations'
++    migrations_path.mkdir()
++    migration_path = migrations_path / '0001_initial.py'
++    with open(migration_path, 'w') as f:
++        f.write('from django.db import migrations\n\nclass Migration(migrations.Migration):\n    pass')
++
++    # Load the migrations
++    loader = MigrationLoader(connection=None)
++    loader.load_disk()
++
++    # Check if the migration was loaded
++    assert ('package', '0001_initial') in loader.disk_migrations
++
++def test_load_disk_non_namespace_package(tmpdir):
++    # Create a non-namespace package
++    package_path = tmpdir / 'package'
++    package_path.mkdir()
++    init_path = package_path / '__init__.py'
++    init_path.touch()
++
++    # Create a migrations module
++    migrations_path = package_path / 'migrations'
++    migrations_path.mkdir()
++    migration_path = migrations_path / '0001_initial.py'
++    with open(migration_path, 'w') as f:
++        f.write('from django.db import migrations\n\nclass Migration(migrations.Migration):\n    pass')
++
++    # Set __file__ to None to simulate a frozen environment
++    package = __import__('package')
++    package.__file__ = None
++
++    # Load the migrations
++    loader = MigrationLoader(connection=None)
++    loader.load_disk()
++
++    # Check if the migration was loaded
++    assert ('package', '0001_initial') in loader.disk_migrations
++
++def test_load_disk_no_file(tmpdir):
++    # Create a package without __file__
++    package_path = tmpdir / 'package'
++    package_path.mkdir()
++    with open(package_path / '__init__.py', 'w') as f:
++        f.write('')
++
++    # Create a migrations module
++    migrations_path = package_path / 'migrations'
++    migrations_path.mkdir()
++    migration_path = migrations_path / '0001_initial.py'
++    with open(migration_path, 'w') as f:
++        f.write('from django.db import migrations\n\nclass Migration(migrations.Migration):\n    pass')
++
++    # Load the migrations
++    loader = MigrationLoader(connection=None)
++    loader.load_disk()
++
++    # Check if the migration was loaded
++    assert ('package', '0001_initial') in loader.disk_migrations

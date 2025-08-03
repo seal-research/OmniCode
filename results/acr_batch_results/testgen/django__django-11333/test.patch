@@ -1,0 +1,56 @@
+--- a/tests/test_urlresolvers.py
++++ b/tests/test_urlresolvers.py
+-# Empty if creating new file
++import pytest
++from django.test import override_settings
++from django.urls import get_resolver, set_urlconf
++from django.urls.base import get_urlconf
++
++@pytest.fixture
++def default_urlconf():
++    return 'tests.urls'
++
++@pytest.mark.test_utils
++class TestURLResolver:
++    @pytest.fixture(autouse=True)
++    def setup_test(self, default_urlconf):
++        self.default_urlconf = default_urlconf
++
++    def test_get_resolver(self):
++        resolver = get_resolver()
++        assert resolver.urlconf_name == self.default_urlconf
++
++    def test_get_resolver_with_urlconf(self):
++        resolver = get_resolver(self.default_urlconf)
++        assert resolver.urlconf_name == self.default_urlconf
++
++    @override_settings(ROOT_URLCONF='tests.other_urls')
++    def test_get_resolver_with_settings_root_urlconf(self):
++        resolver = get_resolver()
++        assert resolver.urlconf_name == 'tests.other_urls'
++
++    def test_get_resolver_called_multiple_times(self):
++        resolver1 = get_resolver()
++        resolver2 = get_resolver()
++        assert resolver1 is resolver2
++
++    def test_get_resolver_called_with_different_urlconfs(self):
++        resolver1 = get_resolver(self.default_urlconf)
++        set_urlconf(self.default_urlconf)
++        resolver2 = get_resolver()
++        assert resolver1 is resolver2
++
++    def test_get_resolver_called_before_set_urlconf(self):
++        get_resolver()  # This should not create a new resolver
++        set_urlconf(self.default_urlconf)
++        resolver = get_resolver()
++        assert resolver.urlconf_name == self.default_urlconf
++
++    def test_get_resolver_with_none_urlconf(self):
++        resolver = get_resolver(None)
++        assert resolver.urlconf_name == self.default_urlconf
++
++    def test_get_resolver_with_custom_urlconf(self):
++        custom_urlconf = 'tests.custom_urls'
++        resolver = get_resolver(custom_urlconf)
++        assert resolver.urlconf_name == custom_urlconf

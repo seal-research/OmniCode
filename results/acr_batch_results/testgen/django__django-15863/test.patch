@@ -1,0 +1,51 @@
+--- a/tests/test_template_filters.py
++++ b/tests/test_template_filters.py
+-# Original code here, if any
++import pytest
++from decimal import Decimal
++from django.template import Template, Context
++
++@pytest.mark.test_floatformat
++def test_floatformat_decimal():
++    # Test that floatformat does not drop precision for Decimal numbers
++    value = Decimal('42.12345678901234567890')
++    template = Template('{{ value|floatformat:20 }}')
++    context = Context({'value': value})
++    rendered = template.render(context)
++    assert rendered == '42.12345678901234567890'
++
++@pytest.mark.test_floatformat
++def test_floatformat_float():
++    # Test floatformat with a float to ensure existing functionality
++    value = 42.123456789012345
++    template = Template('{{ value|floatformat:20 }}')
++    context = Context({'value': value})
++    rendered = template.render(context)
++    assert rendered == '42.12345678901234500000'
++
++@pytest.mark.test_floatformat
++def test_floatformat_negative():
++    # Test floatformat with a negative Decimal number
++    value = Decimal('-42.12345678901234567890')
++    template = Template('{{ value|floatformat:20 }}')
++    context = Context({'value': value})
++    rendered = template.render(context)
++    assert rendered == '-42.12345678901234567890'
++
++@pytest.mark.test_floatformat
++def test_floatformat_zero():
++    # Test floatformat with zero
++    value = Decimal('0')
++    template = Template('{{ value|floatformat:20 }}')
++    context = Context({'value': value})
++    rendered = template.render(context)
++    assert rendered == '0'
++
++@pytest.mark.test_floatformat
++def test_floatformat_large_number():
++    # Test floatformat with a very large Decimal number
++    value = Decimal('4212345678901234567890.12345678901234567890')
++    template = Template('{{ value|floatformat:20 }}')
++    context = Context({'value': value})
++    rendered = template.render(context)
++    assert rendered == '4212345678901234567890.12345678901234567890'

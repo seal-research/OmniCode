@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/query.py b/django/db/models/query.py\nindex 07d6ffd4ca..3d3e7d6bd9 100644\n--- a/django/db/models/query.py\n+++ b/django/db/models/query.py\n@@ -837,6 +837,11 @@ class QuerySet:\n         return clone\n \n     def values(self, *fields, **expressions):\n+        if expressions:\n+            for expr in expressions.values():\n+                if isinstance(expr, Expression) and not expr.contains_aggregate:\n+                    self.query.group_by = False\n+                    break\n         fields += tuple(expressions)\n         clone = self._values(*fields, **expressions)\n         clone._iterable_class = ValuesIterable\n"
+}

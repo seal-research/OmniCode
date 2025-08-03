@@ -1,0 +1,26 @@
+--- a/tests/test_queryset.py
++++ b/tests/test_queryset.py
+-# Empty if creating new file
++import pytest
++from django.db.models import QuerySet
++
++@pytest.mark.test_queryset_union_values_list
++def test_queryset_union_values_list():
++    # Test that composed queries can change the list of columns with values()/values_list()
++    qs1 = QuerySet.objects.all()
++    qs2 = QuerySet.objects.all()
++
++    # Test values_list with multiple fields
++    result = qs1.union(qs2).values_list('name', 'order').get()
++    assert result == ('a', 2)
++
++    # Test values_list with single field
++    result = qs1.union(qs2).values_list('order').get()
++    assert result == (2,)
++
++    # Test that the list of columns does not change
++    result = qs1.union(qs2).values_list('name', 'order').get()
++    assert result == ('a', 2)
++
++    result = qs1.union(qs2).values_list('order').get()
++    assert result == (2,)

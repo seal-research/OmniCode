@@ -1,0 +1,24 @@
+--- a/tests/test_pycode.py
++++ b/tests/test_pycode.py
+-# Original test code here
++import pytest
++from sympy import IndexedBase, Indexed
++from sympy.printing.pycode import PythonCodePrinter
++
++def test_print_indexed():
++    p = IndexedBase("p")
++    printer = PythonCodePrinter()
++    assert printer._print_Indexed(p[0]) == "p[0]"
++    assert printer._print_Indexed(p[0, 1]) == "p[0, 1]"
++
++def test_print_indexed_with_symbolic_indices():
++    p = IndexedBase("p")
++    x, y = pytest.importorskip('sympy').symbols('x y')
++    printer = PythonCodePrinter()
++    assert printer._print_Indexed(p[x]) == "p[x]"
++    assert printer._print_Indexed(p[x, y]) == "p[x, y]"
++
++def test_print_indexed_base():
++    p = IndexedBase("p")
++    printer = PythonCodePrinter()
++    assert printer._print(p) == "p"

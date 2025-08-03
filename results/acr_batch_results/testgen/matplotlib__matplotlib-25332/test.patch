@@ -1,0 +1,43 @@
+--- a/tests/test_figure.py
++++ b/tests/test_figure.py
+-# Original code here (if modifying existing file)
++import pytest
++import matplotlib.pyplot as plt
++import pickle
++
++def test_align_labels_pickling():
++    """Test that pickling a figure with aligned labels works."""
++    fig = plt.figure()
++    ax1 = fig.add_subplot(211)
++    ax2 = fig.add_subplot(212)
++    time = [0, 1, 2, 3, 4]
++    speed = [40000, 4300, 4500, 4700, 4800]
++    acc = [10, 11, 12, 13, 14]
++    ax1.plot(time, speed)
++    ax1.set_ylabel('speed')
++    ax2.plot(time, acc)
++    ax2.set_ylabel('acc')
++
++    fig.align_labels()
++
++    # Test that pickling works
++    try:
++        pickle.dumps(fig)
++    except Exception as e:
++        pytest.fail(f"Pickling failed: {e}")
++
++def test_add_axobserver_pickling():
++    """Test that pickling a figure with an ax observer works."""
++    fig = plt.figure()
++    ax = fig.add_subplot(111)
++
++    def observer(arg):
++        pass
++
++    fig.add_axobserver(observer)
++
++    # Test that pickling works
++    try:
++        pickle.dumps(fig)
++    except Exception as e:
++        pytest.fail(f"Pickling failed: {e}")

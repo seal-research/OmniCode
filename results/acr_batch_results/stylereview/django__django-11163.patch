@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/forms/models.py b/django/forms/models.py\nindex d157c291ef..358803bc31 100644\n--- a/django/forms/models.py\n+++ b/django/forms/models.py\n@@ -278,7 +278,7 @@ class BaseModelForm(BaseForm):\n                  initial=None, error_class=ErrorList, label_suffix=None,\n                  empty_permitted=False, instance=None, use_required_attribute=None,\n                  renderer=None):\n-        opts = self._meta\n+        opts = self.__dict__.get('_meta')\n         if opts.model is None:\n             raise ValueError('ModelForm has no model class specified.')\n         if instance is None:\n"
+}

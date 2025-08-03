@@ -1,0 +1,57 @@
+--- a/tests/test_toctree.py
++++ b/tests/test_toctree.py
+-# Empty if creating new file
++import pytest
++from sphinx import addnodes
++from sphinx.environment import Environment
++from sphinx.builders.html import HTMLBuilder
++from sphinx.testing import TestApp
++
++@pytest.fixture
++def app():
++    return TestApp(buildername='html')
++
++def test_toctree_with_special_documents(app):
++    """Test that toctree can handle special documents like genindex, modindex, and search."""
++    # Arrange
++    env = app.env
++    docname = 'index'
++    toctree_node = addnodes.toctree()
++    toctree_node.append(addnodes.only(text='genindex'))
++    toctree_node.append(addnodes.only(text='modindex'))
++    toctree_node.append(addnodes.only(text='search'))
++
++    # Act
++    env.resolve_references(doctree=toctree_node, fromdocname=docname, builder=HTMLBuilder(app))
++
++    # Assert
++    assert toctree_node[0]['refdoc'] == docname
++    assert toctree_node[1]['refdoc'] == docname
++    assert toctree_node[2]['refdoc'] == docname
++
++def test_toctree_with_nonexisting_documents(app):
++    """Test that toctree can handle nonexisting documents."""
++    # Arrange
++    env = app.env
++    docname = 'index'
++    toctree_node = addnodes.toctree()
++    toctree_node.append(addnodes.only(text='nonexisting'))
++
++    # Act and Assert
++    with pytest.raises(KeyError):
++        env.resolve_references(doctree=toctree_node, fromdocname=docname, builder=HTMLBuilder(app))
++
++def test_process_doc_with_special_documents(app):
++    """Test that process_doc can handle special documents like genindex, modindex, and search."""
++    # Arrange
++    env = app.env
++    docname = 'index'
++    doctree = nodes.document()
++
++    # Act
++    TocTreeCollector().process_doc(app=app, doctree=doctree)
++
++    # Assert
++    assert 'genindex' in env.tocs[docname].astext()
++    assert 'modindex' in env.tocs[docname].astext()
++    assert 'search' in env.tocs[docname].astext()

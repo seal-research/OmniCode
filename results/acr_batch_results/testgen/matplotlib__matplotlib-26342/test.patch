@@ -1,0 +1,28 @@
+--- a/tests/test_contour.py
++++ b/tests/test_contour.py
++import pytest
++import matplotlib.pyplot as plt
++from matplotlib.contour import ContourSet
++
++def test_contour_set_paths_get_paths():
++    fig, ax = plt.subplots()
++    cs = ContourSet(ax, levels=[0, 1], allsegs=[[[(0, 0), (1, 1)]]])
++    paths = cs.get_paths()
++    assert len(paths) == 1
++    new_paths = [[(2, 2), (3, 3)]]
++    cs.set_paths(new_paths)
++    assert cs.get_paths() == new_paths
++
++def test_contour_set_paths_empty():
++    fig, ax = plt.subplots()
++    cs = ContourSet(ax, levels=[0, 1], allsegs=[])
++    assert cs.get_paths() == []
++    new_paths = []
++    cs.set_paths(new_paths)
++    assert cs.get_paths() == new_paths
++
++def test_contour_set_paths_none():
++    fig, ax = plt.subplots()
++    cs = ContourSet(ax, levels=[0, 1], allsegs=[[[(0, 0), (1, 1)]]])
++    cs.set_paths(None)
++    assert cs.get_paths() is None

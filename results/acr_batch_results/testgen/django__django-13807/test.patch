@@ -1,0 +1,40 @@
+--- a/tests/test_commands.py
++++ b/tests/test_commands.py
+-# Original code here
++import pytest
++from django.core.management import call_command
++from django.core.management.commands.loaddata import Command
++from django.db import connections
++from django.db.models import Model
++from django.test import TestCase
++
++pytestmark = pytest.mark.django_db
++
++class TestLoadData(TransactionTestCase):
++
++    @pytest.fixture(autouse=True)
++    def fixtures(self, settings):
++        settings.DATABASES['default'] = {
++            'ENGINE': 'django.db.backends.sqlite3',
++            'NAME': ':memory:',
++        }
++
++    def test_loaddata_quoted_table_names(self):
++        class Order(Model):
++            name = models.CharField(max_length=100)
++
++        order_fixture = [
++            {
++                "model": "test_commands.Order",
++                "fields": {
++                    "name": "Test Order"
++                }
++            }
++        ]
++
++        with open('order.json', 'w') as f:
++            f.write(json.dumps(order_fixture))
++
++        call_command('loaddata', 'order.json')
++
++        self.assertEqual(Order.objects.get().name, "Test Order")

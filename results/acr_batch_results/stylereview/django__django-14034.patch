@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/forms/boundfield.py b/django/forms/boundfield.py\nindex a061f15f87..e72bd75e2f 100644\n--- a/django/forms/boundfield.py\n+++ b/django/forms/boundfield.py\n@@ -1,4 +1,5 @@\n import re\n+from django.forms.utils import PUNCTUATION_MARK_PATTERN\n \n from django.core.exceptions import ValidationError\n from django.forms.utils import flatatt, pretty_name\n"
+}

@@ -1,0 +1,38 @@
+--- a/tests/test_utils_html.py
++++ b/tests/test_utils_html.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.utils.html import json_script
++from django.test import SimpleTestCase
++
++class TestJSONScript(SimpleTestCase):
++ def test_json_script_with_element_id(self):
++ value = {"key": "value"}
++ element_id = "my_script"
++ result = json_script(value, element_id)
++ assert f'<script id="{element_id}" type="application/json">' in result
++
++ def test_json_script_without_element_id(self):
++ value = {"key": "value"}
++ result = json_script(value)
++ assert '<script type="application/json">' in result
++ assert 'id="' not in result
++
++ def test_json_script_with_empty_value(self):
++ result = json_script("")
++ assert '<script type="application/json"></script>' in result
++
++ def test_json_script_with_none_value(self):
++ result = json_script(None)
++ assert '<script type="application/json">null</script>' in result
++
++ def test_json_script_with_non_serializable_value(self):
++ with pytest.raises(TypeError):
++ json_script(object())
++
++ def test_json_script_with_element_id_none(self):
++ value = {"key": "value"}
++ element_id = None
++ result = json_script(value, element_id)
++ assert '<script type="application/json">' in result
++ assert 'id="' not in result

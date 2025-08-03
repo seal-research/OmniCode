@@ -1,0 +1,53 @@
+--- a/tests/test_patches.py
++++ b/tests/test_patches.py
+-# Original code here (if modifying existing file)
++import pytest
++import matplotlib.pyplot as plt
++import matplotlib.patches as patches
++
++def test_patch_linestyle_offset():
++ fig, ax = plt.subplots()
++ ax.add_patch(patches.Rectangle((0.5, 0.5), 1, 1, alpha=0.5, edgecolor='r', 
++                                linewidth=4, ls=(0, (10, 10))))
++ ax.add_patch(patches.Rectangle((0.5, 0.5), 1, 1, alpha=0.5, edgecolor='b', 
++                                linewidth=4, ls=(10, (10, 10))))
++ plt.ylim([0, 2])
++ plt.xlim([0, 2])
++ plt.show()
++
++def test_line2d_linestyle_offset():
++ fig, ax = plt.subplots()
++ ax.plot([0, 1], [0, 1], ls=(0, (10, 10)), color='r')
++ ax.plot([0, 1], [0, 1], ls=(10, (10, 10)), color='b')
++ plt.show()
++
++def test_patch_linestyle_offset_draw():
++ fig, ax = plt.subplots()
++ patch = patches.Rectangle((0.5, 0.5), 1, 1, alpha=0.5, edgecolor='r', 
++                          linewidth=4, ls=(0, (10, 10)))
++ ax.add_patch(patch)
++ ax.set_xlim([0, 2])
++ ax.set_ylim([0, 2])
++ plt.show()
++
++def test_line2d_linestyle_offset_draw():
++ fig, ax = plt.subplots()
++ line = patches.Rectangle((0.5, 0.5), 1, 1, alpha=0.5, edgecolor='r', 
++                         linewidth=4, ls=(0, (10, 10)))
++ ax.add_patch(line)
++ ax.set_xlim([0, 2])
++ ax.set_ylim([0, 2])
++ plt.show()
+
+--- a/tests/test_line2d.py
++++ b/tests/test_line2d.py
+-# Original code here (if modifying existing file)
++import pytest
++import matplotlib.pyplot as plt
++import matplotlib.lines as lines
++
++def test_line2d_linestyle_offset():
++ fig, ax = plt.subplots()
++ ax.plot([0, 1], [0, 1], ls=(0, (10, 10)), color='r')
++ ax.plot([0, 1], [0, 1], ls=(10, (10, 10)), color='b')
++ plt.show()

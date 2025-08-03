@@ -1,0 +1,46 @@
+--- a/tests/test_loaddata.py
++++ b/tests/test_loaddata.py
+-# Empty if creating new file
++import pytest
++from django.core.management import call_command
++from django.core.management.base import CommandError
++from django.db import connections
++
++@pytest.fixture
++def author_data():
++    return [
++        {
++            "model": "testbug.author",
++            "fields": {
++                "name": "JR Tolkien"
++            }
++        }
++    ]
++
++@pytest.fixture
++def book_data():
++    return [
++        {
++            "model": "testbug.book",
++            "fields": {
++                "title": "The Ring",
++                "author": [
++                    "JR Tolkien"
++                ]
++            }
++        }
++    ]
++
++@pytest.mark.django_db(databases={'default': 'sqlite', 'other': 'postgresql'})
++def test_loaddata_default_database(author_data, book_data):
++    call_command('loaddata', '--format=json', '-', stdin='\n'.join(map(str, author_data + book_data)))
++    assert connections['default'].cursor().execute("SELECT * FROM testbug_author")
++
++@pytest.mark.django_db(databases={'default': 'sqlite', 'other': 'postgresql'})
++def test_loaddata_non_default_database(author_data, book_data):
++    call_command('loaddata', '--database=other', '--format=json', '-', stdin='\n'.join(map(str, author_data + book_data)))
++    assert connections['other'].cursor().execute("SELECT * FROM testbug_author")
++
++def test_loaddata_failure(author_data, book_data):
++    with pytest.raises(CommandError):
++        call_command('loaddata', '--database=other', '--format=json', '-', stdin='\n'.join(map(str, book_data)))

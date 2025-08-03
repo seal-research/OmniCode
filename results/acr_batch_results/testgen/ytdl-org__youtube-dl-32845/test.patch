@@ -1,0 +1,47 @@
+--- a/tests/test_youtube.py
++++ b/tests/test_youtube.py
+-# Existing tests
++import pytest
++from youtube_dl.extractor.youtube import YoutubeIE
++
++@pytest.fixture
++def ytdl():
++    return YoutubeIE()
++
++def test_extract_n_function_name(ytdl):
++    # Test that _extract_n_function_name works correctly
++    jscode = """
++    .get("n")])&&(b=(?P<nfunc>[a-zA-Z_$][\w$]*)(?:\[(?P<idx>\d+)\])?[\w$]+)
++    """
++    func_name, idx = ytdl._extract_n_function_name(jscode)
++    assert func_name == 'nfunc'
++
++def test_extract_n_function_code(ytdl):
++    # Test that _extract_n_function_code works correctly
++    video_id = 'BaW_jenozKc'
++    player_url = 'https://www.youtube.com/s/player/12345678/player.js'
++    jsi, player_id, func_code = ytdl._extract_n_function_code(video_id, player_url)
++    assert jsi
++    assert player_id
++    assert func_code
++
++def test_decrypt_nsig(ytdl):
++    # Test that _decrypt_nsig works correctly
++    n = 'encrypted_nsig'
++    video_id = 'BaW_jenozKc'
++    player_url = 'https://www.youtube.com/s/player/12345678/player.js'
++    decrypted_nsig = ytdl._decrypt_nsig(n, video_id, player_url)
++    assert decrypted_nsig
++
++def test_edge_cases(ytdl):
++    # Test edge cases
++    with pytest.raises(ExtractorError):
++        ytdl._decrypt_nsig(None, 'video_id', None)
++
++    with pytest.raises(ExtractorError):
++        ytdl._extract_n_function_code('video_id', None)
++
++def test_real_video(ytdl):
++    # Test with a real video
++    url = 'https://www.youtube.com/watch?v=BaW_jenozKc'
++    ytdl.extract_info(url, download=False)

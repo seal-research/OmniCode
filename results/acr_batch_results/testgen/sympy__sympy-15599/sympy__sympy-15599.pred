@@ -1,0 +1,6 @@
+{
+  "instance_id": "sympy__sympy-15599",
+  "model": "openrouter/meta-llama/llama-4-scout",
+  "response": "<file>sympy/core/tests/test_arit.py</file>\n<original>\ndef test_Mod():\n    i = Symbol('i', integer=True)\n    assert (3*i*x) % (2*i*y) == i*Mod(3*x, 2*y)\n    assert Mod(4*i, 4) == 0\n</original>\n<patched>\ndef test_Mod():\n    i = Symbol('i', integer=True)\n    assert (3*i*x) % (2*i*y) == i*Mod(3*x, 2*y)\n    assert Mod(4*i, 4) == 0\n    assert Mod(3*i, 2) == Mod(i, 2)\n\n    # issue 15493\n    k = Symbol('k', integer=True)\n    assert Mod(3*k, 2) == Mod(k, 2)\n    assert sympify('3*k%2') == Mod(k, 2)\n</patched>\n```",
+  "patch": "--- a/sympy/core/tests/test_arit.py\n+++ b/sympy/core/tests/test_arit.py\n-def test_Mod():\n-    i = Symbol('i', integer=True)\n-    assert (3*i*x) % (2*i*y) == i*Mod(3*x, 2*y)\n-    assert Mod(4*i, 4) == 0\n+def test_Mod():\n+    i = Symbol('i', integer=True)\n+    assert (3*i*x) % (2*i*y) == i*Mod(3*x, 2*y)\n+    assert Mod(4*i, 4) == 0\n+    assert Mod(3*i, 2) == Mod(i, 2)\n+\n+    # issue 15493\n+    k = Symbol('k', integer=True)\n+    assert Mod(3*k, 2) == Mod(k, 2)\n+    assert sympify('3*k%2') == Mod(k, 2)\n"
+}

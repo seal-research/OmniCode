@@ -1,0 +1,43 @@
+--- a/tests/test_plotting.py
++++ b/tests/test_plotting.py
+-# Original tests or empty if new file
++import pytest
++import pyvista as pv
++from pyvista import BasePlotter
++
++def test_add_lines_docstring():
++    """Test the docstring of add_lines method."""
++    plotter = BasePlotter()
++    # Test that the docstring is correctly formatted
++    assert "add_lines(lines, color=(1, 1, 1), width=5, label=None, name=None)" in plotter.add_lines.__doc__
++
++def test_add_lines_default_args():
++    """Test default arguments of add_lines method."""
++    plotter = BasePlotter()
++    lines = [(0, 0, 0), (1, 1, 1)]
++    actor = plotter.add_lines(lines)
++    # Additional assertions based on expected behavior
++
++@pytest.mark.parametrize("color", [(1, 1, 1), (255, 255, 255), ((1, 1, 1),)])
++def test_add_lines_color(color):
++    """Test add_lines with different color inputs."""
++    plotter = BasePlotter()
++    lines = [(0, 0, 0), (1, 1, 1)]
++    actor = plotter.add_lines(lines, color=color)
++    # Additional assertions based on expected behavior
+
+--- a/tests/test_autodoc.py
++++ b/tests/test_autodoc.py
+-# Original tests or empty if new file
++import pytest
++from sphinx.ext.autodoc import stringify_signature
++
++def test_stringify_signature_tuples():
++    """Test stringify_signature with tuple default values."""
++    sig = inspect.signature(lambda x, y=(1, 2): x + y)
++    assert stringify_signature(sig) == "(x, y=(1, 2))"
++
++def test_stringify_signature_non_tuples():
++    """Test stringify_signature with non-tuple default values."""
++    sig = inspect.signature(lambda x, y=5: x + y)
++    assert stringify_signature(sig) == "(x, y=5)"

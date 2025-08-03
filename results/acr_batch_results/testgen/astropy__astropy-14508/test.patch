@@ -1,0 +1,47 @@
+--- a/tests/test_io_fits_card.py
++++ b/tests/test_io_fits_card.py
+-# Original code here (if modifying existing file)
++import pytest
++from astropy.io import fits
++from astropy.io.fits.card import Card
++
++def test_float_format():
++ """Test formatting of float values."""
++ value = 0.009125
++ card = Card("TEST", value)
++ assert str(card) == "TEST            =0.009125       /      "
++
++def test_float_format_compact():
++ """Test compact formatting of float values."""
++ value = 1.23456789
++ card = Card("TEST", value)
++ assert len(str(card)) <= 80
++
++def test_comment_truncation():
++ """Test that comment truncation occurs correctly."""
++ value = 0.009125
++ comment = "This is a very long comment that will be truncated."
++ card = Card("TEST", value, comment)
++ assert len(str(card)) <= 80
++
++def test_rvkc_format():
++ """Test formatting of record-valued keyword cards."""
++ rvkc = Card("DP1.AXIS.1", "AXIS.1:2")
++ assert str(rvkc) == "DP1.AXIS.1     =AXIS.1:2       /      "
+
+--- a/tests/test_io_fits_header.py
++++ b/tests/test_io_fits_header.py
+-# Original code here (if modifying existing file)
++import pytest
++from astropy.io import fits
++
++def test_header_creation():
++ """Test creation of a FITS header."""
++ hdr = fits.Header()
++ assert isinstance(hdr, fits.Header)
++
++def test_header_add_card():
++ """Test adding a card to a header."""
++ hdr = fits.Header()
++ hdr["TEST"] = 1.0
++ assert "TEST" in hdr

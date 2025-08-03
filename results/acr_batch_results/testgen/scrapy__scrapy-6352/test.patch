@@ -1,0 +1,48 @@
+--- a/tests/test_downloader.py
++++ b/tests/test_downloader.py
+-# Empty if creating new file
++import pytest
++from scrapy.core.downloader import Downloader
++from scrapy.exceptions import ScrapyDeprecationWarning
++
++@pytest.fixture
++def downloader():
++    return Downloader(None)
++
++def test_get_slot_key_with_spider(deprecation_warning):
++    downloader = Downloader(None)
++    request = type('Request', (object,), {'meta': {}})
++    with deprecation_warning(ScrapyDeprecationWarning):
++        assert downloader._get_slot_key(request, None) == ""
++
++def test_get_slot_key_without_spider():
++    downloader = Downloader(None)
++    request = type('Request', (object,), {'meta': {}})
++    assert downloader._get_slot_key(request, None) == ""
++
++def test_get_slot_key_with_download_slot_in_meta():
++    downloader = Downloader(None)
++    request = type('Request', (object,), {'meta': {'download_slot': 'test_slot'}})
++    assert downloader._get_slot_key(request, None) == "test_slot"
++
++def test_deprecation_warning():
++    downloader = Downloader(None)
++    request = type('Request', (object,), {'meta': {}})
++    with pytest.warns(ScrapyDeprecationWarning):
++        downloader._get_slot_key(request, None)
++
++def test_get_slot_key_signature():
++    downloader = Downloader(None)
++    request = type('Request', (object,), {'meta': {}})
++    assert downloader._get_slot_key.__signature__.parameters['spider'].default == None
+
+--- a/tests/test_pqueues.py
++++ b/tests/test_pqueues.py
+-# Empty if creating new file
++import pytest
++from scrapy.pqueues import DownloaderInterface
++
++def test_get_slot_key():
++    downloader_interface = DownloaderInterface(None)
++    request = type('Request', (object,), {'meta': {}})
++    assert downloader_interface.get_slot_key(request) == ""

@@ -1,0 +1,60 @@
+--- a/tests/test_dates.py
++++ b/tests/test_dates.py
+-# Original code here (if modifying existing file)
++import pytest
++import matplotlib
++import matplotlib.pyplot as plt
++import numpy as np
++import pandas as pd
++
++def test_datetime_axis_usetex():
++    np.random.seed(1)
++    matplotlib.rcParams["text.usetex"] = True
++
++    dates = pd.date_range("2020-01-01 00:00:00", end="2020-01-01 00:10:00", periods=100)
++    data = np.random.rand(100)
++
++    fig, ax = plt.subplots(constrained_layout=True)
++    ax.plot(dates, data)
++    plt.savefig("datetime_axis_usetex.png")
++
++    # Check if the plot was created successfully
++    assert "datetime_axis_usetex.png" in matplotlib.__version__ + ".png"
++
++def test_datetime_axis_not_usetex():
++    np.random.seed(1)
++    matplotlib.rcParams["text.usetex"] = False
++
++    dates = pd.date_range("2020-01-01 00:00:00", end="2020-01-01 00:10:00", periods=100)
++    data = np.random.rand(100)
++
++    fig, ax = plt.subplots(constrained_layout=True)
++    ax.plot(dates, data)
++    plt.savefig("datetime_axis_not_usetex.png")
++
++    # Check if the plot was created successfully
++    assert "datetime_axis_not_usetex.png" in matplotlib.__version__ + ".png"
++
++def test_compare_3_3_and_4_3():
++    # Test to compare the output of 3.3 and 3.4
++    np.random.seed(1)
++
++    dates = pd.date_range("2020-01-01 00:00:00", end="2020-01-01 00:10:00", periods=100)
++    data = np.random.rand(100)
++
++    # Matplotlib 3.3
++    matplotlib.rcParams["text.usetex"] = True
++    fig, ax = plt.subplots(constrained_layout=True)
++    ax.plot(dates, data)
++    plt.savefig("3_3.png")
++
++    # Matplotlib 3.4
++    matplotlib.rcParams["text.usetex"] = True
++    fig, ax = plt.subplots(constrained_layout=True)
++    ax.plot(dates, data)
++    plt.savefig("3_4.png")
++
++    # Add assertion to compare the two plots
++    # This is a simple assertion, in real-world scenarios you would use a more sophisticated method to compare images
++    assert "3_3.png" in matplotlib.__version__ + ".png"
++    assert "3_4.png" in matplotlib.__version__ + ".png"

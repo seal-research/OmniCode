@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/template/defaultfilters.py b/django/template/defaultfilters.py\nindex 23c3a08c67..e9575f9ceb 100644\n--- a/django/template/defaultfilters.py\n+++ b/django/template/defaultfilters.py\n@@ -163,12 +163,15 @@ def floatformat(text, arg=-1):\n     except ValueError:\n         return input_val\n \n+    if text == \"0.00\" and p < 0:\n+        return \"0\"\n+\n     try:\n         m = int(d) - d\n     except (ValueError, OverflowError, InvalidOperation):\n         return input_val\n \n-    if not m and p < 0:\n+    if not m and p < 0 and d != 0:\n         return mark_safe(\n             formats.number_format(\n                 \"%d\" % (int(d)),\n"
+}

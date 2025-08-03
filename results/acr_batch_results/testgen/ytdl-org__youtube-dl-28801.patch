@@ -1,0 +1,6 @@
+{
+  "instance_id": "ytdl-org__youtube-dl-28801",
+  "status": "success",
+  "patch_file": "../../results/acr_batch_results/testgen/ytdl-org__youtube-dl-28801/test.patch",
+  "pred_file": "../../results/acr_batch_results/testgen/ytdl-org__youtube-dl-28801/ytdl-org__youtube-dl-28801.pred"
+}

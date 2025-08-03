@@ -1,0 +1,34 @@
+--- a/tests/test_sets.py
++++ b/tests/test_sets.py
+-# Original code here (if modifying existing file)
++# New or modified test code here
++import pytest
++from sympy import FiniteSet, Interval, Complement, S
++from sympy.abc import x, y
++
++def test_complement_mixture_of_symbols_and_numbers():
++    """Test that Complement works with a mixture of Symbols and numbers"""
++    a = FiniteSet(x, y, 2)
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    assert result == Complement(FiniteSet(x, y), Interval(-10, 10, left_open=True, right_open=True))
++
++def test_complement_interval_and_finite_set():
++    """Test that Complement works with Interval and FiniteSet"""
++    a = Interval(-10, 10)
++    b = FiniteSet(2, 3)
++    result = Complement(a, b)
++    assert result == Interval(-10, 2, left_open=True) + Interval(3, 10, right_open=True)
++
++def test_complement_finite_set_and_interval():
++    """Test that Complement works with FiniteSet and Interval"""
++    a = FiniteSet(1, 2, x, y)
++    b = Interval(1, 2)
++    result = Complement(a, b)
++    assert result == FiniteSet(0, x, y)
++
++def test_complement_universe():
++    """Test that Complement works with Universe"""
++    a = Interval(-10, 10)
++    result = Complement(a, S.Reals)
++    assert result == Interval(-oo, -10, left_open=True) + Interval(10, oo, right_open=True)

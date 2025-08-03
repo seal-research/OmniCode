@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py\nindex 4648daf395..2436442c59 100644\n--- a/django/db/models/sql/query.py\n+++ b/django/db/models/sql/query.py\n@@ -1078,8 +1078,10 @@ class Query(BaseExpression):\n             # The items of the iterable may be expressions and therefore need\n             # to be resolved independently.\n             return type(value)(\n-                self.resolve_lookup_value(sub_value, can_reuse, allow_joins)\n-                for sub_value in value\n+                *(\n+                    self.resolve_lookup_value(sub_value, can_reuse, allow_joins)\n+                    for sub_value in value\n+                )\n             )\n         return value\n \n"
+}

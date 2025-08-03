@@ -1,0 +1,88 @@
+--- a/tests/test_foreign_key_limit_choices_to.py
++++ b/tests/test_foreign_key_limit_choices_to.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.forms import ModelChoiceField
++from django.db.models import Q
++
++# Define models for testing
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++
++class Book(models.Model):
++    title = models.CharField(max_length=100)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE, limit_choices_to={'name__in': ['Specific Author']})
++
++def test_limit_choices_to_foreign_key():
++    # Create authors
++    author1 = Author.objects.create(name='Specific Author')
++    author2 = Author.objects.create(name='Another Author')
++
++    # Create books
++    Book.objects.create(title='Book 1', author=author1)
++    Book.objects.create(title='Book 2', author=author2)
++
++    # Get the form field
++    form_field = Book._meta.get_field('author').formfield()
++
++    # Assert that only the specified author is in the choices
++    assert len(form_field.queryset) == 1
++    assert form_field.queryset[0] == author1
++
++def test_limit_choices_to_with_q_foreign_key():
++    # Create authors
++    author1 = Author.objects.create(name='Specific Author')
++    author2 = Author.objects.create(name='Another Author')
++
++    # Create books
++    Book.objects.create(title='Book 1', author=author1)
++    Book.objects.create(title='Book 2', author=author2)
++
++    # Define limit_choices_to with Q object
++    class DynamicBook(models.Model):
++        title = models.CharField(max_length=100)
++        author = models.ForeignKey(Author, on_delete=models.CASCADE, limit_choices_to=Q(name__in=['Specific Author']))
++
++    # Get the form field
++    form_field = DynamicBook._meta.get_field('author').formfield()
++
++    # Assert that only the specified author is in the choices
++    assert len(form_field.queryset) == 1
++    assert form_field.queryset[0] == author1
++
++def test_limit_choices_to_callable_foreign_key():
++    def limit_authors():
++        return Author.objects.filter(name__in=['Specific Author'])
++
++    # Create authors
++    author1 = Author.objects.create(name='Specific Author')
++    author2 = Author.objects.create(name='Another Author')
++
++    # Create books
++    Book.objects.create(title='Book 1', author=author1)
++    Book.objects.create(title='Book 2', author=author2)
++
++    # Define limit_choices_to with callable
++    class CallableBook(models.Model):
++        title = models.CharField(max_length=100)
++        author = models.ForeignKey(Author, on_delete=models.CASCADE, limit_choices_to=limit_authors)
++
++    # Get the form field
++    form_field = CallableBook._meta.get_field('author').formfield()
++
++    # Assert that only the specified author is in the choices
++    assert len(form_field.queryset) == 1
++    assert form_field.queryset[0] == author1
++
++def test_apply_limit_choices_to_to_formfield():
++    # Create a ModelChoiceField
++    queryset = Author.objects.all()
++    form_field = ModelChoiceField(queryset)
++
++    # Apply limit_choices_to
++    limit_choices_to = {'name__in': ['Specific Author']}
++    apply_limit_choices_to_to_formfield(form_field)
++
++    # Assert that the queryset is filtered
++    assert len(form_field.queryset) == 0  # Assuming no author with 'Specific Author' name exists

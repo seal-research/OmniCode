@@ -1,0 +1,49 @@
+--- a/tests/test_prefetch_related.py
++++ b/tests/test_prefetch_related.py
+-# Empty if creating new file
++import pytest
++from django.db.models import Prefetch
++from django.test import TestCase
++from .models import Category, Post
++
++@pytest.mark.django_db
++class TestPrefetchRelated:
++    def test_prefetch_related_with_slice(self):
++        # Arrange
++        category = Category.objects.create(name='Test Category')
++        Post.objects.create(category=category)
++        Post.objects.create(category=category)
++
++        # Act and Assert
++        with pytest.raises(ValueError):
++            Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.all()[:3],
++                    to_attr='example_posts',
++                )
++            )
++
++    def test_prefetch_related_without_slice(self):
++        # Arrange
++        category = Category.objects.create(name='Test Category')
++        Post.objects.create(category=category)
++        Post.objects.create(category=category)
++
++        # Act
++        result = Category.objects.prefetch_related('post_set')
++
++        # Assert
++        assert result.count() > 0
++
++    def test_slice_queryset_before_prefetch(self):
++        # Arrange
++        category = Category.objects.create(name='Test Category')
++        Post.objects.create(category=category)
++        Post.objects.create(category=category)
++
++        # Act and Assert
++        queryset = Category.objects.all()
++        sliced_queryset = queryset[:1]
++        with pytest.raises(ValueError):
++            sliced_queryset.prefetch_related('post_set')

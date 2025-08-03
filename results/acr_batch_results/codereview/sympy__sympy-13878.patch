@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/stats/crv.py b/sympy/stats/crv.py\nindex 6efd5571e8..1e3a1c7297 100644\n--- a/sympy/stats/crv.py\n+++ b/sympy/stats/crv.py\n@@ -143,6 +143,9 @@ class ContinuousDistribution(Basic):\n     def __call__(self, *args):\n         return self.pdf(*args)\n \n+    def _cdf(self, x):\n+        return Integral(self.pdf(var), (var, self.set.inf, x))\n+\n \n class SingleContinuousDistribution(ContinuousDistribution, NamedArgsMixin):\n     \"\"\" Continuous distribution of a single variable\n"
+}

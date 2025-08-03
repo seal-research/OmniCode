@@ -1,0 +1,6 @@
+{
+  "instance_id": "scikit-learn__scikit-learn-26194",
+  "status": "success",
+  "patch_file": "../../results/acr_batch_results/testgen/scikit-learn__scikit-learn-26194/test.patch",
+  "pred_file": "../../results/acr_batch_results/testgen/scikit-learn__scikit-learn-26194/scikit-learn__scikit-learn-26194.pred"
+}

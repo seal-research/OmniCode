@@ -1,0 +1,53 @@
+--- a/tests/test_contour.py
++++ b/tests/test_contour.py
+-# Original code here (if modifying existing file)
++import pytest
++import numpy as np
++import matplotlib.pyplot as plt
++
++def test_contour_boolean_array():
++    """Test contour with boolean array."""
++    boolean_array = np.array([[True, False], [False, True]])
++    contours = plt.contour(boolean_array)
++    assert np.all(contours.levels == [0.5])
++
++def test_contourf_boolean_array():
++    """Test contourf with boolean array."""
++    boolean_array = np.array([[True, False], [False, True]])
++    contours = plt.contourf(boolean_array)
++    assert np.all(contours.levels == [0.5])
++
++def test_tricontour_boolean_array():
++    """Test tricontour with boolean array."""
++    # Create a simple triangulation
++    triangulation = plt.triangulation(np.array([0, 0, 1]), np.array([0, 1, 0]), np.array([[0, 1, 1], [0, 0, 1]]))
++    boolean_array = np.array([True, False, True])
++    contours = plt.tricontour(triangulation, boolean_array)
++    assert np.all(contours.levels == [0.5])
++
++def test_tricontourf_boolean_array():
++    """Test tricontourf with boolean array."""
++    # Create a simple triangulation
++    triangulation = plt.triangulation(np.array([0, 0, 1]), np.array([0, 1, 0]), np.array([[0, 1, 1], [0, 0, 1]]))
++    boolean_array = np.array([True, False, True])
++    contours = plt.tricontourf(triangulation, boolean_array)
++    assert np.all(contours.levels == [0.5])
++
++def test_contour_levels_not_specified():
++    """Test contour with boolean array and levels not specified."""
++    boolean_array = np.array([[True, False], [False, True]])
++    contours = plt.contour(boolean_array)
++    assert np.all(contours.levels == [0.5])
++
++def test_contour_levels_specified():
++    """Test contour with boolean array and levels specified."""
++    boolean_array = np.array([[True, False], [False, True]])
++    contours = plt.contour(boolean_array, levels=[0.2, 0.8])
++    assert np.all(contours.levels == [0.2, 0.8])
++
++def test_contour_non_boolean_array():
++    """Test contour with non-boolean array."""
++    non_boolean_array = np.array([[0.1, 0.9], [0.9, 0.1]])
++    contours = plt.contour(non_boolean_array)
++    # The default levels for non-boolean arrays are [0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9, 1.05]
++    assert len(contours.levels) == 8

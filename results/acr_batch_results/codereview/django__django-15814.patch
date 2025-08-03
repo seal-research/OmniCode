@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/query.py b/django/db/models/query.py\nindex be0deb90b0..4a084a4397 100644\n--- a/django/db/models/query.py\n+++ b/django/db/models/query.py\n@@ -2596,7 +2596,7 @@ class RelatedPopulator:\n             )\n \n         self.model_cls = klass_info[\"model\"]\n-        self.pk_idx = self.init_list.index(self.model_cls._meta.pk.attname)\n+        self.pk_idx = self.init_list.index(self.model_cls._meta.concrete_model._meta.pk.attname)\n         self.related_populators = get_related_populators(klass_info, select, self.db)\n         self.local_setter = klass_info[\"local_setter\"]\n         self.remote_setter = klass_info[\"remote_setter\"]\n"
+}

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/serializers/base.py b/django/core/serializers/base.py\nindex da85cb4b92..0c46b24c1b 100644\n--- a/django/core/serializers/base.py\n+++ b/django/core/serializers/base.py\n@@ -36,8 +36,6 @@ class PickleSerializer:\n class SerializerDoesNotExist(KeyError):\n     \"\"\"The requested serializer was not found.\"\"\"\n \n-    pass\n-\n \n class SerializationError(Exception):\n     \"\"\"Something bad happened during serialization.\"\"\"\n"
+}

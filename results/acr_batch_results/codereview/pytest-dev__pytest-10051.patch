@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/src/_pytest/logging.py b/src/_pytest/logging.py\nindex a4f4214b1..25e43b5a4 100644\n--- a/src/_pytest/logging.py\n+++ b/src/_pytest/logging.py\n@@ -441,6 +441,7 @@ class LogCaptureFixture:\n     def clear(self) -> None:\n         \"\"\"Reset the list of log records and the captured log text.\"\"\"\n         self.handler.reset()\n+        self._item.stash[caplog_records_key] = {\"setup\": [], \"call\": [], \"teardown\": []}\n \n     def set_level(self, level: Union[int, str], logger: Optional[str] = None) -> None:\n         \"\"\"Set the level of a logger for the duration of a test.\n"
+}

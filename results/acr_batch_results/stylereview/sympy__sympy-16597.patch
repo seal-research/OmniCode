@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/assumptions/ask.py b/sympy/assumptions/ask.py\nindex 2f72e111e1..621161e5d3 100644\n--- a/sympy/assumptions/ask.py\n+++ b/sympy/assumptions/ask.py\n@@ -1269,7 +1269,8 @@ def ask(proposition, assumptions=True, context=global_assumptions):\n         raise ValueError(\"inconsistent assumptions %s\" % assumptions)\n \n     # direct resolution method, no logic\n-    res = key(expr)._eval_ask(assumptions)\n+    # Assuming there's a public method or a better approach to achieve this\n+    res = key(expr).eval_ask(assumptions)\n     if res is not None:\n         return bool(res)\n \n"
+}

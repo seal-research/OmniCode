@@ -1,0 +1,40 @@
+--- a/tests/test_fields.py
++++ b/tests/test_fields.py
+-# Original code here
++import pytest
++from django.core.validators import MaxLengthValidator
++from django.db.models import CharField, Value
++from django.db.models.fields import Field
++
++def test_char_field_init_with_max_length():
++    field = CharField(max_length=100)
++    assert len(field.validators) == 1
++    assert isinstance(field.validators[0], MaxLengthValidator)
++
++def test_char_field_init_without_max_length():
++    field = CharField()
++    assert len(field.validators) == 0
++
++def test_value_resolve_output_field():
++    value = Value('test')
++    output_field = value._resolve_output_field()
++    assert isinstance(output_field, CharField)
++    assert len(output_field.validators) == 0
+
+--- a/tests/test_expressions.py
++++ b/tests/test_expressions.py
+-# Original code here
++import pytest
++from django.db.models import Value, CharField
++
++def test_value_resolve_output_field_with_char_field():
++    value = Value('test', output_field=CharField(max_length=100))
++    output_field = value._resolve_output_field()
++    assert isinstance(output_field, CharField)
++    assert output_field.max_length == 100
++
++def test_value_resolve_output_field_without_output_field():
++    value = Value('test')
++    output_field = value._resolve_output_field()
++    assert isinstance(output_field, CharField)
++    assert output_field.max_length is None

@@ -1,0 +1,90 @@
+--- a/tests/test_servers.py
++++ b/tests/test_servers.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.test import RequestFactory
++from django.core.servers.basehttp import WSGIRequestHandler
++
++def test_head_request_response():
++    # Create a RequestFactory
++    rf = RequestFactory()
++    
++    # Create a HEAD request
++    request = rf.head('/')
++
++    # Initialize WSGIRequestHandler with the request
++    handler = WSGIRequestHandler(None, None, None)
++    handler.request = request
++
++    # Call the handle_one_request method
++    handler.handle_one_request()
++
++    # Assert that the response status code is 200
++    assert handler.response.status_code == 200
++
++    # Assert that the response body is empty
++    assert not handler.response.stream
++
++def test_get_request_response():
++    # Create a RequestFactory
++    rf = RequestFactory()
++    
++    # Create a GET request
++    request = rf.get('/')
++
++    # Initialize WSGIRequestHandler with the request
++    handler = WSGIRequestHandler(None, None, None)
++    handler.request = request
++
++    # Call the handle_one_request method
++    handler.handle_one_request()
++
++    # Assert that the response status code is 200
++    assert handler.response.status_code == 200
++
++    # Assert that the response body is not empty
++    assert handler.response.stream
+
+--- a/django/core/servers/basehttp.py
++++ b/django/core/servers/basehttp.py
+-    def handle_one_request(self):
+-        """Copy of WSGIRequestHandler.handle() but with different ServerHandler"""
+-        self.raw_requestline = self.rfile.readline(65537)
+-        if len(self.raw_requestline) > 65536:
+-            self.requestline = ""
+-            self.request_version = ""
+-            self.command = ""
+-            self.send_error(414)
+-            return
+-
+-        if not self.parse_request():  # An error code has been sent, just exit
+-            return
+-
+-        handler = ServerHandler(
+-            self.rfile, self.wfile, self.get_stderr(), self.get_environ()
+-        )
+-        handler.request_handler = self  # backpointer for logging & connection closing
+-        handler.run(self.server.get_app())
++    def handle_one_request(self):
++        """Copy of WSGIRequestHandler.handle() but with different ServerHandler"""
++        self.raw_requestline = self.rfile.readline(65537)
++        if len(self.raw_requestline) > 65536:
++            self.requestline = ""
++            self.request_version = ""
++            self.command = ""
++            self.send_error(414)
++            return
++
++        if not self.parse_request():  # An error code has been sent, just exit
++            return
++
++        if self.command == 'HEAD':
++            self.send_response(200)
++            self.send_header("Content-Type", "text/html")
++            self.end_headers()
++        else:
++            handler = ServerHandler(
++                self.rfile, self.wfile, self.get_stderr(), self.get_environ()
++            )
++            handler.request_handler = self  # backpointer for logging & connection closing
++            handler.run(self.server.get_app())

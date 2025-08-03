@@ -1,0 +1,44 @@
+--- a/tests/test_widgets.py
++++ b/tests/test_widgets.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.forms.widgets import FileInput, ClearableFileInput
++
++def test_file_input_use_required_attribute():
++    file_input = FileInput()
++    assert file_input.use_required_attribute(initial=None)  # This should return True
++
++def test_file_input_use_required_attribute_with_initial_data():
++    file_input = FileInput()
++    assert not file_input.use_required_attribute(initial="some_initial_data")  # This should return False
++
++def test_clearable_file_input_use_required_attribute():
++    clearable_file_input = ClearableFileInput()
++    assert clearable_file_input.use_required_attribute(initial=None)  # This should return True
++    assert not clearable_file_input.use_required_attribute(initial="some_initial_data")  # This should return False
++
++def test_file_input_required_attribute_not_rendered_with_initial_data():
++    # Test that the required attribute is not rendered when initial data exists
++    file_input = FileInput()
++    html = file_input.render('file', 'initial_data')
++    assert 'required' not in html
++
++def test_clearable_file_input_required_attribute_not_rendered_with_initial_data():
++    # Test that the required attribute is not rendered when initial data exists
++    clearable_file_input = ClearableFileInput()
++    html = clearable_file_input.render('file', 'initial_data')
++    assert 'required' not in html
+
+--- a/django/forms/widgets.py
++++ b/django/forms/widgets.py
+-class FileInput(Input):
+-    input_type = 'file'
+-    needs_multipart_form = True
+-    template_name = 'django/forms/widgets/file.html'
++class FileInput(Input):
++    input_type = 'file'
++    needs_multipart_form = True
++    template_name = 'django/forms/widgets/file.html'
++
++    def use_required_attribute(self, initial):
++        return False if initial else super().use_required_attribute(initial)

@@ -1,0 +1,71 @@
+--- a/tests/test_auth_backends.py
++++ b/tests/test_auth_backends.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.contrib.auth.backends import ModelBackend
++from django.contrib.auth.models import User
++from django.db.models import QuerySet
++
++@pytest.fixture
++def user():
++    return User.objects.create_user(username='testuser', password='testpassword')
++
++@pytest.mark.django_db
++def test_authenticate_with_username_and_password(user):
++    backend = ModelBackend()
++    authenticated_user = backend.authenticate(request=None, username='testuser', password='testpassword')
++    assert authenticated_user == user
++
++@pytest.mark.django_db
++def test_authenticate_with_none_username():
++    backend = ModelBackend()
++    authenticated_user = backend.authenticate(request=None, username=None, password='testpassword')
++    assert authenticated_user is None
++
++@pytest.mark.django_db
++def test_authenticate_with_none_password(user):
++    backend = ModelBackend()
++    authenticated_user = backend.authenticate(request=None, username='testuser', password=None)
++    assert authenticated_user is None
++
++@pytest.mark.django_db
++def test_authenticate_db_query(user):
++    backend = ModelBackend()
++    with pytest.raises(AssertionError):
++        assert QuerySet()._has_seen_descriptor
++
++    # Test that no database query is made when username or password is None
++    backend.authenticate(request=None, username=None, password='testpassword')
++    backend.authenticate(request=None, username='testuser', password=None)
++
++    # Test that a database query is made when both username and password are provided
++    backend.authenticate(request=None, username='testuser', password='testpassword')
+
+--- a/django/contrib/auth/backends.py
++++ b/django/contrib/auth/backends.py
+-def authenticate(self, request, username=None, password=None, **kwargs):
+-    if username is None:
+-        username = kwargs.get(UserModel.USERNAME_FIELD)
+-    try:
+-        user = UserModel._default_manager.get_by_natural_key(username)
+-    except UserModel.DoesNotExist:
+-        # Run the default password hasher once to reduce the timing
+-        # difference between an existing and a nonexistent user (#20760).
+-        UserModel().set_password(password)
+-    else:
+-        if user.check_password(password) and self.user_can_authenticate(user):
+-            return user
++def authenticate(self, request, username=None, password=None, **kwargs):
++    if username is None or password is None:
++        return
++    if username is None:
++        username = kwargs.get(UserModel.USERNAME_FIELD)
++    try:
++        user = UserModel._default_manager.get_by_natural_key(username)
++    except UserModel.DoesNotExist:
++        # Run the default password hasher once to reduce the timing
++        # difference between an existing and a nonexistent user (#20760).
++        UserModel().set_password(password)
++    else:
++        if user.check_password(password) and self.user_can_authenticate(user):
++            return user

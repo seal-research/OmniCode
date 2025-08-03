@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/axes/_base.py b/lib/matplotlib/axes/_base.py\nindex da2dea6f57..5fef7afe56 100644\n--- a/lib/matplotlib/axes/_base.py\n+++ b/lib/matplotlib/axes/_base.py\n@@ -3639,6 +3639,9 @@ class _AxesBase(martist.Artist):\n                     'log-scaled axis.\\n'\n                     'Invalid limit will be ignored.')\n                 top = old_top\n+            # Adjust for inversion\n+            if bottom > top:\n+                bottom, top = top, bottom\n         if bottom == top:\n             cbook._warn_external(\n                 f\"Attempting to set identical bottom == top == {bottom} \"\n"
+}

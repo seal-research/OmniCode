@@ -1,0 +1,30 @@
+--- a/tests/test_orm.py
++++ b/tests/test_orm.py
+-# Original code here
++import pytest
++from django.db import models
++from django.db.models import Prefetch
++
++class User(models.Model):
++    email = models.EmailField()
++    kind = models.CharField(max_length=10, choices=[("ADMIN", "Admin"), ("REGULAR", "Regular")])
++
++class Profile(models.Model):
++    full_name = models.CharField(max_length=255)
++    user = models.OneToOneField(User, on_delete=models.CASCADE)
++
++def test_only_related_queryset():
++    user = User.objects.create(email="test@example.com", kind="ADMIN")
++    Profile.objects.create(user=user, full_name="Test Tester")
++    queryset = User.objects.only("email").prefetch_related(
++        Prefetch(
++            "profile",
++            queryset=Profile.objects.prefetch_related(
++                Prefetch("user", queryset=User.objects.only("kind"))
++            ),
++        )
++    )
++    with pytest.assertNumQueries(3):
++        user = queryset.first()
++    with pytest.assertNumQueries(0):
++        assert user.profile.user.kind == "ADMIN"

@@ -1,0 +1,38 @@
+--- a/tests/test_tensorproduct.py
++++ b/tests/test_tensorproduct.py
+-# Empty if creating new file
++import pytest
++from sympy import Symbol, Integer
++from sympy.physics.quantum import TensorProduct as tp
++from sympy.physics.quantum import tensor_product_simp as tps
++
++def test_tensor_product_simp_power():
++    """Test tensor_product_simp with powers of TensorProduct."""
++    a = Symbol('a', commutative=False)
++    t1 = tp(1,1)*tp(1,1)
++    assert tps(t1) == tp(1,1**2)
++    assert tps(tp(1,1)*tp(1,a)).subs(a, 1) == tp(1,1)
++
++    t2 = tp(1,tp(1,1))*tp(1,tp(1,1))
++    assert tps(t2) == tp(1,tp(1,1**2))
++    assert tps(tp(1,tp(1,1))*tp(1,tp(1,a))).subs(a, 1) == tp(1,tp(1,1))
++
++def test_tensor_product_expand_power():
++    """Test expand with powers of TensorProduct."""
++    t1 = tp(1,1)*tp(1,1)
++    assert t1.expand(tensorproduct=True) == tp(1,1**2)
++    assert t1.expand(tensorproduct=True).subs(1, 1) == tp(1,1)
++
++    t2 = tp(1,tp(1,1))*tp(1,tp(1,1))
++    assert t2.expand(tensorproduct=True) == tp(1,tp(1,1**2))
++    assert t2.expand(tensorproduct=True).subs(1, 1) == tp(1,tp(1,1))
++
++def test_tensor_product_power():
++    """Test TensorProduct with powers."""
++    t1 = tp(1,1)**2
++    assert t1 == tp(1,1)*tp(1,1)
++    assert tps(t1) == tp(1,1**2)
++
++    t2 = tp(1,tp(1,1))**2
++    assert t2 == tp(1,tp(1,1))*tp(1,tp(1,1))
++    assert tps(t2) == tp(1,tp(1,1**2))

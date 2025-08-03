@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/utilities/lambdify.py b/sympy/utilities/lambdify.py\nindex da67263b19..0d6bd806df 100644\n--- a/sympy/utilities/lambdify.py\n+++ b/sympy/utilities/lambdify.py\n@@ -544,7 +544,7 @@ def sin_cos(x):\n \n         # sin_cos_numpy.py\n \n-        from numpy import sin, cos\n+        import importlib\n \n         def sin_cos(x):\n             return sin(x) + cos(x)\n"
+}

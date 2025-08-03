@@ -1,0 +1,55 @@
+--- a/tests/test_views_debug.py
++++ b/tests/test_views_debug.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.views.debug import ExceptionReporter
++from django.test import RequestFactory
++
++@pytest.fixture
++def request():
++ return RequestFactory().get('/')
++
++def test_explicit_cause():
++ exc = Exception('explicit cause')
++ try:
++ raise Exception('outer exception') from exc
++ except Exception as e:
++ reporter = ExceptionReporter(None, type(e), e, e.__traceback__)
++ frames = reporter.get_traceback_frames()
++ assert len(frames) > 0
++ frame = frames[0]
++ assert frame['exc_cause'] == exc
++
++def test_implicit_cause():
++ exc = Exception('implicit cause')
++ try:
++ raise Exception('outer exception')
++ except Exception as e:
++ exc.__context__ = exc
++ reporter = ExceptionReporter(None, type(e), e, e.__traceback__)
++ frames = reporter.get_traceback_frames()
++ assert len(frames) > 0
++ frame = frames[0]
++ assert frame['exc_cause'] == exc
++
++def test_suppress_context():
++ exc = Exception('suppressed cause')
++ try:
++ raise Exception('outer exception')
++ except Exception as e:
++ e.__suppress_context__ = True
++ reporter = ExceptionReporter(None, type(e), e, e.__traceback__)
++ frames = reporter.get_traceback_frames()
++ assert len(frames) > 0
++ frame = frames[0]
++ assert frame['exc_cause'] is None
++
++def test_no_cause():
++ try:
++ raise Exception('no cause')
++ except Exception as e:
++ reporter = ExceptionReporter(None, type(e), e, e.__traceback__)
++ frames = reporter.get_traceback_frames()
++ assert len(frames) > 0
++ frame = frames[0]
++ assert frame['exc_cause'] is None

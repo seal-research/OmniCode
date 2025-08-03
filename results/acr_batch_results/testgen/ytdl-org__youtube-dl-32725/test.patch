@@ -1,0 +1,52 @@
+--- a/tests/test_extractor_filemoon.py
++++ b/tests/test_extractor_filemoon.py
+-# Empty if creating new file
++import pytest
++from youtube_dl.extractor.filemoon import FileMoonIE
++
++@pytest.fixture
++def filemoon_ie():
++ return FileMoonIE()
++
++def test_extraction(filemoon_ie):
++ url = "https://filemoon.sx/d/dylsgj1mbwn5/video_2024-01-28_02-44-36.mp4"
++ info = filemoon_ie.extract_info(url, download=False)
++ assert info['id'] == 'dylsgj1mbwn5'
++ assert 'formats' in info
++
++def test_empty_packed_code(filemoon_ie):
++ # Simulate an empty packed code
++ packed_code = ""
++ with pytest.raises(Exception):
++ filemoon_ie._real_extract(packed_code)
++
++def test_malformed_packed_code(filemoon_ie):
++ # Simulate a malformed packed code
++ packed_code = "Invalid code"
++ with pytest.raises(Exception):
++ filemoon_ie._real_extract(packed_code)
++
++def test_jwplayer_sources(filemoon_ie):
++ # Test different types of jwplayer sources
++ sources = [
++ # Add different source types here
++ ]
++ for source in sources:
++ # Test extraction for each source type
++ pass
+
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+-# Empty if creating new file
++import pytest
++from youtube_dl.utils import decode_packed_codes, js_to_json
++
++def test_decode_packed_codes():
++ code = "example packed code"
++ unpacked = decode_packed_codes(code)
++ assert unpacked is not None
++
++def test_js_to_json():
++ code = "example js code"
++ json_output = js_to_json(code)
++ assert json_output is not None

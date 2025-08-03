@@ -1,0 +1,40 @@
+--- a/testing/test_skipping.py
++++ b/testing/test_skipping.py
+-# Original code here (if modifying existing file)
++import pytest
++
++def test_skip_location_report():
++    # Test that skip location points to the item itself
++    @pytest.mark.skip
++    def test_skip_location():
++        assert 0
++
++    result = pytest.runpytest("-rs")
++    assert "SKIPPED [1] test_it.py:3: unconditional skip" in result.stdout
++
++def test_runxfail_skip_location_report():
++    # Test that skip location still points to the item with --runxfail
++    @pytest.mark.skip
++    def test_skip_location_runxfail():
++        assert 0
++
++    result = pytest.runpytest("--runxfail", "-rs")
++    assert "SKIPPED [1] test_it.py:3: unconditional skip" in result.stdout
++
++def test_xfail_location_report():
++    # Test xfail reports correctly
++    @pytest.mark.xfail
++    def test_xfail_location():
++        assert 1 == 0
++
++    result = pytest.runpytest("-rs")
++    assert "xfail: reason: None" in result.stdout
++
++def test_runxfail_xfail_location_report():
++    # Test that --runxfail does not interfere with xfail reporting
++    @pytest.mark.xfail
++    def test_xfail_location_runxfail():
++        assert 1 == 0
++
++    result = pytest.runpytest("--runxfail", "-rs")
++    assert "xfail: reason: None" in result.stdout

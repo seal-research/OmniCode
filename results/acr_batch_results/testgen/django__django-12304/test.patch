@@ -1,0 +1,24 @@
+--- a/tests/test_enums.py
++++ b/tests/test_enums.py
+-# Empty if creating new file
++import pytest
++from django.db.models import IntegerChoices
++
++def test_enum_usage_in_template():
++    class TestEnum(IntegerChoices):
++        A = 1
++    template = "{% if test == TestEnum.A %}"
++    # Your test implementation here
++    pass
+
+--- a/tests/test_template.py
++++ b/tests/test_template.py
+-# Empty if creating new file
++import pytest
++from django.template import Context, Template
++
++def test_template_rendering_with_enum():
++    template = Template("{% if my_enum == MyEnum.A %}")
++    context = Context({"my_enum": MyEnum.A})
++    # Your test implementation here
++    pass

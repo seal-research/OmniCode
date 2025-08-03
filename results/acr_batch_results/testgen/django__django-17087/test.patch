@@ -1,0 +1,53 @@
+--- a/tests/test_models.py
++++ b/tests/test_models.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.contrib.postgres.fields import ArrayField
++from django.contrib.postgres import lookups
++
++class Profile(models.Model):
++    class Capability(models.TextChoices):
++        BASIC = ("BASIC", "Basic")
++        PROFESSIONAL = ("PROFESSIONAL", "Professional")
++
++        @classmethod
++        def default(cls) -> list[str]:
++            return [cls.BASIC]
++
++    capabilities = ArrayField(
++        models.CharField(choices=Capability.choices, max_length=30, blank=True),
++        null=True,
++        default=Capability.default
++    )
++
++def test_capability_default():
++    profile = Profile()
++    assert profile.capabilities == [Profile.Capability.BASIC]
++
++def test_migration_default():
++    # Test that the default is correctly serialized in migrations
++    # This test might require a test database and a migration
++    pass
++
++def test_capability_choices():
++    assert Profile.Capability.choices == [('BASIC', 'Basic'), ('PROFESSIONAL', 'Professional')]
++
++def test_capability_default_value():
++    assert Profile.Capability.default() == ['BASIC']
++
++def test_profile_capabilities_default():
++    profile = Profile()
++    assert profile.capabilities is not None
++    assert profile.capabilities == [Profile.Capability.BASIC]
+
+--- a/tests/test_migrations.py
++++ b/tests/test_migrations.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations
++
++@pytest.mark.skip("Implement test for migration default serialization")
++def test_migration_default_serialization():
++    # Test that the default is correctly serialized in migrations
++    pass

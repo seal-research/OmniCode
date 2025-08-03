@@ -1,0 +1,37 @@
+--- a/tests/test_iterables.py
++++ b/tests/test_iterables.py
+-# Original code here (if modifying existing file)
++import pytest
++from sympy.utilities.iterables import partitions
++
++def test_partitions_reuse_dict():
++    """Test that partitions does not reuse the dictionary object."""
++    dicts = []
++    for p in partitions(6, k=2):
++        dicts.append(p)
++    assert len(dicts) == len(set(tuple(sorted(d.items())) for d in dicts))
++
++def test_partitions_copy():
++    """Test that copying partitions works as expected."""
++    original = next(iter(partitions(6, k=2)))
++    copied = original.copy()
++    original[1] = 10
++    assert copied[1] == 1
++
++def test_partitions_size():
++    """Test that partitions with size=True returns correct multiplicities and partitions."""
++    for M, p in partitions(6, k=2, size=True):
++        assert M == sum(p.values())
++
++def test_partitions_limits():
++    """Test that limits (m, k) are applied correctly."""
++    assert list(partitions(6, m=1)) == [{6: 1}]
++    assert list(partitions(6, k=1)) == [{6: 1}]
++
++def test_partitions_empty():
++    """Test that an empty set is returned for invalid inputs."""
++    assert list(partitions(0)) == [{}]
++
++def test_partitions_default():
++    """Test that default values are used correctly."""
++    assert list(partitions(6))  # Just checks that it runs without error

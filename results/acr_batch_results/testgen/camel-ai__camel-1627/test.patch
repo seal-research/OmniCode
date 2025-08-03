@@ -1,0 +1,106 @@
+--- a/tests/test_instruction_filter.py
++++ b/tests/test_instruction_filter.py
+-# Empty if creating new file
++import pytest
++from camel.datagen.self_instruct.filter.instruction_filter import InstructionFilter
++from camel.datagen.self_instruct.filter.filter_function import FilterFunction, RewardModelFilter
++
++def test_filter_passing_instruction():
++ # Create a filter that always passes
++ class AlwaysPassFilter(FilterFunction):
++ def apply(self, instruction: str) -> bool:
++ return True
++
++ # Create an InstructionFilter with the always-pass filter
++ filter = InstructionFilter({"always_pass": {}})
++ filter.add_filter(AlwaysPassFilter())
++
++ # Test that the filter passes
++ assert filter.filter("prompt", "instruction") == True
++
++def test_filter_failing_instruction():
++ # Create a filter that always fails
++ class AlwaysFailFilter(FilterFunction):
++ def apply(self, instruction: str) -> bool:
++ return False
++
++ # Create an InstructionFilter with the always-fail filter
++ filter = InstructionFilter({"always_fail": {}})
++ filter.add_filter(AlwaysFailFilter())
++
++ # Test that the filter fails
++ assert filter.filter("prompt", "instruction") == False
++
++def test_filter_with_return_details():
++ # Create a filter that always fails
++ class AlwaysFailFilter(FilterFunction):
++ def apply(self, instruction: str) -> bool:
++ return False
++
++ # Create an InstructionFilter with the always-fail filter
++ filter = InstructionFilter({"always_fail": {}})
++ filter.add_filter(AlwaysFailFilter())
++
++ # Test that the filter fails with return details
++ passed, failed_filters = filter.filter("prompt", "instruction", return_details=True)
++ assert passed == False
++ assert len(failed_filters) == 1
++ assert failed_filters[0] == "AlwaysFailFilter"
++
++def test_filter_with_multiple_filters():
++ # Create filters that pass and fail
++ class PassFilter(FilterFunction):
++ def apply(self, instruction: str) -> bool:
++ return True
++
++ class FailFilter(FilterFunction):
++ def apply(self, instruction: str) -> bool:
++ return False
++
++ # Create an InstructionFilter with the filters
++ filter = InstructionFilter({"pass": {}, "fail": {}})
++ filter.add_filter(PassFilter())
++ filter.add_filter(FailFilter())
++
++ # Test that the filter fails
++ assert filter.filter("prompt", "instruction") == False
++
++def test_filter_with_reward_model_filter():
++ # Create a RewardModelFilter
++ class TestRewardModelFilter(RewardModelFilter):
++ def apply(self, instruction: str) -> bool:
++ return True
++
++ # Create an InstructionFilter with the RewardModelFilter
++ filter = InstructionFilter({"reward_model": {}})
++ filter.add_filter(TestRewardModelFilter())
++
++ # Test that the filter passes
++ assert filter.filter("prompt", "instruction") == True
++
++def test_filter_type_hints():
++ filter = InstructionFilter({})
++ assert filter.filter("prompt", "instruction", return_details=False) == True
++ assert filter.filter("prompt", "instruction", return_details=True) == (True, [])
+
+--- a/tests/test_instruction_filter_patch.py
++++ b/tests/test_instruction_filter_patch.py
+-# Empty if creating new file
++import pytest
++from camel.datagen.self_instruct.filter.instruction_filter import InstructionFilter
++
++def test_filter_patch():
++ filter = InstructionFilter({})
++ # Test the filter method
++ assert filter.filter("prompt", "instruction") == True
++
++ # Test the filter method with return details
++ passed, failed_filters = filter.filter("prompt", "instruction", return_details=True)
++ assert passed == True
++ assert len(failed_filters) == 0
++
++ # Test type hints
++ try:
++ filter.filter("prompt", "instruction")
++except:
++ pytest.fail("filter method type hints are incorrect")

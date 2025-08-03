@@ -1,0 +1,65 @@
+--- a/tests/test_inspectdb.py
++++ b/tests/test_inspectdb.py
+-# Empty if creating new file
++import pytest
++from django.core.management import call_command
++from django.db import connections
++from django.test import TestCase
++
++@pytest.mark.django_db
++def test_inspectdb_foreign_key_specific_field():
++    # Create a test database schema
++    with connections['default'].cursor() as cursor:
++        cursor.execute("""
++            CREATE TABLE foo (
++                id SERIAL PRIMARY KEY,
++                other_id INT UNIQUE
++            );
++        """)
++        cursor.execute("""
++            CREATE TABLE bar (
++                id SERIAL PRIMARY KEY,
++                other_id INT,
++                CONSTRAINT myconst
++                FOREIGN KEY(other_id) REFERENCES foo(other_id)
++            );
++        """)
++
++    # Run inspectdb to generate the models
++    output = call_command('inspectdb', database='default', stdout=None)
++
++    # Check if the generated model for bar has a ForeignKey to foo(other_id)
++    assert 'ForeignKey("foo", to_field="other_id"' in output
++
++def test_inspectdb_foreign_key_primary_key():
++    # Create a test database schema
++    with connections['default'].cursor() as cursor:
++        cursor.execute("""
++            CREATE TABLE foo (
++                id SERIAL PRIMARY KEY,
++                other_id INT UNIQUE
++            );
++        """)
++        cursor.execute("""
++            CREATE TABLE bar (
++                id SERIAL PRIMARY KEY,
++                other_id INT,
++                CONSTRAINT myconst
++                FOREIGN KEY(other_id) REFERENCES foo(id)
++            );
++        """)
++
++    # Run inspectdb to generate the models
++    output = call_command('inspectdb', database='default', stdout=None)
++
++    # Check if the generated model for bar has a ForeignKey to foo
++    assert 'ForeignKey("foo")' in output
++
++class TestInspectDB(TestCase):
++    def test_handle_inspection(self):
++        # Test handle_inspection method
++        pass
++
++    def test_get_relations(self):
++        # Test get_relations method
++        pass

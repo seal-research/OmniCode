@@ -1,0 +1,47 @@
+--- a/tests/test_admin.py
++++ b/tests/test_admin.py
+-# If the file exists, leave it empty
++import pytest
++from django.contrib.admin import ModelAdmin
++from django.contrib.admin.views import main
++from django.db import models
++from django.test import RequestFactory
++
++@pytest.fixture
++def request():
++    return RequestFactory().get('/')
++
++@pytest.fixture
++def model_admin():
++    class MyModel(models.Model):
++        myfield = models.ForeignKey('self', on_delete=models.CASCADE, blank=True, null=True)
++
++    class MyModelAdmin(ModelAdmin):
++        radio_fields = ('myfield',)
++
++    return MyModelAdmin(MyModel, None)
++
++def test_formfield_for_foreignkey_empty_label(model_admin, request):
++    # Test that empty_label is set to _("None") by default when db_field.blank is True
++    db_field = model_admin.model._meta.get_field('myfield')
++    formfield = model_admin.formfield_for_foreignkey(db_field, request)
++    assert formfield.empty_label == _("None")
++
++def test_formfield_for_foreignkey_user_defined_empty_label(model_admin, request):
++    # Test that user-defined empty_label is respected when radio_fields is defined
++    db_field = model_admin.model._meta.get_field('myfield')
++    formfield = model_admin.formfield_for_foreignkey(db_field, request, empty_label="Custom empty label")
++    assert formfield.empty_label == "Custom empty label"
++
++def test_formfield_for_foreignkey_not_blank(model_admin, request):
++    # Test behavior when db_field.blank is False
++    class MyModelNotBlank(models.Model):
++        myfield = models.ForeignKey('self', on_delete=models.CASCADE)
++
++    class MyModelAdminNotBlank(ModelAdmin):
++        radio_fields = ('myfield',)
++
++    model_admin_not_blank = MyModelAdminNotBlank(MyModelNotBlank, None)
++    db_field = model_admin_not_blank.model._meta.get_field('myfield')
++    formfield = model_admin_not_blank.formfield_for_foreignkey(db_field, request)
++    assert formfield.empty_label is None

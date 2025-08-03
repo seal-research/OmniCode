@@ -1,0 +1,71 @@
+--- a/tests/test_admin.py
++++ b/tests/test_admin.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.contrib.admin import AdminSite
++from django.contrib.auth.models import Permission, User
++from django.test import TestCase
++from .models import Photo, Report
++
++class TestInlinePermissions(TestCase):
++    def setUp(self):
++        self.site = AdminSite()
++        self.user = User.objects.create_user(
++            username='testuser', email='test@example.com', password='test'
++        )
++        self.permission_view = Permission.objects.get(codename='view_report')
++        self.user.user_permissions.add(self.permission_view)
++        self.report = Report.objects.create(name='Test Report')
++
++    def test_has_add_permission(self):
++        # Test that has_add_permission returns False with view-only permission
++        request = self.factory.get('/admin/')
++        request.user = self.user
++        inline = ReportPhotoInlineModelAdmin(self.site)
++        self.assertFalse(inline.has_add_permission(request, self.report))
++
++    def test_has_change_permission(self):
++        # Test that has_change_permission returns False with view-only permission
++        request = self.factory.get('/admin/')
++        request.user = self.user
++        inline = ReportPhotoInlineModelAdmin(self.site)
++        self.assertFalse(inline.has_change_permission(request, self.report))
++
++    def test_has_delete_permission(self):
++        # Test that has_delete_permission returns False with view-only permission
++        request = self.factory.get('/admin/')
++        request.user = self.user
++        inline = ReportPhotoInlineModelAdmin(self.site)
++        self.assertFalse(inline.has_delete_permission(request, self.report))
+
+--- a/tests/test_models.py
++++ b/tests/test_models.py
+-# Original code here (if modifying existing file)
++from django.db import models
++
++class Photo(models.Model):
++    pass
++
++class Report(models.Model):
++    photos = models.ManyToManyField(Photo)
+
+--- a/admin.py
++++ b/admin.py
+-# Original code here (if modifying existing file)
++from django.contrib import admin
++from .models import Report, Photo
++
++class ReportPhotoInlineModelAdmin(admin.TabularInline):
++    model = Report.photos.through
++
++    def has_add_permission(self, request, obj):
++        # Check for add permission
++        return request.user.has_perm('yourapp.add_report')
++
++    def has_change_permission(self, request, obj):
++        # Check for change permission
++        return request.user.has_perm('yourapp.change_report')
++
++    def has_delete_permission(self, request, obj):
++        # Check for delete permission
++        return request.user.has_perm('yourapp.delete_report')

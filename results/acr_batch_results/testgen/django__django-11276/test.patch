@@ -1,0 +1,33 @@
+--- a/tests/test_utils_html.py
++++ b/tests/test_utils_html.py
+-# Original tests, if any
++import pytest
++from django.utils.html import escape
++import html
++
++@pytest.mark.parametrize("input_string,expected_output", [
++    ("&", "&amp;"),
++    ("<", "&lt;"),
++    (">", "&gt;"),
++    ("\"", "&quot;"),
++    ("'", "&#x27;"),
++    ("Hello, World!", "Hello, World!"),
++])
++def test_escape_function(input_string, expected_output):
++    assert escape(input_string) == expected_output
++
++def test_escape_unicode_input():
++    unicode_string = "hällo"
++    assert escape(unicode_string) == html.escape(unicode_string)
++
++def test_escape_safe_output():
++    escaped_string = escape("<script>alert('XSS')</script>")
++    assert escaped_string == "&lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;"
++
++def test_escape_double_escaping():
++    already_escaped_string = "&lt;script&gt;alert(&#x27;XSS&#x27;)&lt;/script&gt;"
++    assert escape(already_escaped_string) == "&amp;lt;script&amp;gt;alert(&#x27;XSS&#x27;)&amp;lt;/script&amp;gt;"
++
++def test_escape_non_string_input():
++    assert escape(123) == "123"
++    assert escape(None) == "None"

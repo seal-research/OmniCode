@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/functions/elementary/miscellaneous.py b/sympy/functions/elementary/miscellaneous.py\nindex 5f9fe73c5c..c4f1ab52a7 100644\n--- a/sympy/functions/elementary/miscellaneous.py\n+++ b/sympy/functions/elementary/miscellaneous.py\n@@ -46,6 +46,8 @@ class IdentityFunction(with_metaclass(Singleton, Lambda)):\n \n     \"\"\"\n \n+    __slots__ = ('nargs',)\n+\n     def __new__(cls):\n         from sympy.sets.sets import FiniteSet\n         x = Dummy('x')\n"
+}

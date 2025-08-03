@@ -1,0 +1,52 @@
+--- a/tests/test_table.py
++++ b/tests/test_table.py
+-# Original code here (if modifying existing file)
++import pytest
++import numpy as np
++from astropy.table import Table, Column
++from astropy import warnings
++
++def test_structured_ndarray_to_column():
++    # Create a structured ndarray
++    data = np.array([(1, 2.), (3, 4.)], dtype=[('a', int), ('b', float)])
++
++    # Add it to a table
++    table = Table(data)
++
++    # Check that it was added as a Column
++    assert isinstance(table['a'], Column)
++    assert isinstance(table['b'], Column)
++
++def test_structured_ndarray_to_ndarray_mixin_warning():
++    # Create a structured ndarray
++    data = np.array([(1, 2.), (3, 4.)], dtype=[('a', int), ('b', float)])
++
++    # Capture the warning
++    with warnings.catch_warnings(record=True) as w:
++        Table(data)
++
++    # Check that the warning was raised
++    assert len(w) == 1
++    assert issubclass(w[0].category, FutureWarning)
++    assert "Structured arrays will be added as Column instances" in str(w[0].message)
++
++def test_homogeneous_ndarray_to_column():
++    # Create a homogeneous ndarray
++    data = np.array([1, 2, 3])
++
++    # Add it to a table
++    table = Table(data)
++
++    # Check that it was added as a Column
++    assert isinstance(table[0], Column)
++
++def test_ndarray_to_column_no_warning():
++    # Create a ndarray
++    data = np.array([1, 2, 3])
++
++    # Capture the warning
++    with warnings.catch_warnings(record=True) as w:
++        Table(data)
++
++    # Check that no warning was raised
++    assert len(w) == 0

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/printing/pycode.py b/sympy/printing/pycode.py\nindex 3a72ab606c..7d5ca243df 100644\n--- a/sympy/printing/pycode.py\n+++ b/sympy/printing/pycode.py\n@@ -470,6 +470,12 @@ def _print_Symbol(self, expr):\n     _print_fresnelc = CodePrinter._print_not_supported\n     _print_fresnels = CodePrinter._print_not_supported\n \n+    def _print_Min(self, expr):\n+        return \"min({})\".format(\", \".join(self._print(arg) for arg in expr.args))\n+\n+    def _print_Max(self, expr):\n+        return \"max({})\".format(\", \".join(self._print(arg) for arg in expr.args))\n+\n \n for k in PythonCodePrinter._kf:\n     setattr(PythonCodePrinter, '_print_%s' % k, _print_known_func)\n"
+}

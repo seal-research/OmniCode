@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/extensions/postprocessing.py b/scrapy/extensions/postprocessing.py\nindex 79e3b1656..87bacc99e 100644\n--- a/scrapy/extensions/postprocessing.py\n+++ b/scrapy/extensions/postprocessing.py\n@@ -149,6 +149,9 @@ class PostProcessingManager(IOBase):\n     def tell(self) -> int:\n         return self.file.tell()\n \n+    def seek(self, offset, whence=0):\n+        return self.file.seek(offset, whence)\n+\n     def close(self) -> None:\n         \"\"\"\n         Close the target file along with all the plugins.\n"
+}

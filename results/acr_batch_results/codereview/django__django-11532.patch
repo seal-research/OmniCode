@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/mail/utils.py b/django/core/mail/utils.py\nindex d18dfe4667..9276fba24f 100644\n--- a/django/core/mail/utils.py\n+++ b/django/core/mail/utils.py\n@@ -3,6 +3,7 @@ Email message and email sending related helper functions.\n \"\"\"\n \n import socket\n+import idna\n \n \n # Cache the hostname, but do it lazily: socket.getfqdn() can take a couple of\n@@ -13,7 +14,7 @@ class CachedDnsName:\n \n     def get_fqdn(self):\n         if not hasattr(self, '_fqdn'):\n-            self._fqdn = socket.getfqdn()\n+            self._fqdn = idna.encode(socket.getfqdn()).decode('ascii')\n         return self._fqdn\n \n \n"
+}

@@ -1,0 +1,47 @@
+--- a/tests/test_database_operations.py
++++ b/tests/test_database_operations.py
+-# Empty if creating new file
++import pytest
++from django.db import connections
++from django.db.backends.base.operations import BaseDatabaseOperations
++
++@pytest.fixture
++def connection():
++    return connections['default']
++
++def test_execute_sql_flush_signature(connection):
++    """Test that execute_sql_flush has the correct signature."""
++    ops = BaseDatabaseOperations(connection=connection)
++    assert hasattr(ops, 'execute_sql_flush')
++
++def test_execute_sql_flush_inference(connection):
++    """Test that execute_sql_flush infers the using argument."""
++    ops = BaseDatabaseOperations(connection=connection)
++    sql_list = ["SELECT * FROM my_table"]
++    # Mock the cursor execution to verify the SQL is executed correctly
++    with pytest.mock.patch.object(connection.cursor(), 'execute') as mock_execute:
++        ops.execute_sql_flush(sql_list)
++        mock_execute.assert_called_once()
++
++def test_execute_sql_flush_calls_atomic(connection):
++    """Test that execute_sql_flush calls atomic with the correct using argument."""
++    ops = BaseDatabaseOperations(connection=connection)
++    sql_list = ["SELECT * FROM my_table"]
++    # Verify that atomic is called with the correct using argument
++    with pytest.mock.patch('django.db.transaction.atomic') as mock_atomic:
++        ops.execute_sql_flush(sql_list)
++        mock_atomic.assert_called_once_with(using=connection.alias, savepoint=connection.features.can_rollback_ddl)
++
++def test_sql_flush_with_reset_sequences(connection):
++    """Test sql_flush with reset_sequences=True."""
++    ops = BaseDatabaseOperations(connection=connection)
++    tables = ['my_table']
++    sql = ops.sql_flush(style=None, tables=tables, reset_sequences=True)
++    assert len(sql) > 0
++
++def test_sql_flush_without_reset_sequences(connection):
++    """Test sql_flush with reset_sequences=False."""
++    ops = BaseDatabaseOperations(connection=connection)
++    tables = ['my_table']
++    sql = ops.sql_flush(style=None, tables=tables, reset_sequences=False)
++    assert len(sql) > 0

@@ -1,0 +1,44 @@
+--- a/tests/test_forms.py
++++ b/tests/test_forms.py
+-# Empty if creating new file
++import pytest
++from django.contrib.auth.forms import UserChangeForm, ReadOnlyPasswordHashField
++from django.contrib.auth.models import User
++
++@pytest.fixture
++def user():
++    return User.objects.create_user(username='testuser', password='testpassword')
++
++def test_read_only_password_hash_field_is_read_only():
++    field = ReadOnlyPasswordHashField()
++    assert field.disabled
++
++def test_user_change_form_clean_password_not_necessary(user):
++    form = UserChangeForm(instance=user)
++    assert form.is_valid()
++    assert form.cleaned_data['password'] == user.password
++
++def test_user_change_form_password_not_provided(user):
++    form = UserChangeForm(instance=user, data={})
++    assert form.is_valid()
++    assert form.cleaned_data['password'] == user.password
++
++def test_user_change_form_password_provided(user):
++    form = UserChangeForm(instance=user, data={'password': 'newpassword'})
++    assert form.is_valid()
++    assert form.cleaned_data['password'] == user.password
++
++def test_read_only_password_hash_field_has_changed():
++    field = ReadOnlyPasswordHashField()
++    assert not field.has_changed('initial_value', 'initial_value')
++    assert not field.has_changed('initial_value', 'different_value')
+
+--- a/tests/test_fields.py
++++ b/tests/test_fields.py
+-# Empty if creating new file
++import pytest
++from django.contrib.auth.forms import ReadOnlyPasswordHashField
++
++def test_read_only_password_hash_field_bound_data():
++    field = ReadOnlyPasswordHashField()
++    assert field.bound_data('data', 'initial_value') == 'initial_value'

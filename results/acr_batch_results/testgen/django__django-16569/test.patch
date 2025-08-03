@@ -1,0 +1,55 @@
+--- a/tests/test_formsets.py
++++ b/tests/test_formsets.py
+-# Empty if creating new file
++import pytest
++from django import forms
++from django.forms import formset_factory
++
++@pytest.fixture
++def my_form():
++    class MyForm(forms.Form):
++        my_field = forms.CharField()
++    return MyForm
++
++@pytest.mark.parametrize("can_delete, can_delete_extra, index, expected_error", [
++    (True, False, None, None),
++    (True, True, None, None),
++    (False, False, None, None),
++    (False, True, None, None),
++    (True, False, 0, None),
++    (True, True, 0, None),
++    (False, False, 0, None),
++    (False, True, 0, None),
++])
++def test_add_fields(my_form, can_delete, can_delete_extra, index, expected_error):
++    MyFormSet = formset_factory(
++        form=my_form,
++        can_delete=can_delete,
++        can_delete_extra=can_delete_extra,
++    )
++    my_formset = MyFormSet(initial=None)
++    if expected_error:
++        with pytest.raises(expected_error):
++            my_formset.add_fields(index=index)
++    else:
++        my_formset.add_fields(index=index)
++
++def test_empty_form(my_form):
++    MyFormSet = formset_factory(
++        form=my_form,
++        can_delete=True,
++        can_delete_extra=False,
++    )
++    my_formset = MyFormSet(initial=None)
++    # This should not raise an error
++    my_formset.empty_form
++
++def test_add_fields_with_index(my_form):
++    MyFormSet = formset_factory(
++        form=my_form,
++        can_delete=True,
++        can_delete_extra=False,
++    )
++    my_formset = MyFormSet(initial=None)
++    # This should not raise an error
++    my_formset.add_fields(index=0)

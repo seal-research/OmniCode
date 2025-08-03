@@ -1,0 +1,67 @@
+--- a/tests/test_temporal_subtraction.py
++++ b/tests/test_temporal_subtraction.py
+-# Empty if creating new file
++import pytest
++from django.db.models import F, DateTimeField, DurationField
++from django.db.models.functions import ExpressionWrapper
++from .models import Experiment
++
++@pytest.mark.test_temporal_subtraction
++def test_temporal_subtraction_without_expression_wrapper():
++    """
++    Test that temporal subtraction works without ExpressionWrapper.
++    """
++    # Arrange
++    experiment = Experiment.objects.create(
++        start='2022-01-01 00:00:00',
++        end='2022-01-01 01:00:00'
++    )
++
++    # Act
++    delta = (experiment.end - experiment.start)
++
++    # Assert
++    assert isinstance(delta, DurationField)
++    assert delta == timedelta(hours=1)
++
++@pytest.mark.test_temporal_subtraction
++def test_temporal_subtraction_with_expression_wrapper():
++    """
++    Test that temporal subtraction works with ExpressionWrapper.
++    """
++    # Arrange
++    experiment = Experiment.objects.create(
++        start='2022-01-01 00:00:00',
++        end='2022-01-01 01:00:00'
++    )
++
++    # Act
++    delta = ExpressionWrapper(
++        experiment.end - experiment.start,
++        output_field=DurationField()
++    )
++
++    # Assert
++    assert isinstance(delta, DurationField)
++    assert delta == timedelta(hours=1)
++
++@pytest.mark.test_temporal_subtraction
++def test_temporal_subtraction_queryset():
++    """
++    Test that temporal subtraction works in a queryset.
++    """
++    # Arrange
++    Experiment.objects.create(
++        start='2022-01-01 00:00:00',
++        end='2022-01-01 01:00:00'
++    )
++
++    # Act
++    deltas = Experiment.objects.annotate(
++        delta=F('end') - F('start')
++    ).values_list('delta', flat=True)
++
++    # Assert
++    assert len(deltas) == 1
++    assert isinstance(deltas[0], timedelta)
++    assert deltas[0] == timedelta(hours=1)

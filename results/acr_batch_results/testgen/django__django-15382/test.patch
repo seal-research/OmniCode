@@ -1,0 +1,64 @@
+--- a/tests/test_queryset.py
++++ b/tests/test_queryset.py
+-# Original code here
++import pytest
++from django.db.models import Exists, Q
++from django.db.models.query import QuerySet
++
++@pytest.mark.django_db
++def test_exists_subquery_empty_queryset():
++    # Create a model
++    from django.db import models
++    class MyModel(models.Model):
++        name = models.CharField(max_length=255)
++
++    # Create an empty queryset
++    qs = MyModel.objects.none()
++
++    # Use ~Exists with an empty queryset
++    qs_filtered = MyModel.objects.filter(~Exists(qs))
++
++    # Check that the query has a WHERE clause
++    assert qs_filtered.query.where
++
++    # Check that the query is not empty
++    assert qs_filtered.count() == 0
++
++@pytest.mark.django_db
++def test_exists_subquery_empty_queryset_with_filter():
++    # Create a model
++    from django.db import models
++    class MyModel(models.Model):
++        name = models.CharField(max_length=255)
++
++    # Create an empty queryset
++    qs = MyModel.objects.none()
++
++    # Use ~Exists with an empty queryset and an additional filter
++    qs_filtered = MyModel.objects.filter(~Exists(qs), name='test')
++
++    # Check that the query has a WHERE clause
++    assert qs_filtered.query.where
++
++    # Check that the query is not empty
++    assert qs_filtered.count() == 0
++
++@pytest.mark.django_db
++def test_exists_subquery_non_empty_queryset():
++    # Create a model
++    from django.db import models
++    class MyModel(models.Model):
++        name = models.CharField(max_length=255)
++
++    # Create a non-empty queryset
++    MyModel.objects.create(name='test')
++    qs = MyModel.objects.all()
++
++    # Use ~Exists with a non-empty queryset
++    qs_filtered = MyModel.objects.filter(~Exists(qs))
++
++    # Check that the query has a WHERE clause
++    assert qs_filtered.query.where
++
++    # Check that the query is not empty
++    assert qs_filtered.count() > 0

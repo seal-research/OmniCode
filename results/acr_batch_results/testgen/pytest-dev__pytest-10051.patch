@@ -1,0 +1,6 @@
+{
+  "instance_id": "pytest-dev__pytest-10051",
+  "status": "success",
+  "patch_file": "../../results/acr_batch_results/testgen/pytest-dev__pytest-10051/test.patch",
+  "pred_file": "../../results/acr_batch_results/testgen/pytest-dev__pytest-10051/pytest-dev__pytest-10051.pred"
+}

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex 81f8f79c71..aa442b4daf 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -1218,7 +1218,9 @@ class Exists(Subquery):\n             query=query,\n             **extra_context,\n         )\n-        if self.negated:\n+        if self.negated and not sql:\n+            sql = '1 = 1'\n+        elif self.negated:\n             sql = 'NOT {}'.format(sql)\n         return sql, params\n \n"
+}

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/management/color.py b/django/core/management/color.py\nindex e409ecc5da..cf0041ab66 100644\n--- a/django/core/management/color.py\n+++ b/django/core/management/color.py\n@@ -61,7 +61,8 @@ def supports_color():\n \n \n class Style:\n-    pass\n+    MIGRATE_HEADING = \"Migrations for '%s':\"\n+    MIGRATE_LABEL = \"%s\"\n \n \n def make_style(config_string=\"\"):\n"
+}

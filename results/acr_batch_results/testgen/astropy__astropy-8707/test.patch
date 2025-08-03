@@ -1,0 +1,62 @@
+--- a/tests/test_header.py
++++ b/tests/test_header.py
+-# Original code here (if modifying existing file)
++import pytest
++from astropy.io.fits.header import Header
++from astropy.io.fits.card import Card
++
++def test_fromstring_unicode():
++    # Test that fromstring works with Unicode strings
++    data = "SIMPLE  =                    T"
++    header = Header.fromstring(data)
++    assert header["SIMPLE"].value == True
++
++def test_fromstring_bytes():
++    # Test that fromstring works with byte strings
++    data = b"SIMPLE  =                    T"
++    header = Header.fromstring(data)
++    assert header["SIMPLE"].value == True
++
++def test_fromstring_invalid_bytes():
++    # Test that fromstring raises an error with invalid byte strings
++    data = b"SIMPLE  =                    T\x00"
++    with pytest.raises(ValueError):
++        Header.fromstring(data)
++
++def test_fromfile_text_mode():
++    # Test that fromfile works with text mode
++    data = "SIMPLE  =                    T"
++    with open("test_header.txt", "w") as f:
++        f.write(data)
++    with open("test_header.txt", "r") as f:
++        header = Header.fromfile(f)
++    assert header["SIMPLE"].value == True
++
++def test_fromfile_binary_mode():
++    # Test that fromfile works with binary mode
++    data = b"SIMPLE  =                    T"
++    with open("test_header.bin", "wb") as f:
++        f.write(data)
++    with open("test_header.bin", "rb") as f:
++        header = Header.fromfile(f)
++    assert header["SIMPLE"].value == True
++
++def test_card_fromstring_unicode():
++    # Test that Card.fromstring works with Unicode strings
++    image = "SIMPLE  =                    T"
++    card = Card.fromstring(image)
++    assert card.keyword == "SIMPLE"
++    assert card.value == True
++
++def test_card_fromstring_bytes():
++    # Test that Card.fromstring works with byte strings
++    image = b"SIMPLE  =                    T"
++    card = Card.fromstring(image)
++    assert card.keyword == "SIMPLE"
++    assert card.value == True
++
++def test_card_fromstring_invalid_bytes():
++    # Test that Card.fromstring raises an error with invalid byte strings
++    image = b"SIMPLE  =                    T\x00"
++    with pytest.raises(ValueError):
++        Card.fromstring(image)

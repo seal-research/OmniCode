@@ -1,0 +1,47 @@
+--- a/tests/test_fields.py
++++ b/tests/test_fields.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import models
++from django.core.exceptions import ValidationError
++
++class ArticleManager(models.Manager):
++    def get_queryset(self):
++        return super().get_queryset().filter(archived=False)
++
++class Article(models.Model):
++    title = models.CharField(max_length=100)
++    archived = models.BooleanField(default=False)
++    objects = ArticleManager()
++
++class FavoriteArticle(models.Model):
++    article = models.ForeignKey(Article, on_delete=models.CASCADE)
++
++def test_foreign_key_validation_uses_base_manager():
++    # Create an archived article
++    archived_article = Article.objects.create(title='Archived Article', archived=True)
++
++    # Try to set the archived article as a favorite
++    favorite = FavoriteArticle()
++    with pytest.raises(ValidationError):
++        favorite.clean_fields()
++        favorite.article = archived_article
++        favorite.clean_fields()
++
++    # Validate that the base manager is used
++    qs = FavoriteArticle._meta.get_field('article').remote_field.model._meta.base_manager.all()
++    assert qs.filter(id=archived_article.id).exists()
++
++def test_foreign_key_validation_uses_default_manager():
++    # Create a non-archived article
++    non_archived_article = Article.objects.create(title='Non-Archived Article')
++
++    # Try to set the non-archived article as a favorite
++    favorite = FavoriteArticle()
++    favorite.clean_fields()
++    favorite.article = non_archived_article
++    favorite.clean_fields()
++
++    # Validate that the default manager is used
++    qs = FavoriteArticle._meta.get_field('article').remote_field.model.objects.all()
++    assert qs.filter(id=non_archived_article.id).exists()

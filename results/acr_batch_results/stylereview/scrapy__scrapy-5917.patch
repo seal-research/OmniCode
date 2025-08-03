@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/http/response/text.py b/scrapy/http/response/text.py\nindex 73bb811de..6ded29c45 100644\n--- a/scrapy/http/response/text.py\n+++ b/scrapy/http/response/text.py\n@@ -36,7 +36,7 @@ class TextResponse(Response):\n \n     def __init__(self, *args, **kwargs):\n         self._encoding = kwargs.pop(\"encoding\", None)\n-        self._cached_benc = None\n+        self._cached_decoded_json = _NONE\n         self._cached_ubody = None\n         self._cached_selector = None\n         super().__init__(*args, **kwargs)\n"
+}

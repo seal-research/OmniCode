@@ -1,0 +1,79 @@
+--- a/tests/test_json_field.py
++++ b/tests/test_json_field.py
++import pytest
++from django.db.models import JSONField, Model
++from django.test import TestCase
++
++class JsonFieldModel(Model):
++    data = JSONField()
++
++@pytest.mark.parametrize("key", ["string_key", 12345])
++def test_has_key_lookup(key):
++    JsonFieldModel.objects.create(data={"string_key": "value", 12345: "numeric_value"})
++    result = JsonFieldModel.objects.filter(data__has_key=key).count()
++    assert result == 1
++
++@pytest.mark.parametrize("keys", [["string_key"], [12345]])
++def test_has_keys_lookup(keys):
++    JsonFieldModel.objects.create(data={"string_key": "value", 12345: "numeric_value"})
++    result = JsonFieldModel.objects.filter(data__has_keys=keys).count()
++    assert result == 1
++
++@pytest.mark.parametrize("keys", [["string_key", 12345]])
++def test_has_any_keys_lookup(keys):
++    JsonFieldModel.objects.create(data={"string_key": "value", 12345: "numeric_value"})
++    result = JsonFieldModel.objects.filter(data__has_any_keys=keys).count()
++    assert result == 1
++
++def test_multiple_backends():
++    # Test on SQLite
++    connection = connections["default"]
++    connection.vendor = "sqlite"
++    # Your test implementation here
++
++    # Test on MySQL
++    connection.vendor = "mysql"
++    # Your test implementation here
++
++    # Test on Oracle
++    connection.vendor = "oracle"
++    # Your test implementation here
+
+--- a/tests/test_json_field.py
++++ b/tests/test_json_field.py
++import pytest
++from django.db import connections
++from django.db.models import JSONField, Model
++
++@pytest.fixture
++def json_field_model():
++    class JsonFieldModel(Model):
++        data = JSONField()
++    return JsonFieldModel
++
++@pytest.mark.parametrize("backend", ["sqlite", "mysql", "oracle"])
++@pytest.mark.parametrize("key", ["string_key", 12345])
++def test_has_key_lookup(backend, key, json_field_model):
++    connection = connections["default"]
++    connection.vendor = backend
++    json_field_model.objects.create(data={"string_key": "value", 12345: "numeric_value"})
++    result = json_field_model.objects.filter(data__has_key=key).count()
++    assert result == 1
++
++@pytest.mark.parametrize("backend", ["sqlite", "mysql", "oracle"])
++@pytest.mark.parametrize("keys", [["string_key"], [12345]])
++def test_has_keys_lookup(backend, keys, json_field_model):
++    connection = connections["default"]
++    connection.vendor = backend
++    json_field_model.objects.create(data={"string_key": "value", 12345: "numeric_value"})
++    result = json_field_model.objects.filter(data__has_keys=keys).count()
++    assert result == 1
++
++@pytest.mark.parametrize("backend", ["sqlite", "mysql", "oracle"])
++@pytest.mark.parametrize("keys", [["string_key", 12345]])
++def test_has_any_keys_lookup(backend, keys, json_field_model):
++    connection = connections["default"]
++    connection.vendor = backend
++    json_field_model.objects.create(data={"string_key": "value", 12345: "numeric_value"})
++    result = json_field_model.objects.filter(data__has_any_keys=keys).count()
++    assert result == 1

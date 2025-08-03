@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/parsing/latex/_parse_latex_antlr.py b/sympy/parsing/latex/_parse_latex_antlr.py\nindex 2e4a45ad20..2aaebaaa1f 100644\n--- a/sympy/parsing/latex/_parse_latex_antlr.py\n+++ b/sympy/parsing/latex/_parse_latex_antlr.py\n@@ -139,7 +139,7 @@ def convert_mp(mp):\n         return sympy.Mul(lh, rh, evaluate=False)\n     elif mp.DIV() or mp.CMD_DIV() or mp.COLON():\n         lh = convert_mp(mp_left)\n-        rh = convert_mp(mp_right)\n+        rh = convert_expr(mp_right)\n         return sympy.Mul(lh, sympy.Pow(rh, -1, evaluate=False), evaluate=False)\n     else:\n         if hasattr(mp, 'unary'):\n"
+}

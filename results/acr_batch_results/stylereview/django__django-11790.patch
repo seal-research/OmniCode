@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/auth/forms.py b/django/contrib/auth/forms.py\nindex a0cfed0995..c4bd5047ba 100644\n--- a/django/contrib/auth/forms.py\n+++ b/django/contrib/auth/forms.py\n@@ -426,6 +426,7 @@ class AdminPasswordChangeForm(forms.Form):\n             self.user.save()\n         return self.user\n \n+    @property\n     @property\n     def changed_data(self):\n         data = super().changed_data\n"
+}

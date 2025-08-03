@@ -1,0 +1,51 @@
+--- a/tests/test_retry_middleware.py
++++ b/tests/test_retry_middleware.py
+-# Empty if creating new file
++import pytest
++from scrapy.downloadermiddlewares.retry import RetryMiddleware
++from scrapy.exceptions import ScrapyDeprecationWarning
++
++def test_exceptions_to_retry_class_access():
++    # Test class-level access to EXCEPTIONS_TO_RETRY
++    assert RetryMiddleware.EXCEPTIONS_TO_RETRY
++
++def test_exceptions_to_retry_instance_access():
++    # Test instance-level access to EXCEPTIONS_TO_RETRY
++    middleware = RetryMiddleware(settings={})
++    with pytest.warns(ScrapyDeprecationWarning):
++        assert middleware.EXCEPTIONS_TO_RETRY
++
++def test_exceptions_to_retry_subclass_access():
++    # Test subclass access to EXCEPTIONS_TO_RETRY
++    class MyRetryMiddleware(RetryMiddleware):
++        pass
++    assert MyRetryMiddleware.EXCEPTIONS_TO_RETRY
++
++def test_exceptions_to_retry_instance_access_via_self():
++    # Test instance-level access via self
++    class MyRetryMiddleware(RetryMiddleware):
++        def process_exception(self, request, exception, spider):
++            if isinstance(exception, self.EXCEPTIONS_TO_RETRY):
++                pass
++    middleware = MyRetryMiddleware(settings={})
++    with pytest.warns(ScrapyDeprecationWarning):
++        assert hasattr(middleware, 'EXCEPTIONS_TO_RETRY')
++
++def test_deprecation_warning():
++    # Test deprecation warning
++    with pytest.warns(ScrapyDeprecationWarning):
++        RetryMiddleware.EXCEPTIONS_TO_RETRY
++
++def test_retry_middleware_process_exception():
++    # Test process_exception method
++    class MyRetryMiddleware(RetryMiddleware):
++        def process_exception(self, request, exception, spider):
++            if isinstance(exception, self.EXCEPTIONS_TO_RETRY):
++                return request
++    middleware = MyRetryMiddleware(settings={})
++    request = object()
++    exception = object()
++    spider = object()
++    with pytest.warns(ScrapyDeprecationWarning):
++        result = middleware.process_exception(request, exception, spider)
++    assert result == request

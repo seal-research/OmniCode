@@ -1,0 +1,59 @@
+--- a/tests/test_admin.py
++++ b/tests/test_admin.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admin.views import main
++from django.test import RequestFactory
++from django.contrib.admin.options import ModelAdmin
++
++@pytest.fixture
++def request_factory():
++    return RequestFactory()
++
++def test_get_edited_object_pks_no_special_chars(request_factory):
++    # Arrange
++    opts = type('Options', (), {'model': type('Model', (), {'_meta': type('Meta', (), {'pk': 'id'})})})
++    admin = ModelAdmin(opts, None)
++    request = request_factory.post('/fake-url/', data={'id-1-id': 'value1', 'id-2-id': 'value2'})
++
++    # Act
++    pks = admin._get_edited_object_pks(request, 'id')
++
++    # Assert
++    assert pks == ['value1', 'value2']
++
++def test_get_edited_object_pks_with_special_chars(request_factory):
++    # Arrange
++    opts = type('Options', (), {'model': type('Model', (), {'_meta': type('Meta', (), {'pk': 'id'})})})
++    admin = ModelAdmin(opts, None)
++    request = request_factory.post('/fake-url/', data={'id.1-1-id': 'value1', 'id.2-2-id': 'value2'})
++
++    # Act
++    pks = admin._get_edited_object_pks(request, 'id.1')
++
++    # Assert
++    assert pks == ['value1']
++
++def test_get_edited_object_pks_with_unrelated_data(request_factory):
++    # Arrange
++    opts = type('Options', (), {'model': type('Model', (), {'_meta': type('Meta', (), {'pk': 'id'})})})
++    admin = ModelAdmin(opts, None)
++    request = request_factory.post('/fake-url/', data={'id-1-id': 'value1', 'unrelated-key': 'unrelated-value'})
++
++    # Act
++    pks = admin._get_edited_object_pks(request, 'id')
++
++    # Assert
++    assert pks == ['value1']
++
++def test_get_edited_object_pks_empty_request(request_factory):
++    # Arrange
++    opts = type('Options', (), {'model': type('Model', (), {'_meta': type('Meta', (), {'pk': 'id'})})})
++    admin = ModelAdmin(opts, None)
++    request = request_factory.post('/fake-url/', data={})
++
++    # Act
++    pks = admin._get_edited_object_pks(request, 'id')
++
++    # Assert
++    assert pks == []

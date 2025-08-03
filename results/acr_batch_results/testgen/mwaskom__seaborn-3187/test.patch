@@ -1,0 +1,70 @@
+--- a/tests/test_scales.py
++++ b/tests/test_scales.py
+-# Empty if creating new file
++import pytest
++import seaborn as sns
++import matplotlib.pyplot as plt
++from matplotlib.ticker import ScalarFormatter
++
++def test_scalar_formatter_offset():
++    # Create a sample plot
++    penguins = sns.load_dataset("penguins")
++    penguins["body_mass_mg"] = penguins["body_mass_g"] * 1000
++
++    fig, ax = plt.subplots()
++    sns.scatterplot(data=penguins, x="bill_length_mm", y="bill_depth_mm", size="body_mass_mg", ax=ax)
++
++    # Get the formatter
++    formatter = ax.yaxis.get_major_formatter()
++
++    # Check if the formatter is a ScalarFormatter
++    assert isinstance(formatter, ScalarFormatter)
++
++    # Get the offset
++    offset = formatter.get_offset()
++
++    # Check if the offset is correct
++    assert offset == 1000
++
++    # Clean up
++    plt.close(fig)
++
++def test_legend_values():
++    # Create a sample plot
++    penguins = sns.load_dataset("penguins")
++    penguins["body_mass_mg"] = penguins["body_mass_g"] * 1000
++
++    fig, ax = plt.subplots()
++    sns.scatterplot(data=penguins, x="bill_length_mm", y="bill_depth_mm", size="body_mass_mg", ax=ax)
++
++    # Get the legend
++    legend = ax.legend()
++
++    # Check if the legend has the correct title
++    assert legend.get_title().get_text() == "body_mass_mg"
++
++    # Check if the legend values are correct
++    assert all([f"{value:.1f} {chr(0xB0)}$" in label.get_text() for value, label in zip([100, 500, 1000], legend.get_texts())])
++
++    # Clean up
++    plt.close(fig)
++
++def test_large_range_legend():
++    # Create a sample plot with large range
++    penguins = sns.load_dataset("penguins")
++    penguins["large_body_mass_mg"] = penguins["body_mass_g"] * 1e6
++
++    fig, ax = plt.subplots()
++    sns.scatterplot(data=penguins, x="bill_length_mm", y="bill_depth_mm", size="large_body_mass_mg", ax=ax)
++
++    # Get the legend
++    legend = ax.legend()
++
++    # Check if the legend has the correct title
++    assert legend.get_title().get_text() == "large_body_mass_mg"
++
++    # Check if the legend values are correct
++    assert all([f"{value / 1e6:.1f} M" in label.get_text() for value, label in zip([1, 5, 10], legend.get_texts())])
++
++    # Clean up
++    plt.close(fig)

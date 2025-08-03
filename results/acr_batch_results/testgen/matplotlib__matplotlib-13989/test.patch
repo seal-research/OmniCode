@@ -1,0 +1,41 @@
+--- a/tests/test_axes.py
++++ b/tests/test_axes.py
+-# Original code here (if modifying existing file)
++import pytest
++import numpy as np
++import matplotlib.pyplot as plt
++
++def test_hist_range_density():
++    # Test that hist() respects range=... when density=True
++    _, bins, _ = plt.hist(np.random.rand(10), "auto", range=(0, 1), density=True)
++    assert np.diff(bins)[0] == (1 - 0) / len(bins) - 1
++
++def test_hist_range_not_density():
++    # Test that hist() respects range=... when density=False
++    _, bins, _ = plt.hist(np.random.rand(10), "auto", range=(0, 1), density=False)
++    assert np.diff(bins)[0] == (1 - 0) / len(bins) 
++
++def test_hist_density():
++    # Test hist() with density=True
++    n, bins, patches = plt.hist([1, 2, 2, 3, 3, 3], density=True)
++    assert np.sum(n * np.diff(bins)) == 1.0
++
++def test_hist_range():
++    # Test hist() with range
++    n, bins, patches = plt.hist([1, 2, 2, 3, 3, 3], range=(1, 3))
++    assert bins[0] == 1
++    assert bins[-1] == 3
+
+--- a/tests/test_hist.py
++++ b/tests/test_hist.py
+-# Empty if creating new file
++import pytest
++import numpy as np
++import matplotlib.pyplot as plt
++
++def test_hist():
++    # Test hist() function
++    n, bins, patches = plt.hist([1, 2, 2, 3, 3, 3])
++    assert len(n) > 0
++    assert len(bins) > 0
++    assert len(patches) > 0

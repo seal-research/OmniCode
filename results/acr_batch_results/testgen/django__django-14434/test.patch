@@ -1,0 +1,50 @@
+--- a/tests/test_constraints.py
++++ b/tests/test_constraints.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import models
++from django.db.backends.base.schema import _create_unique_sql
++
++@pytest.fixture
++def unique_constraint():
++    class TestModel(models.Model):
++        field1 = models.CharField(max_length=255)
++        field2 = models.CharField(max_length=255)
++
++        class Meta:
++            constraints = [
++                models.UniqueConstraint(fields=['field1', 'field2'], name='unique_constraint'),
++            ]
++
++    return TestModel
++
++def test_create_unique_sql_references_column(unique_constraint):
++    model = unique_constraint
++    schema_editor = model._meta.db_table.schema_editor
++
++    # Call _create_unique_sql
++    sql = _create_unique_sql(schema_editor, model, ['field1', 'field2'])
++
++    # Check if references_column is correctly set
++    assert sql.references_column == True
++
++def test_create_unique_sql_with_table_instance(unique_constraint):
++    model = unique_constraint
++    schema_editor = model._meta.db_table.schema_editor
++    table = models.Table(model._meta.db_table, schema_editor.quote_name)
++
++    # Call _create_unique_sql with a Table instance
++    sql = _create_unique_sql(schema_editor, model, ['field1', 'field2'])
++
++    # Check if references_column is correctly set
++    assert sql.references_column == True
++
++def test_create_unique_sql_with_string_columns(unique_constraint):
++    model = unique_constraint
++    schema_editor = model._meta.db_table.schema_editor
++
++    # Call _create_unique_sql with string columns
++    sql = _create_unique_sql(schema_editor, model, ['field1', 'field2'])
++
++    # Check if references_column is correctly set
++    assert sql.references_column == True

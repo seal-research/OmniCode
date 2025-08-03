@@ -1,0 +1,33 @@
+--- a/tests/test_core/test_validators.py
++++ b/tests/test_core/test_validators.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.core.exceptions import ValidationError
++from django.core.validators import EmailValidator, RegexValidator
++
++def test_email_validator_with_value():
++    validator = EmailValidator()
++    with pytest.raises(ValidationError) as e:
++        validator('invalid_email')
++    assert 'Enter a valid email address.' in str(e.value)
++    assert 'invalid_email' in str(e.value)
++
++def test_regex_validator_with_value():
++    validator = RegexValidator(r'^\d+$', message='Must be a number')
++    with pytest.raises(ValidationError) as e:
++        validator('not a number')
++    assert 'Must be a number' in str(e.value)
++    assert 'not a number' in str(e.value)
+
+--- a/tests/test_core/exceptions.py
++++ b/tests/test_core/exceptions.py
+-# Empty if creating new file
++import pytest
++from django.core.exceptions import ValidationError
++
++def test_validation_error_with_value():
++    try:
++        raise ValidationError('Error message', params={'value': 'invalid_value'})
++    except ValidationError as e:
++        assert 'Error message' in str(e)
++        assert 'invalid_value' in str(e)

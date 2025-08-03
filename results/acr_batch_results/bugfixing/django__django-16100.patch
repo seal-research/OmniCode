@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/admin/options.py b/django/contrib/admin/options.py\nindex 5f07a4208a..7b2fd55959 100644\n--- a/django/contrib/admin/options.py\n+++ b/django/contrib/admin/options.py\n@@ -1916,6 +1916,7 @@ class ModelAdmin(BaseModelAdmin):\n         The 'change list' admin view for this model.\n         \"\"\"\n         from django.contrib.admin.views.main import ERROR_FLAG\n+        from django.db import transaction\n \n         app_label = self.opts.app_label\n         if not self.has_view_or_change_permission(request):\n"
+}

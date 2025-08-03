@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/pylint/lint/run.py b/pylint/lint/run.py\nindex a7e5d5574..94dce4df9 100644\n--- a/pylint/lint/run.py\n+++ b/pylint/lint/run.py\n@@ -58,7 +58,7 @@ def _query_cpu() -> int | None:\n             cpu_shares = int(file.read().rstrip())\n         # For AWS, gives correct value * 1024.\n         avail_cpu = int(cpu_shares / 1024)\n-    return avail_cpu\n+    return avail_cpu or 1\n \n \n def _cpu_count() -> int:\n"
+}

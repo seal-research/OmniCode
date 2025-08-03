@@ -1,0 +1,6 @@
+{
+  "instance_id": "matplotlib__matplotlib-21568",
+  "status": "success",
+  "patch_file": "../../results/acr_batch_results/testgen/matplotlib__matplotlib-21568/test.patch",
+  "pred_file": "../../results/acr_batch_results/testgen/matplotlib__matplotlib-21568/matplotlib__matplotlib-21568.pred"
+}

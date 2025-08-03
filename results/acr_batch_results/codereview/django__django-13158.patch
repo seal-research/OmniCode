@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/query.py b/django/db/models/query.py\nindex 07d6ffd4ca..979d19c7c8 100644\n--- a/django/db/models/query.py\n+++ b/django/db/models/query.py\n@@ -1298,6 +1298,7 @@ class QuerySet:\n         c._known_related_objects = self._known_related_objects\n         c._iterable_class = self._iterable_class\n         c._fields = self._fields\n+        c.query.combined_queries = self.query.combined_queries\n         return c\n \n     def _fetch_all(self):\n"
+}

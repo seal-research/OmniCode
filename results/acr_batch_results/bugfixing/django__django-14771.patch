@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/management/commands/runserver.py b/django/core/management/commands/runserver.py\nindex 473fde0de0..11dd46cf24 100644\n--- a/django/core/management/commands/runserver.py\n+++ b/django/core/management/commands/runserver.py\n@@ -105,6 +105,8 @@ class Command(BaseCommand):\n         use_reloader = options['use_reloader']\n \n         if use_reloader:\n+            if options.get('sys.argv'):\n+                sys._xoptions = options['sys.argv'][0]\n             autoreload.run_with_reloader(self.inner_run, **options)\n         else:\n             self.inner_run(None, **options)\n"
+}

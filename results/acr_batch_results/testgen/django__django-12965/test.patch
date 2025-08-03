@@ -1,0 +1,29 @@
+--- a/tests/testapp/tests/test_models.py
++++ b/tests/testapp/tests/test_models.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import models
++
++class Alphabet(models.Model):
++    letter = models.CharField(max_length=1, primary_key=True)
++
++def test_delete_subquery():
++    # Create some test data
++    Alphabet.objects.create(letter='A')
++    Alphabet.objects.create(letter='B')
++    Alphabet.objects.create(letter='C')
++
++    # Test that delete() works as expected
++    deleted = Alphabet.objects.all().delete()
++    assert deleted[0] == 3
++
++def test_delete_mysql():
++    # Test that delete() works as expected on MySQL
++    # This test should pass on MySQL
++    Alphabet.objects.create(letter='A')
++    Alphabet.objects.create(letter='B')
++    Alphabet.objects.create(letter='C')
++
++    # Test that delete() works as expected
++    deleted = Alphabet.objects.all().delete()
++    assert deleted[0] == 3

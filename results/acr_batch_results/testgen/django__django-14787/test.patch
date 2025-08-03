@@ -1,0 +1,44 @@
+--- a/tests/test_decorators.py
++++ b/tests/test_decorators.py
+-# Empty if creating new file
++import pytest
++from django.utils.decorators import method_decorator
++from functools import partial
++
++def test_method_decorator_preserves_metadata():
++    def decorator(func):
++        def wrapper(*args, **kwargs):
++            return func(*args, **kwargs)
++        return wrapper
++
++    @method_decorator(decorator)
++    def hello_world():
++        return "hello"
++
++    assert hello_world.__name__ == "wrapper"
++
++def test_method_decorator_preserves_metadata_for_partial_object():
++    def decorator(func):
++        def wrapper(*args, **kwargs):
++            return func(*args, **kwargs)
++        return wrapper
++
++    def hello_world():
++        return "hello"
++
++    partial_hello_world = partial(hello_world)
++
++    @method_decorator(decorator)
++    def test_method(self):
++        return partial_hello_world()
++
++    assert test_method.__name__ == "test_method"
++
++def test_method_decorator_preserves_metadata_for_method():
++    class Test:
++        @method_decorator(decorator)
++        def hello_world(self):
++            return "hello"
++
++    test = Test()
++    assert test.hello_world.__name__ == "hello_world

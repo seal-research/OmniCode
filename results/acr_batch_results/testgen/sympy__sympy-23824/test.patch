@@ -1,0 +1,38 @@
+--- a/tests/test_gamma_matrices.py
++++ b/tests/test_gamma_matrices.py
+-# Empty if creating new file
++import pytest
++from sympy.physics.hep.gamma_matrices import GammaMatrix as G, kahane_simplify
++from sympy.tensor.tensor import tensor_indices
++
++def test_kahane_simplify_leading_gamma_matrix():
++    mu, nu, rho, sigma = tensor_indices("mu, nu, rho, sigma",)
++
++    t = G(rho)*G(sigma)*G(mu)*G(-mu)
++    r = kahane_simplify(t)
++    assert r.equals(4*G(rho)*G(sigma))
++
++    t = G(mu)*G(-mu)*G(rho)*G(sigma)
++    r = kahane_simplify(t)
++    assert r.equals(4*G(rho)*G(sigma))
++
++def test_kahane_simplify_no_contractions():
++    mu, nu = tensor_indices("mu, nu",)
++
++    t = G(mu)*G(nu)
++    r = kahane_simplify(t)
++    assert r.equals(G(mu)*G(nu))
++
++def test_kahane_simplify_multiple_contractions():
++    mu, nu, rho, sigma = tensor_indices("mu, nu, rho, sigma",)
++
++    t = G(mu)*G(-mu)*G(rho)*G(-rho)*G(sigma)
++    r = kahane_simplify(t)
++    assert r.equals(4*4*G(sigma))
++
++def test_kahane_simplify_complex_expression():
++    mu, nu, rho, sigma = tensor_indices("mu, nu, rho, sigma",)
++
++    t = G(mu)*G(nu)*G(rho)*G(-mu)*G(sigma)*G(-rho)
++    r = kahane_simplify(t)
++    assert r.equals(-4*G(nu)*G(sigma))

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/combinatorics/perm_groups.py b/sympy/combinatorics/perm_groups.py\nindex de94ddabb4..ad91ce6f46 100644\n--- a/sympy/combinatorics/perm_groups.py\n+++ b/sympy/combinatorics/perm_groups.py\n@@ -2,6 +2,7 @@\n from math import log\n from sympy.ntheory import primefactors\n from sympy import multiplicity, factorint, Symbol\n+from sympy.combinatorics.permutations import Permutation\n \n from sympy.combinatorics import Permutation\n from sympy.combinatorics.permutations import (_af_commutes_with, _af_invert,\n"
+}

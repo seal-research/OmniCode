@@ -1,0 +1,55 @@
+--- a/tests/test_admin_checks.py
++++ b/tests/test_admin_checks.py
+-# Original code here, if any
++import pytest
++from django.contrib.admin.checks import ModelAdminChecks
++from django.contrib.admin.options import ModelAdmin
++from django.db import models
++from position.fields import PositionField
++
++@pytest.fixture
++def model_admin_checks():
++    return ModelAdminChecks()
++
++@pytest.fixture
++def model():
++    class Thing(models.Model):
++        number = models.IntegerField(default=0)
++        order = PositionField()
++    return Thing
++
++@pytest.fixture
++def model_admin(model):
++    return ModelAdmin(model, admin_site="admin")
++
++def test_check_list_display_item_callable(model_admin_checks, model_admin):
++    # Test with a callable
++    item = lambda: None
++    result = model_admin_checks._check_list_display_item(model_admin, item, "list_display[0]")
++    assert not result
++
++def test_check_list_display_item_attribute(model_admin_checks, model_admin):
++    # Test with an attribute of the model
++    item = "number"
++    result = model_admin_checks._check_list_display_item(model_admin, item, "list_display[0]")
++    assert not result
++
++def test_check_list_display_item_field(model_admin_checks, model_admin):
++    # Test with a field on the model
++    item = "order"
++    result = model_admin_checks._check_list_display_item(model_admin, item, "list_display[0]")
++    assert not result
++
++def test_check_list_display_item_many_to_many(model_admin_checks, model_admin):
++    # Test with a ManyToManyField
++    class ManyToManyModel(models.Model):
++        things = models.ManyToManyField("Thing")
++    item = "things"
++    result = model_admin_checks._check_list_display_item(model_admin, item, "list_display[0]")
++    assert result[0].id == 'admin.E109'
++
++def test_check_list_display_item_invalid(model_admin_checks, model_admin):
++    # Test with an invalid item
++    item = "invalid"
++    result = model_admin_checks._check_list_display_item(model_admin, item, "list_display[0]")
++    assert result[0].id == 'admin.E108'

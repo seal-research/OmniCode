@@ -1,0 +1,71 @@
+--- a/tests/test_widgets.py
++++ b/tests/test_widgets.py
+-# Empty if creating new file
++import pytest
++from django import forms
++from django.forms.widgets import RadioSelect
++
++@pytest.mark.parametrize("value", [None, ""])
++def test_radioselect_widget_excludes_blank_option(value):
++    # Arrange
++    class TestModel(models.Model):
++        field = models.CharField(max_length=10, blank=False)
++
++    class TestForm(forms.ModelForm):
++        class Meta:
++            model = TestModel
++            fields = ["field"]
++            widgets = {"field": RadioSelect}
++
++    # Act
++    form = TestForm()
++    radioselect_widget = form.fields["field"].widget
++
++    # Assert
++    options = radioselect_widget.optgroups[0][1]
++    assert not any(option["value"] == "" for option in options)
++
++def test_radioselect_widget_allows_blank_option():
++    # Arrange
++    class TestModel(models.Model):
++        field = models.CharField(max_length=10, blank=True)
++
++    class TestForm(forms.ModelForm):
++        class Meta:
++            model = TestModel
++            fields = ["field"]
++            widgets = {"field": RadioSelect}
++
++    # Act
++    form = TestForm()
++    radioselect_widget = form.fields["field"].widget
++
++    # Assert
++    options = radioselect_widget.optgroups[0][1]
++    assert any(option["value"] == "" for option in options)
+
+--- a/tests/test_modelform.py
++++ b/tests/test_modelform.py
+-# Empty if creating new file
++import pytest
++from django import forms
++from django.db import models
++
++def test_modelform_radioselect_excludes_blank_option():
++    # Arrange
++    class TestModel(models.Model):
++        field = models.ForeignKey("self", on_delete=models.CASCADE, blank=False)
++
++    class TestForm(forms.ModelForm):
++        class Meta:
++            model = TestModel
++            fields = ["field"]
++            widgets = {"field": forms.RadioSelect}
++
++    # Act
++    form = TestForm()
++    field_widget = form.fields["field"].widget
++
++    # Assert
++    options = field_widget.optgroups[0][1]
++    assert not any(option["value"] == "" for option in options)

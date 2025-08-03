@@ -1,0 +1,67 @@
+--- a/tests/test_management.py
++++ b/tests/test_management.py
+-# If the file exists and is not supposed to be modified, leave it empty
++import pytest
++import sys
++from django.core.management import ManagementUtility, execute_from_command_line
++from django.core.management.base import CommandParser
++
++def test_management_utility_prog_name():
++    # Test that ManagementUtility sets prog_name correctly
++    utility = ManagementUtility(['django-admin'])
++    assert utility.prog_name == 'django-admin'
++
++def test_execute_from_command_line_prog_name():
++    # Test execute_from_command_line with custom argv
++    argv = ['custom-admin', 'runserver']
++    execute_from_command_line(argv)
++    # We can't directly assert here, but we can verify the behavior
++
++def test_command_parser_prog_argument():
++    # Test CommandParser with prog argument
++    parser = CommandParser(prog='test-admin', usage='%(prog)s subcommand [options] [args]', add_help=False, allow_abbrev=False)
++    assert parser.prog == 'test-admin'
++
++def test_management_utility_command_parser_prog():
++    # Test that ManagementUtility uses the correct prog_name for CommandParser
++    utility = ManagementUtility(['test-admin'])
++    parser = utility.create_parser('test-admin')
++    assert parser.prog == 'test-admin'
++
++@pytest.mark.skipif(sys.version_info < (3, 8), reason="requires python3.8 or higher")
++def test_execute_from_command_line_with_custom_argv():
++    # Test execute_from_command_line with custom argv and python -m django
++    old_sys_argv = sys.argv[:]
++    try:
++        sys.argv = ['python', '-m', 'django', 'runserver']
++        execute_from_command_line()
++    finally:
++        sys.argv = old_sys_argv
++
++def test_execute_from_command_line_with_sys_argv_0_none():
++    # Test edge case where sys.argv[0] is None
++    old_sys_argv = sys.argv[:]
++    try:
++        sys.argv = [None, 'runserver']
++        with pytest.raises(SystemExit):
++            execute_from_command_line()
++    finally:
++        sys.argv = old_sys_argv
+
+--- a/django/core/management/__init__.py
++++ b/django/core/management/__init__.py
+-    def execute(self):
+-        # ...
+-        parser = CommandParser(usage='%(prog)s subcommand [options] [args]', add_help=False, allow_abbrev=False)
+-        # ...
++    def create_parser(self, prog_name):
++        parser = CommandParser(prog=prog_name, usage='%(prog)s subcommand [options] [args]', add_help=False, allow_abbrev=False)
++        parser.add_argument('--settings')
++        parser.add_argument('--pythonpath')
++        parser.add_argument('args', nargs='*')  # catch-all
++        return parser
++
++    def execute(self):
++        # ...
++        parser = self.create_parser(self.prog_name)
++        # ...

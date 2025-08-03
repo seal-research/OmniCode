@@ -1,0 +1,65 @@
+--- a/scrapy/middleware.py
++++ b/scrapy/middleware.py
+-    except NotConfigured as e:
+-        if e.args:
+-            clsname = clspath.split(".")[-1]
+-            logger.warning(
+-                "Disabled %(clsname)s: %(eargs)s",
+-                {"clsname": clsname, "eargs": e.args[0]},
+-                extra={"crawler": crawler},
+-            )
++    except NotConfigured as e:
++        if e.args:
++            if isinstance(clspath, str):
++                clsname = clspath.split(".")[-1]
++            else:
++                clsname = getattr(clspath, '__name__', type(clspath).__name__)
++            logger.warning(
++                "Disabled %(clsname)s: %(eargs)s",
++                {"clsname": clsname, "eargs": e.args[0]},
++                extra={"crawler": crawler},
++            )
+
+--- a/tests/test_middleware.py
++++ b/tests/test_middleware.py
+-# Empty if creating new file
++import pytest
++from scrapy.exceptions import NotConfigured
++from scrapy.middleware import MiddlewareManager
++
++def test_middleware_logging_with_string():
++    class TestMiddleware:
++        pass
++
++    mwlist = [f"{__name__}.TestMiddleware"]
++    try:
++        MiddlewareManager.from_settings({"middleware": mwlist})
++    except NotConfigured:
++        pass
++
++def test_middleware_logging_with_class():
++    class TestMiddleware:
++        pass
++
++    mwlist = [TestMiddleware]
++    try:
++        MiddlewareManager.from_settings({"middleware": mwlist})
++    except NotConfigured:
++        pass
++
++def test_middleware_logging_with_invalid_class():
++    class InvalidMiddleware:
++        def __init__(self):
++            raise NotConfigured("Invalid middleware")
++
++    mwlist = [InvalidMiddleware]
++    with pytest.warns(UserWarning, match="Disabled"):
++        MiddlewareManager.from_settings({"middleware": mwlist})
++
++def test_middleware_enabled_logging():
++    class TestMiddleware:
++        pass
++
++    mwlist = [f"{__name__}.TestMiddleware"]
++    with pytest.info(match="Enabled"):
++        MiddlewareManager.from_settings({"middleware": mwlist})

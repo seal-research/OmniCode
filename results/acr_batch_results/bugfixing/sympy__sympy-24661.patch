@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/parsing/sympy_parser.py b/sympy/parsing/sympy_parser.py\nindex 52711d1324..abb4e0d2cc 100644\n--- a/sympy/parsing/sympy_parser.py\n+++ b/sympy/parsing/sympy_parser.py\n@@ -1075,7 +1075,8 @@ def parse_expr(s: str, local_dict: Optional[DICT] = None,\n         code = compile(evaluateFalse(code), '<string>', 'eval')\n \n     try:\n-        rv = eval_expr(code, local_dict, global_dict)\n+        if not evaluate and isinstance(rv, Relational):\n+            return rv.func(*rv.args, evaluate=False)\n         # restore neutral definitions for names\n         for i in local_dict.pop(null, ()):\n             local_dict[i] = null\n"
+}

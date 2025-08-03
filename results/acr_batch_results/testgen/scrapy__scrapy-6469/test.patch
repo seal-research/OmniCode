@@ -1,0 +1,44 @@
+--- a/tests/test_contracts.py
++++ b/tests/test_contracts.py
+-# Original code here (if modifying existing file)
++import pytest
++from scrapy.contracts import Contract
++from scrapy.http import Request
++
++def test_contract_meta():
++    class MyContract(Contract):
++        name = "my_contract"
++
++    request = Request("https://example.com")
++    meta = {"cookiejar": "my_cookies"}
++    request.meta.update(meta)
++
++    contract = MyContract(None)
++    contract.add_pre_hook(request, None)
++
++    assert request.meta["cookiejar"] == "my_cookies"
++
++def test_contract_meta_post_hook():
++    class MyContract(Contract):
++        name = "my_contract"
++
++    request = Request("https://example.com")
++    meta = {"cookiejar": "my_cookies"}
++    request.meta.update(meta)
++
++    contract = MyContract(None)
++    contract.add_post_hook(request, None)
++
++    assert request.meta["cookiejar"] == "my_cookies"
++
++def test_contract_adjust_request_args():
++    class MyContract(Contract):
++        name = "my_contract"
++
++    request = Request("https://example.com")
++    args = {"meta": {"cookiejar": "my_cookies"}}
++
++    contract = MyContract(None)
++    adjusted_args = contract.adjust_request_args(args)
++
++    assert adjusted_args["meta"]["cookiejar"] == "my_cookies"

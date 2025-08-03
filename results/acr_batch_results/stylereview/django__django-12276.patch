@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/forms/widgets.py b/django/forms/widgets.py\nindex 338d54d72f..c46ae2d63d 100644\n--- a/django/forms/widgets.py\n+++ b/django/forms/widgets.py\n@@ -197,8 +197,9 @@ class Widget(metaclass=MediaDefiningClass):\n     is_required = False\n     supports_microseconds = True\n \n-    def __init__(self, attrs=None):\n+    def __init__(self, attrs=None, template_name=None):\n         self.attrs = {} if attrs is None else attrs.copy()\n+        self.template_name = template_name\n \n     def __deepcopy__(self, memo):\n         obj = copy.copy(self)\n"
+}

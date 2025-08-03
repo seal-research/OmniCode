@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py\nindex 59a5d6abbb..9e7a632f39 100644\n--- a/django/db/models/sql/compiler.py\n+++ b/django/db/models/sql/compiler.py\n@@ -503,7 +503,7 @@ class SQLCompiler:\n             sql, params = node.as_sql(self, self.connection)\n         return sql, params\n \n-    def get_combinator_sql(self, combinator, all):\n+    def get_combinator_sql(self, combinator, all_):\n         features = self.connection.features\n         compilers = [\n             query.get_compiler(self.using, self.connection, self.elide_empty)\n"
+}

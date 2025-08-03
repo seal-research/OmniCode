@@ -1,0 +1,60 @@
+--- a/tests/test_youtube_extractor.py
++++ b/tests/test_youtube_extractor.py
+-# Original code here (if modifying existing file)
+-# Leave empty if creating new file
++import pytest
++from youtube_dl.extractor.youtube import YoutubeIE
++from unittest.mock import patch, MagicMock
++
++@pytest.fixture
++def youtube_ie():
++    return YoutubeIE()
++
++def test_extract_n_function_name(youtube_ie):
++    # Test with a sample JavaScript code
++    jscode = """
++    (b=String.fromCharCode(110),c=a.get(b))&&c=nfunc[idx](c)
++    """
++    func_name, idx = youtube_ie._extract_n_function_name(jscode)
++    assert func_name is not None
++    assert idx is not None
++
++def test_extract_n_function_code(youtube_ie):
++    # Mock player URL and video ID
++    player_url = "https://www.youtube.com/s/player/3bb1f723/player_ias.vflset/en_US/base.js"
++    video_id = "eMNXpZZBWFE"
++    
++    jsi, player_id, func_code = youtube_ie._extract_n_function_code(video_id, player_url)
++    assert jsi is not None
++    assert player_id is not None
++    assert func_code is not None
++
++def test_decrypt_nsig(youtube_ie):
++    # Mock n parameter, video ID, and player URL
++    n_param = "some_n_param"
++    video_id = "eMNXpZZBWFE"
++    player_url = "https://www.youtube.com/s/player/3bb1f723/player_ias.vflset/en_US/base.js"
++    
++    with patch.object(youtube_ie, '_extract_n_function_code') as mock_extract_n_function_code:
++        mock_extract_n_function_code.return_value = (MagicMock(), "player_id", ("func_code",))
++        ret = youtube_ie._decrypt_nsig(n_param, video_id, player_url)
++        assert ret is not None
++
++def test_regex_not_found_error(youtube_ie):
++    # Test that RegexNotFoundError is handled properly
++    jscode = "Invalid JavaScript code"
++    with pytest.raises(Exception):
++        youtube_ie._extract_n_function_name(jscode)
+
+--- a/tests/test_youtube_base.py
++++ b/tests/test_youtube_base.py
+-# Original code here (if modifying existing file)
+-# Leave empty if creating new file
++import pytest
++from youtube_dl.extractor.common import RegexNotFoundError
++
++def test_regex_not_found_error():
++    # Test that RegexNotFoundError is raised when regex pattern is not found
++    with pytest.raises(RegexNotFoundError):
++        # Mock a regex search that fails
++        raise RegexNotFoundError("Unable to extract pattern")

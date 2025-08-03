@@ -1,0 +1,40 @@
+--- a/tests/test_message_tags.py
++++ b/tests/test_message_tags.py
+-# Empty if creating new file
++import pytest
++from django.contrib.messages import constants, storage
++from django.contrib.messages.utils import get_level_tags
++from django.test import TestCase, override_settings
++
++def test_get_level_tags_defaults():
++ default_tags = get_level_tags()
++ assert default_tags[constants.INFO] == 'info'
++ assert default_tags[constants.WARNING] == 'warning'
++ # Add more assertions for other levels
++
++@override_settings(MESSAGE_TAGS={'20': 'custom_tag'})
++def test_get_level_tags_with_override():
++ overridden_tags = get_level_tags()
++ assert overridden_tags[20] == 'custom_tag'
++
++class MessageTagsTest(TestCase):
++ def test_default_message_tags(self):
++ message = storage.Message(constants.INFO, "Test message")
++ assert message.level_tag == 'info'
++
++ @override_settings(MESSAGE_TAGS={'20': 'custom_tag'})
++ def test_message_tags_override(self):
++ message = storage.Message(20, "Test message")
++ assert message.level_tag == 'custom_tag'
++
++class TestMessageLevelTags:
++ @pytest.fixture
++ def message(self):
++ return storage.Message(constants.INFO, "Test message")
++
++ def test_level_tag_property(self, message):
++ assert message.level_tag == 'info'
++
++ @override_settings(MESSAGE_TAGS={constants.INFO: 'custom_info'})
++ def test_level_tag_with_override(self, message):
++ assert message.level_tag == 'custom_info'

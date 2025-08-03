@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/servers/basehttp.py b/django/core/servers/basehttp.py\nindex fef5532e58..05efb51aee 100644\n--- a/django/core/servers/basehttp.py\n+++ b/django/core/servers/basehttp.py\n@@ -220,6 +220,11 @@ class WSGIRequestHandler(simple_server.WSGIRequestHandler):\n         if not self.parse_request():  # An error code has been sent, just exit\n             return\n \n+        if self.command == 'HEAD':\n+            self.send_response(200)\n+            self.end_headers()\n+            return\n+\n         handler = ServerHandler(\n             self.rfile, self.wfile, self.get_stderr(), self.get_environ()\n         )\n"
+}

@@ -1,0 +1,64 @@
+--- a/tests/test_filters.py
++++ b/tests/test_filters.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admin.filters import RelatedFieldListFilter, RelatedOnlyFieldListFilter
++from django.contrib.admin.options import ModelAdmin
++from django.db import models
++
++@pytest.fixture
++def model_admin():
++    class TestModelAdmin(ModelAdmin):
++        pass
++    return TestModelAdmin
++
++@pytest.fixture
++def related_model():
++    class RelatedModel(models.Model):
++        name = models.CharField(max_length=100)
++        class Meta:
++            ordering = ['name']
++    return RelatedModel
++
++@pytest.fixture
++def field():
++    return models.ForeignKey(related_model, on_delete=models.CASCADE)
++
++def test_related_field_list_filter_ordering(model_admin, field, related_model):
++    # Test that RelatedFieldListFilter uses the ordering from the related model's admin interface
++    admin_site = type('AdminSite', (), {'_registry': {related_model: model_admin}})
++    model_admin.admin_site = admin_site
++    filter = RelatedFieldListFilter(field, None, {}, None, model_admin, 'field_path')
++    choices = filter.field_choices(field, None, model_admin)
++    # Assert that the choices are ordered by 'name'
++
++def test_related_field_list_filter_fallback_to_meta_ordering(model_admin, field, related_model):
++    # Test that RelatedFieldListFilter falls back to the ordering defined in the related model's Meta.ordering
++    admin_site = type('AdminSite', (), {'_registry': {}})
++    model_admin.admin_site = admin_site
++    filter = RelatedFieldListFilter(field, None, {}, None, model_admin, 'field_path')
++    choices = filter.field_choices(field, None, model_admin)
++    # Assert that the choices are ordered by 'name'
++
++def test_related_only_field_list_filter_ordering(model_admin, field, related_model):
++    # Test that RelatedOnlyFieldListFilter orders the related model
++    admin_site = type('AdminSite', (), {'_registry': {related_model: model_admin}})
++    model_admin.admin_site = admin_site
++    filter = RelatedOnlyFieldListFilter(field, None, {}, None, model_admin, 'field_path')
++    choices = filter.field_choices(field, None, model_admin)
++    # Assert that the choices are ordered by 'name'
+
+--- a/tests/test_filters.py
++++ b/tests/test_filters.py
++def test_related_field_list_filter_no_meta_ordering(model_admin, field):
++    # Test that RelatedFieldListFilter and RelatedOnlyFieldListFilter work correctly
++    # when the related model has no Meta.ordering
++    class NoOrderingRelatedModel(models.Model):
++        name = models.CharField(max_length=100)
++    filter = RelatedFieldListFilter(field, None, {}, None, model_admin, 'field_path')
++    choices = filter.field_choices(field, None, model_admin)
++    # Assert that the choices are not ordered
++
++    filter = RelatedOnlyFieldListFilter(field, None, {}, None, model_admin, 'field_path')
++    choices = filter.field_choices(field, None, model_admin)
++    # Assert that the choices are not ordered

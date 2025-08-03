@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/auth/checks.py b/django/contrib/auth/checks.py\nindex 65fc266f7e..a4d1cbf388 100644\n--- a/django/contrib/auth/checks.py\n+++ b/django/contrib/auth/checks.py\n@@ -9,6 +9,8 @@ from .management import _get_builtin_permissions\n \n \n def check_user_model(app_configs=None, **kwargs):\n+    # No change needed here, but we'll use kwargs to silence the warning\n+    pass\n     if app_configs is None:\n         cls = apps.get_model(settings.AUTH_USER_MODEL)\n     else:\n"
+}

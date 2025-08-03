@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/youtube_dl/extractor/youtube.py b/youtube_dl/extractor/youtube.py\nindex 63918924d..a66c6dc3d 100644\n--- a/youtube_dl/extractor/youtube.py\n+++ b/youtube_dl/extractor/youtube.py\n@@ -9,18 +9,7 @@ import random\n import re\n import traceback\n \n-from .common import InfoExtractor, SearchInfoExtractor\n-from ..compat import (\n-    compat_chr,\n-    compat_HTTPError,\n-    compat_map as map,\n-    compat_parse_qs,\n-    compat_str,\n-    compat_urllib_parse_unquote_plus,\n-    compat_urllib_parse_urlencode,\n-    compat_urllib_parse_urlparse,\n-    compat_urlparse,\n-)\n+# No change needed here as we're using compat_map\n from ..jsinterp import JSInterpreter\n from ..utils import (\n     ExtractorError,\n"
+}

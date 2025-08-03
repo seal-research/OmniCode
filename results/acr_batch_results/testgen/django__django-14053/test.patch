@@ -1,0 +1,45 @@
+--- a/tests/test_staticfiles_storage.py
++++ b/tests/test_staticfiles_storage.py
+-# Original code here (if modifying existing file)
++import os
++import tempfile
++from django.core.files.storage import FileSystemStorage
++from django.contrib.staticfiles.storage import ManifestStaticFilesStorage
++from django.test import TestCase
++
++class TestManifestStaticFilesStorage(TestCase):
++    def setUp(self):
++        self.storage = ManifestStaticFilesStorage(location=tempfile.mkdtemp(), base_url='')
++
++    def test_post_process_yields_once_per_file(self):
++        # Create a test file
++        file_name = 'test.txt'
++        file_content = b'Hello, world!'
++        with open(os.path.join(self.storage.location, file_name), 'wb') as f:
++            f.write(file_content)
++
++        # Call post_process
++        processed_files = list(self.storage.post_process([file_name]))
++
++        # Check that post_process yielded only once for the file
++        self.assertEqual(len(processed_files), 1)
++
++        # Check that the yielded file is the same as the original file
++        self.assertEqual(processed_files[0][0], file_name)
++
++    def test_post_process_handles_multiple_passes(self):
++        # Create a test file
++        file_name = 'test.txt'
++        file_content = b'Hello, world!'
++        with open(os.path.join(self.storage.location, file_name), 'wb') as f:
++            f.write(file_content)
++
++        # Call post_process multiple times
++        processed_files = list(self.storage.post_process([file_name]))
++        self.storage.post_process([file_name])
++
++        # Check that post_process yielded only once for the file
++        self.assertEqual(len(processed_files), 1)
++
++    def tearDown(self):
++        self.storage.delete(self.storage.location)

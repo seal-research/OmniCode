@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/template/defaultfilters.py b/django/template/defaultfilters.py\nindex 7a5b28d159..7ec7cafea1 100644\n--- a/django/template/defaultfilters.py\n+++ b/django/template/defaultfilters.py\n@@ -161,7 +161,7 @@ def floatformat(text, arg=-1):\n     try:\n         p = int(arg)\n     except ValueError:\n-        return input_val\n+        return repr(input_val)\n \n     try:\n         m = int(d) - d\n"
+}

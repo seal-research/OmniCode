@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/printing/str.py b/sympy/printing/str.py\nindex cc1d19fcce..376f42584f 100644\n--- a/sympy/printing/str.py\n+++ b/sympy/printing/str.py\n@@ -215,6 +215,9 @@ def _print_LatticeOp(self, expr):\n \n     def _print_Limit(self, expr):\n         e, z, z0, dir = expr.args\n+        e = self._print(e)\n+        z = self._print(z)\n+        z0 = self._print(z0)\n         if str(dir) == \"+\":\n             return \"Limit(%s, %s, %s)\" % (e, z, z0)\n         else:\n"
+}

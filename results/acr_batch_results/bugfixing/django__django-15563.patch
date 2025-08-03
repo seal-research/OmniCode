@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/compiler.py b/django/db/models/sql/compiler.py\nindex 59a5d6abbb..bed66aaa2d 100644\n--- a/django/db/models/sql/compiler.py\n+++ b/django/db/models/sql/compiler.py\n@@ -785,6 +785,8 @@ class SQLCompiler:\n         finally:\n             # Finally do cleanup - get rid of the joins we created above.\n             self.query.reset_refcounts(refcounts_before)\n+            # Reset the base table for the main query\n+            self.query.base_table = model._meta.db_table\n \n     def get_default_columns(self, start_alias=None, opts=None, from_parent=None):\n         \"\"\"\n"
+}

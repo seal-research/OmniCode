@@ -1,0 +1,41 @@
+--- a/tests/test_widgets.py
++++ b/tests/test_widgets.py
+-# Original code here (if modifying existing file)
++import pytest
++from django import forms
++from django.forms import SelectDateWidget
++from django.http import HttpResponse
++
++@pytest.mark.parametrize("y, m, d, expected", [
++    (2022, 1, 1, "2022-01-01"),
++    (2022, 12, 31, "2022-12-31"),
++    (1000, 1, 1, "1000-01-01"),
++    (sys.maxsize, 1, 1, None),  # Test case for OverflowError
++])
++def test_select_date_widget_value_from_datadict(y, m, d, expected):
++    class TestForm(forms.Form):
++        my_date = forms.DateField(widget=SelectDateWidget())
++
++    form = TestForm({"my_date_year": y, "my_date_month": m, "my_date_day": d})
++    if expected is None:
++        with pytest.raises((ValueError, OverflowError)):
++            form.is_valid()
++    else:
++        assert form.is_valid()
++        assert form.cleaned_data["my_date"].strftime("%Y-%m-%d") == expected
++
++def test_select_date_widget_overflow_error():
++    class TestForm(forms.Form):
++        my_date = forms.DateField(widget=SelectDateWidget())
++
++    form = TestForm({"my_date_year": sys.maxsize + 1, "my_date_month": 1, "my_date_day": 1})
++    assert not form.is_valid()
++
++def test_select_date_widget_value_omitted_from_data():
++    class TestForm(forms.Form):
++        my_date = forms.DateField(widget=SelectDateWidget())
++
++    form = TestForm({})
++    assert form.is_valid()
++    assert "my_date" in form.cleaned_data
++    assert form.cleaned_data["my_date"] is None

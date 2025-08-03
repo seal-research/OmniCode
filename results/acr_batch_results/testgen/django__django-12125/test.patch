@@ -1,0 +1,71 @@
+--- a/tests/test_migrations.py
++++ b/tests/test_migrations.py
++import pytest
++from django.db import models
++from django.db.migrations import makemigrations
++
++class TestInnerClassPaths:
++    def test_inner_class_field(self):
++        # Define a model with an inner class field
++        class Outer:
++            class Inner(models.CharField):
++                pass
++
++        class A(models.Model):
++            field = Outer.Inner(max_length=20)
++
++        # Generate migrations
++        migrations = makemigrations()
++
++        # Check if the migration file contains the correct path
++        assert "test1.models.Outer.Inner" not in str(migrations)
++
++    def test_nested_inner_class_field(self):
++        # Define a model with a nested inner class field
++        class Outer:
++            class Inner:
++                class DeepInner(models.CharField):
++                    pass
++
++        class A(models.Model):
++            field = Outer.Inner.DeepInner(max_length=20)
++
++        # Generate migrations
++        migrations = makemigrations()
++
++        # Check if the migration file contains the correct path
++        assert "test1.models.Outer.Inner.DeepInner" in str(migrations)
++
++    def test_enum_field(self):
++        # Define a model with an enum field as an inner class
++        import enum
++        from enumfields import Enum, EnumField
++
++        class Thing(models.Model):
++            @enum.unique
++            class State(Enum):
++                on = 'on'
++                off = 'off'
++
++            state = EnumField(enum=State)
++
++        # Generate migrations
++        migrations = makemigrations()
++
++        # Check if the migration file contains the correct path
++        assert "test1.models.Thing.State" in str(migrations)
++
++    def test_field_as_inner_class(self):
++        # Define a model with a field defined as an inner class
++        class Outer:
++            class Inner(models.CharField):
++                pass
++
++        class A(models.Model):
++            field = Outer.Inner(max_length=20)
++
++        # Generate migrations
++        migrations = makemigrations()
++
++        # Check if the migration file contains the correct path
++        assert "test1.models.A.field" in str(migrations)

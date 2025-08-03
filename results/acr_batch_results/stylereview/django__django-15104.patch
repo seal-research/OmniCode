@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/migrations/autodetector.py b/django/db/migrations/autodetector.py\nindex 97977d72ef..fb557d2be7 100644\n--- a/django/db/migrations/autodetector.py\n+++ b/django/db/migrations/autodetector.py\n@@ -93,7 +93,7 @@ class MigrationAutodetector:\n         the related fields change during renames).\n         \"\"\"\n         fields_def = []\n-        for name, field in sorted(fields.items()):\n+        for _, field in sorted(fields.items()):\n             deconstruction = self.deep_deconstruct(field)\n             if field.remote_field and field.remote_field.model:\n                 del deconstruction[2]['to']\n"
+}

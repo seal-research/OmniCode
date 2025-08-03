@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/files.py b/django/db/models/fields/files.py\nindex 7a99b12691..2405f42381 100644\n--- a/django/db/models/fields/files.py\n+++ b/django/db/models/fields/files.py\n@@ -21,6 +21,7 @@ class FieldFile(File, AltersData):\n         self.field = field\n         self.storage = field.storage\n         self._committed = True\n+        self._file = None\n \n     def __eq__(self, other):\n         # Older code may be expecting FileField values to be simple strings.\n@@ -66,7 +67,6 @@ class FieldFile(File, AltersData):\n         self._require_file()\n         return self.storage.url(self.name)\n \n-    @property\n     def size(self):\n         self._require_file()\n         if not self._committed:\n"
+}

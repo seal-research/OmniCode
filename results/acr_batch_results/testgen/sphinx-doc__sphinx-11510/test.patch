@@ -1,0 +1,125 @@
+--- a/tests/test_source_read_event.py
++++ b/tests/test_source_read_event.py
++import pytest
++from sphinx.application import Sphinx
++from sphinx.events import EventManager
++
++@pytest.fixture
++def app():
++    return Sphinx("", "", "", "", "")
++
++def test_source_read_event(app):
++    # GIVEN
++    source = ["This is a test &REPLACE_ME;"]
++
++    # WHEN
++    app.events.emit('source-read', 'test_doc', source)
++
++    # THEN
++    assert source[0] == "This is a test REPLACED"
++
++def test_source_read_event_included_file(app):
++    # GIVEN
++    source = ["This is a test &REPLACE_ME;"]
++
++    # WHEN
++    app.events.emit('source-read', 'included_file', source)
++
++    # THEN
++    assert source[0] == "This is a test REPLACED"
++
++def test_source_read_event_not_modified(app):
++    # GIVEN
++    source = ["This is a test &REPLACE_ME;"]
++
++    # WHEN
++    app.events.emit('source-read', 'not_modified_doc', source)
++
++    # THEN
++    assert source[0] == "This is a test &REPLACE_ME;"
++
++def test_custom_extension(app):
++    # GIVEN
++    class CustomExtension:
++        def __init__(self, app):
++            self.app = app
++            app.connect('source-read', self.source_read)
++
++        def source_read(self, docname, source):
++            result = source[0]
++            result = result.replace("&REPLACE_ME;", "REPLACED")
++            source[0] = result
++
++    # WHEN
++    extension = CustomExtension(app)
++
++    # THEN
++    assert app.registry.extensions['custom_extension'] == extension
+
+--- a/tests/conftest.py
++++ b/tests/conftest.py
++import pytest
++
++@pytest.fixture
++def tmp_path(tmp_path_factory):
++    return tmp_path_factory.mktemp("sphinx_docs")
++
++@pytest.fixture
++def conf_py(tmp_path):
++    (tmp_path / "conf.py").write_text("""
++import sys
++import os
++sys.path.insert(0, os.path.abspath('.'))
++
++extensions = [
++    'my_extension'
++]
++""")
++
++    return tmp_path / "conf.py"
++
++@pytest.fixture
++def index_rst(tmp_path):
++    (tmp_path / "index.rst").write_text("""
++This is a test
++==============
++
++.. include:: something-to-include.rst
++
++&REPLACE_ME;
++""")
++
++    return tmp_path / "index.rst"
++
++@pytest.fixture
++def something_to_include_rst(tmp_path):
++    (tmp_path / "something-to-include.rst").write_text("""
++Testing
++=======
++
++&REPLACE_ME;
++""")
++
++    return tmp_path / "something-to-include.rst"
+
+--- a/tests/test_my_extension.py
++++ b/tests/test_my_extension.py
++import pytest
++from sphinx.application import Sphinx
++
++def test_subst_vars_replace():
++    # GIVEN
++    app = Sphinx("", "", "", "", "")
++    source = ["This is a test &REPLACE_ME;"]
++
++    # WHEN
++    def subst_vars_replace(app, docname, source):
++        result = source[0]
++        result = result.replace("&REPLACE_ME;", "REPLACED")
++        source[0] = result
++
++    app.connect('source-read', subst_vars_replace)
++    app.emit('source-read', 'test_doc', source)
++
++    # THEN
++    assert source[0] == "This is a test REPLACED"

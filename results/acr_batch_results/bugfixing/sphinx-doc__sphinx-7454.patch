@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/ext/autodoc/typehints.py b/sphinx/ext/autodoc/typehints.py\nindex f917dbdf3..49e82f35f 100644\n--- a/sphinx/ext/autodoc/typehints.py\n+++ b/sphinx/ext/autodoc/typehints.py\n@@ -41,7 +41,7 @@ def record_typehints(app: Sphinx, objtype: str, name: str, obj: Any,\n def merge_typehints(app: Sphinx, domain: str, objtype: str, contentnode: Element) -> None:\n     if domain != 'py':\n         return\n-    if app.config.autodoc_typehints != 'description':\n+    if app.config.autodoc_typehints not in ('description', 'signature'):\n         return\n     if objtype == 'class' and app.config.autoclass_content not in ('init', 'both'):\n         return\n"
+}

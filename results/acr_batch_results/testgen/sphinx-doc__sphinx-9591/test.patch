@@ -1,0 +1,110 @@
+--- a/tests/test_autodoc.py
++++ b/tests/test_autodoc.py
+-# Empty if creating new file
++import pytest
++from sphinx import addnodes
++from sphinx.domains.python import PythonDomain
++from sphinx.ext.autodoc import PropertyDocumenter, DataDocumenter
++from sphinx.testing import util
++from sphinx.testing.util import assert_node
++
++@pytest.mark.sphinx('html', buildername='html')
++def test_property_typehint_crossref(app, html_app):
++    """Test typehint of property is cross-referenced."""
++    app.add_domain(PythonDomain)
++
++    class Point:
++        """A class representing a point.
++
++        Attributes:
++            x: Position X.
++            y: Position Y.
++        """
++        x: int
++        y: int
++
++    class Square:
++        """A class representing a square figure."""
++        #: Square's start position (top-left corner).
++        start: Point
++        #: Square width.
++        width: int
++        #: Square height.
++        height: int
++
++        @property
++        def end(self) -> Point:
++            """Square's end position (bottom-right corner)."""
++            return Point(self.start.x + self.width, self.start.y + self.height)
++
++    def test_func(app):
++        app.config.autodoc_typehints = True
++        doc = PropertyDocumenter(
++            name='end',
++            obj=Square.end,
++            parent=Square,
++        )
++        doc.option_spec = {}
++        yield doc
++
++    app.connect('autodoc-before-documentation', test_func)
++    html = html_app.build()
++
++    def get_nodes(html):
++        tree = html_app.parse(html)
++        nodes = []
++        for child in tree.traverse(addnodes.only):
++            if 'class' in child.attributes and 'autodoc' in child.attributes['class']:
++                nodes.extend(child.traverse(descendant=True))
++        return nodes
++
++    nodes = get_nodes(html)
++    assert_node(nodes, 'type', string='Point')
++
++@pytest.mark.sphinx('html', buildername='html')
++def test_data_typehint_crossref(app, html_app):
++    """Test typehint of data is cross-referenced."""
++    app.add_domain(PythonDomain)
++
++    class Point:
++        """A class representing a point.
++
++        Attributes:
++            x: Position X.
++            y: Position Y.
++        """
++        x: int
++        y: int
++
++    class Square:
++        """A class representing a square figure."""
++        #: Square's start position (top-left corner).
++        start: Point
++        #: Square width.
++        width: int
++        #: Square height.
++        height: int
++
++    def test_func(app):
++        app.config.autodoc_typehints = True
++        doc = DataDocumenter(
++            name='start',
++            obj=Square.start,
++            parent=Square,
++        )
++        doc.option_spec = {}
++        yield doc
++
++    app.connect('autodoc-before-documentation', test_func)
++    html = html_app.build()
++
++    def get_nodes(html):
++        tree = html_app.parse(html)
++        nodes = []
++        for child in tree.traverse(addnodes.only):
++            if 'class' in child.attributes and 'autodoc' in child.attributes['class']:
++                nodes.extend(child.traverse(descendant=True))
++        return nodes
++
++    nodes = get_nodes(html)
++    assert_node(nodes, 'type', string='Point')

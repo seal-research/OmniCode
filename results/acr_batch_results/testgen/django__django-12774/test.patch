@@ -1,0 +1,72 @@
+--- a/tests/test_query.py
++++ b/tests/test_query.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import UniqueConstraint
++
++@pytest.mark.test_field_name_with_total_unique_constraint
++def test_field_name_with_total_unique_constraint():
++    class Article(models.Model):
++        slug = models.CharField(max_length=255)
++
++        class Meta:
++            constraints = [
++                models.UniqueConstraint(fields=["slug"], name="%(app_label)s_%(class)s_slug_unq")
++            ]
++
++    article = Article.objects.create(slug="test-slug")
++
++    result = Article.objects.in_bulk(field_name="slug")
++    assert result == {"test-slug": article}
++
++@pytest.mark.test_field_name_with_unique_true
++def test_field_name_with_unique_true():
++    class Article(models.Model):
++        slug = models.CharField(max_length=255, unique=True)
++
++    article = Article.objects.create(slug="test-slug")
++
++    result = Article.objects.in_bulk(field_name="slug")
++    assert result == {"test-slug": article}
++
++@pytest.mark.test_field_name_with_unique_constraint_and_condition
++def test_field_name_with_unique_constraint_and_condition():
++    class Article(models.Model):
++        published = models.BooleanField(default=False)
++        slug = models.CharField(max_length=255)
++
++        class Meta:
++            constraints = [
++                models.UniqueConstraint(fields=["slug"], name="%(app_label)s_%(class)s_slug_unq", condition=models.Q(published=True))
++            ]
++
++    article = Article.objects.create(published=True, slug="test-slug")
++
++    result = Article.objects.in_bulk(field_name="slug")
++    assert result == {"test-slug": article}
++
++@pytest.mark.test_invalid_field_name
++def test_invalid_field_name():
++    class Article(models.Model):
++        slug = models.CharField(max_length=255)
++
++    with pytest.raises(ValueError):
++        Article.objects.in_bulk(field_name="slug")
++
++@pytest.mark.test_in_bulk_with_id_list
++def test_in_bulk_with_id_list():
++    class Article(models.Model):
++        id = models.AutoField(primary_key=True)
++        slug = models.CharField(max_length=255)
++
++        class Meta:
++            constraints = [
++                models.UniqueConstraint(fields=["slug"], name="%(app_label)s_%(class)s_slug_unq")
++            ]
++
++    article1 = Article.objects.create(slug="test-slug-1")
++    article2 = Article.objects.create(slug="test-slug-2")
++
++    result = Article.objects.in_bulk(field_name="slug", id_list=["test-slug-1", "test-slug-2"])
++    assert result == {"test-slug-1": article1, "test-slug-2": article2}

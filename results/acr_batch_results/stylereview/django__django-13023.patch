@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py\nindex 0fd69059ee..cd83473745 100644\n--- a/django/db/models/fields/__init__.py\n+++ b/django/db/models/fields/__init__.py\n@@ -340,7 +340,7 @@ class Field(RegisterLookupMixin):\n             return []\n         app_label = self.model._meta.app_label\n         errors = []\n-        for alias in databases:\n+        for alias in databases or []:\n             if router.allow_migrate(alias, app_label, model_name=self.model._meta.model_name):\n                 errors.extend(connections[alias].validation.check_field(self, **kwargs))\n         return errors\n"
+}

@@ -1,0 +1,46 @@
+--- a/tests/test_scales.py
++++ b/tests/test_scales.py
+-# Empty if creating new file
++import pytest
++import matplotlib.pyplot as plt
++from seaborn._core.scales import Nominal
++
++def test_nominal_scale_limits():
++    """Test that nominal scale limits extend by +/- 0.5 units."""
++    # Create a nominal scale
++    scale = Nominal()
++    # Set the nominal scale limits
++    scale._matplotlib_scale.set_view_interval(0, 10)
++    # Check the limits
++    assert scale._matplotlib_scale.get_view_interval() == (0, 10)
++
++def test_nominal_scale_grid_suppression():
++    """Test that nominal scales suppress grid lines."""
++    # Create a nominal scale
++    scale = Nominal()
++    # Check if grid is suppressed
++    # Assuming a method to check grid visibility
++    assert not scale._matplotlib_scale.grid_visible()
++
++def test_nominal_scale_axis_inversion():
++    """Test that nominal scales on y-axis invert the axis."""
++    # Create a nominal scale on y-axis
++    scale = Nominal()
++    # Assuming a method to set axis orientation
++    scale._matplotlib_scale.set_axis_orientation('y')
++    # Check if axis is inverted
++    # Assuming a method to check axis inversion
++    assert scale._matplotlib_scale.is_inverted()
++
++def test_categorical_scale_behavior():
++    """Test that categorical scales behave as expected."""
++    # Create a categorical scale
++    scale = Nominal()  # Using Nominal as a substitute for categorical
++    # Check limit extension
++    scale._matplotlib_scale.set_view_interval(0, 10)
++    assert scale._matplotlib_scale.get_view_interval() == (0, 10)
++    # Check grid suppression
++    assert not scale._matplotlib_scale.grid_visible()
++    # Check axis inversion on y-axis
++    scale._matplotlib_scale.set_axis_orientation('y')
++    assert scale._matplotlib_scale.is_inverted()

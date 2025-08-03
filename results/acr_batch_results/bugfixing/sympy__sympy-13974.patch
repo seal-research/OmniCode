@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/physics/quantum/tensorproduct.py b/sympy/physics/quantum/tensorproduct.py\nindex 9dd10d219e..9fdedb8000 100644\n--- a/sympy/physics/quantum/tensorproduct.py\n+++ b/sympy/physics/quantum/tensorproduct.py\n@@ -238,6 +238,10 @@ def _label_wrap(label, nlabels):\n     def doit(self, **hints):\n         return TensorProduct(*[item.doit(**hints) for item in self.args])\n \n+    def __pow__(self, exp):\n+        factors = [arg ** exp for arg in self.args]\n+        return TensorProduct(*factors)\n+\n     def _eval_expand_tensorproduct(self, **hints):\n         \"\"\"Distribute TensorProducts across addition.\"\"\"\n         args = self.args\n"
+}

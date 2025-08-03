@@ -1,0 +1,51 @@
+--- a/tests/test_db_collation.py
++++ b/tests/test_db_collation.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models.fields import CharField, ForeignKey
++
++class TestDBCollation:
++    def test_db_collation_propagates_to_foreign_keys(self):
++        # Arrange
++        class Account(models.Model):
++            id = CharField(primary_key=True, db_collation='utf8_bin', max_length=22)
++            name = CharField(max_length=255)
++
++        class Profile(models.Model):
++            account = ForeignKey(Account, on_delete=models.CASCADE)
++            bio = CharField(max_length=255)
++
++        # Act and Assert
++        profile = Profile.objects.create(account_id='some_account_id', bio='some bio')
++        assert profile.account.name == 'some_account_id'
++
++    def test_adding_collation_to_foreign_key_constraint(self):
++        # Arrange
++        class Account(models.Model):
++            id = CharField(primary_key=True, db_collation='utf8_bin', max_length=22)
++            name = CharField(max_length=255)
++
++        class Profile(models.Model):
++            account = ForeignKey(Account, on_delete=models.CASCADE, db_collation='utf8_bin')
++            bio = CharField(max_length=255)
++
++        # Act and Assert
++        profile = Profile.objects.create(account_id='some_account_id', bio='some bio')
++        assert profile.account.name == 'some_account_id'
++
++    def test_collation_in_sql(self):
++        # Arrange
++        class Account(models.Model):
++            id = CharField(primary_key=True, db_collation='utf8_bin', max_length=22)
++            name = CharField(max_length=255)
++
++        class Profile(models.Model):
++            account = ForeignKey(Account, on_delete=models.CASCADE)
++            bio = CharField(max_length=255)
++
++        # Act
++        sql = Profile.objects.raw('SELECT * FROM profiles').sql
++
++        # Assert
++        assert 'utf8_bin' in sql

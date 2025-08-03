@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/sets/conditionset.py b/sympy/sets/conditionset.py\nindex 118eda6f77..c5f5ce6d51 100644\n--- a/sympy/sets/conditionset.py\n+++ b/sympy/sets/conditionset.py\n@@ -243,8 +243,8 @@ def _eval_subs(self, old, new):\n         cond = self.condition.subs(old, new)\n         base = self.base_set.subs(old, new)\n         if cond is S.true:\n-            return ConditionSet(new, Contains(new, base), base)\n-        return self.func(self.sym, cond, base)\n+            return self.func(new if isinstance(new, Symbol) else sym, cond, base)\n+        return self.func(sym, cond, base)\n \n     def dummy_eq(self, other, symbol=None):\n         if not isinstance(other, self.func):\n"
+}

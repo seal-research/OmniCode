@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/management/base.py b/django/core/management/base.py\nindex abc6f79a15..bf9ee930cc 100644\n--- a/django/core/management/base.py\n+++ b/django/core/management/base.py\n@@ -361,7 +361,6 @@ class BaseCommand:\n         \"\"\"\n         Entry point for subclassed commands to add custom arguments.\n         \"\"\"\n-        pass\n \n     def add_base_argument(self, parser, *args, **kwargs):\n         \"\"\"\n@@ -549,7 +548,7 @@ class BaseCommand:\n \n         if msg:\n             if visible_issue_count:\n-                self.stderr.write(msg, lambda x: x)\n+                self.stderr.write(msg)\n             else:\n                 self.stdout.write(msg)\n \n"
+}

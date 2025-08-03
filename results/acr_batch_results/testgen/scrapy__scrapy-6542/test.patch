@@ -1,0 +1,94 @@
+--- a/tests/test_contracts.py
++++ b/tests/test_contracts.py
+-# Empty if creating new file
++import pytest
++from scrapy.contracts import Contract
++from unittest.mock import Mock
++
++@pytest.fixture
++def contract():
++    return Contract()
++
++def test_add_pre_hook_exception(contract):
++    # Test that an exception in the try block is propagated
++    cb = Mock(side_effect=Exception("Test exception"))
++    response = Mock()
++    results = Mock()
++    try:
++        contract.add_pre_hook(cb, response, results)
++    except Exception as e:
++        assert str(e) == "Test exception"
++
++def test_add_post_hook_exception(contract):
++    # Test that an exception in the try block is propagated
++    cb = Mock(side_effect=Exception("Test exception"))
++    response = Mock()
++    results = Mock()
++    try:
++        contract.add_post_hook(cb, response, results)
++    except Exception as e:
++        assert str(e) == "Test exception"
++
++def test_add_pre_hook_return(contract):
++    # Test that the return value is correct when no exception occurs
++    cb = Mock(return_value="Test return value")
++    response = Mock()
++    results = Mock()
++    result = contract.add_pre_hook(cb, response, results)
++    assert result == ["Test return value"]
++
++def test_add_post_hook_return(contract):
++    # Test that the return value is correct when no exception occurs
++    cb = Mock(return_value="Test return value")
++    response = Mock()
++    results = Mock()
++    result = contract.add_post_hook(cb, response, results)
++    assert result == ["Test return value"]
++
++def test_add_pre_hook_finally_return(contract):
++    # Test that the return value in the finally block does not swallow exceptions
++    cb = Mock(side_effect=Exception("Test exception"))
++    response = Mock()
++    results = Mock()
++    with pytest.raises(Exception):
++        contract.add_pre_hook(cb, response, results)
++
++def test_add_post_hook_finally_return(contract):
++    # Test that the return value in the finally block does not swallow exceptions
++    cb = Mock(side_effect=Exception("Test exception"))
++    response = Mock()
++    results = Mock()
++    with pytest.raises(Exception):
++        contract.add_post_hook(cb, response, results)
+
+--- a/scrapy/contracts/__init__.py
++++ b/scrapy/contracts/__init__.py
+-                finally:
+-                    cb_result = cb(response, **cb_kwargs)
+-                    if isinstance(cb_result, (AsyncGenerator, CoroutineType)):
+-                        raise TypeError("Contracts don't support async callbacks")
+-                    return list(  # pylint: disable=return-in-finally
+-                        cast(Iterable[Any], iterate_spider_output(cb_result))
+-                    )
++                try:
++                    cb_result = cb(response, **cb_kwargs)
++                    if isinstance(cb_result, (AsyncGenerator, CoroutineType)):
++                        raise TypeError("Contracts don't support async callbacks")
++                    return list(  # pylint: disable=return-in-finally
++                        cast(Iterable[Any], iterate_spider_output(cb_result))
++                    )
++                finally:
++                    # Perform necessary cleanup here
++                    pass
+
+--- a/scrapy/contracts/__init__.py
++++ b/scrapy/contracts/__init__.py
+-                finally:
+-                    return output  # pylint: disable=return-in-finally
++                try:
++                    # Perform necessary processing here
++                    pass
++                finally:
++                    # Perform necessary cleanup here
++                    pass
++                return output

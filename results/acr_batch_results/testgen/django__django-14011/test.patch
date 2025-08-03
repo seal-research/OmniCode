@@ -1,0 +1,56 @@
+--- a/tests/testcases.py
++++ b/tests/testcases.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.test import LiveServerTestCase
++from django.db import connections
++
++@pytest.mark.django_db
++class TestLiveServerThread(LiveServerTestCase):
++    def test_closes_connections(self):
++        # Verify that database connections are closed after each test
++        connections['default'].cursor().execute("SELECT 1")
++        self.assertEqual(len(connections.all()), 1)
++        # Run a test that uses the live server
++        response = self.client.get('/')
++        self.assertEqual(response.status_code, 200)
++        # Verify that database connections are closed
++        self.assertEqual(len(connections.all()), 0)
++
++    def tearDown(self):
++        # Ensure that all connections are closed after each test
++        for connection in connections.all():
++            connection.close()
+
+--- a/tests/test_database.py
++++ b/tests/test_database.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import connections
++from django.db.backends.base.creation import BaseDatabaseCreation
++
++@pytest.mark.django_db
++class TestDatabaseCreation:
++    def test_destroy_test_db_closes_connections(self):
++        # Verify that destroy_test_db closes all database connections
++        creation = BaseDatabaseCreation(connections['default'])
++        creation.create_test_db()
++        connections['default'].cursor().execute("SELECT 1")
++        self.assertEqual(len(connections.all()), 1)
++        creation.destroy_test_db()
++        self.assertEqual(len(connections.all()), 0)
+
+--- a/tests/test_servers.py
++++ b/tests/test_servers.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.core.servers.basehttp import ThreadedWSGIServer
++
++@pytest.mark.django_db
++class TestThreadedWSGIServer:
++    def test_server_closes_connections(self):
++        # Verify that ThreadedWSGIServer closes all database connections
++        server = ThreadedWSGIServer(('localhost', 8080), allow_reuse_address=False)
++        server.serve_forever()
++        # Verify that database connections are closed
++        self.assertEqual(len(connections.all()), 0)

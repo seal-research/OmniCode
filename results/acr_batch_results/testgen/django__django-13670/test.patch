@@ -1,0 +1,9 @@
+--- a/t
++++ b/t
+-text
++
+
+--- a/dt
++++ b/dt
+-x "\bedt
++obox "\b

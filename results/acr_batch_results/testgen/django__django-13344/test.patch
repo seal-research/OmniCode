@@ -1,0 +1,59 @@
+--- a/tests/test_middleware.py
++++ b/tests/test_middleware.py
+-# Empty if creating new file
++import pytest
++from django.test import RequestFactory
++from django.http import HttpResponse
++from django.middleware.security import SecurityMiddleware
++from django.utils.deprecation import MiddlewareMixin
++
++class DummyMiddleware(MiddlewareMixin):
++    def process_response(self, request, response):
++        assert isinstance(response, HttpResponse)
++
++@pytest.mark.asyncio
++async def test_middleware_with_async_response():
++    request = RequestFactory().get('/')
++    middleware = DummyMiddleware(get_response=lambda request: HttpResponse('Hello, World!'))
++    response = await middleware.__acall__(request)
++    assert isinstance(response, HttpResponse)
++
++@pytest.mark.asyncio
++async def test_middleware_with_coroutine_response():
++    request = RequestFactory().get('/')
++    middleware = DummyMiddleware(get_response=lambda request: asyncio.sleep(1))
++    with pytest.raises(TypeError):
++        await middleware.__acall__(request)
++
++def test_middleware_with_sync_response():
++    request = RequestFactory().get('/')
++    middleware = DummyMiddleware(get_response=lambda request: HttpResponse('Hello, World!'))
++    response = middleware(request)
++    assert isinstance(response, HttpResponse)
+
+--- a/tests/test_security_middleware.py
++++ b/tests/test_security_middleware.py
+-# Empty if creating new file
++import pytest
++from django.test import RequestFactory
++from django.middleware.security import SecurityMiddleware
++
++@pytest.mark.asyncio
++async def test_security_middleware_with_async_response():
++    request = RequestFactory().get('/')
++    middleware = SecurityMiddleware(get_response=lambda request: asyncio.sleep(1))
++    response = await middleware.__acall__(request)
++    assert 'Strict-Transport-Security' in response
++
++@pytest.mark.asyncio
++async def test_security_middleware_with_coroutine_response():
++    request = RequestFactory().get('/')
++    middleware = SecurityMiddleware(get_response=lambda request: asyncio.sleep(1))
++    response = await middleware.__acall__(request)
++    assert isinstance(response, HttpResponse)
++
++def test_security_middleware_with_sync_response():
++    request = RequestFactory().get('/')
++    middleware = SecurityMiddleware(get_response=lambda request: HttpResponse('Hello, World!'))
++    response = middleware(request)
++    assert isinstance(response, HttpResponse)

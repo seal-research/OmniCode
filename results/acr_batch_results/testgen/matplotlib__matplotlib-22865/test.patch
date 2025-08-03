@@ -1,0 +1,56 @@
+--- a/tests/test_colorbar.py
++++ b/tests/test_colorbar.py
+-# Original code here (if modifying existing file)
++import pytest
++import matplotlib as mpl
++import numpy as np
++import matplotlib.pyplot as plt
++from matplotlib.colors import from_levels_and_colors
++
++def test_colorbar_drawedges_extend():
++    my_cmap = mpl.cm.viridis
++    bounds = np.arange(10)
++    nb_colors = len(bounds) + 1
++    colors = my_cmap(np.linspace(100, 255, nb_colors).astype(int))
++    my_cmap, my_norm = from_levels_and_colors(bounds, colors, extend='both')
++
++    fig, ax = plt.subplots(figsize=(5, 1))
++    cbar_ax = fig.add_axes([0.05, 0.4, 0.9, 0.1])
++    cbar = mpl.colorbar.ColorbarBase(cbar_ax, cmap=my_cmap, norm=my_norm, orientation='horizontal', drawedges=True)
++
++    # Assert that edges are drawn at extremities
++    assert len(cbar.dividers.get_segments()) == 12  # 10 segments for colors + 2 for extends
++
++    plt.close(fig)
++
++def test_colorbar_no_drawedges_extend():
++    my_cmap = mpl.cm.viridis
++    bounds = np.arange(10)
++    nb_colors = len(bounds) + 1
++    colors = my_cmap(np.linspace(100, 255, nb_colors).astype(int))
++    my_cmap, my_norm = from_levels_and_colors(bounds, colors, extend='both')
++
++    fig, ax = plt.subplots(figsize=(5, 1))
++    cbar_ax = fig.add_axes([0.05, 0.4, 0.9, 0.1])
++    cbar = mpl.colorbar.ColorbarBase(cbar_ax, cmap=my_cmap, norm=my_norm, orientation='horizontal', drawedges=False)
++
++    # Assert that edges are not drawn at extremities
++    assert len(cbar.dividers.get_segments()) == 0
++
++    plt.close(fig)
++
++def test_colorbar_drawedges_no_extend():
++    my_cmap = mpl.cm.viridis
++    bounds = np.arange(10)
++    nb_colors = len(bounds) + 1
++    colors = my_cmap(np.linspace(100, 255, nb_colors).astype(int))
++    my_cmap, my_norm = from_levels_and_colors(bounds, colors)
++
++    fig, ax = plt.subplots(figsize=(5, 1))
++    cbar_ax = fig.add_axes([0.05, 0.4, 0.9, 0.1])
++    cbar = mpl.colorbar.ColorbarBase(cbar_ax, cmap=my_cmap, norm=my_norm, orientation='horizontal', drawedges=True)
++
++    # Assert that edges are drawn but not at extremities
++    assert len(cbar.dividers.get_segments()) == 10
++
++    plt.close(fig)

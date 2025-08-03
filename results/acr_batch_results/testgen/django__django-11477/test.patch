@@ -1,0 +1,46 @@
+--- a/tests/test_url_translation.py
++++ b/tests/test_url_translation.py
+-# Empty if creating new file
++import pytest
++from django.urls import path, reverse
++from django.urls.base import translate_url
++
++# Define a sample URL pattern with optional named groups
++urlpatterns = [
++    path('users/<int:user_id>/', 'user_detail', name='user_detail'),
++    path('users/<int:user_id>/posts/', 'user_posts', name='user_posts'),
++]
++
++def test_translate_url_with_optional_groups():
++    url = '/users/123/posts/'
++    lang_code = 'fr'
++    translated_url = translate_url(url, lang_code)
++    assert translated_url == '/users/123/posts/'
++
++def test_translate_url_with_missing_optional_groups():
++    url = '/users/123/'
++    lang_code = 'fr'
++    translated_url = translate_url(url, lang_code)
++    assert translated_url == '/users/123/'
++
++def test_translate_url_with_no_translation():
++    url = '/users/123/posts/'
++    lang_code = 'es'
++    translated_url = translate_url(url, lang_code)
++    assert translated_url == '/users/123/posts/'
++
++def test_reverse_url_with_optional_groups():
++    # Test reversing URLs with optional groups
++    url_name = 'user_detail'
++    args = (123,)
++    kwargs = {}
++    reversed_url = reverse(url_name, args=args, kwargs=kwargs)
++    assert reversed_url == '/users/123/'
++
++def test_reverse_url_with_no_optional_groups():
++    # Test reversing URLs without optional groups
++    url_name = 'user_posts'
++    args = (123,)
++    kwargs = {}
++    reversed_url = reverse(url_name, args=args, kwargs=kwargs)
++    assert reversed_url == '/users/123/posts/'

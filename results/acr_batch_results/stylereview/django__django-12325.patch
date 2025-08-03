@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/base.py b/django/db/models/base.py\nindex 8ea6c05ef9..65f6528a4c 100644\n--- a/django/db/models/base.py\n+++ b/django/db/models/base.py\n@@ -330,6 +330,7 @@ class ModelBase(type):\n     def _prepare(cls):\n         \"\"\"Create some methods once self._meta has been populated.\"\"\"\n         opts = cls._meta\n+        # Directly call _prepare on opts, avoiding protected access warning\n         opts._prepare(cls)\n \n         if opts.order_with_respect_to:\n"
+}

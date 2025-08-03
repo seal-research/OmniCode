@@ -1,0 +1,58 @@
+--- a/tests/test_management_commands.py
++++ b/tests/test_management_commands.py
+-# Original content, if any
++import pytest
++from django.core.management import call_command
++from django.core.management.base import CommandError
++from django.test import override_settings
++
++@pytest.mark.skip_checks
++def test_runserver_with_skip_checks():
++    # Test that the runserver command runs successfully with --skip-checks
++    try:
++        call_command('runserver', '--skip-checks', '--no-color')
++    except CommandError as e:
++        pytest.fail(f"CommandError: {e}")
++
++def test_runserver_without_skip_checks():
++    # Test that the runserver command performs system checks without --skip-checks
++    with pytest.raises(SystemCheckError):
++        call_command('runserver', '--no-color')
++
++@override_settings(DEBUG=False)
++def test_runserver_with_debug_false():
++    # Test that the runserver command raises an error when DEBUG=False
++    with pytest.raises(CommandError):
++        call_command('runserver', '--no-color')
++
++def test_runserver_with_invalid_port():
++    # Test that the runserver command raises an error with an invalid port
++    with pytest.raises(CommandError):
++        call_command('runserver', '0.0.0.0:abc', '--no-color')
+
+--- a/tests/test_management_commands_runserver.py
++++ b/tests/test_management_commands_runserver.py
+-# Original content, if any
++import pytest
++from django.core.management.commands.runserver import Command
++
++def test_add_arguments():
++    parser = Command().create_parser('test', 'runserver')
++    args = parser.parse_args(['--skip-checks'])
++    assert args.skip_checks is True
++
++def test_inner_run_with_skip_checks():
++    command = Command()
++    options = {'skip_checks': True}
++    # Mock the check method to assert it's not called
++    with unittest.mock.patch.object(command, 'check') as mock_check:
++        command.inner_run(None, **options)
++        mock_check.assert_not_called()
++
++def test_inner_run_without_skip_checks():
++    command = Command()
++    options = {}
++    # Mock the check method to assert it's called
++    with unittest.mock.patch.object(command, 'check') as mock_check:
++        command.inner_run(None, **options)
++        mock_check.assert_called_once()

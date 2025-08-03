@@ -1,0 +1,96 @@
+--- a/tests/test_modeling.py
++++ b/tests/test_modeling.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++
++def test_abstract_model_fields_not_equal():
++    class A(models.Model):
++        class Meta:
++            abstract = True
++        myfield = models.IntegerField()
++
++    class B(A):
++        pass
++
++    class C(A):
++        pass
++
++    assert B._meta.get_field('myfield') != C._meta.get_field('myfield')
++
++def test_abstract_model_fields_hash():
++    class A(models.Model):
++        class Meta:
++            abstract = True
++        myfield = models.IntegerField()
++
++    class B(A):
++        pass
++
++    class C(A):
++        pass
++
++    fields = {B._meta.get_field('myfield'), C._meta.get_field('myfield')}
++    assert len(fields) == 2
++
++def test_concrete_model_fields_equal():
++    class A(models.Model):
++        pass
++
++    class B(A):
++        pass
++
++    class C(A):
++        pass
++
++    B.myfield = models.IntegerField()
++    C.myfield = models.IntegerField()
++
++    assert B._meta.get_field('myfield') == C._meta.get_field('myfield')
++
++def test_concrete_model_fields_hash():
++    class A(models.Model):
++        pass
++
++    class B(A):
++        pass
++
++    class C(A):
++        pass
++
++    B.myfield = models.IntegerField()
++    C.myfield = models.IntegerField()
++
++    fields = {B._meta.get_field('myfield'), C._meta.get_field('myfield')}
++    assert len(fields) == 1
+
+--- a/django/db/models/fields/__init__.py
++++ b/django/db/models/fields/__init__.py
+-    def __eq__(self, other):
+-        # Needed for @total_ordering
+-        if isinstance(other, Field):
+-            return self.creation_counter == other.creation_counter
+-        return NotImplemented
+-
+-    def __lt__(self, other):
+-        # This is needed because bisect does not take a comparison function.
+-        if isinstance(other, Field):
+-            return self.creation_counter < other.creation_counter
+-        return NotImplemented
+-
+-    def __hash__(self):
+-        return hash(self.creation_counter)
++    def __eq__(self, other):
++        # Needed for @total_ordering
++        if isinstance(other, Field):
++            return (self.creation_counter, self.model) == (other.creation_counter, other.model)
++        return NotImplemented
++
++    def __lt__(self, other):
++        # This is needed because bisect does not take a comparison function.
++        if isinstance(other, Field):
++            return (self.creation_counter, self.model) < (other.creation_counter, other.model)
++        return NotImplemented
++
++    def __hash__(self):
++        return hash((self.creation_counter, self.model))

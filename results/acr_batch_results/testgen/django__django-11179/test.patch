@@ -1,0 +1,50 @@
+--- a/tests/test_models.py
++++ b/tests/test_models.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models.deletion import Collector
++
++@pytest.fixture
++def simple_model():
++    class SimpleModel(models.Model):
++        name = models.CharField(max_length=100)
++    return SimpleModel
++
++def test_delete_clears_pk(simple_model):
++    instance = simple_model.objects.create(name="Test Instance")
++    assert instance.pk is not None
++    instance.delete()
++    # After deletion, pk should be None for instances without dependencies
++    assert instance.pk is None
++
++def test_delete_does_not_clear_pk_for_dependent_instances(simple_model):
++    class DependentModel(models.Model):
++        simple_model = models.ForeignKey(simple_model, on_delete=models.CASCADE)
++        detail = models.CharField(max_length=100)
++    
++    instance = simple_model.objects.create(name="Test Instance")
++    DependentModel.objects.create(simple_model=instance, detail="Dependent Instance")
++    
++    assert instance.pk is not None
++    instance.delete()
++    # pk should not be cleared for instances with dependencies
++    assert instance.pk is not None
++
++def test_collector_delete_clears_pk():
++    class TestModel(models.Model):
++        pass
++    
++    instance = TestModel.objects.create()
++    collector = Collector(using=instance._state.db)
++    collector.collect([instance])
++    collector.delete()
++    # After deletion by collector, pk should be None
++    assert instance.pk is None
++
++def test_fast_delete_clears_pk(simple_model):
++    instance = simple_model.objects.create(name="Test Fast Delete Instance")
++    assert instance.pk is not None
++    sql.DeleteQuery(simple_model).delete_batch([instance.pk], using='default')
++    # After fast deletion, pk should be None
++    assert instance.pk is None

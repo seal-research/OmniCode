@@ -1,0 +1,56 @@
+--- a/tests/test_dates.py
++++ b/tests/test_dates.py
+-# Empty if creating new file
++import pytest
++import matplotlib.pyplot as plt
++import matplotlib.dates as mdates
++from datetime import datetime, timedelta
++
++@pytest.fixture
++def date_range():
++    initial = datetime(2021, 2, 14, 0, 0, 0)
++    time_array = [initial + timedelta(days=x) for x in range(1, 200)]
++    return time_array
++
++def test_concise_date_formatter(date_range):
++    fig, ax = plt.subplots()
++    ax.plot(date_range, [-x**2/20000 for x in range(1, 200)])
++    locator = mdates.AutoDateLocator()
++    formatter = mdates.ConciseDateFormatter(locator)
++    ax.grid(True)
++    ax.set_ylabel("Temperature ($\degree$C)")
++    ax.xaxis.set_major_locator(locator)
++    ax.xaxis.set_major_formatter(formatter)
++    fig.autofmt_xdate()
++    plt.draw()
++    assert '2021' in ax.get_xaxis().get_label().get_text()
++
++def test_concise_date_formatter_no_year(date_range):
++    initial = datetime(2022, 1, 1, 0, 0, 0)
++    time_array = [initial + timedelta(days=x) for x in range(1, 30)]
++    fig, ax = plt.subplots()
++    ax.plot(time_array, [-x**2/20000 for x in range(1, 30)])
++    locator = mdates.AutoDateLocator()
++    formatter = mdates.ConciseDateFormatter(locator)
++    ax.grid(True)
++    ax.set_ylabel("Temperature ($\degree$C)")
++    ax.xaxis.set_major_locator(locator)
++    ax.xaxis.set_major_formatter(formatter)
++    fig.autofmt_xdate()
++    plt.draw()
++    assert '2022' in ax.get_xaxis().get_label().get_text()
++
++def test_concise_date_formatter_edge_case():
++    initial = datetime(2021, 12, 31, 0, 0, 0)
++    time_array = [initial + timedelta(days=x) for x in range(1, 2)]
++    fig, ax = plt.subplots()
++    ax.plot(time_array, [-x**2/20000 for x in range(1, 2)])
++    locator = mdates.AutoDateLocator()
++    formatter = mdates.ConciseDateFormatter(locator)
++    ax.grid(True)
++    ax.set_ylabel("Temperature ($\degree$C)")
++    ax.xaxis.set_major_locator(locator)
++    ax.xaxis.set_major_formatter(formatter)
++    fig.autofmt_xdate()
++    plt.draw()
++    assert '2022' in ax.get_xaxis().get_label().get_text()

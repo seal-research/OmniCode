@@ -1,0 +1,67 @@
+--- a/tests/test_http_response.py
++++ b/tests/test_http_response.py
+-# Empty if creating new file
++import pytest
++from django.http import HttpResponse
++
++def test_delete_cookie_samesite():
++    response = HttpResponse()
++    response.set_cookie('test_cookie', 'test_value', samesite='Lax')
++    response.delete_cookie('test_cookie')
++    assert response.cookies['test_cookie']['samesite'] == 'Lax'
++
++def test_delete_cookie_secure():
++    response = HttpResponse()
++    response.set_cookie('test_cookie', 'test_value', secure=True)
++    response.delete_cookie('test_cookie')
++    assert response.cookies['test_cookie']['secure'] == True
++
++def test_delete_cookie_httponly():
++    response = HttpResponse()
++    response.set_cookie('test_cookie', 'test_value', httponly=True)
++    response.delete_cookie('test_cookie')
++    assert response.cookies['test_cookie']['httponly'] == True
++
++def test_delete_cookie_path():
++    response = HttpResponse()
++    response.set_cookie('test_cookie', 'test_value', path='/path')
++    response.delete_cookie('test_cookie', path='/path')
++    assert response.cookies['test_cookie']['path'] == '/path'
++
++def test_delete_cookie_domain():
++    response = HttpResponse()
++    response.set_cookie('test_cookie', 'test_value', domain='example.com')
++    response.delete_cookie('test_cookie', domain='example.com')
++    assert response.cookies['test_cookie']['domain'] == 'example.com'
++
++def test_delete_cookie_max_age():
++    response = HttpResponse()
++    response.set_cookie('test_cookie', 'test_value')
++    response.delete_cookie('test_cookie')
++    assert response.cookies['test_cookie']['max-age'] == 0
++
++def test_delete_cookie_expires():
++    response = HttpResponse()
++    response.set_cookie('test_cookie', 'test_value')
++    response.delete_cookie('test_cookie')
++    assert response.cookies['test_cookie']['expires'] == 'Thu, 01 Jan 1970 00:00:00 GMT'
+
+--- a/django/http/response.py
++++ b/django/http/response.py
+-    def delete_cookie(self, key, path='/', domain=None):
+-        # Most browsers ignore the Set-Cookie header if the cookie name starts
+-        # with __Host- or __Secure- and the cookie doesn't use the secure flag.
+-        secure = key.startswith(('__Secure-', '__Host-'))
+-        self.set_cookie(
+-            key, max_age=0, path=path, domain=domain, secure=secure,
+-            expires='Thu, 01 Jan 1970 00:00:00 GMT',
+-        )
++    def delete_cookie(self, key, path='/', domain=None, samesite=None):
++        # Most browsers ignore the Set-Cookie header if the cookie name starts
++        # with __Host- or __Secure- and the cookie doesn't use the secure flag.
++        secure = key.startswith(('__Secure-', '__Host-'))
++        self.set_cookie(
++            key, max_age=0, path=path, domain=domain, secure=secure,
++            expires='Thu, 01 Jan 1970 00:00:00 GMT',
++            samesite=samesite,
++        )

@@ -1,0 +1,442 @@
+--- a/g
++++ b/g
++l>
++<
+
+--- a/>
+<
++++ b/>
+<
++l>
++<
+
+--- a/g
++++ b/g
++
+
+--- a/>
+<patch
++++ b/>
+<patch
++
+
+--- a/mport pyt
++++ b/mport pyt
++
+
+--- a/rom sympy.a
++++ b/rom sympy.a
++or
+
+--- a/bras.quat
++++ b/bras.quat
++y
+
+--- a/on
++++ b/on
++s
+
+--- a/rn
++++ b/rn
+-tched>
++y.
+
+--- a/rom sympy
++++ b/rom sympy
++br
+
+--- a/s, tr
++++ b/s, tr
++
+
+--- a/mp, cos, s
++++ b/mp, cos, s
++rnion im
+
+--- a/x
+
+d
++++ b/x
+
+d
+-eb
++ Qu
+
+--- a/t
++++ b/t
+-s.qu
++
+
+--- a/on_matr
++++ b/on_matr
++y im
+
+--- a/cs():
+    x = symbo
++++ b/cs():
+    x = symbo
++ symbols, 
+
+--- a/rn
++++ b/rn
++, 
+
+--- a/n(x
++++ b/n(x
++
+
+--- a/on_matr
++++ b/on_matr
+-te
++
+
+--- a/gs
++++ b/gs
++
+
+--- a/on_matr
++++ b/on_matr
++_
+
+--- a/xp
++++ b/xp
++
+
+--- a/d_matr
++++ b/d_matr
+-mp
++ion_m
+
+--- a/x([
+        [cos(x), -s
++++ b/x([
+        [cos(x), -s
+-t symb
++rix_b
+
+--- a/n(x), cos(x), 0],
+        [0, 0, 1]])
+    ass
++++ b/n(x), cos(x), 0],
+        [0, 0, 1]])
+    ass
+-s, t
++s():
++    x = symbols('x')
++    q = Qu
+
+--- a/on_matr
++++ b/on_matr
++
+
+--- a/xp
++++ b/xp
+-mp, c
++os(x
+
+--- a/d_matr
++++ b/d_matr
++
+
+--- a/
++++ b/
+-t
++ion_m
+
+--- a/st_to_rotat
++++ b/st_to_rotat
+-x
+-
+-def test_t
++rix = 
+
+--- a/x_quat
++++ b/x_quat
++(q.
+
+--- a/on_v():
+    x = symbo
++++ b/on_v():
+    x = symbo
+-t
++
+
+--- a/rn
++++ b/rn
++ion_m
+
+--- a/n(x
++++ b/n(x
+-t
++rix())
++    
+
+--- a/on_matr
++++ b/on_matr
+-x_b
++
+
+--- a/gs
++++ b/gs
+-cs():
+-    x = symb
++
+
+--- a/on_matr
++++ b/on_matr
+-s('x')
+-    q = Qu
++
+
+--- a/xp
++++ b/xp
++
+
+--- a/d_matr
++++ b/d_matr
++
+
+--- a/x([
+        [1, 0, 0],
+        [0, cos(x), -s
++++ b/x([
+        [1, 0, 0],
+        [0, cos(x), -s
+-(c
++os(x), -sin(x), 0],
++        [sin(x), 
+
+--- a/n(x), cos(x)]])
+    ass
++++ b/n(x), cos(x)]])
+    ass
++ss
+
+--- a/on_matr
++++ b/on_matr
++ ro
+
+--- a/xp
++++ b/xp
+-t
++
+
+--- a/d_matr
++++ b/d_matr
++
+
+--- a/
++++ b/
+-t
++x
+
+--- a/st_to_rotat
++++ b/st_to_rotat
+-x = t
++
+
+--- a/x_v_po
++++ b/x_v_po
++
+
+--- a/s('x')
+    q = Quat
++++ b/s('x')
+    q = Quat
+-mp(q.t
++_m
+
+--- a/on(cos(x
++++ b/on(cos(x
++rix
+
+--- a/n(x
++++ b/n(x
+-t
++f 
+
+--- a/ormat
++++ b/ormat
++s
+
+--- a/x = tr
++++ b/x = tr
+-t
++o_ro
+
+--- a/mp(q.to_rotat
++++ b/mp(q.to_rotat
+-x())
+-    expected_m
++
+
+--- a/x(v))
++++ b/x(v))
++
+
+--- a/ct
++++ b/ct
+-t
++
+
+--- a/x = Matr
++++ b/x = Matr
+-x([
+-        [c
++rnion_v():
++    x = symbols('x')
++    q = Qu
+
+--- a/n(x), 0],
+        [0, s
++++ b/n(x), 0],
+        [0, s
++
+
+--- a/rt trans
++++ b/rt trans
++os(x
+
+--- a/on_matr
++++ b/on_matr
+-s(x), 0],
+-        [0, 0, 1]])
+-    
++
+
+--- a/xp
++++ b/xp
+-t 
++ion_m
+
+--- a/d_matr
++++ b/d_matr
+-t
++rix = 
+
+--- a/
++++ b/
++(q.
+
+--- a/st_to_rotat
++++ b/st_to_rotat
+-_m
++
+
+--- a/x_
++++ b/x_
++ion_m
+
+--- a/
++++ b/
+-t
++rix())
++    
+
+--- a/rn
++++ b/rn
+-x
+-
+-def test_t
++
+
+--- a/th pyt
++++ b/th pyt
++
+
+--- a/s
++++ b/s
+-t
++
+
+--- a/u
++++ b/u
++
+
+--- a/rn
++++ b/rn
+-t
++
+
+--- a/on_matr
++++ b/on_matr
+-x_qu
++os(x), -sin(x)],
++        [0, sin(x), 
+
+--- a/
++++ b/
++ss
+
+--- a/st_to_rotat
++++ b/st_to_rotat
++ ro
+
+--- a/x_not_norma
++++ b/x_not_norma
+-_v():
+-    x = symb
++
+
+--- a/z
++++ b/z
+-s('x')
+-    q = Qu
++
+
+--- a/rn
++++ b/rn
++x
+
+--- a/rn
++++ b/rn
++
+
+--- a/on_matr
++++ b/on_matr
+-(c
++
+
+--- a/gs
++++ b/gs
++_m
+
+--- a/on_matr
++++ b/on_matr
++rix
+
+--- a/xp
++++ b/xp
+-t
++f 
+
+--- a/d_matr
++++ b/d_matr
++s
+
+--- a/x([
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1]])
+    ass
++++ b/x([
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 1]])
+    ass
+-t
++o_ro
+
+--- a/on_matr
++++ b/on_matr
+-x = t
++
+
+--- a/xp
++++ b/xp
++
+
+--- a/d_matr
++++ b/d_matr
+-mp(q.t
++oin

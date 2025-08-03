@@ -1,0 +1,31 @@
+--- a/tests/test_setuponly.py
++++ b/tests/test_setuponly.py
++import pytest
++from _pytest.setuponly import _show_fixture_action
++from _pytest._io.terminalwriter import TerminalWriter
++
++def test_show_fixture_action_with_bytes_param():
++    class DummyFixtureDef:
++        def __init__(self, cached_param):
++            self.cached_param = cached_param
++            self.argname = "data"
++            self.scope = "function"
++            self.scopenum = 0
++
++    tw = TerminalWriter()
++    fixturedef = DummyFixtureDef(b"Hello World")
++    _show_fixture_action(fixturedef, "SETUP")
++    assert tw._file.getvalue().startswith("SETUP function data [b'Hello World']")
++
++def test_show_fixture_action_with_string_param():
++    class DummyFixtureDef:
++        def __init__(self, cached_param):
++            self.cached_param = cached_param
++            self.argname = "data"
++            self.scope = "function"
++            self.scopenum = 0
++
++    tw = TerminalWriter()
++    fixturedef = DummyFixtureDef("Hello World")
++    _show_fixture_action(fixturedef, "SETUP")
++    assert tw._file.getvalue().startswith("SETUP function data [Hello World]")

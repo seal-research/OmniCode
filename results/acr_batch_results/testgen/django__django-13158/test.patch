@@ -1,0 +1,59 @@
+--- a/tests/test_model_multiple_choice_field.py
++++ b/tests/test_model_multiple_choice_field.py
+-# Empty if creating new file
++import pytest
++from django import forms
++from django.db import models
++from django.test import TestCase
++
++class Publication(models.Model):
++    id = models.AutoField(primary_key=True)
++
++class Article(models.Model):
++    publications = models.ManyToManyField(to=Publication, blank=True, null=True)
++
++class ArticleForm(forms.ModelForm):
++    publications = forms.ModelMultipleChoiceField(
++        queryset=Publication.objects.none(),
++        required=False,
++    )
++
++    class Meta:
++        model = Article
++        fields = ["publications"]
++
++def test_model_multiple_choice_field_union():
++    # Create some publications
++    Publication.objects.create(id=1)
++    Publication.objects.create(id=2)
++    Publication.objects.create(id=6)
++
++    # Create a queryset using union
++    queryset = Publication.objects.filter(id__lt=2).union(Publication.objects.filter(id__gt=5))
++
++    # Create a form with the queryset
++    class TestForm(forms.ModelForm):
++        publications = forms.ModelMultipleChoiceField(
++            queryset=queryset,
++            required=False,
++        )
++
++        class Meta:
++            model = Article
++            fields = ["publications"]
++
++    # Test that submitting an empty form does not add all objects
++    form = TestForm()
++    form.is_valid()
++    assert form.cleaned_data["publications"] == []
++
++def test_empty_queryset_with_union():
++    # Test that union with an empty queryset returns an empty queryset
++    queryset = Publication.objects.none().union(Publication.objects.filter(id__gt=5))
++    assert queryset.count() == 0
++
++def test_none_method_with_union():
++    # Test that none method returns an empty queryset with union
++    queryset = Publication.objects.filter(id__lt=2).union(Publication.objects.filter(id__gt=5))
++    none_queryset = queryset.none()
++    assert none_queryset.count() == 0

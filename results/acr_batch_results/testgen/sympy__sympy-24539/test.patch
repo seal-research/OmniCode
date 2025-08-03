@@ -1,0 +1,31 @@
+--- a/tests/test_polyelement.py
++++ b/tests/test_polyelement.py
+-# Empty if creating new file
++import pytest
++from sympy import ring, ZZ, symbols
++
++def test_polyelement_as_expr():
++    R, x, y, z = ring("x,y,z", ZZ)
++    f = 3*x**2*y - x*y*z + 7*z**3 + 1
++
++    # Test with correct number of symbols
++    U, V, W = symbols("u,v,w")
++    assert f.as_expr(U, V, W) == 3*U**2*V - U*V*W + 7*W**3 + 1
++
++    # Test with incorrect number of symbols
++    with pytest.raises(ValueError):
++        f.as_expr(U, V)
++
++def test_polyelement_as_expr_default_symbols():
++    R, x, y, z = ring("x,y,z", ZZ)
++    f = 3*x**2*y - x*y*z + 7*z**3 + 1
++
++    # Test that default symbols are used when not provided
++    assert f.as_expr() == 3*x**2*y - x*y*z + 7*z**3 + 1
++
++def test_polyelement_as_expr_dict():
++    R, x, y, z = ring("x,y,z", ZZ)
++    f = 3*x**2*y - x*y*z + 7*z**3 + 1
++
++    # Test that as_expr_dict returns the correct dictionary
++    assert f.as_expr_dict() == {(2, 1, 0): 3, (1, 1, 1): -1, (0, 0, 3): 7, (0, 0, 0): 1}

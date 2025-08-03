@@ -1,0 +1,39 @@
+--- a/tests/test_widgets.py
++++ b/tests/test_widgets.py
+-# Original content, if any
++import pytest
++from django.forms import Form, CharField, CheckboxSelectMultiple
++from django.forms.widgets import Widget
++
++@pytest.mark.parametrize("use_required_attribute", [True, False])
++@pytest.mark.parametrize("auto_id", [None, 'custom_id'])
++def test_checkbox_select_multiple_renders_correct_ids(use_required_attribute, auto_id):
++    class TestForm(Form):
++        test_field = CharField(widget=CheckboxSelectMultiple, required=use_required_attribute)
++
++    form = TestForm(auto_id=auto_id)
++    html = form.as_p()
++    # Check that the HTML contains the expected id for the label
++    assert 'id="test_field_0"' in html
++    assert 'for="test_field_0"' in html
++
++def test_bound_widget_id_for_label():
++    # Create a simple widget and bound widget
++    class SimpleWidget(Widget):
++        def subwidgets(self, name, value, attrs=None):
++            yield {'attrs': {'id': 'test_id'}}
++    
++    widget = SimpleWidget()
++    bound_widget = widget.get_bound_widget('test_name', 'test_value', 'renderer')
++
++    # Test id_for_label method
++    assert bound_widget.id_for_label == 'test_id'
+
+--- a/tests/test_form_rendering.py
++++ b/tests/test_form_rendering.py
+-# Original tests
++def test_form_with_custom_id():
++    # Test form rendering with a custom auto_id
++    form = TestForm(auto_id='custom_%s')
++    html = form.as_p()
++    assert 'id="custom_test_field_0"' in html

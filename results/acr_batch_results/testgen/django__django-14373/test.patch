@@ -1,0 +1,31 @@
+--- a/tests/test_dateformat.py
++++ b/tests/test_dateformat.py
+-# Empty if creating new file
++import pytest
++from django.utils.dateformat import DateFormat
++from datetime import datetime
++
++def test_dateformat_Y_zero_padded():
++    date = datetime(1, 1, 1)
++    df = DateFormat(date)
++    assert df.Y() == "0001"
++
++def test_dateformat_Y_non_zero_padded():
++    date = datetime(1999, 1, 1)
++    df = DateFormat(date)
++    assert df.Y() == "1999"
++
++def test_dateformat_Y_century_years():
++    date = datetime(99, 1, 1)
++    df = DateFormat(date)
++    assert df.Y() == "0099"
++
++def test_dateformat_Y_negative_years():
++    date = datetime(-1, 1, 1)
++    df = DateFormat(date)
++    assert df.Y() == "-0001"
++
++def test_dateformat_Y_large_years():
++    date = datetime(10000, 1, 1)
++    df = DateFormat(date)
++    assert df.Y() == "10000"

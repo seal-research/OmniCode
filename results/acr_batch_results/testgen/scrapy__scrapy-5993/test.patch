@@ -1,0 +1,31 @@
+--- a/tests/test_utils_conf.py
++++ b/tests/test_utils_conf.py
+-# Empty if creating new file
++import pytest
++from scrapy.utils.conf import build_component_list
++
++def test_build_component_list_deprecation_warning():
++    # Test that a deprecation warning is raised when passing a list or tuple as the second argument
++    with pytest.warns(DeprecationWarning):
++        build_component_list({}, custom=[1, 2, 3])
++
++def test_build_component_list_custom_dict():
++    # Test that passing a custom dictionary works as expected
++    compdict = {"a": 1, "b": 2}
++    custom = {"c": 3, "d": 4}
++    result = build_component_list(compdict, custom)
++    assert len(result) == 4
++
++def test_build_component_list_custom_list():
++    # Test that passing a custom list works as expected
++    compdict = {"a": 1, "b": 2}
++    custom = ["c", "d"]
++    with pytest.warns(DeprecationWarning):
++        result = build_component_list(compdict, custom)
++    assert len(result) == 2
++
++def test_build_component_list_no_custom():
++    # Test that not passing a custom dictionary or list works as expected
++    compdict = {"a": 1, "b": 2}
++    result = build_component_list(compdict)
++    assert len(result) == 2

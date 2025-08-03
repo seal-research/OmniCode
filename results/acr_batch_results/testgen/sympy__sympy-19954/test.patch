@@ -1,0 +1,46 @@
+--- a/tests/test_perm_groups.py
++++ b/tests/test_perm_groups.py
+-# Empty if creating new file
++import pytest
++from sympy.combinatorics import DihedralGroup, PermutationGroup
++
++def test_sylow_subgroup_dihedral_group():
++    G = DihedralGroup(18)
++    S2 = G.sylow_subgroup(p=2)
++    assert S2.order() == 4
++
++def test_sylow_subgroup_symmetric_group():
++    G = PermutationGroup([Permutation(1,2,5)])
++    S = G.sylow_subgroup(5)
++    assert S.order() == 5
++
++def test_minimal_blocks_dihedral_group():
++    G = DihedralGroup(6)
++    blocks = G.minimal_blocks()
++    assert blocks == [[0, 1, 0, 1, 0, 1], [0, 1, 2, 0, 1, 2]]
++
++def test_minimal_blocks_intransitive_group():
++    G = PermutationGroup([Permutation(1,2,5)])
++    blocks = G.minimal_blocks()
++    assert blocks is False
++
++def test_sylow_subgroup_p_group():
++    G = DihedralGroup(8)
++    S2 = G.sylow_subgroup(p=2)
++    assert S2 == G
++
++def test_sylow_subgroup_non_prime_p():
++    G = DihedralGroup(6)
++    with pytest.raises(ValueError):
++        G.sylow_subgroup(p=4)
++
++def test_minimal_blocks_primitive_group():
++    G = PermutationGroup([Permutation(1,2)(3,4)])
++    blocks = G.minimal_blocks()
++    assert len(blocks) == 1
++    assert blocks[0] == [0, 0, 1, 1]
++
++def test_sylow_subgroup_trivial_group():
++    G = PermutationGroup()
++    S = G.sylow_subgroup(2)
++    assert S.is_trivial

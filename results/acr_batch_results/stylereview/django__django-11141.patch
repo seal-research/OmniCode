@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/migrations/loader.py b/django/db/migrations/loader.py\nindex 8c308621d2..d59d9972b9 100644\n--- a/django/db/migrations/loader.py\n+++ b/django/db/migrations/loader.py\n@@ -170,7 +170,7 @@ class MigrationLoader:\n                 if self.ignore_no_migrations:\n                     return None\n                 else:\n-                    raise ValueError(\"Dependency on app with no migrations: %s\" % key[0])\n+                    raise ValueError(\"Dependency on app with no migrations: %s\" % key[0]) from None\n         raise ValueError(\"Dependency on unknown app: %s\" % key[0])\n \n     def add_internal_dependencies(self, key, migration):\n"
+}

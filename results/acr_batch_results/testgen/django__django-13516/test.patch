@@ -1,0 +1,37 @@
+--- a/tests/test_management_commands.py
++++ b/tests/test_management_commands.py
+-# Empty if creating new file
++import io
++import sys
++import pytest
++from django.core.management.base import BaseCommand, OutputWrapper
++
++@pytest.fixture
++def out():
++    return io.StringIO()
++
++@pytest.mark.parametrize("stream", ['stdout', 'stderr'])
++def test_flush_stream(out, stream):
++    class TestCommand(BaseCommand):
++        def handle(self, *args, **options):
++            getattr(self, stream).write('Test message')
++            self.stdout.flush()
++
++    command = TestCommand(stdout=out, stderr=out)
++    command.execute()
++
++    assert out.getvalue() == 'Test message\n'
++
++def test_flush_stdout():
++    out = io.StringIO()
++    command = BaseCommand(stdout=out)
++    command.stdout.write('Test message')
++    command.stdout.flush()
++    assert out.getvalue() == 'Test message\n'
++
++def test_flush_stderr():
++    err = io.StringIO()
++    command = BaseCommand(stderr=err)
++    command.stderr.write('Test error message')
++    command.stderr.flush()
++    assert err.getvalue() == 'Test error message\n'

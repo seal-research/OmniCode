@@ -1,0 +1,6 @@
+{
+  "instance_id": "sympy__sympy-20154",
+  "status": "success",
+  "patch_file": "../../results/acr_batch_results/testgen/sympy__sympy-20154/test.patch",
+  "pred_file": "../../results/acr_batch_results/testgen/sympy__sympy-20154/sympy__sympy-20154.pred"
+}

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/functions/mixins.py b/django/db/models/functions/mixins.py\nindex caf20e131d..6e74f61595 100644\n--- a/django/db/models/functions/mixins.py\n+++ b/django/db/models/functions/mixins.py\n@@ -52,6 +52,4 @@ class NumericOutputFieldMixin:\n         source_fields = self.get_source_fields()\n         if any(isinstance(s, DecimalField) for s in source_fields):\n             return DecimalField()\n-        if any(isinstance(s, IntegerField) for s in source_fields):\n-            return FloatField()\n         return super()._resolve_output_field() if source_fields else FloatField()\n"
+}

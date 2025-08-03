@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/astropy/io/fits/card.py b/astropy/io/fits/card.py\nindex 8c1ac5d738..bb729b7283 100644\n--- a/astropy/io/fits/card.py\n+++ b/astropy/io/fits/card.py\n@@ -375,8 +375,7 @@ class Card(_Verify):\n                 try:\n                     self._value = _int_or_float(self._value)\n                 except ValueError:\n-                    raise ValueError('value {} is not a float'.format(\n-                            self._value))\n+                    raise ValueError(f'value {self._value} is not a float')\n \n     @value.deleter\n     def value(self):\n"
+}

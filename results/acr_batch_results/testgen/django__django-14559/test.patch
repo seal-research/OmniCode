@@ -1,0 +1,53 @@
+--- a/tests/test_models.py
++++ b/tests/test_models.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import QuerySet
++
++@pytest.fixture
++def author():
++    return models.Author.objects.create(name='Author1')
++
++@pytest.fixture
++def book():
++    return models.Book.objects.create(title='Book1', author_id=1)
++
++@pytest.mark.test_bulk_update_return_value
++def test_bulk_update_return_value(author, book):
++    another_book = models.Book.objects.create(title='Book2', author_id=1)
++    updated = models.Book.objects.bulk_update([book, another_book], ['title'])
++    assert updated == 2
++
++@pytest.mark.test_bulk_update_empty_list
++def test_bulk_update_empty_list(author):
++    updated = models.Book.objects.bulk_update([], ['title'])
++    assert updated == 0
++
++@pytest.mark.test_bulk_update_batch_size
++def test_bulk_update_batch_size(author, book):
++    another_book = models.Book.objects.create(title='Book2', author_id=1)
++    updated = models.Book.objects.bulk_update([book, another_book], ['title'], batch_size=1)
++    assert updated == 2
++
++@pytest.mark.test_bulk_update_concrete_fields
++def test_bulk_update_concrete_fields(author, book):
++    another_book = models.Book.objects.create(title='Book2', author_id=1)
++    updated = models.Book.objects.bulk_update([book, another_book], ['title'])
++    assert updated == 2
++
++@pytest.mark.test_bulk_update_m2m_fields
++def test_bulk_update_m2m_fields(author, book):
++    with pytest.raises(ValueError):
++        models.Book.objects.bulk_update([book], ['categories'])
++
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++
++class Book(models.Model):
++    title = models.CharField(max_length=100)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE)
++    categories = models.ManyToManyField('Category')
++
++class Category(models.Model):
++    name = models.CharField(max_length=100)

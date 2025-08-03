@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/decorators.py b/django/utils/decorators.py\nindex 5c9a5d01c7..18bbc20471 100644\n--- a/django/utils/decorators.py\n+++ b/django/utils/decorators.py\n@@ -60,6 +60,8 @@ def method_decorator(decorator, name=''):\n     # of the method that will be decorated.\n     def _dec(obj):\n         if not isinstance(obj, type):\n+            if hasattr(obj, '__func__'):  # Handle partial objects\n+                obj = obj.__func__\n             return _multi_decorate(decorator, obj)\n         if not (name and hasattr(obj, name)):\n             raise ValueError(\n"
+}

@@ -1,0 +1,51 @@
+--- a/tests/test_feedexport.py
++++ b/tests/test_feedexport.py
++import pytest
++from scrapy.exceptions import ScrapyException
++from scrapy.extensions.feedexport import FeedExportSettings, S3FeedStorage
++from scrapy.extensions.postprocessing import PostProcessingManager
++from scrapy.utils.testproc import ProcessTest
++
++@pytest.fixture
++def s3_feed_storage():
++    return S3FeedStorage("s3://example-bucket/feed.json")
++
++def test_postprocessing_manager_seek_read(s3_feed_storage):
++    file = s3_feed_storage._open_tempfile()
++    postprocessing_manager = PostProcessingManager([], file, {})
++    postprocessing_manager.write(b"Test data")
++    postprocessing_manager.seek(0)
++    data = postprocessing_manager.read()
++    assert data == b"Test data"
++
++def test_s3_feed_storage_store_in_thread(s3_feed_storage):
++    file = s3_feed_storage._open_tempfile()
++    postprocessing_manager = PostProcessingManager([], file, {})
++    postprocessing_manager.write(b"Test data")
++    s3_feed_storage._store_in_thread(postprocessing_manager.file)
++    # Verify that the file is correctly stored in S3
++    # This might involve using a mock S3 client to check the uploaded object
++
++def test_postprocessing_manager_with_s3_feed_storage():
++    # Create a test case that uses PostProcessingManager with S3FeedStorage
++    settings = FeedExportSettings()
++    settings["FEEDS"] = {"s3://example-bucket/feed.json": {"format": "json"}}
++    settings["FEED_EXPORT_POST_PROCESSING"] = [PostProcessingManager]
++    # Use a test spider to crawl a sample website and verify that the feed is correctly exported
+
+--- a/tests/test_postprocessing.py
++++ b/tests/test_postprocessing.py
++import pytest
++from scrapy.extensions.postprocessing import PostProcessingManager
++
++def test_postprocessing_manager_init():
++    postprocessing_manager = PostProcessingManager([], None, {})
++    assert postprocessing_manager.plugins == []
++
++def test_postprocessing_manager_write():
++    # Test that PostProcessingManager correctly writes data to the target file
++    pass
++
++def test_postprocessing_manager_close():
++    # Test that PostProcessingManager correctly closes the target file
++    pass

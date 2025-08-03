@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/management/__init__.py b/django/core/management/__init__.py\nindex 1ba093e51f..020f883539 100644\n--- a/django/core/management/__init__.py\n+++ b/django/core/management/__init__.py\n@@ -2,6 +2,7 @@ import functools\n import os\n import pkgutil\n import sys\n+from django.core.management.color import color_style\n from argparse import (\n     _AppendConstAction, _CountAction, _StoreConstAction, _SubParsersAction,\n )\n"
+}

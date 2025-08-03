@@ -1,0 +1,37 @@
+--- a/tests/test_forms.py
++++ b/tests/test_forms.py
+-# Existing test code
++import pytest
++from django import forms
++
++def test_clean_fields_accesses_bound_field():
++    class TestForm(forms.Form):
++        test_field = forms.CharField()
++
++    form = TestForm(initial={'test_field': 'initial value'})
++    cleaned_data = form.clean()
++    assert form['test_field'].initial == cleaned_data['test_field']
++
++def test_changed_data_accesses_bound_field():
++    class TestForm(forms.Form):
++        test_field = forms.CharField()
++
++    form = TestForm(initial={'test_field': 'initial value'}, data={'test_field': 'changed value'})
++    assert 'test_field' in form.changed_data
++
++def test_clean_fields_bound_field_disabled():
++    class TestForm(forms.Form):
++        test_field = forms.CharField()
++
++    form = TestForm(initial={'test_field': 'initial value'}, data={'test_field': 'changed value'})
++    form.fields['test_field'].disabled = True
++    cleaned_data = form.clean()
++    assert form['test_field'].initial == cleaned_data['test_field']
++
++def test_changed_data_bound_field_disabled():
++    class TestForm(forms.Form):
++        test_field = forms.CharField()
++
++    form = TestForm(initial={'test_field': 'initial value'}, data={'test_field': 'changed value'})
++    form.fields['test_field'].disabled = True
++    assert 'test_field' not in form.changed_data

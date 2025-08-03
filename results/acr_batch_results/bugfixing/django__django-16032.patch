@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/lookups.py b/django/db/models/lookups.py\nindex 866e38df83..710f4057da 100644\n--- a/django/db/models/lookups.py\n+++ b/django/db/models/lookups.py\n@@ -419,6 +419,7 @@ class In(FieldGetDbPrepValueIterableMixin, BuiltinLookup):\n         from django.db.models.sql.query import Query  # avoid circular import\n \n         if isinstance(self.rhs, Query):\n+            self.rhs = self.rhs._chain()\n             self.rhs.clear_ordering(clear_default=True)\n             if not self.rhs.has_select_fields:\n                 self.rhs.clear_select_clause()\n"
+}

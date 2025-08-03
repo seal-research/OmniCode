@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py\nindex 0fd69059ee..3f2753b9da 100644\n--- a/django/db/models/fields/__init__.py\n+++ b/django/db/models/fields/__init__.py\n@@ -1497,6 +1497,12 @@ class DecimalField(Field):\n     def to_python(self, value):\n         if value is None:\n             return value\n+        if isinstance(value, dict):\n+            raise exceptions.ValidationError(\n+                self.error_messages['invalid'],\n+                code='invalid',\n+                params={'value': value},\n+            )\n         if isinstance(value, float):\n             return self.context.create_decimal_from_float(value)\n         try:\n"
+}

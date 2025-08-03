@@ -1,0 +1,63 @@
+--- a/tests/test_forms.py
++++ b/tests/test_forms.py
++import pytest
++from django import forms
++from django.forms import MultiValueField, MultiWidget
++
++class TestMultiValueField:
++    def test_clean_with_required_subfield(self):
++        # Test that clean() adds an 'incomplete' error for required subfields
++        # when require_all_fields=False.
++
++        class MF(MultiValueField):
++            def __init__(self):
++                fields = [
++                    forms.CharField(required=False),
++                    forms.CharField(required=True),
++                ]
++                widget = MultiWidget(widgets=[f.widget for f in fields])
++                super().__init__(fields=fields, widget=widget, require_all_fields=False)
++
++            def compress(self, value):
++                return []
++
++        mf = MF()
++        with pytest.raises(forms.ValidationError) as e:
++            mf.clean(['', ''])
++        assert e.value.messages == ['Enter a complete value.']
++
++    def test_is_valid_with_required_subfield(self):
++        # Test that is_valid() returns False when a required subfield is empty.
++
++        class F(forms.Form):
++            mf = MF()
++
++        f = F({'mf_0': '', 'mf_1': ''})
++        assert not f.is_valid()
++
++    def test_is_valid_with_non_empty_required_subfield(self):
++        # Test that is_valid() returns True when a required subfield is not empty.
++
++        class F(forms.Form):
++            mf = MF()
++
++        f = F({'mf_0': 'xxx', 'mf_1': 'yyy'})
++        assert f.is_valid()
++
++    def test_clean_with_non_empty_value(self):
++        # Test that clean() does not raise an error for non-empty values.
++
++        class MF(MultiValueField):
++            def __init__(self):
++                fields = [
++                    forms.CharField(required=False),
++                    forms.CharField(required=True),
++                ]
++                widget = MultiWidget(widgets=[f.widget for f in fields])
++                super().__init__(fields=fields, widget=widget, require_all_fields=False)
++
++            def compress(self, value):
++                return []
++
++        mf = MF()
++        mf.clean(['xxx', 'yyy'])

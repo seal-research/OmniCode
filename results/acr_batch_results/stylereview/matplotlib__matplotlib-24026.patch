@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/stackplot.py b/lib/matplotlib/stackplot.py\nindex c580043eeb..e65d174e44 100644\n--- a/lib/matplotlib/stackplot.py\n+++ b/lib/matplotlib/stackplot.py\n@@ -108,7 +108,7 @@ def stackplot(axes, x, *args,\n         stack += first_line\n \n     # Color between x = 0 and the first array.\n-    color = axes._get_lines.get_next_color()\n+    color = axes.get_next_color()\n     coll = axes.fill_between(x, first_line, stack[0, :],\n                              facecolor=color, label=next(labels, None),\n                              **kwargs)\n"
+}

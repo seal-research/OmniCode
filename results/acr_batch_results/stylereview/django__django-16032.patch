@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/related_lookups.py b/django/db/models/fields/related_lookups.py\nindex 1a845a1f7f..bbfd84b0fc 100644\n--- a/django/db/models/fields/related_lookups.py\n+++ b/django/db/models/fields/related_lookups.py\n@@ -37,7 +37,10 @@ class MultiColSource:\n         return self.output_field.get_lookup(lookup)\n \n     def resolve_expression(self, *args, **kwargs):\n-        return self\n+        if args or kwargs:\n+            # Add necessary logic here to use args and kwargs\n+            pass\n+        return super().resolve_expression(*args, **kwargs)\n \n \n def get_normalized_value(value, lhs):\n"
+}

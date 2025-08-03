@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/requests/structures.py b/requests/structures.py\nindex a1759137..7c3dec9b 100644\n--- a/requests/structures.py\n+++ b/requests/structures.py\n@@ -71,7 +71,10 @@ class CaseInsensitiveDict(collections.MutableMapping):\n     def __setitem__(self, key, value):\n         # Use the lowercased key for lookups, but store the actual\n         # key alongside the value.\n-        self._store[key.lower()] = (key, value)\n+        if value is None:\n+            self.__delitem__(key)\n+        else:\n+            self._store[key.lower()] = (key, value)\n \n     def __getitem__(self, key):\n         return self._store[key.lower()][1]\n"
+}

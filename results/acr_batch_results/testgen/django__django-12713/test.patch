@@ -1,0 +1,66 @@
+--- a/tests/test_admin.py
++++ b/tests/test_admin.py
++import pytest
++from django.contrib.admin import AdminSite
++from django.contrib.admin.views import main
++from django.forms import ModelForm
++from django.test import RequestFactory
++
++pytestmark = pytest.mark.django_db
++
++class TestCustomWidgetInFormfieldForManyToMany:
++    @pytest.fixture
++    def request(self):
++        return RequestFactory().get('/')
++
++    @pytest.fixture
++    def admin_site(self):
++        return AdminSite()
++
++    def test_default_widget(self, request, admin_site):
++        # Arrange
++        class MyModelAdmin(admin_site._registry[MyModel]):
++            pass
++
++        # Act
++        form_field = MyModelAdmin().formfield_for_manytomany(MyModel.manytomany_field, request)
++
++        # Assert
++        assert isinstance(form_field.widget, SelectMultiple)
++
++    def test_custom_widget(self, request, admin_site):
++        # Arrange
++        class CustomWidget(forms.SelectMultiple):
++            pass
++
++        class MyModelAdmin(admin_site._registry[MyModel]):
++            def formfield_for_manytomany(self, db_field, request, **kwargs):
++                if db_field.name == 'manytomany_field':
++                    kwargs['widget'] = CustomWidget()
++                return super().formfield_for_manytomany(db_field, request, **kwargs)
++
++        # Act
++        form_field = MyModelAdmin().formfield_for_manytomany(MyModel.manytomany_field, request)
++
++        # Assert
++        assert isinstance(form_field.widget, CustomWidget)
++
++    def test_widget_override(self, request, admin_site):
++        # Arrange
++        class CustomWidget(forms.SelectMultiple):
++            pass
++
++        # Act
++        form_field = admin_site._registry[MyModel]().formfield_for_manytomany(
++            MyModel.manytomany_field, request, widget=CustomWidget()
++        )
++
++        # Assert
++        assert isinstance(form_field.widget, CustomWidget)
+
+--- a/tests/models.py
++++ b/tests/models.py
++from django.db import models
++
++class MyModel(models.Model):
++    manytomany_field = models.ManyToManyField('self')

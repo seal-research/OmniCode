@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/simplify/fu.py b/sympy/simplify/fu.py\nindex ad1130ef96..d0630ccb32 100644\n--- a/sympy/simplify/fu.py\n+++ b/sympy/simplify/fu.py\n@@ -192,7 +192,7 @@\n \n from sympy.core.add import Add\n from sympy.core.basic import S\n-from sympy.core.compatibility import ordered, range\n+from sympy.core.compatibility import ordered\n from sympy.core.expr import Expr\n from sympy.core.exprtools import Factors, gcd_terms, factor_terms\n from sympy.core.function import expand_mul\n"
+}

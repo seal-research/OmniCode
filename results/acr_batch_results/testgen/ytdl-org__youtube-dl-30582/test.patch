@@ -1,0 +1,48 @@
+--- a/tests/test_youtube_dl.py
++++ b/tests/test_youtube_dl.py
+-# Empty if creating new file
++import pytest
++from youtube_dl.YoutubeDL import YoutubeDL
++from youtube_dl.downloader.common import FileDownloader
++
++@pytest.fixture
++def ytdl():
++    return YoutubeDL()
++
++def test_process_video_result(ytdl):
++    # Test that process_video_result selects the highest quality format
++    info_dict = {
++        'id': 'video_id',
++        'title': 'Video Title',
++        'formats': [
++            {'format_id': 'low', 'url': 'low_url', 'vcodec': 'good', 'acodec': 'good'},
++            {'format_id': 'high', 'url': 'high_url', 'vcodec': 'good', 'acodec': 'good'}
++        ]
++    }
++    formats_to_download = ytdl.process_video_result(info_dict)
++    assert formats_to_download[-1]['format_id'] == 'high'
++
++def test_slow_down():
++    # Test that slow_down limits the download speed when rate limit is exceeded
++    downloader = FileDownloader()
++    start_time = 0
++    now = 10
++    byte_counter = 1000
++    downloader.slow_down(start_time, now, byte_counter)
++    # Add assertions to check if sleep was called with correct sleep time
+
+--- a/tests/test_downloader_common.py
++++ b/tests/test_downloader_common.py
+-# Empty if creating new file
++import pytest
++from youtube_dl.downloader.common import FileDownloader
++
++def test_slow_down():
++    # Test that slow_down limits the download speed when rate limit is exceeded
++    downloader = FileDownloader()
++    downloader.params = {'ratelimit': '1000'}
++    start_time = 0
++    now = 10
++    byte_counter = 2000
++    with pytest.raises(SystemExit):
++        downloader.slow_down(start_time, now, byte_counter)

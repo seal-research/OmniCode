@@ -1,0 +1,17 @@
+--- a/tests/test_query.py
++++ b/tests/test_query.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import models
++from django.db.models import QuerySet
++
++class TestQuerySet:
++    def test_create(self):
++        qs = QuerySet()
++        # Test create method
++        pass
++
++    def test_bulk_create(self):
++        qs = QuerySet()
++        # Test bulk_create method
++        pass

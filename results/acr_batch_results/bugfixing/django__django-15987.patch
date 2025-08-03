@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/management/commands/loaddata.py b/django/core/management/commands/loaddata.py\nindex ac97f13161..77f771115f 100644\n--- a/django/core/management/commands/loaddata.py\n+++ b/django/core/management/commands/loaddata.py\n@@ -283,7 +283,7 @@ class Command(BaseCommand):\n         if os.path.isabs(fixture_name):\n             fixture_dirs = [dirname]\n         else:\n-            fixture_dirs = self.fixture_dirs\n+            fixture_dirs = [os.path.abspath(str(dir_)) for dir_ in self.fixture_dirs]\n             if os.path.sep in os.path.normpath(fixture_name):\n                 fixture_dirs = [os.path.join(dir_, dirname) for dir_ in fixture_dirs]\n         return basename, fixture_dirs\n"
+}

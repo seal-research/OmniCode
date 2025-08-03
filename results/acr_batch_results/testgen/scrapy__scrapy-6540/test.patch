@@ -1,0 +1,62 @@
+--- a/tests/test_middleware.py
++++ b/tests/test_middleware.py
+-# Empty if creating new file
++import pytest
++from scrapy import Crawler
++from scrapy.middleware import MiddlewareManager
++from scrapy.utils.misc import build_from_crawler, build_from_settings
++
++def test_build_from_crawler():
++    class TestMiddleware:
++        @classmethod
++        def from_crawler(cls, crawler):
++            return cls()
++
++    crawler = Crawler(None)
++    middleware = build_from_crawler(TestMiddleware, crawler)
++    assert isinstance(middleware, TestMiddleware)
++
++def test_build_from_settings():
++    class TestMiddleware:
++        @classmethod
++        def from_settings(cls, settings):
++            return cls()
++
++    settings = {}
++    with pytest.warns(DeprecationWarning):
++        middleware = build_from_settings(TestMiddleware, settings)
++    assert isinstance(middleware, TestMiddleware)
++
++def test_middleware_manager_from_crawler():
++    class TestMiddleware:
++        @classmethod
++        def from_crawler(cls, crawler):
++            return cls()
++
++    crawler = Crawler(None)
++    middleware_manager = MiddlewareManager.from_crawler(crawler)
++    assert middleware_manager.middlewares
++
++def test_middleware_manager_from_settings():
++    class TestMiddleware:
++        @classmethod
++        def from_settings(cls, settings):
++            return cls()
++
++    settings = {}
++    with pytest.warns(DeprecationWarning):
++        middleware_manager = MiddlewareManager.from_settings(settings)
++    assert middleware_manager.middlewares
++
++def test_build_from_crawler_with_args():
++    class TestMiddleware:
++        def __init__(self, arg):
++            self.arg = arg
++
++        @classmethod
++        def from_crawler(cls, crawler, arg):
++            return cls(arg)
++
++    crawler = Crawler(None)
++    middleware = build_from_crawler(TestMiddleware, crawler, "test_arg")
++    assert middleware.arg == "test_arg"

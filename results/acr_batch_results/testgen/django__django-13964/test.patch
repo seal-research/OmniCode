@@ -1,0 +1,40 @@
+--- a/tests/test_modeling.py
++++ b/tests/test_modeling.py
+-# Empty if creating new file
++import pytest
++from django.db import transaction
++from django.db.models import CharField, ForeignKey, Model
++
++class Product(Model):
++    sku = CharField(primary_key=True, max_length=50)
++
++class Order(Model):
++    product = ForeignKey(Product, on_delete=models.CASCADE)
++
++def test_save_parent_object_after_setting_on_child_leads_to_data_loss_for_parents_with_non_numeric_primary_key():
++    with transaction.atomic():
++        order = Order()
++        order.product = Product()
++        order.product.sku = "foo"
++        order.product.save()
++        order.save()
++        assert Order.objects.filter(product_id="").exists()  # Should not exist
++        assert Order.objects.filter(product=order.product).exists()  # Should exist
++
++def test_save_parent_object_after_setting_on_child_with_existing_primary_key():
++    with transaction.atomic():
++        order = Order()
++        order.product = Product(sku="foo")
++        order.product.save()
++        order.save()
++        assert Order.objects.filter(product=order.product).exists()  # Should exist
++
++def test_foreign_key_assignment_with_deferred_primary_key():
++    with transaction.atomic():
++        product = Product()
++        order = Order()
++        order.product = product
++        product.sku = "bar"
++        product.save()
++        order.save()
++        assert Order.objects.filter(product=order.product).exists()  # Should exist

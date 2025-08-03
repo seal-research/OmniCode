@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/auth/management/commands/changepassword.py b/django/contrib/auth/management/commands/changepassword.py\nindex 669d8cf5d0..f4fd7f160f 100644\n--- a/django/contrib/auth/management/commands/changepassword.py\n+++ b/django/contrib/auth/management/commands/changepassword.py\n@@ -38,8 +38,10 @@ class Command(BaseCommand):\n     def handle(self, *args, **options):\n         if options[\"username\"]:\n             username = options[\"username\"]\n-        else:\n+        elif options[\"username\"] is None:\n             username = getpass.getuser()\n+        else:\n+            username = '0.0.0.0'\n \n         try:\n             u = UserModel._default_manager.using(options[\"database\"]).get(\n"
+}

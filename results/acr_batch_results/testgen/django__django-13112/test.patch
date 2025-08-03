@@ -1,0 +1,93 @@
+--- a/tests/test_apps.py
++++ b/tests/test_apps.py
+-# Empty if creating new file
++import pytest
++from django.apps import AppConfig
++
++def test_app_config_case_insensitive():
++    # Test that app names are handled case-insensitively
++    app_config = AppConfig(name='DJ_RegLogin', app_module=None)
++    assert app_config.name == 'DJ_RegLogin'
++    assert app_config.label == 'dj_reglogin'
++
++def test_installed_apps_case_insensitive():
++    # Test that INSTALLED_APPS handles app names case-insensitively
++    installed_apps = ['DJ_RegLogin']
++    assert 'dj_reglogin' in [app.lower() for app in installed_apps]
++
++def test_foreign_key_app_name_case_insensitive():
++    # Test that ForeignKey app name is handled case-insensitively
++    from django.db import models
++    from django.db.models.fields.related import ForeignKey
++
++    class Category(models.Model):
++        title = models.CharField(max_length=100)
++
++    class Content(models.Model):
++        category = models.ForeignKey('DJ_RegLogin.Category', on_delete=models.CASCADE)
++
++    assert Content._meta.get_field('category').remote_field.model == Category
++
++def test_makemigrations_with_mixed_case_app_name():
++    # Test makemigrations with mixed-case app name
++    from django.core.management import call_command
++
++    # Assuming the app name is 'DJ_RegLogin' and model is defined correctly
++    call_command('makemigrations', '--settings=settings_with_mixed_case_app_name')
+
+--- a/tests/test_migrations.py
++++ b/tests/test_migrations.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations
++
++def test_migration_with_foreign_key():
++    # Test migration with ForeignKey
++    from django.db import models
++
++    class Category(models.Model):
++        title = models.CharField(max_length=100)
++
++    class Content(models.Model):
++        category = models.ForeignKey('DJ_RegLogin.Category', on_delete=models.CASCADE)
++
++    migration = migrations.Migration('test_app', '0001_initial')
++    migration.operations = [
++        migrations.CreateModel(
++            name='Content',
++            fields=[
++                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
++                ('category', models.ForeignKey(on_delete=models.CASCADE, to='DJ_RegLogin.Category')),
++            ],
++        ),
++    ]
+
+--- a/tests/settings_with_mixed_case_app_name.py
++++ b/tests/settings_with_mixed_case_app_name.py
+-# Empty if creating new file
++import os
++
++BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++
++SECRET_KEY = 'your_secret_key_here'
++
++DEBUG = True
++
++ALLOWED_HOSTS = []
++
++INSTALLED_APPS = [
++    'DJ_RegLogin',
++    'django.contrib.admin',
++    'django.contrib.auth',
++    'django.contrib.contenttypes',
++    'django.contrib.sessions',
++    'django.contrib.messages',
++    'django.contrib.staticfiles',
++]
++
++DATABASES = {
++    'default': {
++        'ENGINE': 'django.db.backends.sqlite3',
++        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
++    }
++}

@@ -1,0 +1,60 @@
+--- a/tests/test_glossary.py
++++ b/tests/test_glossary.py
+-# Empty if creating new file
++import pytest
++from sphinx.domains.std import Glossary
++
++def test_glossary_term_case_sensitivity():
++    """Test that glossary terms are handled correctly with respect to case sensitivity."""
++    glossary = Glossary()
++    terms = ["MySQL", "mysql", "MYSQL"]
++
++    # Assume a method to add terms to the glossary
++    for term in terms:
++        glossary.add_term(term)
++
++    # Check that terms are treated as distinct
++    assert len(glossary.get_terms()) == 1  # If case-insensitive
++
++def test_glossary_term_duplicates():
++    """Test that duplicate glossary terms are handled correctly."""
++    glossary = Glossary()
++    terms = ["MySQL", "mysql"]
++
++    for term in terms:
++        glossary.add_term(term)
++
++    # Check that duplicate terms are reported or handled correctly
++    assert len(glossary.get_terms()) == 1
++
++def test_glossary_configuration_case_sensitive():
++    """Test that glossary configuration options work correctly."""
++    glossary = Glossary()
++    glossary.option_spec = {
++        'sorted': False,
++        'case_sensitive': True,
++    }
++
++    terms = ["MySQL", "mysql"]
++
++    for term in terms:
++        glossary.add_term(term)
++
++    # Check that terms are treated as distinct when case_sensitive is True
++    assert len(glossary.get_terms()) == 2
++
++def test_glossary_configuration_case_insensitive():
++    """Test that glossary configuration options work correctly."""
++    glossary = Glossary()
++    glossary.option_spec = {
++        'sorted': False,
++        'case_sensitive': False,
++    }
++
++    terms = ["MySQL", "mysql"]
++
++    for term in terms:
++        glossary.add_term(term)
++
++    # Check that terms are treated as the same when case_sensitive is False
++    assert len(glossary.get_terms()) == 1

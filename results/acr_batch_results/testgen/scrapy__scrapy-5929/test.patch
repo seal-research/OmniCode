@@ -1,0 +1,50 @@
+--- a/tests/test_downloadermiddlewares/retry.py
++++ b/tests/test_downloadermiddlewares/retry.py
+-# Original tests for RetryMiddleware
++import pytest
++from scrapy.downloadermiddlewares.retry import RetryMiddleware
++from scrapy.exceptions import IgnoreRequest
++from scrapy.http import Request, Response
++
++@pytest.fixture
++def settings():
++    return {
++        'RETRY_ENABLED': True,
++        'RETRY_TIMES': 2,
++        'RETRY_HTTP_CODES': [500],
++    }
++
++def test_retry_middleware_default_exceptions(settings):
++    middleware = RetryMiddleware(settings)
++    request = Request('http://example.com')
++    exception = Exception('Test exception')
++    assert middleware.process_exception(request, exception) is not None
++
++def test_retry_middleware_custom_exceptions(settings):
++    settings['RETRY_EXCEPTIONS'] = (Exception, )
++    middleware = RetryMiddleware(settings)
++    request = Request('http://example.com')
++    exception = Exception('Test exception')
++    assert middleware.process_exception(request, exception) is not None
++
++def test_retry_middleware_ignore_request(settings):
++    settings['RETRY_EXCEPTIONS'] = ()
++    middleware = RetryMiddleware(settings)
++    request = Request('http://example.com')
++    exception = Exception('Test exception')
++    assert middleware.process_exception(request, exception) is None
++
++def test_retry_middleware_from_crawler(settings):
++    from scrapy.crawler import Crawler
++    crawler = Crawler(settings)
++    middleware = RetryMiddleware.from_crawler(crawler)
++    assert middleware.max_retry_times == 2
++
++def test_retry_middleware_custom_exceptions_from_crawler(settings):
++    settings['RETRY_EXCEPTIONS'] = (Exception, )
++    from scrapy.crawler import Crawler
++    crawler = Crawler(settings)
++    middleware = RetryMiddleware.from_crawler(crawler)
++    request = Request('http://example.com')
++    exception = Exception('Test exception')
++    assert middleware.process_exception(request, exception) is not None

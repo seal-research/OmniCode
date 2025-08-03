@@ -1,0 +1,58 @@
+--- a/tests/test_functions.py
++++ b/tests/test_functions.py
++import datetime
++import pytz
++
++import pytest
++from django.db.models import Count, DateField, DateTimeField, TimeField
++from django.db.models.functions import TruncDate, TruncTime
++from django.test import TestCase
++from django.utils import timezone
++
++pytestmark = pytest.mark.test_functions
++
++class TimeSlots(models.Model):
++    start_at = DateTimeField()
++    tz = pytz.timezone("America/New_York")
++
++class TestTruncDateTimeZone(TestCase):
++    @classmethod
++    def setUpTestData(cls):
++        TimeSlots.objects.create(start_at="2022-01-01 12:00:00", tz="America/New_York")
++        TimeSlots.objects.create(start_at="2022-01-01 13:00:00", tz="America/New_York")
++
++    def test_trunc_date_with_tz(self):
++        report = (
++            TimeSlots.objects.annotate(start_date=TruncDate("start_at", tzinfo=TimeSlots.objects.get(id=1).tz))
++            .values("start_date")
++            .annotate(timeslot_count=Count("id"))
++            .values("start_date", "timeslot_count")
++        )
++        assert len(report) == 1
++
++    def test_trunc_time_with_tz(self):
++        report = (
++            TimeSlots.objects.annotate(start_time=TruncTime("start_at", tzinfo=TimeSlots.objects.get(id=1).tz))
++            .values("start_time")
++            .annotate(timeslot_count=Count("id"))
++            .values("start_time", "timeslot_count")
++        )
++        assert len(report) == 1
++
++    def test_trunc_date_without_tz(self):
++        report = (
++            TimeSlots.objects.annotate(start_date=TruncDate("start_at"))
++            .values("start_date")
++            .annotate(timeslot_count=Count("id"))
++            .values("start_date", "timeslot_count")
++        )
++        assert len(report) == 1
++
++    def test_trunc_time_without_tz(self):
++        report = (
++            TimeSlots.objects.annotate(start_time=TruncTime("start_at"))
++            .values("start_time")
++            .annotate(timeslot_count=Count("id"))
++            .values("start_time", "timeslot_count")
++        )
++        assert len(report) == 1

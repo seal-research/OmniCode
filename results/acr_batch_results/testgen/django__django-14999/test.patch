@@ -1,0 +1,41 @@
+--- a/tests/test_operations.py
++++ b/tests/test_operations.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations
++
++@pytest.mark.test_operation_rename_model
++def test_rename_model_noop():
++    # Test that RenameModel with db_table is a noop
++    operation = migrations.RenameModel(
++        'old_name', 'new_name', db_table='my_table'
++    )
++    assert operation.database_forwards(
++        'app_label', None, None, None
++    ) is None
++
++@pytest.mark.test_operation_rename_model
++def test_rename_model_table_change():
++    # Test that RenameModel with db_table and table change
++    operation = migrations.RenameModel(
++        'old_name', 'new_name', db_table='old_table'
++    )
++    # Mock database_forwards to check if alter_db_table is called
++    with pytest.mock.patch.object(migrations.operations.schema.SchemaEditor, 'alter_db_table') as mock_alter_db_table:
++        operation.database_forwards(
++            'app_label', None, None, None
++        )
++    mock_alter_db_table.assert_called_once()
++
++@pytest.mark.test_operation_rename_model
++def test_rename_model_no_db_table():
++    # Test that RenameModel without db_table
++    operation = migrations.RenameModel(
++        'old_name', 'new_name'
++    )
++    # Mock database_forwards to check if alter_db_table is called
++    with pytest.mock.patch.object(migrations.operations.schema.SchemaEditor, 'alter_db_table') as mock_alter_db_table:
++        operation.database_forwards(
++            'app_label', None, None, None
++        )
++    mock_alter_db_table.assert_called_once()

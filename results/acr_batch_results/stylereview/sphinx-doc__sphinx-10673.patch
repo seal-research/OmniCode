@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/directives/other.py b/sphinx/directives/other.py\nindex 35e16e623..d828968e6 100644\n--- a/sphinx/directives/other.py\n+++ b/sphinx/directives/other.py\n@@ -355,7 +355,7 @@ class Include(BaseInclude, SphinxDirective):\n            self.arguments[0].endswith('>'):\n             # docutils \"standard\" includes, do not do path processing\n             return super().run()\n-        rel_filename, filename = self.env.relfn2path(self.arguments[0])\n+        _, filename = self.env.relfn2path(self.arguments[0])\n         self.arguments[0] = filename\n         self.env.note_included(filename)\n         return super().run()\n"
+}

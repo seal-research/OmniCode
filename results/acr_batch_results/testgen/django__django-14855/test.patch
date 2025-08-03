@@ -1,0 +1,66 @@
+--- a/tests/test_admin_helpers.py
++++ b/tests/test_admin_helpers.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admin.helpers import AdminSite, get_admin_url
++from django.urls import reverse
++
++@pytest.fixture
++def admin_site():
++    return AdminSite(name='admin')
++
++@pytest.fixture
++def custom_admin_site():
++    return AdminSite(name='custom-admin')
++
++def test_get_admin_url_default_site(admin_site):
++    # Test with default admin site
++    model = admin_site.get_model('testapp', 'TestModel')
++    remote_obj = model()
++    remote_obj.pk = 1
++    url_name = 'admin:testapp_testmodel_change'
++    expected_url = reverse(url_name, args=[1], current_app=admin_site.name)
++    assert get_admin_url(admin_site, model._meta.get_field('fk'), remote_obj) == f'<a href="{expected_url}">TestModel object (1)</a>'
++
++def test_get_admin_url_custom_site(custom_admin_site):
++    # Test with custom admin site
++    model = custom_admin_site.get_model('testapp', 'TestModel')
++    remote_obj = model()
++    remote_obj.pk = 1
++    url_name = 'admin:testapp_testmodel_change'
++    expected_url = reverse(url_name, args=[1], current_app=custom_admin_site.name)
++    assert get_admin_url(custom_admin_site, model._meta.get_field('fk'), remote_obj) == f'<a href="{expected_url}">TestModel object (1)</a>'
++
++def test_get_admin_url_no_reverse_match(admin_site):
++    # Test case where NoReverseMatch is raised
++    model = admin_site.get_model('testapp', 'NonExistentModel')
++    remote_obj = model()
++    remote_obj.pk = 1
++    assert get_admin_url(admin_site, model._meta.get_field('fk'), remote_obj) == 'NonExistentModel object (1)'
+
+--- a/django/contrib/admin/helpers.py
++++ b/django/contrib/admin/helpers.py
+-def get_admin_url(self, remote_field, remote_obj):
+-    url_name = 'admin:%s_%s_change' % (
+-        remote_field.model._meta.app_label,
+-        remote_field.model._meta.model_name,
+-    )
+-    try:
+-        url = reverse(url_name, args=[quote(remote_obj.pk)])
+-        return format_html('<a href="{}">{}</a>', url, remote_obj)
+-    except NoReverseMatch:
+-        return str(remote_obj)
++def get_admin_url(self, remote_field, remote_obj):
++    url_name = 'admin:%s_%s_change' % (
++        remote_field.model._meta.app_label,
++        remote_field.model._meta.model_name,
++    )
++    try:
++        url = reverse(
++            url_name,
++            args=[quote(remote_obj.pk)],
++            current_app=self.model_admin.admin_site.name
++        )
++        return format_html('<a href="{}">{}</a>', url, remote_obj)
++    except NoReverseMatch:
++        return str(remote_obj)

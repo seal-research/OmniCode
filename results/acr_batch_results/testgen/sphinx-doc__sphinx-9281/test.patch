@@ -1,0 +1,60 @@
+--- a/tests/test_autodoc.py
++++ b/tests/test_autodoc.py
++import pytest
++from sphinx import addnodes
++from sphinx.ext.autodoc import FunctionDocumenter
++from sphinx.testing import util
++from sphinx.testing.util import Mock
++
++@pytest.fixture
++def app():
++    return Mock()
++
++def test_merge_default_value_enum(app):
++    # Given
++    class Dummy:
++        pass
++
++    class MyEnum(int, Enum):
++        ValueA = 10
++        ValueB = 20
++
++    def ugly_enum_func(e: MyEnum = MyEnum.ValueA) -> None:
++        ...
++
++    # When
++    documenter = FunctionDocumenter(app, '')
++    documenter.object = ugly_enum_func
++    documenter.objpath = ['ugly_enum_func']
++
++    # Then
++    signature = inspect.signature(ugly_enum_func)
++    actual = signature.parameters['e'].default
++    assert isinstance(actual, MyEnum)
++    assert actual == MyEnum.ValueA
++
++    overload = inspect.Signature(
++        parameters=[
++            inspect.Parameter('e', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=MyEnum.ValueA)
++        ]
++    )
++
++    merged = documenter.merge_default_value(signature, overload)
++    assert str(merged.parameters['e'].default) == "MyEnum.ValueA"
+
+--- a/tests/test_type_comment.py
++++ b/tests/test_type_comment.py
++import pytest
++from sphinx.ext.autodoc import type_comment
++
++def test_type_comment_enum():
++    # Given
++    class MyEnum(Enum):
++        ValueA = 10
++        ValueB = 20
++
++    # When
++    type_comment_ = type_comment.TypeComment(MyEnum)
++
++    # Then
++    assert type_comment_.render() == "MyEnum"

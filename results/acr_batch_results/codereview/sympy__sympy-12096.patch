@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/core/function.py b/sympy/core/function.py\nindex 1b8005e1d2..fbc8d27eeb 100644\n--- a/sympy/core/function.py\n+++ b/sympy/core/function.py\n@@ -507,7 +507,11 @@ def _eval_evalf(self, prec):\n             func = getattr(mpmath, fname)\n         except (AttributeError, KeyError):\n             try:\n-                return Float(self._imp_(*self.args), prec)\n+                result = self._imp_(*self.args)\n+                if isinstance(result, Expr):\n+                    return result.evalf(prec)\n+                else:\n+                    return Float(result, prec)\n             except (AttributeError, TypeError, ValueError):\n                 return\n \n"
+}

@@ -1,0 +1,77 @@
+--- a/tests/test_responsetypes.py
++++ b/tests/test_responsetypes.py
+-# Empty if creating new file
++import pytest
++from scrapy.responsetypes import ResponseTypes
++from scrapy.http import Response
++
++def test_from_content_type_utf8():
++    response_types = ResponseTypes()
++    content_type = b"text/html; charset=utf-8"
++    assert response_types.from_content_type(content_type) == Response
++
++def test_from_content_type_latin1():
++    response_types = ResponseTypes()
++    content_type = b"text/html; charset=windows-1251"
++    assert response_types.from_content_type(content_type) == Response
++
++def test_from_content_type_non_utf8():
++    response_types = ResponseTypes()
++    content_type = b"Content-Type: text/html; charset=windows-1251"
++    # This should not raise an exception
++    response_types.from_content_type(content_type)
++
++def test_from_headers_utf8():
++    response_types = ResponseTypes()
++    headers = {b"Content-Type": b"text/html; charset=utf-8"}
++    assert response_types.from_headers(headers) == Response
++
++def test_from_headers_latin1():
++    response_types = ResponseTypes()
++    headers = {b"Content-Type": b"text/html; charset=windows-1251"}
++    assert response_types.from_headers(headers) == Response
++
++def test_from_headers_non_utf8():
++    response_types = ResponseTypes()
++    headers = {b"Content-Type": b"Content-Type: text/html; charset=windows-1251"}
++    # This should not raise an exception
++    response_types.from_headers(headers)
+
+--- a/scrapy/responsetypes.py
++++ b/scrapy/responsetypes.py
+-    def from_content_type(self, content_type, content_encoding=None):
+-        """Return the most appropriate Response class from an HTTP Content-Type
+-        header"""
+-        if content_encoding:
+-            return Response
+-        mimetype = to_unicode(content_type).split(";")[0].strip().lower()
+-        return self.from_mimetype(mimetype)
+-
+-    def from_headers(self, headers):
+-        """Return the most appropriate Response class by looking at the HTTP
+-        headers"""
+-        cls = Response
+-        if b"Content-Type" in headers:
+-            cls = self.from_content_type(
+-                content_type=headers[b"Content-Type"],
+-                content_encoding=headers.get(b"Content-Encoding"),
+-            )
+-        return cls
++    def from_content_type(self, content_type, content_encoding=None):
++        """Return the most appropriate Response class from an HTTP Content-Type
++        header"""
++        if content_encoding:
++            return Response
++        mimetype = to_unicode(content_type, encoding='latin1').split(";")[0].strip().lower()
++        return self.from_mimetype(mimetype)
++
++    def from_headers(self, headers):
++        """Return the most appropriate Response class by looking at the HTTP
++        headers"""
++        cls = Response
++        if b"Content-Type" in headers:
++            cls = self.from_content_type(
++                content_type=headers[b"Content-Type"],
++                content_encoding=headers.get(b"Content-Encoding"),
++            )
++        return cls

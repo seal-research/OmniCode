@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/sets/conditionset.py b/sympy/sets/conditionset.py\nindex 118eda6f77..85bdf70b93 100644\n--- a/sympy/sets/conditionset.py\n+++ b/sympy/sets/conditionset.py\n@@ -194,7 +194,7 @@ def __new__(cls, sym, condition, base_set=S.UniversalSet):\n     @property\n     def free_symbols(self):\n         s, c, b = self.args\n-        return (c.free_symbols - s.free_symbols) | b.free_symbols\n+        return (c.free_symbols - {s}) | b.free_symbols\n \n     def _contains(self, other):\n         return And(\n"
+}

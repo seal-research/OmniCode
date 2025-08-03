@@ -1,0 +1,65 @@
+--- a/tests/test_commands/makemigrations_check.py
++++ b/tests/test_commands/makemigrations_check.py
+-# Empty if creating new file
++import os
++import re
++import sys
++from io import StringIO
++from unittest import mock
++
++import pytest
++from django.core.management import call_command
++from django.core.management.base import CommandError
++from django.db import models
++from django.test import TestCase
++
++from .test_commands import get_migration_file
++
++@pytest.mark.testcases
++class MakeMigrationsCheckTests(TestCase):
++    def setUp(self):
++        self.old_stdout, self.old_stderr = sys.stdout, sys.stderr
++        sys.stdout, sys.stderr = StringIO(), StringIO()
++        self.project_state = self.setup_test_environment(
++            verbosity=0,
++            interactive=False,
++        )
++        self.addCleanup(self.cleanup_test_environment)
++
++    def test_check_makemigrations_with_no_changes(self):
++        out = StringIO()
++        err = StringIO()
++        call_command("makemigrations", "--check", stdout=out, stderr=err)
++        self.assertEqual(err.getvalue(), "")
++        self.assertEqual(out.getvalue(), "No changes detected\n")
++
++    def test_check_makemigrations_with_changes(self):
++        with mock.patch(
++            "django.core.management.commands.makemigrations.MigrationAutodetector"
++        ) as mock_autodetector:
++            mock_autodetector.return_value.changes.return_value = {"app": [("add", "Field", "model", "app.Model")]}
++            with pytest.raises(CommandError):
++                call_command("makemigrations", "--check")
++
++    def test_check_makemigrations_with_conflicts(self):
++        with mock.patch(
++            "django.core.management.commands.makemigrations.MigrationLoader"
++        ) as mock_loader:
++            mock_loader.return_value.detect_conflicts.return_value = {"app": ["Migration1", "Migration2"]}
++            with pytest.raises(CommandError):
++                call_command("makemigrations", "--check")
++
++    def test_makemigrations_with_check_and_dry_run(self):
++        out = StringIO()
++        err = StringIO()
++        call_command("makemigrations", "--check", "--dry-run", stdout=out, stderr=err)
++        self.assertEqual(err.getvalue(), "")
++        self.assertEqual(out.getvalue(), "")
++
++    def test_makemigrations_with_check_and_merge(self):
++        with mock.patch(
++            "django.core.management.commands.makemigrations.MigrationLoader"
++        ) as mock_loader:
++            mock_loader.return_value.detect_conflicts.return_value = {"app": ["Migration1", "Migration2"]}
++            with pytest.raises(CommandError):
++                call_command("makemigrations", "--check", "--merge")

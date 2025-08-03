@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/admin/utils.py b/django/contrib/admin/utils.py\nindex 15c8ef865f..ffb7d387c8 100644\n--- a/django/contrib/admin/utils.py\n+++ b/django/contrib/admin/utils.py\n@@ -21,7 +21,7 @@ UNQUOTE_RE = re.compile('_(?:%s)' % '|'.join([x[1:] for x in UNQUOTE_MAP]))\n \n class FieldIsAForeignKeyColumnName(Exception):\n     \"\"\"A field is a foreign key attname, i.e. <FK>_id.\"\"\"\n-    pass\n+\n \n \n def lookup_needs_distinct(opts, lookup_path):\n"
+}

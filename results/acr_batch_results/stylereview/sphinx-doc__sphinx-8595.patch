@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py\nindex d85d79617..a2dae3920 100644\n--- a/sphinx/ext/autodoc/__init__.py\n+++ b/sphinx/ext/autodoc/__init__.py\n@@ -147,6 +147,8 @@ def annotation_option(arg: Any) -> Any:\n def bool_option(arg: Any) -> bool:\n     \"\"\"Used to convert flag options to auto directives.  (Instead of\n     directives.flag(), which returns None).\n+\n+    .. versionadded:: 1.8\n     \"\"\"\n     return True\n \n"
+}

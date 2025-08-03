@@ -1,0 +1,55 @@
+--- a/myapp/tests/test_models.py
++++ b/myapp/tests/test_models.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.utils import NotSupportedError
++from myapp.models import ProductMetaData, ProductMetaDataType
++
++@pytest.fixture
++def product_meta_data_type():
++ return ProductMetaDataType.objects.create(label='Test Type')
++
++@pytest.fixture
++def product_meta_data(product_meta_data_type):
++ return ProductMetaData.objects.create(
++ value="Test Value",
++ metadata_type=product_meta_data_type
++ )
++
++def test_filterable_field(product_meta_data):
++ # This should not raise an error
++ try:
++ ProductMetaData.objects.filter(metadata_type__label='Test Type')
++except NotSupportedError:
++ pytest.fail("NotSupportedError was unexpectedly raised")
++
++def test_not_filterable_field(product_meta_data_type):
++ product_meta_data_type.filterable = False
++ product_meta_data_type.save()
++ 
++ with pytest.raises(NotSupportedError):
++ ProductMetaData.objects.filter(metadata_type=product_meta_data_type)
++
++def test_check_filterable_method():
++ query = ProductMetaData.objects.query
++ expression = ProductMetaDataType.objects.get(id=1)
++ 
++ # Mocking the filterable attribute to False for testing
++ expression.filterable = False
++ 
++ with pytest.raises(NotSupportedError):
++ query.check_filterable(expression)
+
+--- a/myapp/models.py
++++ b/myapp/models.py
+-# Empty if creating new file
++from django.db import models
++
++class ProductMetaDataType(models.Model):
++ label = models.CharField(max_length=255, unique=True, blank=False, null=False)
++ filterable = models.BooleanField(default=False, verbose_name="filterable")
++
++class ProductMetaData(models.Model):
++ value = models.TextField(null=False, blank=False)
++ metadata_type = models.ForeignKey(ProductMetaDataType, on_delete=models.CASCADE)

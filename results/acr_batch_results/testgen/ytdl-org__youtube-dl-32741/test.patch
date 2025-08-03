@@ -1,0 +1,25 @@
+--- a/tests/test_downloader.py
++++ b/tests/test_downloader.py
+-# Original code here
++import pytest
++from youtube_dl/YoutubeDL import YoutubeDL
++from youtube_dl.postprocessor.ffmpeg import FFmpegPostProcessor
++
++def test_ffmpeg_location():
++    ydl = YoutubeDL()
++    ydl.params['external_downloader'] = 'ffmpeg'
++    ydl.params['ffmpeg_location'] = '/path/to/ffmpeg'
++    ydl.download(['https://www.youtube.com/watch?v=dQw4w9WgXcQ')
++
++    assert isinstance(FFmpegPostProcessor(ydl).executable, str)
++    assert ydl.params['ffmpeg_location'] in FFmpegPostProcessor(ydl).executable
+
+--- a/tests/test_options.py
++++ b/tests/test_options.py
+-# Original code here
++import pytest
++from youtube_dl.options import parseOpts
++
++def test_ffmpeg_location_option():
++    options = parseOpts([ '--ffmpeg-location', '/path/to/ffmpeg' ])
++    assert options['ffmpeg_location'] == '/path/to/ffmpeg'

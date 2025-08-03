@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/ext/autodoc/mock.py b/sphinx/ext/autodoc/mock.py\nindex 98a3a3a96..2fbdbf904 100644\n--- a/sphinx/ext/autodoc/mock.py\n+++ b/sphinx/ext/autodoc/mock.py\n@@ -68,9 +68,9 @@ class _MockObject:\n         return self.__display_name__\n \n \n-def _make_subclass(name: str, module: str, superclass: Any = _MockObject,\n+def _make_subclass(name: str, module: str, superclass: Any = object,\n                    attributes: Any = None) -> Any:\n-    attrs = {'__module__': module, '__display_name__': module + '.' + name}\n+    attrs = {'__module__': module, '__display_name__': f'{module}.{name}'}\n     attrs.update(attributes or {})\n \n     return type(name, (superclass,), attrs)\n"
+}

@@ -1,0 +1,6 @@
+{
+  "instance_id": "pytest-dev__pytest-10081",
+  "model": "openrouter/meta-llama/llama-4-scout",
+  "response": "<file>tests/test_unittest.py</file>\n<original>\n# Original code here (if modifying existing file)\n# Leave empty if creating new file\n</original>\n<patched>\nimport pytest\nimport unittest\nfrom unittest import skip\n\nclass TestSkipClass(unittest.TestCase):\n    @skip(\"hello\")\n    def test_skip(self):\n        pass\n\ndef test_teardown_executed_for_skipped_class(pdb):\n    result = pytest.main([ \"--pdb\", \"test_unittest.py\" ])\n    assert result == [ \"s\" ]\n\ndef test_no_teardown_executed_for_skipped_class():\n    result = pytest.main([ \"test_unittest.py\" ])\n    assert result == [ \"s\" ]\n</patched>\n```",
+  "patch": "--- a/tests/test_unittest.py\n+++ b/tests/test_unittest.py\n-# Original code here (if modifying existing file)\n-# Leave empty if creating new file\n+import pytest\n+import unittest\n+from unittest import skip\n+\n+class TestSkipClass(unittest.TestCase):\n+    @skip(\"hello\")\n+    def test_skip(self):\n+        pass\n+\n+def test_teardown_executed_for_skipped_class(pdb):\n+    result = pytest.main([ \"--pdb\", \"test_unittest.py\" ])\n+    assert result == [ \"s\" ]\n+\n+def test_no_teardown_executed_for_skipped_class():\n+    result = pytest.main([ \"test_unittest.py\" ])\n+    assert result == [ \"s\" ]\n"
+}

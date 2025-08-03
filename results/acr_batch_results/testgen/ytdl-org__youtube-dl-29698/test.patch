@@ -1,0 +1,36 @@
+--- a/tests/test_extractor_vimeo.py
++++ b/tests/test_extractor_vimeo.py
+-# Original code here (if modifying existing file)
++import pytest
++from youtube_dl.extractor.vimeo import VimeoIE
++
++@pytest.fixture
++def vimeo_ie():
++    return VimeoIE()
++
++def test_real_extract(vimeo_ie):
++    url = 'https://vimeo.com/581039021/9603038895'
++    with pytest.raises(Exception) as e:
++        vimeo_ie._real_extract(url)
++    assert 'HTTP Error 404' in str(e.value)
++
++def test_extract_from_api(vimeo_ie):
++    video_id = '581039021'
++    unlisted_hash = '9603038895'
++    with pytest.raises(Exception) as e:
++        vimeo_ie._extract_from_api(video_id, unlisted_hash)
++    assert 'HTTP Error 404' in str(e.value)
++
++def test_handle_http_error(vimeo_ie):
++    url = 'https://vimeo.com/581039021/9603038895'
++    try:
++        vimeo_ie._real_extract(url)
++    except Exception as e:
++        assert 'HTTP Error 404' in str(e)
++
++def test_on_demand_video(vimeo_ie):
++    url = 'https://vimeo.com/ondemand/video/581039021'
++    try:
++        vimeo_ie._real_extract(url)
++    except Exception as e:
++        assert 'HTTP Error 404' not in str(e)

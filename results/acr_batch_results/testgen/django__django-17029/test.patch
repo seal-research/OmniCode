@@ -1,0 +1,35 @@
+--- a/tests/test_apps.py
++++ b/tests/test_apps.py
+-# Empty if creating new file
++import pytest
++from django.apps import Apps
++from django.db import models
++
++@pytest.fixture
++def apps():
++    return Apps()
++
++def test_clear_cache_clears_get_swappable_settings_name_cache(apps):
++    # Test that get_swappable_settings_name uses caching
++    apps.get_swappable_settings_name.cache_clear()
++    assert apps.get_swappable_settings_name("auth.User") is None
++    apps.register_model("auth", models.Model("User"))
++    assert apps.get_swappable_settings_name("auth.User") is None
++
++    # Clear the cache
++    apps.clear_cache()
++    apps.get_swappable_settings_name.cache_clear()
++    assert apps.get_swappable_settings_name("auth.User") is None
++
++def test_get_swappable_settings_name_uses_caching(apps):
++    apps.get_swappable_settings_name.cache_clear()
++    assert apps.get_swappable_settings_name("auth.User") is None
++    assert apps.get_swappable_settings_name("auth.User") is None  # This should return immediately from cache
++
++def test_clear_cache_does_not_interfere_with_other_methods(apps):
++    apps.clear_cache()
++    assert apps.get_app_configs() == []
++
++def test_get_swappable_settings_name_returns_correct_value(apps):
++    apps.register_model("auth", models.Model("User", swapped="custom.User"))
++    assert apps.get_swappable_settings_name("auth.User") == "custom.User"

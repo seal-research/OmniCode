@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/__init__.py b/django/db/models/fields/__init__.py\nindex 72208efd04..2c9ed7ff25 100644\n--- a/django/db/models/fields/__init__.py\n+++ b/django/db/models/fields/__init__.py\n@@ -198,9 +198,7 @@ class Field(RegisterLookupMixin):\n         self.unique_for_date = unique_for_date\n         self.unique_for_month = unique_for_month\n         self.unique_for_year = unique_for_year\n-        if isinstance(choices, collections.abc.Iterator):\n-            choices = list(choices)\n-        self.choices = choices\n+        self.choices = list(choices) if isinstance(choices, collections.abc.Iterator) else choices\n         self.help_text = help_text\n         self.db_index = db_index\n         self.db_column = db_column\n"
+}

@@ -1,0 +1,29 @@
+--- a/tests/test_utils_timesince.py
++++ b/tests/test_utils_timesince.py
++import pytest
++from django.test import override_settings
++from django.utils import timezone
++from django.utils.timesince import timesince
++from datetime import datetime, timedelta
++
++@pytest.mark.django_db
++@override_settings(USE_TZ=True)
++def test_timesince_long_interval_with_tz():
++    now = timezone.now()
++    d = now - timedelta(days=31)
++    assert timesince(d) == "1\xa0month"
++
++@override_settings(USE_TZ=False)
++def test_timesince_long_interval_without_tz():
++    now = timezone.now()
++    d = now - timedelta(days=31)
++    assert timesince(d) == "1\xa0month"
++
++def test_timesince_equal_datetimes():
++    now = timezone.now()
++    assert timesince(now, now) == "0 minutes"
++
++def test_timesince_future_datetime():
++    now = timezone.now()
++    future_datetime = now + timedelta(minutes=10)
++    assert timesince(future_datetime, now) == "0 minutes"

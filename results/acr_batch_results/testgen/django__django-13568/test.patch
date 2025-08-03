@@ -1,0 +1,45 @@
+--- a/tests/test_auth.py
++++ b/tests/test_auth.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.contrib.auth.base_user import AbstractBaseUser
++from django.db import models
++from django.contrib.auth.checks import check_user_model
++
++def test_auth_e003_error():
++    # Define a user model with non-unique USERNAME_FIELD and no UniqueConstraint
++    class User(AbstractBaseUser):
++        username = models.CharField(max_length=30)
++        USERNAME_FIELD = "username"
++        class Meta:
++            pass
++
++    errors = check_user_model(app_configs=None)
++    assert len(errors) > 0
++    for error in errors:
++        if error.id == 'auth.E003':
++            break
++    else:
++        assert False, "auth.E003 error not found"
++
++def test_auth_e003_no_error_with_unique_constraint():
++    # Define a user model with USERNAME_FIELD and UniqueConstraint
++    class User(AbstractBaseUser):
++        username = models.CharField(max_length=30)
++        USERNAME_FIELD = "username"
++        class Meta:
++            constraints = [models.UniqueConstraint(fields=["username"], name="user_username_unq")]
++
++    errors = check_user_model(app_configs=None)
++    assert len(errors) == 0
++
++def test_auth_e003_no_error_with_unique_field():
++    # Define a user model with unique USERNAME_FIELD
++    class User(AbstractBaseUser):
++        username = models.CharField(max_length=30, unique=True)
++        USERNAME_FIELD = "username"
++        class Meta:
++            pass
++
++    errors = check_user_model(app_configs=None)
++    assert len(errors) == 0

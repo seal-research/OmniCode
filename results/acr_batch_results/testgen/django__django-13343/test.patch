@@ -1,0 +1,47 @@
+--- a/tests/test_fields.py
++++ b/tests/test_fields.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import models
++from django.core.files.storage import FileSystemStorage
++
++def test_filefield_deconstruct_with_callable_storage():
++    # Define a callable storage
++    def my_storage():
++        return FileSystemStorage(location='/tmp')
++
++    # Create a FileField with the callable storage
++    class MyModel(models.Model):
++        file = models.FileField(storage=my_storage)
++
++    # Deconstruct the FileField
++    field = MyModel._meta.get_field('file')
++    name, path, args, kwargs = field.deconstruct()
++
++    # Check that the storage is stored as a callable
++    assert kwargs['storage'] == my_storage
++
++def test_filefield_deconstruct_with_non_callable_storage():
++    # Create a FileField with a non-callable storage
++    storage = FileSystemStorage(location='/tmp')
++    class MyModel(models.Model):
++        file = models.FileField(storage=storage)
++
++    # Deconstruct the FileField
++    field = MyModel._meta.get_field('file')
++    name, path, args, kwargs = field.deconstruct()
++
++    # Check that the storage is stored as is
++    assert kwargs['storage'] == storage
++
++def test_filefield_deconstruct_with_default_storage():
++    # Create a FileField with default storage
++    class MyModel(models.Model):
++        file = models.FileField()
++
++    # Deconstruct the FileField
++    field = MyModel._meta.get_field('file')
++    name, path, args, kwargs = field.deconstruct()
++
++    # Check that the storage is not included in kwargs
++    assert 'storage' not in kwargs

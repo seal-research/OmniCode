@@ -1,0 +1,36 @@
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+-# Empty if creating new file
++import pytest
++from youtube_dl.utils import unified_strdate
++
++@pytest.mark.parametrize(
++    'date_str, expected',
++    [
++        ('January1st,2019', '20190101'),
++        ('January2nd,2019', '20190102'),
++        ('January3rd,2019', '20190103'),
++        ('January4th,2019', '20190104'),
++        ('January22nd,2019', '20190122'),
++        ('January23rd,2019', '20190123'),
++        ('January24th,2019', '20190124'),
++        ('February2nd,2019', '20190202'),
++        ('February3rd,2019', '20190203'),
++        ('February4th,2019', '20190204'),
++    ]
++)
++def test_unified_strdate_with_ordinal_suffixes(date_str, expected):
++    """Test unified_strdate with dates containing ordinal suffixes."""
++    assert unified_strdate(date_str) == expected
++
++def test_unified_strdate_without_ordinal_suffixes():
++    """Test unified_strdate with dates not containing ordinal suffixes."""
++    assert unified_strdate('January 1, 2019') == '20190101'
++
++def test_unified_strdate_with_invalid_date():
++    """Test unified_strdate with an invalid date string."""
++    assert unified_strdate('Invalid date') is None
++
++def test_unified_strdate_with_none_input():
++    """Test unified_strdate with None input."""
++    assert unified_strdate(None) is None

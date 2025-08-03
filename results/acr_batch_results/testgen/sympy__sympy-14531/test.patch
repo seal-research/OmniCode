@@ -1,0 +1,28 @@
+--- a/tests/test_printing.py
++++ b/tests/test_printing.py
+-# Original code here (if modifying existing file)
++import pytest
++from sympy import symbols, Eq, Limit, S
++
++def test_strprinter_sympy_integers():
++    x = symbols('x')
++    assert sstr(x + S(1)/2, sympy_integers=True) == 'x + S(1)/2'
++    assert sstr(Eq(x, S(1)/2), sympy_integers=True) == 'Eq(x, S(1)/2)'
++    assert sstr(Limit(x, x, S(1)/2), sympy_integers=True) == 'Limit(x, x, S(1)/2)'
++
++def test_strprinter_sympy_integers_false():
++    x = symbols('x')
++    assert sstr(x + S(1)/2, sympy_integers=False) == 'x + 1/2'
++    assert sstr(Eq(x, S(1)/2), sympy_integers=False) == 'Eq(x, 1/2)'
++    assert sstr(Limit(x, x, S(1)/2), sympy_integers=False) == 'Limit(x, x, 1/2)'
+
+--- a/tests/test_python.py
++++ b/tests/test_python.py
+-# Original code here (if modifying existing file)
++import pytest
++from sympy import symbols, Eq, Limit, S
++
++def test_python_sympy_integers():
++    x = symbols('x')
++    assert python(Eq(x, S(1)/2), sympy_integers=True) != 'e = Eq(x, 1/2)'
++    assert python(Limit(x, x, S(1)/2), sympy_integers=True) != 'e = Limit(x, x, 1/2)'

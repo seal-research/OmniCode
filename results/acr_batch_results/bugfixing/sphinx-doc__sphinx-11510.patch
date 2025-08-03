@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/directives/code.py b/sphinx/directives/code.py\nindex 8de166137..5fa14c954 100644\n--- a/sphinx/directives/code.py\n+++ b/sphinx/directives/code.py\n@@ -388,6 +388,10 @@ class LiteralInclude(SphinxDirective):\n     not found, and does not raise errors.  Also has several options for\n     selecting what to include.\n     \"\"\"\n+    def run(self):\n+        # Trigger the source-read event for included files\n+        self.env.events.emit('source-read', self.arguments[0], self.source)\n+        return super().run()\n \n     has_content = False\n     required_arguments = 1\n"
+}

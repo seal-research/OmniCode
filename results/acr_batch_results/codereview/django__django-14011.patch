@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/servers/basehttp.py b/django/core/servers/basehttp.py\nindex 14dab517c9..6758440afd 100644\n--- a/django/core/servers/basehttp.py\n+++ b/django/core/servers/basehttp.py\n@@ -79,7 +79,7 @@ class WSGIServer(simple_server.WSGIServer):\n \n class ThreadedWSGIServer(socketserver.ThreadingMixIn, WSGIServer):\n     \"\"\"A threaded version of the WSGIServer\"\"\"\n-    daemon_threads = True\n+    daemon_threads = False\n \n \n class ServerHandler(simple_server.ServerHandler):\n"
+}

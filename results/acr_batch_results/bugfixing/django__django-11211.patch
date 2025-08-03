@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/contenttypes/fields.py b/django/contrib/contenttypes/fields.py\nindex ed98ecb48c..2d20026ca7 100644\n--- a/django/contrib/contenttypes/fields.py\n+++ b/django/contrib/contenttypes/fields.py\n@@ -207,7 +207,7 @@ class GenericForeignKey(FieldCacheMixin):\n \n         return (\n             ret_val,\n-            lambda obj: (obj.pk, obj.__class__),\n+            lambda obj: (self.model._meta.pk.to_python(obj.pk), obj.__class__),\n             gfk_key,\n             True,\n             self.name,\n"
+}

@@ -1,0 +1,62 @@
+--- a/tests/test_migrations.py
++++ b/tests/test_migrations.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations
++from django.db.migrations.writer import MigrationWriter
++from django.db.models import Model, TextField
++
++class TestMigrationWriter:
++    def test_write_imports(self):
++        # Test that the writer includes the necessary imports
++        class MyModel(Model):
++            field = TextField(primary_key=True)
++
++        migration = migrations.CreateModel(
++            name='MyModel',
++            fields=[('field', TextField(primary_key=True))],
++        )
++
++        writer = MigrationWriter(migration)
++        output = writer.as_string()
++
++        assert 'from django.db import models' in output
++
++    def test_bases_import(self):
++        # Test that the writer includes the necessary imports for bases
++        class MyBaseModel(Model):
++            pass
++
++        class MyModel(MyBaseModel):
++            field = TextField(primary_key=True)
++
++        migration = migrations.CreateModel(
++            name='MyModel',
++            fields=[('field', TextField(primary_key=True))],
++            bases=(MyBaseModel, Model),
++        )
++
++        writer = MigrationWriter(migration)
++        output = writer.as_string()
++
++        assert 'from django.db import models' in output
++
++    def test_mixin_import(self):
++        # Test that the writer includes the necessary imports for mixins
++        class MyMixin:
++            pass
++
++        class MyModel(MyMixin):
++            field = TextField(primary_key=True)
++
++        migration = migrations.CreateModel(
++            name='MyModel',
++            fields=[('field', TextField(primary_key=True))],
++            bases=(MyMixin, Model),
++        )
++
++        writer = MigrationWriter(migration)
++        output = writer.as_string()
++
++        assert 'import app.models' not in output
++        assert 'from django.db import models' in output

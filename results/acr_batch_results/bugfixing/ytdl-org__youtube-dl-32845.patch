@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/youtube_dl/extractor/youtube.py b/youtube_dl/extractor/youtube.py\nindex 90c16e172..659e486e8 100644\n--- a/youtube_dl/extractor/youtube.py\n+++ b/youtube_dl/extractor/youtube.py\n@@ -1659,7 +1659,7 @@ class YoutubeIE(YoutubeBaseInfoExtractor):\n     def _extract_n_function_name(self, jscode):\n         func_name, idx = self._search_regex(\n             r'\\.get\\(\"n\"\\)\\)&&\\(b=(?P<nfunc>[a-zA-Z_$][\\w$]*)(?:\\[(?P<idx>\\d+)\\])?\\([\\w$]+\\)',\n-            jscode, 'Initial JS player n function name', group=('nfunc', 'idx'))\n+            jscode, 'Initial JS player n function name', group=('nfunc', 'idx'), fatal=False)\n         if not idx:\n             return func_name\n \n"
+}

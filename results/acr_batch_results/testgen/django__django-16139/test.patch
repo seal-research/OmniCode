@@ -1,0 +1,74 @@
+--- a/tests/test_admin.py
++++ b/tests/test_admin.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.contrib.auth.admin import UserAdmin
++from django.contrib.auth.forms import UserChangeForm
++from django.test import TestCase, Client
++from django.urls import reverse
++
++@pytest.mark.test_admin
++class TestUserAdmin:
++
++    def test_password_change_link(self, rf):
++        """
++        Test that the link to the password change form is correctly generated.
++        """
++        client = Client()
++        # Accessing UserAdmin via primary key
++        response = client.get(reverse('admin:auth_user_change', args=[1]))
++        self.assertEqual(response.status_code, 200)
++        # Check if the link to the password change form is present
++        self.assertContains(response, 'Change password')
++
++        # Accessing UserAdmin via to_field
++        response = client.get(reverse('admin:auth_user_change', args=[1]) + '?_to_field=uuid')
++        self.assertEqual(response.status_code, 200)
++        # Check if the link to the password change form is present
++        self.assertContains(response, 'Change password')
++
++    def test_password_change_link_correct_url(self):
++        """
++        Test that the link to the password change form has the correct URL.
++        """
++        # Create a test user
++        user = User.objects.create_user('testuser', 'test@example.com', 'password')
++
++        # Accessing UserAdmin via primary key
++        client = Client()
++        response = client.get(reverse('admin:auth_user_change', args=[user.pk]))
++        # Find the link to the password change form
++        link = response.context['adminform'].fields['password'].help_text
++        # Check if the link has the correct URL
++        self.assertIn(f'{user.pk}/password/', link)
++
++        # Accessing UserAdmin via to_field
++        response = client.get(reverse('admin:auth_user_change', args=[user.pk]) + '?_to_field=uuid')
++        # Find the link to the password change form
++        link = response.context['adminform'].fields['password'].help_text
++        # Check if the link has the correct URL
++        self.assertIn(f'{user.pk}/password/', link)
+
+--- a/tests/test_forms.py
++++ b/tests/test_forms.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.contrib.auth.forms import UserChangeForm
++from django.test import TestCase
++
++@pytest.mark.test_forms
++class TestUserChangeForm:
++
++    def test_password_help_text(self):
++        """
++        Test that the password help text is correctly formatted.
++        """
++        # Create a test user
++        user = User.objects.create_user('testuser', 'test@example.com', 'password')
++
++        # Initialize the UserChangeForm
++        form = UserChangeForm(instance=user)
++
++        # Check if the password help text is correctly formatted
++        help_text = form.fields['password'].help_text
++        self.assertIn(f'{user.pk}/password/', help_text)

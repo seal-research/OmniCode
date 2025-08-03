@@ -1,0 +1,31 @@
+--- a/tests/test_database_functions.py
++++ b/tests/test_database_functions.py
+-# Empty if creating new file
++import pytest
++from django.db.models.functions import Trunc, Extract
++from django.db.models import DateTimeField, Model
++from django.db import connections
++
++@pytest.mark.test_utils
++class TestDatabaseFunctions:
++    def test_trunc_time_zone(self):
++        # Test that Trunc handles time zones correctly
++        class Event(Model):
++            start_at = DateTimeField()
++
++        event = Event.objects.create(start_at='2022-01-01 12:00:00+10:00')
++
++        trunc_result = Trunc('day', 'start_at', tzinfo='Etc/GMT-10').resolve_expression(query=Event.objects.query)
++
++        assert trunc_result == "DATE_TRUNC('day', \"start_at\" AT TIME ZONE 'Etc/GMT-10')"
++
++    def test_extract_time_zone(self):
++        # Test that Extract handles time zones correctly
++        class Event(Model):
++            start_at = DateTimeField()
++
++        event = Event.objects.create(start_at='2022-01-01 12:00:00+10:00')
++
++        extract_result = Extract('day', 'start_at', tzinfo='Etc/GMT-10').resolve_expression(query=Event.objects.query)
++
++        assert extract_result == "EXTRACT('day' FROM \"start_at\" AT TIME ZONE 'Etc/GMT-10')"

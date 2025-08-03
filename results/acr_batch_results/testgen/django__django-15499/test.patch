@@ -1,0 +1,394 @@
+--- a/mport pyt
++++ b/mport pyt
+-mp
++or
+
+--- a/rom django.db.m
++++ b/rom django.db.m
+-t pytest
+-f
++y
+
+--- a/ons.op
++++ b/ons.op
+-m dj
++s
+
+--- a/ons.mod
++++ b/ons.mod
++j
+
+--- a/s
++++ b/s
+-.db.m
++b.migr
+
+--- a/at
++++ b/at
++ions.o
+
+--- a/
++++ b/
+-t
++r
+
+--- a/rom django.db.m
++++ b/rom django.db.m
++ions.mo
+
+--- a/ons.op
++++ b/ons.op
+-pe
++ls im
+
+--- a/ons
++++ b/ons
+-t
++ Cr
+
+--- a/t
++++ b/t
++
+
+--- a/
++++ b/
+-de
++Mo
+
+--- a/rs
++++ b/rs
+-mp
++l
++from 
+
+--- a/grat
++++ b/grat
+-t C
++ngo.
+
+--- a/m
++++ b/m
+-teM
++
+
+--- a/r
++++ b/r
+-f
++
+
+--- a/grat
++++ b/grat
+-m dj
++
+
+--- a/m
++++ b/m
++or
+
+--- a/r
+
+d
++++ b/r
+
+d
+-.db.m
++
+
+--- a/t
++++ b/t
++
+
+--- a/m
++++ b/m
+-t
++n
+
+--- a/_cr
++++ b/_cr
++rs
++from 
+
+--- a/_mod
++++ b/_mod
+-pe
++ngo.
+
+--- a/_a
++++ b/_a
+-t
++
+
+--- a/r_mod
++++ b/r_mod
++
+
+--- a/_manag
++++ b/_manag
+-mp
++r im
+
+--- a/at
++++ b/at
+-t A
++ Migr
+
+--- a/
++++ b/
+-M
++ionO
+
+--- a/t
++++ b/t
+-M
++imiz
+
+--- a/
++++ b/
++
+
+--- a/rs -> Cr
++++ b/rs -> Cr
+-e
++
+
+--- a/Mod
++++ b/Mod
++_o
+
+--- a/cr
++++ b/cr
++imiz
+
+--- a/_mod
++++ b/_mod
++r
+
+--- a/= Cr
++++ b/= Cr
++
+
+--- a/Mod
++++ b/Mod
++_mo
+
+--- a/(
+        "MyMod
++++ b/(
+        "MyMod
++l_
+
+--- a/",
++++ b/",
+-s.
++
+
+--- a/
++++ b/
+-m
++
+
+--- a/ds=[(nam
++++ b/ds=[(nam
++n
+
+--- a/d",
++++ b/d",
++rs.
+
+--- a/
++++ b/
++
+
+--- a/d=mod
++++ b/d=mod
++
+
+--- a/s.Int
++++ b/s.Int
++
+
+--- a/rF
++++ b/rF
+-Opt
++
+
+--- a/
++++ b/
+-ze
++
+
+--- a/ons={"proxy": Fa
++++ b/ons={"proxy": Fa
+-pt
++n
+
+--- a/}
+    )
+    a
++++ b/}
+    )
+    a
+-ze_c
++rs -> Cr
+
+--- a/r_manag
++++ b/r_manag
+-te_m
++
+
+--- a/t
++++ b/t
+-_
++Mo
+
+--- a/
++++ b/
+-te
++l
++    
+
+--- a/rs("MyMod
++++ b/rs("MyMod
+-de
++
+
+--- a/", manag
++++ b/", manag
++
+
+--- a/r)
+    opt
++++ b/r)
+    opt
++
+
+--- a/z
++++ b/z
+-s.py:
+-    # C
++
+
+--- a/grat
++++ b/grat
+-teM
++
+
+--- a/m
++++ b/m
+- + A
++
+
+--- a/r()
+    op
++++ b/r()
+    op
+-M
++
+
+--- a/ons = [cr
++++ b/ons = [cr
+-M
++l
+
+--- a/_mod
++++ b/_mod
++m
+
+--- a/, a
++++ b/, a
+-e
++", fi
+
+--- a/r_manag
++++ b/r_manag
+-e
++=mo
+
+--- a/m
++++ b/m
+-de
++ls.In
+
+--- a/d = opt
++++ b/d = opt
+-e
++g
+
+--- a/z
++++ b/z
+-de
++l
+
+--- a/m
++++ b/m
+-e
++
+
+--- a/(op
++++ b/(op
+-de
++roxy": F
+
+--- a/ons, "myapp")
+
+    ass
++++ b/ons, "myapp")
+
+    ass
+-de
++}
++    )
++    
+
+--- a/
++++ b/
+-e
++
+
+--- a/m
++++ b/m
++n
+
+--- a/d) == 1
+    ass
++++ b/d) == 1
+    ass
+-d", f
++rs = Al
+
+--- a/s
++++ b/s
+-d=m
++rMo
+
+--- a/(opt
++++ b/(opt
+-s.I
++lM
+
+--- a/z
++++ b/z
+-e
++g
+
+--- a/at
++++ b/at
+-e
++
+
+--- a/
++++ b/
+-pt
++n
+
+--- a/m
++++ b/m
++rs=[m
+
+--- a/d[0].va
++++ b/d[0].va
++g
+
+--- a/dat
++++ b/dat
++

@@ -1,0 +1,46 @@
+--- a/tests/test_orm.py
++++ b/tests/test_orm.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db.models import FilteredRelation, Q
++from django.test import TestCase
++
++@pytest.mark.test_orm
++class FilteredRelationTests(TestCase):
++    def test_multiple_filtered_relation(self):
++        # Test that multiple FilteredRelation with the same relation name but different filters are handled correctly
++        qs = Model.objects.alias(
++            relation_zone=FilteredRelation(
++                "myrelation",
++                condition=Q(myrelation__zone=F("zone"))
++            ),
++            relation_all=FilteredRelation(
++                "myrelation",
++                condition=Q(myrelation__is_all=True)
++            ),
++        ).annotate(
++            price_zone=F("relation_zone__price"),
++            price_all=F("relation_all__price")
++        ).annotate(
++            price_final=Case(
++                When(
++                    price_zone__isnull=True,
++                    then=F("price_all"),
++                ),
++                default=F("price_zone")
++            )
++        )
++        # Your test implementation here
++        pass
++
++    def test_add_filtered_relation_alias_collision(self):
++        # Test that add_filtered_relation handles alias collision correctly
++        query = Query()
++        filtered_relation1 = FilteredRelation("myrelation", condition=Q(myrelation__zone=F("zone")))
++        filtered_relation2 = FilteredRelation("myrelation", condition=Q(myrelation__is_all=True))
++        
++        query.add_filtered_relation(filtered_relation1, "myrelation")
++        query.add_filtered_relation(filtered_relation2, "myrelation")
++        
++        # Assert that aliases are different
++        assert filtered_relation1.alias != filtered_relation2.alias

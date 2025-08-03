@@ -1,0 +1,57 @@
+--- a/tests/test_management_commands.py
++++ b/tests/test_management_commands.py
+-# Original code here, if any
++import pytest
++from django.core.management import call_command
++from django.core.management.base import CommandError
++from django.test import TestCase
++import sys
++import os
++
++@pytest.mark.skipif(sys.platform == 'win32', reason="Windows specifics")
++def test_runserver_passes_x_options():
++    # Arrange
++    os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
++    python_options = ['-X', 'utf8']
++    args = ['runserver', '--noreload'] + python_options
++
++    # Act and Assert
++    try:
++        call_command(*args)
++    except CommandError as e:
++        assert False, f"CommandError: {e}"
++
++    # Verify that PYTHON_OPTIONS is set correctly
++    assert os.environ.get('PYTHON_OPTIONS') == ' '.join(python_options)
++
++def test_autoreload_passes_x_options():
++    # Arrange
++    os.environ['DJANGO_SETTINGS_MODULE'] = 'tests.settings'
++    python_options = ['-X', 'utf8']
++
++    # Simulate autoreload by directly calling get_child_arguments
++    from django.utils.autoreload import get_child_arguments
++    sys.argv = ['manage.py', 'runserver'] + python_options
++
++    # Act
++    args = get_child_arguments()
++
++    # Assert
++    assert '-X utf8' in args
+
+--- a/tests/test_utils_autoreload.py
++++ b/tests/test_utils_autoreload.py
+-# Original code here, if any
++import pytest
++from django.utils.autoreload import get_child_arguments
++import sys
++
++def test_get_child_arguments_passes_x_options():
++    # Arrange
++    sys.argv = ['manage.py', 'runserver', '-X', 'utf8']
++
++    # Act
++    args = get_child_arguments()
++
++    # Assert
++    assert '-X utf8' in args

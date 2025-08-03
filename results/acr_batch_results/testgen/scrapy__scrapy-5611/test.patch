@@ -1,0 +1,4758 @@
+--- a/dt
++++ b/dt
+-s "\m
++
+
+--- a/r
++++ b/r
++ls "\m
+
+--- a/
++++ b/
++
+
+--- a/r
++++ b/r
+-te
++l
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri
+
+--- a/.py
++++ b/.py
+-te
++y
+
+--- a/r
++++ b/r
++
+
+--- a/.py
++++ b/.py
+-.py
++ri
+
+--- a/r
++++ b/r
+-te
++y
+
+--- a/.py
++++ b/.py
++
+
+--- a/r
++++ b/r
+-.py
++ri

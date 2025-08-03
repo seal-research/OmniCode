@@ -1,0 +1,41 @@
+--- a/tests/test_decomposition.py
++++ b/tests/test_decomposition.py
++import pytest
++from sklearn.decomposition import SparseCoder
++from sklearn.linear_model import Lasso
++
++def test_sparse_coder_lasso_max_iter():
++    # Test that SparseCoder exposes max_iter for Lasso
++    dictionary = [[1, 0], [0, 1]]
++    X = [1, 1]
++
++    # Test with default max_iter
++    coder = SparseCoder(dictionary=dictionary, transform_algorithm='lasso_cd')
++    code = coder.fit_transform(X)
++    assert coder.components_ is not None
++
++    # Test with specified max_iter
++    max_iter = 500
++    coder = SparseCoder(dictionary=dictionary, transform_algorithm='lasso_cd', lasso__max_iter=max_iter)
++    assert coder.lasso_params['max_iter'] == max_iter
++
++def test_sparse_coder_lasso_params():
++    # Test that SparseCoder passes lasso_params correctly
++    dictionary = [[1, 0], [0, 1]]
++    X = [1, 1]
++
++    # Test with some lasso parameters
++    lasso_params = {'max_iter': 1000, 'positive': True}
++    coder = SparseCoder(dictionary=dictionary, transform_algorithm='lasso_cd', **lasso_params)
++    assert coder.lasso_params == lasso_params
++
++    code = coder.fit_transform(X)
++    assert coder.components_ is not None
++
++def test_sparse_coder_invalid_lasso_param():
++    # Test that SparseCoder raises an error for invalid lasso parameter
++    dictionary = [[1, 0], [0, 1]]
++    X = [1, 1]
++
++    with pytest.raises(TypeError):
++        SparseCoder(dictionary=dictionary, transform_algorithm='lasso_cd', invalid_param='value')

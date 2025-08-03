@@ -1,0 +1,56 @@
+--- a/tests/test_widgets.py
++++ b/tests/test_widgets.py
+-# Empty if creating new file
++import pytest
++from django.forms import BooleanField, CheckboxInput, SplitArrayField
++from django.forms.models import ModelForm
++from .test_widgets import WidgetTest
++
++class TestCustomCheckboxInput(WidgetTest):
++    def test_get_context(self):
++        widget = CheckboxInput()
++        name = 'test'
++        value = True
++        attrs = {}
++        context = widget.get_context(name, value, attrs)
++        assert context['attrs']['checked'] == True
++
++    def test_get_context_copy(self):
++        widget = CheckboxInput()
++        name = 'test'
++        value = True
++        attrs = {'id': 'test_id'}
++        context = widget.get_context(name, value, attrs)
++        assert context['attrs']['id'] == 'test_id'
++
++class TestBooleanField:
++    def test_to_python(self):
++        field = BooleanField()
++        assert field.to_python('True') == True
++        assert field.to_python('False') == False
++
++class TestSplitArrayField:
++    def test_clean(self):
++        class TestForm(ModelForm):
++            test_field = SplitArrayField(BooleanField, size=3)
++
++        form = TestForm({'test_field': [True, False, True]})
++        assert form.is_valid()
++        assert form.cleaned_data['test_field'] == [True, False, True]
+
+--- a/tests/test_fields.py
++++ b/tests/test_fields.py
+-# Empty if creating new file
++import pytest
++from django.forms import BooleanField, SplitArrayField
++
++class TestBooleanField:
++    def test_has_changed(self):
++        field = BooleanField()
++        assert field.has_changed(True, 'False') == True
++        assert field.has_changed(False, 'True') == True
++
++class TestSplitArrayField:
++    def test_has_changed(self):
++        field = SplitArrayField(BooleanField, size=3)
++        assert field.has_changed([True, False, True], [False, True, False]) == True

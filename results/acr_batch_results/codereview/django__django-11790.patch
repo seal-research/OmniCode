@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/auth/forms.py b/django/contrib/auth/forms.py\nindex a0cfed0995..5fdb135201 100644\n--- a/django/contrib/auth/forms.py\n+++ b/django/contrib/auth/forms.py\n@@ -66,6 +66,7 @@ class UsernameField(forms.CharField):\n             **super().widget_attrs(widget),\n             'autocapitalize': 'none',\n             'autocomplete': 'username',\n+            'maxlength': str(self.max_length),\n         }\n \n \n"
+}

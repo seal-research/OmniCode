@@ -1,0 +1,45 @@
+--- a/tests/test_pretty_print.py
++++ b/tests/test_pretty_print.py
+-# Empty if creating new file
++import pytest
++from sympy import pprint, Symbol
++from sympy.physics import mechanics
++
++def test_pprint_greek_letters():
++    # Test that pprint correctly handles Greek letters with subscripts
++    x = Symbol('x')
++    omega = Symbol('ω')
++    t0 = Symbol('t₀')
++    w0 = Symbol('w₀')
++
++    expr = [ -t0 * w0, -t0 * w0, -t0 * w0]
++    expected = [ '- t₀⋅w₀', '- t₀⋅w₀', '- t₀⋅w₀']
++
++    for i, (e, ex) in enumerate(zip(expr, expected)):
++        assert pprint(e) == ex
++
++def test_pprint_greek_letters_with_subscripts():
++    # Test that pprint correctly handles Greek letters with subscripts
++    x = Symbol('x')
++    omega = Symbol('ω')
++    t0 = Symbol('t₀')
++    w0 = Symbol('w₀')
++
++    expr = [ -t0 * omega, -t0 * omega, -t0 * omega]
++    expected = [ '- t₀⋅ω₀', '- t₀⋅ω₀', '- t₀⋅ω₀']
++
++    for i, (e, ex) in enumerate(zip(expr, expected)):
++        assert pprint(e) == ex
++
++def test_pprint_unicode():
++    # Test that pprint correctly handles unicode characters
++    x = Symbol('x')
++    omega = Symbol('ω')
++    t0 = Symbol('t₀')
++    w0 = Symbol('w₀')
++
++    expr = [ -t0 * w0, -t0 * w0, -t0 * w0]
++    expected = [ '- t₀⋅w₀', '- t₀⋅w₀', '- t₀⋅w₀']
++
++    for i, (e, ex) in enumerate(zip(expr, expected)):
++        assert pprint(e) == ex

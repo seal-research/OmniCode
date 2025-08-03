@@ -1,0 +1,55 @@
+--- a/tests/test_progbar.py
++++ b/tests/test_progbar.py
+-# Original code here (if modifying existing file)
++import pytest
++from keras.src.utils.progbar import Progbar
++import numpy as np
++
++def test_progbar_update_dict():
++    """Test that Progbar handles dictionary values correctly."""
++    progbar = Progbar(10)
++    values = [('compile_metrics', {'mae': 1.0, 'mse': 2.0})]
++    progbar.update(1, values)
++    assert len(progbar._values) == 1
++    assert 'compile_metrics' in progbar._values
++    assert isinstance(progbar._values['compile_metrics'], list)
++
++def test_progbar_update_dict_nested():
++    """Test that Progbar handles nested dictionary values correctly."""
++    progbar = Progbar(10)
++    values = [('compile_metrics', {'mae': 1.0, 'mse': 2.0})]
++    progbar.update(1, values)
++    progbar.update(2, values)
++    assert len(progbar._values) == 1
++    assert 'compile_metrics' in progbar._values
++    assert isinstance(progbar._values['compile_metrics'], list)
++    assert len(progbar._values['compile_metrics']) == 2
++
++def test_progbar_metrics_names():
++    """Test that Progbar handles metrics names correctly."""
++    progbar = Progbar(10)
++    values = [('loss', 1.0), ('accuracy', 0.7)]
++    progbar.update(1, values)
++    assert progbar._values_order == ['loss', 'accuracy']
++
++def test_progbar_finalize():
++    """Test that Progbar handles finalize correctly."""
++    progbar = Progbar(10)
++    values = [('loss', 1.0), ('accuracy', 0.7)]
++    progbar.update(10, values, finalize=True)
++    assert len(progbar._values) == 2
++    assert 'loss' in progbar._values
++    assert 'accuracy' in progbar._values
++
++def test_multiple_metrics():
++    progbar = Progbar(10)
++    metrics = [
++        {'loss': 0.2, 'accuracy': 0.7},
++        {'loss': 0.1, 'accuracy': 0.8}
++    ]
++    for i, metric in enumerate(metrics):
++        values = list(metric.items())
++        progbar.update(i+1, values)
++    assert len(progbar._values_order) == 2
++    assert 'loss' in progbar._values_order
++    assert 'accuracy' in progbar._values_order

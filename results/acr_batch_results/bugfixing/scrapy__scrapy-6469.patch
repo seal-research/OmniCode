@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/contracts/__init__.py b/scrapy/contracts/__init__.py\nindex a7e129948..60aacb033 100644\n--- a/scrapy/contracts/__init__.py\n+++ b/scrapy/contracts/__init__.py\n@@ -99,6 +99,8 @@ class Contract:\n         return request\n \n     def adjust_request_args(self, args: Dict[str, Any]) -> Dict[str, Any]:\n+        if 'meta' in args:\n+            return {**args, 'meta': {**args['meta'], **(self.meta or {})}}\n         return args\n \n \n"
+}

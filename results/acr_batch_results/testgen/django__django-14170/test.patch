@@ -1,0 +1,57 @@
+--- a/tests/test_lookups.py
++++ b/tests/test_lookups.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db.models import ExtractIsoYear
++from django.db.models.functions import Extract
++
++@pytest.mark.test_utils
++class TestExtract:
++    def test_iso_year_lookup(self, connection):
++        # Test that the __iso_year lookup works correctly
++        from django.db.models.lookups import YearLookup
++        lookup = YearLookup('start_date__iso_year', 2020)
++        assert lookup.get_lookups()['iso_year'] == lookup
++
++    def test_extract_iso_year(self, connection):
++        # Test that ExtractIsoYear works correctly
++        qs = DTModel.objects.annotate(extracted=ExtractIsoYear('start_date')).only('id')
++        assert qs.query.sql == [
++            f"SELECT {connection.ops.quote_name('db_functions_dtmodel')}."
++            f"{connection.ops.quote_name('id')}, "
++            f"EXTRACT('isoyear' FROM {connection.ops.quote_name('db_functions_dtmodel')}."
++            f"{connection.ops.quote_name('start_date')}) AS extracted "
++            f"FROM {connection.ops.quote_name('db_functions_dtmodel')}"
++        ]
++
++    def test_extract_iso_year_filter(self, connection):
++        # Test that filtering with ExtractIsoYear works correctly
++        qs = DTModel.objects.filter(start_date__iso_year=2020).only('id')
++        assert qs.query.sql[0] == (
++            f"SELECT {connection.ops.quote_name('db_functions_dtmodel')}."
++            f"{connection.ops.quote_name('id')} "
++            f"FROM {connection.ops.quote_name('db_functions_dtmodel')} "
++            f"WHERE EXTRACT('isoyear' FROM {connection.ops.quote_name('db_functions_dtmodel')}."
++            f"{connection.ops.quote_name('start_date')}) = 2020"
++        )
+
+--- a/tests/test_year_lookup.py
++++ b/tests/test_year_lookup.py
+-# Empty if creating new file
++import pytest
++from django.db.models import YearLookup
++
++def test_year_lookup_bounds():
++    # Test that YearLookup bounds are calculated correctly
++    lookup = YearLookup('start_date__year', 2020)
++    start, finish = lookup.year_lookup_bounds(None, 2020)
++    assert start == '2020-01-01'
++    assert finish == '2020-12-31'
++
++def test_year_lookup_as_sql():
++    # Test that YearLookup as_sql method works correctly
++    lookup = YearLookup('start_date__year', 2020)
++    sql, params = lookup.as_sql(None, None)
++    assert sql == (
++        "{table}.{column} BETWEEN %s AND %s"
++    )

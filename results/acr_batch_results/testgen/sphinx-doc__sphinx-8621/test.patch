@@ -1,0 +1,40 @@
+--- a/tests/test_roles.py
++++ b/tests/test_roles.py
+-# Empty if creating new file
++import pytest
++from sphinx.testing import TestApp
++from sphinx import roles
++
++@pytest.fixture
++def app():
++    return TestApp()
++
++def test_kbd_role(app):
++    """Test the :kbd: role with simple keystrokes."""
++    app.add_source('.. kbd:: Shift', 'test')
++    app.build()
++    assert app.get_artifact('test.html') is not None
++
++def test_kbd_role_compound_keystroke(app):
++    """Test the :kbd: role with compound keystrokes."""
++    app.add_source('.. kbd:: Shift-+', 'test')
++    app.build()
++    assert app.get_artifact('test.html') is not None
++
++def test_kbd_role_standalone_keystroke(app):
++    """Test the :kbd: role with standalone keystrokes."""
++    app.add_source('.. kbd:: -', 'test')
++    app.build()
++    assert app.get_artifact('test.html') is not None
++
++def test_kbd_role_invalid_input(app):
++    """Test the :kbd: role with invalid input."""
++    app.add_source('.. kbd::', 'test')
++    with pytest.raises(roles.RoleError):
++        app.build()
++
++def test_kbd_role_empty_input(app):
++    """Test the :kbd: role with empty input."""
++    app.add_source('.. kbd::', 'test')
++    with pytest.raises(roles.RoleError):
++        app.build()

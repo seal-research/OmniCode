@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/migrations/operations/models.py b/django/db/migrations/operations/models.py\nindex dddf7c679c..a0ae0ebb59 100644\n--- a/django/db/migrations/operations/models.py\n+++ b/django/db/migrations/operations/models.py\n@@ -141,7 +141,7 @@ class CreateModel(ModelOperation):\n                 CreateModel(\n                     self.name,\n                     fields=self.fields,\n-                    options={**self.options, **operation.options},\n+                    options={k: v for k, v in self.options.items() if k in operation.options or k not in operation.options},\n                     bases=self.bases,\n                     managers=self.managers,\n                 ),\n"
+}

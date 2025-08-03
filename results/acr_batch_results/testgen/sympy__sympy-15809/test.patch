@@ -1,0 +1,29 @@
+--- a/tests/test_functions.py
++++ b/tests/test_functions.py
+-# Empty if creating new file
++import pytest
++from sympy import Min, Max, S, oo, Rational
++
++def test_Min_Max_zero_argument():
++    assert Min() == oo
++    assert Max() == -oo
++
++def test_Min_Max_with_arguments():
++    assert Min(1, 2, 3) == 1
++    assert Max(1, 2, 3) == 3
++
++def test_Min_Max_with_negative_numbers():
++    assert Min(-1, -2, -3) == -3
++    assert Max(-1, -2, -3) == -1
++
++def test_Min_Max_with_mixed_numbers():
++    assert Min(-1, 2, -3) == -3
++    assert Max(-1, 2, -3) == 2
++
++def test_Min_Max_identity():
++    assert Min.identity == oo
++    assert Max.identity == -oo
++
++def test_Min_Max_zero():
++    assert Min.zero == S.NegativeInfinity
++    assert Max.zero == S.Infinity

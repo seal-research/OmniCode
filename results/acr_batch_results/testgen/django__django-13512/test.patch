@@ -1,0 +1,64 @@
+--- a/tests/test_jsonfield.py
++++ b/tests/test_jsonfield.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.contrib.admin import AdminSite
++from django.contrib.admin.views import main
++from django.test import TestCase
++
++class JSONField(models.Field):
++    def __init__(self, *args, **kwargs):
++        super().__init__(*args, **kwargs)
++
++    def get_prep_value(self, value):
++        if value is None:
++            return value
++        return self.encoder.encode(value)
++
++    def from_db_value(self, value, expression, connection):
++        if value is None:
++            return value
++        try:
++            return self.decoder.decode(value)
++        except Exception:
++            return value
++
++class TestModel(models.Model):
++    json_field = JSONField()
++
++class TestJSONField(TestCase):
++
++    def test_unicode_chars(self):
++        # Test that Unicode characters are preserved during serialization and deserialization
++        test_model = TestModel.objects.create(json_field={'key': '中国'})
++        self.assertEqual(test_model.json_field, {'key': '中国'})
++
++    def test_admin_interface(self):
++        # Test that the admin interface displays Unicode characters correctly
++        site = AdminSite()
++        model_admin = site._registry[TestModel]
++        view = main.ModelAdminView.as_view(model_admin=model_admin)
++        response = view(request=self.factory.get('/admin/testmodel/'), object_id=1)
++        self.assertContains(response, '中国')
+
+--- a/tests/test_jsonfield_admin.py
++++ b/tests/test_jsonfield_admin.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admin import AdminSite
++from django.test import TestCase, RequestFactory
++from .models import TestModel
++
++class TestJSONFieldAdmin(TestCase):
++
++    def setUp(self):
++        self.factory = RequestFactory()
++        self.site = AdminSite()
++        self.model_admin = self.site._registry[TestModel]
++
++    def test_change_form(self):
++        # Test that the change form in the admin interface handles Unicode characters correctly
++        request = self.factory.get('/admin/testmodel/1/change/')
++        response = self.model_admin.change_view(request, object_id=1)
++        self.assertContains(response, '中国')

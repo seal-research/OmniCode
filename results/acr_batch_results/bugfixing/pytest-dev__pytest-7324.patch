@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/src/_pytest/mark/expression.py b/src/_pytest/mark/expression.py\nindex 04c73411a..200a95bf3 100644\n--- a/src/_pytest/mark/expression.py\n+++ b/src/_pytest/mark/expression.py\n@@ -198,6 +198,8 @@ class Expression:\n \n         :param input: The input expression - one line.\n         \"\"\"\n+        if input in (\"True\", \"False\", \"None\"):\n+            return Expression(compile(ast.NameConstant(input), filename=\"<pytest match expression>\", mode=\"eval\"))\n         astexpr = expression(Scanner(input))\n         code = compile(\n             astexpr, filename=\"<pytest match expression>\", mode=\"eval\",\n"
+}

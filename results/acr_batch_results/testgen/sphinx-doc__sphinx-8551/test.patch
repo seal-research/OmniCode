@@ -1,0 +1,100 @@
+--- a/tests/test_domains_python.py
++++ b/tests/test_domains_python.py
+-# Empty if creating new file
++import pytest
++from sphinx.domains.python import PythonDomain
++from sphinx.environment import BuildEnvironment
++from sphinx.nodes import pending_xref
++
++def test_resolve_xref_current_module():
++    # Create a test environment
++    env = BuildEnvironment()
++
++    # Set the current module
++    env.currentmodule = 'mod'
++
++    # Create a PythonDomain instance
++    domain = PythonDomain()
++
++    # Define a test xref
++    target = 'A'
++    node = pending_xref('', target, '')
++
++    # Resolve the xref
++    result = domain.resolve_xref(env, 'fromdocname', None, 'class', target, node, None)
++
++    # Check that the xref resolves to the correct module
++    assert result is not None
++
++def test_resolve_xref_ambiguous():
++    # Create a test environment
++    env = BuildEnvironment()
++
++    # Set the current module
++    env.currentmodule = 'mod.submod'
++
++    # Create a PythonDomain instance
++    domain = PythonDomain()
++
++    # Define test xrefs
++    targets = ['A', 'mod.A', 'mod.submod.A']
++    node = pending_xref('', 'A', '')
++
++    # Resolve the xrefs
++    results = []
++    for target in targets:
++        result = domain.resolve_xref(env, 'fromdocname', None, 'class', target, node, None)
++        results.append(result)
++
++    # Check that the xrefs resolve correctly
++    assert results[0] == results[2]  # mod.submod.A
++    assert results[1] == 'mod.A'
++
++def test_resolve_xref_unqualified():
++    # Create a test environment
++    env = BuildEnvironment()
++
++    # Set the current module
++    env.currentmodule = 'mod.submod'
++
++    # Create a PythonDomain instance
++    domain = PythonDomain()
++
++    # Define a test xref
++    target = 'A'
++    node = pending_xref('', target, '')
++
++    # Resolve the xref
++    result = domain.resolve_xref(env, 'fromdocname', None, 'class', target, node, None)
++
++    # Check that the xref resolves to the correct module
++    assert result == 'mod.submod.A'
++
++def test_resolve_xref_rtype():
++    # Create a test environment
++    env = BuildEnvironment()
++
++    # Set the current module
++    env.currentmodule = 'mod.submod'
++
++    # Create a PythonDomain instance
++    domain = PythonDomain()
++
++    # Define a test xref
++    target = 'A'
++    node = pending_xref('', target, '')
++
++    # Resolve the xref for :rtype:
++    result = domain.resolve_xref(env, 'fromdocname', None, 'rtype', target, node, None)
++
++    # Check that the xref resolves to the correct module
++    assert result == 'mod.submod.A'
+
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+-# Empty if creating new file
++import pytest
++
++@pytest.fixture
++def build_environment():
++    return BuildEnvironment()

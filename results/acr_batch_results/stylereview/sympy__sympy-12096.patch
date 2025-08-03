@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/core/function.py b/sympy/core/function.py\nindex 1b8005e1d2..aefd40231f 100644\n--- a/sympy/core/function.py\n+++ b/sympy/core/function.py\n@@ -46,7 +46,7 @@\n \n from sympy.core.containers import Tuple, Dict\n from sympy.core.logic import fuzzy_and\n-from sympy.core.compatibility import string_types, with_metaclass, range\n+from sympy.core.compatibility import string_types, with_metaclass\n from sympy.utilities import default_sort_key\n from sympy.utilities.misc import filldedent\n from sympy.utilities.iterables import uniq\n"
+}

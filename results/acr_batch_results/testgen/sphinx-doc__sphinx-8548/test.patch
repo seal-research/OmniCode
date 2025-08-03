@@ -1,0 +1,55 @@
+--- a/tests/test_autodoc_inherited_members.py
++++ b/tests/test_autodoc_inherited_members.py
+-# Empty if creating new file
++import pytest
++from sphinx import autodoc
++from sphinx.testing import TestApp
++from sphinx.ext.autodoc import Documenter
++
++@pytest.fixture
++def app():
++ return TestApp()
++
++def test_inherited_attributes(app):
++ class Parent:
++ attr = "Parent attribute"
++
++ class Child(Parent):
++ pass
++
++ doc = autodoc.get_doc(Child, None, None, None, None)
++ assert "attr" in [line.strip() for line in doc]
++
++def test_nested_classes(app):
++ class Outer:
++ class Inner:
++ attr = "Inner attribute"
++
++ doc = autodoc.get_doc(Outer.Inner, None, None, None, None)
++ assert "attr" in [line.strip() for line in doc]
++
++def test_autodoc_inherit_docstrings(app):
++ app.config.autodoc_inherit_docstrings = True
++
++ class Parent:
++ """Parent docstring"""
++ attr = "Parent attribute"
++
++ class Child(Parent):
++ pass
++
++ doc = autodoc.get_doc(Child, None, None, None, None)
++ assert "Parent docstring" in [line.strip() for line in doc]
++
++def test_autodoc_inherit_docstrings_disabled(app):
++ app.config.autodoc_inherit_docstrings = False
++
++ class Parent:
++ """Parent docstring"""
++ attr = "Parent attribute"
++
++ class Child(Parent):
++ pass
++
++ doc = autodoc.get_doc(Child, None, None, None, None)
++ assert "Parent docstring" not in [line.strip() for line in doc]

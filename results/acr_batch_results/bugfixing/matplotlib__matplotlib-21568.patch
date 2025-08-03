@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/dates.py b/lib/matplotlib/dates.py\nindex 0766156d64..af51d1a748 100644\n--- a/lib/matplotlib/dates.py\n+++ b/lib/matplotlib/dates.py\n@@ -596,8 +596,7 @@ def _wrap_in_tex(text):\n     ret_text = re.sub(p, r'}$\\1$\\\\mathdefault{', text)\n \n     # Braces ensure dashes are not spaced like binary operators.\n-    ret_text = '$\\\\mathdefault{'+ret_text.replace('-', '{-}')+'}$'\n-    ret_text = ret_text.replace('$\\\\mathdefault{}$', '')\n+    ret_text = '\\\\mathdefault{' + ret_text.replace('-', '{-}') + '}'\n     return ret_text\n \n \n"
+}

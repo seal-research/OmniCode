@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/migrations/writer.py b/django/db/migrations/writer.py\nindex 4918261fb0..6c38dee114 100644\n--- a/django/db/migrations/writer.py\n+++ b/django/db/migrations/writer.py\n@@ -164,7 +164,7 @@ class MigrationWriter:\n \n         # django.db.migrations is always used, but models import may not be.\n         # If models import exists, merge it with migrations import.\n-        if \"from django.db import models\" in imports:\n+        if any(line.startswith(\"from django.db import models\") for line in imports):\n             imports.discard(\"from django.db import models\")\n             imports.add(\"from django.db import migrations, models\")\n         else:\n"
+}

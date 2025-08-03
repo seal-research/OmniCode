@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex c1a76584f0..5c5bbb6269 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -349,7 +349,7 @@ class BaseExpression:\n \n     def get_group_by_cols(self, alias=None):\n         if not self.contains_aggregate:\n-            return [self]\n+            return self.expression.get_group_by_cols(alias)\n         cols = []\n         for source in self.get_source_expressions():\n             cols.extend(source.get_group_by_cols())\n"
+}

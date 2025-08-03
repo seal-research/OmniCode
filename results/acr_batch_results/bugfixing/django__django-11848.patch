@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/http.py b/django/utils/http.py\nindex 572cfb4347..00432c681f 100644\n--- a/django/utils/http.py\n+++ b/django/utils/http.py\n@@ -176,10 +176,12 @@ def parse_http_date(date):\n     try:\n         year = int(m.group('year'))\n         if year < 100:\n-            if year < 70:\n-                year += 2000\n+            current_year = datetime.now().year\n+            century = (current_year // 100) * 100\n+            if year > (current_year % 100 + 50) % 100:\n+                year += century - 100\n             else:\n-                year += 1900\n+                year += century\n         month = MONTHS.index(m.group('mon').lower()) + 1\n         day = int(m.group('day'))\n         hour = int(m.group('hour'))\n"
+}

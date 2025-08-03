@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/admin/options.py b/django/contrib/admin/options.py\nindex 5f07a4208a..d65c7e64e9 100644\n--- a/django/contrib/admin/options.py\n+++ b/django/contrib/admin/options.py\n@@ -138,7 +138,8 @@ class BaseModelAdmin(metaclass=forms.MediaDefiningClass):\n     def check(self, **kwargs):\n         return self.checks_class().check(self, **kwargs)\n \n-    def __init__(self):\n+    def __init__(self, admin_site=None):\n+        self.admin_site = admin_site\n         # Merge FORMFIELD_FOR_DBFIELD_DEFAULTS with the formfield_overrides\n         # rather than simply overwriting.\n         overrides = copy.deepcopy(FORMFIELD_FOR_DBFIELD_DEFAULTS)\n"
+}

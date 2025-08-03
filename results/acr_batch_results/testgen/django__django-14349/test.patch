@@ -1,0 +1,36 @@
+--- a/tests/validators/tests.py
++++ b/tests/validators/tests.py
+-# Original code here
++import pytest
++from django.core.validators import URLValidator
++from django.core.exceptions import ValidationError
++
++def test_url_validator_forbidden_characters():
++    validator = URLValidator()
++    # Test with URL containing LF
++    with pytest.raises(ValidationError):
++        validator('http://www.djangoproject.com/\n')
++    # Test with URL containing CR
++    with pytest.raises(ValidationError):
++        validator('http://www.djangoproject.com/\r')
++    # Test with URL containing tab
++    with pytest.raises(ValidationError):
++        validator('http://www.djangoproject.com/\t')
++
++def test_url_validator_valid_urls():
++    validator = URLValidator()
++    # Test with valid HTTP URL
++    validator('http://www.djangoproject.com')
++    # Test with valid HTTPS URL
++    validator('https://www.djangoproject.com')
++    # Test with valid FTP URL
++    validator('ftp://www.djangoproject.com')
++
++def test_url_validator_invalid_urls():
++    validator = URLValidator()
++    # Test with invalid URL (missing scheme)
++    with pytest.raises(ValidationError):
++        validator('www.djangoproject.com')
++    # Test with invalid URL (invalid scheme)
++    with pytest.raises(ValidationError):
++        validator('invalid://www.djangoproject.com')

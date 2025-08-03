@@ -1,0 +1,49 @@
+--- a/tests/test_i18n.py
++++ b/tests/test_i18n.py
+-# Empty if creating new file
++import os
++import pytest
++from sphinx.testing import TestApp
++from sphinx.util.i18n import CatalogRepository
++
++def test_load_custom_translation():
++    app = TestApp(srcdir='path/to/src', confoverrides={'language': 'da'})
++    app.config.locale_dirs = ['locale_dir1', 'locale_dir2']
++    catalog_repo = CatalogRepository(app.srcdir, app.config.locale_dirs, app.config.language, 'utf-8')
++    catalogs = list(catalog_repo.catalogs)
++    # Your test implementation here
++    assert len(catalogs) > 0
++
++def test_prioritize_custom_translation():
++    # Your test implementation here
++    pass
++
++def test_catalog_repository_init():
++    # Your test implementation here
++    pass
+
+--- a/tests/test_sphinx_application.py
++++ b/tests/test_sphinx_application.py
+-# Empty if creating new file
++import pytest
++from sphinx.application import Sphinx
++
++def test_sphinx_init_i18n():
++    app = Sphinx('src', 'conf', 'build', 'build/doctrees', 'builder', 'html', {}, None, None, False, False, None, 0, 0, False)
++    # Your test implementation here
++    pass
++</file>
++
++<file>path/to/test_locale_override.py</file>
++<original>
++# Original code here (if modifying existing file)
++</original>
++<patched>
++import pytest
++from sphinx.testing import TestApp
++
++@pytest.mark.skip("This test suite is not complete")
++def test_locale_override():
++    app = TestApp(srcdir='path/to/src', confoverrides={'language': 'da'})
++    # Your test implementation here
++    pass

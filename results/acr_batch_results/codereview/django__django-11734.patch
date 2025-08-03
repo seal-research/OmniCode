@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/query.py b/django/db/models/query.py\nindex ab4f3fc534..c50012894a 100644\n--- a/django/db/models/query.py\n+++ b/django/db/models/query.py\n@@ -908,7 +908,7 @@ class QuerySet:\n \n         clone = self._chain()\n         if negate:\n-            clone.query.add_q(~Q(*args, **kwargs))\n+            clone.query.add_q(~Q(*args, **kwargs), prelude=True)\n         else:\n             clone.query.add_q(Q(*args, **kwargs))\n         return clone\n"
+}

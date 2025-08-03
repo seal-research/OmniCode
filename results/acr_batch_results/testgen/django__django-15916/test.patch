@@ -1,0 +1,58 @@
+--- a/tests/test_forms_models_regress.py
++++ b/tests/test_forms_models_regress.py
+-# Empty if creating new file
++import pytest
++from django import forms
++from django.db import models
++from django.forms.models import modelform_factory
++
++class TestModelFormRegress:
++    def test_modelform_factory_preserves_formfield_callback(self):
++        # Create a model
++        class MyModel(models.Model):
++            active = models.BooleanField()
++            name = models.CharField(max_length=64, blank=True, null=True)
++
++        # Define a form with a custom formfield_callback
++        def all_required(field, **kwargs):
++            formfield = field.formfield(**kwargs)
++            formfield.required = True
++            return formfield
++
++        class MyForm(forms.ModelForm):
++            class Meta:
++                model = MyModel
++                formfield_callback = all_required
++                fields = ['active', 'name']
++
++        # Create a ModelForm using modelform_factory
++        FactoryForm = modelform_factory(MyModel, form=MyForm)
++
++        # Check that the formfield_callback was preserved
++        for field in FactoryForm.base_fields.values():
++            assert field.required
++
++    def test_modelform_factory_uses_meta_formfield_callback(self):
++        # Create a model
++        class MyModel(models.Model):
++            active = models.BooleanField()
++            name = models.CharField(max_length=64, blank=True, null=True)
++
++        # Define a form with a custom formfield_callback
++        def all_required(field, **kwargs):
++            formfield = field.formfield(**kwargs)
++            formfield.required = True
++            return formfield
++
++        class MyForm(forms.ModelForm):
++            class Meta:
++                model = MyModel
++                formfield_callback = all_required
++                fields = ['active', 'name']
++
++        # Create a ModelForm using modelform_factory
++        FactoryForm = modelform_factory(MyModel, form=MyForm, formfield_callback=None)
++
++        # Check that the formfield_callback from Meta was used
++        for field in FactoryForm.base_fields.values():
++            assert field.required

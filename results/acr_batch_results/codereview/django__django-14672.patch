@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/reverse_related.py b/django/db/models/fields/reverse_related.py\nindex ccc2223a5f..6f8954da56 100644\n--- a/django/db/models/fields/reverse_related.py\n+++ b/django/db/models/fields/reverse_related.py\n@@ -308,9 +308,13 @@ class ManyToManyRel(ForeignObjectRel):\n \n     @property\n     def identity(self):\n+        if isinstance(self.through_fields, list):\n+            through_fields = tuple(self.through_fields)\n+        else:\n+            through_fields = self.through_fields\n         return super().identity + (\n             self.through,\n-            self.through_fields,\n+            make_hashable(through_fields),\n             self.db_constraint,\n         )\n \n"
+}

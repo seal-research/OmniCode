@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/src/_pytest/capture.py b/src/_pytest/capture.py\nindex d6cf42c3b..d44748050 100644\n--- a/src/_pytest/capture.py\n+++ b/src/_pytest/capture.py\n@@ -787,8 +787,11 @@ class CaptureManager:\n \n     @hookimpl(hookwrapper=True)\n     def pytest_runtest_teardown(self, item: Item) -> Generator[None, None, None]:\n-        with self.item_capture(\"teardown\", item):\n+        if item._request._fixturemanager.getfixtureinfo(item, None, None).skip:\n             yield\n+        else:\n+            with self.item_capture(\"teardown\", item):\n+                yield\n \n     @hookimpl(tryfirst=True)\n     def pytest_keyboard_interrupt(self) -> None:\n"
+}

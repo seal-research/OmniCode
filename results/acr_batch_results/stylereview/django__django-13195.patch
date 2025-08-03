@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/messages/storage/cookie.py b/django/contrib/messages/storage/cookie.py\nindex 78256ca3b2..23682df867 100644\n--- a/django/contrib/messages/storage/cookie.py\n+++ b/django/contrib/messages/storage/cookie.py\n@@ -94,7 +94,7 @@ class CookieStorage(BaseStorage):\n         else:\n             response.delete_cookie(self.cookie_name, domain=settings.SESSION_COOKIE_DOMAIN)\n \n-    def _store(self, messages, response, remove_oldest=True, *args, **kwargs):\n+    def _store(self, messages, response, *args, remove_oldest=True, **kwargs):\n         \"\"\"\n         Store the messages to a cookie and return a list of any messages which\n         could not be stored.\n"
+}

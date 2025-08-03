@@ -1,0 +1,45 @@
+--- a/tests/test_exporters.py
++++ b/tests/test_exporters.py
++import json
++import pytest
++from scrapy.exporters import JsonItemExporter
++from scrapy.utils.test import get_crawler
++
++@pytest.fixture
++def crawler():
++    return get_crawler()
++
++def test_json_item_exporter_encoding_error(crawler):
++    exporter = JsonItemExporter(crawler.engine.output)
++    item = {'date': 1234}  # This will cause an encoding error
++    with pytest.raises(json.JSONDecodeError):
++        exporter.export_item(item)
++
++def test_json_item_exporter_valid_item(crawler):
++    exporter = JsonItemExporter(crawler.engine.output)
++    item = {'date': '2018-01-01'}
++    exporter.export_item(item)
++    # Verify that the item was exported correctly
++    assert crawler.engine.output.getvalue().strip() == '[{"date": "2018-01-01"}]'
++
++def test_json_item_exporter_multiple_items(crawler):
++    exporter = JsonItemExporter(crawler.engine.output)
++    item1 = {'date': '2018-01-01'}
++    item2 = {'date': '2018-01-02'}
++    exporter.export_item(item1)
++    exporter.export_item(item2)
++    # Verify that the items were exported correctly
++    assert json.loads(crawler.engine.output.getvalue()) == [
++        {'date': '2018-01-01'},
++        {'date': '2018-01-02'}
++    ]
++
++def test_json_item_exporter_encoding_error_no_comma(crawler):
++    exporter = JsonItemExporter(crawler.engine.output)
++    item1 = {'date': 1234}  # This will cause an encoding error
++    item2 = {'date': '2018-01-02'}
++    exporter.export_item(item1)
++    exporter.export_item(item2)
++    # Verify that no comma was written for the invalid item
++    output = crawler.engine.output.getvalue()
++    assert output.strip() == '[{"date": "2018-01-02"}]'

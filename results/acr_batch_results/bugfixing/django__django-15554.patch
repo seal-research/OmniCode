@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py\nindex 54f3258eac..cbc3aa5e5a 100644\n--- a/django/db/models/sql/query.py\n+++ b/django/db/models/sql/query.py\n@@ -1598,7 +1598,7 @@ class Query(BaseExpression):\n                         \"relations deeper than the relation_name (got %r for \"\n                         \"%r).\" % (lookup, filtered_relation.relation_name)\n                     )\n-        self._filtered_relations[filtered_relation.alias] = filtered_relation\n+        self._filtered_relations[alias] = filtered_relation\n \n     def names_to_path(self, names, opts, allow_many=True, fail_on_missing=False):\n         \"\"\"\n"
+}

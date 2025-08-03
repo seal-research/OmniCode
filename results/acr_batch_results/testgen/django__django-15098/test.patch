@@ -1,0 +1,79 @@
+--- a/tests/test_middleware_locale.py
++++ b/tests/test_middleware_locale.py
+-# Empty if creating new file
++import pytest
++from django.test import RequestFactory
++from django.urls import path, i18n_patterns
++from django.http import HttpResponse
++from django.middleware.locale import LocaleMiddleware
++from django.conf import settings
++
++@pytest.fixture
++def request_factory():
++    return RequestFactory()
++
++def test_process_request_language_code_with_script_and_region():
++    # Arrange
++    settings.LANGUAGES = [
++        ('en-us', "English"),
++        ('en-latn-us', "Latin English"),
++        ('en-Latn-US', "BCP 47 case format"),
++    ]
++    settings.MIDDLEWARE = ['django.middleware.locale.LocaleMiddleware']
++    request = RequestFactory().get('/en-latn-us/')
++
++    # Act
++    middleware = LocaleMiddleware()
++    middleware.process_request(request)
++
++    # Assert
++    assert request.LANGUAGE_CODE == 'en-latn-us'
++
++def test_process_response_language_code_with_script_and_region():
++    # Arrange
++    settings.LANGUAGES = [
++        ('en-us', "English"),
++        ('en-latn-us', "Latin English"),
++        ('en-Latn-US', "BCP 47 case format"),
++    ]
++    settings.MIDDLEWARE = ['django.middleware.locale.LocaleMiddleware']
++
++    def bangiah(request):
++        return HttpResponse('U!')
++
++    urlpatterns = i18n_patterns(
++        path('', bangiah),
++    )
++
++    request = RequestFactory().get('/en-latn-us/')
++    response = bangiah(request)
++
++    # Act
++    middleware = LocaleMiddleware()
++    result = middleware.process_response(request, response)
++
++    # Assert
++    assert result.status_code == 200
++
++def test_i18n_patterns_language_code_with_script_and_region():
++    # Arrange
++    settings.LANGUAGES = [
++        ('en-us', "English"),
++        ('en-latn-us', "Latin English"),
++        ('en-Latn-US', "BCP 47 case format"),
++    ]
++
++    def bangiah(request):
++        return HttpResponse('U!')
++
++    urlpatterns = i18n_patterns(
++        path('', bangiah),
++    )
++
++    request = RequestFactory().get('/en-latn-us/')
++
++    # Act
++    response = bangiah(request)
++
++    # Assert
++    assert response.status_code == 200

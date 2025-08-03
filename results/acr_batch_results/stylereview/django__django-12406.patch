@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/related.py b/django/db/models/fields/related.py\nindex f269d9e17f..edd55cf742 100644\n--- a/django/db/models/fields/related.py\n+++ b/django/db/models/fields/related.py\n@@ -335,6 +335,8 @@ class RelatedField(FieldCacheMixin, Field):\n         returned by related descriptors. obj is an instance of\n         self.related_field.model.\n         \"\"\"\n+        if not hasattr(self, 'related_fields'):\n+            self.related_fields = self.resolve_related_fields()\n         return {\n             '%s__%s' % (self.name, rh_field.name): getattr(obj, rh_field.attname)\n             for _, rh_field in self.related_fields\n"
+}

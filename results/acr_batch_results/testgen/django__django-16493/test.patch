@@ -1,0 +1,51 @@
+--- a/tests/test_fields.py
++++ b/tests/test_fields.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.core.files.storage import FileSystemStorage, default_storage
++from django.db import models
++
++def test_filefield_deconstruct_callable_storage():
++    # Test that a callable storage that returns default_storage is deconstructed correctly
++    def get_storage():
++        return default_storage
++
++    class MyModel(models.Model):
++        my_file = models.FileField(storage=get_storage())
++
++    field = MyModel._meta.get_field('my_file')
++    name, path, args, kwargs = field.deconstruct()
++    assert kwargs['storage'] == get_storage
++
++def test_filefield_deconstruct_non_callable_storage():
++    # Test that a non-callable storage is deconstructed correctly
++    storage = FileSystemStorage(location='/media/other')
++
++    class MyModel(models.Model):
++        my_file = models.FileField(storage=storage)
++
++    field = MyModel._meta.get_field('my_file')
++    name, path, args, kwargs = field.deconstruct()
++    assert kwargs['storage'] == storage
++
++def test_filefield_deconstruct_default_storage():
++    # Test that default_storage is deconstructed correctly when not callable
++    class MyModel(models.Model):
++        my_file = models.FileField(storage=default_storage)
++
++    field = MyModel._meta.get_field('my_file')
++    name, path, args, kwargs = field.deconstruct()
++    assert 'storage' not in kwargs
++
++def test_filefield_deconstruct_callable_storage_other_storage():
++    # Test that a callable storage that returns other storage is deconstructed correctly
++    other_storage = FileSystemStorage(location='/media/other')
++    def get_storage():
++        return other_storage
++
++    class MyModel(models.Model):
++        my_file = models.FileField(storage=get_storage())
++
++    field = MyModel._meta.get_field('my_file')
++    name, path, args, kwargs = field.deconstruct()
++    assert kwargs['storage'] == get_storage

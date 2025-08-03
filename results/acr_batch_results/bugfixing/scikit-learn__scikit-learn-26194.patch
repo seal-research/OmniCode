@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sklearn/metrics/_ranking.py b/sklearn/metrics/_ranking.py\nindex 0cdead923..7857a1484 100644\n--- a/sklearn/metrics/_ranking.py\n+++ b/sklearn/metrics/_ranking.py\n@@ -1083,7 +1083,7 @@ def roc_curve(\n     # to make sure that the curve starts at (0, 0)\n     tps = np.r_[0, tps]\n     fps = np.r_[0, fps]\n-    thresholds = np.r_[thresholds[0] + 1, thresholds]\n+    thresholds = np.r_[np.inf, thresholds]\n \n     if fps[-1] <= 0:\n         warnings.warn(\n"
+}

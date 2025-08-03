@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/handlers/base.py b/django/core/handlers/base.py\nindex 8e8c3da06a..f8c75327ba 100644\n--- a/django/core/handlers/base.py\n+++ b/django/core/handlers/base.py\n@@ -62,6 +62,7 @@ class BaseHandler:\n                         logger.debug('MiddlewareNotUsed(%r): %s', middleware_path, exc)\n                     else:\n                         logger.debug('MiddlewareNotUsed: %r', middleware_path)\n+                handler_is_async = getattr(middleware, 'async_capable', False)\n                 continue\n \n             if mw_instance is None:\n"
+}

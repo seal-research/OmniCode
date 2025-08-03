@@ -1,0 +1,54 @@
+--- a/tests/test_inspect_signature.py
++++ b/tests/test_inspect_signature.py
+-# Empty if creating new file
++import inspect
++import pytest
++from django.db import models
++from django.db.models import QuerySet
++
++class Person(models.Model):
++    name = models.CharField(max_length=100)
++
++def test_inspect_signature():
++    # Test that inspect.signature returns the correct signature information
++    # for a queryset method.
++    signature = inspect.signature(Person.objects.bulk_create)
++    assert signature.parameters == {
++        'objs': inspect.Parameter('objs', inspect.Parameter.POSITIONAL_OR_KEYWORD),
++        'batch_size': inspect.Parameter('batch_size', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
++        'ignore_conflicts': inspect.Parameter('ignore_conflicts', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=False),
++        'update_conflicts': inspect.Parameter('update_conflicts', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=False),
++        'update_fields': inspect.Parameter('update_fields', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
++        'unique_fields': inspect.Parameter('unique_fields', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
++    }
++
++def test_inspect_signature_with_functools_wraps():
++    # Test that using functools.wraps preserves the original method's signature.
++    from functools import wraps
++
++    def my_decorator(func):
++        @wraps(func)
++        def wrapper(*args, **kwargs):
++            return func(*args, **kwargs)
++        return wrapper
++
++    @my_decorator
++    def my_function(objs, batch_size=None, ignore_conflicts=False):
++        pass
++
++    signature = inspect.signature(my_function)
++    assert signature.parameters == {
++        'objs': inspect.Parameter('objs', inspect.Parameter.POSITIONAL_OR_KEYWORD),
++        'batch_size': inspect.Parameter('batch_size', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=None),
++        'ignore_conflicts': inspect.Parameter('ignore_conflicts', inspect.Parameter.POSITIONAL_OR_KEYWORD, default=False),
++    }
++
++def test_queryset_method_signature():
++    # Test that queryset methods have the correct signature information.
++    methods = [getattr(QuerySet, method) for method in QuerySet.__dir__() if callable(getattr(QuerySet, method))]
++    for method in methods:
++        try:
++            signature = inspect.signature(method)
++            assert len(signature.parameters) > 0
++        except Exception as e:
++            pytest.fail(f"Error inspecting signature of {method.__name__}: {e}")

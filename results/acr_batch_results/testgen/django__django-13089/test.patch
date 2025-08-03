@@ -1,0 +1,65 @@
+--- a/django/core/cache/backends/db.py
++++ b/django/core/cache/backends/db.py
+-                cursor.execute(
+-                    connection.ops.cache_key_culling_sql() % table,
+-                    [cull_num])
+-                cursor.execute("DELETE FROM %s "
+-                               "WHERE cache_key < %%s" % table,
+-                               [cursor.fetchone()[0]])
++                cursor.execute(
++                    connection.ops.cache_key_culling_sql() % table,
++                    [cull_num])
++                cull_key = cursor.fetchone()
++                if cull_key:
++                    cursor.execute("DELETE FROM %s "
++                                   "WHERE cache_key < %%s" % table,
++                                   [cull_key[0]])
+
+--- a/tests/test_cache_backends_db.py
++++ b/tests/test_cache_backends_db.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.core.cache.backends.db import BaseDatabaseCache
++from django.db import connections
++
++@pytest.fixture
++def cache_backend():
++    return BaseDatabaseCache('test_cache', {})
++
++def test_cull_with_data(cache_backend):
++    # Mock the database connection and cursor
++    with connections['default'].cursor() as cursor:
++        cursor.execute("CREATE TABLE IF NOT EXISTS test_cache (cache_key VARCHAR(255), value TEXT, expires DATETIME)")
++        cursor.execute("INSERT INTO test_cache (cache_key, value, expires) VALUES ('key1', 'value1', '2050-01-01 00:00:00')")
++        cursor.execute("INSERT INTO test_cache (cache_key, value, expires) VALUES ('key2', 'value2', '2050-01-01 00:00:00')")
++
++        cache_backend._cull('default', cursor, '2022-01-01 00:00:00')
++
++        # Check that the cache has been culled
++        cursor.execute("SELECT COUNT(*) FROM test_cache")
++        count = cursor.fetchone()[0]
++        assert count == 1
++
++def test_cull_without_data(cache_backend):
++    # Mock the database connection and cursor
++    with connections['default'].cursor() as cursor:
++        cursor.execute("CREATE TABLE IF NOT EXISTS test_cache (cache_key VARCHAR(255), value TEXT, expires DATETIME)")
++
++        cache_backend._cull('default', cursor, '2022-01-01 00:00:00')
++
++        # Check that no exception is raised
++        pass
++
++def test_cull_frequency_zero(cache_backend):
++    cache_backend._cull_frequency = 0
++    # Mock the database connection and cursor
++    with connections['default'].cursor() as cursor:
++        cursor.execute("CREATE TABLE IF NOT EXISTS test_cache (cache_key VARCHAR(255), value TEXT, expires DATETIME)")
++        cursor.execute("INSERT INTO test_cache (cache_key, value, expires) VALUES ('key1', 'value1', '2050-01-01 00:00:00')")
++
++        cache_backend._cull('default', cursor, '2022-01-01 00:00:00')
++
++        # Check that the cache has been cleared
++        cursor.execute("SELECT COUNT(*) FROM test_cache")
++        count = cursor.fetchone()[0]
++        assert count == 0

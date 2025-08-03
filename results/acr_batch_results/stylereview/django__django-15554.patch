@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py\nindex 54f3258eac..c5f63f4972 100644\n--- a/django/db/models/sql/query.py\n+++ b/django/db/models/sql/query.py\n@@ -368,7 +368,8 @@ class Query(BaseExpression):\n \n     def relabeled_clone(self, change_map):\n         clone = self.clone()\n-        clone.change_aliases(change_map)\n+        if hasattr(clone, \"change_aliases\"):\n+            clone.change_aliases(change_map)\n         return clone\n \n     def _get_col(self, target, field, alias):\n"
+}

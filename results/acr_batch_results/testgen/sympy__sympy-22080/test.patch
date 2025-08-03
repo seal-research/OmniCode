@@ -1,0 +1,42 @@
+--- a/tests/test_lambdify.py
++++ b/tests/test_lambdify.py
+-# Original code here (if modifying existing file)
+-# Leave empty if creating new file
++import pytest
++from sympy import Mod, lambdify, symbols
++
++def test_lambdify_mod():
++    x, y = symbols('x y')
++    expr = -Mod(x, y)
++    f = lambdify([x, y], expr)
++    assert f(3, 7) == -3
++
++def test_lambdify_mod_modules_empty():
++    x, y = symbols('x y')
++    expr = -Mod(x, y)
++    f = lambdify([x, y], expr, modules=[])
++    assert f(3, 7) == 4
++
++def test_lambdify_mod_modules_none():
++    x, y = symbols('x y')
++    expr = -Mod(x, y)
++    f = lambdify([x, y], expr, modules=None)
++    assert f(3, 7) == -3
++
++def test_lambdify_mod_with_multiplier():
++    x, y = symbols('x y')
++    expr = 2 * Mod(x, y)
++    f = lambdify([x, y], expr)
++    assert f(3, 7) == 2
++
++def test_lambdify_mod_with_multiplier_modules_empty():
++    x, y = symbols('x y')
++    expr = 2 * Mod(x, y)
++    f = lambdify([x, y], expr, modules=[])
++    assert f(3, 7) == 2
++
++def test_lambdify_mod_with_multiplier_modules_none():
++    x, y = symbols('x y')
++    expr = 2 * Mod(x, y)
++    f = lambdify([x, y], expr, modules=None)
++    assert f(3, 7) == 2

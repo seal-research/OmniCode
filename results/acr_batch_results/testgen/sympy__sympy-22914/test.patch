@@ -1,0 +1,27 @@
+--- a/tests/printing/test_pycode.py
++++ b/tests/printing/test_pycode.py
++import pytest
++from sympy import symbols, Min, Max, pycode
++
++def test_min_max_pycode():
++    a, b = symbols("a b")
++
++    c = Min(a, b)
++    assert pycode(c) == "min(a, b)"
++
++    d = Max(a, b)
++    assert pycode(d) == "max(a, b)"
+
+--- a/tests/printing/test_pycode.py
++++ b/tests/printing/test_pycode.py
++import pytest
++from sympy import symbols, Min, Max, pycode
++
++def test_min_max_pycode():
++    a, b = symbols("a b")
++
++    c = Min(a, b)
++    assert pycode(c) == "min(a, b)"
++
++    d = Max(a, b)
++    assert pycode(d) == "max(a, b)"

@@ -1,0 +1,73 @@
+--- a/tests/test_modeling.py
++++ b/tests/test_modeling.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++
++class ParentModel(models.Model):
++    class Meta:
++        ordering = ['expression']
++
++class ChildModel(ParentModel):
++    pass
++
++def test_order_by_with_expression_in_meta_ordering():
++    # This test should reproduce the crash
++    ChildModel.objects.order_by()
+
+--- a/tests/test_modeling.py
++++ b/tests/test_modeling.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db import models
++
++class ParentModel(models.Model):
++    class Meta:
++        ordering = ['expression']
++
++class ChildModel(ParentModel):
++    pass
++
++def test_order_by_with_expression_in_meta_ordering():
++    try:
++        ChildModel.objects.order_by()
++        pytest.fail("Expected an error or proper handling")
++    except Exception as e:
++        assert "ordering" in str(e)
++
++class TestModel(models.Model):
++    class Meta:
++        ordering = [models.F('id')]
++
++def test_order_by_with_field_expression_in_meta_ordering():
++    obj = TestModel.objects.create()
++    ordered_objs = TestModel.objects.order_by()
++    assert ordered_objs.first().id == obj.id
++
++def test_order_by_with_multiple_field_expressions_in_meta_ordering():
++    class MultiOrderModel(models.Model):
++        class Meta:
++            ordering = [models.F('id'), models.F('id')]
++
++    obj1 = MultiOrderModel.objects.create()
++    obj2 = MultiOrderModel.objects.create()
++    ordered_objs = MultiOrderModel.objects.order_by()
++    assert ordered_objs.first().id == obj1.id
++
++def test_order_by_with_invalid_expression_in_meta_ordering():
++    class InvalidOrderModel(models.Model):
++        class Meta:
++            ordering = ['invalid']
++
++    with pytest.raises(FieldError):
++        InvalidOrderModel.objects.order_by()
++
++def test_order_by_with_expression_and_queryset_ordering():
++    class ExpressionModel(models.Model):
++        class Meta:
++            ordering = [models.F('id')]
++
++    obj = ExpressionModel.objects.create()
++    qs = ExpressionModel.objects.order_by('-id')
++    ordered_objs = qs.order_by()
++    assert ordered_objs.first().id == obj.id

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/doc/conf.py b/doc/conf.py\nindex f62e02a34..444da0827 100644\n--- a/doc/conf.py\n+++ b/doc/conf.py\n@@ -83,6 +83,12 @@ latex_show_urls = 'footnote'\n latex_use_xindy = True\n \n autodoc_member_order = 'groupwise'\n+autodoc_default_options = {\n+    'member-order': 'groupwise',\n+    'special-members': True,\n+    'undoc-members': True,\n+    'default-value': True,\n+}\n todo_include_todos = True\n extlinks = {'duref': ('http://docutils.sourceforge.net/docs/ref/rst/'\n                       'restructuredtext.html#%s', ''),\n"
+}

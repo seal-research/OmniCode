@@ -1,0 +1,61 @@
+--- a/tests/queries/test_qs_combinators.py
++++ b/tests/queries/test_qs_combinators.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db.models import OuterRef, Q, Exists
++from .models import Number, Item, Tag
++
++@pytest.mark.test_utils
++class TestQuerySetCombinators:
++ def test_exists_exclude(self):
++        # filter()
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.filter(tags__category_id=OuterRef('pk'))
++            )
++        ).filter(foo=True)
++
++        # exclude()
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.exclude(tags__category_id=OuterRef('pk'))
++            )
++        ).filter(foo=True)
++
++        # filter(~Q())
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.filter(~Q(tags__category_id=OuterRef('pk')))
++            )
++        ).filter(foo=True)
+
+--- a/tests/queries/test_qs_combinators.py
++++ b/tests/queries/test_qs_combinators.py
+-# Empty if creating new file
++import pytest
++from django.db.models import OuterRef, Q, Exists
++from .models import Number, Item, Tag
++
++def test_exists_filter():
++    qs = Number.objects.annotate(
++        foo=Exists(
++            Item.objects.filter(tags__category_id=OuterRef('pk'))
++        )
++    ).filter(foo=True)
++    assert qs.count() > 0
++
++def test_exists_exclude():
++    qs = Number.objects.annotate(
++        foo=Exists(
++            Item.objects.exclude(tags__category_id=OuterRef('pk'))
++        )
++    ).filter(foo=True)
++    assert qs.count() > 0
++
++def test_exists_filter_negated():
++    qs = Number.objects.annotate(
++        foo=Exists(
++            Item.objects.filter(~Q(tags__category_id=OuterRef('pk')))
++        )
++    ).filter(foo=True)
++    assert qs.count() > 0

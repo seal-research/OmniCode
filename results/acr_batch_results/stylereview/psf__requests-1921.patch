@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/requests/sessions.py b/requests/sessions.py\nindex a023e4ec..e2435924 100644\n--- a/requests/sessions.py\n+++ b/requests/sessions.py\n@@ -9,7 +9,10 @@ requests (cookies, auth, proxies).\n \n \"\"\"\n import os\n-from collections import Mapping\n+try:\n+    from collections import Mapping\n+except ImportError:\n+    from collections.abc import Mapping\n from datetime import datetime\n \n from .compat import cookielib, OrderedDict, urljoin, urlparse, builtin_str\n"
+}

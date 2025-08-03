@@ -1,0 +1,93 @@
+--- a/tests/test_media_pipeline.py
++++ b/tests/test_media_pipeline.py
+-# Empty if creating new file
++import pytest
++from scrapy.pipelines.media import MediaPipeline
++from scrapy.exceptions import NotConfigured
++
++def test_media_pipeline_not_configured():
++    with pytest.raises(NotConfigured):
++        MediaPipeline.from_crawler(None)
++
++def test_media_downloaded_not_implemented():
++    pipeline = MediaPipeline()
++    with pytest.raises(NotImplementedError):
++        pipeline.media_downloaded(None, None, None)
++
++def test_media_failed_not_implemented():
++    pipeline = MediaPipeline()
++    with pytest.raises(NotImplementedError):
++        pipeline.media_failed(None, None, None)
++
++def test_media_processing_started_not_implemented():
++    pipeline = MediaPipeline()
++    with pytest.raises(NotImplementedError):
++        pipeline.media_processing_started(None, None)
++
++def test_media_processing_finished_not_implemented():
++    pipeline = MediaPipeline()
++    with pytest.raises(NotImplementedError):
++        pipeline.media_processing_finished(None, None)
++
++def test_media_uploading_finished_not_implemented():
++    pipeline = MediaPipeline()
++    with pytest.raises(NotImplementedError):
++        pipeline.media_uploading_finished(None, None)
++
++def test_item_completed_not_implemented():
++    pipeline = MediaPipeline()
++    results = [(True, None), (False, "Error")]
++    item = {}
++    assert pipeline.item_completed(results, item, None) == item
++
++def test_media_downloaded_implemented():
++    class MyMediaPipeline(MediaPipeline):
++        def media_downloaded(self, response, request, info, *, item=None):
++            return {"response": response}
++
++    pipeline = MyMediaPipeline()
++    response = object()
++    request = object()
++    info = object()
++    assert pipeline.media_downloaded(response, request, info) == {"response": response}
++
++def test_media_failed_implemented():
++    class MyMediaPipeline(MediaPipeline):
++        def media_failed(self, failure, request, info):
++            return {"failure": failure}
++
++    pipeline = MyMediaPipeline()
++    failure = object()
++    request = object()
++    info = object()
++    assert pipeline.media_failed(failure, request, info) == {"failure": failure}
++
++def test_media_processing_started_implemented():
++    class MyMediaPipeline(MediaPipeline):
++        def media_processing_started(self, item, info):
++            return {"item": item}
++
++    pipeline = MyMediaPipeline()
++    item = object()
++    info = object()
++    assert pipeline.media_processing_started(item, info) == {"item": item}
++
++def test_media_processing_finished_implemented():
++    class MyMediaPipeline(MediaPipeline):
++        def media_processing_finished(self, item, info):
++            return {"item": item}
++
++    pipeline = MyMediaPipeline()
++    item = object()
++    info = object()
++    assert pipeline.media_processing_finished(item, info) == {"item": item}
++
++def test_media_uploading_finished_implemented():
++    class MyMediaPipeline(MediaPipeline):
++        def media_uploading_finished(self, item, info):
++            return {"item": item}
++
++    pipeline = MyMediaPipeline()
++    item = object()
++    info = object()
++    assert pipeline.media_uploading_finished(item, info) == {"item": item}

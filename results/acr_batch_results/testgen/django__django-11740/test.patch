@@ -1,0 +1,107 @@
+--- a/tests/test_migrations.py
++++ b/tests/test_migrations.py
++import pytest
++from django.db import migrations
++from django.db.migrations.autodetector import MigrationAutodetector
++from django.db.migrations.state import ProjectState
++from django.db.models import ForeignKey, UUIDField, Model
++
++class TestMigrationDependencies:
++    def test_change_uuid_to_fk_creates_dependency(self):
++        # Create a project state with two apps: testapp1 and testapp2
++        project_state = ProjectState()
++        project_state.add_model(
++            "testapp1",
++            "App1",
++            [
++                ("id", UUIDField(primary_key=True)),
++                ("text", str),
++                ("another_app", UUIDField(null=True, blank=True)),
++            ],
++        )
++        project_state.add_model(
++            "testapp2",
++            "App2",
++            [
++                ("id", UUIDField(primary_key=True)),
++                ("text", str),
++            ],
++        )
++
++        # Create a new project state with the field changed to a FK
++        new_project_state = ProjectState()
++        new_project_state.add_model(
++            "testapp1",
++            "App1",
++            [
++                ("id", UUIDField(primary_key=True)),
++                ("text", str),
++                ("another_app", ForeignKey("testapp2.App2", null=True, blank=True)),
++            ],
++        )
++        new_project_state.add_model(
++            "testapp2",
++            "App2",
++            [
++                ("id", UUIDField(primary_key=True)),
++                ("text", str),
++            ],
++        )
++
++        # Detect changes
++        autodetector = MigrationAutodetector(project_state, new_project_state)
++        changes = autodetector.detect_changes()
++
++        # Check that the dependency is created
++        migration = changes["testapp1"][0]
++        assert len(migration.dependencies) == 1
++        assert migration.dependencies[0][0] == "testapp2"
++
++    def test_change_uuid_to_fk_creates_no_dependency_if_not_related(self):
++        # Create a project state with two apps: testapp1 and testapp2
++        project_state = ProjectState()
++        project_state.add_model(
++            "testapp1",
++            "App1",
++            [
++                ("id", UUIDField(primary_key=True)),
++                ("text", str),
++                ("another_app", UUIDField(null=True, blank=True)),
++            ],
++        )
++        project_state.add_model(
++            "testapp2",
++            "App2",
++            [
++                ("id", UUIDField(primary_key=True)),
++                ("text", str),
++            ],
++        )
++
++        # Create a new project state with the field changed to a FK to a non-existent model
++        new_project_state = ProjectState()
++        new_project_state.add_model(
++            "testapp1",
++            "App1",
++            [
++                ("id", UUIDField(primary_key=True)),
++                ("text", str),
++                ("another_app", ForeignKey("non_existent_model.NonExistentModel", null=True, blank=True)),
++            ],
++        )
++        new_project_state.add_model(
++            "testapp2",
++            "App2",
++            [
++                ("id", UUIDField(primary_key=True)),
++                ("text", str),
++            ],
++        )
++
++        # Detect changes
++        autodetector = MigrationAutodetector(project_state, new_project_state)
++        changes = autodetector.detect_changes()
++
++        # Check that no dependency is created
++        migration = changes["testapp1"][0]
++        assert len(migration.dependencies) == 0

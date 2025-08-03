@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/urls/resolvers.py b/django/urls/resolvers.py\nindex 9b00e24509..bb41babefe 100644\n--- a/django/urls/resolvers.py\n+++ b/django/urls/resolvers.py\n@@ -6,6 +6,7 @@ a string) and returns a ResolverMatch object which provides access to all\n attributes of the resolved URL match.\n \"\"\"\n import functools\n+from django.utils.functional import cached_property\n import inspect\n import re\n import string\n"
+}

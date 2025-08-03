@@ -1,0 +1,66 @@
+--- a/tests/test_autodoc_docstring_signature.py
++++ b/tests/test_autodoc_docstring_signature.py
+-# Empty if creating new file
++import pytest
++from sphinx import __version__ as sphinx_version
++from sphinx.ext import autodoc
++from sphinx.testing import util
++import inspect
++
++@pytest.fixture
++def app():
++    return util.SphinxApp("sphinx", "html", [])
++
++def test_autodoc_docstring_signature_simple(app):
++    # Test simple case
++    app.config.autodoc_docstring_signature = True
++    # Your test implementation here
++    pass
++
++def test_autodoc_docstring_signature_overloaded(app):
++    # Test overloaded methods
++    app.config.autodoc_docstring_signature = True
++    # Your test implementation here
++    pass
++
++def test_autodoc_docstring_signature_edge_case(app):
++    # Test edge cases
++    app.config.autodoc_docstring_signature = True
++    # Your test implementation here
++    pass
+
+--- a/tests/example.py
++++ b/tests/example.py
+-# Empty if creating new file
++class Example:
++    def method(self, arg1):
++        """Method 1
++        method(arg1)
++        """
++        pass
++
++    def method(self, arg1, arg2):
++        """Method 2
++        method(arg1, arg2)
++        """
++        pass
+
+--- a/tests/test_autodoc_docstring_signature.py
++++ b/tests/test_autodoc_docstring_signature.py
+-# 
++def test_autodoc_docstring_signature_overloaded(app):
++    import example
++    app.config.autodoc_docstring_signature = True
++    docstring = inspect.getdoc(example.Example.method)
++    assert "method(arg1)" in docstring
++    assert "method(arg1, arg2)" in docstring
+
+--- a/path/to/test/file1.py
++++ b/path/to/test/file1.py
+-# Original code here
++# New or modified test code here
+
+--- a/path/to/test/file2.py
++++ b/path/to/test/file2.py
+-# Original code here
++# New or modified test code here

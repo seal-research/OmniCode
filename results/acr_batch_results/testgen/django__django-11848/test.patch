@@ -1,0 +1,48 @@
+--- a/tests/test_http.py
++++ b/tests/test_http.py
+-# Empty if creating new file
++import datetime
++import pytest
++from django.utils.http import parse_http_date
++
++def test_parse_http_date():
++    # Test with a date in the 2000s
++    date_string = "Wed, 15 Sep 2009 20:05:06 GMT"
++    result = parse_http_date(date_string)
++    assert result == 1253304306
++
++def test_parse_http_date_two_digit_year():
++    # Test with a date with a two-digit year (should default to 2000s)
++    date_string = "Wed, 15 Sep 09 20:05:06 GMT"
++    result = parse_http_date(date_string)
++    assert result == 1253304306
++
++def test_parse_http_date_rfc850_date():
++    # Test with a date in RFC 850 format
++    date_string = "Wednesday, 15-Sep-09 20:05:06 GMT"
++    result = parse_http_date(date_string)
++    assert result == 1253304306
++
++def test_parse_http_date_asctime_date():
++    # Test with a date in asctime format
++    date_string = "Wed Sep 15 20:05:06 2009"
++    result = parse_http_date(date_string)
++    assert result == 1253304306
++
++def test_parse_http_date_invalid_date():
++    # Test with an invalid date string
++    date_string = "Invalid date"
++    with pytest.raises(ValueError):
++        parse_http_date(date_string)
++
++def test_parse_http_date_current_year():
++    current_year = datetime.datetime.now().year
++    date_string = f"Wed, 15 Sep {current_year % 100} 20:05:06 GMT"
++    result = parse_http_date(date_string)
++    assert result > 0
++
++def test_parse_http_date_far_future():
++    current_year = datetime.datetime.now().year
++    date_string = f"Wed, 15 Sep {current_year % 100 + 50} 20:05:06 GMT"
++    result = parse_http_date(date_string)
++    assert result > 0

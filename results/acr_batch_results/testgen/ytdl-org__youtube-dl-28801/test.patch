@@ -1,0 +1,62 @@
+--- a/tests/test_ytdl.py
++++ b/tests/test_ytdl.py
+-# Empty if creating new file
++import pytest
++from youtube_dl import YoutubeDL
++
++def test_authentication():
++    ydl = YoutubeDL({'username': 'peel', 'password': 'group'})
++    url = 'http://mooo.peelwiki.com/dl/BillfromNorthWales/01%20John%20Peel/1978-12-26%20John%20Peel%20BBC%20Radio%201.mp3'
++    try:
++        ydl.download([url])
++        assert True
++    except Exception as e:
++        assert False, f"Download failed: {e}"
++
++def test_authentication_invalid_credentials():
++    ydl = YoutubeDL({'username': 'wrong', 'password': 'credentials'})
++    url = 'http://mooo.peelwiki.com/dl/BillfromNorthWales/01%20John%20Peel/1978-12-26%20John%20Peel%20BBC%20Radio%201.mp3'
++    with pytest.raises(Exception):
++        ydl.download([url])
++
++def test_no_authentication():
++    ydl = YoutubeDL()
++    url = 'http://mooo.peelwiki.com/dl/BillfromNorthWales/01%20John%20Peel/1978-12-26%20John%20Peel%20BBC%20Radio%201.mp3'
++    with pytest.raises(Exception):
++        ydl.download([url])
+
+--- a/tests/test_options.py
++++ b/tests/test_options.py
+-# Empty if creating new file
++import pytest
++from youtube_dl.options import parseOpts
++
++def test_parse_opts_username_password():
++    opts = parseOpts(['--username', 'peel', '--password', 'group'])
++    assert opts['username'] == 'peel'
++    assert opts['password'] == 'group'
+
+--- a/youtube_dl/options.py
++++ b/youtube_dl/options.py
+-def parseOpts(overrideArguments=None):
+-    # ...
++def parseOpts(overrideArguments=None):
++    # ...
++    opts = {}
++    # ...
++    if '--username' in overrideArguments:
++        opts['username'] = overrideArguments[overrideArguments.index('--username') + 1]
++    if '--password' in overrideArguments:
++        opts['password'] = overrideArguments[overrideArguments.index('--password') + 1]
++    # ...
++    return opts
+
+--- a/youtube_dl/YoutubeDL.py
++++ b/youtube_dl/YoutubeDL.py
+-def _setup_opener(self):
+-    # ...
++def _setup_opener(self):
++    # ...
++    if 'username' in self.params and 'password' in self.params:
++        self._opener.addheaders = [('Authorization', f'Basic {self.params["username"]}:{self.params["password"]}')]
++    # ...

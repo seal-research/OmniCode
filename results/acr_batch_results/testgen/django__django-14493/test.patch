@@ -1,0 +1,44 @@
+--- a/tests/test_staticfiles_storage.py
++++ b/tests/test_staticfiles_storage.py
+-# Original code here, if any
++import pytest
++from django.contrib.staticfiles.storage import ManifestStaticFilesStorage
++from django.core.management import call_command
++
++@pytest.fixture
++class temp_storage:
++    def __init__(self, tmp_path):
++        self.tmp_path = tmp_path
++
++    def __enter__(self):
++        return self.tmp_path
++
++    def __exit__(self, exc_type, exc_val, exc_tb):
++        pass
++
++def test_max_post_process_passes_zero_fails_before_fix(temp_storage):
++    # This test should fail before the fix is applied
++    class MyManifestStaticFilesStorage(ManifestStaticFilesStorage):
++        max_post_process_passes = 0
++
++    with pytest.raises(Exception) as e:
++        call_command('collectstatic', '--noinput', '--clear', storage=MyManifestStaticFilesStorage())
++    assert "UnboundLocalError" in str(e.value)
++
++def test_max_post_process_passes_zero_passes_after_fix(temp_storage):
++    # This test should pass after the fix is applied
++    class MyManifestStaticFilesStorage(ManifestStaticFilesStorage):
++        max_post_process_passes = 0
++
++    call_command('collectstatic', '--noinput', '--clear', storage=MyManifestStaticFilesStorage())
++
++def test_max_post_process_passes_negative_number(temp_storage):
++    # Test edge case with negative number
++    class MyManifestStaticFilesStorage(ManifestStaticFilesStorage):
++        max_post_process_passes = -1
++
++    call_command('collectstatic', '--noinput', '--clear', storage=MyManifestStaticFilesStorage())
++
++def test_max_post_process_passes_default(temp_storage):
++    # Test with default max_post_process_passes
++    call_command('collectstatic', '--noinput', '--clear', storage=ManifestStaticFilesStorage())

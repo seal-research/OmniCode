@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/autoreload.py b/django/utils/autoreload.py\nindex cc65c043ab..40296974b7 100644\n--- a/django/utils/autoreload.py\n+++ b/django/utils/autoreload.py\n@@ -255,6 +255,8 @@ def trigger_reload(filename):\n \n def restart_with_reloader():\n     new_environ = {**os.environ, DJANGO_AUTORELOAD_ENV: 'true'}\n+    if hasattr(sys, '_xoptions'):\n+        new_environ.update(sys._xoptions)\n     args = get_child_arguments()\n     while True:\n         p = subprocess.run(args, env=new_environ, close_fds=False)\n"
+}

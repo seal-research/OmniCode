@@ -1,0 +1,41 @@
+--- a/tests/test_colormap_name_handling.py
++++ b/tests/test_colormap_name_handling.py
++import pytest
++import matplotlib
++from matplotlib import cm
++from matplotlib.colors import LinearSegmentedColormap
++import matplotlib.pyplot as plt
++
++def test_colormap_name_handling():
++    my_cmap_data = [[1.5e-03, 4.7e-04, 1.4e-02],
++                    [2.3e-03, 1.3e-03, 1.8e-02],
++                    [3.3e-03, 2.3e-03, 2.4e-02]]
++
++    my_cmap = LinearSegmentedColormap.from_list('some_cmap_name', my_cmap_data)
++    cm.register_cmap(name='my_cmap_name', cmap=my_cmap)
++
++    plt.set_cmap('my_cmap_name')
++    img = plt.imshow([[1, 1], [2, 2]])
++    assert img.get_cmap().name == 'my_cmap_name'
++
++    # Test that using the cmap with the correct name works
++    plt.imshow([[1, 1], [2, 2]], cmap='my_cmap_name')
++
++    # Test that using the cmap with the incorrect name raises an error
++    with pytest.raises(ValueError):
++        plt.imshow([[1, 1], [2, 2]], cmap='some_cmap_name')
++
++def test_colormap_registration():
++    my_cmap = LinearSegmentedColormap.from_list('test_cmap', [[0, 0, 0], [1, 1, 1]])
++
++    cm.register_cmap(cmap=my_cmap)
++
++    assert 'test_cmap' in cm._colormaps
++
++def test_get_cmap():
++    my_cmap = LinearSegmentedColormap.from_list('test_cmap', [[0, 0, 0], [1, 1, 1]])
++
++    cm.register_cmap(cmap=my_cmap)
++
++    cmap = cm.get_cmap('test_cmap')
++    assert cmap.name == 'test_cmap'

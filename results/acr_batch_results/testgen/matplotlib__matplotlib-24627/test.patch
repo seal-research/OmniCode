@@ -1,0 +1,51 @@
+--- a/tests/test_axes.py
++++ b/tests/test_axes.py
++import pytest
++import matplotlib.pyplot as plt
++
++def test_cla_unsets_axes():
++    fig, ax = plt.subplots()
++    line, = ax.plot([1, 2])
++    ax.cla()
++    assert line.axes is None
++
++def test_clf_unsets_axes_and_figure():
++    fig, ax = plt.subplots()
++    line, = ax.plot([1, 2])
++    fig.clf()
++    assert line.axes is None
++    assert line.figure is None
++
++def test_remove_unsets_axes_and_figure():
++    fig, ax = plt.subplots()
++    line, = ax.plot([1, 2])
++    line.remove()
++    assert line.axes is None
++    assert line.figure is None
++
++def test_cla_then_plot_unsets_previous_artist_attributes():
++    fig, ax = plt.subplots()
++    line1, = ax.plot([1, 2])
++    ax.cla()
++    line2, = ax.plot([3, 4])
++    assert line1.axes is None
++    assert line1.figure is None
+
+--- a/tests/test_figure.py
++++ b/tests/test_figure.py
++import pytest
++import matplotlib.pyplot as plt
++
++def test_clf_unsets_axes_and_figure():
++    fig, ax = plt.subplots()
++    line, = ax.plot([1, 2])
++    fig.clf()
++    assert line.axes is None
++    assert line.figure is None
++
++def test_clear_figure_unsets_all_artist_attributes():
++    fig, ax = plt.subplots()
++    line, = ax.plot([1, 2])
++    fig.clear()
++    assert line.axes is None
++    assert line.figure is None

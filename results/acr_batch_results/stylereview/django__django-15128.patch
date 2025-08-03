@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/datastructures.py b/django/db/models/sql/datastructures.py\nindex e08b570350..b82d76fe9e 100644\n--- a/django/db/models/sql/datastructures.py\n+++ b/django/db/models/sql/datastructures.py\n@@ -18,7 +18,8 @@ class MultiJoin(Exception):\n \n \n class Empty:\n-    pass\n+    def __init__(self, *args, **kwargs):\n+        pass\n \n \n class Join:\n"
+}

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex a156c5e881..9ab1c91831 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -5,7 +5,8 @@ from decimal import Decimal\n \n from django.core.exceptions import EmptyResultSet, FieldError\n from django.db import NotSupportedError, connection\n-from django.db.models import fields\n+from django.db.models import fields, DurationValue\n+import datetime\n from django.db.models.constants import LOOKUP_SEP\n from django.db.models.query_utils import Q\n from django.utils.deconstruct import deconstructible\n"
+}

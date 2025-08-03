@@ -1,0 +1,44 @@
+--- a/tests/test_axes.py
++++ b/tests/test_axes.py
+-# Original code here
++import pytest
++import numpy as np
++import matplotlib.pyplot as plt
++
++def test_annotate_xy_array_modification():
++    # Test that modifying the xy array does not affect the annotation
++    fig, ax = plt.subplots()
++    xy_0 = np.array((-4, 1))
++    xy_f = np.array((-1, 1))
++    ax.annotate(s='', xy=xy_0, xytext=xy_f, arrowprops=dict(arrowstyle='<->'))
++    xy_0[1] = 3
++    assert np.array_equal(xy_0, np.array((-4, 3)))
++
++def test_annotate_xy_array_copy():
++    # Test that using a copy of the xy array does not affect the annotation
++    fig, ax = plt.subplots()
++    xy_0 = np.array((1, 1))
++    xy_f = np.array((4, 1))
++    ax.annotate(s='', xy=xy_0.copy(), xytext=xy_f, arrowprops=dict(arrowstyle='<->'))
++    xy_0[1] = 3
++    assert np.array_equal(xy_0, np.array((1, 3)))
++
++def test_annotate_default_xy():
++    # Test default xy
++    fig, ax = plt.subplots()
++    ax.annotate("text")
++
++def test_annotate_xy_none_xytext():
++    # Test xy and xytext
++    fig, ax = plt.subplots()
++    ax.annotate("text", xy=(0, 0), xytext=(1, 1))
++
++def test_annotate_arrowprops():
++    # Test arrowprops
++    fig, ax = plt.subplots()
++    ax.annotate("text", xy=(0, 0), xytext=(1, 1), arrowprops=dict(arrowstyle='<->'))
++
++def test_annotate_clip_on():
++    # Test clip_on
++    fig, ax = plt.subplots()
++    ax.annotate("text", xy=(0, 0), xytext=(1, 1), clip_on=True)

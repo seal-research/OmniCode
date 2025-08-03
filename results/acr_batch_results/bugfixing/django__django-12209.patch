@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/base.py b/django/db/models/base.py\nindex e3b14a41a0..0cc3f8da4c 100644\n--- a/django/db/models/base.py\n+++ b/django/db/models/base.py\n@@ -852,7 +852,8 @@ class Model(metaclass=ModelBase):\n             not force_insert and\n             self._state.adding and\n             self._meta.pk.default and\n-            self._meta.pk.default is not NOT_PROVIDED\n+            self._meta.pk.default is not NOT_PROVIDED and\n+            not pk_set\n         ):\n             force_insert = True\n         # If possible, try an UPDATE. If that doesn't update anything, do an INSERT.\n"
+}

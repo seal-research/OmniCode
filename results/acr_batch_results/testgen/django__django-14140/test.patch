@@ -1,0 +1,47 @@
+--- a/tests/test_query_utils.py
++++ b/tests/test_query_utils.py
+-# Empty if creating new file
++import pytest
++from django.db.models import Q, Exists
++from django.contrib.auth import get_user_model
++
++@pytest.mark.parametrize("child", [
++    (1, 2),
++    ("a", "b"),
++    (True, False),
++])
++def test_q_deconstruct_with_subscriptable_child(child):
++    q = Q(child)
++    path, args, kwargs = q.deconstruct()
++    assert path == "django.db.models.Q"
++    assert args == ()
++    assert kwargs == dict(child)
++
++def test_q_deconstruct_with_nonsubscriptable_child():
++    user_model = get_user_model()
++    q = Q(Exists(user_model.objects.filter(username="jim")))
++    path, args, kwargs = q.deconstruct()
++    assert path == "django.db.models.Q"
++    assert len(args) == 1
++    assert kwargs == {}
++
++def test_q_deconstruct_with_multiple_children():
++    q = Q(x=1, y=2)
++    path, args, kwargs = q.deconstruct()
++    assert path == "django.db.models.Q"
++    assert args == ()
++    assert kwargs == {"x": 1, "y": 2}
++
++def test_q_deconstruct_with_connector():
++    q = Q(x=1) & Q(y=2)
++    path, args, kwargs = q.deconstruct()
++    assert path == "django.db.models.Q"
++    assert len(args) == 2
++    assert kwargs == {"_connector": "AND"}
++
++def test_q_deconstruct_with_negation():
++    q = ~Q(x=1)
++    path, args, kwargs = q.deconstruct()
++    assert path == "django.db.models.Q"
++    assert args == ()
++    assert kwargs == {"x": 1, "_negated": True}

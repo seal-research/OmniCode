@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/src/_pytest/setuponly.py b/src/_pytest/setuponly.py\nindex c9cc589ff..721fccd04 100644\n--- a/src/_pytest/setuponly.py\n+++ b/src/_pytest/setuponly.py\n@@ -1,4 +1,5 @@\n import pytest\n+from py import saferepr\n \n \n def pytest_addoption(parser):\n@@ -66,7 +67,7 @@ def _show_fixture_action(fixturedef, msg):\n             tw.write(\" (fixtures used: {})\".format(\", \".join(deps)))\n \n     if hasattr(fixturedef, \"cached_param\"):\n-        tw.write(\"[{}]\".format(fixturedef.cached_param))\n+        tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param)))\n \n     tw.flush()\n \n"
+}

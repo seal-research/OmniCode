@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/query.py b/django/db/models/query.py\nindex be0deb90b0..511f81b8fc 100644\n--- a/django/db/models/query.py\n+++ b/django/db/models/query.py\n@@ -2162,6 +2162,13 @@ class Prefetch:\n \n         self.queryset = queryset\n         self.to_attr = to_attr\n+        if queryset is not None:\n+            self.queryset = self._clone_queryset(queryset)\n+\n+    def _clone_queryset(self, queryset):\n+        if hasattr(queryset, '_result_cache'):\n+            return queryset._chain()\n+        return queryset\n \n     def __getstate__(self):\n         obj_dict = self.__dict__.copy()\n"
+}

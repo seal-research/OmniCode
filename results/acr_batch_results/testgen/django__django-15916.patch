@@ -1,0 +1,6 @@
+{
+  "instance_id": "django__django-15916",
+  "status": "success",
+  "patch_file": "../../results/acr_batch_results/testgen/django__django-15916/test.patch",
+  "pred_file": "../../results/acr_batch_results/testgen/django__django-15916/django__django-15916.pred"
+}

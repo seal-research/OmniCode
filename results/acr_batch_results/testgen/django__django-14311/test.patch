@@ -1,0 +1,63 @@
+--- a/tests/test_autoreload.py
++++ b/tests/test_autoreload.py
++import pytest
++from django.core.management.commands.runserver import Command
++from django.test import TestCase
++
++@pytest.mark.skip("Waiting for autoreload fix")
++def test_autoreload_with_python_m():
++    # Test that autoreload works when running with python -m
++    # This test assumes that the autoreloading issue is fixed
++    pass
++
++def test_autoreload_with_dotted_module_name():
++    # Test that autoreload works with dotted module names
++    # This test assumes that the autoreloading issue is fixed
++    pass
++
++def test_managementutility_prog_name():
++    # Test ManagementUtility sets prog_name correctly
++    from django.core.management import ManagementUtility
++    utility = ManagementUtility()
++    assert utility.prog_name == "python -m django"
++
++def test_runserver_command_execute():
++    # Test runserver command execute method
++    command = Command()
++    # Assuming some setup and assertions
++    pass
+
+--- a/django/core/management/__init__.py
++++ b/django/core/management/__init__.py
+-class ManagementUtility:
+- def __init__(self, argv=None):
+- self.argv = argv or sys.argv[:]
+- self.prog_name = os.path.basename(self.argv[0])
+- if self.prog_name == '__main__.py':
+- self.prog_name = 'python -m django'
+- self.settings_exception = None
++class ManagementUtility:
++ def __init__(self, argv=None):
++ self.argv = argv or sys.argv[:]
++ self.prog_name = os.path.basename(self.argv[0])
++ if self.prog_name.endswith('__main__.py'):
++ self.prog_name = ' '.join(self.argv[:1])
++ self.settings_exception = None
+
+--- a/tests/test_autoreload.py
++++ b/tests/test_autoreload.py
++import pytest
++from django.core.management import ManagementUtility
++
++def test_prog_name_with_python_m():
++ utility = ManagementUtility(['python', '-m', 'django'])
++ assert utility.prog_name == 'python -m django'
++
++def test_prog_name_with_python_m_dotted_module():
++ utility = ManagementUtility(['python', '-m', 'django.core.management.commands.runserver'])
++ assert utility.prog_name == 'python -m django.core.management.commands.runserver'
++
++def test_autoreload_triggered():
++ # Test that autoreload is triggered correctly
++ # Assuming some setup and assertions
++ pass

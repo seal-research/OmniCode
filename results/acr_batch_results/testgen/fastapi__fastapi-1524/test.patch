@@ -1,0 +1,63 @@
+--- a/tests/test_responses.py
++++ b/tests/test_responses.py
+-# Empty if creating new file
++import pytest
++from fastapi import FastAPI
++from fastapi.responses import ORJSONResponse
++from fastapi.encoders import jsonable_encoder
++from pydantic import BaseModel
++from typing import List
++
++app = FastAPI()
++
++class RootTestClass(BaseModel):
++    __root__: List[str]
++
++@app.get("/", response_class=ORJSONResponse)
++async def root():
++    response = RootTestClass(__root__=['a', 'b', 'c'])
++    return response
++
++def test_root_response():
++    # Test that the response is correctly encoded as a JSON array
++    response = root()
++    assert response == b'["a", "b", "c"]'
++
++def test_custom_root_type_response():
++    # Test that Pydantic models with __root__ are correctly handled
++    class CustomRoot(BaseModel):
++        __root__: str
++
++    @app.get("/custom_root", response_class=ORJSONResponse)
++    async def custom_root():
++        return CustomRoot(__root__="test")
++
++    response = custom_root()
++    assert response == b'"test"'
++
++def test_nested_model_response():
++    # Test that nested Pydantic models are correctly handled
++    class NestedModel(BaseModel):
++        value: str
++
++    class Wrapper(BaseModel):
++        __root__: NestedModel
++
++    @app.get("/nested", response_class=ORJSONResponse)
++    async def nested():
++        return Wrapper(__root__=NestedModel(value="nested"))
++
++    response = nested()
++    assert response == b'{"value": "nested"}'
++
++def test_list_of_models_response():
++    # Test that a list of Pydantic models is correctly handled
++    class Item(BaseModel):
++        name: str
++
++    @app.get("/items", response_class=ORJSONResponse)
++    async def items():
++        return [Item(name="Item1"), Item(name="Item2")]
++
++    response = items()
++    assert response == b'[{"name": "Item1"}, {"name": "Item2"}]'

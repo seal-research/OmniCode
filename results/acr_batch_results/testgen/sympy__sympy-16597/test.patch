@@ -1,0 +1,18 @@
+--- a/tests/test_symbol.py
++++ b/tests/test_symbol.py
+-import pytest
+-from sympy.core.symbol import Symbol
+-
+-def test_symbol_even_implies_finite():
+-    m = Symbol('m', even=True)
+-    assert m.assumptions0['finite'] is True
++import pytest
++from sympy.core.symbol import Symbol
++
++def test_symbol_even_implies_finite():
++    m = Symbol('m', even=True)
++    assert m.is_finite
++
++def test_symbol_not_even_implies_finite():
++    m = Symbol('m', even=False)
++    assert m.is_finite is None

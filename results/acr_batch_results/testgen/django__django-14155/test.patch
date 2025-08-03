@@ -1,0 +1,84 @@
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+-# Empty if creating new file
++import pytest
++from django.urls.resolvers import ResolverMatch
++from functools import partial
++
++def test_resolver_match_repr_partial():
++    # Create a partial function
++    def test_func(a, b):
++        return a + b
++
++    partial_func = partial(test_func, 1)
++
++    # Create a ResolverMatch object with the partial function
++    resolver_match = ResolverMatch(partial_func, (), {})
++
++    # Check that the __repr__ method correctly handles the partial function
++    expected_repr = f"ResolverMatch(func=functools.partial({test_func.__module__}.{test_func.__name__}, (1,), {{}}), args=(), kwargs={{}}, url_name=None, app_names=[], namespaces=[], route=None)"
++    assert str(resolver_match) == expected_repr
++
++def test_resolver_match_init_partial():
++    # Create a partial function
++    def test_func(a, b):
++        return a + b
++
++    partial_func = partial(test_func, 1)
++
++    # Create a ResolverMatch object with the partial function
++    resolver_match = ResolverMatch(partial_func, (), {})
++
++    # Check that the __init__ method unwrapped the partial function
++    assert resolver_match.func == test_func
+
+--- a/tests/test_resolvers.py
++++ b/tests/test_resolvers.py
+-# Empty if creating new file
++import pytest
++from django.urls.resolvers import ResolverMatch
++from functools import partial
++
++def test_resolver_match_repr_partial():
++    # Create a partial function
++    def test_func(a, b):
++        return a + b
++
++    partial_func = partial(test_func, 1)
++
++    # Create a ResolverMatch object with the partial function
++    resolver_match = ResolverMatch(partial_func, (), {})
++
++    # Check that the __repr__ method correctly handles the partial function
++    expected_repr = f"ResolverMatch(func=functools.partial({test_func.__module__}.{test_func.__name__}, (1,), {{}}), args=(), kwargs={{}}, url_name=None, app_names=[], namespaces=[], route=None)"
++    assert str(resolver_match) == expected_repr
++
++def test_resolver_match_init_partial_with_args():
++    # Create a partial function
++    def test_func(a, b, c):
++        return a + b + c
++
++    partial_func = partial(test_func, 1, b=2)
++
++    # Create a ResolverMatch object with the partial function
++    resolver_match = ResolverMatch(partial_func, (), {})
++
++    # Check that the __init__ method unwrapped the partial function
++    assert resolver_match.func == test_func
++    assert resolver_match.args == ()
++    assert resolver_match.kwargs == {}
++
++def test_resolver_match_init_partial_with_kwargs():
++    # Create a partial function
++    def test_func(a, b, c):
++        return a + b + c
++
++    partial_func = partial(test_func, 1, c=3)
++
++    # Create a ResolverMatch object with the partial function
++    resolver_match = ResolverMatch(partial_func, (), {})
++
++    # Check that the __init__ method unwrapped the partial function
++    assert resolver_match.func == test_func
++    assert resolver_match.args == (1,)
++    assert resolver_match.kwargs == {'c': 3}

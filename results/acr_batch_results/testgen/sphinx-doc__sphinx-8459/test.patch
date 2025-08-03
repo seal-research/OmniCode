@@ -1,0 +1,125 @@
+--- a/tests/test_autodoc_type_aliases.py
++++ b/tests/test_autodoc_type_aliases.py
+-# Empty if creating new file
++import pytest
++from sphinx import __version__ as sphinx_version
++from sphinx.ext.autodoc import AutodocReporter
++from sphinx.testing import SphinxTestApp
++from sphinx.testing.util import etree
++
++@pytest.fixture
++def app():
++    return SphinxTestApp()
++
++def test_autodoc_type_aliases_description(app):
++    # Test that autodoc_type_aliases works when autodoc_typehints is set to "description"
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_type_aliases = {
++        'JSONObject': 'types.JSONObject',
++    }
++
++    # Create a test file
++    test_file = '''
++from __future__ import annotations
++
++from typing import Any, Dict
++
++JSONObject = Dict[str, Any]
++
++
++def sphinx_doc(data: JSONObject) -> JSONObject:
++    """Does it work.
++
++    Args:
++        data: Does it args.
++
++    Returns:
++        Does it work in return.
++    """
++    return {}
++'''
++
++    # Build the documentation
++    app.add_source_file('types.py', test_file)
++    app.build()
++
++    # Check that the type alias is used in the documentation
++    with open(app.outdir / 'html' / 'types.html', 'r') as f:
++        html = f.read()
++        assert 'data (Dict[str, Any])' not in html
++        assert 'data (types.JSONObject)' in html
++
++def test_autodoc_type_aliases_signature(app):
++    # Test that autodoc_type_aliases works when autodoc_typehints is set to "description"
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_type_aliases = {
++        'JSONObject': 'types.JSONObject',
++    }
++
++    # Create a test file
++    test_file = '''
++from __future__ import annotations
++
++from typing import Any, Dict
++
++JSONObject = Dict[str, Any]
++
++
++def sphinx_doc(data: JSONObject) -> JSONObject:
++    """Does it work.
++
++    Args:
++        data: Does it args.
++
++    Returns:
++        Does it work in return.
++    """
++    return {}
++'''
++
++    # Build the documentation
++    app.add_source_file('types.py', test_file)
++    app.build()
++
++    # Check that the type alias is used in the documentation
++    with open(app.outdir / 'html' / 'types.html', 'r') as f:
++        html = f.read()
++        assert '→ types.JSONObject' in html
++
++def test_autodoc_type_aliases_not_set(app):
++    # Test that autodoc_type_aliases does not work when autodoc_typehints is not set to "description"
++    app.config.autodoc_typehints = 'signature'
++    app.config.autodoc_type_aliases = {
++        'JSONObject': 'types.JSONObject',
++    }
++
++    # Create a test file
++    test_file = '''
++from __future__ import annotations
++
++from typing import Any, Dict
++
++JSONObject = Dict[str, Any]
++
++
++def sphinx_doc(data: JSONObject) -> JSONObject:
++    """Does it work.
++
++    Args:
++        data: Does it args.
++
++    Returns:
++        Does it work in return.
++    """
++    return {}
++'''
++
++    # Build the documentation
++    app.add_source_file('types.py', test_file)
++    app.build()
++
++    # Check that the type alias is not used in the documentation
++    with open(app.outdir / 'html' / 'types.html', 'r') as f:
++        html = f.read()
++        assert 'data (Dict[str, Any])' in html
++        assert 'data (types.JSONObject)' not in html

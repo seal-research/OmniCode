@@ -1,0 +1,16 @@
+--- a/tests/test_printing_mathematica.py
++++ b/tests/test_printing_mathematica.py
+-# Original code here (if modifying existing file)
++import pytest
++from sympy import symbols, Max
++from sympy.printing.mathematica import mathematica_code
++
++def test_mathematica_code_Max():
++    x = symbols('x')
++    assert mathematica_code(Max(x, 2)) == 'Max[x, 2]'
++    assert mathematica_code(Max(2, x)) == 'Max[2, x]'
++
++def test_mathematica_code_Min():
++    x = symbols('x')
++    assert mathematica_code(min(x, 2)) == 'Min[x, 2]'
++    assert mathematica_code(min(2, x)) == 'Min[2, x]'

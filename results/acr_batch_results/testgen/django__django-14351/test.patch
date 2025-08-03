@@ -1,0 +1,49 @@
+--- a/tests/test_query.py
++++ b/tests/test_query.py
+-# Empty if creating new file
++import pytest
++from django.db.models import Q, Count
++from django.db.models.query_utils import Query
++
++def test_q_object_or_with_in_lookup():
++    # Test that Q object with __in lookup works correctly
++    queryset = Query()
++    property_groups = [1, 2, 3]
++    q_object = Q(agent__property_groups__in=property_groups)
++    assert q_object.resolve_expression(queryset).as_sql()[0].startswith("SELECT")
++
++def test_q_object_or_with_id_in_lookup():
++    # Test that Q object with __id__in lookup works correctly
++    queryset = Query()
++    property_groups = [1, 2, 3]
++    q_object = Q(agent__property_groups__id__in=property_groups)
++    assert q_object.resolve_expression(queryset).as_sql()[0].startswith("SELECT")
++
++def test_q_object_or_with_count():
++    # Test that Q object with __count lookup works correctly
++    queryset = Query()
++    q_object = Q(agent__property_groups__count=0)
++    assert q_object.resolve_expression(queryset).as_sql()[0].startswith("COUNT")
++
++def test_q_object_or_combination():
++    # Test that combination of Q objects with OR works correctly
++    queryset = Query()
++    property_groups = [1, 2, 3]
++    q_object = Q(agent__property_groups__in=property_groups) | Q(agent__property_groups__count=0)
++    assert q_object.resolve_expression(queryset).as_sql()[0].startswith("(")
++
++def test_distinct_with_q_object():
++    # Test that distinct() works correctly with Q object
++    queryset = Query()
++    queryset.distinct = True
++    property_groups = [1, 2, 3]
++    q_object = Q(agent__property_groups__in=property_groups) | Q(agent__property_groups__count=0)
++    assert queryset.filter(q_object).distinct().as_sql()[0].startswith("SELECT DISTINCT")
++
++def test_annotate_with_q_object():
++    # Test that annotate() works correctly with Q object
++    queryset = Query()
++    queryset = queryset.annotate(Count("agent__property_groups"))
++    property_groups = [1, 2, 3]
++    q_object = Q(agent__property_groups__in=property_groups) | Q(agent__property_groups__count=0)
++    assert queryset.filter(q_object).as_sql()[0].startswith("SELECT")

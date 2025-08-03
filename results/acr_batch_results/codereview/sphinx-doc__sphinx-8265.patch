@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/pycode/ast.py b/sphinx/pycode/ast.py\nindex 9bafff11c..367ae3428 100644\n--- a/sphinx/pycode/ast.py\n+++ b/sphinx/pycode/ast.py\n@@ -88,7 +88,10 @@ class _UnparseVisitor(ast.NodeVisitor):\n             if arg.annotation:\n                 name += \" = %s\" % self.visit(default)\n             else:\n-                name += \"=%s\" % self.visit(default)\n+                value = self.visit(default)\n+                if isinstance(default, (ast.Tuple, ast.List)) and not isinstance(default, ast.Name):\n+                    value = f\"({value})\"\n+                name += f\"={value}\"\n         return name\n \n     def visit_arguments(self, node: ast.arguments) -> str:\n"
+}

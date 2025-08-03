@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/printing/conventions.py b/sympy/printing/conventions.py\nindex 9a3be6bbe9..f9f555f100 100644\n--- a/sympy/printing/conventions.py\n+++ b/sympy/printing/conventions.py\n@@ -66,6 +66,9 @@ def split_super_sub(text):\n     if m:\n         name, sub = m.groups()\n         subs.insert(0, sub)\n+    if name and name[-1].isdigit():\n+        subs.insert(0, name[-1])\n+        name = name[:-1]\n \n     return name, supers, subs\n \n"
+}

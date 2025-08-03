@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/auth/forms.py b/django/contrib/auth/forms.py\nindex b9eb33329f..ffff91793e 100644\n--- a/django/contrib/auth/forms.py\n+++ b/django/contrib/auth/forms.py\n@@ -190,7 +190,7 @@ class AuthenticationForm(forms.Form):\n         'inactive': _(\"This account is inactive.\"),\n     }\n \n-    def __init__(self, request=None, *args, **kwargs):\n+    def __init__(self, *args, request=None, **kwargs):\n         \"\"\"\n         The 'request' parameter is set for custom auth use by subclasses.\n         The form data comes in via the standard 'data' kwarg.\n"
+}

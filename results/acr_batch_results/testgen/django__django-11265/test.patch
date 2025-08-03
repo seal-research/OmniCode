@@ -1,0 +1,54 @@
+--- a/tests/test_filtered_relation.py
++++ b/tests/test_filtered_relation.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db.models import Q
++from django.test import TestCase
++from .models import Author, Book
++
++class FilteredRelationTests(TestCase):
++    def setUp(self):
++        self.author1 = Author.objects.create(name='Author 1')
++        self.author2 = Author.objects.create(name='Author 2')
++        self.book1 = Book.objects.create(title='Poem by Alice', author=self.author1)
++        self.book2 = Book.objects.create(title='Book by Bob', author=self.author2)
++
++    def test_with_join(self):
++        # Test that using filter on queryset with annotated FilteredRelation works
++        authors = Author.objects.annotate(
++            book_alice=FilteredRelation('book', condition=Q(book__title__iexact='poem by alice')),
++        ).filter(book_alice__isnull=False)
++        self.assertSequenceEqual(authors, [self.author1])
++
++    def test_with_exclude(self):
++        # Test that using exclude on queryset with annotated FilteredRelation works
++        authors = Author.objects.annotate(
++            book_alice=FilteredRelation('book', condition=Q(book__title__iexact='poem by alice')),
++        ).exclude(book_alice__isnull=False)
++        self.assertSequenceEqual(authors, [self.author2])
++
++    def test_edge_case_empty_query(self):
++        # Test edge case with empty query
++        authors = Author.objects.none().annotate(
++            book_alice=FilteredRelation('book', condition=Q(book__title__iexact='poem by alice')),
++        ).filter(book_alice__isnull=False)
++        self.assertSequenceEqual(authors, [])
++
++    def test_edge_case_no_match(self):
++        # Test edge case where no match is found
++        authors = Author.objects.annotate(
++            book_alice=FilteredRelation('book', condition=Q(book__title__iexact='non-existent book')),
++        ).filter(book_alice__isnull=False)
++        self.assertSequenceEqual(authors, [])
+
+--- a/tests/models.py
++++ b/tests/models.py
+-# Original code here (if modifying existing file)
++from django.db import models
++
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++
++class Book(models.Model):
++    title = models.CharField(max_length=100)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE)

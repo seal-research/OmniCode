@@ -1,0 +1,52 @@
+--- a/tests/annotations/tests.py
++++ b/tests/annotations/tests.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.db.models import Value, QuerySet
++from django.db.models.functions import Value
++
++@pytest.mark.testcases
++class TestAnnotations:
++    def test_annotation_and_alias_filter_in_subquery(self):
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(book_annotate=Value(1))
++            .alias(book_alias=Value(1))
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        expected = [
++            {'name': 'Apress'},
++            {'name': 'Sams'},
++            {'name': 'Prentice Hall'},
++            {'name': 'Morgan Kaufmann'}
++        ]
++        assert list(publisher_books_qs) == expected
++
++    def test_failing_test_annotation_and_alias_filter_in_subquery(self):
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(book_annotate=Value(1))
++            .alias(book_alias=Value(1))
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        with pytest.raises(AssertionError):
++            assert list(publisher_books_qs) == [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]

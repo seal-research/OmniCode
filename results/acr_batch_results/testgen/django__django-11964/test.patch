@@ -1,0 +1,36 @@
+--- a/tests/test_enums.py
++++ b/tests/test_enums.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.utils.translation import gettext_lazy as _
++
++class TestChoices(models.TextChoices):
++    FIRST_CHOICE = "first", _("The first choice")
++    SECOND_CHOICE = "second", _("The second choice")
++
++class TestIntegerChoices(models.IntegerChoices):
++    FIRST_CHOICE = 1, _("The first choice")
++    SECOND_CHOICE = 2, _("The second choice")
++
++class TestModel(models.Model):
++    str_value = models.CharField(max_length=10, choices=TestChoices.choices)
++    int_value = models.IntegerField(choices=TestIntegerChoices.choices)
++
++def test_text_choices_str_value():
++    instance = TestModel.objects.create(str_value=TestChoices.FIRST_CHOICE)
++    assert str(instance.str_value) == "first"
++
++def test_text_choices_int_value():
++    instance = TestModel.objects.create(int_value=TestIntegerChoices.FIRST_CHOICE)
++    assert str(instance.int_value) == "1"
++
++def test_retrieved_text_choices_str_value():
++    instance = TestModel.objects.create(str_value=TestChoices.FIRST_CHOICE)
++    retrieved_instance = TestModel.objects.get(id=instance.id)
++    assert str(retrieved_instance.str_value) == "first"
++
++def test_retrieved_text_choices_int_value():
++    instance = TestModel.objects.create(int_value=TestIntegerChoices.FIRST_CHOICE)
++    retrieved_instance = TestModel.objects.get(id=instance.id)
++    assert str(retrieved_instance.int_value) == "1"

@@ -1,0 +1,101 @@
+--- a/tests/test_migrations/test_migration_ordering.py
++++ b/tests/test_migrations/test_migration_ordering.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations, models
++from django.db.migrations.autodetector import MigrationAutodetector
++from django.db.migrations.state import ProjectState
++
++def test_migration_ordering():
++    # Define the initial models
++    initial_state = ProjectState(
++        models=[
++            ("testapp", "Readable", models.Model, {"title": models.CharField(max_length=200)}),
++        ]
++    )
++
++    # Define the final models
++    final_state = ProjectState(
++        models=[
++            ("testapp", "Readable", models.Model, {}),
++            ("testapp", "Book", models.Model, {"title": models.CharField(max_length=200)}),
++        ]
++    )
++
++    # Create a MigrationAutodetector instance
++    detector = MigrationAutodetector(initial_state, final_state)
++
++    # Detect changes
++    changes = detector.changes(graph=None)
++
++    # Apply the changes
++    for app_label, migration_list in changes.items():
++        for migration in migration_list:
++            migration.apply(ProjectState(), None)
++
++    # Verify that the field was moved correctly
++    book_model = final_state.models["testapp", "Book"]
++    assert book_model.fields["title"]
++
++def test_migration_ordering_with_inheritance():
++    # Define the initial models
++    initial_state = ProjectState(
++        models=[
++            ("testapp", "Readable", models.Model, {"title": models.CharField(max_length=200)}),
++        ]
++    )
++
++    # Define the final models
++    final_state = ProjectState(
++        models=[
++            ("testapp", "Readable", models.Model, {}),
++            ("testapp", "Book", models.Model, {"title": models.CharField(max_length=200)}),
++        ]
++    )
++
++    # Create a MigrationAutodetector instance
++    detector = MigrationAutodetector(initial_state, final_state)
++
++    # Detect changes
++    changes = detector.changes(graph=None)
++
++    # Apply the changes
++    for app_label, migration_list in changes.items():
++        for migration in migration_list:
++            migration.apply(ProjectState(), None)
++
++    # Verify that the field was moved correctly
++    book_model = final_state.models["testapp", "Book"]
++    assert book_model.fields["title"]
++
++def test_migration_ordering_with_multiple_fields():
++    # Define the initial models
++    initial_state = ProjectState(
++        models=[
++            ("testapp", "Readable", models.Model, {"title": models.CharField(max_length=200), "author": models.CharField(max_length=100)}),
++        ]
++    )
++
++    # Define the final models
++    final_state = ProjectState(
++        models=[
++            ("testapp", "Readable", models.Model, {}),
++            ("testapp", "Book", models.Model, {"title": models.CharField(max_length=200), "author": models.CharField(max_length=100)}),
++        ]
++    )
++
++    # Create a MigrationAutodetector instance
++    detector = MigrationAutodetector(initial_state, final_state)
++
++    # Detect changes
++    changes = detector.changes(graph=None)
++
++    # Apply the changes
++    for app_label, migration_list in changes.items():
++        for migration in migration_list:
++            migration.apply(ProjectState(), None)
++
++    # Verify that the fields were moved correctly
++    book_model = final_state.models["testapp", "Book"]
++    assert book_model.fields["title"]
++    assert book_model.fields["author"]

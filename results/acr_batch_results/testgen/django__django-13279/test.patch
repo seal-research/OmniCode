@@ -1,0 +1,64 @@
+--- a/tests/test_session_backends.py
++++ b/tests/test_session_backends.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.conf import settings
++from django.contrib.sessions.backends.base import SessionBase
++from django.core.signing import get_default_backend
++from django.utils.encoding import force_bytes
++
++@pytest.fixture
++def session_backend():
++    return SessionBase()
++
++def test_decode_session_data_sha1(session_backend):
++    # Test decoding with sha1 algorithm
++    session_data = 'sha1_encoded_session_data'
++    decoded_data = session_backend.decode(session_data)
++    assert decoded_data is not None
++
++def test_decode_session_data_new_format(session_backend):
++    # Test decoding with the new format
++    session_data = 'new_format_encoded_session_data'
++    decoded_data = session_backend.decode(session_data)
++    assert decoded_data is not None
++
++def test_encode_session_data_sha1(session_backend):
++    # Test encoding with sha1 algorithm
++    session_dict = {'key': 'value'}
++    encoded_data = session_backend.encode(session_dict)
++    assert encoded_data is not None
++
++def test_encode_session_data_new_format(session_backend):
++    # Test encoding with the new format
++    session_dict = {'key': 'value'}
++    encoded_data = session_backend.encode(session_dict)
++    assert encoded_data is not None
++
++def test_compatibility_with_old_format(session_backend):
++    # Test compatibility with the old format
++    old_session_data = 'old_format_encoded_session_data'
++    decoded_data = session_backend.decode(old_session_data)
++    assert decoded_data is not None
++
++def test_compatibility_with_new_format(session_backend):
++    # Test compatibility with the new format
++    new_session_data = 'new_format_encoded_session_data'
++    decoded_data = session_backend.decode(new_session_data)
++    assert decoded_data is not None
++
++def test_default_hashing_algorithm_setting():
++    # Test that the DEFAULT_HASHING_ALGORITHM setting is respected
++    with settings(DEFAULT_HASHING_ALGORITHM='sha1'):
++        assert get_default_backend().algorithm == 'sha1'
+
+--- a/tests/test_session_models.py
++++ b/tests/test_session_models.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.contrib.sessions.models import Session
++
++def test_session_model():
++    # Test the session model
++    session = Session()
++    assert session is not None

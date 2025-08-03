@@ -1,0 +1,47 @@
+--- a/tests/test_admin.py
++++ b/tests/test_admin.py
+-# Original code here (if modifying existing file)
++import pytest
++from django.contrib.admin.sites import AdminSite
++from django.test import RequestFactory
++from django.urls import path, reverse
++
++@pytest.fixture
++def admin_site():
++    return AdminSite()
++
++@pytest.fixture
++def request_factory():
++    return RequestFactory()
++
++def test_catch_all_view_with_force_script_name(admin_site, request_factory):
++    # Test that catch_all_view supports FORCE_SCRIPT_NAME
++    request = request_factory.get('/admin/')
++    request.META['SCRIPT_NAME'] = '/my-script'
++    response = admin_site.catch_all_view(request, 'path/to/resource')
++    assert response.status_code == 301
++    assert response.url == f'/my-script/path/to/resource/'
++
++def test_catch_all_view_without_force_script_name(admin_site, request_factory):
++    # Test without FORCE_SCRIPT_NAME
++    request = request_factory.get('/admin/')
++    response = admin_site.catch_all_view(request, 'path/to/resource')
++    assert response.status_code == 301
++    assert response.url == '/path/to/resource/'
++
++def test_catch_all_view_append_slash(admin_site, request_factory):
++    # Test that catch_all_view appends a slash when APPEND_SLASH is True
++    request = request_factory.get('/admin/')
++    request.META['SCRIPT_NAME'] = '/my-script'
++    with pytest.settings(APPEND_SLASH=True):
++        response = admin_site.catch_all_view(request, 'path/to/resource')
++        assert response.status_code == 301
++        assert response.url == f'/my-script/path/to/resource/'
++
++def test_catch_all_view_no_append_slash(admin_site, request_factory):
++    # Test that catch_all_view does not append a slash when APPEND_SLASH is False
++    request = request_factory.get('/admin/')
++    request.META['SCRIPT_NAME'] = '/my-script'
++    with pytest.settings(APPEND_SLASH=False):
++        response = admin_site.catch_all_view(request, 'path/to/resource')
++        assert response.status_code == 404

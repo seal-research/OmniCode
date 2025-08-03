@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/admin/filters.py b/django/contrib/admin/filters.py\nindex d65e01d5e2..d8f8ab9007 100644\n--- a/django/contrib/admin/filters.py\n+++ b/django/contrib/admin/filters.py\n@@ -419,4 +419,4 @@ FieldListFilter.register(lambda f: True, AllValuesFieldListFilter)\n class RelatedOnlyFieldListFilter(RelatedFieldListFilter):\n     def field_choices(self, field, request, model_admin):\n         pk_qs = model_admin.get_queryset(request).distinct().values_list('%s__pk' % self.field_path, flat=True)\n-        return field.get_choices(include_blank=False, limit_choices_to={'pk__in': pk_qs})\n+        return field.get_choices(include_blank=False, limit_choices_to={'pk__in': pk_qs}, ordering=self._get_ordering(field, request, model_admin))\n"
+}

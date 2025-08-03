@@ -1,0 +1,39 @@
+--- a/tests/test_loaddata.py
++++ b/tests/test_loaddata.py
+-# Empty if creating new file
++import pytest
++from django.core.management.commands.loaddata import Command
++from django.conf import settings
++from django.core.exceptions import ImproperlyConfigured
++from pathlib import Path
++
++@pytest.fixture
++def fixture_dirs():
++    return [Path('/path/to/fixture/dir1'), Path('/path/to/fixture/dir2')]
++
++def test_duplicate_fixture_dirs(fixture_dirs):
++    with pytest.raises(ImproperlyConfigured):
++        Command().fixture_dirs()
++
++def test_fixture_dirs_return_list(fixture_dirs):
++    dirs = Command().fixture_dirs()
++    assert isinstance(dirs, list)
++
++def test_fixture_dirs_handle_path_instances(fixture_dirs):
++    dirs = Command().fixture_dirs()
++    assert all(isinstance(dir, str) for dir in dirs)
++
++def test_fixture_dirs_remove_duplicates(fixture_dirs):
++    fixture_dirs.append(fixture_dirs[0])
++    dirs = Command().fixture_dirs()
++    assert len(dirs) == 2
++
++def test_fixture_dirs_with_string_and_path():
++    settings.FIXTURE_DIRS = ['/path/to/fixture/dir1', Path('/path/to/fixture/dir2')]
++    dirs = Command().fixture_dirs()
++    assert len(dirs) == 2
++
++def test_fixture_dirs_with_duplicate_string_and_path():
++    settings.FIXTURE_DIRS = ['/path/to/fixture/dir1', '/path/to/fixture/dir1']
++    with pytest.raises(ImproperlyConfigured):
++        Command().fixture_dirs()

@@ -1,0 +1,83 @@
+--- a/tests/test_deletion.py
++++ b/tests/test_deletion.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models.deletion import Collector
++
++@pytest.fixture
++def person_model():
++    return models.Model('Person', {
++        'id': models.AutoField(primary_key=True),
++        'friends': models.ManyToManyField('self'),
++    })
++
++@pytest.fixture
++def user_model():
++    return models.Model('User', {
++        'id': models.AutoField(primary_key=True),
++    })
++
++@pytest.fixture
++def entry_model(user_model):
++    return models.Model('Entry', {
++        'id': models.AutoField(primary_key=True),
++        'created_by': models.ForeignKey(user_model),
++        'updated_by': models.ForeignKey(user_model),
++    })
++
++def test_combine_fast_delete_queries(person_model, user_model, entry_model):
++    # Create instances
++    person = person_model.objects.create()
++    user = user_model.objects.create()
++    entry = entry_model.objects.create(created_by=user, updated_by=user)
++
++    # Delete person and verify queries
++    with person_model.objects.db_manager().connection.cursor() as cursor:
++        person.delete()
++        queries = cursor.connection.queries
++        assert len(queries) == 3  # 1 for person_friends, 1 for person, 1 for person_friends (combined)
++
++    # Delete user and verify queries
++    with user_model.objects.db_manager().connection.cursor() as cursor:
++        user.delete()
++        queries = cursor.connection.queries
++        assert len(queries) == 3  # 1 for entry (created_by), 1 for entry (updated_by), 1 for user
++
++def test_fast_delete_combine_queries():
++    model = models.Model('Model', {
++        'id': models.AutoField(primary_key=True),
++        'related': models.ForeignKey('self'),
++    })
++    instance = model.objects.create()
++    instance.related.add(instance)
++
++    collector = Collector(using='default')
++    collector.add(instance)
++
++    # Verify fast_delete combines queries
++    with model.objects.db_manager().connection.cursor() as cursor:
++        collector.fast_delete()
++        queries = cursor.connection.queries
++        assert len(queries) == 1  # 1 for model
++
++def test_fast_delete_separate_queries():
++    model1 = models.Model('Model1', {
++        'id': models.AutoField(primary_key=True),
++    })
++    model2 = models.Model('Model2', {
++        'id': models.AutoField(primary_key=True),
++        'related': models.ForeignKey(model1),
++    })
++    instance1 = model1.objects.create()
++    instance2 = model2.objects.create(related=instance1)
++
++    collector = Collector(using='default')
++    collector.add(instance1)
++    collector.add(instance2)
++
++    # Verify fast_delete performs separate queries
++    with model1.objects.db_manager().connection.cursor() as cursor:
++        collector.fast_delete()
++        queries = cursor.connection.queries
++        assert len(queries) == 2  # 1 for model1, 1 for model2

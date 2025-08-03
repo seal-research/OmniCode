@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/src/_pytest/fixtures.py b/src/_pytest/fixtures.py\nindex 638ed89b1..5763b815e 100644\n--- a/src/_pytest/fixtures.py\n+++ b/src/_pytest/fixtures.py\n@@ -870,6 +870,10 @@ class FixtureDef:\n         self.cached_result = None\n         self._finalizers = []\n \n+    @property\n+    def fixturemanager(self):\n+        return self._fixturemanager\n+\n     def addfinalizer(self, finalizer):\n         self._finalizers.append(finalizer)\n \n"
+}

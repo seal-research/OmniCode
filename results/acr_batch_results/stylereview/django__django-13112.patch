@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/fields/related.py b/django/db/models/fields/related.py\nindex c2aea9c730..d3ddcca652 100644\n--- a/django/db/models/fields/related.py\n+++ b/django/db/models/fields/related.py\n@@ -623,8 +623,7 @@ class ForeignObject(RelatedField):\n             related_fields.append((from_field, to_field))\n         return related_fields\n \n-    @cached_property\n-    def related_fields(self):\n+    def get_related_fields(self):\n         return self.resolve_related_fields()\n \n     @cached_property\n"
+}

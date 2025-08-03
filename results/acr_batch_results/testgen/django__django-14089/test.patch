@@ -1,0 +1,34 @@
+--- a/tests/test_datastructures.py
++++ b/tests/test_datastructures.py
+-# Empty if creating new file
++import pytest
++from django.utils.datastructures import OrderedSet
++
++def test_ordered_set_reversed():
++    # Create an OrderedSet
++    ordered_set = OrderedSet([1, 2, 3, 4, 5])
++    
++    # Test that reversed() works as expected
++    assert list(reversed(ordered_set)) == [5, 4, 3, 2, 1]
++
++def test_ordered_set_reversed_empty():
++    # Create an empty OrderedSet
++    ordered_set = OrderedSet()
++    
++    # Test that reversed() works as expected on an empty set
++    assert list(reversed(ordered_set)) == []
++
++def test_ordered_set_reversed_unordered_set_comparison():
++    # Create an unordered set and an OrderedSet with the same elements
++    unordered_set = {1, 2, 3, 4, 5}
++    ordered_set = OrderedSet([1, 2, 3, 4, 5])
++    
++    # Test that reversed() on OrderedSet does not match unordered set
++    assert list(reversed(ordered_set)) != list(reversed(unordered_set))
++
++def test_ordered_set_iter_and_reversed_equivalence():
++    # Create an OrderedSet
++    ordered_set = OrderedSet([1, 2, 3, 4, 5])
++    
++    # Test that iterating over the reversed OrderedSet gives the same elements as the original order
++    assert list(ordered_set) == list(reversed(reversed(ordered_set)))

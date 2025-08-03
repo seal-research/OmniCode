@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/youtube_dl/jsinterp.py b/youtube_dl/jsinterp.py\nindex 8e119d08a..0f7c19a16 100644\n--- a/youtube_dl/jsinterp.py\n+++ b/youtube_dl/jsinterp.py\n@@ -280,6 +280,11 @@ class JSInterpreter(object):\n             return right_val\n \n         try:\n+            if left_val is None or right_val is None:\n+                if op in ('>', '<', '>=', '<='):\n+                    return False\n+                elif op in ('==', '!='):\n+                    return op == '=='\n             return opfunc(left_val, right_val)\n         except Exception as e:\n             raise self.Exception('Failed to evaluate {left_val!r} {op} {right_val!r}'.format(**locals()), expr, cause=e)\n"
+}

@@ -1,0 +1,156 @@
+--- a/tests/test_orm.py
++++ b/tests/test_orm.py
+-# Empty if creating new file
++import pytest
++from django.db.models import Count
++from django.test import TestCase
++
++class TestMetaOrderingInGroupBy(TestCase):
++    @classmethod
++    def setUpTestData(cls):
++        # Setup test data
++        pass
++
++    def test_meta_ordering_not_in_group_by(self):
++        # Test that Meta.ordering fields are not included in GROUP BY clause
++        pass
++
++    def test_annotate_with_meta_ordering(self):
++        # Test that annotating with a Count does not include Meta.ordering in GROUP BY
++        pass
++
++    def test_values_with_meta_ordering(self):
++        # Test that values() with Meta.ordering does not include it in GROUP BY
++        pass
++
++    def test_group_by_with_meta_ordering(self):
++        # Test that group_by with Meta.ordering does not include it in GROUP BY
++        pass
+
+--- a/
++++ b/
+-de
++
+
+--- a/rom django.db
++++ b/rom django.db
++y
++from 
+
+--- a/
++++ b/
++ngo.
+
+--- a/ass Book(mod
++++ b/ass Book(mod
++or
+
+--- a/s.Mod
++++ b/s.Mod
+-mp
++
+
+--- a/):
+    t
++++ b/):
+    t
+-t m
++l
+
+--- a/
++++ b/
+-s
+-
+-c
++
+
+--- a/
++++ b/
+-ss B
++
+
+--- a/
++++ b/
+-k(m
++i
+
+--- a/d(max_
++++ b/d(max_
+-s.M
++ = mo
+
+--- a/ngth=200)
+    author = mod
++++ b/ngth=200)
+    author = mod
+-):
+-    t
++ls.C
+
+--- a/s.CharF
++++ b/s.CharF
+-e = m
++rFi
+
+--- a/
++++ b/
+-s.Ch
++(m
+
+--- a/
++++ b/
+-F
++ng
+
+--- a/ass M
++++ b/ass M
+-d(m
++=200)
++    
+
+--- a/r
++++ b/r
+-e
++
+
+--- a/t
++++ b/t
+-th=200)
+-    
++
+
+--- a/tests/test_orm.py
++++ b/tests/test_orm.py
++import pytest
++from django.db.models import Count
++from django.test import TestCase
++from .models import Book
++
++class TestMetaOrderingInGroupBy(TestCase):
++    def setUp(self):
++        self.book1 = Book.objects.create(title='Book1', author='Author1')
++        self.book2 = Book.objects.create(title='Book2', author='Author2')
++
++    def test_meta_ordering_not_in_group_by(self):
++        # Test that Meta.ordering fields are not included in GROUP BY clause
++        query = Book.objects.annotate(count=Count('id')).values('author')
++        sql = str(query.query)
++        self.assertNotIn('title', sql)
++
++    def test_annotate_with_meta_ordering(self):
++        # Test that annotating with a Count does not include Meta.ordering in GROUP BY
++        query = Book.objects.annotate(count=Count('id'))
++        sql = str(query.query)
++        self.assertNotIn('title', sql)
++
++    def test_values_with_meta_ordering(self):
++        # Test that values() with Meta.ordering does not include it in GROUP BY
++        query = Book.objects.values('author')
++        sql = str(query.query)
++        self.assertNotIn('title', sql)
++
++    def test_group_by_with_meta_ordering(self):
++        # Test that group_by with Meta.ordering does not include it in GROUP BY
++        query = Book.objects.values('author').annotate(count=Count('id'))
++        sql = str(query.query)
++        self.assertNotIn('title', sql)

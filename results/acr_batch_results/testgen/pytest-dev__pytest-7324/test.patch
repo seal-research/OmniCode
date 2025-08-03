@@ -1,0 +1,24 @@
+--- a/testing/test_mark_expression.py
++++ b/testing/test_mark_expression.py
+-# Original code here
++import pytest
++from _pytest.mark.expression import Expression
++
++def test_compile_bool():
++    assert Expression.compile("True").evaluate(lambda x: True)
++    assert Expression.compile("False").evaluate(lambda x: False)
++
++def test_compile_string():
++    assert Expression.compile("foo").evaluate(lambda x: x == "foo")
++
++def test_evaluate():
++    expr = Expression.compile("foo")
++    assert expr.evaluate(lambda x: x == "foo")
++    assert not expr.evaluate(lambda x: x == "bar")
++
++def test_syntax_error():
++    with pytest.raises(SyntaxError):
++        Expression.compile("invalid syntax")
++
++def test_empty_is_false():
++    assert not Expression.compile("").evaluate(lambda x: True)

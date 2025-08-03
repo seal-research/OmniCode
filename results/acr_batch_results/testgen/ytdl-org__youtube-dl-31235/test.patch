@@ -1,0 +1,41 @@
+--- a/tests/test_neteasemusic.py
++++ b/tests/test_neteasemusic.py
+-# Empty if creating new file
++import pytest
++from youtube_dl.extractor.neteasemusic import NetEaseMusicIE
++
++@pytest.fixture
++def ytdl():
++    return YoutubeDL()
++
++def test_netease_music_ie_extract_info(ytdl):
++    url = 'https://music.163.com/#/song?id=33166366'
++    info = ytdl.extract_info(url, download=False)
++    assert info['id'] == '33166366'
++    assert info['title'] == 'Bad Blood (feat. Kendrick Lamar)'
++
++def test_netease_music_ie_extract_formats(ytdl):
++    url = 'https://music.163.com/#/song?id=33166366'
++    info = ytdl.extract_info(url, download=False)
++    assert len(info['formats']) > 0
++
++def test_netease_music_ie_extract_lyrics(ytdl):
++    url = 'https://music.163.com/#/song?id=33166366'
++    info = ytdl.extract_info(url, download=False)
++    assert 'description' in info
++
++def test_netease_music_ie_handle_noplaylist(ytdl):
++    url = 'https://music.163.com/#/song?id=33166366'
++    ytdl.params['noplaylist'] = True
++    info = ytdl.extract_info(url, download=False)
++    assert 'formats' in info
++
++def test_netease_music_ie_handle_playlist(ytdl):
++    url = 'https://music.163.com/#/playlist?id=22735043'
++    info = ytdl.extract_info(url, download=False)
++    assert len(info['entries']) > 0
+
+--- a/tests/test_utils.py
++++ b/tests/test_utils.py
+-# Original code here
++# No changes

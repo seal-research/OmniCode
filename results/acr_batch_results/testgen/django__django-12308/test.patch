@@ -1,0 +1,101 @@
+--- a/tests/test_admin.py
++++ b/tests/test_admin.py
+-# Empty if creating new file
++import json
++import pytest
++from django.contrib.admin.utils import display_for_field
++from django.contrib.auth import get_user_model
++from django.test import TestCase, RequestFactory
++from django.db import models
++from django.forms.fields import JSONField
++
++User = get_user_model()
+
+--- a/tests/test_admin.py
++++ b/tests/test_admin.py
+-# Empty if creating new file
++class JSONModel(models.Model):
++    json_field = models.JSONField()
++
++class TestJSONFieldDisplay(TestCase):
++    def setUp(self):
++        self.factory = RequestFactory()
++        self.user = User.objects.create_superuser(
++            username='testuser',
++            email='test@example.com',
++            password='testpassword'
++        )
++
++    def test_display_json_field(self):
++        obj = JSONModel.objects.create(json_field={"foo": "bar"})
++        request = self.factory.get('/admin/')
++        request.user = self.user
++        field = JSONModel._meta.get_field('json_field')
++        value = display_for_field(obj.json_field, field, empty_value_display='')
++
++        assert value == '{"foo": "bar"}'
++
++    def test_display_invalid_json_field(self):
++        obj = JSONModel.objects.create(json_field="{'foo': 'bar'}")
++        request = self.factory.get('/admin/')
++        request.user = self.user
++        field = JSONModel._meta.get_field('json_field')
++        value = display_for_field(obj.json_field, field, empty_value_display='')
++
++        assert value == "{'foo': 'bar'}"
+
+--- a/tests/test_admin.py
++++ b/tests/test_admin.py
+-# Empty if creating new file
++import json
++import pytest
++from django.contrib.admin.utils import display_for_field
++from django.contrib.auth import get_user_model
++from django.db import models
++
++User = get_user_model()
++
++@pytest.fixture
++def user():
++    return User.objects.create_superuser(
++        username='testuser',
++        email='test@example.com',
++        password='testpassword'
++    )
++
++@pytest.fixture
++def json_model():
++    class JSONModel(models.Model):
++        json_field = models.JSONField()
++    return JSONModel
++
++def test_display_json_field(user, json_model):
++    obj = json_model.objects.create(json_field={"foo": "bar"})
++    field = json_model._meta.get_field('json_field')
++    value = display_for_field(obj.json_field, field, empty_value_display='')
++    assert value == '{"foo": "bar"}'
++
++def test_display_invalid_json_field(user, json_model):
++    obj = json_model.objects.create(json_field="{'foo': 'bar'}")
++    field = json_model._meta.get_field('json_field')
++    value = display_for_field(obj.json_field, field, empty_value_display='')
++    assert value == "{'foo': 'bar'}"
++
++def test_prepare_value_valid_json():
++    field = JSONField()
++    value = field.prepare_value({"foo": "bar"})
++    assert value == '{"foo": "bar"}'
++
++def test_prepare_value_invalid_json():
++    field = JSONField()
++    value = field.prepare_value("{'foo': 'bar'}")
++    assert value == "{'foo': 'bar'}"
+
+--- a/django/contrib/admin/utils.py
++++ b/django/contrib/admin/utils.py
+-def display_for_field(value, field, empty_value_display):
+-    # ...
++def display_for_field(value, field, empty_value_display):
++    if isinstance(field, models.JSONField):
++        return field.prepare_value(value)
++    # ...

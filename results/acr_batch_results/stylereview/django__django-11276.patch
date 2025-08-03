@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/html.py b/django/utils/html.py\nindex 9c519978f5..65be0e9b0b 100644\n--- a/django/utils/html.py\n+++ b/django/utils/html.py\n@@ -156,8 +156,11 @@ class MLStripper(HTMLParser):\n         self.reset()\n         self.fed = []\n \n-    def handle_data(self, d):\n-        self.fed.append(d)\n+    def handle_data(self, data):\n+        self.fed.append(data)\n+\n+    def error(self, message):\n+        pass\n \n     def handle_entityref(self, name):\n         self.fed.append('&%s;' % name)\n"
+}

@@ -1,0 +1,39 @@
+--- a/tests/test_forms_models.py
++++ b/tests/test_forms_models.py
+-# Empty if creating new file
++import pytest
++from django.forms.models import model_to_dict
++
++@pytest.mark.parametrize("fields", [None, []])
++def test_model_to_dict_empty_fields(fields):
++    # Test that model_to_dict returns an empty dict when fields is empty
++    class TestModel:
++        def __init__(self):
++            self.field1 = "value1"
++            self.field2 = "value2"
++
++    instance = TestModel()
++    result = model_to_dict(instance, fields=fields)
++    assert result == {}
++
++def test_model_to_dict_fields():
++    # Test that model_to_dict returns a dict with specified fields
++    class TestModel:
++        def __init__(self):
++            self.field1 = "value1"
++            self.field2 = "value2"
++
++    instance = TestModel()
++    result = model_to_dict(instance, fields=["field1"])
++    assert result == {"field1": "value1"}
++
++def test_model_to_dict_exclude():
++    # Test that model_to_dict excludes specified fields
++    class TestModel:
++        def __init__(self):
++            self.field1 = "value1"
++            self.field2 = "value2"
++
++    instance = TestModel()
++    result = model_to_dict(instance, exclude=["field1"])
++    assert result == {"field2": "value2"}

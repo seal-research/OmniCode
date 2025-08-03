@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py\nindex e16ab8ce5..8217fa4fb 100644\n--- a/sphinx/ext/autodoc/__init__.py\n+++ b/sphinx/ext/autodoc/__init__.py\n@@ -1552,7 +1552,10 @@ class ClassDocumenter(DocstringSignatureMixin, ModuleLevelDocumenter):  # type:\n         if sig is None:\n             return None\n \n-        return stringify_signature(sig, show_return_annotation=False, **kwargs)\n+        if self._signature_method_name == '__init__':\n+            return stringify_signature(sig, show_return_annotation=False, **kwargs)\n+        else:\n+            return stringify_signature(sig, **kwargs)\n \n     def _find_signature(self) -> Tuple[str, str]:\n         result = super()._find_signature()\n"
+}

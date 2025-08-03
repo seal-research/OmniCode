@@ -1,0 +1,41 @@
+--- a/tests/test_management_commands.py
++++ b/tests/test_management_commands.py
+-# Empty if creating new file
++import pytest
++from django.core.management import call_command
++from django.core.management.base import CommandError
++
++def test_call_command_mutually_exclusive_group():
++    # Arrange
++    # Assuming a command named 'test_command' with a required mutually exclusive group
++    # defined using add_mutually_exclusive_group
++
++    # Act and Assert
++    with pytest.raises(CommandError):
++        call_command('test_command', shop_id=1)
++
++    # Additional assertions or tests for different scenarios
++    # ...
++
++def test_call_command_mutually_exclusive_group_with_arg():
++    # Test with an argument that is part of a mutually exclusive group
++    call_command('test_command', '--shop-id=1')
++
++def test_call_command_mutually_exclusive_group_both_args():
++    # Test that passing both args raises an error
++    with pytest.raises(CommandError):
++        call_command('test_command', shop_id=1, '--shop=some_shop')
+
+--- a/tests/test_management_commands.py
++++ b/tests/test_management_commands.py
+-# Empty if creating new file
++import pytest
++from django.core.management import call_command
++
++def test_call_command_simple():
++    # Test a simple command without mutually exclusive groups
++    call_command('simple_command')
++
++def test_call_command_with_required_arg():
++    # Test a command with a required argument
++    call_command('command_with_required_arg', required_arg='some_value')

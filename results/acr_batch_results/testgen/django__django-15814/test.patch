@@ -1,0 +1,61 @@
+--- a/tests/test_proxy_models.py
++++ b/tests/test_proxy_models.py
++import pytest
++from django.db import models
++from django.test import TestCase
++
++class CustomModel(models.Model):
++    name = models.CharField(max_length=16)
++
++class ProxyCustomModel(CustomModel):
++    class Meta:
++        proxy = True
++
++class AnotherModel(models.Model):
++    custom = models.ForeignKey(
++        ProxyCustomModel,
++        on_delete=models.SET_NULL,
++        null=True,
++        blank=True,
++    )
++
++@pytest.mark.django_db
++class TestProxyModels:
++    def test_select_related_and_only(self):
++        # Create a ProxyCustomModel instance
++        custom_obj = ProxyCustomModel.objects.create(name="Custom Object")
++
++        # Create an AnotherModel instance related to the ProxyCustomModel instance
++        another_obj = AnotherModel.objects.create(custom=custom_obj)
++
++        # Use select_related and only
++        objs = list(AnotherModel.objects.select_related("custom").only("custom__name").all())
++
++        # Assert that the query doesn't crash
++        assert len(objs) > 0
++        assert objs[0].custom.name == custom_obj.name
++
++    def test_select_related_and_only_with_filter(self):
++        # Create a ProxyCustomModel instance
++        custom_obj = ProxyCustomModel.objects.create(name="Custom Object")
++
++        # Create an AnotherModel instance related to the ProxyCustomModel instance
++        another_obj = AnotherModel.objects.create(custom=custom_obj)
++
++        # Use select_related and only with a filter
++        objs = list(AnotherModel.objects.filter(id=another_obj.id).select_related("custom").only("custom__name").all())
++
++        # Assert that the query doesn't crash
++        assert len(objs) > 0
++        assert objs[0].custom.name == custom_obj.name
++
++    def test_only_with_select_related_on_proxy_model(self):
++        # Test that only works correctly when used with select_related on a proxy model
++        custom_obj = ProxyCustomModel.objects.create(name="Custom Object")
++        AnotherModel.objects.create(custom=custom_obj)
++
++        query = AnotherModel.objects.select_related("custom").only("custom__name")
++        results = list(query.all())
++
++        assert len(results) == 1
++        assert results[0].custom.name == custom_obj.name

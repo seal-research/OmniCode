@@ -1,0 +1,46 @@
+--- a/tests/test_lint_run.py
++++ b/tests/test_lint_run.py
+-# Original code here (if modifying existing file)
++import pytest
++from pylint.lint.run import _query_cpu
++
++def test_query_cpu_zero_cfs_quota():
++    """Test _query_cpu with zero cfs_quota_us."""
++    # Mock /sys/fs/cgroup/cpu/cpu.cfs_quota_us to return 0
++    with open("/sys/fs/cgroup/cpu/cpu.cfs_quota_us", "w", encoding="utf-8") as file:
++        file.write("0")
++    # Mock /sys/fs/cgroup/cpu/cpu.cfs_period_us to return 100000
++    with open("/sys/fs/cgroup/cpu/cpu.cfs_period_us", "w", encoding="utf-8") as file:
++        file.write("100000")
++    # Mock /sys/fs/cgroup/cpu/cpu.shares to return 2
++    with open("/sys/fs/cgroup/cpu/cpu.shares", "w", encoding="utf-8") as file:
++        file.write("2")
++
++    assert _query_cpu() == 1  # Should return 1
++
++def test_query_cpu_negative_cfs_quota():
++    """Test _query_cpu with negative cfs_quota_us."""
++    # Mock /sys/fs/cgroup/cpu/cpu.cfs_quota_us to return -1
++    with open("/sys/fs/cgroup/cpu/cpu.cfs_quota_us", "w", encoding="utf-8") as file:
++        file.write("-1")
++
++    assert _query_cpu() is None  # Should return None
++
++def test_query_cpu_valid_cfs_quota():
++    """Test _query_cpu with valid cfs_quota_us."""
++    # Mock /sys/fs/cgroup/cpu/cpu.cfs_quota_us to return 5000
++    with open("/sys/fs/cgroup/cpu/cpu.cfs_quota_us", "w", encoding="utf-8") as file:
++        file.write("5000")
++    # Mock /sys/fs/cgroup/cpu/cpu.cfs_period_us to return 100000
++    with open("/sys/fs/cgroup/cpu/cpu.cfs_period_us", "w", encoding="utf-8") as file:
++        file.write("100000")
++
++    assert _query_cpu() == 1  # Should return 1
++
++def test_query_cpu_valid_shares():
++    """Test _query_cpu with valid cpu shares."""
++    # Mock /sys/fs/cgroup/cpu/cpu.shares to return 1024
++    with open("/sys/fs/cgroup/cpu/cpu.shares", "w", encoding="utf-8") as file:
++        file.write("1024")
++
++    assert _query_cpu() == 1  # Should return 1

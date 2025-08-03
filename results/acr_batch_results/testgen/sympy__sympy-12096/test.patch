@@ -1,0 +1,36 @@
+--- a/tests/test_function.py
++++ b/tests/test_function.py
+-# Original code here (if modifying existing file)
++import pytest
++from sympy import Function, implemented_function, Symbol
++from sympy.utilities.lambdify import lambdify
++
++def test_implemented_function_evalf():
++    x = Symbol('x')
++    f = implemented_function('f', lambda x: x ** 2)
++    assert f(2).evalf() == 4.0
++
++def test_composition_evalf():
++    x = Symbol('x')
++    f = implemented_function('f', lambda x: x ** 2)
++    g = implemented_function('g', lambda x: 2 * x)
++    assert f(g(2)).evalf() == 16.0
++
++def test_nested_composition_evalf():
++    x = Symbol('x')
++    f = implemented_function('f', lambda x: x ** 2)
++    g = implemented_function('g', lambda x: 2 * x)
++    h = implemented_function('h', lambda x: 3 * x)
++    assert f(g(h(2))).evalf() == 144.0
++
++def test_evalf_not_called_recursively():
++    x = Symbol('x')
++    f = implemented_function('f', lambda x: x ** 2)
++    g = implemented_function('g', lambda x: 2 * x)
++    assert f(g(2)).evalf() == 16.0
++
++def test_issue_12096():
++    from sympy.abc import x
++    f = implemented_function('f', lambda x: 2*x)
++    assert f(x).subs(x, 2).evalf() == 4.0
++    assert f(f(x)).subs(x, 2).evalf() == 8.0

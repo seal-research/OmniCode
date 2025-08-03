@@ -1,0 +1,25 @@
+--- a/tests/test_simplify.py
++++ b/tests/test_simplify.py
+-# Original code here
++import pytest
++from sympy import symbols, I, cos, simplify
++
++def test_simplify_cos_x_to_I():
++    x = symbols('x')
++    assert simplify(cos(x)**I) == cos(x)**I
++
++def test_simplify_cos_x_to_complex_I():
++    x = symbols('x')
++    assert simplify(cos(x)**(I*2)) == (cos(x)**2)**I
++
++def test_simplify_trigsimp_cos_x_to_I():
++    x = symbols('x')
++    assert simplify(cos(x)**I) == cos(x)**I
++
++def test_invalid_comparison_complex_I():
++    x = symbols('x')
++    try:
++        simplify(cos(x)**I)
++        assert False, "Expected TypeError for complex comparison"
++    except TypeError as e:
++        assert "Invalid comparison of complex" in str(e)

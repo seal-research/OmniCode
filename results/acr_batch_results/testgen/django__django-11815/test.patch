@@ -1,0 +1,61 @@
+--- a/tests/test_migrations.py
++++ b/tests/test_migrations.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations
++from django.db.models import CharField, Enum
++
++class Status(Enum):
++    GOOD = 'good'
++    BAD = 'bad'
++
++class Item(models.Model):
++    status = CharField(max_length=10, default=Status.GOOD)
++
++def test_enum_default_in_migration():
++    """
++    Test that Enum default values are handled correctly in migrations.
++    """
++    # Create a migration
++    migration = migrations.Migration()
++    field = migrations.Field(
++        'status',
++        CharField,
++        default=Status.GOOD,
++    )
++    migration.operations.append(migrations.AddField(
++        model_name='item',
++        name='status',
++        field=field,
++    ))
++
++    # Apply the migration
++    migration.apply(ProjectState(), 'item')
++
++    # Check that the default value is correct
++    item = Item.objects.get(id=1)
++    assert item.status == 'good'
++
++def test_enum_default_in_migration_serialization():
++    """
++    Test that Enum default values are serialized correctly in migrations.
++    """
++    # Create a migration
++    migration = migrations.Migration()
++    field = migrations.Field(
++        'status',
++        CharField,
++        default=Status.GOOD,
++    )
++    migration.operations.append(migrations.AddField(
++        model_name='item',
++        name='status',
++        field=field,
++    ))
++
++    # Serialize the migration
++    serializer = MigrationSerializer(migration)
++    serialized_migration = serializer.serialize()
++
++    # Check that the default value is correct
++    assert 'default=Status.GOOD' in serialized_migration

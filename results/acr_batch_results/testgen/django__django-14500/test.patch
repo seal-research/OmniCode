@@ -1,0 +1,47 @@
+--- a/tests/test_migration_executor.py
++++ b/tests/test_migration_executor.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations
++from django.db.migrations.executor import MigrationExecutor
++from django.db.migrations.recorder import MigrationRecorder
++
++@pytest.fixture
++def executor():
++ return MigrationExecutor(connection=None)
++
++def test_unapply_squashed_migration(executor):
++ # Create a squashed migration
++ squashed_migration = migrations.Migration('app', 'squashed')
++
++ # Create replaced migrations
++ replaced_migration1 = migrations.Migration('app', 'replaced1')
++ replaced_migration2 = migrations.Migration('app', 'replaced2')
++
++ # Mark replaced migrations as applied
++ executor.recorder.record_applied(replaced_migration1.app_label, replaced_migration1.name)
++ executor.recorder.record_applied(replaced_migration2.app_label, replaced_migration2.name)
++
++ # Squashed migration replaces the other two
++ squashed_migration.replaces = [(replaced_migration1.app_label, replaced_migration1.name),
++ (replaced_migration2.app_label, replaced_migration2.name)]
++
++ # Unapply the squashed migration
++ executor.unapply_migration(None, squashed_migration)
++
++ # Check that replaced migrations are marked as unapplied
++ assert not executor.recorder.migration_qs.filter(app=replaced_migration1.app_label, name=replaced_migration1.name).exists()
++ assert not executor.recorder.migration_qs.filter(app=replaced_migration2.app_label, name=replaced_migration2.name).exists()
++
++def test_unapply_non_squashed_migration(executor):
++ # Create a non-squashed migration
++ non_squashed_migration = migrations.Migration('app', 'non_squashed')
++
++ # Mark it as applied
++ executor.recorder.record_applied(non_squashed_migration.app_label, non_squashed_migration.name)
++
++ # Unapply the migration
++ executor.unapply_migration(None, non_squashed_migration)
++
++ # Check that it's marked as unapplied
++ assert not executor.recorder.migration_qs.filter(app=non_squashed_migration.app_label, name=non_squashed_migration.name).exists()

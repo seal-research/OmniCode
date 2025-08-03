@@ -1,0 +1,76 @@
+--- a/tests/test_feedexport.py
++++ b/tests/test_feedexport.py
+-# Empty if creating new file
++import pytest
++import boto3
++from moto import mock_s3
++from scrapy.exceptions import NotConfigured
++from scrapy.utils.test import get_crawler
++from scrapy.settings import Settings
++from scrapy.extensions.feedexport import S3FeedStorage
++
++@pytest.fixture
++def crawler():
++    return get_crawler(settings_dict={"FEED_STORAGE_S3_ACL": "private"})
++
++def test_s3_feed_storage_init(crawler):
++    storage = S3FeedStorage("s3://bucket/key", crawler=crawler)
++    assert storage.bucketname == "bucket"
++    assert storage.keyname == "key"
++
++def test_s3_feed_storage_from_crawler(crawler):
++    storage = S3FeedStorage.from_crawler(crawler, "s3://bucket/key")
++    assert storage.bucketname == "bucket"
++    assert storage.keyname == "key"
++
++def test_s3_feed_storage_store_in_thread(tmp_path):
++    bucket_name = "bucket"
++    key_name = "key"
++    file_path = tmp_path / "test_file"
++
++    with open(file_path, "w") as f:
++        f.write("Test content")
++
++    with mock_s3():
++        s3 = boto3.client("s3", region_name="us-east-1")
++        s3.create_bucket(Bucket=bucket_name)
++
++        storage = S3FeedStorage(f"s3://{bucket_name}/{key_name}")
++        storage._store_in_thread(file_path)
++
++        response = s3.get_object(Bucket=bucket_name, Key=key_name)
++        assert response["Body"].read().decode() == "Test content"
++
++def test_s3_feed_storage_store_in_thread_multipart(tmp_path):
++    bucket_name = "bucket"
++    key_name = "key"
++    file_path = tmp_path / "test_file"
++
++    with open(file_path, "w") as f:
++        f.write("Test content" * 1000000)  # Create a large file
++
++    with mock_s3():
++        s3 = boto3.client("s3", region_name="us-east-1")
++        s3.create_bucket(Bucket=bucket_name)
++
++        storage = S3FeedStorage(f"s3://{bucket_name}/{key_name}")
++        storage._store_in_thread(file_path)
++
++        response = s3.get_object(Bucket=bucket_name, Key=key_name)
++        assert response["Body"].read().decode() == "Test content" * 1000000
++
++def test_s3_feed_storage_not_configured():
++    with pytest.raises(NotConfigured):
++        S3FeedStorage("s3://bucket/key")
++
++def test_s3_feed_storage_acl(crawler):
++    settings = Settings({"FEED_STORAGE_S3_ACL": "public-read"})
++    crawler = get_crawler(settings_dict=settings)
++    storage = S3FeedStorage.from_crawler(crawler, "s3://bucket/key")
++    assert storage.acl == "public-read"
++
++def test_s3_feed_storage_endpoint_url(crawler):
++    settings = Settings({"AWS_ENDPOINT_URL": "https://example.com"})
++    crawler = get_crawler(settings_dict=settings)
++    storage = S3FeedStorage.from_crawler(crawler, "s3://bucket/key")
++    assert storage.endpoint_url == "https://example.com"

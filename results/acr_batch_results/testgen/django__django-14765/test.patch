@@ -1,0 +1,27 @@
+--- a/tests/test_migrations/test_state.py
++++ b/tests/test_migrations/test_state.py
+-# Empty if creating new file
++import pytest
++from django.db.migrations.state import ProjectState
++
++def test_projectstate_real_apps_set():
++    # Test that ProjectState.__init__ accepts a set for real_apps
++    real_apps = {"app1", "app2"}
++    project_state = ProjectState(real_apps=real_apps)
++    assert project_state.real_apps == real_apps
++
++def test_projectstate_real_apps_none():
++    # Test that ProjectState.__init__ defaults to an empty set for real_apps=None
++    project_state = ProjectState(real_apps=None)
++    assert project_state.real_apps == set()
++
++def test_projectstate_real_apps_not_set():
++    # Test that ProjectState.__init__ raises an AssertionError for non-set real_apps
++    with pytest.raises(AssertionError):
++        ProjectState(real_apps="not a set")
++
++def test_projectstate_real_apps_empty_set():
++    # Test that ProjectState.__init__ accepts an empty set for real_apps
++    real_apps = set()
++    project_state = ProjectState(real_apps=real_apps)
++    assert project_state.real_apps == real_apps
