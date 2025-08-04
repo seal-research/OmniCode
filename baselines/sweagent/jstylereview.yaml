@@ -22,11 +22,12 @@ agent:
       {{problem_statement}}
       
       Your task is to:
-      1. Analyze the Checkstyle violations provided in the problem statement
+      1. Analyze the Checkstyle errors provided in the problem statement
       2. Understand the specific rules that were violated (e.g., naming conventions, import organization, formatting)
       3. Apply fixes that resolve these violations while maintaining code functionality
       4. Ensure your changes follow Java best practices and coding standards
-      5. Test that your fixes don't introduce new style violations
+      5. Test that your fixes don't introduce new style errors
+      6. Do not introduce any new files to fix the style errors
       
       Common Checkstyle violations you may encounter:
       - Naming violations (ConstantName, LocalVariableName, MethodName, etc.)

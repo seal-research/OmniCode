@@ -24,9 +24,10 @@ agent:
       Your task is to:
       1. Analyze the PMD violations provided in the problem statement
       2. Understand the specific rules that were violated (e.g., best practices, code style, error-prone patterns)
-      3. Apply fixes that resolve these violations while maintaining code functionality
+      3. Apply fixes that resolve these errors while maintaining code functionality
       4. Ensure your changes follow Java best practices and improve code quality
-      5. Test that your fixes don't introduce new quality violations
+      5. Test that your fixes don't introduce new style errors 
+      6. Do not introduce any new files to fix the style errors
       
       Common PMD violations you may encounter:
       - Best practices violations (AvoidReassigningParameters, AvoidUsingHardCodedIP, etc.)
