@@ -20,5 +20,5 @@ RUN pip3 install --user pipx && \
     /root/.local/bin/pipx install swe-rex
 
 # Clone repo (optional for test)
-RUN git clone https://github.com/apache/dubbo.git /home/dubbo
+RUN git clone https://github.com/elastic/logstash.git /home/logstash
 
