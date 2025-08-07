@@ -390,7 +390,6 @@ def main(
 from argparse import ArgumentParser
 if __name__ == '__main__':
 
-    from argparse import ArgumentParser
     parser = ArgumentParser()
     parser.add_argument("-i", "--input_tasks", type=str, required=True)
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
