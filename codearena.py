@@ -718,8 +718,7 @@ def main():
                     "--clean", str(args.clean),
                     "--open_file_limit", str(args.open_file_limit),
                     "--run_id", args.run_id,
-                    "--timeout", str(args.timeout)
-                   
+                    "--timeout", str(args.timeout)                   
                 ]
 
                 # Add optional arguments if they're set
@@ -730,7 +729,6 @@ def main():
                 if args.instance_ids:
                     cmd.extend(["--instance_ids"] + args.instance_ids)
                 
-
                 # Run the command
                 print(f"Executing command: {' '.join(cmd)}")
                 result = run_with_timeout(cmd, args.timeout)
