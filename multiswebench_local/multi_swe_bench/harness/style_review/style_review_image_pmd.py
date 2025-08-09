@@ -267,4 +267,3 @@ run_style_review "$@"
 
     def fix_patch_path(self) -> str:
         return "/home/fix.patch"
-

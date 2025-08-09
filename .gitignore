@@ -217,4 +217,6 @@ multiswebench/data/workdir/
 temp_BugFixing_python_style_predictions.json
 testgen_mockito3424.json
 testgen_mockito3424.jsonl
+sweagent_input_*
+
 

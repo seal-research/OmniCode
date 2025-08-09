@@ -249,6 +249,7 @@ def run_style_review_single(
     style_tool: str = "checkstyle",
     thinking_budget: int | None = None,
     timeout: int | None = None,
+    use_apptainer: bool = False,
 ):
     """
     Run style review for a single instance using the specified tool (PMD or Checkstyle).
@@ -263,28 +264,33 @@ def run_style_review_single(
         repo_path = instance.get("repo", "")
 
     repo_path = repo_path.strip()  # Ensure no leading/trailing whitespace
-    
-    
-    
     url = f"https://github.com/{repo_path}"
-    
-    image = f"omnicodeorg/omnicode:"+repo_path.replace('/','_')+"_base"
-    print(f"DEBUG: About to use Docker image: '{image}'")
     config_file = STYLE_REVIEW_CONFIG_MAP[style_tool]
 
-    # Check if the Docker image exists locally
-    try:
-        result = subprocess.run([
-            "docker", "images", "-q", image
-        ], capture_output=True, text=True)
-        if not result.stdout.strip():
-            print(f"\nERROR: Required Docker image '{image}' does not exist locally.")
+    # Select image and check existence based on container type
+    if use_apptainer:
+        image = f"omnicodeorg/omnicode:{repo_path.replace('/', '_')}_base.sif"
+        # Optionally check for .sif file existence locally
+        sif_path = Path.home() / ".apptainer" / "images" / f"{repo_path.replace('/', '_')}_base.sif"
+        if not sif_path.exists():
+            print(f"\nERROR: Required Apptainer image '{image}' does not exist locally at {sif_path}.")
             print(f"Please build or pull the image before running the agent.")
-            print(f"You can try: docker pull {image}")
-            raise RuntimeError(f"Docker image '{image}' not found locally.")
-    except Exception as e:
-        print(f"\nERROR: Failed to check for Docker image '{image}': {e}")
-        raise
+            raise RuntimeError(f"Apptainer image '{image}' not found locally.")
+    else:
+        image = f"omnicodeorg/omnicode:{repo_path.replace('/', '_')}_base"
+        # Check if the Docker image exists locally
+        try:
+            result = subprocess.run([
+                "docker", "images", "-q", image
+            ], capture_output=True, text=True)
+            if not result.stdout.strip():
+                print(f"\nERROR: Required Docker image '{image}' does not exist locally.")
+                print(f"Please build or pull the image before running the agent.")
+                print(f"You can try: docker pull {image}")
+                raise RuntimeError(f"Docker image '{image}' not found locally.")
+        except Exception as e:
+            print(f"\nERROR: Failed to check for Docker image '{image}': {e}")
+            raise
 
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
         fp.write(instance['problem_statement'])
@@ -314,12 +320,16 @@ def run_style_review_single(
         if "patch" in instance:
             commands = apply_patch_commands(instance["patch"], repo_name=repo_path.replace("/", "__"))
             if commands:
-                docker_args = ["-w", "/"] + commands
+                container_args = ["-w", "/"] + commands
             else:
-                docker_args = ["-w", "/"]
-            args.append(f"--env.deployment.docker_args={json.dumps(docker_args)}")
+                container_args = ["-w", "/"]
         else:
-            args.append(f"--env.deployment.docker_args={json.dumps(['-w', '/'])}")
+            container_args = ["-w", "/"]
+        # Pass correct args for apptainer or docker
+        if use_apptainer:
+            args.append(f"--env.deployment.apptainer_args={json.dumps(container_args)}")
+        else:
+            args.append(f"--env.deployment.docker_args={json.dumps(container_args)}")
         print("DEBUG: Full args to sweagent_main:", args)
         sweagent_main(args)
     output_file_path = output_dir / instance['instance_id'] / (instance['instance_id'] + ".pred")
