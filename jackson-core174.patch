@@ -1,0 +1,147 @@
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+index ff25103..dd9ec77 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonPointer.java
+@@ -32,23 +32,23 @@ public class JsonPointer
+      * segment (if any); null if this pointer refers to a matching
+      * segment.
+      */
+-    protected final JsonPointer _nextSegment;
++    protected final JsonPointer nextSegment;
+ 
+     /**
+      * Reference form currently matching segment (if any) to node
+      * before leaf.
+      */
+-    protected final JsonPointer _headSegment;
++    protected final JsonPointer headSegment;
+ 
+     /**
+      * We will retain representation of the pointer, as a String,
+      * so that {@link #toString} should be as efficient as possible.
+      */
+-    protected final String _asString;
++    protected final String asString;
+     
+-    protected final String _matchingPropertyName;
++    protected final String matchingPropertyName;
+ 
+-    protected final int _matchingElementIndex;
++    protected final int matchingElementIndex;
+ 
+     /*
+     /**********************************************************
+@@ -61,23 +61,23 @@ public class JsonPointer
+      * state that matches current node.
+      */
+     protected JsonPointer() {
+-        _nextSegment = null;
+-        _headSegment = null;
+-        _matchingPropertyName = "";
+-        _matchingElementIndex = -1;
+-        _asString = "";
++        nextSegment = null;
++        headSegment = null;
++        matchingPropertyName = "";
++        matchingElementIndex = -1;
++        asString = "";
+     }
+ 
+     /**
+      * Constructor used for creating non-empty Segments
+      */
+     protected JsonPointer(String fullString, String segment, JsonPointer next, JsonPointer head) {
+-        _asString = fullString;
+-        _nextSegment = next;
+-        _headSegment = head;
++        asString = fullString;
++        nextSegment = next;
++        headSegment = head;
+         // Ok; may always be a property
+-        _matchingPropertyName = segment;
+-        _matchingElementIndex = _parseIndex(segment);
++        matchingPropertyName = segment;
++        matchingElementIndex = _parseIndex(segment);
+     }
+     
+     /*
+@@ -142,11 +142,11 @@ public class JsonPointer
+     /**********************************************************
+      */
+ 
+-    public boolean matches() { return _nextSegment == null; }
+-    public String getMatchingProperty() { return _matchingPropertyName; }
+-    public int getMatchingIndex() { return _matchingElementIndex; }
+-    public boolean mayMatchProperty() { return _matchingPropertyName != null; }
+-    public boolean mayMatchElement() { return _matchingElementIndex >= 0; }
++    public boolean matches() { return nextSegment == null; }
++    public String getMatchingProperty() { return matchingPropertyName; }
++    public int getMatchingIndex() { return matchingElementIndex; }
++    public boolean mayMatchProperty() { return matchingPropertyName != null; }
++    public boolean mayMatchElement() { return matchingElementIndex >= 0; }
+ 
+     /**
+      * Method that may be called to see if the pointer would match property
+@@ -155,14 +155,14 @@ public class JsonPointer
+      * @since 2.5
+      */
+     public boolean matchesProperty(String name) {
+-        return (_nextSegment != null) && _matchingPropertyName.equals(name);
++        return (nextSegment != null) && matchingPropertyName.equals(name);
+     }
+     
+     public JsonPointer matchProperty(String name) {
+-        if (_nextSegment == null || !_matchingPropertyName.equals(name)) {
++        if (nextSegment == null || !matchingPropertyName.equals(name)) {
+             return null;
+         }
+-        return _nextSegment;
++        return nextSegment;
+     }
+ 
+     /**
+@@ -172,7 +172,7 @@ public class JsonPointer
+      * @since 2.5
+      */
+     public boolean matchesElement(int index) {
+-        return (index == _matchingElementIndex) && (index >= 0);
++        return (index == matchingElementIndex) && (index >= 0);
+     }
+ 
+     /**
+@@ -181,7 +181,7 @@ public class JsonPointer
+      * For matching state, will return null.
+      */
+     public JsonPointer tail() {
+-        return _nextSegment;
++        return nextSegment;
+     }
+ 
+     /**
+@@ -191,7 +191,7 @@ public class JsonPointer
+      * @since 2.5
+      */
+     public JsonPointer head() {
+-        return _headSegment;
++        return headSegment;
+     }
+ 
+     /*
+@@ -200,14 +200,14 @@ public class JsonPointer
+     /**********************************************************
+      */
+ 
+-    @Override public String toString() { return _asString; }
+-    @Override public int hashCode() { return _asString.hashCode(); }
++    @Override public String toString() { return asString; }
++    @Override public int hashCode() { return asString.hashCode(); }
+ 
+     @Override public boolean equals(Object o) {
+         if (o == this) return true;
+         if (o == null) return false;
+         if (!(o instanceof JsonPointer)) return false;
+-        return _asString.equals(((JsonPointer) o)._asString);
++        return asString.equals(((JsonPointer) o).asString);
+     }
+     
+     /*

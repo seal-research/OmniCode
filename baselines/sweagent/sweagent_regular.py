@@ -4,6 +4,7 @@ import logging
 import tempfile
 import base64
 import subprocess
+import shutil
 
 from datasets import load_dataset, load_from_disk
 from tqdm import tqdm
@@ -257,113 +258,137 @@ def run_style_review_single(
     if style_tool not in STYLE_REVIEW_CONFIG_MAP:
         raise RuntimeError(f"Unknown style tool: {style_tool}. Must be 'checkstyle' or 'pmd'")
 
-    # Correctly construct repo_path from instance_id
-    if ":" in instance.get("instance_id", ""):
-        repo_path = instance["instance_id"].split(":")[0]
-    else:
-        repo_path = instance.get("repo", "")
+    # Extract repo path from instance id or fallback to instance["repo"]
+    repo_path = ""
+    if "instance_id" in instance:
+        if ":" in instance["instance_id"]:
+            repo_path = instance["instance_id"].split(":")[0]
+        else:
+            repo_path = instance.get("repo", "")
+    repo_path = repo_path.strip()
+    if not repo_path:
+        raise RuntimeError("Repository path could not be determined from instance data")
 
-    repo_path = repo_path.strip()  # Ensure no leading/trailing whitespace
     url = f"https://github.com/{repo_path}"
     config_file = STYLE_REVIEW_CONFIG_MAP[style_tool]
 
-    # Select image and check existence based on container type
     if use_apptainer:
-        image = f"omnicodeorg/omnicode:{repo_path.replace('/', '_')}_base.sif"
-        # Optionally check for .sif file existence locally
-        sif_path = Path.home() / ".apptainer" / "images" / f"{repo_path.replace('/', '_')}_base.sif"
+        image = f"omnicodeorg_omnicode_{repo_path.replace('/', '_')}_base.sif"
+        sif_path = sif_path = Path.cwd() / f"omnicodeorg_omnicode_{repo_path.replace('/', '_')}_base.sif"
+
         if not sif_path.exists():
             print(f"\nERROR: Required Apptainer image '{image}' does not exist locally at {sif_path}.")
             print(f"Please build or pull the image before running the agent.")
             raise RuntimeError(f"Apptainer image '{image}' not found locally.")
     else:
         image = f"omnicodeorg/omnicode:{repo_path.replace('/', '_')}_base"
-        # Check if the Docker image exists locally
-        try:
-            result = subprocess.run([
-                "docker", "images", "-q", image
-            ], capture_output=True, text=True)
-            if not result.stdout.strip():
-                print(f"\nERROR: Required Docker image '{image}' does not exist locally.")
-                print(f"Please build or pull the image before running the agent.")
-                print(f"You can try: docker pull {image}")
-                raise RuntimeError(f"Docker image '{image}' not found locally.")
-        except Exception as e:
-            print(f"\nERROR: Failed to check for Docker image '{image}': {e}")
-            raise
+        if shutil.which("docker") is None:
+            print(f"\nWARNING: Docker CLI not found. Skipping Docker image existence check.")
+        else:
+            try:
+                result = subprocess.run(
+                    ["docker", "images", "-q", image],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                )
+                if not result.stdout.strip():
+                    print(f"\nERROR: Required Docker image '{image}' does not exist locally.")
+                    print(f"Please build or pull the image before running the agent.")
+                    print(f"You can try: docker pull {image}")
+                    raise RuntimeError(f"Docker image '{image}' not found locally.")
+            except subprocess.CalledProcessError as e:
+                print(f"\nERROR: Failed to check for Docker image '{image}': {e}")
+                raise
 
-    with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
+    with tempfile.NamedTemporaryFile(delete=False, mode="w") as fp:
         fp.write(instance['problem_statement'])
-        fp.close()
+        temp_file_path = fp.name
 
-        args = ["run"]
-        if config_file is not None:
-            args.extend([f"--config", str(config_file)])
-        args += [
-            f"--agent.model.name={model_name}",
-            f"--agent.model.per_instance_cost_limit=2.0",
-            f"--env.repo.github_url={url}",
-            f"--env.repo.base_commit={instance['base_commit']}",
-            f"--env.deployment.image={image}",
-            f"--problem_statement.path={str(fp.name)}",
-            f"--problem_statement.id={instance['instance_id']}",
-            f"--output_dir={output_dir}",
-        ]
-        if api_key is not None:
-            args.append(f"--agent.model.api_key={api_key}")
-        if thinking_budget is not None:
-            if model_name.startswith("gemini"):
-                args.append("""--agent.model.completion_kwargs={\"thinking\":{\"type\":\"enabled\",\"budget_tokens\":""" + str(int(thinking_budget)) + """}}""")
-            else:
-                raise RuntimeError(f"Cannot use thinking budget with non-gemini model: {model_name}")
-        # Apply the patch for style review if present
-        if "patch" in instance:
-            commands = apply_patch_commands(instance["patch"], repo_name=repo_path.replace("/", "__"))
-            if commands:
-                container_args = ["-w", "/"] + commands
-            else:
-                container_args = ["-w", "/"]
+    args = ["run"]
+    if config_file is not None:
+        args.extend(["--config", str(config_file)])
+
+    args += [
+        f"--agent.model.name={model_name}",
+        f"--agent.model.per_instance_cost_limit=2.0",
+        f"--env.repo.github_url={url}",
+        f"--env.repo.base_commit={instance['base_commit']}",
+        f"--env.deployment.image={image}",
+        f"--problem_statement.path={str(temp_file_path)}",
+        f"--problem_statement.id={instance['instance_id']}",
+        f"--output_dir={output_dir}",
+    ]
+
+    if api_key is not None:
+        args.append(f"--agent.model.api_key={api_key}")
+
+    if thinking_budget is not None:
+        if model_name.startswith("gemini"):
+            args.append(
+                f"""--agent.model.completion_kwargs={{"thinking":{{"type":"enabled","budget_tokens":{int(thinking_budget)}}}}}"""
+            )
         else:
-            container_args = ["-w", "/"]
-        # Pass correct args for apptainer or docker
-        if use_apptainer:
-            args.append(f"--env.deployment.apptainer_args={json.dumps(container_args)}")
-        else:
-            args.append(f"--env.deployment.docker_args={json.dumps(container_args)}")
-        print("DEBUG: Full args to sweagent_main:", args)
-        sweagent_main(args)
+            raise RuntimeError(f"Cannot use thinking budget with non-gemini model: {model_name}")
+
+    # Handle patch commands if any
+    if "patch" in instance:
+        commands = apply_patch_commands(instance["patch"], repo_name=repo_path.replace("/", "__"))
+        container_args = ["-w", "/"] + commands if commands else ["-w", "/"]
+    else:
+        container_args = ["-w", "/"]
+
+    # Pass container args according to deployment type
+    if use_apptainer:
+        args.append(f"--env.deployment.apptainer_args={json.dumps(container_args)}")
+    else:
+        args.append(f"--env.deployment.docker_args={json.dumps(container_args)}")
+
+    print("DEBUG: Full args to sweagent_main:", args)
+
+    sweagent_main(args)
+
     output_file_path = output_dir / instance['instance_id'] / (instance['instance_id'] + ".pred")
     output = json.loads(output_file_path.read_text())
+
+    # Cleanup temp file
+    try:
+        Path(temp_file_path).unlink()
+    except Exception:
+        pass
+
     return None, output
+
 
 def main(
     input_tasks_path: Path,
     output_dir_path: Path,
     model_name: str,
     api_key: str | None,
-    instance_ids: list[str] | None= None,
+    instance_ids: list[str] | None = None,
     mode: str = "bugfixing",
     thinking_budget: int | None = None,
     use_apptainer: bool = False,
 ):
+    # Load dataset
     if input_tasks_path.exists():
-        if input_tasks_path.suffix.endswith("json"):
+        suffix = input_tasks_path.suffix.lower()
+        if suffix == ".json":
             dataset = json.loads(input_tasks_path.read_text())
-        elif input_tasks_path.suffix.endswith("jsonl"):
-            dataset = [json.loads(i) for i in input_tasks_path.read_text().splitlines()]
-        elif input_tasks_path.suffix.endswith("csv"):
+        elif suffix == ".jsonl":
+            dataset = [json.loads(line) for line in input_tasks_path.read_text().splitlines()]
+        elif suffix == ".csv":
             dataset = pd.read_csv(input_tasks_path).to_dict('records')
         else:
-            raise RuntimeError(f"Data type ({input_tasks_path.suffix}) not supported")
-
+            raise RuntimeError(f"Unsupported data file type: {input_tasks_path.suffix}")
     else:
         dataset = load_dataset(str(input_tasks_path))
 
     if isinstance(dataset, dict):
-        dataset = dataset['test']
+        dataset = dataset.get('test', dataset)
 
     if not (isinstance(dataset, list) and all(isinstance(d, dict) for d in dataset)):
-        raise RuntimeError(f"Data folllows incorrect format")
+        raise RuntimeError("Dataset must be a list of dicts")
 
     if instance_ids is not None:
         dataset = [d for d in dataset if d["instance_id"] in instance_ids]
@@ -377,9 +402,9 @@ def main(
         with open(output_file_path) as f:
             for line in f:
                 data = json.loads(line)
-                instance_id = data["instance_id"]
-                existing_ids.add(instance_id)
-    logger.info(f"Read {len(existing_ids)} already completed ids from {output_file_path}")
+                existing_ids.add(data["instance_id"])
+
+    logger.info(f"Found {len(existing_ids)} existing instance_ids in output.")
 
     basic_args = {
         "model_name_or_path": model_name,
@@ -392,15 +417,35 @@ def main(
                 continue
             output_dict = {"instance_id": instance_id}
             output_dict.update(basic_args)
-            full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path, api_key=api_key, mode=mode, thinking_budget=thinking_budget, use_apptainer=use_apptainer)
+            full_output, model_patch = run_sweagent_single(
+                datum,
+                model_name=model_name,
+                output_dir=output_dir_path,
+                api_key=api_key,
+                mode=mode,
+                thinking_budget=thinking_budget,
+                use_apptainer=use_apptainer,
+            )
             output_dict["full_output"] = full_output
             output_dict["model_patch"] = model_patch
             print(json.dumps(output_dict), file=f, flush=True)
-# Update main to support style review via --mode stylereview or --style_tool
-from argparse import ArgumentParser
-if __name__ == '__main__':
 
-    parser = ArgumentParser()
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+        return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+        return False
+    else:
+        raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--input_tasks", type=str, required=True)
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
@@ -409,58 +454,71 @@ if __name__ == '__main__':
     parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview", "reviewfix"])
     parser.add_argument("--thinking_budget", type=int, default=0)
     parser.add_argument("--style_tool", type=str, default=None, choices=["checkstyle", "pmd"], help="Style review tool to use (Java)")
-    parser.add_argument("--use_apptainer", type=str2bool, default=False, help="run with docker or apptainer")
+    parser.add_argument("--use_apptainer", type=str2bool, default=False, help="Run with Docker or Apptainer container")
+
     args = parser.parse_args()
-    
-    # Determine if we are in style review mode
+
     style_review_modes = ["stylereview", "stylereview-java"]
     is_style_review = (args.mode in style_review_modes) or (args.style_tool is not None)
 
-    # Determine style_tool from mode or argument
     style_tool = args.style_tool
     if is_style_review and style_tool is None:
-        # Try to infer style_tool from input file or default to checkstyle
-        style_tool = "checkstyle"
+        style_tool = "checkstyle"  # default style tool if not specified
 
     if is_style_review:
-        # Load dataset
         input_tasks_path = Path(args.input_tasks)
-        if input_tasks_path.exists():
-            if input_tasks_path.suffix.endswith("json"):
-                dataset = json.loads(input_tasks_path.read_text())
-            elif input_tasks_path.suffix.endswith("jsonl"):
-                dataset = [json.loads(i) for i in input_tasks_path.read_text().splitlines()]
-            elif input_tasks_path.suffix.endswith("csv"):
-                dataset = pd.read_csv(input_tasks_path).to_dict('records')
-            else:
-                raise RuntimeError(f"Data type ({input_tasks_path.suffix}) not supported")
+
+        # Load dataset
+        suffix = input_tasks_path.suffix.lower()
+        if suffix == ".json":
+            dataset = json.loads(input_tasks_path.read_text())
+        elif suffix == ".jsonl":
+            dataset = [json.loads(line) for line in input_tasks_path.read_text().splitlines()]
+        elif suffix == ".csv":
+            dataset = pd.read_csv(input_tasks_path).to_dict('records')
         else:
-            dataset = load_dataset(str(input_tasks_path))
+            raise RuntimeError(f"Unsupported data file type: {input_tasks_path.suffix}")
+
         if isinstance(dataset, dict):
-            dataset = dataset['test']
+            dataset = dataset.get('test', dataset)
+
         if not (isinstance(dataset, list) and all(isinstance(d, dict) for d in dataset)):
-            raise RuntimeError(f"Data follows incorrect format")
+            raise RuntimeError("Dataset must be a list of dicts")
+
         if args.instance_ids:
             instance_ids = args.instance_ids.split(",")
             dataset = [d for d in dataset if d["instance_id"] in instance_ids]
-        # If mode is in the instance, filter for those with mode stylereview
+
+        # Filter dataset to only those with matching mode, if present in datum else default
         dataset = [d for d in dataset if d.get("mode", args.mode) in style_review_modes]
+
         output_dir_path = Path(args.output_dir)
         output_dir_path.mkdir(parents=True, exist_ok=True)
         output_file_path = output_dir_path / f"style_review_{style_tool}_results.jsonl"
+
         existing_ids = set()
         if output_file_path.exists():
             with open(output_file_path) as f:
                 for line in f:
                     data = json.loads(line)
-                    instance_id = data["instance_id"]
-                    existing_ids.add(instance_id)
+                    existing_ids.add(data["instance_id"])
+
+        # Filter out already processed
         dataset = [d for d in dataset if d["instance_id"] not in existing_ids]
+
         with open(output_file_path, "a+") as f:
             for datum in tqdm(dataset, desc=f"Style review with {style_tool}"):
                 instance_id = datum["instance_id"]
                 output_dict = {"instance_id": instance_id, "style_tool": style_tool, "model_name": args.model_name}
-                full_output, model_patch = run_style_review_single(datum, model_name=args.model_name, api_key=args.api_key, output_dir=output_dir_path, style_tool=style_tool, thinking_budget=args.thinking_budget)
+                full_output, model_patch = run_style_review_single(
+                    datum,
+                    model_name=args.model_name,
+                    api_key=args.api_key,
+                    output_dir=output_dir_path,
+                    style_tool=style_tool,
+                    thinking_budget=args.thinking_budget if args.thinking_budget > 0 else None,
+                    use_apptainer=args.use_apptainer,
+                )
                 output_dict["full_output"] = full_output
                 output_dict["model_patch"] = model_patch
                 print(json.dumps(output_dict), file=f, flush=True)
@@ -472,6 +530,6 @@ if __name__ == '__main__':
             instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
             api_key=args.api_key,
             mode=args.mode,
-            # thinking_budget=args.thinking_budget,
+            thinking_budget=args.thinking_budget if args.thinking_budget > 0 else None,
             use_apptainer=args.use_apptainer,
         )

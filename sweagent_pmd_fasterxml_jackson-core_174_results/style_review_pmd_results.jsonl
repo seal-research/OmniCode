@@ -1,0 +1,1 @@
+{"instance_id": "fasterxml/jackson-core:174", "style_tool": "pmd", "model_name": "gemini/gemini-1.5-flash", "full_output": null, "model_patch": {"model_name_or_path": "sweagent_pmd_fasterxml_jackson-core_174_results", "instance_id": "fasterxml/jackson-core:174", "model_patch": null}}
