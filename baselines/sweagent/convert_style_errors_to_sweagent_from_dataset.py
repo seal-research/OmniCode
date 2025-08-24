@@ -122,7 +122,7 @@ def create_sweagent_instance(org: str, repo: str, pr_number: int, base_commit: s
         "number": pr_number,
         "base_commit": base_commit,
         "problem_statement": problem_statement,
-        "patch": original_patch,
+        "patch": "",
         "mode": "stylereview"
     }
 
@@ -169,7 +169,7 @@ def main():
 
     # Construct label and path to JSONL
     target_label = f"{args.org}/{args.repo}:pr-{args.pr_number}"
-    jsonl_filename = f"original_results_{args.style_tool}.jsonl"
+    jsonl_filename = "filtered_results.jsonl"#f"original_results_{args.style_tool}.jsonl"
     jsonl_path =Path(jsonl_filename)
 
     print(f"\n Loading style errors from {jsonl_path}...")

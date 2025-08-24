@@ -36,7 +36,6 @@ def extract_violations_from_file(file_report: Dict) -> List[str]:
 
 
 def extract_modified_files_from_patch(patch_text: str) -> List[str]:
-    """Extract a list of modified file paths from a unified diff/patch string."""
     modified_files = []
     for line in patch_text.splitlines():
         if line.startswith("+++ b/"):
@@ -47,7 +46,6 @@ def extract_modified_files_from_patch(patch_text: str) -> List[str]:
 
 
 def filter_patch_by_files(patch_text: str, modified_files: List[str]) -> str:
-    """Extract only the patch hunks that correspond to the modified files."""
     filtered_lines = []
     lines = patch_text.splitlines()
     i = 0
@@ -55,7 +53,6 @@ def filter_patch_by_files(patch_text: str, modified_files: List[str]) -> str:
     while i < len(lines):
         line = lines[i]
         if line.startswith("diff --git"):
-            # Look ahead to see what file is being patched
             j = i + 1
             while j < len(lines) and not lines[j].startswith("+++ b/"):
                 j += 1
@@ -64,16 +61,13 @@ def filter_patch_by_files(patch_text: str, modified_files: List[str]) -> str:
                 keep = file_path in modified_files
             else:
                 keep = False
-
         if keep:
             filtered_lines.append(line)
-
         i += 1
-
     return "\n".join(filtered_lines)
 
 
-def generate_problem_statement(original_errors: List[Dict], patched_errors: List[Dict], style_tool: str, modified_files: List[str]) -> str:
+def generate_problematic_files(original_errors: List[Dict], patched_errors: List[Dict], modified_files: List[str]) -> List[Dict]:
     original_map = {error["file"]: error for error in original_errors}
     patched_map = {error["file"]: error for error in patched_errors}
 
@@ -93,27 +87,35 @@ def generate_problem_statement(original_errors: List[Dict], patched_errors: List
             })
 
     if not problematic_files:
-        return f"No {style_tool.upper()} violations found in modified files."
+        for file_report in original_errors[:10]:
+            problematic_files.append({
+                "file": file_report["file"],
+                "original_score": file_report.get("score", 10.0),
+                "patched_score": file_report.get("score", 10.0),
+                "original_errors": file_report.get("error_count", 0),
+                "patched_errors": file_report.get("error_count", 0),
+                "violations": extract_violations_from_file(file_report)
+            })
 
-    problem_statement = f"""Fix the following {style_tool.upper()} style violations in the modified code:\n\n"""
+    return problematic_files
+
+
+def generate_problem_statement(problematic_files: List[Dict], style_tool: str) -> str:
+    problem_statement = f"Fix the following {style_tool.upper()} style violations in the modified code:\n\n"
     total_violations = 0
-
     for file_info in problematic_files[:10]:
         total_violations += file_info["patched_errors"]
         display_path = file_info["file"].replace("/workspace/repo/", "")
         problem_statement += f"File: {display_path}\n"
         problem_statement += f"Score: {file_info['patched_score']}/10.0 (was {file_info['original_score']}/10.0)\n"
         problem_statement += f"Violations: {file_info['patched_errors']} (was {file_info['original_errors']})\n\n"
-
-        for i, violation in enumerate(file_info["violations"][:5]):
-            problem_statement += f"  {violation}\n"
-
+        for v in file_info["violations"][:5]:
+            problem_statement += f"  {v}\n"
         if len(file_info["violations"]) > 5:
             problem_statement += f"  ... and {len(file_info['violations']) - 5} more violations\n"
-
         problem_statement += "\n"
 
-    total_original_errors = sum(original_map.get(f["file"], {}).get("error_count", 0) for f in problematic_files)
+    total_original_errors = sum(f["original_errors"] for f in problematic_files)
     total_patched_errors = sum(f["patched_errors"] for f in problematic_files)
 
     if total_original_errors > 0:
@@ -134,7 +136,7 @@ Focus on the most critical issues first and ensure the code follows Java best pr
     return problem_statement
 
 
-def create_sweagent_instance(org: str, repo: str, pr_number: int, base_commit: str, problem_statement: str, original_patch: str = "") -> Dict:
+def create_sweagent_instance(org: str, repo: str, pr_number: int, base_commit: str, problem_statement: str, filtered_patch: str = "") -> Dict:
     instance_id = f"{org}/{repo}:{pr_number}"
     return {
         "instance_id": instance_id,
@@ -143,8 +145,52 @@ def create_sweagent_instance(org: str, repo: str, pr_number: int, base_commit: s
         "number": pr_number,
         "base_commit": base_commit,
         "problem_statement": problem_statement,
-        "patch": "",
+        "patch": filtered_patch,
         "mode": "stylereview"
+    }
+
+
+def format_filtered_entry(problematic_files: List[Dict], target_label: str) -> Dict:
+    def safe_parse_violation(v: str) -> Dict:
+        try:
+            parts = v.split(": ", 2)
+            line_col = parts[0].replace("Line ", "").split(", Column ")
+            line = int(line_col[0])
+            column = int(line_col[1])
+            message = parts[2].rsplit(" [", 1)[0] if len(parts) > 2 else parts[-1]
+            source = parts[-1].rsplit("[", 1)[-1].replace("]", "").strip()
+            return {
+                "line": line,
+                "column": column,
+                "type": "error",
+                "message": message,
+                "source": source
+            }
+        except Exception:
+            # fallback if parsing fails
+            return {
+                "line": 0,
+                "column": 0,
+                "type": "error",
+                "message": v,
+                "source": ""
+            }
+
+    return {
+        "label": target_label,
+        "overview": {
+            "global_score": sum(f["patched_score"] for f in problematic_files) / len(problematic_files) if problematic_files else 10.0,
+            "total_errors": sum(f["patched_errors"] for f in problematic_files),
+            "total_warnings": 0
+        },
+        "files": [
+            {
+                "file": f["file"],
+                "score": f["patched_score"],
+                "error_count": f["patched_errors"],
+                "messages": [safe_parse_violation(v) for v in f["violations"]]
+            } for f in problematic_files
+        ]
     }
 
 
@@ -178,20 +224,10 @@ def main():
     parser.add_argument("--base_commit", help="Base commit hash (if not in dataset)")
     args = parser.parse_args()
 
-    print(f"\n  Converting Style Errors to SWE Agent Input")
-    print("=" * 60)
-    print(f"Org        : {args.org}")
-    print(f"Repo       : {args.repo}")
-    print(f"PR Number  : {args.pr_number}")
-    print(f"Style Tool : {args.style_tool}")
-    print(f"Output     : {args.output}")
-    print("=" * 60)
-
     target_label = f"{args.org}/{args.repo}:pr-{args.pr_number}"
     jsonl_filename = f"original_results_{args.style_tool}.jsonl"
     jsonl_path = Path(jsonl_filename)
 
-    print(f"\n Loading style errors from {jsonl_path}...")
     original_errors = load_errors_from_jsonl(jsonl_path, target_label)
     patched_errors = original_errors
 
@@ -199,39 +235,35 @@ def main():
         print(" No violations found or failed to load style errors.")
         sys.exit(1)
 
-    print("\n Loading dataset info for base commit...")
     dataset_info = load_original_dataset_info(args.org, args.repo, args.pr_number, args.dataset_path)
     base_commit = args.base_commit or (dataset_info.get("base_commit") if dataset_info else "main")
     patch_text = dataset_info.get("patch", "") if dataset_info else ""
 
-    print("\n Extracting modified files from patch...")
     modified_files = extract_modified_files_from_patch(patch_text)
-
-    print("\n Filtering patch to only modified files...")
     filtered_patch = filter_patch_by_files(patch_text, modified_files)
 
-    print("\n Generating problem statement...")
-    problem_statement = generate_problem_statement(original_errors, patched_errors, args.style_tool, modified_files)
+    problematic_files = generate_problematic_files(original_errors, patched_errors, modified_files)
+    problem_statement = generate_problem_statement(problematic_files, args.style_tool)
 
-    print("\n Creating SWE-agent instance...")
     sweagent_instance = create_sweagent_instance(
         org=args.org,
         repo=args.repo,
         pr_number=args.pr_number,
         base_commit=base_commit,
         problem_statement=problem_statement,
-        original_patch=filtered_patch
+        filtered_patch=filtered_patch
     )
 
-    print(f"\n Saving instance to {args.output}...")
-    try:
-        with open(args.output, 'w') as f:
-            json.dump([sweagent_instance], f, indent=2)
-        print(" Successfully saved.")
-    except Exception as e:
-        print(f" Failed to save: {e}")
-        sys.exit(1)
+    with open(args.output, 'w') as f:
+        json.dump([sweagent_instance], f, indent=2)
 
+    filtered_jsonl_path = Path("filtered_results.jsonl")
+    filtered_entry = format_filtered_entry(problematic_files, target_label)
+    with open(filtered_jsonl_path, "a") as f:
+        f.write(json.dumps(filtered_entry) + "\n")
+
+    print(f"SWE-agent input saved to {args.output}")
+    print(f"Filtered results appended to {filtered_jsonl_path}")
     print("\n Sample run command:")
     print("=" * 60)
     output_dir = f"sweagent_{args.style_tool}_{args.org}_{args.repo}_{args.pr_number}_results"
@@ -247,4 +279,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

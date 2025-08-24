@@ -1,0 +1,210 @@
+diff --git a/src/main/java/com/fasterxml/jackson/dataformat/xml/DefaultingXmlTypeResolverBuilder.java b/src/main/java/com/fasterxml/jackson/dataformat/xml/DefaultingXmlTypeResolverBuilder.java
+index a545728..696d972 100644
+--- a/src/main/java/com/fasterxml/jackson/dataformat/xml/DefaultingXmlTypeResolverBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/dataformat/xml/DefaultingXmlTypeResolverBuilder.java
+@@ -3,7 +3,7 @@ package com.fasterxml.jackson.dataformat.xml;
+ import java.util.Collection;
+ 
+ import com.fasterxml.jackson.annotation.JsonTypeInfo;
+-import com.fasterxml.jackson.databind.*;
++
+ import com.fasterxml.jackson.databind.ObjectMapper.DefaultTyping;
+ import com.fasterxml.jackson.databind.cfg.MapperConfig;
+ import com.fasterxml.jackson.databind.jsontype.NamedType;
+@@ -29,7 +29,7 @@ public class DefaultingXmlTypeResolverBuilder
+ {
+     private static final long serialVersionUID = 1L;
+ 
+-    public DefaultingXmlTypeResolverBuilder(DefaultTyping t, PolymorphicTypeValidator ptv) {
++    public DefaultingXmlTypeResolverBuilder(final DefaultTyping t, PolymorphicTypeValidator ptv) {
+         super(t, ptv);
+     }
+ 
+@@ -53,10 +53,11 @@ public class DefaultingXmlTypeResolverBuilder
+     public StdTypeResolverBuilder typeProperty(String typeIdPropName)
+     {
+         // ok to have null/empty; will restore to use defaults
+-        if (typeIdPropName == null || typeIdPropName.length() == 0) {
+-            typeIdPropName = _idType.getDefaultPropertyName();
++        String propName = typeIdPropName;
++        if (propName == null || propName.length() == 0) {
++            propName = _idType.getDefaultPropertyName();
+         }
+-        _typeProperty = StaxUtil.sanitizeXmlTypeName(typeIdPropName);
++        _typeProperty = StaxUtil.sanitizeXmlTypeName(propName);
+         return this;
+     }
+ 
+@@ -65,19 +66,25 @@ public class DefaultingXmlTypeResolverBuilder
+             JavaType baseType, PolymorphicTypeValidator subtypeValidator,
+             Collection<NamedType> subtypes, boolean forSer, boolean forDeser)
+     {
++        TypeIdResolver resolver;
+         if (_customIdResolver != null) {
+-            return _customIdResolver;
+-        }
+-        // Only override handlers of class, minimal class; name is good as is
+-        switch (_idType) {
+-        case CLASS:
+-            return new XmlTypeResolverBuilder.XmlClassNameIdResolver(baseType, config.getTypeFactory(),
+-                    subTypeValidator(config));
+-        case MINIMAL_CLASS:
+-            return new XmlTypeResolverBuilder.XmlMinimalClassNameIdResolver(baseType, config.getTypeFactory(),
+-                    subTypeValidator(config));
+-        default:
++            resolver = _customIdResolver;
++        } else {
++            // Only override handlers of class, minimal class; name is good as is
++            switch (_idType) {
++            case CLASS:
++                resolver = new XmlTypeResolverBuilder.XmlClassNameIdResolver(baseType, config.getTypeFactory(),
++                        subTypeValidator(config));
++                break;
++            case MINIMAL_CLASS:
++                resolver = new XmlTypeResolverBuilder.XmlMinimalClassNameIdResolver(baseType, config.getTypeFactory(),
++                        subTypeValidator(config));
++                break;
++            default:
++                resolver = super.idResolver(config, baseType, subtypeValidator, subtypes, forSer, forDeser);
++                break;
++            }
+         }
+-        return super.idResolver(config, baseType, subtypeValidator, subtypes, forSer, forDeser);
++        return resolver;
+     }
+ }
+diff --git a/src/main/java/com/fasterxml/jackson/dataformat/xml/JacksonXmlAnnotationIntrospector.java b/src/main/java/com/fasterxml/jackson/dataformat/xml/JacksonXmlAnnotationIntrospector.java
+index ee61709..89ac973 100644
+--- a/src/main/java/com/fasterxml/jackson/dataformat/xml/JacksonXmlAnnotationIntrospector.java
++++ b/src/main/java/com/fasterxml/jackson/dataformat/xml/JacksonXmlAnnotationIntrospector.java
+@@ -42,14 +42,15 @@ public class JacksonXmlAnnotationIntrospector
+     public final static boolean DEFAULT_USE_WRAPPER = true;
+ 
+     // non-final from 2.7 on, to allow mapper to change
+-    protected boolean _cfgDefaultUseWrapper;
++    protected boolean _defaultUseWrapper;
+ 
+     public JacksonXmlAnnotationIntrospector() {
+         this(DEFAULT_USE_WRAPPER);
+     }
+ 
+     public JacksonXmlAnnotationIntrospector(boolean defaultUseWrapper) {
+-        _cfgDefaultUseWrapper = defaultUseWrapper;
++        super();
++        _defaultUseWrapper = defaultUseWrapper;
+     }
+ 
+     /*
+@@ -71,7 +72,7 @@ public class JacksonXmlAnnotationIntrospector
+     @Override
+     public PropertyName findWrapperName(Annotated ann)
+     {
+-        JacksonXmlElementWrapper w = _findAnnotation(ann, JacksonXmlElementWrapper.class);
++        final JacksonXmlElementWrapper w = _findAnnotation(ann, JacksonXmlElementWrapper.class);
+         if (w != null) {
+             // Special case: wrapping explicitly blocked?
+             if (!w.useWrapping()) {
+@@ -150,7 +151,7 @@ public class JacksonXmlAnnotationIntrospector
+     @Override
+     public void findAndAddVirtualProperties(MapperConfig<?> config, AnnotatedClass ac,
+             List<BeanPropertyWriter> properties) {
+-        return;
++
+     }
+ 
+     /*
+@@ -199,10 +200,8 @@ public class JacksonXmlAnnotationIntrospector
+     {
+         PropertyName pn = PropertyName.merge(_findXmlName(a),
+                 super.findNameForSerialization(a));
+-        if (pn == null) {
+-            if (_hasOneOf(a, ANNOTATIONS_TO_INFER_XML_PROP)) {
+-                return PropertyName.USE_DEFAULT;
+-            }
++        if (pn == null && _hasOneOf(a, ANNOTATIONS_TO_INFER_XML_PROP)) {
++            return PropertyName.USE_DEFAULT;
+         }
+         return pn;
+     }
+diff --git a/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlAnnotationIntrospector.java b/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlAnnotationIntrospector.java
+index da08819..4942ec3 100644
+--- a/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlAnnotationIntrospector.java
++++ b/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlAnnotationIntrospector.java
+@@ -23,7 +23,7 @@ public interface XmlAnnotationIntrospector
+      * Extension of <code>AnnotationIntrospector.Pair</code> that can
+      * also dispatch 'XmlAnnotationIntrospector' methods.
+      */
+-    public static class Pair extends AnnotationIntrospectorPair
++    public class XmlAnnotationIntrospectorPair extends AnnotationIntrospectorPair
+         implements XmlAnnotationIntrospector
+     {
+         private static final long serialVersionUID = 1L;
+diff --git a/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlFactory.java b/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlFactory.java
+index 521c9bd..b7f2e5a 100644
+--- a/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlFactory.java
++++ b/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlFactory.java
+@@ -41,7 +41,7 @@ public class XmlFactory extends JsonFactory
+      * Bitfield (set of flags) of all parser features that are enabled
+      * by default.
+      */
+-    final static int DEFAULT_XML_PARSER_FEATURE_FLAGS = FromXmlParser.Feature.collectDefaults();
++    /* package */ final static int DEFAULT_XML_PARSER_FEATURE_FLAGS = FromXmlParser.Feature.collectDefaults();
+ 
+     /**
+      * Bitfield (set of flags) of all generator features that are enabled
+@@ -120,7 +120,7 @@ public class XmlFactory extends JsonFactory
+         _xmlGeneratorFeatures = xgFeatures;
+         _cfgNameForTextElement = nameForTextElem;
+         if (xmlIn == null) {
+-            xmlIn = StaxUtil.defaultInputFactory(getClass().getClassLoader());
++            xmlIn = StaxUtil.defaultInputFactory(Thread.currentThread().getContextClassLoader());
+             // as per [dataformat-xml#190], disable external entity expansion by default
+             xmlIn.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+             // and ditto wrt [dataformat-xml#211], SUPPORT_DTD
+@@ -236,8 +236,8 @@ public class XmlFactory extends JsonFactory
+         } catch (Exception e) {
+             throw new IllegalArgumentException(e);
+         }
+-	return new XmlFactory(_objectCodec, _xmlParserFeatures, _xmlGeneratorFeatures,
+-			      inf, outf, _cfgNameForTextElement);
++        return new XmlFactory(_objectCodec, _xmlParserFeatures, _xmlGeneratorFeatures,
++                              inf, outf, _cfgNameForTextElement);
+     }
+ 
+     /**
+diff --git a/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlFactoryBuilder.java b/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlFactoryBuilder.java
+index 117bbb9..3a95624 100644
+--- a/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlFactoryBuilder.java
++++ b/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlFactoryBuilder.java
+@@ -80,7 +80,6 @@ public class XmlFactoryBuilder extends TSFBuilder<XmlFactory, XmlFactoryBuilder>
+     protected XmlFactoryBuilder() {
+         _formatParserFeatures = XmlFactory.DEFAULT_XML_PARSER_FEATURE_FLAGS;
+         _formatGeneratorFeatures = XmlFactory.DEFAULT_XML_GENERATOR_FEATURE_FLAGS;
+-        _classLoaderForStax = null;
+         _nameProcessor = XmlNameProcessors.newPassthroughProcessor();
+     }
+ 
+@@ -88,8 +87,8 @@ public class XmlFactoryBuilder extends TSFBuilder<XmlFactory, XmlFactoryBuilder>
+         super(base);
+         _formatParserFeatures = base._xmlParserFeatures;
+         _formatGeneratorFeatures = base._xmlGeneratorFeatures;
+-        _xmlInputFactory = base._xmlInputFactory;
+-        _xmlOutputFactory = base._xmlOutputFactory;
++        _xmlInputFactory = base.getXMLInputFactory();
++        _xmlOutputFactory = base.getXMLOutputFactory();
+         _nameForTextElement = base._cfgNameForTextElement;
+         _nameProcessor = base._nameProcessor;
+         _classLoaderForStax = null;
+diff --git a/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlNameProcessor.java b/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlNameProcessor.java
+index 5be3560..c9c8033 100644
+--- a/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlNameProcessor.java
++++ b/src/main/java/com/fasterxml/jackson/dataformat/xml/XmlNameProcessor.java
+@@ -23,7 +23,7 @@ public interface XmlNameProcessor extends Serializable {
+         public String namespace;
+         public String localPart;
+ 
+-        public XmlName() { }
++
+     }
+ 
+     /**

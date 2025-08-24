@@ -1,0 +1,172 @@
+diff --git a/src/main/java/com/fasterxml/jackson/core/Base64Variant.java b/src/main/java/com/fasterxml/jackson/core/Base64Variant.java
+index 888fb8b..6b2b41b 100644
+--- a/src/main/java/com/fasterxml/jackson/core/Base64Variant.java
++++ b/src/main/java/com/fasterxml/jackson/core/Base64Variant.java
+@@ -55,7 +55,7 @@ public final class Base64Variant
+      * Placeholder used by "no padding" variant, to be used when a character
+      * value is needed.
+      */
+-    protected final static char PADDING_CHAR_NONE = '\0';
++    private final static char PADDING_CHAR_NONE = '\0';
+ 
+     /**
+      * Marker used to denote ascii characters that do not correspond
+@@ -79,7 +79,7 @@ public final class Base64Variant
+     /**
+      * Decoding table used for base 64 decoding.
+      */
+-    private final transient int[] _asciiToBase64 = new int[128];
++    private final transient int[] _asciiTo64 = new int[128];
+ 
+     /**
+      * Encoding table used for base 64 decoding when output is done
+@@ -107,7 +107,7 @@ public final class Base64Variant
+      *<p>
+      * Also: must not be private, accessed from `BaseVariants`
+      */
+-    final String _name;
++    /* default */ final String _name;
+ 
+     /**
+      * Character used for padding, if any ({@link #PADDING_CHAR_NONE} if not).
+diff --git a/src/main/java/com/fasterxml/jackson/core/Base64Variants.java b/src/main/java/com/fasterxml/jackson/core/Base64Variants.java
+index 4970c4e..7302601 100644
+--- a/src/main/java/com/fasterxml/jackson/core/Base64Variants.java
++++ b/src/main/java/com/fasterxml/jackson/core/Base64Variants.java
+@@ -31,6 +31,7 @@ package com.fasterxml.jackson.core;
+  * @author Tatu Saloranta
+  */
+ public final class Base64Variants
++    private Base64Variants() { }
+ {
+     final static String STD_BASE64_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+ 
+@@ -120,7 +121,7 @@ public final class Base64Variants
+      */
+     public static Base64Variant valueOf(String name) throws IllegalArgumentException
+     {
+-        if (MIME._name.equals(name)) {
++        if (MIME.getName().equals(name)) {
+             return MIME;
+         }
+         if (MIME_NO_LINEFEEDS._name.equals(name)) {
+diff --git a/src/main/java/com/fasterxml/jackson/core/ErrorReportConfiguration.java b/src/main/java/com/fasterxml/jackson/core/ErrorReportConfiguration.java
+index 21118bf..bf967e7 100644
+--- a/src/main/java/com/fasterxml/jackson/core/ErrorReportConfiguration.java
++++ b/src/main/java/com/fasterxml/jackson/core/ErrorReportConfiguration.java
+@@ -78,8 +78,8 @@ public class ErrorReportConfiguration
+      */
+ 
+     public static final class Builder {
+-        private int maxErrorTokenLength;
+-        private int maxRawContentLength;
++        private int _maxErrorTokenLength;
++        private int _maxRawContentLength;
+ 
+         /**
+          * @param maxErrorTokenLength Maximum error token length setting to use
+diff --git a/src/main/java/com/fasterxml/jackson/core/FormatFeature.java b/src/main/java/com/fasterxml/jackson/core/FormatFeature.java
+index 45c72ad..62d6df2 100644
+--- a/src/main/java/com/fasterxml/jackson/core/FormatFeature.java
++++ b/src/main/java/com/fasterxml/jackson/core/FormatFeature.java
+@@ -20,7 +20,7 @@ public interface FormatFeature
+      * Accessor for checking whether this feature is enabled by default.
+      */
+     @Override
+-    public boolean enabledByDefault();
++    boolean enabledByDefault();
+ 
+     /**
+      * Returns bit mask for this feature instance; must be a single bit,
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonFactory.java b/src/main/java/com/fasterxml/jackson/core/JsonFactory.java
+index 73ec628..267bfbd 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonFactory.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonFactory.java
+@@ -13,7 +13,7 @@ import java.util.Objects;
+ 
+ import com.fasterxml.jackson.core.format.InputAccessor;
+ import com.fasterxml.jackson.core.format.MatchStrength;
+-import com.fasterxml.jackson.core.io.*;
++
+ import com.fasterxml.jackson.core.json.*;
+ import com.fasterxml.jackson.core.json.async.NonBlockingByteBufferJsonParser;
+ import com.fasterxml.jackson.core.json.async.NonBlockingJsonParser;
+@@ -373,6 +373,7 @@ public class JsonFactory
+     public JsonFactory() { this((ObjectCodec) null); }
+ 
+     public JsonFactory(ObjectCodec oc) {
++        super();
+         _recyclerPool = JsonRecyclerPools.defaultPool();
+         _objectCodec = oc;
+         _quoteChar = DEFAULT_QUOTE_CHAR;
+@@ -424,9 +425,7 @@ public class JsonFactory
+      *
+      * @since 2.10
+      */
+-    public JsonFactory(JsonFactoryBuilder b) {
+-        _recyclerPool = b._recyclerPool;
+-        _objectCodec = null;
++        // _objectCodec = null; // not passed via builder
+ 
+         // General
+         _factoryFeatures = b._factoryFeatures;
+@@ -458,7 +457,7 @@ public class JsonFactory
+      */
+     protected JsonFactory(TSFBuilder<?,?> b, boolean bogus) {
+         _recyclerPool = b._recyclerPool;
+-        _objectCodec = null;
++        // _objectCodec = null; // not passed via builder
+ 
+         _factoryFeatures = b._factoryFeatures;
+         _parserFeatures = b._streamReadFeatures;
+diff --git a/src/main/java/com/fasterxml/jackson/core/JsonGenerator.java b/src/main/java/com/fasterxml/jackson/core/JsonGenerator.java
+index d4e18d6..ef6b50f 100644
+--- a/src/main/java/com/fasterxml/jackson/core/JsonGenerator.java
++++ b/src/main/java/com/fasterxml/jackson/core/JsonGenerator.java
+@@ -400,9 +400,7 @@ public abstract class JsonGenerator
+      *
+      * @return Output target this generator was configured with
+      */
+-    public Object getOutputTarget() {
+-        return null;
+-    }
++    public abstract Object getOutputTarget();
+ 
+     /**
+      * Helper method, usually equivalent to:
+@@ -1173,7 +1171,7 @@ public abstract class JsonGenerator
+         }
+         _verifyOffsets(array.length, offset, length);
+         writeStartArray(array, length);
+-        for (int i = offset, end = offset+length; i < end; ++i) {
++        for (int i = offset; i < offset + length; ++i) {
+             writeNumber(array[i]);
+         }
+         writeEndArray();
+@@ -1200,7 +1198,7 @@ public abstract class JsonGenerator
+         }
+         _verifyOffsets(array.length, offset, length);
+         writeStartArray(array, length);
+-        for (int i = offset, end = offset+length; i < end; ++i) {
++        for (int i = offset; i < offset + length; ++i) {
+             writeNumber(array[i]);
+         }
+         writeEndArray();
+@@ -1227,7 +1225,7 @@ public abstract class JsonGenerator
+         }
+         _verifyOffsets(array.length, offset, length);
+         writeStartArray(array, length);
+-        for (int i = offset, end = offset+length; i < end; ++i) {
++        for (int i = offset; i < offset + length; ++i) {
+             writeNumber(array[i]);
+         }
+         writeEndArray();
+@@ -1254,7 +1252,7 @@ public abstract class JsonGenerator
+         }
+         _verifyOffsets(array.length, offset, length);
+         writeStartArray(array, length);
+-        for (int i = offset, end = offset+length; i < end; ++i) {
++        for (int i = offset; i < offset + length; ++i) {
+             writeString(array[i]);
+         }
+         writeEndArray();

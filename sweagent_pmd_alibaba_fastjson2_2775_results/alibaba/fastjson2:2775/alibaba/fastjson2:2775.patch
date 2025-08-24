@@ -1,0 +1,140 @@
+diff --git a/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/Block.java b/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/Block.java
+index 8fbaf3c..0617c55 100644
+--- a/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/Block.java
++++ b/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/Block.java
+@@ -5,12 +5,15 @@ import com.alibaba.fastjson2.JSONException;
+ import java.util.ArrayList;
+ import java.util.List;
+ 
+-import static com.alibaba.fastjson2.internal.codegen.Opcodes.*;
++
+ 
+ public class Block {
++    public Block() {
++    }
++
+     protected final List<Statement> statements = new ArrayList<>();
+ 
+-    public void invoke(String method, Opcodes.Op... args) {
++    public void invoke(final String method, Opcodes.Op... args) {
+         statements.add(new StatementOp(Opcodes.invoke(method, args)));
+     }
+ 
+@@ -47,7 +50,7 @@ public class Block {
+     }
+ 
+     public IfStmt ifStmt(Opcodes.Op testValue) {
+-        IfStmt stmt = new IfStmt(testValue);
++        final IfStmt stmt = new IfStmt(testValue);
+         statements.add(stmt);
+         return stmt;
+     }
+@@ -84,7 +87,7 @@ public class Block {
+         return stmt;
+     }
+ 
+-    public SwitchStmt switchStmt(Opcodes.Op op, int[] hashCodes) {
++    public SwitchStmt switchStmt(Opcodes.Op op, int... hashCodes) {
+         SwitchStmt stmt = new SwitchStmt(op, hashCodes);
+         statements.add(stmt);
+         return stmt;
+diff --git a/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/ClassWriter.java b/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/ClassWriter.java
+index 345ba3a..4c181eb 100644
+--- a/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/ClassWriter.java
++++ b/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/ClassWriter.java
+@@ -11,7 +11,7 @@ public class ClassWriter {
+     final Class superClass;
+     final Class[] interfaces;
+ 
+-    private Set<String> imports = new TreeSet<>();
++    private final Set<String> imports = new TreeSet<>();
+     private List<FieldWriter> fields = new ArrayList<>();
+     private List<MethodWriter> methods = new ArrayList<>();
+ 
+@@ -29,13 +29,11 @@ public class ClassWriter {
+     }
+ 
+     static String getTypeName(Class type) {
++        String className;
+         Package pkg = type.getPackage();
+         if (pkg != null && "java.lang".equals(pkg.getName()) && !type.isArray()) {
+-            return type.getSimpleName();
+-        }
+-
+-        String className;
+-        if (type.isArray()) {
++            className = type.getSimpleName();
++        } else if (type.isArray()) {
+             className = getTypeName(type.getComponentType()) + "[]";
+         } else {
+             className = type.getName();
+diff --git a/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/Opcodes.java b/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/Opcodes.java
+index 088445d..2afc08f 100644
+--- a/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/Opcodes.java
++++ b/codegen/src/main/java/com/alibaba/fastjson2/internal/codegen/Opcodes.java
+@@ -4,9 +4,11 @@ import com.alibaba.fastjson2.JSONException;
+ 
+ import static com.alibaba.fastjson2.internal.codegen.ClassWriter.getTypeName;
+ 
+-public class Opcodes {
+-    public static OpName THIS = var("this");
+-    public static OpName SUPER = var("super");
++public final class Opcodes {
++    private Opcodes() {
++    }
++    public static final OpName THIS_OP = var("this");
++    public static final OpName SUPER_OP = var("super");
+ 
+     public static Op arrayGet(Op owner, Op index) {
+         return new ArrayGet(owner, index);
+@@ -25,7 +27,7 @@ public class Opcodes {
+     }
+ 
+     public static Op invoke(String method, Op... args) {
+-        return new OpInvoke(THIS, method, args);
++        return new OpInvoke(THIS_OP, method, args);
+     }
+ 
+     public static Op invokeStatic(Class type, String method, Op... args) {
+@@ -40,8 +42,26 @@ public class Opcodes {
+         return new Lambda(new String[]{type}, new String[]{name}, op);
+     }
+ 
+-    public static Lambda lambda(String type0, String name0, String type1, String name1, Op op) {
+-        return new Lambda(new String[]{type0, type1}, new String[]{name0, name1}, op);
++    public static Lambda lambda(LambdaParams params, Op op) {
++        return new Lambda(params.getParamTypes(), params.getParamNames(), op);
++    }
++
++    public static class LambdaParams {
++        private final String[] paramTypes;
++        private final String[] paramNames;
++
++        public LambdaParams(String[] paramTypes, String[] paramNames) {
++            this.paramTypes = paramTypes;
++            this.paramNames = paramNames;
++        }
++
++        public String[] getParamTypes() {
++            return paramTypes;
++        }
++
++        public String[] getParamNames() {
++            return paramNames;
++        }
+     }
+ 
+     public static Op allocate(Class type, Op... args) {
+diff --git a/codegen/src/main/java/com/alibaba/fastjson2/internal/graalmeta/MethodMetadata.java b/codegen/src/main/java/com/alibaba/fastjson2/internal/graalmeta/MethodMetadata.java
+index 0da96c3..efb98cd 100644
+--- a/codegen/src/main/java/com/alibaba/fastjson2/internal/graalmeta/MethodMetadata.java
++++ b/codegen/src/main/java/com/alibaba/fastjson2/internal/graalmeta/MethodMetadata.java
+@@ -21,7 +21,7 @@ public class MethodMetadata {
+     }
+ 
+     public String[] getParameterTypes() {
+-        return parameterTypes;
++        return parameterTypes == null ? null : parameterTypes.clone();
+     }
+ 
+     public void setParameterTypes(String[] parameterTypes) {

@@ -1,0 +1,114 @@
+'{"env":{"deployment":{"image":"omnicodeorg/omnicode:fasterxml_jackson-dataformat-xml_base","port":null,"docker_args":[],"startup_timeout":180.0,"pull":"missing","remove_images":false,"python_standalone_dir":null,"platform":null,"remove_container":true,"type":"docker"},"repo":{"github_url":"https://github.com/fasterxml/jackson-dataformat-xml","base_commit":"b782f4b9559ece1b6178cbeafa8acffb0ab9d0f0","clone_timeout":500.0,"type":"github"},"post_startup_commands":[],"post_startup_command_timeout":500,"name":"main"},"env_apptainer":{"deployment":{"image":"docker://wellslu/apptainer_base:latest","startup_timeout":300.0,"apptainer_output_dir":"dev/apptainer_sandbox","type":"apptainer"},"repo":null,"post_startup_commands":["source
+    /opt/miniconda3/bin/activate && conda activate testbed"],"post_startup_command_timeout":500,"name":"main"},"agent":{"name":"main","templates":{"system_template":"You
+    are a Java code quality expert assistant that can interact with a computer to
+    analyze and fix code quality issues.\nYou specialize in PMD-based code analysis
+    and can interpret PMD violation reports to provide targeted fixes.\n\nYour expertise
+    includes:\n- Java code quality and best practices\n- PMD rule interpretation and
+    application\n- Code design patterns and anti-patterns\n- Performance optimization
+    and resource management\n- Security vulnerabilities and error-prone code detection\n\nYou
+    work with a repository that has been analyzed by PMD, and your goal is to resolve
+    all quality violations\nwhile preserving the original functionality of the code.","instance_template":"You
+    have recently generated a patch to resolve an issue within this repository.\nPMD
+    has been run on the modified files and has produced the following feedback:\n\n{{problem_statement}}\n\nYour
+    task is to:\n1. Analyze the PMD violations provided in the problem statement\n2.
+    Understand the specific rules that were violated (e.g., best practices, code style,
+    error-prone patterns)\n3. Apply fixes that resolve these errors while maintaining
+    code functionality\n4. Ensure your changes follow Java best practices and improve
+    code quality\n5. Test that your fixes don''t introduce new style errors \n6. Do
+    not introduce any new files to fix the style errors\n7. Do not delete or create
+    any files, only modify existing ones\n8. Do not rename any public classes or files\n9.
+    Do not rename any global variables\n\nCommon PMD violations you may encounter:\n-
+    Best practices violations (AvoidReassigningParameters, AvoidUsingHardCodedIP,
+    etc.)\n- Code style issues (AtLeastOneConstructor, AvoidDuplicateLiterals, etc.)\n-
+    Error-prone patterns (AssignmentInOperand, AvoidBranchingStatementAsLastInLoop,
+    etc.)\n- Design issues (CouplingBetweenObjects, CyclomaticComplexity, etc.)\n-
+    Performance issues (AvoidInstantiatingObjectsInLoops, UseStringBufferForStringAppends,
+    etc.)\n\nPlease resolve the PMD feedback to the best of your ability, while preserving
+    the functionality of the code.\nFocus on the most critical violations first and
+    ensure your fixes improve overall code quality and maintainability.","next_step_template":"OBSERVATION:\n{{observation}}\n\nBased
+    on this observation, continue with your analysis and fix any remaining PMD violations.\nIf
+    you encounter any errors or unexpected behavior, document them and proceed with
+    the best available solution.","next_step_truncated_observation_template":"Observation:
+    {{observation[:max_observation_length]}}<response clipped><NOTE>Observations should
+    not exceeded {{max_observation_length}} characters. {{elided_chars}} characters
+    were elided. Please try a different command that produces less output or use head/tail/grep/redirect
+    the output to a file. Do not use interactive pagers.</NOTE>","max_observation_length":100000,"next_step_no_output_template":"Your
+    command ran successfully and did not produce any output.\nThis may indicate that
+    the PMD analysis completed without finding violations, or the files were processed
+    successfully.\nContinue with your analysis or proceed to the next step in your
+    quality review process.","strategy_template":null,"demonstration_template":null,"demonstrations":[],"put_demos_in_history":false,"disable_image_processing":false,"shell_check_error_template":"Your
+    bash command contained syntax errors and was NOT executed. Please fix the syntax
+    errors and try again. This can be the result of not adhering to the syntax for
+    multi-line commands. Here is the output of `bash -n`:\n{{bash_stdout}}\n{{bash_stderr}}","command_cancelled_timeout_template":"The
+    command ''{{command}}'' was cancelled because it took more than {{timeout}} seconds.
+    Please try a different command that completes more quickly. Note: A common source
+    of this error is if the command is interactive or requires user input (it is impossible
+    to receive user input in the current environment, so the command will never complete)."},"tools":{"filter":{"blocklist_error_template":"Operation
+    ''{{action}}'' is not supported by this environment.","blocklist":["vim","vi","emacs","nano","nohup","gdb","less","tail
+    -f","python -m venv","make"],"blocklist_standalone":["python","python3","ipython","bash","sh","/usr/bin/bash","/usr/bin/dash","nohup","vi","vim","emacs","nano","su"],"block_unless_regex":{"radare2":"\\b(?:radare2)\\b.*\\s+-c\\s+.*","r2":"\\b(?:radare2)\\b.*\\s+-c\\s+.*"}},"bundles":[{"path":"/home/debjitd/OmniCode/SWE-agent/tools/registry","hidden_tools":[]},{"path":"/home/debjitd/OmniCode/SWE-agent/tools/edit_anthropic","hidden_tools":[]},{"path":"/home/debjitd/OmniCode/SWE-agent/tools/review_on_submit_m","hidden_tools":[]}],"propagate_env_variables":[],"env_variables":{"PAGER":"cat","MANPAGER":"cat","LESS":"-R","PIP_PROGRESS_BAR":"off","TQDM_DISABLE":"1","GIT_PAGER":"cat"},"registry_variables":{"USE_FILEMAP":"true","SUBMIT_REVIEW_MESSAGES":["Thank
+    you for your work on resolving the PMD violations. Here is a summary of all the
+    code quality improvements made:\n\n<diff>\n{{diff}}\n</diff>\n\nThe following
+    PMD violations were addressed:\n- Fixed best practices violations\n- Resolved
+    code style and design issues\n- Corrected error-prone patterns\n- Improved performance
+    and resource management\n\nAll changes maintain the original functionality while
+    ensuring better code quality and maintainability.\n"]},"submit_command":"submit","parse_function":{"error_message":"{%-
+    if error_code == \"missing\" -%}\nYour last output did not use any tool calls!\nPlease
+    make sure your output includes exactly _ONE_ function call!\nYou must invoke the
+    function directly using the function call format.\nYou cannot invoke commands
+    with ```, you have to use the function call format.\nIf you think you have already
+    resolved the issue, please submit your changes by running the `submit` command.\nIf
+    you think you cannot solve the problem, please run `exit_forfeit` (if available)
+    or `submit`.\nElse, please continue with a new tool call!\n{%- elif error_code
+    == \"multiple\" -%}\nYour last output included multiple tool calls!\nPlease make
+    sure your output includes a thought and exactly _ONE_ function call.\n{%- elif
+    error_code == \"unexpected_arg\" -%}\nYour action could not be parsed properly:
+    {{exception_message}}.\nMake sure your function call doesn''t include any extra
+    arguments that are not in the allowed arguments, and only use the allowed commands.\n{%-
+    else -%}\nYour action could not be parsed properly: {{exception_message}}.\n{%
+    endif %}\n","type":"function_calling"},"enable_bash_tool":true,"format_error_template":"{%-
+    if error_code == \"missing\" -%}\nYour last output did not use any tool calls!\nPlease
+    make sure your output includes exactly _ONE_ function call!\nYou must invoke the
+    function directly using the function call format.\nYou cannot invoke commands
+    with ```, you have to use the function call format.\nIf you think you have already
+    resolved the issue, please submit your changes by running the `submit` command.\nIf
+    you think you cannot solve the problem, please run `exit_forfeit` (if available)
+    or `submit`.\nElse, please continue with a new tool call!\n{%- elif error_code
+    == \"multiple\" -%}\nYour last output included multiple tool calls!\nPlease make
+    sure your output includes a thought and exactly _ONE_ function call.\n{%- elif
+    error_code == \"unexpected_arg\" -%}\nYour action could not be parsed properly:
+    {{exception_message}}.\nMake sure your function call doesn''t include any extra
+    arguments that are not in the allowed arguments, and only use the allowed commands.\n{%-
+    else -%}\nYour action could not be parsed properly: {{exception_message}}.\n{%
+    endif %}\n","command_docs":"bash:\n  docstring: runs the given command directly
+    in bash\n  signature: <command>\n  arguments:\n    - command (string) [required]:
+    The bash command to execute.\n\nstr_replace_editor:\n  docstring: Custom editing
+    tool for viewing, creating and editing files * State is persistent across command
+    calls and discussions with the user * If `path` is a file, `view` displays the
+    result of applying `cat -n`. If `path` is a directory, `view` lists non-hidden
+    files and directories up to 2 levels deep * The `create` command cannot be used
+    if the specified `path` already exists as a file * If a `command` generates a
+    long output, it will be truncated and marked with `<response clipped>` * The `undo_edit`
+    command will revert the last edit made to the file at `path`\nNotes for using
+    the `str_replace` command: * The `old_str` parameter should match EXACTLY one
+    or more consecutive lines from the original file. Be mindful of whitespaces! *
+    If the `old_str` parameter is not unique in the file, the replacement will not
+    be performed. Make sure to include enough context in `old_str` to make it unique
+    * The `new_str` parameter should contain the edited lines that should replace
+    the `old_str`\n\n  signature: str_replace_editor <command> <path> [<file_text>]
+    [<view_range>] [<old_str>] [<new_str>] [<insert_line>]\n\n  arguments:\n    -
+    command (string) [required]: The commands to run. Allowed options are: `view`,
+    `create`, `str_replace`, `insert`, `undo_edit`.\n    - path (string) [required]:
+    Absolute path to file or directory, e.g. `/testbed/file.py` or `/testbed`.\n    -
+    file_text (string) [optional]: Required parameter of `create` command, with the
+    content of the file to be created.\n    - old_str (string) [optional]: Required
+    parameter of `str_replace` command containing the string in `path` to replace.\n    -
+    new_str (string) [optional]: Optional parameter of `str_replace` command containing
+    the new string (if not given, no string will be added). Required parameter of
+    `insert` command containing the string to insert.\n    - insert_line (integer)
+    [optional]: Required parameter of `insert` command. The `new_str` will be inserted
+    AFTER the line `insert_line` of `path`.\n    - view_range (array) [optional]:
+    Optional parameter of `view` command when `path` points to a file. If none is
+    given, the full file is shown. If provided, the file will be shown in the indicated
+    line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start.
+    Setting `[start_line, -1]` shows all lines from `start_line` to the end of the
+    file.\n\nsubmit:\n  docstring: submits the current file\n  signature: submit\n\n","multi_line_command_endings":{},"submit_command_end_name":null,"reset_commands":[],"execution_timeout":30,"install_timeout":300,"total_execution_timeout":1800,"max_consecutive_execution_timeouts":3},"history_processors":[{"type":"default"}],"model":{"name":"gemini/gemini-2.5-flash","per_instance_cost_limit":2.0,"total_cost_limit":0.0,"per_instance_call_limit":0,"temperature":0.0,"top_p":1.0,"api_base":null,"api_version":null,"api_key":"**********","stop":[],"completion_kwargs":{},"convert_system_to_user":false,"retry":{"retries":20,"min_wait":10.0,"max_wait":120.0},"delay":0.0,"fallbacks":[],"choose_api_key_by_thread":true,"max_input_tokens":null,"max_output_tokens":null,"litellm_model_registry":null,"custom_tokenizer":null},"max_requeries":3,"action_sampler":null,"type":"default"},"problem_statement":{"path":"/tmp/tmpn1t6usci","extra_fields":{},"type":"text_file","id":"fasterxml/jackson-dataformat-xml:644"},"output_dir":"sweagent_pmd_fasterxml_dataformat-xml_644_results","actions":{"open_pr":false,"pr_config":{"skip_if_commits_reference_issue":true},"apply_patch_locally":false},"env_var_path":null}'

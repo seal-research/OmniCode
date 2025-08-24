@@ -267,20 +267,19 @@ Prerequisites:
 Example command:
 
 ```bash
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java]
 ```
 
 ### Running SWE-Agent for Java Style Review
 
 Prerequisites:
-
-- Dataset should be downloaded from
-  https://drive.google.com/file/d/1ZVg-rVXU9hPN0iO1qsxm-Ru7a5AUmwJU/view?usp=drive_link (PMD)
-  https://drive.google.com/file/d/15yDXDq9S-mOOYoNT0na7MqiodvJ8Rf4g/view?usp=drive_link (Checkstyle)
+- Dataset should be downloaded from 
+https://drive.google.com/file/d/1ZVg-rVXU9hPN0iO1qsxm-Ru7a5AUmwJU/view?usp=drive_link (PMD),
+https://drive.google.com/file/d/15yDXDq9S-mOOYoNT0na7MqiodvJ8Rf4g/view?usp=drive_link (Checkstyle)
 - Base image should already built in your local docker (e.g. MSWEBugFixing)
 
 ```bash
-python baselines/sweagent/convert_style_errors_to_sweagent_from_dataset.py --org apache --repo dubbo --pr_number 10638 --style_tool pmd --output sweagent_input.json
+python baselines/sweagent/convert_unique_style_errors_to_sweagent_from_dataset.py --org apache --repo dubbo --pr_number 10638 --style_tool pmd --output sweagent_input.json
 ```
 
 OR (to use only errors of files modified in gold patch)
