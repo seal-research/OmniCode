@@ -27,7 +27,9 @@ CONFIG_FILE_MAP = {
     "bugfixing": CUR_DIR / "bugfixing.yaml",
     "testgen": CUR_DIR / "testgen.yaml",
     "bugfixing-java": CUR_DIR / "bugfixing_java.yaml",
+    "bugfixing-cpp": CUR_DIR / "bugfixing_cpp.yaml",
     "testgen-java": CUR_DIR / "testgen_java.yaml",
+    "testgen-cpp": CUR_DIR / "testgen_cpp.yaml",
     "stylereview": CUR_DIR / "stylereview.yaml",
     "reviewfix": CUR_DIR / "reviewfix.yaml",
 }
@@ -163,7 +165,7 @@ def run_sweagent_single(
     if mode not in CONFIG_FILE_MAP:
         raise RuntimeError(f"Unknown mode: {mode}")
     
-    if 'java' in mode:
+    if 'java' or 'cpp' in mode:
         image = f"omnicodeorg/omnicode:{instance['repo'].replace('/', '_')}_base"
     else:
         image = f"omnicodeorg/omnicode:{instance['instance_id']}"
@@ -452,7 +454,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
     parser.add_argument("-k", "--api_key", type=str, default=None)
-    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "stylereview", "reviewfix"])
+    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "bugfixing-cpp", "testgen-cpp", "stylereview", "reviewfix"])
     parser.add_argument("--thinking_budget", type=int, default=0)
     parser.add_argument("--style_tool", type=str, default=None, choices=["checkstyle", "pmd"], help="Style review tool to use (Java)")
     parser.add_argument("--use_apptainer", type=str2bool, default=False, help="Run with Docker or Apptainer container")
