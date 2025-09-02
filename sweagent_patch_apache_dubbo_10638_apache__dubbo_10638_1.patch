@@ -1,0 +1,119 @@
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/AbstractGenerator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/AbstractGenerator.java
+index 8d95ecd..eced3e9 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/AbstractGenerator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/AbstractGenerator.java
+@@ -39,6 +39,10 @@ import java.util.stream.Collectors;
+ 
+ public abstract class AbstractGenerator extends Generator {
+ 
++    protected AbstractGenerator() {
++        // Default constructor
++    }
++
+     private static final int SERVICE_NUMBER_OF_PATHS = 2;
+     private static final int METHOD_NUMBER_OF_PATHS = 4;
+ 
+@@ -73,11 +77,12 @@ public abstract class AbstractGenerator extends Generator {
+ 
+     @Override
+     public List<PluginProtos.CodeGeneratorResponse.File> generateFiles(
+-        PluginProtos.CodeGeneratorRequest request) throws GeneratorException {
++        final PluginProtos.CodeGeneratorRequest request) throws GeneratorException {
+         final ProtoTypeMap typeMap = ProtoTypeMap.of(request.getProtoFileList());
+ 
+-        List<FileDescriptorProto> protosToGenerate = request.getProtoFileList().stream()
+-            .filter(protoFile -> request.getFileToGenerateList().contains(protoFile.getName()))
++        final List<String> fileToGenerateList = request.getFileToGenerateList();
++        final List<FileDescriptorProto> protosToGenerate = request.getProtoFileList().stream()
++            .filter(protoFile -> fileToGenerateList.contains(protoFile.getName()))
+             .collect(Collectors.toList());
+ 
+         List<ServiceContext> services = findServices(protosToGenerate, typeMap);
+@@ -114,14 +119,14 @@ public abstract class AbstractGenerator extends Generator {
+ 
+     private String extractPackageName(FileDescriptorProto proto) {
+         FileOptions options = proto.getOptions();
++        String javaPackage = Strings.nullToEmpty(proto.getPackage()); // Default value
+         if (options != null) {
+-            String javaPackage = options.getJavaPackage();
+-            if (!Strings.isNullOrEmpty(javaPackage)) {
+-                return javaPackage;
++            String optionJavaPackage = options.getJavaPackage();
++            if (!Strings.isNullOrEmpty(optionJavaPackage)) {
++                javaPackage = optionJavaPackage;
+             }
+         }
+-
+-        return Strings.nullToEmpty(proto.getPackage());
++        return javaPackage;
+     }
+ 
+     private String extractCommonPackageName(FileDescriptorProto proto) {
+@@ -164,7 +169,7 @@ public abstract class AbstractGenerator extends Generator {
+                 methodNumber
+             );
+ 
+-            serviceContext.methods.add(methodContext);
++            serviceContext.methodList.add(methodContext);
+             serviceContext.methodTypes.add(methodContext.inputType);
+             serviceContext.methodTypes.add(methodContext.outputType);
+         }
+@@ -302,7 +307,7 @@ public abstract class AbstractGenerator extends Generator {
+     /**
+      * Template class for proto Service objects.
+      */
+-    private class ServiceContext {
++    private final class ServiceContext {
+ 
+         // CHECKSTYLE DISABLE VisibilityModifier FOR 8 LINES
+         public String fileName;
+@@ -318,40 +323,40 @@ public abstract class AbstractGenerator extends Generator {
+         public boolean multipleFiles;
+ 
+         public String outerClassName;
+-        public List<MethodContext> methods = new ArrayList<>();
++        public final List<MethodContext> methodList = new ArrayList<>();
+ 
+         public Set<String> methodTypes = new HashSet<>();
+ 
+         public List<MethodContext> unaryRequestMethods() {
+-            return methods.stream().filter(m -> !m.isManyInput).collect(Collectors.toList());
++            return methodList.stream().filter(m -> !m.isManyInput).collect(Collectors.toList());
+         }
+ 
+         public List<MethodContext> unaryMethods() {
+-            return methods.stream().filter(m -> (!m.isManyInput && !m.isManyOutput))
++            return methodList.stream().filter(m -> !m.isManyInput && !m.isManyOutput)
+                 .collect(Collectors.toList());
+         }
+ 
+         public List<MethodContext> serverStreamingMethods() {
+-            return methods.stream().filter(m -> !m.isManyInput && m.isManyOutput)
++            return methodList.stream().filter(m -> !m.isManyInput && m.isManyOutput)
+                 .collect(Collectors.toList());
+         }
+ 
+         public List<MethodContext> biStreamingMethods() {
+-            return methods.stream().filter(m -> m.isManyInput).collect(Collectors.toList());
++            return methodList.stream().filter(m -> m.isManyInput).collect(Collectors.toList());
+         }
+ 
+         public List<MethodContext> biStreamingWithoutClientStreamMethods() {
+-            return methods.stream().filter(m -> m.isManyInput && m.isManyOutput)
++            return methodList.stream().filter(m -> m.isManyInput && m.isManyOutput)
+                 .collect(Collectors.toList());
+         }
+ 
+         public List<MethodContext> clientStreamingMethods() {
+-            return methods.stream().filter(m -> m.isManyInput && !m.isManyOutput)
++            return methodList.stream().filter(m -> m.isManyInput && !m.isManyOutput)
+                 .collect(Collectors.toList());
+         }
+ 
+-        public List<MethodContext> methods() {
+-            return methods;
++        public List<MethodContext> methodList() {
++            return methodList;
+         }
+ 
+     }

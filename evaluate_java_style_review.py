@@ -213,7 +213,7 @@ def check_style_errors(org: str, repo: str, pr_number: str, workdir: Path, filte
     for e in filtered_entries:
         if e.get("label") == target_label:
             matched = e
-            break
+            #break
 
     if matched is None:
         print(f"[ERROR] No entry with label {target_label} found in {filtered_results_path}")
@@ -231,8 +231,7 @@ def check_style_errors(org: str, repo: str, pr_number: str, workdir: Path, filte
     extra_filtered_keys = filt_keyed - orig_keyed          # in filtered but not in original (filtered-only)
 
     print(f"[INFO] Original unique errors: {len(orig_keyed)}")
-    print(f"[INFO] Filtered unique errors: {len(filt_keyed)}")
-    print(f"[INFO] Remaining original (unresolved) unique errors: {len(remaining_orig_keys)}")
+    print(f"[INFO] Unique errors: {len(filt_keyed)}")
     print(f"[INFO] Extra errors in filtered (not in original): {len(extra_filtered_keys)}")
 
     if not orig_keyed:

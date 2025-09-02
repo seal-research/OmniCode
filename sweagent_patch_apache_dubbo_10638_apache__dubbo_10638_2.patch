@@ -1,0 +1,26 @@
+diff --git a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/Dubbo3Generator.java b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/Dubbo3Generator.java
+index 29a789b..0f53c72 100644
+--- a/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/Dubbo3Generator.java
++++ b/dubbo-compiler/src/main/java/org/apache/dubbo/gen/dubbo/Dubbo3Generator.java
+@@ -19,14 +19,20 @@ package org.apache.dubbo.gen.dubbo;
+ import org.apache.dubbo.gen.AbstractGenerator;
+ 
+ import com.salesforce.jprotoc.ProtocPlugin;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
+ 
+ public class Dubbo3Generator extends AbstractGenerator {
+ 
++    private static final Logger LOGGER = LoggerFactory.getLogger(Dubbo3Generator.class);
++
+     public static void main(String[] args) {
+         if (args.length == 0) {
+             ProtocPlugin.generate(new Dubbo3Generator());
+         } else {
+-            ProtocPlugin.debug(new Dubbo3Generator(), args[0]);
++            if (LOGGER.isDebugEnabled()) {
++                ProtocPlugin.debug(new Dubbo3Generator(), args[0]);
++            }
+         }
+     }
+ 

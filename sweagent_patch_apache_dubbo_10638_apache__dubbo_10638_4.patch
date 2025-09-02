@@ -1,0 +1,102 @@
+diff --git a/dubbo-container/dubbo-container-spring/src/main/java/org/apache/dubbo/container/spring/SpringContainer.java b/dubbo-container/dubbo-container-spring/src/main/java/org/apache/dubbo/container/spring/SpringContainer.java
+index e3c0040..a5fd960 100644
+--- a/dubbo-container/dubbo-container-spring/src/main/java/org/apache/dubbo/container/spring/SpringContainer.java
++++ b/dubbo-container/dubbo-container-spring/src/main/java/org/apache/dubbo/container/spring/SpringContainer.java
+@@ -33,7 +33,7 @@ public class SpringContainer implements Container {
+     public static final String SPRING_CONFIG = "dubbo.spring.config";
+     public static final String DEFAULT_SPRING_CONFIG = "classpath*:META-INF/spring/*.xml";
+     private static final Logger logger = LoggerFactory.getLogger(SpringContainer.class);
+-    static ClassPathXmlApplicationContext context;
++    private static ClassPathXmlApplicationContext context;
+ 
+     public static ClassPathXmlApplicationContext getContext() {
+         return context;
+@@ -56,7 +56,6 @@ public class SpringContainer implements Container {
+             if (context != null) {
+                 context.stop();
+                 context.close();
+-                context = null;
+             }
+         } catch (Throwable e) {
+             logger.error(e.getMessage(), e);
+diff --git a/dubbo-container/dubbo-container-spring/src/test/java/org/apache/dubbo/container/spring/SpringContainerTest.java b/dubbo-container/dubbo-container-spring/src/test/java/org/apache/dubbo/container/spring/SpringContainerTest.java
+index a09a1bf..3bea7f3 100644
+--- a/dubbo-container/dubbo-container-spring/src/test/java/org/apache/dubbo/container/spring/SpringContainerTest.java
++++ b/dubbo-container/dubbo-container-spring/src/test/java/org/apache/dubbo/container/spring/SpringContainerTest.java
+@@ -25,7 +25,7 @@ import org.junit.jupiter.api.Test;
+ /**
+  * StandaloneContainerTest
+  */
+-public class SpringContainerTest {
++class SpringContainerTest {
+ 
+     @Test
+     public void testContainer() {
+diff --git a/dubbo-plugin/dubbo-reactive/src/main/java/org/apache/dubbo/reactive/AbstractTripleReactorPublisher.java b/dubbo-plugin/dubbo-reactive/src/main/java/org/apache/dubbo/reactive/AbstractTripleReactorPublisher.java
+index 0328c59..bcb4164 100644
+--- a/dubbo-plugin/dubbo-reactive/src/main/java/org/apache/dubbo/reactive/AbstractTripleReactorPublisher.java
++++ b/dubbo-plugin/dubbo-reactive/src/main/java/org/apache/dubbo/reactive/AbstractTripleReactorPublisher.java
+@@ -60,6 +60,7 @@ public abstract class AbstractTripleReactorPublisher<T> extends CancelableStream
+     private final AtomicBoolean CALLED_SHUT_DOWN_HOOK = new AtomicBoolean();
+ 
+     public AbstractTripleReactorPublisher() {
++        super();
+     }
+ 
+     public AbstractTripleReactorPublisher(Consumer<CallStreamObserver<?>> onSubscribe, Runnable shutdownHook) {
+@@ -120,14 +121,13 @@ public abstract class AbstractTripleReactorPublisher<T> extends CancelableStream
+     @Override
+     public void subscribe(Subscriber<? super T> subscriber) {
+         if (subscriber == null) {
+-            throw new NullPointerException();
++            throw new NullPointerException("Subscriber cannot be null");
+         }
+ 
+         if (SUBSCRIBED.compareAndSet(false, true)) {
+             subscriber.onSubscribe(this);
+-            this.downstream = subscriber;
+-            if (isCancelled) {
+-                this.downstream = null;
++            if (!isCancelled) {
++                this.downstream = subscriber;
+             }
+         }
+     }
+diff --git a/dubbo-plugin/dubbo-reactive/src/main/java/org/apache/dubbo/reactive/calls/ReactorClientCalls.java b/dubbo-plugin/dubbo-reactive/src/main/java/org/apache/dubbo/reactive/calls/ReactorClientCalls.java
+index c23e987..97b5d72 100644
+--- a/dubbo-plugin/dubbo-reactive/src/main/java/org/apache/dubbo/reactive/calls/ReactorClientCalls.java
++++ b/dubbo-plugin/dubbo-reactive/src/main/java/org/apache/dubbo/reactive/calls/ReactorClientCalls.java
+@@ -43,15 +43,15 @@ public final class ReactorClientCalls {
+      * @param methodDescriptor the method descriptor
+      * @return the mono with response
+      */
+-    public static <TRequest, TResponse, TInvoker> Mono<TResponse> oneToOne(Invoker<TInvoker> invoker,
+-                                                                 Mono<TRequest> monoRequest,
++    public static <REQ, RSP, INV> Mono<RSP> oneToOne(Invoker<INV> invoker,
++                                                                 Mono<REQ> monoRequest,
+                                                                  StubMethodDescriptor methodDescriptor) {
+         try {
+             return Mono.create(emitter -> monoRequest.subscribe(
+-                    request -> StubInvocationUtil.unaryCall(invoker, methodDescriptor, request, new StreamObserver<TResponse>() {
++                    request -> StubInvocationUtil.unaryCall(invoker, methodDescriptor, request, new StreamObserver<RSP>() {
+                         @Override
+-                        public void onNext(TResponse tResponse) {
+-                            emitter.success(tResponse);
++                        public void onNext(RSP rsp) {
++                            emitter.success(rsp);
+                         }
+ 
+                         @Override
+diff --git a/dubbo-serialization/dubbo-serialization-api/src/main/java/org/apache/dubbo/common/serialize/Constants.java b/dubbo-serialization/dubbo-serialization-api/src/main/java/org/apache/dubbo/common/serialize/Constants.java
+index 9dda745..1ae2c25 100644
+--- a/dubbo-serialization/dubbo-serialization-api/src/main/java/org/apache/dubbo/common/serialize/Constants.java
++++ b/dubbo-serialization/dubbo-serialization-api/src/main/java/org/apache/dubbo/common/serialize/Constants.java
+@@ -17,7 +17,7 @@
+ 
+ package org.apache.dubbo.common.serialize;
+ 
+-public interface Constants {
++public final class Constants {
+     byte HESSIAN2_SERIALIZATION_ID = 2;
+     byte JAVA_SERIALIZATION_ID = 3;
+     byte COMPACTED_JAVA_SERIALIZATION_ID = 4;

@@ -221,3 +221,15 @@ slurm_logs/
 data/agentless_results/*
 server/
 *.Dockerfile 
+clones/
+cpp_style_review_results.json
+sweagent_patch_*.json
+unicorn_runner.py
+results_fmtlib_fmt_4310.json
+results_catchorg_Catch2_2849.json
+sweagent_style_review_results.json
+unique_results_pmd.json
+patch_maker.py
+patch_maker_logs.txt
+original_results_clang-tidy.jsonl
+server_new/

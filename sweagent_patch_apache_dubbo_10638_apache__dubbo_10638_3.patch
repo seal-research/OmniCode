@@ -1,0 +1,91 @@
+diff --git a/dubbo-container/dubbo-container-api/src/main/java/org/apache/dubbo/container/Main.java b/dubbo-container/dubbo-container-api/src/main/java/org/apache/dubbo/container/Main.java
+index b43d340..54aa046 100644
+--- a/dubbo-container/dubbo-container-api/src/main/java/org/apache/dubbo/container/Main.java
++++ b/dubbo-container/dubbo-container-api/src/main/java/org/apache/dubbo/container/Main.java
+@@ -29,7 +29,7 @@ import java.util.List;
+ import java.util.concurrent.locks.Condition;
+ import java.util.concurrent.locks.ReentrantLock;
+ 
+-import static org.apache.dubbo.common.constants.CommonConstants.COMMA_SPLIT_PATTERN;
++
+ 
+ /**
+  * Main. (API, Static, ThreadSafe)
+@@ -38,11 +38,17 @@ import static org.apache.dubbo.common.constants.CommonConstants.COMMA_SPLIT_PATT
+  */
+ public class Main {
+ 
++    private Main() {
++        // private constructor to prevent instantiation
++    }
++
++
+     public static final String CONTAINER_KEY = "dubbo.container";
+ 
+     public static final String SHUTDOWN_HOOK_KEY = "dubbo.shutdown.hook";
++    public static final String TRUE_STRING = "true";
+ 
+-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
++    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+ 
+     private static final ExtensionLoader<Container> LOADER = ExtensionLoader.getExtensionLoader(Container.class);
+ 
+@@ -54,25 +60,25 @@ public class Main {
+         try {
+             if (ArrayUtils.isEmpty(args)) {
+                 String config = System.getProperty(CONTAINER_KEY, LOADER.getDefaultExtensionName());
+-                args = COMMA_SPLIT_PATTERN.split(config);
++                args = org.apache.dubbo.common.constants.CommonConstants.COMMA_SPLIT_PATTERN.split(config);
+             }
+ 
+-            final List<Container> containers = new ArrayList<Container>();
+-            for (int i = 0; i < args.length; i++) {
+-                containers.add(LOADER.getExtension(args[i]));
++            final List<Container> containers = new ArrayList<>();
++            for (String arg : args) {
++                containers.add(LOADER.getExtension(arg));
+             }
+-            logger.info("Use container type(" + Arrays.toString(args) + ") to run dubbo serivce.");
++            LOGGER.info("Use container type(" + Arrays.toString(args) + ") to run dubbo serivce.");
+ 
+-            if ("true".equals(System.getProperty(SHUTDOWN_HOOK_KEY))) {
++            if (TRUE_STRING.equals(System.getProperty(SHUTDOWN_HOOK_KEY))) {
+                 Runtime.getRuntime().addShutdownHook(new Thread("dubbo-container-shutdown-hook") {
+                     @Override
+                     public void run() {
+                         for (Container container : containers) {
+                             try {
+                                 container.stop();
+-                                logger.info("Dubbo " + container.getClass().getSimpleName() + " stopped!");
+-                            } catch (Throwable t) {
+-                                logger.error(t.getMessage(), t);
++                                LOGGER.info("Dubbo " + container.getClass().getSimpleName() + " stopped!");
++                            } catch (Exception e) {
++                                LOGGER.error(e.getMessage(), e);
+                             }
+                             try {
+                                 LOCK.lock();
+@@ -87,18 +93,18 @@ public class Main {
+ 
+             for (Container container : containers) {
+                 container.start();
+-                logger.info("Dubbo " + container.getClass().getSimpleName() + " started!");
++                LOGGER.info("Dubbo " + container.getClass().getSimpleName() + " started!");
+             }
+-            System.out.println(new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]").format(new Date()) + " Dubbo service server started!");
+-        } catch (RuntimeException e) {
+-            logger.error(e.getMessage(), e);
++            LOGGER.info(new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]", Locale.getDefault()).format(new Date()) + " Dubbo service server started!");
++        } catch (Exception e) {
++            LOGGER.error(e.getMessage(), e);
+             System.exit(1);
+         }
+         try {
+             LOCK.lock();
+             STOP.await();
+         } catch (InterruptedException e) {
+-            logger.warn("Dubbo service server stopped, interrupted by other thread!", e);
++            LOGGER.warn("Dubbo service server stopped, interrupted by other thread!", e);
+         } finally {
+             LOCK.unlock();
+         }
