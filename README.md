@@ -270,6 +270,8 @@ Example command:
 python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java]
 ```
 
+For pmd java style review use sweagent_pmd_results.json in the input_tasks
+
 ### Running SWE-Agent for Java Style Review
 
 Prerequisites:

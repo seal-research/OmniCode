@@ -33,7 +33,7 @@ from typing import Any, Dict, List, Tuple
 
 ROOT = Path.cwd()
 SWEAGENT_FILE = ROOT / "sweagent_pmd_results.json"
-OUTPUT_FILE = ROOT / "sweagent_style_review_results1.json"
+OUTPUT_FILE = ROOT / "sweagent_style_review_results.json"
 
 # --- Helpers -----------------------------------------------------------------
 
