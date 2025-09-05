@@ -1,0 +1,4568 @@
+{
+  "label": "catchorg/Catch2:pr-2849",
+  "files": [
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/build/generated-includes/catch2/catch_user_config.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 1,
+          "type": "warning",
+          "message": "replace macro with enum",
+          "source": "modernize-macro-to-enum"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "macro 'CATCH_CONFIG_CONSOLE_WIDTH' defines an integral constant; prefer an enum instead",
+          "source": "modernize-macro-to-enum"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/internal/catch_unique_ptr.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        },
+        {
+          "line": 98,
+          "column": 21,
+          "type": "warning",
+          "message": "swap functions should be marked noexcept",
+          "source": "performance-noexcept-swap"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/internal/catch_noncopyable.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 16,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 17,
+          "column": 13,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 18,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        },
+        {
+          "line": 19,
+          "column": 26,
+          "type": "warning",
+          "message": "deleted member function should be public",
+          "source": "modernize-use-equals-delete"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/internal/catch_optional.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 42,
+          "column": 9,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 53,
+          "column": 19,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/catch_message.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 110,
+          "column": 175,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 114,
+          "column": 153,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 110,
+          "column": 175,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 114,
+          "column": 153,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 110,
+          "column": 175,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 114,
+          "column": 153,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 110,
+          "column": 175,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 114,
+          "column": 153,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/catch_version.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 22,
+          "column": 34,
+          "type": "warning",
+          "message": "parameter '_branchName' is const-qualified in the function declaration; const-qualification of parameters only has an effect in function definitions",
+          "source": "readability-avoid-const-params-in-decls"
+        },
+        {
+          "line": 22,
+          "column": 34,
+          "type": "warning",
+          "message": "parameter '_branchName' is const-qualified in the function declaration; const-qualification of parameters only has an effect in function definitions",
+          "source": "readability-avoid-const-params-in-decls"
+        },
+        {
+          "line": 22,
+          "column": 34,
+          "type": "warning",
+          "message": "parameter '_branchName' is const-qualified in the function declaration; const-qualification of parameters only has an effect in function definitions",
+          "source": "readability-avoid-const-params-in-decls"
+        },
+        {
+          "line": 22,
+          "column": 34,
+          "type": "warning",
+          "message": "parameter '_branchName' is const-qualified in the function declaration; const-qualification of parameters only has an effect in function definitions",
+          "source": "readability-avoid-const-params-in-decls"
+        },
+        {
+          "line": 22,
+          "column": 34,
+          "type": "warning",
+          "message": "parameter '_branchName' is const-qualified in the function declaration; const-qualification of parameters only has an effect in function definitions",
+          "source": "readability-avoid-const-params-in-decls"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/internal/catch_compare_traits.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 51,
+          "column": 70,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/internal/catch_decomposer.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 198,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 205,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 212,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 219,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 226,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 233,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 240,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        },
+        {
+          "line": 247,
+          "column": 9,
+          "type": "warning",
+          "message": "return type 'const BinaryExpr<LhsT, const RhsT &>' is 'const'-qualified at the top level, which may reduce code readability without improving const correctness",
+          "source": "readability-const-return-type"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/internal/catch_clara.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 186,
+          "column": 17,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 187,
+          "column": 21,
+          "type": "warning",
+          "message": "move constructor initializes base class by calling a copy constructor",
+          "source": "performance-move-constructor-init"
+        },
+        {
+          "line": 210,
+          "column": 34,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 186,
+          "column": 17,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 187,
+          "column": 21,
+          "type": "warning",
+          "message": "move constructor initializes base class by calling a copy constructor",
+          "source": "performance-move-constructor-init"
+        },
+        {
+          "line": 210,
+          "column": 34,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 186,
+          "column": 17,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 210,
+          "column": 34,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 186,
+          "column": 17,
+          "type": "warning",
+          "message": "move constructors should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 210,
+          "column": 34,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/catch_translate_exception.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 68,
+          "column": 118,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/generators/catch_generator_exception.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 26,
+          "column": 21,
+          "type": "warning",
+          "message": "'override' is redundant since the function is already declared 'final'",
+          "source": "modernize-use-override"
+        },
+        {
+          "line": 26,
+          "column": 21,
+          "type": "warning",
+          "message": "'override' is redundant since the function is already declared 'final'",
+          "source": "modernize-use-override"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/internal/catch_test_spec_parser.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 67,
+          "column": 9,
+          "type": "warning",
+          "message": "function 'addCharToPattern' has inline specifier but is implicitly inlined",
+          "source": "readability-redundant-inline-specifier"
+        },
+        {
+          "line": 67,
+          "column": 9,
+          "type": "warning",
+          "message": "function 'addCharToPattern' has inline specifier but is implicitly inlined",
+          "source": "readability-redundant-inline-specifier"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/internal/catch_random_integer_helpers.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 69,
+          "column": 26,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 70,
+          "column": 23,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 69,
+          "column": 26,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        },
+        {
+          "line": 70,
+          "column": 23,
+          "type": "warning",
+          "message": "macro argument should be enclosed in parentheses",
+          "source": "bugprone-macro-parentheses"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/internal/catch_section.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 26,
+          "column": 30,
+          "type": "warning",
+          "message": "parameter 3 is const-qualified in the function declaration; const-qualification of parameters only has an effect in function definitions",
+          "source": "readability-avoid-const-params-in-decls"
+        },
+        {
+          "line": 74,
+          "column": 55,
+          "type": "warning",
+          "message": "parameter 2 is const-qualified in the function declaration; const-qualification of parameters only has an effect in function definitions",
+          "source": "readability-avoid-const-params-in-decls"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/reporters/catch_reporter_json.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 84,
+          "column": 53,
+          "type": "warning",
+          "message": "initializer for member 'm_objectWriters' is redundant",
+          "source": "readability-redundant-member-init"
+        },
+        {
+          "line": 85,
+          "column": 51,
+          "type": "warning",
+          "message": "initializer for member 'm_arrayWriters' is redundant",
+          "source": "readability-redundant-member-init"
+        },
+        {
+          "line": 86,
+          "column": 37,
+          "type": "warning",
+          "message": "initializer for member 'm_writers' is redundant",
+          "source": "readability-redundant-member-init"
+        },
+        {
+          "line": 84,
+          "column": 53,
+          "type": "warning",
+          "message": "initializer for member 'm_objectWriters' is redundant",
+          "source": "readability-redundant-member-init"
+        },
+        {
+          "line": 85,
+          "column": 51,
+          "type": "warning",
+          "message": "initializer for member 'm_arrayWriters' is redundant",
+          "source": "readability-redundant-member-init"
+        },
+        {
+          "line": 86,
+          "column": 37,
+          "type": "warning",
+          "message": "initializer for member 'm_writers' is redundant",
+          "source": "readability-redundant-member-init"
+        }
+      ]
+    },
+    {
+      "file": "/tmp/clang_tidy_review_i0dpdf2o/repo/src/catch2/../catch2/matchers/catch_matchers_templated.hpp",
+      "score": 10.0,
+      "error_count": 0,
+      "messages": [
+        {
+          "line": 115,
+          "column": 32,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 170,
+          "column": 32,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 226,
+          "column": 32,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 115,
+          "column": 32,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 170,
+          "column": 32,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 226,
+          "column": 32,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 115,
+          "column": 32,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 170,
+          "column": 32,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        },
+        {
+          "line": 226,
+          "column": 32,
+          "type": "warning",
+          "message": "move assignment operators should be marked noexcept",
+          "source": "performance-noexcept-move-constructor"
+        }
+      ]
+    }
+  ],
+  "overview": {
+    "global_score": 10.0,
+    "total_errors": 0,
+    "total_warnings": 635,
+    "total_files": 16
+  }
+}

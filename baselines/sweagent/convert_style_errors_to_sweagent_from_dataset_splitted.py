@@ -161,7 +161,7 @@ def main():
     print("=" * 60)
 
     target_label = f"{args.org}/{args.repo}:pr-{args.pr_number}"
-    jsonl_filename = f"unique_results_{args.style_tool}.jsonl"
+    jsonl_filename = "results.json"#f"unique_results_{args.style_tool}.jsonl"
     jsonl_path = Path(jsonl_filename)
 
     file_reports = load_errors_from_jsonl(jsonl_path, target_label)

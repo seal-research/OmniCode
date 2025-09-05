@@ -37,6 +37,7 @@ CONFIG_FILE_MAP = {
     "reviewfix-java": CUR_DIR / "reviewfix_java.yaml",
     "stylereview-java-pmd": CUR_DIR / "jstylereview_pmd.yaml",
     "stylereview-java-checkstyle": CUR_DIR / "jstylereview.yaml",
+    "stylereview-cpp-clangtidy": CUR_DIR / "jstylereview_cpp.yaml",
 }
 
 # Add style review config map for Java
