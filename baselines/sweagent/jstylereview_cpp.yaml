@@ -36,11 +36,9 @@ agent:
       10. Add small inline comments in the patch where non-obvious changes were made, to help reviewers understand intent.
 
       Typical clang-tidy categories you may address:
-      - modernize-* (use of modern language features)
       - cppcoreguidelines-* (safety and design best practices)
       - bugprone-* (likely bugs and undefined behaviors)
       - performance-* (inefficient constructs and needless copies)
-      - readability-* (improve clarity without changing behavior)
       - misc-* and cert-* (security / portability checks)
 
       Keep the tone professional and direct. Be practical: fix the immediate problem correctly; don't over-engineer. If a violation requires further design discussion, document the risk and provide a minimal safe alternative.
