@@ -1,0 +1,419 @@
+--- a/tests/test_util_inspect_enum.py
++++ b/tests/test_util_inspect_enum.py
+-# Empty if creating new file
++import enum
++import pytest
++from sphinx.util.inspect import object_description
++
++
++class MyEnum(enum.Enum):
++    """Test enum for testing object_description formatting."""
++    ValueA = 10
++    ValueB = 20
++    ValueC = "string_value"
++
++
++class IntEnum(enum.IntEnum):
++    """Test IntEnum for testing object_description formatting."""
++    FIRST = 1
++    SECOND = 2
++
++
++class StringEnum(enum.Enum):
++    """Test string enum for testing object_description formatting."""
++    RED = "red"
++    GREEN = "green"
++    BLUE = "blue"
++
++
++def test_object_description_enum_basic():
++    """Test that object_description formats basic Enum values correctly."""
++    # Test basic enum value
++    result = object_description(MyEnum.ValueA)
++    expected = "MyEnum.ValueA"
++    assert result == expected, f"Expected '{expected}', got '{result}'"
++
++
++def test_object_description_enum_with_string_value():
++    """Test that object_description formats Enum with string values correctly."""
++    result = object_description(MyEnum.ValueC)
++    expected = "MyEnum.ValueC"
++    assert result == expected, f"Expected '{expected}', got '{result}'"
++
++
++def test_object_description_int_enum():
++    """Test that object_description formats IntEnum values correctly."""
++    result = object_description(IntEnum.FIRST)
++    expected = "IntEnum.FIRST"
++    assert result == expected, f"Expected '{expected}', got '{result}'"
++
++
++def test_object_description_string_enum():
++    """Test that object_description formats string Enum values correctly."""
++    result = object_description(StringEnum.RED)
++    expected = "StringEnum.RED"
++    assert result == expected, f"Expected '{expected}', got '{result}'"
++
++
++def test_object_description_enum_vs_repr():
++    """Test that object_description output differs from default repr for enums."""
++    enum_value = MyEnum.ValueA
++    
++    # Get the object_description result
++    obj_desc_result = object_description(enum_value)
++    
++    # Get the default repr result
++    repr_result = repr(enum_value)
++    
++    # They should be different
++    assert obj_desc_result != repr_result, f"object_description should differ from repr: '{obj_desc_result}' vs '{repr_result}'"
++    
++    # object_description should be cleaner (no angle brackets)
++    assert "<" not in obj_desc_result, f"object_description should not contain angle brackets: '{obj_desc_result}'"
++    assert ">" not in obj_desc_result, f"object_description should not contain angle brackets: '{obj_desc_result}'"
++    
++    # repr should contain angle brackets (the ugly format)
++    assert "<" in repr_result and ">" in repr_result, f"repr should contain angle brackets: '{repr_result}'"
++
++
++def test_object_description_non_enum_unchanged():
++    """Test that object_description behavior for non-enum objects is unchanged."""
++    # Test with various non-enum objects to ensure existing functionality is preserved
++    
++    # Test with dict
++    test_dict = {"key": "value"}
++    result = object_description(test_dict)
++    # Should contain the dict representation
++    assert "key" in result and "value" in result
++    
++    # Test with string
++    test_string = "hello world"
++    result = object_description(test_string)
++    assert result == repr(test_string)
++    
++    # Test with int
++    test_int = 42
++    result = object_description(test_int)
++    assert result == repr(test_int)
++    
++    # Test with list
++    test_list = [1, 2, 3]
++    result = object_description(test_list)
++    assert result == repr(test_list)
++
++
++def test_object_description_enum_edge_cases():
++    """Test edge cases for enum object_description."""
++    
++    # Test all enum values from MyEnum
++    for enum_value in MyEnum:
++        result = object_description(enum_value)
++        expected = f"MyEnum.{enum_value.name}"
++        assert result == expected, f"Expected '{expected}', got '{result}'"
++    
++    # Test all enum values from IntEnum
++    for enum_value in IntEnum:
++        result = object_description(enum_value)
++        expected = f"IntEnum.{enum_value.name}"
++        assert result == expected, f"Expected '{expected}', got '{result}'"
++
++
++class NestedEnum(enum.Enum):
++    """Test enum with complex names."""
++    COMPLEX_NAME_WITH_UNDERSCORES = "complex"
++    ANOTHER_VALUE = 999
++
++
++def test_object_description_enum_complex_names():
++    """Test that object_description handles complex enum names correctly."""
++    result = object_description(NestedEnum.COMPLEX_NAME_WITH_UNDERSCORES)
++    expected = "NestedEnum.COMPLEX_NAME_WITH_UNDERSCORES"
++    assert result == expected, f"Expected '{expected}', got '{result}'"
++
++
++def test_enum_in_function_signature_context():
++    """Test that demonstrates the fix works in the context of function signatures."""
++    # This test simulates how the enum would be used in a function signature
++    # and verifies that object_description produces the expected clean format
++    
++    def example_function(param: MyEnum = MyEnum.ValueA):
++        """Example function with enum default parameter."""
++        pass
++    
++    # Simulate what happens when Sphinx processes the default value
++    default_value = MyEnum.ValueA
++    formatted_default = object_description(default_value)
++    
++    # The formatted default should be clean and readable
++    assert formatted_default == "MyEnum.ValueA"
++    
++    # It should not contain the ugly repr format
++    assert "<MyEnum.ValueA: 10>" != formatted_default
++    assert "<" not in formatted_default
++    assert ">" not in formatted_default
++
++
++def test_object_description_preserves_existing_behavior():
++    """Comprehensive test to ensure existing object_description behavior is preserved."""
++    
++    # Test cases that should behave exactly as before
++    test_cases = [
++        # Basic types
++        (42, "42"),
++        ("string", "'string'"),
++        (True, "True"),
++        (None, "None"),
++        ([], "[]"),
++        ({}, "{}"),
++        
++        # More complex objects
++        ([1, 2, 3], "[1, 2, 3]"),
++        ({"a": 1}, "{'a': 1}"),
++    ]
++    
++    for obj, expected in test_cases:
++        result = object_description(obj)
++        assert result == expected, f"For {type(obj).__name__} {obj}: expected '{expected}', got '{result}'"
++
++
++# Test that verifies the bug is actually fixed
++def test_enum_bug_reproduction():
++    """Test that reproduces the original bug and verifies it's fixed."""
++    
++    # Create an enum value like in the bug report
++    enum_value = MyEnum.ValueA
++    
++    # The bug was that this would return "<MyEnum.ValueA: 10>"
++    # After the fix, it should return "MyEnum.ValueA"
++    result = object_description(enum_value)
++    
++    # Verify the fix
++    assert result == "MyEnum.ValueA", f"Bug not fixed: got '{result}'"
++    
++    # Verify it's different from the buggy behavior
++    buggy_output = "<MyEnum.ValueA: 10>"
++    assert result != buggy_output, f"Still showing buggy output: '{result}'"
++    
++    # Verify it's different from repr
++    assert result != repr(enum_value), f"Should differ from repr: '{result}' vs '{repr(enum_value)}'"
+
+--- a/tests/test_autodoc_enum_signatures.py
++++ b/tests/test_autodoc_enum_signatures.py
+-# Empty if creating new file
++import enum
++import pytest
++from sphinx.ext.autodoc import FunctionDocumenter
++from sphinx.testing.util import SphinxTestApp
++from sphinx.util.inspect import object_description
++
++
++class TestEnum(enum.Enum):
++    """Test enum for autodoc signature testing."""
++    VALUE_ONE = 1
++    VALUE_TWO = 2
++    STRING_VALUE = "test"
++
++
++class ColorEnum(enum.Enum):
++    """Color enum for testing."""
++    RED = "red"
++    GREEN = "green"
++    BLUE = "blue"
++
++
++def function_with_enum_default(param: TestEnum = TestEnum.VALUE_ONE) -> None:
++    """Function with enum default parameter for testing."""
++    pass
++
++
++def function_with_multiple_enum_defaults(
++    color: ColorEnum = ColorEnum.RED,
++    test_val: TestEnum = TestEnum.STRING_VALUE,
++    normal_param: str = "default"
++) -> None:
++    """Function with multiple enum defaults for testing."""
++    pass
++
++
++def function_with_enum_no_annotation(param=TestEnum.VALUE_TWO):
++    """Function with enum default but no type annotation."""
++    pass
++
++
++class TestEnumInSignatures:
++    """Test class for enum handling in function signatures."""
++    
++    def test_enum_default_formatting(self):
++        """Test that enum defaults are formatted cleanly in signatures."""
++        # Test the object_description function directly
++        result = object_description(TestEnum.VALUE_ONE)
++        assert result == "TestEnum.VALUE_ONE"
++        assert "<TestEnum.VALUE_ONE: 1>" != result
++        
++    def test_enum_string_value_formatting(self):
++        """Test that enum with string values are formatted cleanly."""
++        result = object_description(ColorEnum.RED)
++        assert result == "ColorEnum.RED"
++        assert "<ColorEnum.RED: 'red'>" != result
++        
++    def test_multiple_enum_types_formatting(self):
++        """Test that different enum types are all formatted cleanly."""
++        test_cases = [
++            (TestEnum.VALUE_ONE, "TestEnum.VALUE_ONE"),
++            (TestEnum.VALUE_TWO, "TestEnum.VALUE_TWO"),
++            (TestEnum.STRING_VALUE, "TestEnum.STRING_VALUE"),
++            (ColorEnum.RED, "ColorEnum.RED"),
++            (ColorEnum.GREEN, "ColorEnum.GREEN"),
++            (ColorEnum.BLUE, "ColorEnum.BLUE"),
++        ]
++        
++        for enum_value, expected in test_cases:
++            result = object_description(enum_value)
++            assert result == expected, f"Expected '{expected}', got '{result}'"
++            
++    def test_enum_vs_non_enum_defaults(self):
++        """Test that enum and non-enum defaults are handled appropriately."""
++        # Enum should be formatted cleanly
++        enum_result = object_description(TestEnum.VALUE_ONE)
++        assert enum_result == "TestEnum.VALUE_ONE"
++        
++        # Non-enum should use existing behavior
++        string_result = object_description("default")
++        assert string_result == "'default'"
++        
++        int_result = object_description(42)
++        assert int_result == "42"
++        
++    def test_enum_formatting_consistency(self):
++        """Test that enum formatting is consistent across different contexts."""
++        # All enum values should follow the same pattern
++        for enum_value in TestEnum:
++            result = object_description(enum_value)
++            expected_pattern = f"TestEnum.{enum_value.name}"
++            assert result == expected_pattern
++            
++            # Should not contain angle brackets
++            assert "<" not in result
++            assert ">" not in result
++            
++            # Should not contain the value representation
++            assert str(enum_value.value) not in result or enum_value.name == str(enum_value.value)
++
++
++class TestEnumSignatureIntegration:
++    """Integration tests for enum handling in autodoc signatures."""
++    
++    def test_function_signature_with_enum_default(self):
++        """Test that function signatures with enum defaults look clean."""
++        # This test verifies the integration works end-to-end
++        
++        # Get the default value
++        import inspect
++        sig = inspect.signature(function_with_enum_default)
++        param = sig.parameters['param']
++        default_value = param.default
++        
++        # Format it using object_description (what Sphinx uses)
++        formatted_default = object_description(default_value)
++        
++        # Should be clean format
++        assert formatted_default == "TestEnum.VALUE_ONE"
++        
++        # Should not be the ugly format
++        assert formatted_default != "<TestEnum.VALUE_ONE: 1>"
++        
++    def test_multiple_enum_defaults_in_signature(self):
++        """Test function with multiple enum defaults."""
++        import inspect
++        sig = inspect.signature(function_with_multiple_enum_defaults)
++        
++        # Check color parameter
++        color_param = sig.parameters['color']
++        color_default = object_description(color_param.default)
++        assert color_default == "ColorEnum.RED"
++        
++        # Check test_val parameter
++        test_param = sig.parameters['test_val']
++        test_default = object_description(test_param.default)
++        assert test_default == "TestEnum.STRING_VALUE"
++        
++        # Check normal parameter (should be unchanged)
++        normal_param = sig.parameters['normal_param']
++        normal_default = object_description(normal_param.default)
++        assert normal_default == "'default'"
++        
++    def test_enum_without_annotation(self):
++        """Test enum default without type annotation."""
++        import inspect
++        sig = inspect.signature(function_with_enum_no_annotation)
++        param = sig.parameters['param']
++        default_value = param.default
++        
++        formatted_default = object_description(default_value)
++        assert formatted_default == "TestEnum.VALUE_TWO"
++
++
++def test_enum_signature_bug_reproduction():
++    """Test that reproduces the exact bug from the issue description."""
++    
++    # Create a function similar to the one in the bug report
++    def ugly_enum_func(e: TestEnum = TestEnum.VALUE_ONE) -> None:
++        """Function that demonstrates the enum signature bug."""
++        pass
++    
++    # Get the default value
++    import inspect
++    sig = inspect.signature(ugly_enum_func)
++    param = sig.parameters['e']
++    default_value = param.default
++    
++    # Format using object_description (what Sphinx autodoc uses)
++    formatted_default = object_description(default_value)
++    
++    # The bug was that this would show: <TestEnum.VALUE_ONE: 1>
++    # After fix, it should show: TestEnum.VALUE_ONE
++    
++    assert formatted_default == "TestEnum.VALUE_ONE"
++    
++    # Verify it's not the ugly format
++    ugly_format = "<TestEnum.VALUE_ONE: 1>"
++    assert formatted_default != ugly_format
++    
++    # Verify it doesn't contain angle brackets
++    assert "<" not in formatted_default
++    assert ">" not in formatted_default
++
++
++def test_enum_edge_cases_in_signatures():
++    """Test edge cases for enum handling in signatures."""
++    
++    # Test enum with complex name
++    class ComplexEnum(enum.Enum):
++        VERY_LONG_NAME_WITH_UNDERSCORES = "complex"
++        ANOTHER_VALUE = 123
++    
++    def func_with_complex_enum(param: ComplexEnum = ComplexEnum.VERY_LONG_NAME_WITH_UNDERSCORES):
++        pass
++    
++    import inspect
++    sig = inspect.signature(func_with_complex_enum)
++    param = sig.parameters['param']
++    default_value = param.default
++    
++    formatted_default = object_description(default_value)
++    assert formatted_default == "ComplexEnum.VERY_LONG_NAME_WITH_UNDERSCORES"
++    
++    # Test IntEnum
++    class TestIntEnum(enum.IntEnum):
++        FIRST = 1
++        SECOND = 2
++    
++    def func_with_int_enum(param: TestIntEnum = TestIntEnum.FIRST):
++        pass
++    
++    sig = inspect.signature(func_with_int_enum)
++    param = sig.parameters['param']
++    default_value = param.default
++    
++    formatted_default = object_description(default_value)
++    assert formatted_default == "TestIntEnum.FIRST"

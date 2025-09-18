@@ -1,0 +1,355 @@
+--- a/tests/datagen/self_instruct/filter/test_instruction_filter.py
++++ b/tests/datagen/self_instruct/filter/test_instruction_filter.py
+-# Empty if creating new file
++import pytest
++from typing import List, Tuple, Union
++from unittest.mock import Mock, patch
++
++from camel.datagen.self_instruct.filter.instruction_filter import InstructionFilter
++from camel.datagen.self_instruct.filter.filter_function import FilterFunction, RewardModelFilter
++
++
++class MockFilterFunction(FilterFunction):
++    """Mock filter function for testing."""
++    
++    def __init__(self, should_pass: bool = True, name: str = "MockFilter"):
++        self.should_pass = should_pass
++        self.name = name
++        self.apply_called = False
++    
++    def apply(self, instruction: str) -> bool:
++        self.apply_called = True
++        return self.should_pass
++
++
++class MockRewardModelFilter(RewardModelFilter):
++    """Mock reward model filter for testing."""
++    
++    def __init__(self, should_pass: bool = True):
++        # Don't call super().__init__ to avoid needing actual reward model
++        self.should_pass = should_pass
++        self.apply_called = False
++        self.prompt = None
++    
++    def apply(self, instruction: str) -> bool:
++        self.apply_called = True
++        return self.should_pass
++
++
++class TestInstructionFilterTypeHints:
++    """Test type hints and return types of the filter method."""
++    
++    def test_filter_return_type_bool_when_return_details_false(self):
++        """Test that filter returns bool when return_details=False."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Add a passing filter
++        passing_filter = MockFilterFunction(should_pass=True)
++        instruction_filter.add_filter(passing_filter)
++        
++        result = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        
++        assert isinstance(result, bool)
++        assert result is True
++    
++    def test_filter_return_type_tuple_when_return_details_true(self):
++        """Test that filter returns tuple when return_details=True."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Add a passing filter
++        passing_filter = MockFilterFunction(should_pass=True)
++        instruction_filter.add_filter(passing_filter)
++        
++        result = instruction_filter.filter("test prompt", "test instruction", return_details=True)
++        
++        assert isinstance(result, tuple)
++        assert len(result) == 2
++        assert isinstance(result[0], bool)
++        assert isinstance(result[1], list)
++    
++    def test_filter_return_type_consistency_with_failing_filters(self):
++        """Test return type consistency when filters fail."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Add a failing filter
++        failing_filter = MockFilterFunction(should_pass=False)
++        instruction_filter.add_filter(failing_filter)
++        
++        # Test return_details=False
++        result_bool = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        assert isinstance(result_bool, bool)
++        assert result_bool is False
++        
++        # Test return_details=True
++        result_tuple = instruction_filter.filter("test prompt", "test instruction", return_details=True)
++        assert isinstance(result_tuple, tuple)
++        assert len(result_tuple) == 2
++        assert isinstance(result_tuple[0], bool)
++        assert isinstance(result_tuple[1], list)
++        assert result_tuple[0] is False
++        assert len(result_tuple[1]) > 0
++
++
++class TestInstructionFilterEarlyReturn:
++    """Test early return optimization in the filter method."""
++    
++    def test_early_return_optimization_when_return_details_false(self):
++        """Test that filter returns early when return_details=False and first filter fails."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Add filters: first fails, second should not be called
++        first_filter = MockFilterFunction(should_pass=False, name="FirstFilter")
++        second_filter = MockFilterFunction(should_pass=True, name="SecondFilter")
++        
++        instruction_filter.add_filter(first_filter)
++        instruction_filter.add_filter(second_filter)
++        
++        result = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        
++        # First filter should be called
++        assert first_filter.apply_called is True
++        
++        # With early return optimization, second filter should NOT be called
++        # This test will FAIL before the fix is applied
++        assert second_filter.apply_called is False, "Early return optimization not implemented"
++        
++        assert result is False
++    
++    def test_no_early_return_when_return_details_true(self):
++        """Test that all filters are processed when return_details=True."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Add filters: first fails, second also fails
++        first_filter = MockFilterFunction(should_pass=False, name="FirstFilter")
++        second_filter = MockFilterFunction(should_pass=False, name="SecondFilter")
++        
++        instruction_filter.add_filter(first_filter)
++        instruction_filter.add_filter(second_filter)
++        
++        result = instruction_filter.filter("test prompt", "test instruction", return_details=True)
++        
++        # Both filters should be called to collect all failed filter names
++        assert first_filter.apply_called is True
++        assert second_filter.apply_called is True
++        
++        assert result[0] is False
++        assert "MockFilter" in result[1]  # Both filters should be in failed list
++        assert len(result[1]) == 2
++    
++    def test_all_filters_processed_when_all_pass_return_details_false(self):
++        """Test that all filters are processed when all pass and return_details=False."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Add multiple passing filters
++        first_filter = MockFilterFunction(should_pass=True, name="FirstFilter")
++        second_filter = MockFilterFunction(should_pass=True, name="SecondFilter")
++        third_filter = MockFilterFunction(should_pass=True, name="ThirdFilter")
++        
++        instruction_filter.add_filter(first_filter)
++        instruction_filter.add_filter(second_filter)
++        instruction_filter.add_filter(third_filter)
++        
++        result = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        
++        # All filters should be called since they all pass
++        assert first_filter.apply_called is True
++        assert second_filter.apply_called is True
++        assert third_filter.apply_called is True
++        
++        assert result is True
++    
++    def test_early_return_with_mixed_filter_types(self):
++        """Test early return works with different filter types including RewardModelFilter."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Add a failing RewardModelFilter first
++        reward_filter = MockRewardModelFilter(should_pass=False)
++        regular_filter = MockFilterFunction(should_pass=True, name="RegularFilter")
++        
++        instruction_filter.add_filter(reward_filter)
++        instruction_filter.add_filter(regular_filter)
++        
++        result = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        
++        # Reward filter should be called and prompt should be set
++        assert reward_filter.apply_called is True
++        assert reward_filter.prompt == "test prompt"
++        
++        # With early return optimization, regular filter should NOT be called
++        # This test will FAIL before the fix is applied
++        assert regular_filter.apply_called is False, "Early return optimization not implemented"
++        
++        assert result is False
++
++
++class TestInstructionFilterExistingFunctionality:
++    """Test that existing functionality is preserved after enhancements."""
++    
++    def test_empty_filters_list_returns_true(self):
++        """Test that empty filters list returns True."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        result_bool = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        result_tuple = instruction_filter.filter("test prompt", "test instruction", return_details=True)
++        
++        assert result_bool is True
++        assert result_tuple == (True, [])
++    
++    def test_single_passing_filter(self):
++        """Test behavior with single passing filter."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        passing_filter = MockFilterFunction(should_pass=True, name="PassingFilter")
++        instruction_filter.add_filter(passing_filter)
++        
++        result_bool = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        result_tuple = instruction_filter.filter("test prompt", "test instruction", return_details=True)
++        
++        assert result_bool is True
++        assert result_tuple == (True, [])
++    
++    def test_single_failing_filter(self):
++        """Test behavior with single failing filter."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        failing_filter = MockFilterFunction(should_pass=False, name="FailingFilter")
++        instruction_filter.add_filter(failing_filter)
++        
++        result_bool = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        result_tuple = instruction_filter.filter("test prompt", "test instruction", return_details=True)
++        
++        assert result_bool is False
++        assert result_tuple[0] is False
++        assert "MockFilter" in result_tuple[1]
++        assert len(result_tuple[1]) == 1
++    
++    def test_multiple_filters_mixed_results(self):
++        """Test behavior with multiple filters having mixed results."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        passing_filter1 = MockFilterFunction(should_pass=True, name="PassingFilter1")
++        failing_filter = MockFilterFunction(should_pass=False, name="FailingFilter")
++        passing_filter2 = MockFilterFunction(should_pass=True, name="PassingFilter2")
++        
++        instruction_filter.add_filter(passing_filter1)
++        instruction_filter.add_filter(failing_filter)
++        instruction_filter.add_filter(passing_filter2)
++        
++        result_bool = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        result_tuple = instruction_filter.filter("test prompt", "test instruction", return_details=True)
++        
++        assert result_bool is False
++        assert result_tuple[0] is False
++        assert "MockFilter" in result_tuple[1]
++        assert len(result_tuple[1]) == 1
++    
++    def test_reward_model_filter_prompt_setting(self):
++        """Test that RewardModelFilter gets prompt set correctly."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        reward_filter = MockRewardModelFilter(should_pass=True)
++        instruction_filter.add_filter(reward_filter)
++        
++        test_prompt = "This is a test prompt"
++        instruction_filter.filter(test_prompt, "test instruction", return_details=False)
++        
++        assert reward_filter.prompt == test_prompt
++    
++    def test_failed_filters_list_contains_correct_names(self):
++        """Test that failed filters list contains correct filter class names."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Create filters with different class names by subclassing
++        class CustomFilter1(MockFilterFunction):
++            pass
++        
++        class CustomFilter2(MockFilterFunction):
++            pass
++        
++        passing_filter = MockFilterFunction(should_pass=True)
++        failing_filter1 = CustomFilter1(should_pass=False)
++        failing_filter2 = CustomFilter2(should_pass=False)
++        
++        instruction_filter.add_filter(passing_filter)
++        instruction_filter.add_filter(failing_filter1)
++        instruction_filter.add_filter(failing_filter2)
++        
++        result = instruction_filter.filter("test prompt", "test instruction", return_details=True)
++        
++        assert result[0] is False
++        assert "CustomFilter1" in result[1]
++        assert "CustomFilter2" in result[1]
++        assert "MockFilterFunction" not in result[1]  # Passing filter should not be in list
++        assert len(result[1]) == 2
++
++
++class TestInstructionFilterEdgeCases:
++    """Test edge cases and boundary conditions."""
++    
++    def test_filter_with_empty_strings(self):
++        """Test filter behavior with empty prompt and instruction strings."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        passing_filter = MockFilterFunction(should_pass=True)
++        instruction_filter.add_filter(passing_filter)
++        
++        result_bool = instruction_filter.filter("", "", return_details=False)
++        result_tuple = instruction_filter.filter("", "", return_details=True)
++        
++        assert result_bool is True
++        assert result_tuple == (True, [])
++    
++    def test_filter_with_none_values_handled_gracefully(self):
++        """Test that filter handles edge cases gracefully."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Add a filter that might receive None values
++        mock_filter = MockFilterFunction(should_pass=True)
++        instruction_filter.add_filter(mock_filter)
++        
++        # This should not crash
++        result = instruction_filter.filter("test", "test", return_details=False)
++        assert isinstance(result, bool)
++    
++    def test_large_number_of_filters_performance(self):
++        """Test behavior with many filters to verify early return optimization benefit."""
++        filter_config = {}
++        instruction_filter = InstructionFilter(filter_config)
++        
++        # Add one failing filter at the beginning
++        failing_filter = MockFilterFunction(should_pass=False, name="FailingFilter")
++        instruction_filter.add_filter(failing_filter)
++        
++        # Add many filters that should not be called with early return
++        many_filters = []
++        for i in range(100):
++            filter_obj = MockFilterFunction(should_pass=True, name=f"Filter{i}")
++            many_filters.append(filter_obj)
++            instruction_filter.add_filter(filter_obj)
++        
++        result = instruction_filter.filter("test prompt", "test instruction", return_details=False)
++        
++        # First filter should be called
++        assert failing_filter.apply_called is True
++        
++        # With early return optimization, none of the other filters should be called
++        # This test will FAIL before the fix is applied
++        for i, filter_obj in enumerate(many_filters):
++            assert filter_obj.apply_called is False, f"Filter {i} was called despite early return optimization"
++        
++        assert result is False

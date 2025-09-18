@@ -1,0 +1,87 @@
+--- a/sympy/core/tests/test_sympify.py
++++ b/sympy/core/tests/test_sympify.py
+-def test_kernS():
+-    s = '2*x+2*y+2'
+-    assert kernS(s) == '2*(x+y+1)'
+-    s = '2*x + 2*y + 2'
+-    assert kernS(s) == s
+-    s = '2 x+2 y+2'
+-    assert kernS(s) == s
+-    s = 'x + (2*y + 2)'
+-    assert kernS(s) == s
++def test_kernS():
++    s = '2*x+2*y+2'
++    assert kernS(s) == '2*(x+y+1)'
++    s = '2*x + 2*y + 2'
++    assert kernS(s) == s
++    s = '2 x+2 y+2'
++    assert kernS(s) == s
++    s = 'x + (2*y + 2)'
++    assert kernS(s) == s
++
++
++def test_kernS_no_spaces_bug():
++    """Test that kernS handles strings without spaces correctly.
++    
++    This test reproduces the bug where kernS would raise UnboundLocalError
++    when processing strings that don't contain spaces, because 'kern' was
++    referenced before assignment.
++    """
++    # Test case from the bug report - should not raise UnboundLocalError
++    text = "(2*x)/(x-1)"
++    result = kernS(text)
++    # Should return the expression unchanged since no spaces to process
++    assert result == text
++    
++    # Additional test cases without spaces
++    assert kernS("x+y") == "x+y"
++    assert kernS("2*x*y") == "2*x*y"
++    assert kernS("(a+b)*c") == "(a+b)*c"
++    assert kernS("sin(x)") == "sin(x)"
++    assert kernS("x**2+y**2") == "x**2+y**2"
++
++
++def test_kernS_edge_cases():
++    """Test edge cases for kernS function."""
++    # Empty string
++    assert kernS("") == ""
++    
++    # String with only spaces
++    assert kernS("   ") == "   "
++    
++    # String with parentheses but no spaces
++    assert kernS("(x+y)") == "(x+y)"
++    
++    # String with quotes
++    assert kernS("'x + y'") == "'x + y'"
++    assert kernS('"x + y"') == '"x + y"'
++    
++    # Mixed cases
++    assert kernS("2*(x+y)") == "2*(x+y)"
++    assert kernS("-(x+1)") == "-(x+1)"
++
++
++def test_kernS_with_spaces():
++    """Test kernS behavior when spaces are present (existing functionality)."""
++    # These should trigger the kern replacement logic
++    s = "2 * (x + y)"
++    result = kernS(s)
++    # The exact result depends on the kern replacement, but should not raise error
++    assert isinstance(result, (str, type(sympify("x"))))
++    
++    # Test that spaces in expressions are handled
++    s = "x + y + z"
++    result = kernS(s)
++    assert isinstance(result, (str, type(sympify("x"))))
++
++
++def test_kernS_unmatched_parentheses():
++    """Test that kernS raises SympifyError for unmatched parentheses."""
++    with pytest.raises(SympifyError):
++        kernS("(x + y")
++    
++    with pytest.raises(SympifyError):
++        kernS("x + y)")
++    
++    with pytest.raises(SympifyError):
++        kernS("((x + y)")

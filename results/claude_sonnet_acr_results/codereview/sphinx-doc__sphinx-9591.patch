@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/domains/python.py b/sphinx/domains/python.py\nindex e8330e81c..58ad2aa36 100644\n--- a/sphinx/domains/python.py\n+++ b/sphinx/domains/python.py\n@@ -861,7 +861,8 @@ class PyProperty(PyObject):\n \n         typ = self.options.get('type')\n         if typ:\n-            signode += addnodes.desc_annotation(typ, ': ' + typ)\n+            annotation = self._parse_annotation(typ, self.env)\n+            signode += addnodes.desc_annotation(typ, ': ', annotation)\n \n         return fullname, prefix\n \n"
+}

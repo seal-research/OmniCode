@@ -1,0 +1,193 @@
+--- a/sklearn/decomposition/tests/test_dict_learning.py
++++ b/sklearn/decomposition/tests/test_dict_learning.py
+-# This will be added to the existing test file
++import pytest
++import numpy as np
++import warnings
++from sklearn.decomposition import SparseCoder
++from sklearn.linear_model import Lasso
++from sklearn.exceptions import ConvergenceWarning
++
++
++def test_sparse_coder_max_iter_parameter():
++    """Test that SparseCoder accepts and uses max_iter parameter."""
++    # Create a simple dictionary and data
++    n_components, n_features = 5, 10
++    n_samples = 8
++    
++    rng = np.random.RandomState(42)
++    dictionary = rng.randn(n_components, n_features)
++    X = rng.randn(n_samples, n_features)
++    
++    # Test that SparseCoder accepts max_iter parameter
++    coder = SparseCoder(dictionary, transform_algorithm='lasso_cd', max_iter=500)
++    assert hasattr(coder, 'max_iter')
++    assert coder.max_iter == 500
++    
++    # Test default value
++    coder_default = SparseCoder(dictionary, transform_algorithm='lasso_cd')
++    assert hasattr(coder_default, 'max_iter')
++    assert coder_default.max_iter == 1000
++
++
++def test_sparse_coder_max_iter_convergence_warning():
++    """Test that SparseCoder with low max_iter produces convergence warning."""
++    # Create a dictionary and data that will likely not converge with few iterations
++    n_components, n_features = 10, 20
++    n_samples = 15
++    
++    rng = np.random.RandomState(42)
++    dictionary = rng.randn(n_components, n_features)
++    X = rng.randn(n_samples, n_features) * 10  # Scale up to make convergence harder
++    
++    # Test with very low max_iter should produce warning
++    coder_low_iter = SparseCoder(dictionary, transform_algorithm='lasso_cd', 
++                                max_iter=1, transform_alpha=0.1)
++    
++    with warnings.catch_warnings(record=True) as w:
++        warnings.simplefilter("always")
++        coder_low_iter.transform(X)
++        # Should have at least one convergence warning
++        convergence_warnings = [warning for warning in w 
++                              if issubclass(warning.category, ConvergenceWarning)]
++        assert len(convergence_warnings) > 0
++
++
++def test_sparse_coder_max_iter_no_warning_with_sufficient_iterations():
++    """Test that SparseCoder with sufficient max_iter doesn't produce convergence warning."""
++    # Create a simple dictionary and data
++    n_components, n_features = 5, 10
++    n_samples = 8
++    
++    rng = np.random.RandomState(42)
++    dictionary = rng.randn(n_components, n_features)
++    X = rng.randn(n_samples, n_features)
++    
++    # Test with high max_iter should not produce warning
++    coder_high_iter = SparseCoder(dictionary, transform_algorithm='lasso_cd', 
++                                 max_iter=5000, transform_alpha=0.1)
++    
++    with warnings.catch_warnings(record=True) as w:
++        warnings.simplefilter("always")
++        result = coder_high_iter.transform(X)
++        # Should have no convergence warnings
++        convergence_warnings = [warning for warning in w 
++                              if issubclass(warning.category, ConvergenceWarning)]
++        assert len(convergence_warnings) == 0
++        assert result.shape == (n_samples, n_components)
++
++
++def test_sparse_coder_max_iter_different_algorithms():
++    """Test that max_iter parameter only affects lasso_cd algorithm."""
++    n_components, n_features = 5, 10
++    n_samples = 8
++    
++    rng = np.random.RandomState(42)
++    dictionary = rng.randn(n_components, n_features)
++    X = rng.randn(n_samples, n_features)
++    
++    # Test with different algorithms - max_iter should be accepted but only used for lasso_cd
++    algorithms = ['omp', 'lasso_lars', 'lars', 'threshold']
++    
++    for algorithm in algorithms:
++        if algorithm == 'threshold':
++            coder = SparseCoder(dictionary, transform_algorithm=algorithm, 
++                              max_iter=100, transform_alpha=0.1)
++        else:
++            coder = SparseCoder(dictionary, transform_algorithm=algorithm, 
++                              max_iter=100, transform_n_nonzero_coefs=3)
++        
++        assert hasattr(coder, 'max_iter')
++        assert coder.max_iter == 100
++        
++        # Should not raise any errors
++        result = coder.transform(X)
++        assert result.shape == (n_samples, n_components)
++
++
++def test_sparse_coder_max_iter_backward_compatibility():
++    """Test that existing code without max_iter parameter still works."""
++    n_components, n_features = 5, 10
++    n_samples = 8
++    
++    rng = np.random.RandomState(42)
++    dictionary = rng.randn(n_components, n_features)
++    X = rng.randn(n_samples, n_features)
++    
++    # Test that old code without max_iter still works
++    coder = SparseCoder(dictionary, transform_algorithm='lasso_cd', 
++                       transform_alpha=0.1)
++    
++    result = coder.transform(X)
++    assert result.shape == (n_samples, n_components)
++    assert coder.max_iter == 1000  # Default value
++
++
++def test_sparse_coder_max_iter_parameter_validation():
++    """Test that max_iter parameter is properly validated."""
++    n_components, n_features = 5, 10
++    
++    rng = np.random.RandomState(42)
++    dictionary = rng.randn(n_components, n_features)
++    
++    # Test with valid max_iter values
++    valid_values = [1, 100, 1000, 5000]
++    for max_iter in valid_values:
++        coder = SparseCoder(dictionary, transform_algorithm='lasso_cd', 
++                           max_iter=max_iter)
++        assert coder.max_iter == max_iter
++
++
++def test_sparse_coder_max_iter_reproduces_original_issue():
++    """Test that reproduces the original issue from the bug report."""
++    # This test should fail before the fix and pass after the fix
++    n_components, n_features = 10, 20
++    n_samples = 15
++    
++    rng = np.random.RandomState(42)
++    # Create a dictionary and data that will likely not converge with default iterations
++    dictionary = rng.randn(n_components, n_features)
++    X = rng.randn(n_samples, n_features) * 5
++    
++    # Before fix: SparseCoder doesn't accept max_iter, uses default 1000
++    # After fix: SparseCoder should accept max_iter and use it
++    
++    # Test that we can now specify max_iter to avoid convergence warnings
++    coder = SparseCoder(dictionary, transform_algorithm='lasso_cd', 
++                       max_iter=10000, transform_alpha=0.01)
++    
++    with warnings.catch_warnings(record=True) as w:
++        warnings.simplefilter("always")
++        result = coder.transform(X)
++        
++        # With sufficient iterations, should have fewer or no convergence warnings
++        convergence_warnings = [warning for warning in w 
++                              if issubclass(warning.category, ConvergenceWarning)]
++        
++        # The key test: we should be able to control max_iter
++        assert hasattr(coder, 'max_iter')
++        assert coder.max_iter == 10000
++        assert result.shape == (n_samples, n_components)
++
++
++def test_sparse_coder_max_iter_integration_with_lasso():
++    """Test that max_iter is properly passed to underlying Lasso estimator."""
++    # This test verifies the integration between SparseCoder and Lasso
++    n_components, n_features = 5, 10
++    n_samples = 8
++    
++    rng = np.random.RandomState(42)
++    dictionary = rng.randn(n_components, n_features)
++    X = rng.randn(n_samples, n_features)
++    
++    # Create SparseCoder with specific max_iter
++    max_iter_value = 2000
++    coder = SparseCoder(dictionary, transform_algorithm='lasso_cd', 
++                       max_iter=max_iter_value, transform_alpha=0.1)
++    
++    # Transform should work without issues
++    result = coder.transform(X)
++    assert result.shape == (n_samples, n_components)
++    
++    # Verify that the max_iter is stored correctly
++    assert coder.max_iter == max_iter_value

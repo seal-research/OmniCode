@@ -1,0 +1,6 @@
+{
+  "instance_id": "mwaskom__seaborn-3069",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/mwaskom__seaborn-3069/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/mwaskom__seaborn-3069/mwaskom__seaborn-3069.pred"
+}

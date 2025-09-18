@@ -1,0 +1,298 @@
+--- a/tests/model_fields/test_jsonfield.py
++++ b/tests/model_fields/test_jsonfield.py
+-# Empty if creating new file
++import json
++import pytest
++from django.db import models
++from django.test import TestCase, skipUnlessDBFeature
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('model_fields')
++class JSONFieldInLookupTests(TestCase):
++    """Test cases for __in lookup on JSONField key transforms."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        class TestModel(models.Model):
++            json_field = models.JSONField()
++            
++            class Meta:
++                app_label = 'model_fields'
++        
++        cls.TestModel = TestModel
++    
++    def setUp(self):
++        """Set up test data."""
++        # Create test objects with various JSON structures
++        self.TestModel.objects.create(json_field={'key': 0, 'other': 'value1'})
++        self.TestModel.objects.create(json_field={'key': 1, 'other': 'value2'})
++        self.TestModel.objects.create(json_field={'key': 2, 'other': 'value3'})
++        self.TestModel.objects.create(json_field={'key': 'string_value', 'other': 'value4'})
++        self.TestModel.objects.create(json_field={'key': None, 'other': 'value5'})
++        self.TestModel.objects.create(json_field={'different_key': 0, 'other': 'value6'})
++        
++        # Nested JSON structures
++        self.TestModel.objects.create(json_field={'nested': {'key': 0}, 'other': 'value7'})
++        self.TestModel.objects.create(json_field={'nested': {'key': 1}, 'other': 'value8'})
++        self.TestModel.objects.create(json_field={'nested': {'key': 2}, 'other': 'value9'})
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_key_transform_in_lookup_single_value(self):
++        """Test __in lookup with single value should match exact lookup."""
++        # Test with integer value
++        in_filter = {'json_field__key__in': [0]}
++        exact_filter = {'json_field__key': 0}
++        
++        in_items = list(self.TestModel.objects.filter(**in_filter))
++        exact_items = list(self.TestModel.objects.filter(**exact_filter))
++        
++        self.assertEqual(len(in_items), len(exact_items))
++        self.assertEqual(len(in_items), 1)
++        self.assertEqual(in_items[0].json_field['key'], 0)
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_key_transform_in_lookup_multiple_values(self):
++        """Test __in lookup with multiple values."""
++        # Test with multiple integer values
++        in_filter = {'json_field__key__in': [0, 1, 2]}
++        items = list(self.TestModel.objects.filter(**in_filter))
++        
++        self.assertEqual(len(items), 3)
++        keys = [item.json_field['key'] for item in items]
++        self.assertCountEqual(keys, [0, 1, 2])
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_key_transform_in_lookup_mixed_types(self):
++        """Test __in lookup with mixed data types."""
++        # Test with mixed types: integer, string, None
++        in_filter = {'json_field__key__in': [0, 'string_value', None]}
++        items = list(self.TestModel.objects.filter(**in_filter))
++        
++        self.assertEqual(len(items), 3)
++        keys = [item.json_field['key'] for item in items]
++        self.assertCountEqual(keys, [0, 'string_value', None])
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_key_transform_in_lookup_empty_list(self):
++        """Test __in lookup with empty list should return no results."""
++        in_filter = {'json_field__key__in': []}
++        items = list(self.TestModel.objects.filter(**in_filter))
++        
++        self.assertEqual(len(items), 0)
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_key_transform_in_lookup_nonexistent_values(self):
++        """Test __in lookup with values that don't exist."""
++        in_filter = {'json_field__key__in': [999, 'nonexistent']}
++        items = list(self.TestModel.objects.filter(**in_filter))
++        
++        self.assertEqual(len(items), 0)
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_nested_key_transform_in_lookup(self):
++        """Test __in lookup on nested JSON keys."""
++        in_filter = {'json_field__nested__key__in': [0, 1]}
++        items = list(self.TestModel.objects.filter(**in_filter))
++        
++        self.assertEqual(len(items), 2)
++        nested_keys = [item.json_field['nested']['key'] for item in items]
++        self.assertCountEqual(nested_keys, [0, 1])
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_key_transform_in_lookup_consistency_with_exact(self):
++        """Test that __in lookup is consistent with multiple exact lookups."""
++        # Get results using __in lookup
++        in_filter = {'json_field__key__in': [0, 1]}
++        in_items = set(self.TestModel.objects.filter(**in_filter).values_list('id', flat=True))
++        
++        # Get results using multiple exact lookups with OR
++        from django.db.models import Q
++        exact_items = set(self.TestModel.objects.filter(
++            Q(json_field__key=0) | Q(json_field__key=1)
++        ).values_list('id', flat=True))
++        
++        self.assertEqual(in_items, exact_items)
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_key_transform_in_lookup_with_none_values(self):
++        """Test __in lookup behavior with None values."""
++        # Test that None in the list works correctly
++        in_filter = {'json_field__key__in': [None]}
++        items = list(self.TestModel.objects.filter(**in_filter))
++        
++        self.assertEqual(len(items), 1)
++        self.assertIsNone(items[0].json_field['key'])
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_key_transform_in_lookup_case_sensitivity(self):
++        """Test __in lookup case sensitivity for string values."""
++        # Add test data with different cases
++        self.TestModel.objects.create(json_field={'key': 'Test', 'other': 'case_test1'})
++        self.TestModel.objects.create(json_field={'key': 'test', 'other': 'case_test2'})
++        
++        # Test case-sensitive lookup
++        in_filter = {'json_field__key__in': ['Test']}
++        items = list(self.TestModel.objects.filter(**in_filter))
++        
++        self.assertEqual(len(items), 1)
++        self.assertEqual(items[0].json_field['key'], 'Test')
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_key_transform_in_lookup_with_duplicates(self):
++        """Test __in lookup with duplicate values in the list."""
++        # Duplicates in the __in list should not affect results
++        in_filter = {'json_field__key__in': [0, 0, 1, 1]}
++        items = list(self.TestModel.objects.filter(**in_filter))
++        
++        self.assertEqual(len(items), 2)
++        keys = [item.json_field['key'] for item in items]
++        self.assertCountEqual(keys, [0, 1])
++
++
++@isolate_apps('model_fields')
++class JSONFieldInLookupBugReproductionTests(TestCase):
++    """Test cases that reproduce the specific bug described in the issue."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        class OurModel(models.Model):
++            our_field = models.JSONField()
++            
++            class Meta:
++                app_label = 'model_fields'
++        
++        cls.OurModel = OurModel
++    
++    def setUp(self):
++        """Set up test data that reproduces the bug scenario."""
++        # Create 312 objects with our_field.key = 0 to match the issue description
++        for i in range(312):
++            self.OurModel.objects.create(our_field={'key': 0, 'index': i})
++        
++        # Add some objects with different key values
++        for i in range(10):
++            self.OurModel.objects.create(our_field={'key': i + 1, 'index': i + 312})
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_bug_reproduction_in_vs_exact_lookup(self):
++        """
++        Reproduce the exact bug described in the issue.
++        
++        This test should fail before the fix and pass after the fix.
++        The issue states that:
++        - first_filter = {'our_field__key__in': [0]} returns 0 items (BUG)
++        - second_filter = {'our_field__key': 0} returns 312 items (CORRECT)
++        
++        They should return the same number of items.
++        """
++        # This is the failing case from the issue
++        first_filter = {'our_field__key__in': [0]}
++        first_items = self.OurModel.objects.filter(**first_filter)
++        first_count = len(first_items)
++        
++        # This is the working case from the issue
++        second_filter = {'our_field__key': 0}
++        second_items = self.OurModel.objects.filter(**second_filter)
++        second_count = len(second_items)
++        
++        # Before the fix, this assertion will fail because first_count is 0
++        # After the fix, this assertion should pass because both should return 312
++        self.assertEqual(first_count, second_count)
++        self.assertEqual(first_count, 312)
++        self.assertEqual(second_count, 312)
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_bug_reproduction_multiple_values_in_lookup(self):
++        """Test that __in lookup works with multiple values after the fix."""
++        # Test with multiple values
++        filter_dict = {'our_field__key__in': [0, 1, 2]}
++        items = self.OurModel.objects.filter(**filter_dict)
++        count = len(items)
++        
++        # Should return 312 (for key=0) + 1 (for key=1) + 1 (for key=2) = 314
++        self.assertEqual(count, 314)
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_bug_reproduction_consistency_check(self):
++        """Verify that __in and exact lookups are consistent for all values."""
++        for key_value in [0, 1, 2, 3]:
++            with self.subTest(key_value=key_value):
++                in_filter = {'our_field__key__in': [key_value]}
++                exact_filter = {'our_field__key': key_value}
++                
++                in_count = self.OurModel.objects.filter(**in_filter).count()
++                exact_count = self.OurModel.objects.filter(**exact_filter).count()
++                
++                self.assertEqual(in_count, exact_count, 
++                    f"__in and exact lookups should return same count for key={key_value}")
++
++
++@isolate_apps('model_fields')  
++class JSONFieldInLookupDatabaseSpecificTests(TestCase):
++    """Test cases for database-specific behavior of __in lookup on JSON key transforms."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        class TestModel(models.Model):
++            json_field = models.JSONField()
++            
++            class Meta:
++                app_label = 'model_fields'
++        
++        cls.TestModel = TestModel
++    
++    def setUp(self):
++        """Set up test data for database-specific tests."""
++        # Test data with various numeric types
++        self.TestModel.objects.create(json_field={'num': 42})
++        self.TestModel.objects.create(json_field={'num': 42.0})
++        self.TestModel.objects.create(json_field={'num': '42'})
++        
++        # Test data with boolean values
++        self.TestModel.objects.create(json_field={'bool': True})
++        self.TestModel.objects.create(json_field={'bool': False})
++        
++        # Test data with array values
++        self.TestModel.objects.create(json_field={'arr': [1, 2, 3]})
++        self.TestModel.objects.create(json_field={'arr': [4, 5, 6]})
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_numeric_type_handling_in_lookup(self):
++        """Test how different numeric types are handled in __in lookup."""
++        # Test integer lookup
++        int_filter = {'json_field__num__in': [42]}
++        int_items = list(self.TestModel.objects.filter(**int_filter))
++        
++        # Should find items where num is 42 (as int or float, depending on DB)
++        self.assertGreaterEqual(len(int_items), 1)
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_boolean_handling_in_lookup(self):
++        """Test boolean value handling in __in lookup."""
++        true_filter = {'json_field__bool__in': [True]}
++        true_items = list(self.TestModel.objects.filter(**true_filter))
++        
++        false_filter = {'json_field__bool__in': [False]}
++        false_items = list(self.TestModel.objects.filter(**false_filter))
++        
++        self.assertEqual(len(true_items), 1)
++        self.assertEqual(len(false_items), 1)
++        self.assertTrue(true_items[0].json_field['bool'])
++        self.assertFalse(false_items[0].json_field['bool'])
++    
++    @skipUnlessDBFeature('supports_json_field')
++    def test_array_handling_in_lookup(self):
++        """Test array value handling in __in lookup."""
++        # Note: This tests the lookup on the array itself, not array elements
++        arr_filter = {'json_field__arr__in': [[1, 2, 3]]}
++        arr_items = list(self.TestModel.objects.filter(**arr_filter))
++        
++        self.assertEqual(len(arr_items), 1)
++        self.assertEqual(arr_items[0].json_field['arr'], [1, 2, 3])

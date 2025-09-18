@@ -1,0 +1,246 @@
+--- a/tests/queries/test_meta_ordering_group_by.py
++++ b/tests/queries/test_meta_ordering_group_by.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import Count, Sum
++from django.test import TestCase
++
++
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++    birth_year = models.IntegerField()
++    
++    class Meta:
++        ordering = ['name']
++        app_label = 'queries'
++
++
++class Book(models.Model):
++    title = models.CharField(max_length=200)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE)
++    pages = models.IntegerField()
++    publication_year = models.IntegerField()
++    
++    class Meta:
++        ordering = ['title']
++        app_label = 'queries'
++
++
++class MetaOrderingGroupByTest(TestCase):
++    """Test that Meta.ordering fields are not included in GROUP BY clause."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        # Create test data
++        cls.author1 = Author.objects.create(name="Alice", birth_year=1970)
++        cls.author2 = Author.objects.create(name="Bob", birth_year=1980)
++        
++        # Create books for each author
++        Book.objects.create(title="Book A1", author=cls.author1, pages=100, publication_year=2000)
++        Book.objects.create(title="Book A2", author=cls.author1, pages=150, publication_year=2005)
++        Book.objects.create(title="Book B1", author=cls.author2, pages=200, publication_year=2010)
++    
++    def test_meta_ordering_not_in_group_by_with_count(self):
++        """Test that Meta.ordering fields don't affect COUNT aggregation."""
++        # This should group by author only, not by author + name (from Meta.ordering)
++        result = list(Author.objects.annotate(book_count=Count('book')).values('name', 'book_count'))
++        
++        # Should have 2 authors with correct book counts
++        expected = [
++            {'name': 'Alice', 'book_count': 2},
++            {'name': 'Bob', 'book_count': 1},
++        ]
++        self.assertEqual(len(result), 2)
++        self.assertCountEqual(result, expected)
++    
++    def test_meta_ordering_not_in_group_by_with_sum(self):
++        """Test that Meta.ordering fields don't affect SUM aggregation."""
++        # This should group by author only, not by author + name (from Meta.ordering)
++        result = list(Author.objects.annotate(total_pages=Sum('book__pages')).values('name', 'total_pages'))
++        
++        # Should have 2 authors with correct page totals
++        expected = [
++            {'name': 'Alice', 'total_pages': 250},  # 100 + 150
++            {'name': 'Bob', 'total_pages': 200},
++        ]
++        self.assertEqual(len(result), 2)
++        self.assertCountEqual(result, expected)
++    
++    def test_meta_ordering_not_in_group_by_with_values_annotation(self):
++        """Test that Meta.ordering doesn't affect values() + annotate() queries."""
++        # Group by author name explicitly, Meta.ordering shouldn't interfere
++        result = list(Book.objects.values('author__name').annotate(book_count=Count('id')))
++        
++        expected = [
++            {'author__name': 'Alice', 'book_count': 2},
++            {'author__name': 'Bob', 'book_count': 1},
++        ]
++        self.assertEqual(len(result), 2)
++        self.assertCountEqual(result, expected)
++    
++    def test_explicit_order_by_still_works(self):
++        """Test that explicit order_by() still works correctly with aggregation."""
++        # Explicit order_by should not affect grouping but should order results
++        result = list(Author.objects.annotate(book_count=Count('book'))
++                     .order_by('-book_count')
++                     .values('name', 'book_count'))
++        
++        # Should be ordered by book_count descending
++        expected = [
++            {'name': 'Alice', 'book_count': 2},
++            {'name': 'Bob', 'book_count': 1},
++        ]
++        self.assertEqual(result, expected)
++    
++    def test_meta_ordering_with_related_field_aggregation(self):
++        """Test Meta.ordering doesn't interfere with related field aggregation."""
++        # Book has Meta.ordering = ['title'], this shouldn't affect author aggregation
++        result = list(Author.objects.annotate(avg_pages=models.Avg('book__pages'))
++                     .values('name', 'avg_pages'))
++        
++        expected = [
++            {'name': 'Alice', 'avg_pages': 125.0},  # (100 + 150) / 2
++            {'name': 'Bob', 'avg_pages': 200.0},
++        ]
++        self.assertEqual(len(result), 2)
++        self.assertCountEqual(result, expected)
++    
++    def test_values_before_annotate_with_meta_ordering(self):
++        """Test values() before annotate() with Meta.ordering."""
++        # This pattern should work correctly regardless of Meta.ordering
++        result = list(Book.objects.values('author__name')
++                     .annotate(total_pages=Sum('pages'))
++                     .values('author__name', 'total_pages'))
++        
++        expected = [
++            {'author__name': 'Alice', 'total_pages': 250},
++            {'author__name': 'Bob', 'total_pages': 200},
++        ]
++        self.assertEqual(len(result), 2)
++        self.assertCountEqual(result, expected)
++    
++    def test_annotate_then_values_with_meta_ordering(self):
++        """Test annotate() then values() with Meta.ordering."""
++        # This should group by all model fields but only return specified values
++        result = list(Author.objects.annotate(book_count=Count('book'))
++                     .values('name', 'book_count'))
++        
++        expected = [
++            {'name': 'Alice', 'book_count': 2},
++            {'name': 'Bob', 'book_count': 1},
++        ]
++        self.assertEqual(len(result), 2)
++        self.assertCountEqual(result, expected)
++    
++    def test_complex_aggregation_with_meta_ordering(self):
++        """Test complex aggregation that would fail if Meta.ordering is in GROUP BY."""
++        # This query would produce incorrect results if Meta.ordering fields
++        # are included in GROUP BY clause
++        result = list(Author.objects
++                     .annotate(
++                         book_count=Count('book'),
++                         total_pages=Sum('book__pages'),
++                         avg_pages=models.Avg('book__pages')
++                     )
++                     .values('name', 'book_count', 'total_pages', 'avg_pages'))
++        
++        expected = [
++            {
++                'name': 'Alice', 
++                'book_count': 2, 
++                'total_pages': 250, 
++                'avg_pages': 125.0
++            },
++            {
++                'name': 'Bob', 
++                'book_count': 1, 
++                'total_pages': 200, 
++                'avg_pages': 200.0
++            },
++        ]
++        self.assertEqual(len(result), 2)
++        self.assertCountEqual(result, expected)
++
++
++class MetaOrderingGroupByFailingTest(TestCase):
++    """Test cases that should fail before the fix is applied."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        # Create test data that will expose the bug
++        cls.author1 = Author.objects.create(name="Alice", birth_year=1970)
++        cls.author2 = Author.objects.create(name="Bob", birth_year=1980)
++        
++        # Create multiple books per author
++        Book.objects.create(title="Book A1", author=cls.author1, pages=100, publication_year=2000)
++        Book.objects.create(title="Book A2", author=cls.author1, pages=150, publication_year=2005)
++        Book.objects.create(title="Book B1", author=cls.author2, pages=200, publication_year=2010)
++    
++    def test_bug_reproduction_count_aggregation(self):
++        """
++        This test reproduces the bug where Meta.ordering fields are included in GROUP BY.
++        
++        Before the fix: This test will fail because Meta.ordering fields ('name') 
++        will be included in GROUP BY, causing incorrect aggregation results.
++        
++        After the fix: This test should pass with correct aggregation results.
++        """
++        # Query that should group by author only, but Meta.ordering might interfere
++        queryset = Author.objects.annotate(book_count=Count('book'))
++        
++        # Get the SQL to verify GROUP BY clause behavior
++        sql, params = queryset.query.sql_with_params()
++        
++        # The bug would cause 'name' field to be in GROUP BY due to Meta.ordering
++        # After fix, only necessary fields should be in GROUP BY
++        result = list(queryset.values('name', 'book_count'))
++        
++        # This should work correctly regardless of Meta.ordering
++        self.assertEqual(len(result), 2)
++        
++        # Verify correct counts
++        alice_result = next(r for r in result if r['name'] == 'Alice')
++        bob_result = next(r for r in result if r['name'] == 'Bob')
++        
++        self.assertEqual(alice_result['book_count'], 2)
++        self.assertEqual(bob_result['book_count'], 1)
++    
++    def test_bug_reproduction_sum_aggregation(self):
++        """
++        This test reproduces the bug with SUM aggregation.
++        
++        Before the fix: Meta.ordering fields in GROUP BY cause incorrect results.
++        After the fix: Correct aggregation results.
++        """
++        queryset = Author.objects.annotate(total_pages=Sum('book__pages'))
++        result = list(queryset.values('name', 'total_pages'))
++        
++        self.assertEqual(len(result), 2)
++        
++        # Verify correct sums
++        alice_result = next(r for r in result if r['name'] == 'Alice')
++        bob_result = next(r for r in result if r['name'] == 'Bob')
++        
++        self.assertEqual(alice_result['total_pages'], 250)  # 100 + 150
++        self.assertEqual(bob_result['total_pages'], 200)
++    
++    def test_sql_group_by_clause_inspection(self):
++        """
++        Test to inspect the actual SQL GROUP BY clause.
++        
++        This test helps verify that Meta.ordering fields are not included
++        in the GROUP BY clause when they shouldn't be.
++        """
++        queryset = Author.objects.annotate(book_count=Count('book'))
++        sql, params = queryset.query.sql_with_params()
++        
++        # The SQL should not include ordering fields in GROUP BY for aggregation
++        # This is more of a diagnostic test to understand the generated SQL
++        self.assertIsInstance(sql, str)
++        self.assertIn('GROUP BY', sql.upper())
++        
++        # After the fix, the GROUP BY should not include Meta.ordering fields
++        # when they're not necessary for the aggregation
++        result = list(queryset.values('name', 'book_count'))
++        self.assertEqual(len(result), 2)

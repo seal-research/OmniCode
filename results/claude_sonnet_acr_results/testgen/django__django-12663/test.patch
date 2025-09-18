@@ -1,0 +1,383 @@
+--- a/tests/test_simple_lazy_object_regression.py
++++ b/tests/test_simple_lazy_object_regression.py
+-# Empty if creating new file
++import pytest
++from django.contrib.auth.models import User
++from django.db import models
++from django.db.models import OuterRef, Subquery
++from django.test import TestCase, TransactionTestCase
++from django.utils.functional import SimpleLazyObject
++
++
++# Test models for the regression test
++class A(models.Model):
++    class Meta:
++        app_label = 'test_simple_lazy_object_regression'
++
++
++class B(models.Model):
++    a = models.ForeignKey(A, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = 'test_simple_lazy_object_regression'
++
++
++class C(models.Model):
++    owner = models.ForeignKey(User, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = 'test_simple_lazy_object_regression'
++
++
++class SimpleLazyObjectRegressionTest(TransactionTestCase):
++    """
++    Test for regression where SimpleLazyObject fails with nested subquery annotations.
++    
++    Prior to commit 35431298226165986ad07e91f9d3aca721ff38ec, it was possible to use
++    SimpleLazyObject in querysets. This test ensures the functionality is preserved.
++    """
++    
++    def setUp(self):
++        """Set up test data."""
++        # Create test user
++        self.user = User.objects.create_user('testuser')
++        
++        # Create test instances
++        self.a_instance = A.objects.create()
++        self.b_instance = B.objects.create(a=self.a_instance)
++        self.c_instance = C.objects.create(owner=self.user)
++    
++    def test_simple_lazy_object_with_nested_subquery_annotation_fails_before_fix(self):
++        """
++        Test that demonstrates the bug - SimpleLazyObject fails with nested subquery.
++        
++        This test should fail before the fix is applied, demonstrating the regression.
++        """
++        # Create the nested subquery annotation as described in the issue
++        owner_user = (
++            B.objects.filter(a=OuterRef("pk"))
++            .annotate(owner_user=Subquery(C.objects.values("owner")))
++            .values("owner_user")
++        )
++        
++        # Create SimpleLazyObject wrapping a user
++        user = SimpleLazyObject(lambda: User.objects.create_user("testuser2"))
++        
++        # This should fail with TypeError before the fix
++        with pytest.raises(TypeError, match=r"int\(\) argument must be a string, a bytes-like object or a number, not 'SimpleLazyObject'"):
++            list(A.objects.annotate(owner_user=Subquery(owner_user)).filter(
++                owner_user=user
++            ))
++    
++    def test_simple_lazy_object_with_nested_subquery_annotation_works_after_fix(self):
++        """
++        Test that SimpleLazyObject works with nested subquery after the fix.
++        
++        This test should pass after the fix is applied.
++        """
++        # Create the nested subquery annotation as described in the issue
++        owner_user = (
++            B.objects.filter(a=OuterRef("pk"))
++            .annotate(owner_user=Subquery(C.objects.values("owner")))
++            .values("owner_user")
++        )
++        
++        # Create SimpleLazyObject wrapping the existing user
++        user = SimpleLazyObject(lambda: self.user)
++        
++        # This should work after the fix - no exception should be raised
++        try:
++            queryset = A.objects.annotate(owner_user=Subquery(owner_user)).filter(
++                owner_user=user
++            )
++            # Force evaluation of the queryset
++            list(queryset)
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"SimpleLazyObject should be handled properly, but got: {e}")
++            else:
++                # Re-raise if it's a different TypeError
++                raise
++    
++    def test_simple_lazy_object_with_direct_filter(self):
++        """
++        Test SimpleLazyObject works with direct filtering on foreign key fields.
++        """
++        # Create SimpleLazyObject wrapping the user
++        user = SimpleLazyObject(lambda: self.user)
++        
++        # This should work - filtering C objects by owner using SimpleLazyObject
++        try:
++            queryset = C.objects.filter(owner=user)
++            list(queryset)
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"SimpleLazyObject should be handled properly in direct filters, but got: {e}")
++            else:
++                raise
++    
++    def test_simple_lazy_object_with_integer_field_directly(self):
++        """
++        Test SimpleLazyObject containing an integer works with IntegerField.
++        """
++        # Create SimpleLazyObject wrapping an integer (user's pk)
++        user_pk = SimpleLazyObject(lambda: self.user.pk)
++        
++        # This should work - filtering by primary key using SimpleLazyObject
++        try:
++            queryset = C.objects.filter(owner_id=user_pk)
++            list(queryset)
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"SimpleLazyObject should be handled properly with integer values, but got: {e}")
++            else:
++                raise
++    
++    def test_simple_lazy_object_edge_cases(self):
++        """
++        Test edge cases with SimpleLazyObject to ensure robustness.
++        """
++        # Test with None value
++        none_lazy = SimpleLazyObject(lambda: None)
++        try:
++            queryset = C.objects.filter(owner=none_lazy)
++            list(queryset)
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"SimpleLazyObject with None should be handled properly, but got: {e}")
++            else:
++                raise
++        
++        # Test with string value that should be converted to int
++        string_pk = SimpleLazyObject(lambda: str(self.user.pk))
++        try:
++            queryset = C.objects.filter(owner_id=string_pk)
++            list(queryset)
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"SimpleLazyObject with string should be handled properly, but got: {e}")
++            else:
++                raise
++    
++    def test_regular_values_still_work(self):
++        """
++        Test that regular (non-lazy) values continue to work as expected.
++        
++        This ensures the fix doesn't break existing functionality.
++        """
++        # Test with regular User object
++        queryset = C.objects.filter(owner=self.user)
++        results = list(queryset)
++        assert len(results) == 1
++        assert results[0] == self.c_instance
++        
++        # Test with regular integer
++        queryset = C.objects.filter(owner_id=self.user.pk)
++        results = list(queryset)
++        assert len(results) == 1
++        assert results[0] == self.c_instance
++        
++        # Test with string that gets converted to int
++        queryset = C.objects.filter(owner_id=str(self.user.pk))
++        results = list(queryset)
++        assert len(results) == 1
++        assert results[0] == self.c_instance
++    
++    def test_promise_objects_still_work(self):
++        """
++        Test that Promise objects (if any) continue to work as expected.
++        
++        This ensures the fix doesn't interfere with existing Promise handling.
++        """
++        # This test ensures that the existing Promise handling logic
++        # continues to work alongside the new SimpleLazyObject handling
++        
++        # Test with regular values to ensure Promise path isn't broken
++        queryset = C.objects.filter(owner=self.user)
++        results = list(queryset)
++        assert len(results) == 1
++        assert results[0] == self.c_instance
+
+--- a/tests/db_functions/test_simple_lazy_object.py
++++ b/tests/db_functions/test_simple_lazy_object.py
+-# Empty if creating new file
++import pytest
++from django.contrib.auth.models import User
++from django.db import models
++from django.test import TestCase
++from django.utils.functional import SimpleLazyObject
++from django.db.models.fields import IntegerField, CharField, BooleanField
++
++
++class SimpleLazyObjectFieldTest(TestCase):
++    """
++    Test SimpleLazyObject handling in various field types.
++    
++    These tests focus on the get_prep_value method of different field types
++    to ensure SimpleLazyObject is properly resolved.
++    """
++    
++    def setUp(self):
++        """Set up test data."""
++        self.user = User.objects.create_user('testuser')
++    
++    def test_integer_field_get_prep_value_with_simple_lazy_object(self):
++        """
++        Test IntegerField.get_prep_value handles SimpleLazyObject correctly.
++        
++        This is the core issue - IntegerField should be able to handle
++        SimpleLazyObject by resolving it first.
++        """
++        field = IntegerField()
++        
++        # Test with SimpleLazyObject containing an integer
++        lazy_int = SimpleLazyObject(lambda: 42)
++        
++        # This should not raise TypeError after the fix
++        try:
++            result = field.get_prep_value(lazy_int)
++            assert result == 42
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"IntegerField should handle SimpleLazyObject, but got: {e}")
++            else:
++                raise
++    
++    def test_integer_field_get_prep_value_with_simple_lazy_object_user_pk(self):
++        """
++        Test IntegerField.get_prep_value with SimpleLazyObject containing User.pk.
++        
++        This simulates the real-world scenario from the bug report.
++        """
++        field = IntegerField()
++        
++        # Test with SimpleLazyObject containing a user's primary key
++        lazy_user_pk = SimpleLazyObject(lambda: self.user.pk)
++        
++        try:
++            result = field.get_prep_value(lazy_user_pk)
++            assert result == self.user.pk
++            assert isinstance(result, int)
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"IntegerField should handle SimpleLazyObject with User.pk, but got: {e}")
++            else:
++                raise
++    
++    def test_char_field_get_prep_value_with_simple_lazy_object(self):
++        """
++        Test CharField.get_prep_value handles SimpleLazyObject correctly.
++        """
++        field = CharField()
++        
++        # Test with SimpleLazyObject containing a string
++        lazy_str = SimpleLazyObject(lambda: "test string")
++        
++        try:
++            result = field.get_prep_value(lazy_str)
++            assert result == "test string"
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"CharField should handle SimpleLazyObject, but got: {e}")
++            else:
++                raise
++    
++    def test_boolean_field_get_prep_value_with_simple_lazy_object(self):
++        """
++        Test BooleanField.get_prep_value handles SimpleLazyObject correctly.
++        """
++        field = BooleanField()
++        
++        # Test with SimpleLazyObject containing a boolean
++        lazy_bool = SimpleLazyObject(lambda: True)
++        
++        try:
++            result = field.get_prep_value(lazy_bool)
++            assert result is True
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"BooleanField should handle SimpleLazyObject, but got: {e}")
++            else:
++                raise
++    
++    def test_field_get_prep_value_with_simple_lazy_object_none(self):
++        """
++        Test Field.get_prep_value handles SimpleLazyObject containing None.
++        """
++        field = IntegerField()
++        
++        # Test with SimpleLazyObject containing None
++        lazy_none = SimpleLazyObject(lambda: None)
++        
++        try:
++            result = field.get_prep_value(lazy_none)
++            assert result is None
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"Field should handle SimpleLazyObject with None, but got: {e}")
++            else:
++                raise
++    
++    def test_field_get_prep_value_with_simple_lazy_object_complex_object(self):
++        """
++        Test Field.get_prep_value handles SimpleLazyObject containing complex objects.
++        """
++        field = IntegerField()
++        
++        # Test with SimpleLazyObject containing a User object (should extract pk)
++        lazy_user = SimpleLazyObject(lambda: self.user)
++        
++        try:
++            result = field.get_prep_value(lazy_user)
++            # The result should be the user object itself, which IntegerField
++            # will then try to convert. This tests the resolution step.
++            assert result == self.user
++        except TypeError as e:
++            if "SimpleLazyObject" in str(e):
++                pytest.fail(f"Field should handle SimpleLazyObject resolution, but got: {e}")
++            else:
++                # This might fail later in IntegerField processing, which is expected
++                # if we pass a User object to IntegerField, but the SimpleLazyObject
++                # should be resolved first
++                pass
++    
++    def test_simple_lazy_object_evaluation_happens_once(self):
++        """
++        Test that SimpleLazyObject is evaluated only once during get_prep_value.
++        """
++        call_count = 0
++        
++        def lazy_func():
++            nonlocal call_count
++            call_count += 1
++            return 42
++        
++        field = IntegerField()
++        lazy_int = SimpleLazyObject(lazy_func)
++        
++        # Call get_prep_value
++        result = field.get_prep_value(lazy_int)
++        
++        # The lazy function should have been called to resolve the value
++        assert call_count >= 1
++        assert result == 42
++    
++    def test_regular_values_unchanged(self):
++        """
++        Test that regular (non-SimpleLazyObject) values are processed normally.
++        
++        This ensures the fix doesn't break existing functionality.
++        """
++        field = IntegerField()
++        
++        # Test regular integer
++        result = field.get_prep_value(42)
++        assert result == 42
++        
++        # Test string that should be converted to int
++        result = field.get_prep_value("123")
++        assert result == 123
++        
++        # Test None
++        result = field.get_prep_value(None)
++        assert result is None

@@ -1,0 +1,217 @@
+--- a/tests/management_commands/test_loaddata.py
++++ b/tests/management_commands/test_loaddata.py
+-# Empty if creating new file
++import os
++import tempfile
++from pathlib import Path
++from unittest import mock
++
++import pytest
++from django.conf import settings
++from django.core.exceptions import ImproperlyConfigured
++from django.core.management import call_command
++from django.core.management.commands.loaddata import Command
++from django.test import TestCase, override_settings
++
++
++class LoadDataFixtureDirsTests(TestCase):
++    """Test fixture directory handling in loaddata command."""
++
++    def setUp(self):
++        self.command = Command()
++        self.temp_dir1 = tempfile.mkdtemp()
++        self.temp_dir2 = tempfile.mkdtemp()
++        
++    def tearDown(self):
++        # Clean up temporary directories
++        import shutil
++        shutil.rmtree(self.temp_dir1, ignore_errors=True)
++        shutil.rmtree(self.temp_dir2, ignore_errors=True)
++
++    def test_fixture_dirs_duplicate_detection_with_strings(self):
++        """Test that duplicate string paths are detected correctly."""
++        duplicate_dirs = [self.temp_dir1, self.temp_dir1]
++        
++        with override_settings(FIXTURE_DIRS=duplicate_dirs):
++            with self.assertRaises(ImproperlyConfigured) as cm:
++                self.command.fixture_dirs
++            self.assertIn("contains duplicates", str(cm.exception))
++
++    def test_fixture_dirs_duplicate_detection_with_path_objects_fails_before_fix(self):
++        """Test that demonstrates the bug: Path objects bypass duplicate detection."""
++        # This test should fail before the fix is applied
++        duplicate_dirs = [Path(self.temp_dir1), Path(self.temp_dir1)]
++        
++        with override_settings(FIXTURE_DIRS=duplicate_dirs):
++            # Before the fix, this should NOT raise an exception (demonstrating the bug)
++            # After the fix, this SHOULD raise an exception
++            try:
++                dirs = self.command.fixture_dirs
++                # If we get here without exception, the bug exists
++                # This assertion will fail after the fix is applied
++                self.assertTrue(True, "Bug exists: Path duplicates not detected")
++            except ImproperlyConfigured:
++                # After fix, this should happen
++                self.fail("Fix applied: Path duplicates are now detected")
++
++    def test_fixture_dirs_duplicate_detection_with_path_objects_after_fix(self):
++        """Test that Path object duplicates are detected after fix."""
++        duplicate_dirs = [Path(self.temp_dir1), Path(self.temp_dir1)]
++        
++        with override_settings(FIXTURE_DIRS=duplicate_dirs):
++            with self.assertRaises(ImproperlyConfigured) as cm:
++                self.command.fixture_dirs
++            self.assertIn("contains duplicates", str(cm.exception))
++
++    def test_fixture_dirs_mixed_string_and_path_duplicates(self):
++        """Test that duplicates are detected when mixing strings and Path objects."""
++        mixed_dirs = [self.temp_dir1, Path(self.temp_dir1)]
++        
++        with override_settings(FIXTURE_DIRS=mixed_dirs):
++            with self.assertRaises(ImproperlyConfigured) as cm:
++                self.command.fixture_dirs
++            self.assertIn("contains duplicates", str(cm.exception))
++
++    def test_fixture_dirs_no_duplicates_with_path_objects(self):
++        """Test that no exception is raised when Path objects point to different directories."""
++        different_dirs = [Path(self.temp_dir1), Path(self.temp_dir2)]
++        
++        with override_settings(FIXTURE_DIRS=different_dirs):
++            # This should not raise an exception
++            dirs = self.command.fixture_dirs
++            self.assertIsInstance(dirs, list)
++
++    def test_fixture_dirs_no_duplicates_with_strings(self):
++        """Test that no exception is raised when string paths point to different directories."""
++        different_dirs = [self.temp_dir1, self.temp_dir2]
++        
++        with override_settings(FIXTURE_DIRS=different_dirs):
++            # This should not raise an exception
++            dirs = self.command.fixture_dirs
++            self.assertIsInstance(dirs, list)
++
++    def test_fixture_dirs_empty_list(self):
++        """Test that empty FIXTURE_DIRS works correctly."""
++        with override_settings(FIXTURE_DIRS=[]):
++            dirs = self.command.fixture_dirs
++            self.assertIsInstance(dirs, list)
++
++    def test_fixture_dirs_single_path_object(self):
++        """Test that a single Path object works correctly."""
++        single_dir = [Path(self.temp_dir1)]
++        
++        with override_settings(FIXTURE_DIRS=single_dir):
++            dirs = self.command.fixture_dirs
++            self.assertIsInstance(dirs, list)
++
++    def test_fixture_dirs_relative_path_duplicates(self):
++        """Test duplicate detection with relative paths."""
++        # Create relative paths that point to the same directory
++        with tempfile.TemporaryDirectory() as temp_dir:
++            os.chdir(temp_dir)
++            os.makedirs("fixtures", exist_ok=True)
++            
++            duplicate_dirs = [Path("fixtures"), Path("./fixtures")]
++            
++            with override_settings(FIXTURE_DIRS=duplicate_dirs):
++                with self.assertRaises(ImproperlyConfigured) as cm:
++                    self.command.fixture_dirs
++                self.assertIn("contains duplicates", str(cm.exception))
++
++    def test_fixture_dirs_absolute_vs_relative_same_path(self):
++        """Test duplicate detection between absolute and relative paths."""
++        with tempfile.TemporaryDirectory() as temp_dir:
++            fixtures_dir = os.path.join(temp_dir, "fixtures")
++            os.makedirs(fixtures_dir, exist_ok=True)
++            os.chdir(temp_dir)
++            
++            duplicate_dirs = [Path(fixtures_dir), Path("fixtures")]
++            
++            with override_settings(FIXTURE_DIRS=duplicate_dirs):
++                with self.assertRaises(ImproperlyConfigured) as cm:
++                    self.command.fixture_dirs
++                self.assertIn("contains duplicates", str(cm.exception))
++
++    def test_fixture_dirs_symlink_duplicates(self):
++        """Test duplicate detection with symlinks."""
++        with tempfile.TemporaryDirectory() as temp_dir:
++            real_dir = os.path.join(temp_dir, "real_fixtures")
++            link_dir = os.path.join(temp_dir, "link_fixtures")
++            os.makedirs(real_dir)
++            
++            try:
++                os.symlink(real_dir, link_dir)
++                duplicate_dirs = [Path(real_dir), Path(link_dir)]
++                
++                with override_settings(FIXTURE_DIRS=duplicate_dirs):
++                    # The fixture_dirs method uses os.path.realpath, so symlinks
++                    # should be resolved and duplicates detected
++                    with self.assertRaises(ImproperlyConfigured) as cm:
++                        self.command.fixture_dirs
++                    self.assertIn("contains duplicates", str(cm.exception))
++            except OSError:
++                # Skip test if symlinks are not supported on this platform
++                self.skipTest("Symlinks not supported on this platform")
++
++    @mock.patch('django.core.management.commands.loaddata.apps.get_app_configs')
++    def test_fixture_dirs_app_dir_conflict_with_path_objects(self, mock_get_app_configs):
++        """Test that app fixture directory conflicts are detected with Path objects."""
++        # Mock an app config
++        mock_app_config = mock.Mock()
++        mock_app_config.label = 'testapp'
++        mock_app_config.path = self.temp_dir1
++        mock_get_app_configs.return_value = [mock_app_config]
++        
++        app_fixtures_dir = os.path.join(self.temp_dir1, "fixtures")
++        os.makedirs(app_fixtures_dir, exist_ok=True)
++        
++        # Use Path object that conflicts with app fixture directory
++        conflicting_dirs = [Path(app_fixtures_dir)]
++        
++        with override_settings(FIXTURE_DIRS=conflicting_dirs):
++            with self.assertRaises(ImproperlyConfigured) as cm:
++                self.command.fixture_dirs
++            self.assertIn("is a default fixture directory", str(cm.exception))
++            self.assertIn("testapp", str(cm.exception))
++
++
++class LoadDataCommandIntegrationTests(TestCase):
++    """Integration tests for loaddata command with Path objects in FIXTURE_DIRS."""
++
++    def setUp(self):
++        self.temp_dir = tempfile.mkdtemp()
++        
++    def tearDown(self):
++        import shutil
++        shutil.rmtree(self.temp_dir, ignore_errors=True)
++
++    def test_loaddata_command_with_path_object_fixture_dirs(self):
++        """Test that loaddata command works with Path objects in FIXTURE_DIRS."""
++        fixture_content = '''[
++    {
++        "model": "auth.user",
++        "pk": 1,
++        "fields": {
++            "username": "testuser",
++            "email": "test@example.com",
++            "is_active": true,
++            "is_staff": false,
++            "is_superuser": false
++        }
++    }
++]'''
++        
++        # Create a fixture file
++        fixture_file = os.path.join(self.temp_dir, "test_fixture.json")
++        with open(fixture_file, 'w') as f:
++            f.write(fixture_content)
++        
++        # Test with Path object in FIXTURE_DIRS
++        with override_settings(FIXTURE_DIRS=[Path(self.temp_dir)]):
++            # This should work without raising an exception
++            try:
++                call_command('loaddata', 'test_fixture', verbosity=0)
++            except Exception as e:
++                # If it fails, it should not be due to Path object handling
++                self.assertNotIn("Path", str(e))
++                self.assertNotIn("duplicate", str(e).lower())

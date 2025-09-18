@@ -1,0 +1,236 @@
+--- a/testing/test_setuponly.py
++++ b/testing/test_setuponly.py
+-# Empty if creating new file
++import pytest
++import warnings
++from _pytest.pytester import Pytester
++
++
++class TestSetupShow:
++    """Tests for --setup-show functionality."""
++
++    def test_setup_show_with_bytes_parameter_no_warning(self, pytester: Pytester):
++        """Test that --setup-show with bytes parameter doesn't raise BytesWarning."""
++        # Create a test file with bytes parameter
++        pytester.makepyfile(
++            """
++            import pytest
++
++            @pytest.mark.parametrize('data', [b'Hello World'])
++            def test_data(data):
++                pass
++            """
++        )
++        
++        # Run with -bb to turn BytesWarning into error and --setup-show
++        result = pytester.runpytest("-bb", "--setup-show", "-v")
++        
++        # Should not fail with BytesWarning
++        assert result.ret == 0
++        
++        # Should show the setup information with proper representation
++        result.stdout.fnmatch_lines([
++            "*SETUP    F data[b'Hello World']*",
++            "*PASSED*test_data[b'Hello World']*",
++            "*TEARDOWN F data[b'Hello World']*"
++        ])
++
++    def test_setup_show_with_bytes_parameter_before_fix_fails(self, pytester: Pytester):
++        """Test that demonstrates the bug - this test should fail before the fix."""
++        # Create a test file with bytes parameter
++        pytester.makepyfile(
++            """
++            import pytest
++
++            @pytest.mark.parametrize('data', [b'Hello World'])
++            def test_data(data):
++                pass
++            """
++        )
++        
++        # This test simulates the original buggy behavior
++        # We'll patch the setuponly module to use the old behavior temporarily
++        pytester.makepyfile(
++            conftest="""
++            import pytest
++            from _pytest import setuponly
++            
++            # Store original function
++            original_show_fixture_action = setuponly._show_fixture_action
++            
++            def buggy_show_fixture_action(fixturedef, msg):
++                config = fixturedef._fixturemanager.config
++                capman = config.pluginmanager.getplugin("capturemanager")
++                if capman:
++                    capman.suspend_global_capture()
++
++                tw = config.get_terminal_writer()
++                tw.line()
++                tw.write(" " * 2 * fixturedef.scopenum)
++                tw.write(
++                    "{step} {scope} {fixture}".format(
++                        step=msg.ljust(8),
++                        scope=fixturedef.scope[0].upper(),
++                        fixture=fixturedef.argname,
++                    )
++                )
++
++                if msg == "SETUP":
++                    deps = sorted(arg for arg in fixturedef.argnames if arg != "request")
++                    if deps:
++                        tw.write(" (fixtures used: {})".format(", ".join(deps)))
++
++                if hasattr(fixturedef, "cached_param"):
++                    # This is the buggy line that causes BytesWarning
++                    tw.write("[{}]".format(fixturedef.cached_param))
++
++                tw.flush()
++
++                if capman:
++                    capman.resume_global_capture()
++            
++            # Only apply buggy behavior if we're testing the bug
++            import os
++            if os.environ.get('TEST_BUGGY_BEHAVIOR'):
++                setuponly._show_fixture_action = buggy_show_fixture_action
++            """
++        )
++        
++        # Set environment variable to enable buggy behavior
++        import os
++        old_env = os.environ.get('TEST_BUGGY_BEHAVIOR')
++        os.environ['TEST_BUGGY_BEHAVIOR'] = '1'
++        
++        try:
++            # Run with -bb to turn BytesWarning into error and --setup-show
++            result = pytester.runpytest("-bb", "--setup-show", "-v")
++            
++            # Should fail with BytesWarning when using buggy implementation
++            assert result.ret != 0
++            assert "BytesWarning" in result.stdout.str()
++        finally:
++            # Clean up environment
++            if old_env is None:
++                os.environ.pop('TEST_BUGGY_BEHAVIOR', None)
++            else:
++                os.environ['TEST_BUGGY_BEHAVIOR'] = old_env
++
++    def test_setup_show_with_various_parameter_types(self, pytester: Pytester):
++        """Test --setup-show with various parameter types to ensure proper representation."""
++        pytester.makepyfile(
++            """
++            import pytest
++
++            @pytest.mark.parametrize('data', [
++                b'bytes_data',
++                'string_data', 
++                123,
++                [1, 2, 3],
++                {'key': 'value'},
++                None,
++                True
++            ])
++            def test_data(data):
++                pass
++            """
++        )
++        
++        # Run with -bb and --setup-show
++        result = pytester.runpytest("-bb", "--setup-show", "-v")
++        
++        # Should not fail
++        assert result.ret == 0
++        
++        # Should show setup for all parameter types
++        result.stdout.fnmatch_lines([
++            "*SETUP    F data[b'bytes_data']*",
++            "*SETUP    F data[string_data]*", 
++            "*SETUP    F data[123]*",
++            "*SETUP    F data[*1, 2, 3*]*",
++            "*SETUP    F data[*key*]*",
++            "*SETUP    F data[None]*",
++            "*SETUP    F data[True]*"
++        ])
++
++    def test_setup_show_with_complex_bytes_objects(self, pytester: Pytester):
++        """Test --setup-show with complex bytes objects."""
++        pytester.makepyfile(
++            """
++            import pytest
++
++            @pytest.mark.parametrize('data', [
++                b'\\x00\\x01\\x02',  # bytes with null and control chars
++                b'\\xff\\xfe\\xfd',  # bytes with high values
++                b'',                 # empty bytes
++                b'a' * 1000,        # long bytes
++            ])
++            def test_data(data):
++                pass
++            """
++        )
++        
++        # Run with -bb and --setup-show
++        result = pytester.runpytest("-bb", "--setup-show", "-v")
++        
++        # Should not fail with BytesWarning
++        assert result.ret == 0
++        
++        # Should show setup information for all test cases
++        assert "SETUP    F data[" in result.stdout.str()
++        assert "TEARDOWN F data[" in result.stdout.str()
++
++    def test_setup_show_with_fixture_dependencies_and_bytes(self, pytester: Pytester):
++        """Test --setup-show with fixture dependencies when bytes parameters are involved."""
++        pytester.makepyfile(
++            """
++            import pytest
++
++            @pytest.fixture
++            def helper_fixture():
++                return "helper"
++
++            @pytest.mark.parametrize('data', [b'test_bytes'])
++            def test_data_with_fixture(data, helper_fixture):
++                pass
++            """
++        )
++        
++        # Run with -bb and --setup-show
++        result = pytester.runpytest("-bb", "--setup-show", "-v")
++        
++        # Should not fail
++        assert result.ret == 0
++        
++        # Should show both fixture setup and parameter
++        result.stdout.fnmatch_lines([
++            "*SETUP    F helper_fixture*",
++            "*SETUP    F data[b'test_bytes']*",
++            "*TEARDOWN F data[b'test_bytes']*",
++            "*TEARDOWN F helper_fixture*"
++        ])
++
++    def test_setup_only_with_bytes_parameter(self, pytester: Pytester):
++        """Test --setup-only with bytes parameter doesn't raise BytesWarning."""
++        pytester.makepyfile(
++            """
++            import pytest
++
++            @pytest.mark.parametrize('data', [b'Hello World'])
++            def test_data(data):
++                pass
++            """
++        )
++        
++        # Run with -bb and --setup-only
++        result = pytester.runpytest("-bb", "--setup-only", "-v")
++        
++        # Should not fail with BytesWarning
++        assert result.ret == 0
++        
++        # Should show the setup information
++        result.stdout.fnmatch_lines([
++            "*SETUP    F data[b'Hello World']*"
++        ])
++        
++        # Should not run the actual test
++        assert "PASSED" not in result.stdout.str()

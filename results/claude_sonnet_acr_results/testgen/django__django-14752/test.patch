@@ -1,0 +1,276 @@
+--- a/tests/admin_views/test_autocomplete_view.py
++++ b/tests/admin_views/test_autocomplete_view.py
+-# Empty if creating new file
++import json
++from django.contrib.admin.sites import site
++from django.contrib.admin.views.autocomplete import AutocompleteJsonView
++from django.contrib.auth.models import User
++from django.http import JsonResponse
++from django.test import RequestFactory, TestCase
++from django.contrib.admin import ModelAdmin
++from django.db import models
++from django.test.utils import override_settings
++
++
++class TestModel(models.Model):
++    """Test model for autocomplete functionality."""
++    name = models.CharField(max_length=100)
++    notes = models.TextField(blank=True)
++    
++    def __str__(self):
++        return self.name
++    
++    class Meta:
++        app_label = 'admin_views'
++
++
++class TestModelAdmin(ModelAdmin):
++    """Test ModelAdmin for autocomplete functionality."""
++    search_fields = ['name']
++
++
++class CustomAutocompleteJsonView(AutocompleteJsonView):
++    """Custom autocomplete view that adds extra fields to response."""
++    
++    def serialize_result(self, obj, to_field_name):
++        """Override to add notes field to autocomplete response."""
++        result = super().serialize_result(obj, to_field_name)
++        result['notes'] = obj.notes
++        return result
++
++
++class TestAutocompleteJsonViewRefactor(TestCase):
++    """Test suite for AutocompleteJsonView refactoring to support extra fields."""
++    
++    def setUp(self):
++        """Set up test data and request factory."""
++        self.factory = RequestFactory()
++        self.user = User.objects.create_superuser(
++            username='admin', email='admin@test.com', password='password'
++        )
++        
++        # Create test objects
++        self.obj1 = TestModel.objects.create(name='Test Object 1', notes='First note')
++        self.obj2 = TestModel.objects.create(name='Test Object 2', notes='Second note')
++        
++        # Set up model admin
++        self.model_admin = TestModelAdmin(TestModel, site)
++        
++    def test_original_serialize_result_method_exists(self):
++        """Test that the new serialize_result method exists and works correctly."""
++        view = AutocompleteJsonView()
++        
++        # Test that the method exists
++        self.assertTrue(hasattr(view, 'serialize_result'))
++        self.assertTrue(callable(getattr(view, 'serialize_result')))
++        
++        # Test the method returns correct format
++        result = view.serialize_result(self.obj1, 'pk')
++        expected = {'id': str(self.obj1.pk), 'text': str(self.obj1)}
++        self.assertEqual(result, expected)
++        
++    def test_serialize_result_with_different_to_field(self):
++        """Test serialize_result works with different to_field_name values."""
++        view = AutocompleteJsonView()
++        
++        # Test with 'name' field
++        result = view.serialize_result(self.obj1, 'name')
++        expected = {'id': self.obj1.name, 'text': str(self.obj1)}
++        self.assertEqual(result, expected)
++        
++    def test_get_method_uses_serialize_result(self):
++        """Test that the get method now uses serialize_result for object serialization."""
++        request = self.factory.get('/admin/autocomplete/', {
++            'term': 'Test',
++            'app_label': 'admin_views',
++            'model_name': 'testmodel',
++            'field_name': 'name'
++        })
++        request.user = self.user
++        
++        view = AutocompleteJsonView()
++        view.admin_site = site
++        
++        # Mock the serialize_result method to verify it's called
++        original_serialize = view.serialize_result
++        call_count = 0
++        
++        def mock_serialize_result(obj, to_field_name):
++            nonlocal call_count
++            call_count += 1
++            return original_serialize(obj, to_field_name)
++        
++        view.serialize_result = mock_serialize_result
++        
++        # Set up view attributes that would normally be set by process_request
++        view.term = 'Test'
++        view.model_admin = self.model_admin
++        view.source_field = TestModel._meta.get_field('name')
++        
++        # Call get method
++        response = view.get(request)
++        
++        # Verify serialize_result was called
++        self.assertGreater(call_count, 0)
++        
++        # Verify response format is correct
++        self.assertIsInstance(response, JsonResponse)
++        data = json.loads(response.content)
++        self.assertIn('results', data)
++        self.assertIn('pagination', data)
++        
++    def test_backward_compatibility_maintained(self):
++        """Test that the refactoring maintains backward compatibility."""
++        request = self.factory.get('/admin/autocomplete/', {
++            'term': 'Test',
++            'app_label': 'admin_views',
++            'model_name': 'testmodel',
++            'field_name': 'name'
++        })
++        request.user = self.user
++        
++        view = AutocompleteJsonView()
++        view.admin_site = site
++        view.term = 'Test'
++        view.model_admin = self.model_admin
++        view.source_field = TestModel._meta.get_field('name')
++        
++        response = view.get(request)
++        data = json.loads(response.content)
++        
++        # Verify the response structure is unchanged
++        self.assertIn('results', data)
++        self.assertIn('pagination', data)
++        
++        # Verify each result has the expected format
++        for result in data['results']:
++            self.assertIn('id', result)
++            self.assertIn('text', result)
++            self.assertEqual(len(result), 2)  # Only id and text, no extra fields
++            
++    def test_custom_autocomplete_view_can_add_extra_fields(self):
++        """Test that custom views can now easily add extra fields by overriding serialize_result."""
++        request = self.factory.get('/admin/autocomplete/', {
++            'term': 'Test',
++            'app_label': 'admin_views',
++            'model_name': 'testmodel',
++            'field_name': 'name'
++        })
++        request.user = self.user
++        
++        view = CustomAutocompleteJsonView()
++        view.admin_site = site
++        view.term = 'Test'
++        view.model_admin = self.model_admin
++        view.source_field = TestModel._meta.get_field('name')
++        
++        response = view.get(request)
++        data = json.loads(response.content)
++        
++        # Verify the response includes extra fields
++        for result in data['results']:
++            self.assertIn('id', result)
++            self.assertIn('text', result)
++            self.assertIn('notes', result)  # Extra field added by custom view
++            
++    def test_serialize_result_override_preserves_base_functionality(self):
++        """Test that overriding serialize_result can extend base functionality."""
++        view = CustomAutocompleteJsonView()
++        
++        result = view.serialize_result(self.obj1, 'pk')
++        
++        # Should have base fields
++        self.assertIn('id', result)
++        self.assertIn('text', result)
++        self.assertEqual(result['id'], str(self.obj1.pk))
++        self.assertEqual(result['text'], str(self.obj1))
++        
++        # Should have extra field
++        self.assertIn('notes', result)
++        self.assertEqual(result['notes'], self.obj1.notes)
++        
++    def test_serialize_result_handles_none_values(self):
++        """Test that serialize_result handles None values gracefully."""
++        view = AutocompleteJsonView()
++        
++        # Create object with None/empty values
++        obj_with_none = TestModel.objects.create(name='', notes='')
++        
++        result = view.serialize_result(obj_with_none, 'pk')
++        
++        self.assertEqual(result['id'], str(obj_with_none.pk))
++        self.assertEqual(result['text'], str(obj_with_none))
++        
++    def test_multiple_custom_fields_in_serialize_result(self):
++        """Test that serialize_result can be overridden to add multiple custom fields."""
++        
++        class MultiFieldAutocompleteView(AutocompleteJsonView):
++            def serialize_result(self, obj, to_field_name):
++                result = super().serialize_result(obj, to_field_name)
++                result.update({
++                    'notes': obj.notes,
++                    'name_upper': obj.name.upper(),
++                    'has_notes': bool(obj.notes)
++                })
++                return result
++        
++        view = MultiFieldAutocompleteView()
++        result = view.serialize_result(self.obj1, 'pk')
++        
++        # Should have all fields
++        expected_keys = {'id', 'text', 'notes', 'name_upper', 'has_notes'}
++        self.assertEqual(set(result.keys()), expected_keys)
++        
++        # Verify custom field values
++        self.assertEqual(result['notes'], self.obj1.notes)
++        self.assertEqual(result['name_upper'], self.obj1.name.upper())
++        self.assertEqual(result['has_notes'], bool(self.obj1.notes))
++        
++    def test_serialize_result_method_signature(self):
++        """Test that serialize_result has the correct method signature."""
++        view = AutocompleteJsonView()
++        
++        # Test method exists and is callable
++        self.assertTrue(hasattr(view, 'serialize_result'))
++        method = getattr(view, 'serialize_result')
++        self.assertTrue(callable(method))
++        
++        # Test method accepts correct parameters
++        try:
++            result = method(self.obj1, 'pk')
++            self.assertIsInstance(result, dict)
++        except TypeError:
++            self.fail("serialize_result method should accept (obj, to_field_name) parameters")
++            
++    def test_refactoring_does_not_break_existing_functionality(self):
++        """Test that the refactoring doesn't break any existing autocomplete functionality."""
++        request = self.factory.get('/admin/autocomplete/', {
++            'term': 'Object',
++            'app_label': 'admin_views', 
++            'model_name': 'testmodel',
++            'field_name': 'name'
++        })
++        request.user = self.user
++        
++        view = AutocompleteJsonView()
++        view.admin_site = site
++        view.term = 'Object'
++        view.model_admin = self.model_admin
++        view.source_field = TestModel._meta.get_field('name')
++        
++        # This should work without any errors
++        response = view.get(request)
++        
++        # Verify response is valid JSON
++        self.assertIsInstance(response, JsonResponse)
++        data = json.loads(response.content)
++        
++        # Verify structure matches expected format
++        self.assertIn('results', data)
++        self.assertIn('pagination', data)
++        self.assertIsInstance(data['results'], list)
++        self.assertIsInstance(data['pagination'], dict)
++        
++        # Verify pagination structure
++        self.assertIn('more', data['pagination'])
++        self.assertIsInstance(data['pagination']['more'], bool)

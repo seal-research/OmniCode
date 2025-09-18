@@ -1,0 +1,192 @@
+--- a/tests/backends/mysql/test_deprecated_kwargs.py
++++ b/tests/backends/mysql/test_deprecated_kwargs.py
+-# Empty if creating new file
++import pytest
++from unittest import mock
++from django.db import connection
++from django.db.backends.mysql.base import DatabaseWrapper
++from django.test import TestCase, override_settings
++
++
++class TestMySQLDeprecatedKwargs(TestCase):
++    """Test that MySQL backend uses non-deprecated connection parameters."""
++    
++    def setUp(self):
++        """Set up test database settings."""
++        self.test_settings = {
++            'ENGINE': 'django.db.backends.mysql',
++            'NAME': 'test_database',
++            'USER': 'test_user',
++            'PASSWORD': 'test_password',
++            'HOST': 'localhost',
++            'PORT': '3306',
++            'OPTIONS': {},
++        }
++    
++    def test_get_connection_params_uses_database_not_db(self):
++        """Test that get_connection_params uses 'database' instead of deprecated 'db'."""
++        wrapper = DatabaseWrapper(self.test_settings)
++        params = wrapper.get_connection_params()
++        
++        # Should use 'database' parameter, not deprecated 'db'
++        assert 'database' in params
++        assert 'db' not in params
++        assert params['database'] == 'test_database'
++    
++    def test_get_connection_params_uses_password_not_passwd(self):
++        """Test that get_connection_params uses 'password' instead of deprecated 'passwd'."""
++        wrapper = DatabaseWrapper(self.test_settings)
++        params = wrapper.get_connection_params()
++        
++        # Should use 'password' parameter, not deprecated 'passwd'
++        assert 'password' in params
++        assert 'passwd' not in params
++        assert params['password'] == 'test_password'
++    
++    def test_get_connection_params_with_empty_name(self):
++        """Test that no database parameter is set when NAME is empty."""
++        settings_empty_name = self.test_settings.copy()
++        settings_empty_name['NAME'] = ''
++        
++        wrapper = DatabaseWrapper(settings_empty_name)
++        params = wrapper.get_connection_params()
++        
++        # Neither 'database' nor 'db' should be present when NAME is empty
++        assert 'database' not in params
++        assert 'db' not in params
++    
++    def test_get_connection_params_with_empty_password(self):
++        """Test that no password parameter is set when PASSWORD is empty."""
++        settings_empty_password = self.test_settings.copy()
++        settings_empty_password['PASSWORD'] = ''
++        
++        wrapper = DatabaseWrapper(settings_empty_password)
++        params = wrapper.get_connection_params()
++        
++        # Neither 'password' nor 'passwd' should be present when PASSWORD is empty
++        assert 'password' not in params
++        assert 'passwd' not in params
++    
++    def test_get_connection_params_preserves_other_parameters(self):
++        """Test that other connection parameters are preserved correctly."""
++        wrapper = DatabaseWrapper(self.test_settings)
++        params = wrapper.get_connection_params()
++        
++        # Verify other parameters are still present and correct
++        assert params['user'] == 'test_user'
++        assert params['host'] == 'localhost'
++        assert params['port'] == 3306
++        assert 'conv' in params
++        assert 'charset' in params
++        assert params['charset'] == 'utf8'
++    
++    @mock.patch('django.db.backends.mysql.base.Database.connect')
++    def test_connection_uses_non_deprecated_params(self, mock_connect):
++        """Test that actual connection uses non-deprecated parameters."""
++        mock_connect.return_value = mock.MagicMock()
++        
++        wrapper = DatabaseWrapper(self.test_settings)
++        conn_params = wrapper.get_connection_params()
++        wrapper.get_new_connection(conn_params)
++        
++        # Verify that Database.connect was called with non-deprecated parameters
++        mock_connect.assert_called_once()
++        call_kwargs = mock_connect.call_args[1]
++        
++        # Should use new parameter names
++        assert 'database' in call_kwargs
++        assert 'password' in call_kwargs
++        
++        # Should NOT use deprecated parameter names
++        assert 'db' not in call_kwargs
++        assert 'passwd' not in call_kwargs
++        
++        # Verify values are correct
++        assert call_kwargs['database'] == 'test_database'
++        assert call_kwargs['password'] == 'test_password'
++    
++    def test_backward_compatibility_functionality(self):
++        """Test that the fix doesn't break existing functionality."""
++        wrapper = DatabaseWrapper(self.test_settings)
++        params = wrapper.get_connection_params()
++        
++        # Verify all expected parameters are present with correct values
++        expected_params = {
++            'database': 'test_database',
++            'password': 'test_password',
++            'user': 'test_user',
++            'host': 'localhost',
++            'port': 3306,
++            'charset': 'utf8',
++        }
++        
++        for key, expected_value in expected_params.items():
++            assert key in params
++            assert params[key] == expected_value
++    
++    def test_unix_socket_connection_params(self):
++        """Test connection parameters when using Unix socket."""
++        settings_unix_socket = self.test_settings.copy()
++        settings_unix_socket['HOST'] = '/var/run/mysqld/mysqld.sock'
++        
++        wrapper = DatabaseWrapper(settings_unix_socket)
++        params = wrapper.get_connection_params()
++        
++        # Should still use non-deprecated parameters with Unix socket
++        assert 'database' in params
++        assert 'password' in params
++        assert 'db' not in params
++        assert 'passwd' not in params
++        
++        # Unix socket specific parameter should be present
++        assert params['unix_socket'] == '/var/run/mysqld/mysqld.sock'
++        assert 'host' not in params  # host should not be set when using unix socket
++
++
++class TestMySQLDeprecatedKwargsFailingCase(TestCase):
++    """Test case that would fail before the fix is applied."""
++    
++    def setUp(self):
++        """Set up test database settings."""
++        self.test_settings = {
++            'ENGINE': 'django.db.backends.mysql',
++            'NAME': 'test_database',
++            'USER': 'test_user', 
++            'PASSWORD': 'test_password',
++            'HOST': 'localhost',
++            'PORT': '3306',
++            'OPTIONS': {},
++        }
++    
++    def test_deprecated_params_not_used_before_fix(self):
++        """
++        This test demonstrates the bug - it would fail before the fix.
++        After the fix, deprecated parameters should not be present.
++        """
++        wrapper = DatabaseWrapper(self.test_settings)
++        params = wrapper.get_connection_params()
++        
++        # This test will fail BEFORE the fix because the old code uses 'db' and 'passwd'
++        # After the fix, these assertions should pass
++        with pytest.raises(AssertionError, match="Deprecated parameter 'db' should not be used"):
++            if 'db' in params:
++                raise AssertionError("Deprecated parameter 'db' should not be used")
++        
++        with pytest.raises(AssertionError, match="Deprecated parameter 'passwd' should not be used"):
++            if 'passwd' in params:
++                raise AssertionError("Deprecated parameter 'passwd' should not be used")
++    
++    def test_new_params_present_after_fix(self):
++        """
++        This test verifies the fix works - new parameters should be present.
++        """
++        wrapper = DatabaseWrapper(self.test_settings)
++        params = wrapper.get_connection_params()
++        
++        # After the fix, these should be present
++        assert 'database' in params, "New parameter 'database' should be present"
++        assert 'password' in params, "New parameter 'password' should be present"
++        
++        # And have correct values
++        assert params['database'] == 'test_database'
++        assert params['password'] == 'test_password'

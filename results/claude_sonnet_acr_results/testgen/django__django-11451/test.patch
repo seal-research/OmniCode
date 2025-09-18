@@ -1,0 +1,338 @@
+--- a/tests/auth_tests/test_backends.py
++++ b/tests/auth_tests/test_backends.py
+-import inspect
+-import warnings
+-from unittest import mock
+-
+-from django.contrib.auth import authenticate, get_user_model
+-from django.contrib.auth.backends import BaseBackend, ModelBackend
+-from django.contrib.auth.models import AnonymousUser, Group, Permission, User
+-from django.contrib.contenttypes.models import ContentType
+-from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+-from django.test import TestCase, override_settings
+-
+-from .models import CustomPermissionsUser, CustomUser, CustomUserWithoutUsernameField, ExtensionUser
+-
+-
+-class BaseBackendTest(TestCase):
+-    backend = BaseBackend()
+-
+-    def test_authenticate(self):
+-        self.assertIsNone(self.backend.authenticate(None))
+-
+-
+-class ModelBackendTest(TestCase):
+-    """
+-    Tests for the ModelBackend authentication backend.
+-    """
+-    backend = ModelBackend()
+-
+-    def test_authenticate(self):
+-        user = User.objects.create_user('test', 'test@example.com', 'test')
+-        self.assertEqual(self.backend.authenticate(None, 'test', 'test'), user)
+-
+-    def test_authenticate_and_check_password(self):
+-        """
+-        authenticate() successfully authenticates when check_password() is True.
+-        """
+-        user = User.objects.create_user('test', 'test@example.com', 'test')
+-        self.assertEqual(user.check_password('test'), True)
+-
+-    def test_authenticate_inactive_user(self):
+-        """
+-        An inactive user can't authenticate.
+-        """
+-        user = User.objects.create_user('test', 'test@example.com', 'test')
+-        user.is_active = False
+-        user.save()
+-        self.assertIsNone(self.backend.authenticate(None, 'test', 'test'))
+-        user = User._default_manager.get_by_natural_key('test')
+-        self.assertFalse(user.is_active)
+-
+-    def test_authenticate_user_without_is_active_field(self):
+-        """
+-        A custom user without an is_active field can authenticate.
+-        """
+-        with self.settings(AUTH_USER_MODEL='auth_tests.ExtensionUser'):
+-            backend = ModelBackend()
+-            user = ExtensionUser._default_manager.create_user('test')
+-            authenticated_user = backend.authenticate(None, 'test', 'test')
+-            self.assertEqual(authenticated_user, user)
+-
+-    def test_authenticate_user_with_username_field_not_set(self):
+-        """
+-        A custom user without a USERNAME_FIELD can authenticate.
+-        """
+-        with self.settings(AUTH_USER_MODEL='auth_tests.CustomUserWithoutUsernameField'):
+-            backend = ModelBackend()
+-            user = CustomUserWithoutUsernameField._default_manager.create_user()
+-            authenticated_user = backend.authenticate(None, user=user)
+-            self.assertEqual(authenticated_user, user)
+-
+-    def test_authenticate_user_with_username_field_not_set_and_no_password(self):
+-        """
+-        A custom user without a USERNAME_FIELD and no password can authenticate.
+-        """
+-        with self.settings(AUTH_USER_MODEL='auth_tests.CustomUserWithoutUsernameField'):
+-            backend = ModelBackend()
+-            user = CustomUserWithoutUsernameField._default_manager.create_user()
+-            authenticated_user = backend.authenticate(None, user=user)
+-            self.assertEqual(authenticated_user, user)
+-
+-    def test_authenticate_user_with_username_field_not_set_and_invalid_password(self):
+-        """
+-        A custom user without a USERNAME_FIELD and invalid password can't authenticate.
+-        """
+-        with self.settings(AUTH_USER_MODEL='auth_tests.CustomUserWithoutUsernameField'):
+-            backend = ModelBackend()
+-            user = CustomUserWithoutUsernameField._default_manager.create_user()
+-            authenticated_user = backend.authenticate(None, user=user, password='invalid')
+-            self.assertIsNone(authenticated_user)
+-
+-    def test_authenticate_user_with_username_field_not_set_and_valid_password(self):
+-        """
+-        A custom user without a USERNAME_FIELD and valid password can authenticate.
+-        """
+-        with self.settings(AUTH_USER_MODEL='auth_tests.CustomUserWithoutUsernameField'):
+-            backend = ModelBackend()
+-            user = CustomUserWithoutUsernameField._default_manager.create_user()
+-            user.set_password('valid')
+-            user.save()
+-            authenticated_user = backend.authenticate(None, user=user, password='valid')
+-            self.assertEqual(authenticated_user, user)
++import inspect
++import warnings
++from unittest import mock
++
++from django.contrib.auth import authenticate, get_user_model
++from django.contrib.auth.backends import BaseBackend, ModelBackend
++from django.contrib.auth.models import AnonymousUser, Group, Permission, User
++from django.contrib.contenttypes.models import ContentType
++from django.core.exceptions import ImproperlyConfigured, PermissionDenied
++from django.test import TestCase, override_settings
++
++from .models import CustomPermissionsUser, CustomUser, CustomUserWithoutUsernameField, ExtensionUser
++
++
++class BaseBackendTest(TestCase):
++    backend = BaseBackend()
++
++    def test_authenticate(self):
++        self.assertIsNone(self.backend.authenticate(None))
++
++
++class ModelBackendTest(TestCase):
++    """
++    Tests for the ModelBackend authentication backend.
++    """
++    backend = ModelBackend()
++
++    def test_authenticate(self):
++        user = User.objects.create_user('test', 'test@example.com', 'test')
++        self.assertEqual(self.backend.authenticate(None, 'test', 'test'), user)
++
++    def test_authenticate_and_check_password(self):
++        """
++        authenticate() successfully authenticates when check_password() is True.
++        """
++        user = User.objects.create_user('test', 'test@example.com', 'test')
++        self.assertEqual(user.check_password('test'), True)
++
++    def test_authenticate_inactive_user(self):
++        """
++        An inactive user can't authenticate.
++        """
++        user = User.objects.create_user('test', 'test@example.com', 'test')
++        user.is_active = False
++        user.save()
++        self.assertIsNone(self.backend.authenticate(None, 'test', 'test'))
++        user = User._default_manager.get_by_natural_key('test')
++        self.assertFalse(user.is_active)
++
++    def test_authenticate_user_without_is_active_field(self):
++        """
++        A custom user without an is_active field can authenticate.
++        """
++        with self.settings(AUTH_USER_MODEL='auth_tests.ExtensionUser'):
++            backend = ModelBackend()
++            user = ExtensionUser._default_manager.create_user('test')
++            authenticated_user = backend.authenticate(None, 'test', 'test')
++            self.assertEqual(authenticated_user, user)
++
++    def test_authenticate_user_with_username_field_not_set(self):
++        """
++        A custom user without a USERNAME_FIELD can authenticate.
++        """
++        with self.settings(AUTH_USER_MODEL='auth_tests.CustomUserWithoutUsernameField'):
++            backend = ModelBackend()
++            user = CustomUserWithoutUsernameField._default_manager.create_user()
++            authenticated_user = backend.authenticate(None, user=user)
++            self.assertEqual(authenticated_user, user)
++
++    def test_authenticate_user_with_username_field_not_set_and_no_password(self):
++        """
++        A custom user without a USERNAME_FIELD and no password can authenticate.
++        """
++        with self.settings(AUTH_USER_MODEL='auth_tests.CustomUserWithoutUsernameField'):
++            backend = ModelBackend()
++            user = CustomUserWithoutUsernameField._default_manager.create_user()
++            authenticated_user = backend.authenticate(None, user=user)
++            self.assertEqual(authenticated_user, user)
++
++    def test_authenticate_user_with_username_field_not_set_and_invalid_password(self):
++        """
++        A custom user without a USERNAME_FIELD and invalid password can't authenticate.
++        """
++        with self.settings(AUTH_USER_MODEL='auth_tests.CustomUserWithoutUsernameField'):
++            backend = ModelBackend()
++            user = CustomUserWithoutUsernameField._default_manager.create_user()
++            authenticated_user = backend.authenticate(None, user=user, password='invalid')
++            self.assertIsNone(authenticated_user)
++
++    def test_authenticate_user_with_username_field_not_set_and_valid_password(self):
++        """
++        A custom user without a USERNAME_FIELD and valid password can authenticate.
++        """
++        with self.settings(AUTH_USER_MODEL='auth_tests.CustomUserWithoutUsernameField'):
++            backend = ModelBackend()
++            user = CustomUserWithoutUsernameField._default_manager.create_user()
++            user.set_password('valid')
++            user.save()
++            authenticated_user = backend.authenticate(None, user=user, password='valid')
++            self.assertEqual(authenticated_user, user)
++
++    def test_authenticate_with_none_username_no_database_query(self):
++        """
++        authenticate() should not make database queries when username is None.
++        This test demonstrates the bug where unnecessary queries are made.
++        """
++        # This test should fail before the fix is applied
++        with self.assertNumQueries(0):
++            # When username is None, no database query should be made
++            result = self.backend.authenticate(None, username=None, password='test')
++            self.assertIsNone(result)
++
++    def test_authenticate_with_none_password_no_database_query(self):
++        """
++        authenticate() should not make database queries when password is None.
++        """
++        with self.assertNumQueries(0):
++            # When password is None, no database query should be made
++            result = self.backend.authenticate(None, username='test', password=None)
++            self.assertIsNone(result)
++
++    def test_authenticate_with_both_none_no_database_query(self):
++        """
++        authenticate() should not make database queries when both username and password are None.
++        """
++        with self.assertNumQueries(0):
++            # When both are None, no database query should be made
++            result = self.backend.authenticate(None, username=None, password=None)
++            self.assertIsNone(result)
++
++    def test_authenticate_with_none_username_from_kwargs_no_database_query(self):
++        """
++        authenticate() should not make database queries when username is None after
++        extracting from kwargs using USERNAME_FIELD.
++        """
++        UserModel = get_user_model()
++        # Create kwargs where USERNAME_FIELD key exists but has None value
++        kwargs = {UserModel.USERNAME_FIELD: None}
++        
++        with self.assertNumQueries(0):
++            # When username from kwargs is None, no database query should be made
++            result = self.backend.authenticate(None, password='test', **kwargs)
++            self.assertIsNone(result)
++
++    def test_authenticate_with_missing_username_field_in_kwargs_no_database_query(self):
++        """
++        authenticate() should not make database queries when USERNAME_FIELD is missing
++        from kwargs, resulting in username being None.
++        """
++        # Don't provide username parameter or USERNAME_FIELD in kwargs
++        with self.assertNumQueries(0):
++            # When username is None (not provided), no database query should be made
++            result = self.backend.authenticate(None, password='test')
++            self.assertIsNone(result)
++
++    def test_authenticate_with_empty_string_username_makes_query(self):
++        """
++        authenticate() should still make database queries when username is empty string
++        (not None), to maintain existing behavior.
++        """
++        # Empty string is different from None - should still query database
++        with self.assertNumQueries(1):
++            # When username is empty string, database query should be made
++            result = self.backend.authenticate(None, username='', password='test')
++            self.assertIsNone(result)
++
++    def test_authenticate_with_empty_string_password_makes_query(self):
++        """
++        authenticate() should still make database queries when password is empty string
++        (not None), to maintain existing behavior.
++        """
++        # Create a user to ensure the query finds something
++        User.objects.create_user('test', 'test@example.com', 'test')
++        
++        # Empty string password is different from None - should still query database
++        with self.assertNumQueries(1):
++            # When password is empty string, database query should be made
++            result = self.backend.authenticate(None, username='test', password='')
++            self.assertIsNone(result)
++
++    @mock.patch('django.contrib.auth.models.User.set_password')
++    def test_authenticate_with_none_username_no_password_hashing(self, mock_set_password):
++        """
++        authenticate() should not run password hashing when username is None.
++        This test verifies that the expensive set_password operation is avoided.
++        """
++        # When username is None, set_password should not be called
++        result = self.backend.authenticate(None, username=None, password='test')
++        self.assertIsNone(result)
++        mock_set_password.assert_not_called()
++
++    @mock.patch('django.contrib.auth.models.User.set_password')
++    def test_authenticate_with_none_password_no_password_hashing(self, mock_set_password):
++        """
++        authenticate() should not run password hashing when password is None.
++        """
++        # When password is None, set_password should not be called
++        result = self.backend.authenticate(None, username='test', password=None)
++        self.assertIsNone(result)
++        mock_set_password.assert_not_called()
++
++    def test_authenticate_timing_attack_protection_still_works(self):
++        """
++        authenticate() should still provide timing attack protection for valid
++        username/password combinations where the user doesn't exist.
++        """
++        with mock.patch('django.contrib.auth.models.User.set_password') as mock_set_password:
++            # When both username and password are provided but user doesn't exist,
++            # timing attack protection should still work
++            result = self.backend.authenticate(None, username='nonexistent', password='test')
++            self.assertIsNone(result)
++            # set_password should be called for timing attack protection
++            mock_set_password.assert_called_once_with('test')
++
++    def test_authenticate_multiple_backends_scenario(self):
++        """
++        Test the scenario described in the issue where multiple authentication
++        backends are used and one backend receives None credentials intended
++        for another backend.
++        """
++        # Simulate a scenario where credentials are provided for another backend
++        # This backend receives None values and should not make database queries
++        with self.assertNumQueries(0):
++            # This simulates the case where another backend is handling authentication
++            # and this backend receives None credentials
++            result = self.backend.authenticate(None, username=None, password=None)
++            self.assertIsNone(result)
++
++        # Also test the case where only one credential is None
++        with self.assertNumQueries(0):
++            result = self.backend.authenticate(None, username='someuser', password=None)
++            self.assertIsNone(result)
++
++        with self.assertNumQueries(0):
++            result = self.backend.authenticate(None, username=None, password='somepass')
++            self.assertIsNone(result)

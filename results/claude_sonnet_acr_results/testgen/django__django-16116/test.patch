@@ -1,0 +1,297 @@
+--- a/tests/migrations/test_commands.py
++++ b/tests/migrations/test_commands.py
+-# Empty if creating new file
++import os
++import sys
++import tempfile
++from io import StringIO
++from unittest import mock
++
++import pytest
++from django.core.management import call_command
++from django.core.management.base import CommandError
++from django.db import models
++from django.test import TestCase, override_settings
++from django.test.utils import isolate_apps
++
++
++class MakeMigrationsCheckTests(TestCase):
++    """
++    Test suite for makemigrations --check flag behavior.
++    
++    This tests the bug where makemigrations --check was inconsistent with
++    other Django commands like migrate --check and optimizemigration --check.
++    The --check flag should exit without creating migration files.
++    """
++
++    def setUp(self):
++        """Set up test environment with temporary migration directory."""
++        self.temp_dir = tempfile.mkdtemp()
++        self.addCleanup(lambda: __import__('shutil').rmtree(self.temp_dir, ignore_errors=True))
++
++    @isolate_apps('test_app')
++    def test_makemigrations_check_with_no_changes_exits_zero(self):
++        """
++        Test that makemigrations --check exits with code 0 when no changes are detected.
++        This should be the successful case - no migrations needed.
++        """
++        # Create a simple model
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Mock the autodetector to return no changes
++        with mock.patch('django.db.migrations.autodetector.MigrationAutodetector.changes') as mock_changes:
++            mock_changes.return_value = {}
++            
++            # Capture stdout/stderr
++            stdout = StringIO()
++            stderr = StringIO()
++            
++            # This should exit with code 0 (success) and not create any files
++            with self.assertRaises(SystemExit) as cm:
++                call_command('makemigrations', 'test_app', check_changes=True, 
++                           stdout=stdout, stderr=stderr, verbosity=1)
++            
++            # Should exit with code 0 (no changes needed)
++            self.assertEqual(cm.exception.code, 0)
++            
++            # Should not have written any migration files
++            self.assertEqual(len(os.listdir(self.temp_dir)), 0)
++
++    @isolate_apps('test_app')
++    def test_makemigrations_check_with_changes_exits_one(self):
++        """
++        Test that makemigrations --check exits with code 1 when changes are detected.
++        This is the main bug fix - it should exit without creating migration files.
++        """
++        # Create a simple model
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Mock the autodetector to return changes (simulating pending migrations)
++        fake_migration = mock.MagicMock()
++        fake_migration.name = 'test_migration'
++        
++        with mock.patch('django.db.migrations.autodetector.MigrationAutodetector.changes') as mock_changes:
++            mock_changes.return_value = {'test_app': [fake_migration]}
++            
++            # Capture stdout/stderr
++            stdout = StringIO()
++            stderr = StringIO()
++            
++            # This should exit with code 1 (changes detected) and not create any files
++            with self.assertRaises(SystemExit) as cm:
++                call_command('makemigrations', 'test_app', check_changes=True, 
++                           stdout=stdout, stderr=stderr, verbosity=1)
++            
++            # Should exit with code 1 (changes detected)
++            self.assertEqual(cm.exception.code, 1)
++            
++            # Should not have written any migration files
++            self.assertEqual(len(os.listdir(self.temp_dir)), 0)
++
++    @isolate_apps('test_app')
++    def test_makemigrations_check_does_not_write_files(self):
++        """
++        Test that makemigrations --check never writes migration files,
++        even when changes are detected. This is the core of the bug fix.
++        """
++        # Create a simple model
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Mock the autodetector and file writing
++        fake_migration = mock.MagicMock()
++        fake_migration.name = 'test_migration'
++        
++        with mock.patch('django.db.migrations.autodetector.MigrationAutodetector.changes') as mock_changes, \
++             mock.patch('django.core.management.commands.makemigrations.Command.write_migration_files') as mock_write:
++            
++            mock_changes.return_value = {'test_app': [fake_migration]}
++            
++            # Capture stdout/stderr
++            stdout = StringIO()
++            stderr = StringIO()
++            
++            # This should exit before write_migration_files is called
++            with self.assertRaises(SystemExit):
++                call_command('makemigrations', 'test_app', check_changes=True, 
++                           stdout=stdout, stderr=stderr)
++            
++            # write_migration_files should never be called when --check is used
++            mock_write.assert_not_called()
++
++    @isolate_apps('test_app')
++    def test_makemigrations_without_check_still_writes_files(self):
++        """
++        Test that makemigrations without --check still works normally.
++        This ensures we don't break existing functionality.
++        """
++        # Create a simple model
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Mock the autodetector and file writing
++        fake_migration = mock.MagicMock()
++        fake_migration.name = 'test_migration'
++        
++        with mock.patch('django.db.migrations.autodetector.MigrationAutodetector.changes') as mock_changes, \
++             mock.patch('django.core.management.commands.makemigrations.Command.write_migration_files') as mock_write:
++            
++            mock_changes.return_value = {'test_app': [fake_migration]}
++            
++            # Capture stdout/stderr
++            stdout = StringIO()
++            stderr = StringIO()
++            
++            # This should call write_migration_files normally
++            call_command('makemigrations', 'test_app', check_changes=False, 
++                        stdout=stdout, stderr=stderr)
++            
++            # write_migration_files should be called when --check is not used
++            mock_write.assert_called_once()
++
++    @isolate_apps('test_app')
++    def test_makemigrations_check_with_dry_run_combination(self):
++        """
++        Test that makemigrations --check --dry-run behaves correctly.
++        The issue mentioned that currently both flags are needed, but
++        after the fix, --check alone should be sufficient.
++        """
++        # Create a simple model
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Mock the autodetector to return changes
++        fake_migration = mock.MagicMock()
++        fake_migration.name = 'test_migration'
++        
++        with mock.patch('django.db.migrations.autodetector.MigrationAutodetector.changes') as mock_changes:
++            mock_changes.return_value = {'test_app': [fake_migration]}
++            
++            # Capture stdout/stderr
++            stdout = StringIO()
++            stderr = StringIO()
++            
++            # Even with both flags, should exit with code 1 and not write files
++            with self.assertRaises(SystemExit) as cm:
++                call_command('makemigrations', 'test_app', check_changes=True, 
++                           dry_run=True, stdout=stdout, stderr=stderr)
++            
++            # Should exit with code 1 (changes detected)
++            self.assertEqual(cm.exception.code, 1)
++
++    @isolate_apps('test_app')
++    def test_makemigrations_check_consistency_with_migrate_check(self):
++        """
++        Test that makemigrations --check behaves consistently with migrate --check.
++        Both should exit immediately after checking without performing their main action.
++        """
++        # Create a simple model
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Test makemigrations --check behavior
++        fake_migration = mock.MagicMock()
++        fake_migration.name = 'test_migration'
++        
++        with mock.patch('django.db.migrations.autodetector.MigrationAutodetector.changes') as mock_changes, \
++             mock.patch('django.core.management.commands.makemigrations.Command.write_migration_files') as mock_write:
++            
++            mock_changes.return_value = {'test_app': [fake_migration]}
++            
++            # makemigrations --check should exit without writing files
++            with self.assertRaises(SystemExit) as cm:
++                call_command('makemigrations', 'test_app', check_changes=True)
++            
++            self.assertEqual(cm.exception.code, 1)
++            mock_write.assert_not_called()
++
++        # Test migrate --check behavior for comparison
++        with mock.patch('django.db.migrations.executor.MigrationExecutor.migration_plan') as mock_plan, \
++             mock.patch('django.db.migrations.executor.MigrationExecutor.migrate') as mock_migrate:
++            
++            # Mock unapplied migrations
++            mock_plan.return_value = [('test_app', '0001_initial')]
++            
++            # migrate --check should exit without running migrations
++            with self.assertRaises(SystemExit) as cm:
++                call_command('migrate', check=True)
++            
++            self.assertEqual(cm.exception.code, 1)
++            mock_migrate.assert_not_called()
++
++    @isolate_apps('test_app')
++    def test_makemigrations_check_multiple_apps(self):
++        """
++        Test that makemigrations --check works correctly with multiple apps.
++        """
++        # Create models for multiple apps
++        class TestModel1(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class TestModel2(models.Model):
++            title = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app2'
++
++        # Mock the autodetector to return changes for multiple apps
++        fake_migration1 = mock.MagicMock()
++        fake_migration1.name = 'test_migration1'
++        fake_migration2 = mock.MagicMock()
++        fake_migration2.name = 'test_migration2'
++        
++        with mock.patch('django.db.migrations.autodetector.MigrationAutodetector.changes') as mock_changes:
++            mock_changes.return_value = {
++                'test_app': [fake_migration1],
++                'test_app2': [fake_migration2]
++            }
++            
++            # Should exit with code 1 when changes are detected in any app
++            with self.assertRaises(SystemExit) as cm:
++                call_command('makemigrations', check_changes=True)
++            
++            self.assertEqual(cm.exception.code, 1)
++
++    def test_makemigrations_check_help_text(self):
++        """
++        Test that the help text for --check flag is accurate.
++        """
++        from django.core.management.commands.makemigrations import Command
++        
++        command = Command()
++        parser = command.create_parser('manage.py', 'makemigrations')
++        
++        # Find the --check argument
++        check_action = None
++        for action in parser._actions:
++            if '--check' in action.option_strings:
++                check_action = action
++                break
++        
++        self.assertIsNotNone(check_action)
++        self.assertEqual(check_action.dest, 'check_changes')
++        self.assertIn('Exit with a non-zero status', check_action.help)
++        self.assertIn('missing migrations', check_action.help)

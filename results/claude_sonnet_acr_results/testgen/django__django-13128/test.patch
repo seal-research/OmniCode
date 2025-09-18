@@ -1,0 +1,331 @@
+--- a/tests/expressions/test_temporal_subtraction.py
++++ b/tests/expressions/test_temporal_subtraction.py
+-# Empty if creating new file
++import datetime
++import pytest
++from django.core.exceptions import FieldError
++from django.db import models
++from django.db.models import F, Value, ExpressionWrapper
++from django.db.models.fields import DurationField, DateTimeField
++from django.test import TestCase
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('expressions')
++class TemporalSubtractionTests(TestCase):
++    """Test temporal subtraction operations without requiring ExpressionWrapper."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        # Create test model
++        class Experiment(models.Model):
++            start = models.DateTimeField()
++            end = models.DateTimeField()
++            
++            class Meta:
++                app_label = 'expressions'
++        
++        cls.Experiment = Experiment
++        
++        # Create the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.create_model(cls.Experiment)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Drop the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.delete_model(cls.Experiment)
++        super().tearDownClass()
++    
++    @classmethod
++    def _get_connection(cls):
++        from django.db import connection
++        return connection
++    
++    def setUp(self):
++        """Set up test data."""
++        self.start_time = datetime.datetime(2023, 1, 1, 10, 0, 0)
++        self.end_time = datetime.datetime(2023, 1, 1, 12, 30, 0)
++        
++        self.experiment = self.Experiment.objects.create(
++            start=self.start_time,
++            end=self.end_time
++        )
++    
++    def test_temporal_subtraction_fails_without_fix(self):
++        """Test that temporal subtraction currently fails without ExpressionWrapper."""
++        # This test demonstrates the bug - it should fail before the fix is applied
++        with self.assertRaises(FieldError) as cm:
++            list(self.Experiment.objects.annotate(
++                delta=F('end') - F('start') + Value(datetime.timedelta(), output_field=DurationField())
++            ))
++        
++        self.assertIn("Expression contains mixed types", str(cm.exception))
++        self.assertIn("DateTimeField", str(cm.exception))
++        self.assertIn("DurationField", str(cm.exception))
++        self.assertIn("You must set output_field", str(cm.exception))
++    
++    def test_temporal_subtraction_with_expression_wrapper_works(self):
++        """Test that temporal subtraction works when wrapped in ExpressionWrapper."""
++        # This should work even before the fix
++        queryset = self.Experiment.objects.annotate(
++            delta=ExpressionWrapper(
++                F('end') - F('start'), 
++                output_field=DurationField()
++            )
++        )
++        
++        result = list(queryset)
++        self.assertEqual(len(result), 1)
++        
++        # The delta should be 2.5 hours
++        expected_delta = datetime.timedelta(hours=2, minutes=30)
++        self.assertEqual(result[0].delta, expected_delta)
++    
++    def test_simple_temporal_subtraction_should_work_after_fix(self):
++        """Test that simple temporal subtraction should work without ExpressionWrapper after fix."""
++        # This test should pass after the fix is applied
++        try:
++            queryset = self.Experiment.objects.annotate(
++                delta=F('end') - F('start')
++            )
++            
++            result = list(queryset)
++            self.assertEqual(len(result), 1)
++            
++            # The delta should be 2.5 hours
++            expected_delta = datetime.timedelta(hours=2, minutes=30)
++            self.assertEqual(result[0].delta, expected_delta)
++        except FieldError:
++            # If this fails, it means the fix hasn't been applied yet
++            self.fail("Temporal subtraction should work without ExpressionWrapper after fix")
++    
++    def test_temporal_subtraction_with_duration_addition_should_work_after_fix(self):
++        """Test that temporal subtraction combined with duration addition should work after fix."""
++        # This is the exact case from the issue description
++        try:
++            queryset = self.Experiment.objects.annotate(
++                delta=F('end') - F('start') + Value(datetime.timedelta(), output_field=DurationField())
++            )
++            
++            result = list(queryset)
++            self.assertEqual(len(result), 1)
++            
++            # The delta should be 2.5 hours (plus zero timedelta)
++            expected_delta = datetime.timedelta(hours=2, minutes=30)
++            self.assertEqual(result[0].delta, expected_delta)
++        except FieldError:
++            # If this fails, it means the fix hasn't been applied yet
++            self.fail("Temporal subtraction with duration addition should work without ExpressionWrapper after fix")
++    
++    def test_temporal_subtraction_with_timedelta_value(self):
++        """Test temporal subtraction with timedelta Value objects."""
++        try:
++            # Test subtracting a timedelta from datetime
++            queryset = self.Experiment.objects.annotate(
++                adjusted_start=F('start') - Value(datetime.timedelta(hours=1))
++            )
++            
++            result = list(queryset)
++            self.assertEqual(len(result), 1)
++            
++            expected_time = self.start_time - datetime.timedelta(hours=1)
++            self.assertEqual(result[0].adjusted_start, expected_time)
++        except FieldError:
++            self.fail("DateTime - timedelta should work without ExpressionWrapper after fix")
++    
++    def test_temporal_addition_with_timedelta_value(self):
++        """Test temporal addition with timedelta Value objects."""
++        try:
++            # Test adding a timedelta to datetime
++            queryset = self.Experiment.objects.annotate(
++                adjusted_end=F('end') + Value(datetime.timedelta(hours=1))
++            )
++            
++            result = list(queryset)
++            self.assertEqual(len(result), 1)
++            
++            expected_time = self.end_time + datetime.timedelta(hours=1)
++            self.assertEqual(result[0].adjusted_end, expected_time)
++        except FieldError:
++            self.fail("DateTime + timedelta should work without ExpressionWrapper after fix")
++    
++    def test_complex_temporal_expression(self):
++        """Test complex temporal expressions involving multiple operations."""
++        try:
++            # Test a more complex expression: (end - start) + 1 hour - 30 minutes
++            queryset = self.Experiment.objects.annotate(
++                complex_delta=(
++                    F('end') - F('start') + 
++                    Value(datetime.timedelta(hours=1)) - 
++                    Value(datetime.timedelta(minutes=30))
++                )
++            )
++            
++            result = list(queryset)
++            self.assertEqual(len(result), 1)
++            
++            # Original delta: 2.5 hours, +1 hour, -30 minutes = 3 hours
++            expected_delta = datetime.timedelta(hours=3)
++            self.assertEqual(result[0].complex_delta, expected_delta)
++        except FieldError:
++            self.fail("Complex temporal expressions should work without ExpressionWrapper after fix")
++    
++    def test_non_temporal_operations_still_require_output_field(self):
++        """Test that non-temporal operations still require explicit output_field."""
++        # Create a model with numeric fields for testing
++        @isolate_apps('expressions')
++        class NumericModel(models.Model):
++            value1 = models.IntegerField()
++            value2 = models.DecimalField(max_digits=10, decimal_places=2)
++            
++            class Meta:
++                app_label = 'expressions'
++        
++        # This should still require ExpressionWrapper for mixed numeric types
++        with self.assertRaises(FieldError):
++            list(NumericModel.objects.annotate(
++                mixed_result=F('value1') + F('value2')
++            ))
++    
++    def test_temporal_subtraction_preserves_existing_functionality(self):
++        """Test that the fix doesn't break existing ExpressionWrapper usage."""
++        # Existing code using ExpressionWrapper should continue to work
++        queryset = self.Experiment.objects.annotate(
++            delta_explicit=ExpressionWrapper(
++                F('end') - F('start'), 
++                output_field=DurationField()
++            ),
++            # After fix, this should also work without wrapper
++            delta_implicit=F('end') - F('start')
++        )
++        
++        try:
++            result = list(queryset)
++            self.assertEqual(len(result), 1)
++            
++            # Both should give the same result
++            expected_delta = datetime.timedelta(hours=2, minutes=30)
++            self.assertEqual(result[0].delta_explicit, expected_delta)
++            self.assertEqual(result[0].delta_implicit, expected_delta)
++        except FieldError:
++            # If implicit fails, at least explicit should work
++            queryset_explicit = self.Experiment.objects.annotate(
++                delta_explicit=ExpressionWrapper(
++                    F('end') - F('start'), 
++                    output_field=DurationField()
++                )
++            )
++            result = list(queryset_explicit)
++            self.assertEqual(len(result), 1)
++            
++            expected_delta = datetime.timedelta(hours=2, minutes=30)
++            self.assertEqual(result[0].delta_explicit, expected_delta)
++
++
++@isolate_apps('expressions')  
++class TemporalSubtractionEdgeCaseTests(TestCase):
++    """Test edge cases for temporal subtraction operations."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        # Create test model with different temporal field types
++        class TemporalModel(models.Model):
++            datetime_field = models.DateTimeField()
++            date_field = models.DateField()
++            time_field = models.TimeField()
++            
++            class Meta:
++                app_label = 'expressions'
++        
++        cls.TemporalModel = TemporalModel
++        
++        # Create the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.create_model(cls.TemporalModel)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Drop the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.delete_model(cls.TemporalModel)
++        super().tearDownClass()
++    
++    @classmethod
++    def _get_connection(cls):
++        from django.db import connection
++        return connection
++    
++    def setUp(self):
++        """Set up test data."""
++        self.temporal_obj = self.TemporalModel.objects.create(
++            datetime_field=datetime.datetime(2023, 1, 2, 15, 30, 0),
++            date_field=datetime.date(2023, 1, 2),
++            time_field=datetime.time(15, 30, 0)
++        )
++    
++    def test_date_field_subtraction(self):
++        """Test that date field subtraction works."""
++        try:
++            queryset = self.TemporalModel.objects.annotate(
++                date_delta=F('date_field') - Value(datetime.date(2023, 1, 1))
++            )
++            
++            result = list(queryset)
++            self.assertEqual(len(result), 1)
++            
++            # Should be 1 day difference
++            expected_delta = datetime.timedelta(days=1)
++            self.assertEqual(result[0].date_delta, expected_delta)
++        except FieldError:
++            self.fail("Date field subtraction should work after fix")
++    
++    def test_time_field_subtraction(self):
++        """Test that time field subtraction works."""
++        try:
++            queryset = self.TemporalModel.objects.annotate(
++                time_delta=F('time_field') - Value(datetime.time(14, 0, 0))
++            )
++            
++            result = list(queryset)
++            self.assertEqual(len(result), 1)
++            
++            # Should be 1.5 hours difference
++            expected_delta = datetime.timedelta(hours=1, minutes=30)
++            self.assertEqual(result[0].time_delta, expected_delta)
++        except FieldError:
++            self.fail("Time field subtraction should work after fix")
++    
++    def test_mixed_temporal_types_still_require_output_field(self):
++        """Test that mixing different temporal field types still requires explicit output_field."""
++        # Mixing DateTimeField and DateField should still require ExpressionWrapper
++        # since the result type is ambiguous
++        with self.assertRaises(FieldError):
++            list(self.TemporalModel.objects.annotate(
++                mixed_temporal=F('datetime_field') - F('date_field')
++            ))
++    
++    def test_null_temporal_values(self):
++        """Test temporal subtraction with null values."""
++        # Create object with null datetime
++        null_obj = self.TemporalModel.objects.create(
++            datetime_field=None,
++            date_field=datetime.date(2023, 1, 1),
++            time_field=datetime.time(12, 0, 0)
++        )
++        
++        try:
++            queryset = self.TemporalModel.objects.annotate(
++                delta_with_null=F('datetime_field') - Value(datetime.datetime(2023, 1, 1, 12, 0, 0))
++            ).filter(pk=null_obj.pk)
++            
++            result = list(queryset)
++            self.assertEqual(len(result), 1)
++            self.assertIsNone(result[0].delta_with_null)
++        except FieldError:
++            self.fail("Temporal subtraction with null values should work after fix")

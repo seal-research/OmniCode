@@ -1,0 +1,299 @@
+--- a/tests/inspectdb/test_foreign_key_to_field.py
++++ b/tests/inspectdb/test_foreign_key_to_field.py
+-# Empty if creating new file
++import pytest
++from io import StringIO
++from django.core.management import call_command
++from django.db import connection
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++
++
++class InspectDBForeignKeyToFieldTests(TransactionTestCase):
++    """
++    Test that inspectdb correctly handles foreign keys that reference
++    specific fields (not primary keys) in other tables.
++    """
++    
++    def setUp(self):
++        """Set up test tables with foreign key to specific field."""
++        with connection.cursor() as cursor:
++            # Create foo table with primary key and unique other_id field
++            cursor.execute("""
++                CREATE TABLE test_foo (
++                    id SERIAL PRIMARY KEY,
++                    other_id INTEGER UNIQUE
++                )
++            """)
++            
++            # Create bar table with foreign key to foo.other_id (not foo.id)
++            cursor.execute("""
++                CREATE TABLE test_bar (
++                    id SERIAL PRIMARY KEY,
++                    other_id INTEGER,
++                    CONSTRAINT test_fk_constraint 
++                    FOREIGN KEY(other_id) REFERENCES test_foo(other_id)
++                )
++            """)
++            
++            # Create baz table with foreign key to foo.id (primary key) for comparison
++            cursor.execute("""
++                CREATE TABLE test_baz (
++                    id SERIAL PRIMARY KEY,
++                    foo_id INTEGER,
++                    CONSTRAINT test_fk_constraint_pk
++                    FOREIGN KEY(foo_id) REFERENCES test_foo(id)
++                )
++            """)
++
++    def tearDown(self):
++        """Clean up test tables."""
++        with connection.cursor() as cursor:
++            cursor.execute("DROP TABLE IF EXISTS test_bar CASCADE")
++            cursor.execute("DROP TABLE IF EXISTS test_baz CASCADE")
++            cursor.execute("DROP TABLE IF EXISTS test_foo CASCADE")
++
++    def test_foreign_key_to_specific_field_includes_to_field_parameter(self):
++        """
++        Test that inspectdb generates ForeignKey with to_field parameter
++        when foreign key references a specific non-primary key field.
++        """
++        out = StringIO()
++        call_command('inspectdb', 'test_bar', stdout=out)
++        output = out.getvalue()
++        
++        # Should contain to_field parameter for the foreign key to other_id
++        self.assertIn("to_field='other_id'", output)
++        self.assertIn("ForeignKey('TestFoo'", output)
++        
++    def test_foreign_key_to_primary_key_no_to_field_parameter(self):
++        """
++        Test that inspectdb does NOT generate to_field parameter
++        when foreign key references the primary key (existing behavior).
++        """
++        out = StringIO()
++        call_command('inspectdb', 'test_baz', stdout=out)
++        output = out.getvalue()
++        
++        # Should NOT contain to_field parameter for foreign key to primary key
++        self.assertNotIn("to_field=", output)
++        self.assertIn("ForeignKey('TestFoo'", output)
++
++    def test_foreign_key_to_field_with_self_reference(self):
++        """
++        Test that inspectdb handles self-referencing foreign keys to specific fields.
++        """
++        with connection.cursor() as cursor:
++            # Create self-referencing table
++            cursor.execute("""
++                CREATE TABLE test_self_ref (
++                    id SERIAL PRIMARY KEY,
++                    code VARCHAR(10) UNIQUE,
++                    parent_code VARCHAR(10),
++                    CONSTRAINT test_self_fk
++                    FOREIGN KEY(parent_code) REFERENCES test_self_ref(code)
++                )
++            """)
++        
++        try:
++            out = StringIO()
++            call_command('inspectdb', 'test_self_ref', stdout=out)
++            output = out.getvalue()
++            
++            # Should contain to_field parameter for self-reference to code field
++            self.assertIn("to_field='code'", output)
++            self.assertIn("ForeignKey('self'", output)
++            
++        finally:
++            with connection.cursor() as cursor:
++                cursor.execute("DROP TABLE IF EXISTS test_self_ref CASCADE")
++
++    def test_multiple_foreign_keys_mixed_references(self):
++        """
++        Test that inspectdb correctly handles multiple foreign keys,
++        some to primary keys and some to specific fields.
++        """
++        with connection.cursor() as cursor:
++            # Create table with multiple foreign keys
++            cursor.execute("""
++                CREATE TABLE test_multi_fk (
++                    id SERIAL PRIMARY KEY,
++                    foo_id INTEGER,
++                    foo_other_id INTEGER,
++                    CONSTRAINT test_multi_fk_pk
++                    FOREIGN KEY(foo_id) REFERENCES test_foo(id),
++                    CONSTRAINT test_multi_fk_other
++                    FOREIGN KEY(foo_other_id) REFERENCES test_foo(other_id)
++                )
++            """)
++        
++        try:
++            out = StringIO()
++            call_command('inspectdb', 'test_multi_fk', stdout=out)
++            output = out.getvalue()
++            
++            # Should have one FK with to_field and one without
++            self.assertIn("to_field='other_id'", output)
++            # Count occurrences of ForeignKey - should be 2
++            fk_count = output.count("ForeignKey('TestFoo'")
++            self.assertEqual(fk_count, 2)
++            
++        finally:
++            with connection.cursor() as cursor:
++                cursor.execute("DROP TABLE IF EXISTS test_multi_fk CASCADE")
++
++    def test_foreign_key_to_field_with_unique_constraint(self):
++        """
++        Test that inspectdb generates OneToOneField with to_field parameter
++        when foreign key to specific field has unique constraint.
++        """
++        with connection.cursor() as cursor:
++            # Create table with unique foreign key to specific field
++            cursor.execute("""
++                CREATE TABLE test_unique_fk (
++                    id SERIAL PRIMARY KEY,
++                    unique_other_id INTEGER UNIQUE,
++                    CONSTRAINT test_unique_fk_constraint
++                    FOREIGN KEY(unique_other_id) REFERENCES test_foo(other_id)
++                )
++            """)
++        
++        try:
++            out = StringIO()
++            call_command('inspectdb', 'test_unique_fk', stdout=out)
++            output = out.getvalue()
++            
++            # Should contain OneToOneField with to_field parameter
++            self.assertIn("to_field='other_id'", output)
++            self.assertIn("OneToOneField('TestFoo'", output)
++            
++        finally:
++            with connection.cursor() as cursor:
++                cursor.execute("DROP TABLE IF EXISTS test_unique_fk CASCADE")
++
++    def test_inspectdb_output_format_with_to_field(self):
++        """
++        Test that the generated model code is properly formatted
++        when to_field parameter is included.
++        """
++        out = StringIO()
++        call_command('inspectdb', 'test_bar', stdout=out)
++        output = out.getvalue()
++        
++        # Check that the field definition is properly formatted
++        lines = output.split('\n')
++        fk_line = None
++        for line in lines:
++            if 'ForeignKey' in line and 'to_field' in line:
++                fk_line = line.strip()
++                break
++        
++        self.assertIsNotNone(fk_line)
++        # Should have proper syntax: ForeignKey('TestFoo', models.DO_NOTHING, to_field='other_id')
++        self.assertIn("models.DO_NOTHING", fk_line)
++        self.assertIn("to_field='other_id'", fk_line)
++        self.assertTrue(fk_line.endswith(')'))
++
++    def test_foreign_key_to_field_preserves_existing_functionality(self):
++        """
++        Test that the fix doesn't break existing functionality for
++        foreign keys that reference primary keys.
++        """
++        out = StringIO()
++        call_command('inspectdb', stdout=out)
++        output = out.getvalue()
++        
++        # Should contain models for all test tables
++        self.assertIn("class TestFoo(models.Model):", output)
++        self.assertIn("class TestBar(models.Model):", output)
++        self.assertIn("class TestBaz(models.Model):", output)
++        
++        # TestBaz should have FK without to_field (references primary key)
++        baz_section = self._extract_model_section(output, "TestBaz")
++        self.assertIn("ForeignKey('TestFoo'", baz_section)
++        self.assertNotIn("to_field=", baz_section)
++        
++        # TestBar should have FK with to_field (references specific field)
++        bar_section = self._extract_model_section(output, "TestBar")
++        self.assertIn("ForeignKey('TestFoo'", bar_section)
++        self.assertIn("to_field='other_id'", bar_section)
++
++    def _extract_model_section(self, output, model_name):
++        """Helper method to extract a specific model's section from inspectdb output."""
++        lines = output.split('\n')
++        start_idx = None
++        end_idx = None
++        
++        for i, line in enumerate(lines):
++            if f"class {model_name}(models.Model):" in line:
++                start_idx = i
++            elif start_idx is not None and line.startswith('class ') and 'models.Model' in line:
++                end_idx = i
++                break
++        
++        if start_idx is not None:
++            if end_idx is None:
++                end_idx = len(lines)
++            return '\n'.join(lines[start_idx:end_idx])
++        return ""
++
++
++class InspectDBForeignKeyToFieldFailureTests(TransactionTestCase):
++    """
++    Tests that demonstrate the bug before the fix is applied.
++    These tests should fail with the current implementation.
++    """
++    
++    def setUp(self):
++        """Set up test tables with foreign key to specific field."""
++        with connection.cursor() as cursor:
++            # Create foo table with primary key and unique other_id field
++            cursor.execute("""
++                CREATE TABLE bug_test_foo (
++                    id SERIAL PRIMARY KEY,
++                    other_id INTEGER UNIQUE
++                )
++            """)
++            
++            # Create bar table with foreign key to foo.other_id (not foo.id)
++            cursor.execute("""
++                CREATE TABLE bug_test_bar (
++                    id SERIAL PRIMARY KEY,
++                    other_id INTEGER,
++                    CONSTRAINT bug_test_fk_constraint 
++                    FOREIGN KEY(other_id) REFERENCES bug_test_foo(other_id)
++                )
++            """)
++
++    def tearDown(self):
++        """Clean up test tables."""
++        with connection.cursor() as cursor:
++            cursor.execute("DROP TABLE IF EXISTS bug_test_bar CASCADE")
++            cursor.execute("DROP TABLE IF EXISTS bug_test_foo CASCADE")
++
++    def test_bug_foreign_key_to_specific_field_missing_to_field(self):
++        """
++        This test demonstrates the bug: inspectdb should generate
++        to_field parameter but currently doesn't.
++        
++        This test should FAIL before the fix is applied.
++        """
++        out = StringIO()
++        call_command('inspectdb', 'bug_test_bar', stdout=out)
++        output = out.getvalue()
++        
++        # This assertion should fail with current implementation
++        # because inspectdb doesn't generate to_field parameter
++        try:
++            self.assertIn("to_field='other_id'", output)
++            # If this passes, the bug is fixed
++        except AssertionError:
++            # This is expected with the current buggy implementation
++            # The test documents the bug
++            self.assertNotIn("to_field='other_id'", output)
++            self.assertIn("ForeignKey('BugTestFoo'", output)
++            # Re-raise to show this test fails (demonstrating the bug)
++            raise AssertionError(
++                "Bug confirmed: inspectdb does not generate to_field parameter "
++                "for foreign keys that reference specific non-primary key fields"
++            )

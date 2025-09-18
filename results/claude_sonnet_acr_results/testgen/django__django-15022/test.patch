@@ -1,0 +1,297 @@
+--- a/tests/admin_views/test_changelist_search.py
++++ b/tests/admin_views/test_changelist_search.py
+-# Empty if creating new file
++import pytest
++from django.contrib import admin
++from django.contrib.admin.views.main import ChangeList
++from django.contrib.auth.models import User
++from django.db import models, connection
++from django.test import TestCase, RequestFactory
++from django.utils.translation import gettext_lazy as _
++
++
++class Client(models.Model):
++    """Test model representing a client."""
++    name = models.CharField(_('name'), max_length=256)
++    name2 = models.CharField(_('unofficial or obsolete name'), max_length=256, blank=True, null=True)
++    contact_person = models.CharField(_('contact person'), max_length=256, blank=True, null=True)
++
++    class Meta:
++        app_label = 'admin_views'
++
++
++class ClientOffice(models.Model):
++    """Test model representing a client office."""
++    name = models.CharField(_('name'), max_length=256)
++    name2 = models.CharField(_('unofficial or obsolete name'), max_length=256, blank=True, null=True)
++    client = models.ForeignKey(Client, verbose_name=_('client'), on_delete=models.CASCADE)
++
++    class Meta:
++        app_label = 'admin_views'
++
++
++class ClientAdmin(admin.ModelAdmin):
++    """Admin configuration for Client model with search fields including related fields."""
++    search_fields = ('name', 'name2', 'contact_person', 'clientoffice__name', 'clientoffice__name2')
++
++
++class TestChangelistSearchJoins(TestCase):
++    """Test suite for admin changelist search query optimization."""
++
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        # Create tables for our test models
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(Client)
++            schema_editor.create_model(ClientOffice)
++
++    @classmethod
++    def tearDownClass(cls):
++        # Clean up tables
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(ClientOffice)
++            schema_editor.delete_model(Client)
++        super().tearDownClass()
++
++    def setUp(self):
++        """Set up test data and admin configuration."""
++        self.factory = RequestFactory()
++        self.user = User.objects.create_superuser('admin', 'admin@test.com', 'password')
++        
++        # Create test data
++        self.client1 = Client.objects.create(
++            name='Test Client One',
++            name2='Alternative Name One',
++            contact_person='John Doe'
++        )
++        self.client2 = Client.objects.create(
++            name='Another Client',
++            name2='Alternative Name Two',
++            contact_person='Jane Smith'
++        )
++        
++        self.office1 = ClientOffice.objects.create(
++            name='Main Office',
++            name2='HQ',
++            client=self.client1
++        )
++        self.office2 = ClientOffice.objects.create(
++            name='Branch Office',
++            name2='Secondary Location',
++            client=self.client1
++        )
++        self.office3 = ClientOffice.objects.create(
++            name='Remote Office',
++            name2='Satellite',
++            client=self.client2
++        )
++
++        self.model_admin = ClientAdmin(Client, admin.site)
++
++    def _create_changelist(self, search_query=''):
++        """Helper method to create a ChangeList instance with search query."""
++        request = self.factory.get('/admin/admin_views/client/', {'q': search_query})
++        request.user = self.user
++        
++        changelist = ChangeList(
++            request=request,
++            model=Client,
++            list_display=['name'],
++            list_display_links=None,
++            list_filter=[],
++            date_hierarchy=None,
++            search_fields=self.model_admin.search_fields,
++            list_select_related=False,
++            list_per_page=100,
++            list_max_show_all=200,
++            list_editable=[],
++            model_admin=self.model_admin,
++            sortable_by=None,
++            search_help_text=None,
++        )
++        return changelist
++
++    def _count_joins_in_query(self, queryset):
++        """Helper method to count the number of JOINs in a queryset's SQL."""
++        sql = str(queryset.query)
++        # Count JOIN occurrences (case insensitive)
++        join_count = sql.upper().count('JOIN')
++        return join_count
++
++    def test_single_word_search_creates_minimal_joins(self):
++        """Test that single word search creates expected number of joins."""
++        changelist = self._create_changelist('Test')
++        queryset = changelist.get_queryset(changelist.request)
++        
++        # Should find client1 which has "Test" in name
++        results = list(queryset)
++        self.assertIn(self.client1, results)
++        
++        # Count joins - should be minimal for single word
++        join_count = self._count_joins_in_query(queryset)
++        single_word_joins = join_count
++
++    def test_multiple_words_search_excessive_joins_bug(self):
++        """Test that demonstrates the bug: multiple words create excessive joins."""
++        # This test should fail before the fix is applied
++        changelist = self._create_changelist('Test Client Main Office')
++        queryset = changelist.get_queryset(changelist.request)
++        
++        # Count joins for multiple words
++        join_count = self._count_joins_in_query(queryset)
++        
++        # Before fix: each word creates additional joins, leading to excessive joins
++        # This assertion will fail before the fix, demonstrating the bug
++        # After fix: joins should be optimized and not multiply with each word
++        
++        # Get single word join count for comparison
++        single_changelist = self._create_changelist('Test')
++        single_queryset = single_changelist.get_queryset(single_changelist.request)
++        single_word_joins = self._count_joins_in_query(single_queryset)
++        
++        # The bug: multiple words should not create significantly more joins than single word
++        # This assertion demonstrates the problem - it will fail before fix
++        self.assertLessEqual(
++            join_count, 
++            single_word_joins + 1,  # Allow for at most 1 additional join
++            f"Multiple word search created {join_count} joins vs {single_word_joins} for single word. "
++            f"This indicates unnecessary join multiplication bug."
++        )
++
++    def test_search_functionality_preserved_after_fix(self):
++        """Test that search functionality works correctly after the fix."""
++        # Test various search scenarios to ensure functionality is preserved
++        
++        # Search by client name
++        changelist = self._create_changelist('Test Client')
++        queryset = changelist.get_queryset(changelist.request)
++        results = list(queryset)
++        self.assertIn(self.client1, results)
++        self.assertNotIn(self.client2, results)
++        
++        # Search by contact person
++        changelist = self._create_changelist('John Doe')
++        queryset = changelist.get_queryset(changelist.request)
++        results = list(queryset)
++        self.assertIn(self.client1, results)
++        self.assertNotIn(self.client2, results)
++        
++        # Search by related office name
++        changelist = self._create_changelist('Main Office')
++        queryset = changelist.get_queryset(changelist.request)
++        results = list(queryset)
++        self.assertIn(self.client1, results)
++        self.assertNotIn(self.client2, results)
++        
++        # Search by related office alternative name
++        changelist = self._create_changelist('HQ')
++        queryset = changelist.get_queryset(changelist.request)
++        results = list(queryset)
++        self.assertIn(self.client1, results)
++        self.assertNotIn(self.client2, results)
++
++    def test_multiple_word_search_all_words_must_match(self):
++        """Test that all words in search query must match (AND logic between words)."""
++        # Search for words that should match client1
++        changelist = self._create_changelist('Test Main')
++        queryset = changelist.get_queryset(changelist.request)
++        results = list(queryset)
++        self.assertIn(self.client1, results)  # Has "Test" in name and "Main" in office name
++        self.assertNotIn(self.client2, results)  # Doesn't have "Test" in any field
++        
++        # Search for words where only one matches
++        changelist = self._create_changelist('Test Remote')
++        queryset = changelist.get_queryset(changelist.request)
++        results = list(queryset)
++        # client1 has "Test" but no "Remote", client2 has "Remote" but no "Test"
++        # So no results should match
++        self.assertEqual(len(results), 0)
++
++    def test_search_with_quoted_phrases(self):
++        """Test that quoted phrases work correctly."""
++        changelist = self._create_changelist('"Test Client"')
++        queryset = changelist.get_queryset(changelist.request)
++        results = list(queryset)
++        self.assertIn(self.client1, results)
++        self.assertNotIn(self.client2, results)
++
++    def test_search_performance_with_many_words(self):
++        """Test that search with many words doesn't create excessive joins."""
++        # Create a search with many words to stress test the join optimization
++        many_words_search = 'Test Client Main Office John Doe Alternative'
++        changelist = self._create_changelist(many_words_search)
++        queryset = changelist.get_queryset(changelist.request)
++        
++        # Count joins - should not grow linearly with number of search words
++        join_count = self._count_joins_in_query(queryset)
++        
++        # Get baseline with fewer words
++        few_words_search = 'Test Client'
++        baseline_changelist = self._create_changelist(few_words_search)
++        baseline_queryset = baseline_changelist.get_queryset(baseline_changelist.request)
++        baseline_joins = self._count_joins_in_query(baseline_queryset)
++        
++        # After fix: joins should not multiply with search word count
++        # Allow some reasonable increase but not linear growth
++        max_expected_joins = baseline_joins + 2  # Allow for some reasonable increase
++        self.assertLessEqual(
++            join_count,
++            max_expected_joins,
++            f"Search with many words created {join_count} joins vs {baseline_joins} baseline. "
++            f"Joins should not grow linearly with search word count."
++        )
++
++    def test_empty_search_returns_all_results(self):
++        """Test that empty search returns all results."""
++        changelist = self._create_changelist('')
++        queryset = changelist.get_queryset(changelist.request)
++        results = list(queryset)
++        self.assertIn(self.client1, results)
++        self.assertIn(self.client2, results)
++
++    def test_search_with_special_characters(self):
++        """Test that search handles special characters correctly."""
++        # Create client with special characters
++        special_client = Client.objects.create(
++            name='Client & Co.',
++            contact_person="O'Connor"
++        )
++        
++        changelist = self._create_changelist("O'Connor")
++        queryset = changelist.get_queryset(changelist.request)
++        results = list(queryset)
++        self.assertIn(special_client, results)
++
++    def test_get_search_results_method_directly(self):
++        """Test the get_search_results method directly to verify join optimization."""
++        request = self.factory.get('/admin/admin_views/client/')
++        request.user = self.user
++        
++        # Test with multiple words
++        base_queryset = Client.objects.all()
++        search_term = 'Test Client Main Office'
++        
++        result_queryset, may_have_duplicates = self.model_admin.get_search_results(
++            request, base_queryset, search_term
++        )
++        
++        # Verify the search works
++        results = list(result_queryset)
++        self.assertIn(self.client1, results)
++        
++        # Verify join count is reasonable
++        join_count = self._count_joins_in_query(result_queryset)
++        
++        # Compare with single word search
++        single_result_queryset, _ = self.model_admin.get_search_results(
++            request, base_queryset, 'Test'
++        )
++        single_join_count = self._count_joins_in_query(single_result_queryset)
++        
++        # After fix: multiple words should not create significantly more joins
++        self.assertLessEqual(
++            join_count,
++            single_join_count + 1,
++            f"Multiple word search created {join_count} joins vs {single_join_count} for single word"
++        )

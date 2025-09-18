@@ -1,0 +1,43 @@
+{
+  "start_time": 1757692804.6991704,
+  "total_tasks": 273,
+  "total_modes": 4,
+  "completed_tasks": 1004,
+  "failed_tasks": 88,
+  "mode_progress": {
+    "bugfixing": {
+      "start_time": 1757692804.735578,
+      "completed": 273,
+      "failed": 0,
+      "total": 273,
+      "end_time": 1757754338.5316565,
+      "total_time": 61533.79607987404
+    },
+    "testgen": {
+      "start_time": 1757754338.532099,
+      "completed": 259,
+      "failed": 14,
+      "total": 273,
+      "end_time": 1757809756.500611,
+      "total_time": 55417.96851325035
+    },
+    "stylereview": {
+      "start_time": 1757809756.5007646,
+      "completed": 243,
+      "failed": 30,
+      "total": 273,
+      "end_time": 1757904082.3929572,
+      "total_time": 94325.892193079
+    },
+    "codereview": {
+      "start_time": 1757904082.393113,
+      "completed": 229,
+      "failed": 44,
+      "total": 273,
+      "end_time": 1757965005.8995035,
+      "total_time": 60923.50639104843
+    }
+  },
+  "end_time": 1757965005.8996012,
+  "total_time": 272201.2004315853
+}

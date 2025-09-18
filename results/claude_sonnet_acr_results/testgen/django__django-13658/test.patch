@@ -1,0 +1,150 @@
+--- a/tests/admin_scripts/test_management_utility.py
++++ b/tests/admin_scripts/test_management_utility.py
+-# Empty if creating new file
++import os
++import sys
++import pytest
++from unittest import mock
++from django.core.management import ManagementUtility, execute_from_command_line
++from django.core.management.base import CommandParser
++
++
++class TestManagementUtilityProgName:
++    """Test that ManagementUtility uses the computed prog_name consistently."""
++
++    def test_prog_name_computed_from_argv(self):
++        """Test that prog_name is correctly computed from provided argv."""
++        # Test with regular script name
++        argv = ['/path/to/manage.py', 'help']
++        utility = ManagementUtility(argv)
++        assert utility.prog_name == 'manage.py'
++        
++        # Test with __main__.py
++        argv = ['/path/to/__main__.py', 'help']
++        utility = ManagementUtility(argv)
++        assert utility.prog_name == 'python -m django'
++        
++        # Test with custom script name
++        argv = ['/custom/path/my_script.py', 'help']
++        utility = ManagementUtility(argv)
++        assert utility.prog_name == 'my_script.py'
++
++    def test_prog_name_with_none_argv_zero(self):
++        """Test that prog_name handles None in argv[0] gracefully."""
++        # This reproduces the bug scenario where sys.argv[0] is None
++        argv = [None, 'help']
++        with pytest.raises((TypeError, AttributeError)):
++            # This should fail before the fix because os.path.basename(None) fails
++            ManagementUtility(argv)
++
++    @mock.patch('django.core.management.sys.argv', [None, 'help'])
++    def test_execute_from_command_line_with_custom_argv_none_sys_argv(self):
++        """Test execute_from_command_line with custom argv when sys.argv[0] is None."""
++        # This tests the scenario described in the issue where sys.argv[0] is None
++        # but we provide a custom argv to execute_from_command_line
++        custom_argv = ['/path/to/manage.py', 'help']
++        
++        # This should work without raising exceptions after the fix
++        try:
++            execute_from_command_line(custom_argv)
++        except SystemExit:
++            # SystemExit is expected for help command
++            pass
++
++    def test_command_parser_uses_computed_prog_name(self):
++        """Test that CommandParser receives the computed prog_name."""
++        argv = ['/custom/path/my_django_script.py', 'help']
++        utility = ManagementUtility(argv)
++        
++        # Mock CommandParser to capture the arguments passed to it
++        with mock.patch('django.core.management.CommandParser') as mock_parser:
++            mock_parser_instance = mock.Mock()
++            mock_parser.return_value = mock_parser_instance
++            mock_parser_instance.parse_known_args.return_value = (mock.Mock(settings=None, pythonpath=None), [])
++            
++            try:
++                utility.execute()
++            except SystemExit:
++                # SystemExit is expected for help command
++                pass
++            
++            # Verify that CommandParser was called with prog=self.prog_name
++            mock_parser.assert_called_with(
++                prog='my_django_script.py',
++                usage='%(prog)s subcommand [options] [args]',
++                add_help=False,
++                allow_abbrev=False
++            )
++
++    def test_command_parser_prog_name_consistency_main_py(self):
++        """Test CommandParser prog consistency with __main__.py."""
++        argv = ['/path/to/__main__.py', 'help']
++        utility = ManagementUtility(argv)
++        
++        with mock.patch('django.core.management.CommandParser') as mock_parser:
++            mock_parser_instance = mock.Mock()
++            mock_parser.return_value = mock_parser_instance
++            mock_parser_instance.parse_known_args.return_value = (mock.Mock(settings=None, pythonpath=None), [])
++            
++            try:
++                utility.execute()
++            except SystemExit:
++                pass
++            
++            # Verify that CommandParser was called with the transformed prog name
++            mock_parser.assert_called_with(
++                prog='python -m django',
++                usage='%(prog)s subcommand [options] [args]',
++                add_help=False,
++                allow_abbrev=False
++            )
++
++    @mock.patch('django.core.management.sys.argv', [None])
++    def test_bug_reproduction_none_sys_argv_without_custom_argv(self):
++        """Test that demonstrates the bug when sys.argv[0] is None and no custom argv is provided."""
++        # This test reproduces the original bug scenario
++        with pytest.raises((TypeError, AttributeError)):
++            # This should fail because sys.argv[0] is None
++            execute_from_command_line()
++
++    def test_command_parser_receives_prog_argument_bug_reproduction(self):
++        """Test that reproduces the bug where CommandParser doesn't receive prog argument."""
++        argv = ['/path/to/manage.py', 'help']
++        utility = ManagementUtility(argv)
++        
++        # Before the fix, this would fail because CommandParser wouldn't receive
++        # the prog argument and would default to sys.argv[0]
++        with mock.patch('django.core.management.sys.argv', ['/different/path/sys_argv_script.py']):
++            with mock.patch('django.core.management.CommandParser') as mock_parser:
++                mock_parser_instance = mock.Mock()
++                mock_parser.return_value = mock_parser_instance
++                mock_parser_instance.parse_known_args.return_value = (mock.Mock(settings=None, pythonpath=None), [])
++                
++                try:
++                    utility.execute()
++                except SystemExit:
++                    pass
++                
++                # After the fix, CommandParser should be called with prog='manage.py'
++                # not with the default from sys.argv[0] which would be 'sys_argv_script.py'
++                call_args = mock_parser.call_args
++                assert call_args is not None
++                assert 'prog' in call_args.kwargs
++                assert call_args.kwargs['prog'] == 'manage.py'
++
++    def test_edge_case_empty_argv(self):
++        """Test edge case with empty argv."""
++        with pytest.raises(IndexError):
++            ManagementUtility([])
++
++    def test_edge_case_relative_path(self):
++        """Test with relative path in argv[0]."""
++        argv = ['manage.py', 'help']
++        utility = ManagementUtility(argv)
++        assert utility.prog_name == 'manage.py'
++
++    def test_edge_case_path_with_spaces(self):
++        """Test with path containing spaces."""
++        argv = ['/path with spaces/manage.py', 'help']
++        utility = ManagementUtility(argv)
++        assert utility.prog_name == 'manage.py'

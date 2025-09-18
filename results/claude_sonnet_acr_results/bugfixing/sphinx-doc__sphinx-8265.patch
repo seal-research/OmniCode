@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/util/inspect.py b/sphinx/util/inspect.py\nindex 378174993..32b1af7a3 100644\n--- a/sphinx/util/inspect.py\n+++ b/sphinx/util/inspect.py\n@@ -390,6 +390,8 @@ def object_description(object: Any) -> str:\n         else:\n             return \"frozenset({%s})\" % \", \".join(object_description(x)\n                                                  for x in sorted_values)\n+    if isinstance(object, tuple):\n+        return \"(%s)\" % \", \".join(object_description(x) for x in object)\n     try:\n         s = repr(object)\n     except Exception as exc:\n"
+}

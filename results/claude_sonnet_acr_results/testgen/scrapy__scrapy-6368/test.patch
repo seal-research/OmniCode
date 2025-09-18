@@ -1,0 +1,248 @@
+--- a/tests/test_pipeline_media_overridable_methods.py
++++ b/tests/test_pipeline_media_overridable_methods.py
+-# Empty if creating new file
++import pytest
++from scrapy.pipelines.media import MediaPipeline
++from scrapy.pipelines.files import FilesPipeline
++from scrapy.http import Request, Response
++from scrapy.spiders import Spider
++from scrapy.utils.test import get_crawler
++from twisted.internet import defer
++from twisted.python.failure import Failure
++
++
++class TestMediaPipelineOverridableMethods:
++    """Test that MediaPipeline overridable methods raise NotImplementedError."""
++
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.spider = Spider('test')
++        self.crawler = get_crawler()
++        self.pipeline = MediaPipeline()
++        self.pipeline.crawler = self.crawler
++        self.info = MediaPipeline.SpiderInfo(self.spider)
++        self.request = Request('http://example.com/file.jpg')
++        self.response = Response('http://example.com/file.jpg', body=b'fake image data')
++        self.failure = Failure(Exception("Download failed"))
++
++    def test_get_media_requests_raises_not_implemented_error(self):
++        """Test that get_media_requests raises NotImplementedError in base class."""
++        item = {'file_urls': ['http://example.com/file.jpg']}
++        
++        with pytest.raises(NotImplementedError):
++            self.pipeline.get_media_requests(item, self.info)
++
++    def test_media_to_download_raises_not_implemented_error(self):
++        """Test that media_to_download raises NotImplementedError in base class."""
++        with pytest.raises(NotImplementedError):
++            self.pipeline.media_to_download(self.request, self.info, item={})
++
++    def test_media_downloaded_raises_not_implemented_error(self):
++        """Test that media_downloaded raises NotImplementedError in base class."""
++        with pytest.raises(NotImplementedError):
++            self.pipeline.media_downloaded(self.response, self.request, self.info, item={})
++
++    def test_media_failed_raises_not_implemented_error(self):
++        """Test that media_failed raises NotImplementedError in base class."""
++        with pytest.raises(NotImplementedError):
++            self.pipeline.media_failed(self.failure, self.request, self.info)
++
++    def test_file_path_raises_not_implemented_error(self):
++        """Test that file_path raises NotImplementedError in base class."""
++        with pytest.raises(NotImplementedError):
++            self.pipeline.file_path(self.request, item={})
++
++    def test_item_completed_raises_not_implemented_error(self):
++        """Test that item_completed raises NotImplementedError in base class."""
++        results = [(True, {'url': 'http://example.com/file.jpg', 'path': 'file.jpg'})]
++        item = {'file_urls': ['http://example.com/file.jpg']}
++        
++        with pytest.raises(NotImplementedError):
++            self.pipeline.item_completed(results, item, self.info)
++
++
++class TestMediaPipelineBeforeFix:
++    """Test the current behavior before the fix is applied (these should fail after fix)."""
++
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.spider = Spider('test')
++        self.crawler = get_crawler()
++        self.pipeline = MediaPipeline()
++        self.pipeline.crawler = self.crawler
++        self.info = MediaPipeline.SpiderInfo(self.spider)
++        self.request = Request('http://example.com/file.jpg')
++        self.response = Response('http://example.com/file.jpg', body=b'fake image data')
++        self.failure = Failure(Exception("Download failed"))
++
++    def test_get_media_requests_returns_none_before_fix(self):
++        """Test that get_media_requests currently returns None (this test should fail after fix)."""
++        item = {'file_urls': ['http://example.com/file.jpg']}
++        result = self.pipeline.get_media_requests(item, self.info)
++        assert result is None
++
++    def test_media_to_download_returns_none_before_fix(self):
++        """Test that media_to_download currently returns None (this test should fail after fix)."""
++        result = self.pipeline.media_to_download(self.request, self.info, item={})
++        assert result is None
++
++    def test_media_downloaded_returns_response_before_fix(self):
++        """Test that media_downloaded currently returns response (this test should fail after fix)."""
++        result = self.pipeline.media_downloaded(self.response, self.request, self.info, item={})
++        assert result is self.response
++
++    def test_media_failed_returns_failure_before_fix(self):
++        """Test that media_failed currently returns failure (this test should fail after fix)."""
++        result = self.pipeline.media_failed(self.failure, self.request, self.info)
++        assert result is self.failure
++
++    def test_file_path_returns_none_before_fix(self):
++        """Test that file_path currently returns None (this test should fail after fix)."""
++        result = self.pipeline.file_path(self.request, item={})
++        assert result is None
++
++    def test_item_completed_returns_item_before_fix(self):
++        """Test that item_completed currently returns item (this test should fail after fix)."""
++        results = [(True, {'url': 'http://example.com/file.jpg', 'path': 'file.jpg'})]
++        item = {'file_urls': ['http://example.com/file.jpg']}
++        result = self.pipeline.item_completed(results, item, self.info)
++        assert result is item
++
++
++class TestSubclassesStillWork:
++    """Test that subclasses like FilesPipeline still work correctly after the fix."""
++
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.spider = Spider('test')
++        self.crawler = get_crawler()
++        # Mock the store to avoid file system operations
++        self.pipeline = FilesPipeline('file:///tmp/test')
++        self.pipeline.crawler = self.crawler
++        self.info = MediaPipeline.SpiderInfo(self.spider)
++        self.request = Request('http://example.com/file.jpg')
++
++    def test_files_pipeline_get_media_requests_works(self):
++        """Test that FilesPipeline.get_media_requests works correctly."""
++        item = {'file_urls': ['http://example.com/file.jpg']}
++        requests = list(self.pipeline.get_media_requests(item, self.info))
++        assert len(requests) == 1
++        assert isinstance(requests[0], Request)
++        assert requests[0].url == 'http://example.com/file.jpg'
++
++    def test_files_pipeline_file_path_works(self):
++        """Test that FilesPipeline.file_path works correctly."""
++        # This will call the store's get_path method
++        result = self.pipeline.file_path(self.request, item={})
++        # The exact result depends on the store implementation, but it should not be None
++        assert result is not None
++
++    def test_files_pipeline_media_downloaded_returns_dict(self):
++        """Test that FilesPipeline.media_downloaded returns a dict with file info."""
++        response = Response('http://example.com/file.jpg', body=b'fake image data', status=200)
++        
++        # Mock the store.persist_file method to avoid file operations
++        self.pipeline.store.persist_file = lambda path, response, info: None
++        
++        result = self.pipeline.media_downloaded(response, self.request, self.info, item={})
++        
++        # FilesPipeline should return a dict with file information
++        assert isinstance(result, dict)
++        assert 'url' in result
++        assert 'path' in result
++        assert 'checksum' in result
++        assert 'status' in result
++        assert result['url'] == 'http://example.com/file.jpg'
++
++    def test_files_pipeline_media_failed_raises_exception(self):
++        """Test that FilesPipeline.media_failed raises FileException."""
++        from scrapy.pipelines.files import FileException
++        
++        failure = Failure(Exception("Download failed"))
++        
++        with pytest.raises(FileException):
++            self.pipeline.media_failed(failure, self.request, self.info)
++
++    def test_files_pipeline_item_completed_works(self):
++        """Test that FilesPipeline.item_completed works correctly."""
++        results = [(True, {'url': 'http://example.com/file.jpg', 'path': 'file.jpg'})]
++        item = {'file_urls': ['http://example.com/file.jpg']}
++        
++        result = self.pipeline.item_completed(results, item, self.info)
++        
++        # Should return the item with files field added
++        assert result is item
++        assert 'files' in result
++        assert len(result['files']) == 1
++        assert result['files'][0]['url'] == 'http://example.com/file.jpg'
++
++
++class TestEdgeCases:
++    """Test edge cases and error conditions."""
++
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.spider = Spider('test')
++        self.crawler = get_crawler()
++        self.pipeline = MediaPipeline()
++        self.pipeline.crawler = self.crawler
++        self.info = MediaPipeline.SpiderInfo(self.spider)
++
++    def test_methods_raise_not_implemented_error_with_none_args(self):
++        """Test that methods raise NotImplementedError even with None arguments."""
++        with pytest.raises(NotImplementedError):
++            self.pipeline.get_media_requests(None, None)
++        
++        with pytest.raises(NotImplementedError):
++            self.pipeline.media_to_download(None, None, item=None)
++        
++        with pytest.raises(NotImplementedError):
++            self.pipeline.media_downloaded(None, None, None, item=None)
++        
++        with pytest.raises(NotImplementedError):
++            self.pipeline.media_failed(None, None, None)
++        
++        with pytest.raises(NotImplementedError):
++            self.pipeline.file_path(None, item=None)
++        
++        with pytest.raises(NotImplementedError):
++            self.pipeline.item_completed(None, None, None)
++
++    def test_methods_raise_not_implemented_error_with_empty_args(self):
++        """Test that methods raise NotImplementedError with empty/minimal arguments."""
++        with pytest.raises(NotImplementedError):
++            self.pipeline.get_media_requests({}, self.info)
++        
++        request = Request('http://example.com')
++        with pytest.raises(NotImplementedError):
++            self.pipeline.media_to_download(request, self.info, item={})
++        
++        response = Response('http://example.com')
++        with pytest.raises(NotImplementedError):
++            self.pipeline.media_downloaded(response, request, self.info, item={})
++        
++        failure = Failure(Exception("test"))
++        with pytest.raises(NotImplementedError):
++            self.pipeline.media_failed(failure, request, self.info)
++        
++        with pytest.raises(NotImplementedError):
++            self.pipeline.file_path(request, item={})
++        
++        with pytest.raises(NotImplementedError):
++            self.pipeline.item_completed([], {}, self.info)
++
++    def test_not_implemented_error_messages_are_clear(self):
++        """Test that NotImplementedError messages are clear about which method needs implementation."""
++        request = Request('http://example.com')
++        
++        try:
++            self.pipeline.get_media_requests({}, self.info)
++        except NotImplementedError as e:
++            # The error should be clear about what needs to be implemented
++            assert "get_media_requests" in str(e) or "must be implemented" in str(e).lower()
++        
++        try:
++            self.pipeline.file_path(request, item={})
++        except NotImplementedError as e:
++            # The error should be clear about what needs to be implemented
++            assert "file_path" in str(e) or "must be implemented" in str(e).lower()

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/forms/models.py b/django/forms/models.py\nindex dafc11f995..0efd44a09a 100644\n--- a/django/forms/models.py\n+++ b/django/forms/models.py\n@@ -1187,6 +1187,8 @@ class ModelChoiceField(ChoiceField):\n                  **kwargs):\n         if required and (initial is not None):\n             self.empty_label = None\n+        elif required and isinstance(widget, RadioSelect):\n+            self.empty_label = None\n         else:\n             self.empty_label = empty_label\n \n"
+}

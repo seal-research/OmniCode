@@ -1,0 +1,244 @@
+--- a/tests/forms_tests/test_modelform_factory_formfield_callback.py
++++ b/tests/forms_tests/test_modelform_factory_formfield_callback.py
+-# Empty if creating new file
++import pytest
++from django import forms
++from django.db import models
++from django.test import TestCase
++
++
++class TestModel(models.Model):
++    """Test model for formfield_callback tests."""
++    active = models.BooleanField(default=False)
++    name = models.CharField(max_length=64, blank=True, null=True)
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++def all_required_callback(field, **kwargs):
++    """Callback that makes all fields required."""
++    formfield = field.formfield(**kwargs)
++    formfield.required = True
++    return formfield
++
++
++def custom_widget_callback(field, **kwargs):
++    """Callback that adds custom widgets."""
++    formfield = field.formfield(**kwargs)
++    if isinstance(field, models.CharField):
++        formfield.widget = forms.TextInput(attrs={'class': 'custom-text'})
++    return formfield
++
++
++class ModelFormFactoryFormfieldCallbackTests(TestCase):
++    """Test that modelform_factory properly inherits formfield_callback from base forms."""
++    
++    def test_modelform_factory_without_callback_parameter_inherits_from_meta(self):
++        """
++        Test that when no formfield_callback is passed to modelform_factory,
++        it inherits the callback from the base form's Meta class.
++        This is the main bug described in the issue.
++        """
++        # Create a base form with formfield_callback in Meta
++        class BaseForm(forms.ModelForm):
++            class Meta:
++                model = TestModel
++                fields = ['active', 'name']
++                formfield_callback = staticmethod(all_required_callback)
++        
++        # Create factory form without explicit callback
++        FactoryForm = forms.modelform_factory(TestModel, form=BaseForm)
++        
++        # Both forms should have required fields due to inherited callback
++        base_form = BaseForm()
++        factory_form = FactoryForm()
++        
++        # Check that both forms have the same required field behavior
++        self.assertTrue(base_form.fields['active'].required)
++        self.assertTrue(base_form.fields['name'].required)
++        self.assertTrue(factory_form.fields['active'].required)
++        self.assertTrue(factory_form.fields['name'].required)
++        
++        # Verify the callback is properly set on the factory form's Meta
++        self.assertTrue(hasattr(FactoryForm.Meta, 'formfield_callback'))
++        self.assertEqual(FactoryForm.Meta.formfield_callback, all_required_callback)
++    
++    def test_modelform_factory_explicit_callback_overrides_base_form(self):
++        """
++        Test that when formfield_callback is explicitly passed to modelform_factory,
++        it overrides the base form's callback (existing behavior should be preserved).
++        """
++        # Create a base form with one callback
++        class BaseForm(forms.ModelForm):
++            class Meta:
++                model = TestModel
++                fields = ['active', 'name']
++                formfield_callback = staticmethod(all_required_callback)
++        
++        # Create factory form with different explicit callback
++        FactoryForm = forms.modelform_factory(
++            TestModel, 
++            form=BaseForm, 
++            formfield_callback=custom_widget_callback
++        )
++        
++        base_form = BaseForm()
++        factory_form = FactoryForm()
++        
++        # Base form should have required fields
++        self.assertTrue(base_form.fields['active'].required)
++        self.assertTrue(base_form.fields['name'].required)
++        
++        # Factory form should use the explicit callback (custom widgets, not required)
++        self.assertFalse(factory_form.fields['active'].required)
++        self.assertFalse(factory_form.fields['name'].required)
++        self.assertEqual(
++            factory_form.fields['name'].widget.attrs.get('class'), 
++            'custom-text'
++        )
++        
++        # Verify the explicit callback is set on the factory form's Meta
++        self.assertEqual(FactoryForm.Meta.formfield_callback, custom_widget_callback)
++    
++    def test_modelform_factory_no_base_callback_no_explicit_callback(self):
++        """
++        Test that when neither base form nor explicit parameter has a callback,
++        the factory form works normally (existing behavior should be preserved).
++        """
++        # Create a base form without callback
++        class BaseForm(forms.ModelForm):
++            class Meta:
++                model = TestModel
++                fields = ['active', 'name']
++        
++        # Create factory form without explicit callback
++        FactoryForm = forms.modelform_factory(TestModel, form=BaseForm)
++        
++        base_form = BaseForm()
++        factory_form = FactoryForm()
++        
++        # Both forms should have default field behavior (not required for nullable fields)
++        self.assertTrue(base_form.fields['active'].required)  # BooleanField is required by default
++        self.assertFalse(base_form.fields['name'].required)  # CharField with blank=True, null=True
++        self.assertTrue(factory_form.fields['active'].required)
++        self.assertFalse(factory_form.fields['name'].required)
++        
++        # Verify no callback is set
++        self.assertFalse(hasattr(FactoryForm.Meta, 'formfield_callback'))
++    
++    def test_modelform_factory_explicit_none_callback_overrides_base_form(self):
++        """
++        Test that when formfield_callback=None is explicitly passed to modelform_factory,
++        it overrides the base form's callback.
++        """
++        # Create a base form with callback
++        class BaseForm(forms.ModelForm):
++            class Meta:
++                model = TestModel
++                fields = ['active', 'name']
++                formfield_callback = staticmethod(all_required_callback)
++        
++        # Create factory form with explicit None callback
++        FactoryForm = forms.modelform_factory(
++            TestModel, 
++            form=BaseForm, 
++            formfield_callback=None
++        )
++        
++        base_form = BaseForm()
++        factory_form = FactoryForm()
++        
++        # Base form should have required fields
++        self.assertTrue(base_form.fields['active'].required)
++        self.assertTrue(base_form.fields['name'].required)
++        
++        # Factory form should use default behavior (no callback)
++        self.assertTrue(factory_form.fields['active'].required)  # BooleanField default
++        self.assertFalse(factory_form.fields['name'].required)  # CharField with blank=True, null=True
++        
++        # Verify no callback is set on the factory form
++        self.assertIsNone(FactoryForm.formfield_callback)
++    
++    def test_modelform_factory_callback_consistency_between_meta_and_class(self):
++        """
++        Test that the formfield_callback is consistently set on both the Meta class
++        and the form class itself.
++        """
++        # Create a base form with callback
++        class BaseForm(forms.ModelForm):
++            class Meta:
++                model = TestModel
++                fields = ['active', 'name']
++                formfield_callback = staticmethod(all_required_callback)
++        
++        # Create factory form that should inherit the callback
++        FactoryForm = forms.modelform_factory(TestModel, form=BaseForm)
++        
++        # Check that both Meta and class have the callback
++        self.assertTrue(hasattr(FactoryForm.Meta, 'formfield_callback'))
++        self.assertTrue(hasattr(FactoryForm, 'formfield_callback'))
++        self.assertEqual(FactoryForm.Meta.formfield_callback, all_required_callback)
++        self.assertEqual(FactoryForm.formfield_callback, all_required_callback)
++    
++    def test_modelform_factory_inheritance_with_multiple_base_classes(self):
++        """
++        Test that formfield_callback inheritance works correctly when the base form
++        inherits from multiple classes.
++        """
++        # Create a mixin with callback
++        class CallbackMixin:
++            class Meta:
++                formfield_callback = staticmethod(all_required_callback)
++        
++        # Create a base form that inherits from the mixin
++        class BaseForm(CallbackMixin, forms.ModelForm):
++            class Meta(CallbackMixin.Meta):
++                model = TestModel
++                fields = ['active', 'name']
++        
++        # Create factory form
++        FactoryForm = forms.modelform_factory(TestModel, form=BaseForm)
++        
++        factory_form = FactoryForm()
++        
++        # Should inherit the callback and make fields required
++        self.assertTrue(factory_form.fields['active'].required)
++        self.assertTrue(factory_form.fields['name'].required)
++        self.assertEqual(FactoryForm.Meta.formfield_callback, all_required_callback)
++    
++    def test_failing_case_before_fix(self):
++        """
++        This test demonstrates the bug described in the issue.
++        Before the fix, this test should fail because the factory form
++        doesn't inherit the formfield_callback from the base form.
++        """
++        # This is the exact example from the issue description
++        def all_required(field, **kwargs):
++            formfield = field.formfield(**kwargs)
++            formfield.required = True
++            return formfield
++        
++        class MyForm(forms.ModelForm):
++            class Meta:
++                model = TestModel
++                formfield_callback = staticmethod(all_required)
++                fields = ['active', 'name']
++        
++        FactoryForm = forms.modelform_factory(TestModel, form=MyForm)
++        
++        # Create instances of both forms
++        my_form = MyForm()
++        factory_form = FactoryForm()
++        
++        # Both forms should have the same behavior - all fields required
++        # This assertion will fail before the fix is applied
++        self.assertEqual(
++            my_form.fields['name'].required,
++            factory_form.fields['name'].required,
++            "Factory form should inherit formfield_callback from base form"
++        )
++        
++        # Both should be True (required) due to the callback
++        self.assertTrue(my_form.fields['name'].required)
++        self.assertTrue(factory_form.fields['name'].required)

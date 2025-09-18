@@ -1,0 +1,409 @@
+--- a/tests/annotations/tests.py
++++ b/tests/annotations/tests.py
+-# This will be added to the existing test file
++import pytest
++from django.db import models
++from django.db.models import Value
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++
++from .models import Book, Publisher
++
++
++class AnnotationAliasTests(TestCase):
++    """Test cases for annotation and alias interactions with __in lookups."""
++
++    @classmethod
++    def setUpTestData(cls):
++        # Create test publishers
++        cls.apress = Publisher.objects.create(name='Apress', num_awards=3)
++        cls.sams = Publisher.objects.create(name='Sams', num_awards=1)
++        cls.prentice_hall = Publisher.objects.create(name='Prentice Hall', num_awards=7)
++        cls.morgan_kaufmann = Publisher.objects.create(name='Morgan Kaufmann', num_awards=9)
++        cls.no_books_publisher = Publisher.objects.create(name='No Books Publisher', num_awards=0)
++
++        # Create test books with different page counts
++        Book.objects.create(
++            name='The Definitive Guide to Django',
++            pages=447,
++            rating=4.5,
++            price=30.00,
++            contact_id=1,
++            publisher=cls.apress,
++            pubdate='2007-12-06'
++        )
++        Book.objects.create(
++            name='Sams Teach Yourself Django',
++            pages=528,
++            rating=4.0,
++            price=23.09,
++            contact_id=1,
++            publisher=cls.sams,
++            pubdate='2008-03-03'
++        )
++        Book.objects.create(
++            name='Practical Django Projects',
++            pages=300,
++            rating=4.0,
++            price=29.69,
++            contact_id=1,
++            publisher=cls.apress,
++            pubdate='2008-06-23'
++        )
++        Book.objects.create(
++            name='Python Web Development with Django',
++            pages=350,
++            rating=4.0,
++            price=29.69,
++            contact_id=1,
++            publisher=cls.prentice_hall,
++            pubdate='2008-11-01'
++        )
++        Book.objects.create(
++            name='Advanced Django',
++            pages=450,
++            rating=5.0,
++            price=35.00,
++            contact_id=1,
++            publisher=cls.morgan_kaufmann,
++            pubdate='2009-05-01'
++        )
++        Book.objects.create(
++            name='Pro Django',
++            pages=600,
++            rating=4.5,
++            price=39.95,
++            contact_id=1,
++            publisher=cls.apress,
++            pubdate='2008-12-15'
++        )
++
++    def test_annotation_and_alias_filter_in_subquery(self):
++        """
++        Test that __in doesn't fail when QuerySet.alias() is used after annotate().
++        
++        This test reproduces the bug where using a QuerySet with both annotations
++        and aliases in an __in lookup causes "sub-select returns 10 columns - expected 1"
++        error because the selected fields are not properly cleared.
++        """
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(book_annotate=Value(1))
++            .alias(book_alias=Value(1))
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        
++        # This should not raise an OperationalError
++        result = list(publisher_books_qs)
++        
++        self.assertCountEqual(
++            result,
++            [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]
++        )
++
++    def test_annotation_only_filter_in_subquery(self):
++        """
++        Test that __in works correctly with QuerySet that only has annotations.
++        This should work as a baseline comparison.
++        """
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(book_annotate=Value(1))
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        
++        result = list(publisher_books_qs)
++        
++        self.assertCountEqual(
++            result,
++            [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]
++        )
++
++    def test_alias_only_filter_in_subquery(self):
++        """
++        Test that __in works correctly with QuerySet that only has aliases.
++        This should work as a baseline comparison.
++        """
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .alias(book_alias=Value(1))
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        
++        result = list(publisher_books_qs)
++        
++        self.assertCountEqual(
++            result,
++            [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]
++        )
++
++    def test_multiple_annotations_and_aliases_filter_in_subquery(self):
++        """
++        Test that __in works with multiple annotations and aliases.
++        This tests a more complex scenario to ensure the fix is robust.
++        """
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(
++                book_annotate1=Value(1),
++                book_annotate2=Value(2)
++            )
++            .alias(
++                book_alias1=Value(3),
++                book_alias2=Value(4)
++            )
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        
++        result = list(publisher_books_qs)
++        
++        self.assertCountEqual(
++            result,
++            [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]
++        )
++
++    def test_mixed_order_annotations_aliases_filter_in_subquery(self):
++        """
++        Test that __in works when annotations and aliases are mixed in different orders.
++        This ensures the fix works regardless of the order of operations.
++        """
++        # Test: annotate -> alias -> annotate -> alias
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(book_annotate1=Value(1))
++            .alias(book_alias1=Value(2))
++            .annotate(book_annotate2=Value(3))
++            .alias(book_alias2=Value(4))
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        
++        result = list(publisher_books_qs)
++        
++        self.assertCountEqual(
++            result,
++            [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]
++        )
++
++    def test_annotation_alias_with_values_in_subquery(self):
++        """
++        Test that __in works when the subquery QuerySet also uses values().
++        This tests interaction with values() method.
++        """
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(book_annotate=Value(1))
++            .alias(book_alias=Value(1))
++            .values('id')  # Explicitly select only id
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        
++        result = list(publisher_books_qs)
++        
++        self.assertCountEqual(
++            result,
++            [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]
++        )
++
++    def test_annotation_alias_empty_result_in_subquery(self):
++        """
++        Test that __in works correctly when the subquery returns no results.
++        This ensures the fix doesn't break edge cases.
++        """
++        # Filter for books with more than 1000 pages (should be empty)
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=1000,
++            )
++            .annotate(book_annotate=Value(1))
++            .alias(book_alias=Value(1))
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        
++        result = list(publisher_books_qs)
++        
++        # Should return empty list
++        self.assertEqual(result, [])
++
++    def test_annotation_alias_with_distinct_in_subquery(self):
++        """
++        Test that __in works when the subquery QuerySet uses distinct().
++        This tests interaction with distinct() method.
++        """
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(book_annotate=Value(1))
++            .alias(book_alias=Value(1))
++            .distinct()
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        
++        result = list(publisher_books_qs)
++        
++        self.assertCountEqual(
++            result,
++            [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]
++        )
++
++    def test_annotation_alias_with_order_by_in_subquery(self):
++        """
++        Test that __in works when the subquery QuerySet uses order_by().
++        This tests interaction with order_by() method.
++        """
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(book_annotate=Value(1))
++            .alias(book_alias=Value(1))
++            .order_by('pages')
++        )
++        publisher_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .values("name")
++        )
++        
++        result = list(publisher_books_qs)
++        
++        self.assertCountEqual(
++            result,
++            [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]
++        )
++
++    def test_nested_annotation_alias_subqueries(self):
++        """
++        Test that __in works with nested subqueries that have annotations and aliases.
++        This tests more complex nested query scenarios.
++        """
++        # First level: books with annotations and aliases
++        long_books_qs = (
++            Book.objects.filter(
++                pages__gt=400,
++            )
++            .annotate(book_annotate=Value(1))
++            .alias(book_alias=Value(1))
++        )
++        
++        # Second level: publishers with books in the first subquery
++        publishers_with_long_books_qs = (
++            Publisher.objects.filter(
++                book__in=long_books_qs
++            )
++            .annotate(pub_annotate=Value(2))
++            .alias(pub_alias=Value(2))
++        )
++        
++        # Third level: use the second subquery in another __in lookup
++        final_qs = (
++            Publisher.objects.filter(
++                id__in=publishers_with_long_books_qs
++            )
++            .values("name")
++        )
++        
++        result = list(final_qs)
++        
++        self.assertCountEqual(
++            result,
++            [
++                {'name': 'Apress'},
++                {'name': 'Sams'},
++                {'name': 'Prentice Hall'},
++                {'name': 'Morgan Kaufmann'}
++            ]
++        )

@@ -1,0 +1,287 @@
+--- a/tests/test_exporters.py
++++ b/tests/test_exporters.py
+-# Empty if creating new file
++import datetime
++import io
++import json
++import pytest
++from unittest.mock import Mock, patch
++
++from scrapy.exporters import JsonItemExporter
++from scrapy.utils.serialize import ScrapyJSONEncoder
++
++
++class TestJsonItemExporterEncodingFailure:
++    """Test JsonItemExporter behavior when encoding fails."""
++
++    def test_export_item_encoding_failure_no_comma_written(self):
++        """Test that no comma is written when encoding fails on first item."""
++        output = io.BytesIO()
++        exporter = JsonItemExporter(output)
++        exporter.start_exporting()
++        
++        # Create an item that will fail to encode
++        # Using a date before 1900 which causes strftime to fail
++        problematic_item = {'date': datetime.date(1234, 1, 1)}
++        
++        # The encoding should fail and no comma should be written
++        with pytest.raises(ValueError, match="year=1234 is before 1900"):
++            exporter.export_item(problematic_item)
++        
++        exporter.finish_exporting()
++        
++        # Check that output only contains the opening and closing brackets
++        output_content = output.getvalue().decode('utf-8')
++        assert output_content == "[]"
++
++    def test_export_item_encoding_failure_after_successful_item(self):
++        """Test that lone comma is not written when encoding fails after successful items."""
++        output = io.BytesIO()
++        exporter = JsonItemExporter(output)
++        exporter.start_exporting()
++        
++        # First, export a successful item
++        good_item = {'date': datetime.date(2018, 1, 1)}
++        exporter.export_item(good_item)
++        
++        # Then try to export an item that will fail
++        bad_item = {'date': datetime.date(1234, 1, 1)}
++        with pytest.raises(ValueError, match="year=1234 is before 1900"):
++            exporter.export_item(bad_item)
++        
++        # Export another successful item
++        another_good_item = {'date': datetime.date(2019, 1, 1)}
++        exporter.export_item(another_good_item)
++        
++        exporter.finish_exporting()
++        
++        # Check that output is valid JSON without lone commas
++        output_content = output.getvalue().decode('utf-8')
++        
++        # Should not contain lone comma
++        assert ",," not in output_content
++        assert ",\n," not in output_content
++        assert ",]" not in output_content
++        
++        # Should be valid JSON
++        parsed = json.loads(output_content)
++        assert len(parsed) == 2
++        assert parsed[0]['date'] == "2018-01-01"
++        assert parsed[1]['date'] == "2019-01-01"
++
++    def test_export_item_encoding_failure_multiple_failures(self):
++        """Test behavior with multiple encoding failures."""
++        output = io.BytesIO()
++        exporter = JsonItemExporter(output)
++        exporter.start_exporting()
++        
++        # Export successful item
++        good_item1 = {'date': datetime.date(2018, 1, 1)}
++        exporter.export_item(good_item1)
++        
++        # Try multiple failing items
++        bad_item1 = {'date': datetime.date(1234, 1, 1)}
++        bad_item2 = {'date': datetime.date(1000, 1, 1)}
++        
++        with pytest.raises(ValueError):
++            exporter.export_item(bad_item1)
++        
++        with pytest.raises(ValueError):
++            exporter.export_item(bad_item2)
++        
++        # Export another successful item
++        good_item2 = {'date': datetime.date(2019, 1, 1)}
++        exporter.export_item(good_item2)
++        
++        exporter.finish_exporting()
++        
++        # Check output is valid JSON
++        output_content = output.getvalue().decode('utf-8')
++        parsed = json.loads(output_content)
++        assert len(parsed) == 2
++        assert parsed[0]['date'] == "2018-01-01"
++        assert parsed[1]['date'] == "2019-01-01"
++
++    def test_export_item_serialization_failure(self):
++        """Test that comma is not written when serialization fails."""
++        output = io.BytesIO()
++        exporter = JsonItemExporter(output)
++        exporter.start_exporting()
++        
++        # Export a successful item first
++        good_item = {'name': 'test'}
++        exporter.export_item(good_item)
++        
++        # Mock _get_serialized_fields to raise an exception
++        with patch.object(exporter, '_get_serialized_fields', side_effect=Exception("Serialization failed")):
++            with pytest.raises(Exception, match="Serialization failed"):
++                exporter.export_item({'name': 'bad'})
++        
++        # Export another successful item
++        another_good_item = {'name': 'test2'}
++        exporter.export_item(another_good_item)
++        
++        exporter.finish_exporting()
++        
++        # Check output is valid JSON
++        output_content = output.getvalue().decode('utf-8')
++        parsed = json.loads(output_content)
++        assert len(parsed) == 2
++        assert parsed[0]['name'] == 'test'
++        assert parsed[1]['name'] == 'test2'
++
++    def test_export_item_to_bytes_failure(self):
++        """Test that comma is not written when to_bytes conversion fails."""
++        output = io.BytesIO()
++        exporter = JsonItemExporter(output)
++        exporter.start_exporting()
++        
++        # Export a successful item first
++        good_item = {'name': 'test'}
++        exporter.export_item(good_item)
++        
++        # Mock to_bytes to raise an exception
++        with patch('scrapy.exporters.to_bytes', side_effect=Exception("Encoding failed")):
++            with pytest.raises(Exception, match="Encoding failed"):
++                exporter.export_item({'name': 'bad'})
++        
++        # Export another successful item
++        another_good_item = {'name': 'test2'}
++        exporter.export_item(another_good_item)
++        
++        exporter.finish_exporting()
++        
++        # Check output is valid JSON
++        output_content = output.getvalue().decode('utf-8')
++        parsed = json.loads(output_content)
++        assert len(parsed) == 2
++        assert parsed[0]['name'] == 'test'
++        assert parsed[1]['name'] == 'test2'
++
++    def test_export_item_first_item_flag_preserved_on_failure(self):
++        """Test that first_item flag is preserved when first item encoding fails."""
++        output = io.BytesIO()
++        exporter = JsonItemExporter(output)
++        exporter.start_exporting()
++        
++        # Verify first_item is True initially
++        assert exporter.first_item is True
++        
++        # Try to export an item that will fail
++        bad_item = {'date': datetime.date(1234, 1, 1)}
++        with pytest.raises(ValueError):
++            exporter.export_item(bad_item)
++        
++        # first_item should still be True since no item was successfully exported
++        assert exporter.first_item is True
++        
++        # Now export a successful item
++        good_item = {'date': datetime.date(2018, 1, 1)}
++        exporter.export_item(good_item)
++        
++        # Now first_item should be False
++        assert exporter.first_item is False
++        
++        exporter.finish_exporting()
++        
++        # Check output
++        output_content = output.getvalue().decode('utf-8')
++        parsed = json.loads(output_content)
++        assert len(parsed) == 1
++        assert parsed[0]['date'] == "2018-01-01"
++
++    def test_export_item_with_indentation_encoding_failure(self):
++        """Test that encoding failure with indentation doesn't leave malformed JSON."""
++        output = io.BytesIO()
++        exporter = JsonItemExporter(output, indent=2)
++        exporter.start_exporting()
++        
++        # Export successful item
++        good_item = {'name': 'test'}
++        exporter.export_item(good_item)
++        
++        # Try to export failing item
++        bad_item = {'date': datetime.date(1234, 1, 1)}
++        with pytest.raises(ValueError):
++            exporter.export_item(bad_item)
++        
++        # Export another successful item
++        another_good_item = {'name': 'test2'}
++        exporter.export_item(another_good_item)
++        
++        exporter.finish_exporting()
++        
++        # Check output is valid JSON with proper indentation
++        output_content = output.getvalue().decode('utf-8')
++        parsed = json.loads(output_content)
++        assert len(parsed) == 2
++        assert parsed[0]['name'] == 'test'
++        assert parsed[1]['name'] == 'test2'
++        
++        # Check that indentation is preserved
++        assert '  {' in output_content  # Indented object start
++
++    def test_export_item_successful_case_unchanged(self):
++        """Test that successful export behavior is unchanged."""
++        output = io.BytesIO()
++        exporter = JsonItemExporter(output)
++        exporter.start_exporting()
++        
++        # Export multiple successful items
++        items = [
++            {'name': 'item1', 'value': 1},
++            {'name': 'item2', 'value': 2},
++            {'name': 'item3', 'value': 3}
++        ]
++        
++        for item in items:
++            exporter.export_item(item)
++        
++        exporter.finish_exporting()
++        
++        # Check output is valid JSON with all items
++        output_content = output.getvalue().decode('utf-8')
++        parsed = json.loads(output_content)
++        assert len(parsed) == 3
++        
++        for i, item in enumerate(parsed):
++            assert item['name'] == f'item{i+1}'
++            assert item['value'] == i+1
++
++    def test_reproduce_original_bug_scenario(self):
++        """Test that reproduces the exact scenario from the bug report."""
++        output = io.BytesIO()
++        exporter = JsonItemExporter(output)
++        exporter.start_exporting()
++        
++        # Simulate the exact items from the bug report
++        items = [
++            {'date': datetime.date(2018, 1, 1)},
++            {'date': datetime.date(1234, 1, 1)},  # This will fail
++            {'date': datetime.date(2019, 1, 1)}
++        ]
++        
++        # Export first item (should succeed)
++        exporter.export_item(items[0])
++        
++        # Export second item (should fail)
++        with pytest.raises(ValueError, match="year=1234 is before 1900"):
++            exporter.export_item(items[1])
++        
++        # Export third item (should succeed)
++        exporter.export_item(items[2])
++        
++        exporter.finish_exporting()
++        
++        # Check that output is valid JSON (not the buggy format from the issue)
++        output_content = output.getvalue().decode('utf-8')
++        
++        # Should NOT be the buggy format: [{"date": "2018-01-01"},, {"date": "2019-01-01"}]
++        assert ",," not in output_content
++        assert ",\n," not in output_content
++        
++        # Should be valid JSON that can be parsed
++        parsed = json.loads(output_content)
++        assert len(parsed) == 2
++        assert parsed[0]['date'] == "2018-01-01"
++        assert parsed[1]['date'] == "2019-01-01"

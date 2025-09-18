@@ -1,0 +1,340 @@
+--- a/tests/delete_regression/test_delete_subquery_regression.py
++++ b/tests/delete_regression/test_delete_subquery_regression.py
+-# Empty if creating new file
++import pytest
++from django.db import models, connection
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++from django.db.models import Q
++
++
++class TestModel(models.Model):
++    name = models.CharField(max_length=100)
++    value = models.IntegerField(default=0)
++    
++    class Meta:
++        app_label = 'delete_regression'
++
++
++class DeleteSubqueryRegressionTest(TestCase):
++    """
++    Test suite for the Model.objects.all().delete() subquery performance regression.
++    
++    This tests the issue where Django 3.1+ generates:
++    DELETE FROM table WHERE id IN (SELECT id FROM table)
++    instead of the simpler and more performant:
++    DELETE FROM table
++    """
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        # Create the table for our test model
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(TestModel)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Clean up the table
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(TestModel)
++        super().tearDownClass()
++    
++    def setUp(self):
++        # Create some test data
++        TestModel.objects.bulk_create([
++            TestModel(name=f'test_{i}', value=i) 
++            for i in range(10)
++        ])
++    
++    def tearDown(self):
++        # Clean up after each test
++        TestModel.objects.all().delete()
++    
++    def test_all_delete_generates_simple_sql(self):
++        """
++        Test that Model.objects.all().delete() generates simple DELETE FROM table SQL
++        without a subquery when there are no WHERE conditions.
++        """
++        # Capture the SQL queries
++        with self.assertNumQueries(1):
++            with connection.cursor() as cursor:
++                # Get the initial query count
++                initial_queries = len(connection.queries)
++                
++                # Perform the delete operation
++                deleted_count, _ = TestModel.objects.all().delete()
++                
++                # Check that we deleted the expected number of objects
++                self.assertEqual(deleted_count, 10)
++                
++                # Get the SQL that was executed
++                executed_queries = connection.queries[initial_queries:]
++                self.assertEqual(len(executed_queries), 1)
++                
++                sql = executed_queries[0]['sql'].upper()
++                
++                # The SQL should be a simple DELETE FROM without subquery
++                self.assertIn('DELETE FROM', sql)
++                # Should NOT contain a subquery with IN (SELECT ...)
++                self.assertNotIn('IN (SELECT', sql)
++                # Should NOT contain WHERE clause for simple all() delete
++                table_name = TestModel._meta.db_table.upper()
++                expected_simple_delete = f'DELETE FROM "{table_name}"'
++                self.assertIn(expected_simple_delete.replace('"', ''), sql.replace('"', '').replace('`', ''))
++    
++    def test_filtered_delete_still_uses_subquery_when_needed(self):
++        """
++        Test that filtered deletes still use subqueries when there are actual WHERE conditions.
++        This ensures we don't break existing functionality for complex queries.
++        """
++        with connection.cursor() as cursor:
++            initial_queries = len(connection.queries)
++            
++            # Delete with a filter - this should still use subquery if needed
++            deleted_count, _ = TestModel.objects.filter(value__gt=5).delete()
++            
++            # Check that we deleted the expected number of objects
++            self.assertEqual(deleted_count, 4)  # values 6, 7, 8, 9
++            
++            # Get the SQL that was executed
++            executed_queries = connection.queries[initial_queries:]
++            
++            # For filtered deletes, we expect the query to have WHERE conditions
++            # The exact SQL structure may vary, but it should have filtering
++            sql = executed_queries[-1]['sql'].upper()
++            self.assertIn('DELETE FROM', sql)
++            # Should have some form of WHERE condition
++            self.assertTrue('WHERE' in sql or 'IN (' in sql)
++    
++    def test_delete_with_empty_queryset(self):
++        """
++        Test that deleting an empty queryset works correctly.
++        """
++        # Delete all objects first
++        TestModel.objects.all().delete()
++        
++        with connection.cursor() as cursor:
++            initial_queries = len(connection.queries)
++            
++            # Try to delete from empty table
++            deleted_count, _ = TestModel.objects.all().delete()
++            
++            # Should delete 0 objects
++            self.assertEqual(deleted_count, 0)
++            
++            # Should still generate simple SQL
++            executed_queries = connection.queries[initial_queries:]
++            if executed_queries:  # Some databases might optimize away the query
++                sql = executed_queries[0]['sql'].upper()
++                self.assertIn('DELETE FROM', sql)
++                self.assertNotIn('IN (SELECT', sql)
++    
++    def test_delete_performance_comparison(self):
++        """
++        Test to demonstrate the performance difference between simple DELETE
++        and subquery DELETE. This test documents the expected behavior.
++        """
++        # Create more test data for performance testing
++        TestModel.objects.all().delete()
++        TestModel.objects.bulk_create([
++            TestModel(name=f'perf_test_{i}', value=i) 
++            for i in range(100)
++        ])
++        
++        with connection.cursor() as cursor:
++            initial_queries = len(connection.queries)
++            
++            # Perform the delete
++            deleted_count, _ = TestModel.objects.all().delete()
++            
++            self.assertEqual(deleted_count, 100)
++            
++            # Verify we're using simple SQL
++            executed_queries = connection.queries[initial_queries:]
++            if executed_queries:
++                sql = executed_queries[0]['sql'].upper()
++                # Should be simple DELETE without subquery
++                self.assertNotIn('IN (SELECT', sql)
++    
++    def test_delete_with_multiple_conditions(self):
++        """
++        Test that complex queries with multiple conditions work correctly.
++        """
++        with connection.cursor() as cursor:
++            initial_queries = len(connection.queries)
++            
++            # Complex query with multiple conditions
++            deleted_count, _ = TestModel.objects.filter(
++                Q(value__gt=3) & Q(value__lt=7)
++            ).delete()
++            
++            # Should delete objects with values 4, 5, 6
++            self.assertEqual(deleted_count, 3)
++            
++            # Verify remaining objects
++            remaining = TestModel.objects.count()
++            self.assertEqual(remaining, 7)
++    
++    def test_delete_with_ordering_ignored(self):
++        """
++        Test that ordering is properly ignored in delete operations.
++        """
++        with connection.cursor() as cursor:
++            initial_queries = len(connection.queries)
++            
++            # Delete with ordering (should be ignored)
++            deleted_count, _ = TestModel.objects.all().order_by('name').delete()
++            
++            self.assertEqual(deleted_count, 10)
++            
++            # Verify simple SQL is still generated despite ordering
++            executed_queries = connection.queries[initial_queries:]
++            if executed_queries:
++                sql = executed_queries[0]['sql'].upper()
++                self.assertNotIn('IN (SELECT', sql)
++                # Ordering should not appear in DELETE statement
++                self.assertNotIn('ORDER BY', sql)
++
++
++class DeleteSubqueryRegressionTransactionTest(TransactionTestCase):
++    """
++    Transaction-based tests for delete operations to test database-specific behavior.
++    """
++    
++    def setUp(self):
++        # Create the table for our test model
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(TestModel)
++        
++        # Create test data
++        TestModel.objects.bulk_create([
++            TestModel(name=f'trans_test_{i}', value=i) 
++            for i in range(5)
++        ])
++    
++    def tearDown(self):
++        # Clean up the table
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(TestModel)
++    
++    def test_delete_in_transaction(self):
++        """
++        Test that delete operations work correctly within transactions.
++        """
++        from django.db import transaction
++        
++        with transaction.atomic():
++            initial_count = TestModel.objects.count()
++            self.assertEqual(initial_count, 5)
++            
++            # Delete all objects
++            deleted_count, _ = TestModel.objects.all().delete()
++            self.assertEqual(deleted_count, 5)
++            
++            # Verify they're gone
++            self.assertEqual(TestModel.objects.count(), 0)
++    
++    def test_delete_rollback(self):
++        """
++        Test that delete operations can be rolled back properly.
++        """
++        from django.db import transaction
++        
++        initial_count = TestModel.objects.count()
++        self.assertEqual(initial_count, 5)
++        
++        try:
++            with transaction.atomic():
++                # Delete all objects
++                TestModel.objects.all().delete()
++                self.assertEqual(TestModel.objects.count(), 0)
++                
++                # Force a rollback
++                raise Exception("Force rollback")
++        except Exception:
++            pass
++        
++        # Objects should be restored after rollback
++        self.assertEqual(TestModel.objects.count(), initial_count)
++
++
++# Test to verify the bug exists before the fix
++class DeleteSubqueryBugReproductionTest(TestCase):
++    """
++    This test reproduces the original bug to ensure our fix addresses it.
++    Before the fix, this test should fail by showing subquery usage.
++    After the fix, it should pass by showing simple DELETE SQL.
++    """
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(TestModel)
++    
++    @classmethod
++    def tearDownClass(cls):
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(TestModel)
++        super().tearDownClass()
++    
++    def setUp(self):
++        TestModel.objects.bulk_create([
++            TestModel(name=f'bug_test_{i}', value=i) 
++            for i in range(3)
++        ])
++    
++    def tearDown(self):
++        TestModel.objects.all().delete()
++    
++    def test_bug_reproduction_simple_delete_sql(self):
++        """
++        This test should FAIL before the fix is applied, demonstrating the bug.
++        After the fix, it should PASS.
++        
++        The bug: Model.objects.all().delete() generates:
++        DELETE FROM table WHERE id IN (SELECT id FROM table)
++        
++        Expected: Model.objects.all().delete() should generate:
++        DELETE FROM table
++        """
++        with connection.cursor() as cursor:
++            initial_queries = len(connection.queries)
++            
++            # This is the problematic operation
++            deleted_count, _ = TestModel.objects.all().delete()
++            
++            self.assertEqual(deleted_count, 3)
++            
++            # Check the generated SQL
++            executed_queries = connection.queries[initial_queries:]
++            self.assertGreater(len(executed_queries), 0)
++            
++            sql = executed_queries[0]['sql'].upper()
++            
++            # Before fix: This assertion would FAIL because SQL contains subquery
++            # After fix: This assertion should PASS
++            self.assertNotIn('IN (SELECT', sql, 
++                           f"Bug reproduced! Generated SQL contains subquery: {sql}")
++            
++            # The SQL should be simple
++            self.assertIn('DELETE FROM', sql)
++            
++            # Should not have unnecessary WHERE clause for all() delete
++            table_name = TestModel._meta.db_table
++            # Allow for different quote styles across databases
++            simple_patterns = [
++                f'DELETE FROM {table_name}',
++                f'DELETE FROM "{table_name}"',
++                f'DELETE FROM `{table_name}`',
++            ]
++            
++            sql_normalized = sql.replace('"', '').replace('`', '')
++            found_simple_pattern = any(
++                pattern.replace('"', '').replace('`', '').upper() in sql_normalized
++                for pattern in simple_patterns
++            )
++            
++            self.assertTrue(found_simple_pattern, 
++                          f"Expected simple DELETE statement, got: {sql}")

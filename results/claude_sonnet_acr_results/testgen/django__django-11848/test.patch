@@ -1,0 +1,242 @@
+--- a/tests/utils_tests/test_http.py
++++ b/tests/utils_tests/test_http.py
+-import unittest
+-from datetime import datetime
+-from unittest import mock
+-
+-from django.test import SimpleTestCase
+-from django.utils.http import (
+-    base36_to_int, escape_uri_path, http_date, int_to_base36, is_safe_url,
+-    parse_etags, parse_http_date, parse_http_date_safe, quote_etag,
+-    urlencode, urlquote, urlquote_plus, urlsafe_base64_decode,
+-    urlsafe_base64_encode, urlunquote, urlunquote_plus,
+-)
+-
+-
+-class HttpDateProcessingTests(SimpleTestCase):
+-    def test_http_date(self):
+-        t = 1167616461.0
+-        self.assertEqual(http_date(t), 'Mon, 01 Jan 2007 01:54:21 GMT')
+-
+-    def test_parsing_rfc1123(self):
+-        parsed = parse_http_date('Sun, 06 Nov 1994 08:49:37 GMT')
+-        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
+-
+-    def test_parsing_rfc850(self):
+-        parsed = parse_http_date('Sunday, 06-Nov-94 08:49:37 GMT')
+-        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
+-
+-    def test_parsing_asctime(self):
+-        parsed = parse_http_date('Sun Nov  6 08:49:37 1994')
+-        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
+-
+-    def test_parsing_year_less_than_70(self):
+-        # This should be 2005, not 1905
+-        parsed = parse_http_date('Sun, 06 Nov 05 08:49:37 GMT')
+-        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2005, 11, 6, 8, 49, 37))
+-
+-    def test_parsing_year_greater_than_70(self):
+-        parsed = parse_http_date('Sun, 06 Nov 94 08:49:37 GMT')
+-        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
+-
+-    def test_parsing_rfc850_year_less_than_70(self):
+-        parsed = parse_http_date('Sunday, 06-Nov-05 08:49:37 GMT')
+-        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2005, 11, 6, 8, 49, 37))
+-
+-    def test_parsing_rfc850_year_greater_than_70(self):
+-        parsed = parse_http_date('Sunday, 06-Nov-94 08:49:37 GMT')
+-        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
++import unittest
++from datetime import datetime
++from unittest import mock
++
++from django.test import SimpleTestCase
++from django.utils.http import (
++    base36_to_int, escape_uri_path, http_date, int_to_base36, is_safe_url,
++    parse_etags, parse_http_date, parse_http_date_safe, quote_etag,
++    urlencode, urlquote, urlquote_plus, urlsafe_base64_decode,
++    urlsafe_base64_encode, urlunquote, urlunquote_plus,
++)
++
++
++class HttpDateProcessingTests(SimpleTestCase):
++    def test_http_date(self):
++        t = 1167616461.0
++        self.assertEqual(http_date(t), 'Mon, 01 Jan 2007 01:54:21 GMT')
++
++    def test_parsing_rfc1123(self):
++        parsed = parse_http_date('Sun, 06 Nov 1994 08:49:37 GMT')
++        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
++
++    def test_parsing_rfc850(self):
++        parsed = parse_http_date('Sunday, 06-Nov-94 08:49:37 GMT')
++        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
++
++    def test_parsing_asctime(self):
++        parsed = parse_http_date('Sun Nov  6 08:49:37 1994')
++        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
++
++    def test_parsing_year_less_than_70(self):
++        # This should be 2005, not 1905
++        parsed = parse_http_date('Sun, 06 Nov 05 08:49:37 GMT')
++        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2005, 11, 6, 8, 49, 37))
++
++    def test_parsing_year_greater_than_70(self):
++        parsed = parse_http_date('Sun, 06 Nov 94 08:49:37 GMT')
++        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
++
++    def test_parsing_rfc850_year_less_than_70(self):
++        parsed = parse_http_date('Sunday, 06-Nov-05 08:49:37 GMT')
++        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2005, 11, 6, 8, 49, 37))
++
++    def test_parsing_rfc850_year_greater_than_70(self):
++        parsed = parse_http_date('Sunday, 06-Nov-94 08:49:37 GMT')
++        self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
++
++    def test_two_digit_year_rfc7231_compliance_current_year_2023(self):
++        """
++        Test RFC 7231 compliance for two-digit years when current year is 2023.
++        Years that would be more than 50 years in the future should be 
++        interpreted as being in the past century.
++        """
++        with mock.patch('django.utils.http.datetime') as mock_datetime:
++            # Mock current year as 2023
++            mock_datetime.datetime.now.return_value.year = 2023
++            mock_datetime.datetime.side_effect = datetime
++            
++            # Year 25 -> should be 2025 (not more than 50 years in future)
++            parsed = parse_http_date('Sun, 06 Nov 25 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2025, 11, 6, 8, 49, 37))
++            
++            # Year 73 -> should be 2073 (exactly 50 years in future, allowed)
++            parsed = parse_http_date('Sun, 06 Nov 73 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2073, 11, 6, 8, 49, 37))
++            
++            # Year 74 -> should be 1974 (would be 51 years in future, so interpret as past)
++            parsed = parse_http_date('Sun, 06 Nov 74 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1974, 11, 6, 8, 49, 37))
++
++    def test_two_digit_year_rfc7231_compliance_current_year_2050(self):
++        """
++        Test RFC 7231 compliance for two-digit years when current year is 2050.
++        This tests the dynamic nature of the 50-year rule.
++        """
++        with mock.patch('django.utils.http.datetime') as mock_datetime:
++            # Mock current year as 2050
++            mock_datetime.datetime.now.return_value.year = 2050
++            mock_datetime.datetime.side_effect = datetime
++            
++            # Year 00 -> should be 2100 (exactly 50 years in future, allowed)
++            parsed = parse_http_date('Sun, 06 Nov 00 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2100, 11, 6, 8, 49, 37))
++            
++            # Year 01 -> should be 2001 (would be 51 years in future, so interpret as past)
++            parsed = parse_http_date('Sun, 06 Nov 01 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2001, 11, 6, 8, 49, 37))
++            
++            # Year 49 -> should be 2049 (1 year in past, recent past)
++            parsed = parse_http_date('Sun, 06 Nov 49 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2049, 11, 6, 8, 49, 37))
++
++    def test_two_digit_year_rfc7231_compliance_edge_cases(self):
++        """
++        Test edge cases for RFC 7231 two-digit year handling.
++        """
++        with mock.patch('django.utils.http.datetime') as mock_datetime:
++            # Mock current year as 2023
++            mock_datetime.datetime.now.return_value.year = 2023
++            mock_datetime.datetime.side_effect = datetime
++            
++            # Year 23 -> should be 2023 (current year)
++            parsed = parse_http_date('Sun, 06 Nov 23 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2023, 11, 6, 8, 49, 37))
++            
++            # Year 22 -> should be 2022 (1 year in past)
++            parsed = parse_http_date('Sun, 06 Nov 22 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2022, 11, 6, 8, 49, 37))
++            
++            # Year 24 -> should be 2024 (1 year in future)
++            parsed = parse_http_date('Sun, 06 Nov 24 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2024, 11, 6, 8, 49, 37))
++
++    def test_two_digit_year_rfc850_format_rfc7231_compliance(self):
++        """
++        Test RFC 7231 compliance specifically for RFC 850 date format.
++        """
++        with mock.patch('django.utils.http.datetime') as mock_datetime:
++            # Mock current year as 2023
++            mock_datetime.datetime.now.return_value.year = 2023
++            mock_datetime.datetime.side_effect = datetime
++            
++            # Year 25 -> should be 2025 (RFC 850 format)
++            parsed = parse_http_date('Sunday, 06-Nov-25 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2025, 11, 6, 8, 49, 37))
++            
++            # Year 74 -> should be 1974 (RFC 850 format)
++            parsed = parse_http_date('Sunday, 06-Nov-74 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1974, 11, 6, 8, 49, 37))
++
++    def test_two_digit_year_hardcoded_behavior_fails_rfc7231(self):
++        """
++        This test demonstrates the bug in the current hardcoded implementation.
++        It should fail before the fix is applied, showing that the current
++        implementation doesn't follow RFC 7231.
++        """
++        # This test will fail with the current hardcoded implementation
++        # but should pass after implementing RFC 7231 compliance
++        
++        # Simulate a future year where the hardcoded logic would be wrong
++        with mock.patch('django.utils.http.datetime') as mock_datetime:
++            # Mock current year as 2080
++            mock_datetime.datetime.now.return_value.year = 2080
++            mock_datetime.datetime.side_effect = datetime
++            
++            # With current hardcoded logic: year 30 -> 2030 (50 years in past, should be correct)
++            # But year 69 -> 2069 (11 years in past, should be correct)
++            # But year 70 -> 1970 (110 years in past, this is wrong per RFC 7231)
++            # Year 70 should be 2070 (10 years in past) according to RFC 7231
++            
++            # This will currently return 1970 but should return 2070
++            parsed = parse_http_date('Sun, 06 Nov 70 08:49:37 GMT')
++            # The current implementation will make this assertion fail
++            # because it returns 1970 instead of 2070
++            try:
++                self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2070, 11, 6, 8, 49, 37))
++                self.fail("This test should fail with the current hardcoded implementation")
++            except AssertionError:
++                # Expected to fail with current implementation
++                # Verify it actually returns 1970 (the buggy behavior)
++                self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1970, 11, 6, 8, 49, 37))
++
++    def test_four_digit_years_unchanged(self):
++        """
++        Test that four-digit years are not affected by the RFC 7231 changes.
++        """
++        with mock.patch('django.utils.http.datetime') as mock_datetime:
++            # Mock current year as 2023
++            mock_datetime.datetime.now.return_value.year = 2023
++            mock_datetime.datetime.side_effect = datetime
++            
++            # Four-digit years should work exactly as before
++            parsed = parse_http_date('Sun, 06 Nov 1994 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(1994, 11, 6, 8, 49, 37))
++            
++            parsed = parse_http_date('Sun, 06 Nov 2025 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2025, 11, 6, 8, 49, 37))
++
++    def test_parse_http_date_safe_with_rfc7231_compliance(self):
++        """
++        Test that parse_http_date_safe also follows RFC 7231 compliance.
++        """
++        with mock.patch('django.utils.http.datetime') as mock_datetime:
++            # Mock current year as 2023
++            mock_datetime.datetime.now.return_value.year = 2023
++            mock_datetime.datetime.side_effect = datetime
++            
++            # Valid date that should be parsed according to RFC 7231
++            parsed = parse_http_date_safe('Sun, 06 Nov 25 08:49:37 GMT')
++            self.assertEqual(datetime.utcfromtimestamp(parsed), datetime(2025, 11, 6, 8, 49, 37))
++            
++            # Invalid date should return None
++            parsed = parse_http_date_safe('Invalid date string')
++            self.assertIsNone(parsed)

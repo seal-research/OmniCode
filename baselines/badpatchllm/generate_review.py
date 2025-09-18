@@ -19,6 +19,7 @@ import os
 import json
 import argparse
 from pathlib import Path
+import time
 import google.generativeai as genai
 import math
 import copy # Import copy for deep copying
@@ -155,7 +156,7 @@ def main(
         problem_statement = instance.get("problem_statement", "No problem statement provided.")
         correct_patch_example = instance.get("patch", "No correct patch example provided.")
         bad_patches_input = instance.get("bad_patches")
-        bad_patches_input = [bp for bp in bad_patches_input if bp['source'] == 'gemini']
+        # bad_patches_input = [bp for bp in bad_patches_input if bp['source'] == 'badpatchllm']
         reviews_input = instance.get("reviews")
 
         if not instance_id:
@@ -185,7 +186,7 @@ def main(
             print(f"  Info: Instance {instance_id} already has {existing_review_count} reviews (>= {required_reviews} required). Skipping.")
             continue
 
-        new_reviews = []
+        modified_bad_patches = []
         for bad_patch_content in bad_patches_list:
             if type(bad_patch_content) == dict:
                 bad_patch_str = bad_patch_content['patch']
@@ -195,15 +196,37 @@ def main(
                 print(f"  Warning: Bad patch content for instance {instance_id} is not a valid string or dict. Skipping.")
                 continue
 
-            review = query_llm_for_review(
-                bad_patch=bad_patch_str,
-                problem_statement=problem_statement,
-                correct_patch_example=correct_patch_example,
-                model_name=model_name
-            )
-            new_reviews.append(review)
+            retries = 0
+            done = False
+            while retries < 5 and not done:
+                try:
+                    review = query_llm_for_review(
+                        bad_patch=bad_patch_str,
+                        problem_statement=problem_statement,
+                        correct_patch_example=correct_patch_example,
+                        model_name=model_name
+                    )
+                    if ("429 You exceeded your current quota" in review):
+                        raise Exception("\n!!!!!! Quota hit")
+                    done = True
+                    print(review)
+                except KeyboardInterrupt:
+                    break
+                except Exception as e:
+                    print(e, ": retrying in 60 seconds")
+                    time.sleep(60)
+                finally:
+                    retries += 1
+            
+            # review = bad_patch_content.get("review", [])
+            # new_reviews.append(review)
+            bad_patch_content["review"] = review
+            modified_bad_patches.append(bad_patch_content)
+            
+
+            
         # Update the instance dictionary
-        instance["reviews"] = new_reviews
+        instance["bad_patches"] = modified_bad_patches
 
     # 3) Write the updated list back (this will preserve old entries)
     json_path = output_dir / "modified_dataset.json"
@@ -215,7 +238,7 @@ if __name__ == "__main__":
     # Changed argument name and help text
     parser.add_argument("--input_tasks", required=True, help="Path to the codearena_instances.json file (will be read and updated).")
     # Removed output_dir argument
-    parser.add_argument("--model_name", default="gemini-2.5-flash-preview-04-17", help="Model name to use for review generation (e.g., gemini-2.5-flash).")
+    parser.add_argument("--model_name", default="gemini-2.5-flash", help="Model name to use for review generation (e.g., gemini-2.5-flash).")
     parser.add_argument("--api_key", required=True, help="Secret key for accessing the Google Generative AI API.")
     # Kept this argument but clarified its behavior in the help text
     parser.add_argument("--num_reviews_per_patch", type=int, default=1, help="Number of reviews to attempt generating per bad patch (currently only the first successful review for the first valid patch per instance is saved).")

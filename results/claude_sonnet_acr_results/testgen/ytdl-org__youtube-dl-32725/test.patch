@@ -1,0 +1,244 @@
+--- a/test/test_filemoon.py
++++ b/test/test_filemoon.py
+-# Empty if creating new file
++# coding: utf-8
++from __future__ import unicode_literals
++
++import pytest
++import re
++from youtube_dl.extractor.filemoon import FileMoonIE
++from youtube_dl.utils import RegexNotFoundError, decode_packed_codes, js_to_json
++
++
++class TestFileMoonIE:
++    """Test suite for FileMoon extractor focusing on jwplayer source extraction."""
++    
++    def setup_method(self):
++        """Setup test fixtures."""
++        self.ie = FileMoonIE()
++        
++    def test_jwplayer_regex_fails_with_current_pattern(self):
++        """Test that demonstrates the bug - current regex pattern fails on new format."""
++        # Simulate the unpacked JavaScript that might be found on current filemoon.sx
++        unpacked_js_new_format = '''
++        var player = jwplayer("video-player");
++        player.setup({
++            width: "100%",
++            height: "100%",
++            autostart: false,
++            sources: [{
++                file: "https://example.com/video.mp4",
++                type: "mp4",
++                label: "720p"
++            }],
++            tracks: []
++        });
++        '''
++        
++        # Current regex pattern from the extractor
++        current_pattern = r'(?s)player\s*\.\s*setup\s*\(\s*\{\s*sources\s*:\s*(.*?])'
++        
++        # This should fail to match the new format
++        match = re.search(current_pattern, unpacked_js_new_format)
++        assert match is None, "Current regex should fail on new format"
++        
++    def test_jwplayer_regex_fails_with_properties_before_sources(self):
++        """Test that current regex fails when other properties come before sources."""
++        unpacked_js_with_props_first = '''
++        player.setup({
++            width: "100%",
++            height: "100%",
++            sources: [{"file": "https://example.com/video.mp4", "type": "mp4"}]
++        });
++        '''
++        
++        current_pattern = r'(?s)player\s*\.\s*setup\s*\(\s*\{\s*sources\s*:\s*(.*?])'
++        match = re.search(current_pattern, unpacked_js_with_props_first)
++        assert match is None, "Current regex should fail when sources is not first property"
++        
++    def test_jwplayer_regex_works_with_original_format(self):
++        """Test that current regex works with the original expected format."""
++        unpacked_js_original_format = '''
++        player.setup({sources: [{"file": "https://example.com/video.mp4", "type": "mp4"}]});
++        '''
++        
++        current_pattern = r'(?s)player\s*\.\s*setup\s*\(\s*\{\s*sources\s*:\s*(.*?])'
++        match = re.search(current_pattern, unpacked_js_original_format)
++        assert match is not None, "Current regex should work with original format"
++        assert '"file": "https://example.com/video.mp4"' in match.group(1)
++        
++    def test_improved_jwplayer_regex_handles_new_format(self):
++        """Test that an improved regex pattern can handle the new format."""
++        unpacked_js_new_format = '''
++        var player = jwplayer("video-player");
++        player.setup({
++            width: "100%",
++            height: "100%",
++            autostart: false,
++            sources: [{
++                file: "https://example.com/video.mp4",
++                type: "mp4",
++                label: "720p"
++            }],
++            tracks: []
++        });
++        '''
++        
++        # Improved regex pattern that looks for sources anywhere in the setup call
++        improved_pattern = r'(?s)player\s*\.\s*setup\s*\([^}]*sources\s*:\s*(\[.*?\])'
++        match = re.search(improved_pattern, unpacked_js_new_format)
++        assert match is not None, "Improved regex should handle new format"
++        assert '"file": "https://example.com/video.mp4"' in match.group(1)
++        
++    def test_improved_jwplayer_regex_handles_properties_before_sources(self):
++        """Test that improved regex handles other properties before sources."""
++        unpacked_js_with_props_first = '''
++        player.setup({
++            width: "100%",
++            height: "100%",
++            sources: [{"file": "https://example.com/video.mp4", "type": "mp4"}],
++            autostart: false
++        });
++        '''
++        
++        improved_pattern = r'(?s)player\s*\.\s*setup\s*\([^}]*sources\s*:\s*(\[.*?\])'
++        match = re.search(improved_pattern, unpacked_js_with_props_first)
++        assert match is not None, "Improved regex should handle properties before sources"
++        assert '"file": "https://example.com/video.mp4"' in match.group(1)
++        
++    def test_improved_jwplayer_regex_maintains_backward_compatibility(self):
++        """Test that improved regex still works with original format."""
++        unpacked_js_original_format = '''
++        player.setup({sources: [{"file": "https://example.com/video.mp4", "type": "mp4"}]});
++        '''
++        
++        improved_pattern = r'(?s)player\s*\.\s*setup\s*\([^}]*sources\s*:\s*(\[.*?\])'
++        match = re.search(improved_pattern, unpacked_js_original_format)
++        assert match is not None, "Improved regex should maintain backward compatibility"
++        assert '"file": "https://example.com/video.mp4"' in match.group(1)
++        
++    def test_multiple_fallback_patterns(self):
++        """Test using multiple fallback patterns for maximum compatibility."""
++        test_cases = [
++            # Original format
++            'player.setup({sources: [{"file": "test.mp4"}]});',
++            # Properties before sources
++            'player.setup({width: "100%", sources: [{"file": "test.mp4"}]});',
++            # Multiline with extra whitespace
++            '''player.setup({
++                width: "100%",
++                sources: [{"file": "test.mp4"}]
++            });''',
++            # Different variable name
++            'jwplayer("id").setup({sources: [{"file": "test.mp4"}]});'
++        ]
++        
++        fallback_patterns = [
++            r'(?s)player\s*\.\s*setup\s*\(\s*\{\s*sources\s*:\s*(\[.*?\])',  # Original
++            r'(?s)player\s*\.\s*setup\s*\([^}]*sources\s*:\s*(\[.*?\])',     # Improved
++            r'(?s)jwplayer\([^)]*\)\s*\.\s*setup\s*\([^}]*sources\s*:\s*(\[.*?\])',  # jwplayer() call
++            r'(?s)sources\s*:\s*(\[.*?\])'  # Just find sources anywhere
++        ]
++        
++        for test_js in test_cases:
++            found_match = False
++            for pattern in fallback_patterns:
++                match = re.search(pattern, test_js)
++                if match:
++                    assert '"file": "test.mp4"' in match.group(1)
++                    found_match = True
++                    break
++            assert found_match, f"No pattern matched for: {test_js}"
++            
++    def test_real_extract_with_mock_webpage_old_format(self, mocker):
++        """Test _real_extract with mocked webpage containing old format."""
++        # Mock the webpage download
++        mock_webpage = '''
++        <script>
++        eval(function(p,a,c,k,e,d){return p}('player.setup({sources:[{"file":"test.mp4"}]});',0,0,''.split('|'),0,{}))
++        </script>
++        '''
++        
++        mocker.patch.object(self.ie, '_download_webpage', return_value=mock_webpage)
++        mocker.patch.object(self.ie, '_match_id', return_value='test_id')
++        mocker.patch('youtube_dl.extractor.filemoon.decode_packed_codes', 
++                    return_value='player.setup({sources:[{"file":"test.mp4","type":"mp4"}]});')
++        mocker.patch.object(self.ie, '_parse_jwplayer_formats', return_value=[{'url': 'test.mp4'}])
++        mocker.patch.object(self.ie, '_generic_title', return_value='Test Video')
++        
++        # This should work with the original format
++        result = self.ie._real_extract('https://filemoon.sx/e/test_id')
++        assert result['id'] == 'test_id'
++        assert result['title'] == 'Test Video'
++        
++    def test_real_extract_fails_with_new_format_current_regex(self, mocker):
++        """Test that _real_extract fails with new format using current regex."""
++        # Mock the webpage download with new format
++        mock_webpage = '''
++        <script>
++        eval(function(p,a,c,k,e,d){return p}('var player = jwplayer("id"); player.setup({width:"100%",sources:[{"file":"test.mp4"}]});',0,0,''.split('|'),0,{}))
++        </script>
++        '''
++        
++        mocker.patch.object(self.ie, '_download_webpage', return_value=mock_webpage)
++        mocker.patch.object(self.ie, '_match_id', return_value='test_id')
++        mocker.patch('youtube_dl.extractor.filemoon.decode_packed_codes', 
++                    return_value='var player = jwplayer("id"); player.setup({width:"100%",sources:[{"file":"test.mp4","type":"mp4"}]});')
++        
++        # This should fail with RegexNotFoundError due to current regex
++        with pytest.raises(RegexNotFoundError) as exc_info:
++            self.ie._real_extract('https://filemoon.sx/e/test_id')
++        
++        assert 'Unable to extract jwplayer sources' in str(exc_info.value)
++        
++    def test_edge_case_empty_sources_array(self):
++        """Test handling of empty sources array."""
++        unpacked_js_empty_sources = 'player.setup({sources: []});'
++        
++        pattern = r'(?s)player\s*\.\s*setup\s*\([^}]*sources\s*:\s*(\[.*?\])'
++        match = re.search(pattern, unpacked_js_empty_sources)
++        assert match is not None
++        assert match.group(1) == '[]'
++        
++    def test_edge_case_malformed_javascript(self):
++        """Test handling of malformed JavaScript."""
++        malformed_js_cases = [
++            'player.setup({sources:',  # Incomplete
++            'player.setup({sources: [}',  # Malformed array
++            'player.setup(sources: [])',  # Missing braces
++            ''  # Empty string
++        ]
++        
++        pattern = r'(?s)player\s*\.\s*setup\s*\([^}]*sources\s*:\s*(\[.*?\])'
++        
++        for malformed_js in malformed_js_cases:
++            match = re.search(pattern, malformed_js)
++            # Should not match malformed JavaScript
++            assert match is None, f"Should not match malformed JS: {malformed_js}"
++            
++    def test_edge_case_nested_objects_in_sources(self):
++        """Test handling of complex nested objects in sources array."""
++        complex_sources_js = '''
++        player.setup({
++            sources: [{
++                file: "test.mp4",
++                tracks: [
++                    {kind: "captions", file: "captions.vtt"}
++                ],
++                metadata: {
++                    title: "Test Video",
++                    nested: {
++                        property: "value"
++                    }
++                }
++            }]
++        });
++        '''
++        
++        pattern = r'(?s)player\s*\.\s*setup\s*\([^}]*sources\s*:\s*(\[.*?\])'
++        match = re.search(pattern, complex_sources_js)
++        assert match is not None
++        sources_content = match.group(1)
++        assert 'file: "test.mp4"' in sources_content
++        assert 'tracks:' in sources_content
++        assert 'metadata:' in sources_content

@@ -1,0 +1,286 @@
+--- a/tests/migrations/test_operations.py
++++ b/tests/migrations/test_operations.py
+-# This file already exists, we'll add our tests to it
++import pytest
++from django.db import connection, models
++from django.db.migrations.operations.fields import AlterField
++from django.db.migrations.state import ProjectState
++from django.test import TestCase, override_settings
++from django.test.utils import isolate_apps
++
++
++class AlterFieldChoicesTests(TestCase):
++    """
++    Test that AlterField operations with only choices changes are no-ops
++    and don't generate unnecessary SQL, especially on SQLite.
++    """
++
++    def setUp(self):
++        self.schema_editor = connection.schema_editor()
++
++    def test_alter_field_choices_only_sqlite_noop(self):
++        """
++        Test that changing only choices on SQLite doesn't generate SQL.
++        This reproduces the bug where SQLite generates unnecessary table
++        recreation SQL for choices-only changes.
++        """
++        # Create a simple model for testing
++        @isolate_apps('test_app')
++        def test_choices_alteration():
++            class TestModel(models.Model):
++                status = models.CharField(max_length=10, choices=[('A', 'Active')])
++                
++                class Meta:
++                    app_label = 'test_app'
++
++            # Create the initial field
++            old_field = models.CharField(max_length=10, choices=[('A', 'Active')])
++            old_field.set_attributes_from_name('status')
++            
++            # Create the new field with additional choices
++            new_field = models.CharField(
++                max_length=10, 
++                choices=[('A', 'Active'), ('I', 'Inactive')]
++            )
++            new_field.set_attributes_from_name('status')
++            
++            # Test that _field_should_be_altered returns False for choices-only changes
++            should_alter = self.schema_editor._field_should_be_altered(old_field, new_field)
++            
++            # This should be False after the fix - choices changes shouldn't trigger alterations
++            self.assertFalse(
++                should_alter,
++                "Field alteration should not be needed when only choices change"
++            )
++
++        test_choices_alteration()
++
++    def test_alter_field_choices_and_other_attrs_still_alters(self):
++        """
++        Test that changing choices along with database-affecting attributes
++        still triggers field alteration.
++        """
++        @isolate_apps('test_app')
++        def test_choices_with_other_changes():
++            class TestModel(models.Model):
++                status = models.CharField(max_length=10, choices=[('A', 'Active')])
++                
++                class Meta:
++                    app_label = 'test_app'
++
++            # Create the initial field
++            old_field = models.CharField(max_length=10, choices=[('A', 'Active')])
++            old_field.set_attributes_from_name('status')
++            
++            # Create the new field with different max_length AND choices
++            new_field = models.CharField(
++                max_length=20,  # This should trigger alteration
++                choices=[('A', 'Active'), ('I', 'Inactive')]
++            )
++            new_field.set_attributes_from_name('status')
++            
++            # Test that _field_should_be_altered returns True when other attrs change
++            should_alter = self.schema_editor._field_should_be_altered(old_field, new_field)
++            
++            # This should be True - max_length change should trigger alterations
++            self.assertTrue(
++                should_alter,
++                "Field alteration should be needed when database-affecting attributes change"
++            )
++
++        test_choices_with_other_changes()
++
++    def test_alter_field_migration_operation_choices_only(self):
++        """
++        Test that AlterField migration operation with only choices changes
++        doesn't execute any database operations.
++        """
++        @isolate_apps('test_app')
++        def test_migration_operation():
++            class TestModel(models.Model):
++                status = models.CharField(max_length=10, choices=[('A', 'Active')])
++                
++                class Meta:
++                    app_label = 'test_app'
++
++            # Create project states
++            project_state = ProjectState()
++            project_state.add_model(TestModel._meta.get_model())
++            
++            # Create the operation
++            operation = AlterField(
++                model_name='TestModel',
++                name='status',
++                field=models.CharField(
++                    max_length=10,
++                    choices=[('A', 'Active'), ('I', 'Inactive'), ('P', 'Pending')]
++                )
++            )
++            
++            # Track SQL statements executed
++            with connection.cursor() as cursor:
++                initial_queries = len(connection.queries)
++                
++                # Execute the operation
++                with self.schema_editor as editor:
++                    operation.database_forwards('test_app', editor, project_state, project_state)
++                
++                # Check that no additional SQL was executed
++                final_queries = len(connection.queries)
++                
++                # Should be no new queries for choices-only changes
++                self.assertEqual(
++                    initial_queries, 
++                    final_queries,
++                    "No SQL should be executed for choices-only field alterations"
++                )
++
++        test_migration_operation()
++
++    def test_choices_in_non_database_attrs_list(self):
++        """
++        Test that 'choices' is properly included in the non_database_attrs list
++        in the _field_should_be_altered method.
++        """
++        # This test verifies the fix by checking the implementation directly
++        @isolate_apps('test_app')
++        def test_non_database_attrs():
++            # Create two identical fields except for choices
++            field1 = models.CharField(
++                max_length=10,
++                choices=[('A', 'Active')],
++                help_text="Status field",
++                verbose_name="Status"
++            )
++            field1.set_attributes_from_name('status')
++            
++            field2 = models.CharField(
++                max_length=10,
++                choices=[('A', 'Active'), ('I', 'Inactive')],
++                help_text="Status field",
++                verbose_name="Status"
++            )
++            field2.set_attributes_from_name('status')
++            
++            # Deconstruct both fields to check the comparison logic
++            _, path1, args1, kwargs1 = field1.deconstruct()
++            _, path2, args2, kwargs2 = field2.deconstruct()
++            
++            # Manually remove non-database attributes as the method does
++            non_database_attrs = [
++                "blank",
++                "choices",  # This should be in the list after the fix
++                "db_column",
++                "editable",
++                "error_messages",
++                "help_text",
++                "limit_choices_to",
++                "on_delete",
++                "related_name",
++                "related_query_name",
++                "validators",
++                "verbose_name",
++            ]
++            
++            for attr in non_database_attrs:
++                kwargs1.pop(attr, None)
++                kwargs2.pop(attr, None)
++            
++            # After removing non-database attrs, the fields should be identical
++            self.assertEqual(
++                (path1, args1, kwargs1),
++                (path2, args2, kwargs2),
++                "Fields should be identical after removing non-database attributes including choices"
++            )
++
++        test_non_database_attrs()
++
++    @override_settings(DATABASE_ENGINE='django.db.backends.sqlite3')
++    def test_sqlite_specific_choices_alteration(self):
++        """
++        Test specifically for SQLite that choices-only changes don't trigger
++        the expensive table recreation process.
++        """
++        if connection.vendor != 'sqlite':
++            self.skipTest("This test is specific to SQLite")
++            
++        @isolate_apps('test_app')
++        def test_sqlite_behavior():
++            class TestModel(models.Model):
++                priority = models.IntegerField(choices=[(1, 'Low'), (2, 'High')])
++                
++                class Meta:
++                    app_label = 'test_app'
++
++            # Create fields with different choices
++            old_field = models.IntegerField(choices=[(1, 'Low'), (2, 'High')])
++            old_field.set_attributes_from_name('priority')
++            
++            new_field = models.IntegerField(
++                choices=[(1, 'Low'), (2, 'High'), (3, 'Critical')]
++            )
++            new_field.set_attributes_from_name('priority')
++            
++            # This should not require alteration on SQLite
++            should_alter = self.schema_editor._field_should_be_altered(old_field, new_field)
++            
++            self.assertFalse(
++                should_alter,
++                "SQLite should not require field alteration for choices-only changes"
++            )
++
++        test_sqlite_behavior()
++
++    def test_edge_case_empty_choices_to_populated(self):
++        """
++        Test the edge case of going from no choices to having choices.
++        """
++        @isolate_apps('test_app')
++        def test_empty_to_populated_choices():
++            # Field with no choices
++            old_field = models.CharField(max_length=10)
++            old_field.set_attributes_from_name('status')
++            
++            # Field with choices
++            new_field = models.CharField(
++                max_length=10,
++                choices=[('A', 'Active'), ('I', 'Inactive')]
++            )
++            new_field.set_attributes_from_name('status')
++            
++            # Should not require alteration
++            should_alter = self.schema_editor._field_should_be_altered(old_field, new_field)
++            
++            self.assertFalse(
++                should_alter,
++                "Adding choices to a field without choices should not require alteration"
++            )
++
++        test_empty_to_populated_choices()
++
++    def test_edge_case_populated_choices_to_empty(self):
++        """
++        Test the edge case of going from having choices to no choices.
++        """
++        @isolate_apps('test_app')
++        def test_populated_to_empty_choices():
++            # Field with choices
++            old_field = models.CharField(
++                max_length=10,
++                choices=[('A', 'Active'), ('I', 'Inactive')]
++            )
++            old_field.set_attributes_from_name('status')
++            
++            # Field with no choices
++            new_field = models.CharField(max_length=10)
++            new_field.set_attributes_from_name('status')
++            
++            # Should not require alteration
++            should_alter = self.schema_editor._field_should_be_altered(old_field, new_field)
++            
++            self.assertFalse(
++                should_alter,
++                "Removing choices from a field should not require alteration"
++            )
++
++        test_populated_to_empty_choices()

@@ -1,0 +1,386 @@
+--- a/tests/migrations/test_optimizer.py
++++ b/tests/migrations/test_optimizer.py
+-# Empty if creating new file
++import pytest
++from django.db import migrations
++from django.db.migrations.optimizer import MigrationOptimizer
++from django.test import TestCase
++
++
++class OptimizerTests(TestCase):
++    """
++    Tests for the migration optimizer, specifically focusing on optimizing
++    multiple AlterFooTogether operations into one.
++    """
++
++    def test_optimize_alter_unique_together_operations(self):
++        """
++        Test that multiple AlterUniqueTogether operations on the same model
++        are optimized into a single operation with the final state.
++        """
++        operations = [
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together=set(),
++            ),
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together={("col",)},
++            ),
++        ]
++        
++        optimizer = MigrationOptimizer()
++        result = optimizer.optimize(operations, 'testapp')
++        
++        # Should be optimized to just the final operation
++        self.assertEqual(len(result), 1)
++        self.assertIsInstance(result[0], migrations.AlterUniqueTogether)
++        self.assertEqual(result[0].name, 'mymodel')
++        self.assertEqual(result[0].unique_together, {("col",)})
++
++    def test_optimize_alter_index_together_operations(self):
++        """
++        Test that multiple AlterIndexTogether operations on the same model
++        are optimized into a single operation with the final state.
++        """
++        operations = [
++            migrations.AlterIndexTogether(
++                name='mymodel',
++                index_together=set(),
++            ),
++            migrations.AlterIndexTogether(
++                name='mymodel',
++                index_together={("col",)},
++            ),
++        ]
++        
++        optimizer = MigrationOptimizer()
++        result = optimizer.optimize(operations, 'testapp')
++        
++        # Should be optimized to just the final operation
++        self.assertEqual(len(result), 1)
++        self.assertIsInstance(result[0], migrations.AlterIndexTogether)
++        self.assertEqual(result[0].name, 'mymodel')
++        self.assertEqual(result[0].index_together, {("col",)})
++
++    def test_optimize_mixed_alter_together_operations(self):
++        """
++        Test that mixed AlterUniqueTogether and AlterIndexTogether operations
++        are optimized correctly when there are multiple operations of each type.
++        """
++        operations = [
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together=set(),
++            ),
++            migrations.AlterIndexTogether(
++                name='mymodel',
++                index_together=set(),
++            ),
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together={("col",)},
++            ),
++            migrations.AlterIndexTogether(
++                name='mymodel',
++                index_together={("col",)},
++            ),
++        ]
++        
++        optimizer = MigrationOptimizer()
++        result = optimizer.optimize(operations, 'testapp')
++        
++        # Should be optimized to just the final operations
++        self.assertEqual(len(result), 2)
++        
++        # Check that we have one of each type with the final state
++        unique_ops = [op for op in result if isinstance(op, migrations.AlterUniqueTogether)]
++        index_ops = [op for op in result if isinstance(op, migrations.AlterIndexTogether)]
++        
++        self.assertEqual(len(unique_ops), 1)
++        self.assertEqual(len(index_ops), 1)
++        
++        self.assertEqual(unique_ops[0].unique_together, {("col",)})
++        self.assertEqual(index_ops[0].index_together, {("col",)})
++
++    def test_optimize_alter_together_different_models(self):
++        """
++        Test that AlterFooTogether operations on different models are not optimized together.
++        """
++        operations = [
++            migrations.AlterUniqueTogether(
++                name='model1',
++                unique_together=set(),
++            ),
++            migrations.AlterUniqueTogether(
++                name='model2',
++                unique_together=set(),
++            ),
++            migrations.AlterUniqueTogether(
++                name='model1',
++                unique_together={("col",)},
++            ),
++        ]
++        
++        optimizer = MigrationOptimizer()
++        result = optimizer.optimize(operations, 'testapp')
++        
++        # Should optimize model1 operations but keep model2 operation separate
++        self.assertEqual(len(result), 2)
++        
++        model1_ops = [op for op in result if op.name == 'model1']
++        model2_ops = [op for op in result if op.name == 'model2']
++        
++        self.assertEqual(len(model1_ops), 1)
++        self.assertEqual(len(model2_ops), 1)
++        
++        self.assertEqual(model1_ops[0].unique_together, {("col",)})
++        self.assertEqual(model2_ops[0].unique_together, set())
++
++    def test_optimize_three_alter_unique_together_operations(self):
++        """
++        Test that three consecutive AlterUniqueTogether operations are optimized
++        to just the final one.
++        """
++        operations = [
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together=set(),
++            ),
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together={("col1",)},
++            ),
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together={("col1", "col2")},
++            ),
++        ]
++        
++        optimizer = MigrationOptimizer()
++        result = optimizer.optimize(operations, 'testapp')
++        
++        # Should be optimized to just the final operation
++        self.assertEqual(len(result), 1)
++        self.assertIsInstance(result[0], migrations.AlterUniqueTogether)
++        self.assertEqual(result[0].name, 'mymodel')
++        self.assertEqual(result[0].unique_together, {("col1", "col2")})
++
++    def test_optimize_alter_together_with_other_operations(self):
++        """
++        Test that AlterFooTogether optimization works correctly when mixed
++        with other types of operations.
++        """
++        operations = [
++            migrations.CreateModel(
++                name='TestModel',
++                fields=[
++                    ('id', migrations.AutoField(primary_key=True)),
++                    ('name', migrations.CharField(max_length=100)),
++                ],
++            ),
++            migrations.AlterUniqueTogether(
++                name='TestModel',
++                unique_together=set(),
++            ),
++            migrations.AddField(
++                model_name='TestModel',
++                name='email',
++                field=migrations.EmailField(),
++            ),
++            migrations.AlterUniqueTogether(
++                name='TestModel',
++                unique_together={("name", "email")},
++            ),
++        ]
++        
++        optimizer = MigrationOptimizer()
++        result = optimizer.optimize(operations, 'testapp')
++        
++        # Should optimize the AlterUniqueTogether operations but keep others
++        unique_ops = [op for op in result if isinstance(op, migrations.AlterUniqueTogether)]
++        self.assertEqual(len(unique_ops), 1)
++        self.assertEqual(unique_ops[0].unique_together, {("name", "email")})
++        
++        # Other operations should still be present
++        create_ops = [op for op in result if isinstance(op, migrations.CreateModel)]
++        add_field_ops = [op for op in result if isinstance(op, migrations.AddField)]
++        self.assertEqual(len(create_ops), 1)
++        self.assertEqual(len(add_field_ops), 1)
++
++    def test_no_optimization_single_alter_together_operation(self):
++        """
++        Test that a single AlterFooTogether operation is not modified during optimization.
++        """
++        operations = [
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together={("col",)},
++            ),
++        ]
++        
++        optimizer = MigrationOptimizer()
++        result = optimizer.optimize(operations, 'testapp')
++        
++        # Should remain unchanged
++        self.assertEqual(len(result), 1)
++        self.assertIsInstance(result[0], migrations.AlterUniqueTogether)
++        self.assertEqual(result[0].name, 'mymodel')
++        self.assertEqual(result[0].unique_together, {("col",)})
++
++    def test_optimize_alter_together_empty_to_non_empty_to_empty(self):
++        """
++        Test optimization when going from empty -> non-empty -> empty constraints.
++        """
++        operations = [
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together=set(),
++            ),
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together={("col1", "col2")},
++            ),
++            migrations.AlterUniqueTogether(
++                name='mymodel',
++                unique_together=set(),
++            ),
++        ]
++        
++        optimizer = MigrationOptimizer()
++        result = optimizer.optimize(operations, 'testapp')
++        
++        # Should be optimized to just the final empty operation
++        self.assertEqual(len(result), 1)
++        self.assertIsInstance(result[0], migrations.AlterUniqueTogether)
++        self.assertEqual(result[0].name, 'mymodel')
++        self.assertEqual(result[0].unique_together, set())
+
+--- a/tests/migrations/test_operations.py
++++ b/tests/migrations/test_operations.py
+-# This file already exists, we need to add our tests to it
++# Add these test methods to the existing test file
++
++def test_alter_unique_together_reduce_same_model(self):
++    """
++    Test that AlterUniqueTogether.reduce() optimizes operations on the same model.
++    """
++    operation_1 = migrations.AlterUniqueTogether(
++        name='Pony',
++        unique_together=set(),
++    )
++    operation_2 = migrations.AlterUniqueTogether(
++        name='Pony',
++        unique_together={("col",)},
++    )
++    
++    # Test reducing operation_1 with operation_2
++    result = operation_1.reduce(operation_2, 'testapp')
++    self.assertEqual(result, [operation_2])
++    
++    # Test reducing operation_2 with operation_1 (reverse order)
++    result = operation_2.reduce(operation_1, 'testapp')
++    self.assertEqual(result, [operation_1])
++
++def test_alter_index_together_reduce_same_model(self):
++    """
++    Test that AlterIndexTogether.reduce() optimizes operations on the same model.
++    """
++    operation_1 = migrations.AlterIndexTogether(
++        name='Pony',
++        index_together=set(),
++    )
++    operation_2 = migrations.AlterIndexTogether(
++        name='Pony',
++        index_together={("col",)},
++    )
++    
++    # Test reducing operation_1 with operation_2
++    result = operation_1.reduce(operation_2, 'testapp')
++    self.assertEqual(result, [operation_2])
++    
++    # Test reducing operation_2 with operation_1 (reverse order)
++    result = operation_2.reduce(operation_1, 'testapp')
++    self.assertEqual(result, [operation_1])
++
++def test_alter_unique_together_reduce_different_models(self):
++    """
++    Test that AlterUniqueTogether.reduce() does not optimize operations on different models.
++    """
++    operation_1 = migrations.AlterUniqueTogether(
++        name='Pony',
++        unique_together=set(),
++    )
++    operation_2 = migrations.AlterUniqueTogether(
++        name='Horse',
++        unique_together={("col",)},
++    )
++    
++    # Operations on different models should not be reduced
++    result = operation_1.reduce(operation_2, 'testapp')
++    self.assertTrue(result)  # Should return True (no reduction possible)
++
++def test_alter_index_together_reduce_different_models(self):
++    """
++    Test that AlterIndexTogether.reduce() does not optimize operations on different models.
++    """
++    operation_1 = migrations.AlterIndexTogether(
++        name='Pony',
++        index_together=set(),
++    )
++    operation_2 = migrations.AlterIndexTogether(
++        name='Horse',
++        index_together={("col",)},
++    )
++    
++    # Operations on different models should not be reduced
++    result = operation_1.reduce(operation_2, 'testapp')
++    self.assertTrue(result)  # Should return True (no reduction possible)
++
++def test_alter_unique_together_reduce_with_delete_model(self):
++    """
++    Test that AlterUniqueTogether.reduce() works correctly with DeleteModel.
++    """
++    alter_operation = migrations.AlterUniqueTogether(
++        name='Pony',
++        unique_together={("col",)},
++    )
++    delete_operation = migrations.DeleteModel(name='Pony')
++    
++    # AlterUniqueTogether followed by DeleteModel should be reduced to just DeleteModel
++    result = alter_operation.reduce(delete_operation, 'testapp')
++    self.assertEqual(result, [delete_operation])
++
++def test_alter_index_together_reduce_with_delete_model(self):
++    """
++    Test that AlterIndexTogether.reduce() works correctly with DeleteModel.
++    """
++    alter_operation = migrations.AlterIndexTogether(
++        name='Pony',
++        index_together={("col",)},
++    )
++    delete_operation = migrations.DeleteModel(name='Pony')
++    
++    # AlterIndexTogether followed by DeleteModel should be reduced to just DeleteModel
++    result = alter_operation.reduce(delete_operation, 'testapp')
++    self.assertEqual(result, [delete_operation])
++
++def test_alter_together_reduce_mixed_operations(self):
++    """
++    Test that AlterUniqueTogether and AlterIndexTogether don't reduce with each other.
++    """
++    unique_operation = migrations.AlterUniqueTogether(
++        name='Pony',
++        unique_together={("col1",)},
++    )
++    index_operation = migrations.AlterIndexTogether(
++        name='Pony',
++        index_together={("col2",)},
++    )
++    
++    # Different operation types should not be reduced even on same model
++    result = unique_operation.reduce(index_operation, 'testapp')
++    self.assertTrue(result)  # Should return True (no reduction possible)
++    
++    result = index_operation.reduce(unique_operation, 'testapp')
++    self.assertTrue(result)  # Should return True (no reduction possible)

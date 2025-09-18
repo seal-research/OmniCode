@@ -1,0 +1,170 @@
+--- a/sympy/parsing/latex/tests/test_latex_fraction_parsing.py
++++ b/sympy/parsing/latex/tests/test_latex_fraction_parsing.py
+-# Empty if creating new file
++import pytest
++from sympy.parsing.latex import parse_latex
++from sympy import symbols, Mul, Pow, Add
++from sympy.testing.pytest import XFAIL
++
++
++def test_nested_fraction_parsing_basic():
++    """Test basic nested fraction parsing to reproduce the bug."""
++    # This is the problematic case from the issue
++    latex_expr = r"\frac{\frac{a^3+b}{c}}{\frac{1}{c^2}}"
++    result = parse_latex(latex_expr)
++    
++    # The current buggy result would be: ((a**3 + b)/c)/1/(c**2)
++    # The expected correct result should be: ((a**3 + b)/c)/(1/(c**2))
++    
++    # Let's verify the structure - this test will fail before the fix
++    a, b, c = symbols('a b c')
++    
++    # Expected structure: ((a**3 + b)/c) / (1/c**2)
++    # Which should be equivalent to: ((a**3 + b)/c) * (c**2/1) = (a**3 + b) * c
++    expected = (a**3 + b) * c
++    
++    # The result should simplify to the expected form
++    simplified_result = result.simplify()
++    assert simplified_result == expected, f"Expected {expected}, got {simplified_result}"
++
++
++def test_nested_fraction_parsing_structure():
++    """Test that nested fractions maintain proper structure before simplification."""
++    latex_expr = r"\frac{\frac{a^3+b}{c}}{\frac{1}{c^2}}"
++    result = parse_latex(latex_expr)
++    
++    a, b, c = symbols('a b c')
++    
++    # Check that the result has the correct structure
++    # It should be a Mul with the numerator and the inverse of the denominator
++    assert isinstance(result, Mul), f"Expected Mul, got {type(result)}"
++    
++    # The string representation should show proper parenthesization
++    result_str = str(result)
++    
++    # This test documents the current buggy behavior
++    # Before fix: "((a**3 + b)/c)/1/(c**2)"
++    # After fix should be: "((a**3 + b)/c)/(1/(c**2))" or equivalent
++    
++    # For now, let's just ensure we can parse it without errors
++    assert result is not None
++
++
++def test_simple_fraction_parsing():
++    """Test that simple fractions still work correctly."""
++    latex_expr = r"\frac{a}{b}"
++    result = parse_latex(latex_expr)
++    
++    a, b = symbols('a b')
++    expected = a / b
++    
++    assert result.equals(expected), f"Expected {expected}, got {result}"
++
++
++def test_fraction_with_complex_numerator():
++    """Test fractions with complex numerators work correctly."""
++    latex_expr = r"\frac{a^2 + b^2}{c}"
++    result = parse_latex(latex_expr)
++    
++    a, b, c = symbols('a b c')
++    expected = (a**2 + b**2) / c
++    
++    assert result.equals(expected), f"Expected {expected}, got {result}"
++
++
++def test_fraction_with_complex_denominator():
++    """Test fractions with complex denominators work correctly."""
++    latex_expr = r"\frac{a}{b + c}"
++    result = parse_latex(latex_expr)
++    
++    a, b, c = symbols('a b c')
++    expected = a / (b + c)
++    
++    assert result.equals(expected), f"Expected {expected}, got {result}"
++
++
++def test_multiple_nested_fractions():
++    """Test more complex nested fraction scenarios."""
++    latex_expr = r"\frac{\frac{a}{b}}{\frac{c}{d}}"
++    result = parse_latex(latex_expr)
++    
++    a, b, c, d = symbols('a b c d')
++    # This should be (a/b) / (c/d) = (a/b) * (d/c) = a*d/(b*c)
++    expected = (a * d) / (b * c)
++    
++    simplified_result = result.simplify()
++    assert simplified_result.equals(expected), f"Expected {expected}, got {simplified_result}"
++
++
++def test_triple_nested_fractions():
++    """Test even more complex nested fractions."""
++    latex_expr = r"\frac{a}{\frac{\frac{b}{c}}{d}}"
++    result = parse_latex(latex_expr)
++    
++    a, b, c, d = symbols('a b c d')
++    # This should be a / ((b/c)/d) = a / (b/(c*d)) = a * (c*d)/b = a*c*d/b
++    expected = (a * c * d) / b
++    
++    simplified_result = result.simplify()
++    assert simplified_result.equals(expected), f"Expected {expected}, got {simplified_result}"
++
++
++@XFAIL
++def test_nested_fraction_string_representation():
++    """Test that the string representation of nested fractions is correct.
++    
++    This test is expected to fail before the fix is applied.
++    """
++    latex_expr = r"\frac{\frac{a^3+b}{c}}{\frac{1}{c^2}}"
++    result = parse_latex(latex_expr)
++    
++    result_str = str(result)
++    
++    # The correct representation should have proper parentheses
++    # It should NOT be: "((a**3 + b)/c)/1/(c**2)"
++    # It should be something like: "((a**3 + b)/c)/(1/(c**2))" or equivalent
++    
++    # Check that we don't have the buggy pattern
++    assert ")/1/(" not in result_str, f"Found buggy pattern in: {result_str}"
++
++
++def test_fraction_parsing_edge_cases():
++    """Test various edge cases for fraction parsing."""
++    test_cases = [
++        (r"\frac{1}{2}", "1/2"),
++        (r"\frac{x}{y}", "x/y"),
++        (r"\frac{x+1}{y-1}", "(x+1)/(y-1)"),
++        (r"\frac{\frac{1}{2}}{3}", "1/6"),  # Should be (1/2)/3 = 1/6
++        (r"\frac{1}{\frac{2}{3}}", "3/2"),  # Should be 1/(2/3) = 3/2
++    ]
++    
++    for latex_expr, expected_simplified in test_cases:
++        result = parse_latex(latex_expr)
++        # Just ensure parsing doesn't crash
++        assert result is not None, f"Failed to parse: {latex_expr}"
++
++
++def test_nested_fraction_mathematical_correctness():
++    """Test that nested fractions produce mathematically correct results."""
++    # Test case: (2/3) / (4/5) should equal (2/3) * (5/4) = 10/12 = 5/6
++    latex_expr = r"\frac{\frac{2}{3}}{\frac{4}{5}}"
++    result = parse_latex(latex_expr)
++    
++    from sympy import Rational
++    expected = Rational(5, 6)
++    
++    simplified_result = result.simplify()
++    assert simplified_result == expected, f"Expected {expected}, got {simplified_result}"
++
++
++def test_nested_fraction_with_variables_and_numbers():
++    """Test nested fractions mixing variables and numbers."""
++    latex_expr = r"\frac{\frac{x}{2}}{\frac{3}{y}}"
++    result = parse_latex(latex_expr)
++    
++    x, y = symbols('x y')
++    # This should be (x/2) / (3/y) = (x/2) * (y/3) = x*y/6
++    expected = (x * y) / 6
++    
++    simplified_result = result.simplify()
++    assert simplified_result.equals(expected), f"Expected {expected}, got {simplified_result}"

@@ -1,0 +1,205 @@
+--- a/tests/files/test_locks.py
++++ b/tests/files/test_locks.py
+-# Empty if creating new file
++import fcntl
++import os
++import tempfile
++import pytest
++from unittest import mock
++
++from django.core.files import locks
++
++
++class TestFileLocks:
++    """Test file locking functionality."""
++
++    def test_lock_returns_false_with_current_buggy_implementation(self):
++        """
++        Test that demonstrates the bug: lock() always returns False
++        even when fcntl.flock() succeeds (returns None).
++        This test should fail after the fix is applied.
++        """
++        # Skip if not on POSIX or fcntl not available
++        if os.name == 'nt' or not hasattr(locks, 'fcntl'):
++            pytest.skip("Test only applies to POSIX systems with fcntl")
++        
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Mock fcntl.flock to return None (success case)
++            with mock.patch('django.core.files.locks.fcntl.flock', return_value=None):
++                # With the current buggy implementation, this returns False
++                # even though fcntl.flock returned None (success)
++                result = locks.lock(temp_file, locks.LOCK_EX)
++                # This assertion demonstrates the bug - it should be True but is False
++                assert result is False  # This shows the current buggy behavior
++
++    def test_unlock_returns_false_with_current_buggy_implementation(self):
++        """
++        Test that demonstrates the bug: unlock() always returns False
++        even when fcntl.flock() succeeds (returns None).
++        This test should fail after the fix is applied.
++        """
++        # Skip if not on POSIX or fcntl not available
++        if os.name == 'nt' or not hasattr(locks, 'fcntl'):
++            pytest.skip("Test only applies to POSIX systems with fcntl")
++        
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Mock fcntl.flock to return None (success case)
++            with mock.patch('django.core.files.locks.fcntl.flock', return_value=None):
++                # With the current buggy implementation, this returns False
++                # even though fcntl.flock returned None (success)
++                result = locks.unlock(temp_file)
++                # This assertion demonstrates the bug - it should be True but is False
++                assert result is False  # This shows the current buggy behavior
++
++    def test_lock_should_return_true_on_success(self):
++        """
++        Test that lock() returns True when fcntl.flock() succeeds.
++        This test will pass after the fix is applied.
++        """
++        # Skip if not on POSIX or fcntl not available
++        if os.name == 'nt' or not hasattr(locks, 'fcntl'):
++            pytest.skip("Test only applies to POSIX systems with fcntl")
++        
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Mock fcntl.flock to return None (success case)
++            with mock.patch('django.core.files.locks.fcntl.flock', return_value=None):
++                result = locks.lock(temp_file, locks.LOCK_EX)
++                assert result is True
++
++    def test_lock_should_return_false_on_failure(self):
++        """
++        Test that lock() returns False when fcntl.flock() raises OSError.
++        This test will pass after the fix is applied.
++        """
++        # Skip if not on POSIX or fcntl not available
++        if os.name == 'nt' or not hasattr(locks, 'fcntl'):
++            pytest.skip("Test only applies to POSIX systems with fcntl")
++        
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Mock fcntl.flock to raise OSError (failure case)
++            with mock.patch('django.core.files.locks.fcntl.flock', side_effect=OSError("Lock failed")):
++                result = locks.lock(temp_file, locks.LOCK_EX)
++                assert result is False
++
++    def test_unlock_should_return_true_on_success(self):
++        """
++        Test that unlock() returns True when fcntl.flock() succeeds.
++        This test will pass after the fix is applied.
++        """
++        # Skip if not on POSIX or fcntl not available
++        if os.name == 'nt' or not hasattr(locks, 'fcntl'):
++            pytest.skip("Test only applies to POSIX systems with fcntl")
++        
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Mock fcntl.flock to return None (success case)
++            with mock.patch('django.core.files.locks.fcntl.flock', return_value=None):
++                result = locks.unlock(temp_file)
++                assert result is True
++
++    def test_unlock_should_return_false_on_failure(self):
++        """
++        Test that unlock() returns False when fcntl.flock() raises OSError.
++        This test will pass after the fix is applied.
++        """
++        # Skip if not on POSIX or fcntl not available
++        if os.name == 'nt' or not hasattr(locks, 'fcntl'):
++            pytest.skip("Test only applies to POSIX systems with fcntl")
++        
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Mock fcntl.flock to raise OSError (failure case)
++            with mock.patch('django.core.files.locks.fcntl.flock', side_effect=OSError("Unlock failed")):
++                result = locks.unlock(temp_file)
++                assert result is False
++
++    def test_non_blocking_lock_behavior(self):
++        """
++        Test non-blocking lock behavior which is critical for the bug fix.
++        Non-blocking locks need accurate return values to know if lock was acquired.
++        """
++        # Skip if not on POSIX or fcntl not available
++        if os.name == 'nt' or not hasattr(locks, 'fcntl'):
++            pytest.skip("Test only applies to POSIX systems with fcntl")
++        
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Test successful non-blocking lock
++            with mock.patch('django.core.files.locks.fcntl.flock', return_value=None):
++                result = locks.lock(temp_file, locks.LOCK_EX | locks.LOCK_NB)
++                assert result is True
++            
++            # Test failed non-blocking lock (would block)
++            with mock.patch('django.core.files.locks.fcntl.flock', side_effect=OSError("Would block")):
++                result = locks.lock(temp_file, locks.LOCK_EX | locks.LOCK_NB)
++                assert result is False
++
++    def test_lock_with_different_flags(self):
++        """
++        Test lock function with different flag combinations.
++        """
++        # Skip if not on POSIX or fcntl not available
++        if os.name == 'nt' or not hasattr(locks, 'fcntl'):
++            pytest.skip("Test only applies to POSIX systems with fcntl")
++        
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Test exclusive lock
++            with mock.patch('django.core.files.locks.fcntl.flock', return_value=None) as mock_flock:
++                result = locks.lock(temp_file, locks.LOCK_EX)
++                assert result is True
++                mock_flock.assert_called_once_with(temp_file.fileno(), locks.LOCK_EX)
++            
++            # Test shared lock
++            with mock.patch('django.core.files.locks.fcntl.flock', return_value=None) as mock_flock:
++                result = locks.lock(temp_file, locks.LOCK_SH)
++                assert result is True
++                mock_flock.assert_called_once_with(temp_file.fileno(), locks.LOCK_SH)
++
++    def test_fd_function_with_file_object(self):
++        """
++        Test that _fd function works correctly with file objects.
++        """
++        with tempfile.NamedTemporaryFile() as temp_file:
++            fd = locks._fd(temp_file)
++            assert fd == temp_file.fileno()
++
++    def test_fd_function_with_file_descriptor(self):
++        """
++        Test that _fd function works correctly with file descriptors.
++        """
++        with tempfile.NamedTemporaryFile() as temp_file:
++            fd_number = temp_file.fileno()
++            fd = locks._fd(fd_number)
++            assert fd == fd_number
++
++    def test_lock_unlock_integration(self):
++        """
++        Integration test for lock and unlock functions.
++        This test verifies the complete workflow works correctly.
++        """
++        # Skip if not on POSIX or fcntl not available
++        if os.name == 'nt' or not hasattr(locks, 'fcntl'):
++            pytest.skip("Test only applies to POSIX systems with fcntl")
++        
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Mock successful operations
++            with mock.patch('django.core.files.locks.fcntl.flock', return_value=None):
++                # Lock the file
++                lock_result = locks.lock(temp_file, locks.LOCK_EX)
++                assert lock_result is True
++                
++                # Unlock the file
++                unlock_result = locks.unlock(temp_file)
++                assert unlock_result is True
++
++    def test_constants_are_available(self):
++        """
++        Test that lock constants are properly defined.
++        """
++        # These should be available regardless of platform
++        assert hasattr(locks, 'LOCK_EX')
++        assert hasattr(locks, 'LOCK_SH') 
++        assert hasattr(locks, 'LOCK_NB')
++        
++        # On POSIX with fcntl, they should have proper values
++        if os.name != 'nt' and hasattr(locks, 'fcntl'):
++            assert locks.LOCK_EX == fcntl.LOCK_EX
++            assert locks.LOCK_SH == fcntl.LOCK_SH
++            assert locks.LOCK_NB == fcntl.LOCK_NB

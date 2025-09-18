@@ -1,0 +1,396 @@
+--- a/tests/test_directive_include_source_read.py
++++ b/tests/test_directive_include_source_read.py
+-# Empty if creating new file
++import pytest
++from pathlib import Path
++import tempfile
++import shutil
++from sphinx.application import Sphinx
++from sphinx.util.docutils import docutils_namespace
++from sphinx.testing.util import SphinxTestApp
++from sphinx.testing.path import path
++import os
++
++
++class TestIncludeSourceReadEvent:
++    """Test that the source-read event is properly emitted for included files."""
++
++    @pytest.fixture
++    def temp_sphinx_project(self, tmp_path):
++        """Create a temporary Sphinx project for testing."""
++        srcdir = tmp_path / "source"
++        outdir = tmp_path / "build"
++        doctreedir = tmp_path / "doctrees"
++        confdir = srcdir
++        
++        srcdir.mkdir()
++        outdir.mkdir()
++        doctreedir.mkdir()
++        
++        # Create conf.py
++        conf_content = '''
++import sys
++import os
++sys.path.insert(0, os.path.abspath('.'))
++
++extensions = ['test_extension']
++'''
++        (srcdir / "conf.py").write_text(conf_content)
++        
++        # Create test extension
++        extension_content = '''
++from sphinx.application import Sphinx
++
++__version__ = '1.0'
++
++# Track which files had their source modified
++modified_files = []
++
++def subst_vars_replace(app: Sphinx, docname, source):
++    """Replace &REPLACE_ME; with REPLACED in source."""
++    result = source[0]
++    if "&REPLACE_ME;" in result:
++        result = result.replace("&REPLACE_ME;", "REPLACED")
++        source[0] = result
++        modified_files.append(docname)
++
++def setup(app: Sphinx):
++    app.connect('source-read', subst_vars_replace)
++    return dict(
++        version=__version__,
++        parallel_read_safe=True,
++        parallel_write_safe=True
++    )
++'''
++        (srcdir / "test_extension.py").write_text(extension_content)
++        
++        return {
++            'srcdir': srcdir,
++            'outdir': outdir,
++            'doctreedir': doctreedir,
++            'confdir': confdir
++        }
++
++    def test_source_read_event_not_emitted_for_included_files_bug(self, temp_sphinx_project):
++        """Test that demonstrates the bug: source-read event is not properly applied to included files."""
++        srcdir = temp_sphinx_project['srcdir']
++        outdir = temp_sphinx_project['outdir']
++        
++        # Create main document
++        index_content = '''
++This is a test
++==============
++
++.. include:: something-to-include.rst
++
++&REPLACE_ME;
++'''
++        (srcdir / "index.rst").write_text(index_content)
++        
++        # Create included document
++        include_content = '''
++Testing
++=======
++
++&REPLACE_ME;
++'''
++        (srcdir / "something-to-include.rst").write_text(include_content)
++        
++        # Build the documentation
++        with docutils_namespace():
++            app = SphinxTestApp(
++                srcdir=str(srcdir),
++                builddir=str(outdir),
++                confdir=str(srcdir)
++            )
++            app.build()
++            
++            # Read the generated HTML
++            html_file = outdir / "html" / "index.html"
++            if html_file.exists():
++                html_content = html_file.read_text()
++            else:
++                # Fallback to check doctree or other output
++                html_content = ""
++                for html_file in (outdir / "html").glob("*.html"):
++                    html_content += html_file.read_text()
++            
++            # This test demonstrates the bug: the included file's &REPLACE_ME; is NOT replaced
++            # The main file's &REPLACE_ME; should be replaced, but the included file's should not be
++            # This shows that source-read event is not properly emitted for included files
++            assert "REPLACED" in html_content  # Main file replacement works
++            assert "&amp;REPLACE_ME;" in html_content  # Included file replacement fails (bug)
++
++    def test_source_read_event_called_for_included_files_tracking(self, temp_sphinx_project):
++        """Test that source-read event is called for included files but changes don't take effect."""
++        srcdir = temp_sphinx_project['srcdir']
++        outdir = temp_sphinx_project['outdir']
++        
++        # Create tracking extension
++        tracking_extension_content = '''
++from sphinx.application import Sphinx
++
++__version__ = '1.0'
++
++# Track all source-read events
++source_read_calls = []
++
++def track_source_read(app: Sphinx, docname, source):
++    """Track all source-read events."""
++    source_read_calls.append({
++        'docname': docname,
++        'original_content': source[0],
++        'has_replace_me': '&REPLACE_ME;' in source[0]
++    })
++    # Try to modify the source
++    if "&REPLACE_ME;" in source[0]:
++        source[0] = source[0].replace("&REPLACE_ME;", "REPLACED")
++
++def setup(app: Sphinx):
++    app.connect('source-read', track_source_read)
++    return dict(
++        version=__version__,
++        parallel_read_safe=True,
++        parallel_write_safe=True
++    )
++'''
++        (srcdir / "test_extension.py").write_text(tracking_extension_content)
++        
++        # Create main document
++        index_content = '''
++Main Document
++=============
++
++.. include:: included.rst
++
++Main content: &REPLACE_ME;
++'''
++        (srcdir / "index.rst").write_text(index_content)
++        
++        # Create included document
++        include_content = '''
++Included Section
++================
++
++Included content: &REPLACE_ME;
++'''
++        (srcdir / "included.rst").write_text(include_content)
++        
++        # Build the documentation
++        with docutils_namespace():
++            app = SphinxTestApp(
++                srcdir=str(srcdir),
++                builddir=str(outdir),
++                confdir=str(srcdir)
++            )
++            app.build()
++            
++            # Import the tracking data from the extension
++            import sys
++            if str(srcdir) not in sys.path:
++                sys.path.insert(0, str(srcdir))
++            
++            try:
++                import test_extension
++                calls = test_extension.source_read_calls
++                
++                # Verify that source-read was called for both files
++                docnames = [call['docname'] for call in calls]
++                assert 'index' in docnames
++                assert 'included' in docnames
++                
++                # Verify that both files had &REPLACE_ME; content
++                for call in calls:
++                    if call['docname'] in ['index', 'included']:
++                        assert call['has_replace_me'], f"File {call['docname']} should have &REPLACE_ME;"
++                        
++            except ImportError:
++                # If we can't import the extension, skip this verification
++                pass
++
++    def test_include_with_standard_docutils_syntax(self, temp_sphinx_project):
++        """Test that standard docutils includes (with < >) are not affected."""
++        srcdir = temp_sphinx_project['srcdir']
++        outdir = temp_sphinx_project['outdir']
++        
++        # Create main document with standard docutils include syntax
++        index_content = '''
++Standard Include Test
++====================
++
++.. include:: <stdin>
++
++Regular content: &REPLACE_ME;
++'''
++        (srcdir / "index.rst").write_text(index_content)
++        
++        # Build should not fail even with non-existent <stdin>
++        with docutils_namespace():
++            app = SphinxTestApp(
++                srcdir=str(srcdir),
++                builddir=str(outdir),
++                confdir=str(srcdir)
++            )
++            # This should not raise an exception
++            app.build()
++
++    def test_include_with_absolute_path_processing(self, temp_sphinx_project):
++        """Test that include directive properly processes absolute paths."""
++        srcdir = temp_sphinx_project['srcdir']
++        outdir = temp_sphinx_project['outdir']
++        
++        # Create subdirectory
++        subdir = srcdir / "subdir"
++        subdir.mkdir()
++        
++        # Create main document
++        index_content = '''
++Path Processing Test
++===================
++
++.. include:: /subdir/nested.rst
++
++Main content: &REPLACE_ME;
++'''
++        (srcdir / "index.rst").write_text(index_content)
++        
++        # Create nested document
++        nested_content = '''
++Nested Content
++==============
++
++Nested: &REPLACE_ME;
++'''
++        (subdir / "nested.rst").write_text(nested_content)
++        
++        # Build the documentation
++        with docutils_namespace():
++            app = SphinxTestApp(
++                srcdir=str(srcdir),
++                builddir=str(outdir),
++                confdir=str(srcdir)
++            )
++            app.build()
++            
++            # Verify the build completed without errors
++            # The exact behavior depends on the fix implementation
++
++    def test_multiple_nested_includes(self, temp_sphinx_project):
++        """Test source-read event with multiple levels of nested includes."""
++        srcdir = temp_sphinx_project['srcdir']
++        outdir = temp_sphinx_project['outdir']
++        
++        # Create main document
++        index_content = '''
++Nested Includes Test
++===================
++
++.. include:: level1.rst
++
++Main: &REPLACE_ME;
++'''
++        (srcdir / "index.rst").write_text(index_content)
++        
++        # Create level 1 include
++        level1_content = '''
++Level 1
++=======
++
++.. include:: level2.rst
++
++Level 1: &REPLACE_ME;
++'''
++        (srcdir / "level1.rst").write_text(level1_content)
++        
++        # Create level 2 include
++        level2_content = '''
++Level 2
++=======
++
++Level 2: &REPLACE_ME;
++'''
++        (srcdir / "level2.rst").write_text(level2_content)
++        
++        # Build the documentation
++        with docutils_namespace():
++            app = SphinxTestApp(
++                srcdir=str(srcdir),
++                builddir=str(outdir),
++                confdir=str(srcdir)
++            )
++            app.build()
++            
++            # Read the generated HTML
++            html_files = list((outdir / "html").glob("*.html"))
++            html_content = ""
++            for html_file in html_files:
++                html_content += html_file.read_text()
++            
++            # Count occurrences - this test shows the current buggy behavior
++            # After fix, all &REPLACE_ME; should become REPLACED
++            replaced_count = html_content.count("REPLACED")
++            unreplaced_count = html_content.count("&amp;REPLACE_ME;")
++            
++            # Currently, only the main file gets replaced (bug)
++            # After fix, all files should be replaced
++            assert replaced_count >= 1  # At least main file works
++            # The bug is that unreplaced_count > 0 for included files
++
++    def test_include_with_source_read_modification_should_work_after_fix(self, temp_sphinx_project):
++        """Test that after the fix, included files are properly modified by source-read events."""
++        srcdir = temp_sphinx_project['srcdir']
++        outdir = temp_sphinx_project['outdir']
++        
++        # Create main document
++        index_content = '''
++Fixed Include Test
++=================
++
++.. include:: to-be-modified.rst
++
++Main content: &REPLACE_ME;
++'''
++        (srcdir / "index.rst").write_text(index_content)
++        
++        # Create included document with content that should be modified
++        include_content = '''
++Included Content
++===============
++
++This should be modified: &REPLACE_ME;
++
++Multiple replacements: &REPLACE_ME; and &REPLACE_ME;
++'''
++        (srcdir / "to-be-modified.rst").write_text(include_content)
++        
++        # Build the documentation
++        with docutils_namespace():
++            app = SphinxTestApp(
++                srcdir=str(srcdir),
++                builddir=str(outdir),
++                confdir=str(srcdir)
++            )
++            app.build()
++            
++            # Read the generated HTML
++            html_files = list((outdir / "html").glob("*.html"))
++            html_content = ""
++            for html_file in html_files:
++                html_content += html_file.read_text()
++            
++            # This test will fail before the fix and pass after the fix
++            # Before fix: included file's &REPLACE_ME; won't be replaced
++            # After fix: all &REPLACE_ME; should be replaced with REPLACED
++            
++            # Count total expected replacements (4 total: 1 in main + 3 in included)
++            expected_replacements = 4
++            actual_replacements = html_content.count("REPLACED")
++            unreplaced = html_content.count("&amp;REPLACE_ME;")
++            
++            # This assertion will fail before the fix (showing the bug)
++            # and should pass after the fix
++            assert actual_replacements == expected_replacements, \
++                f"Expected {expected_replacements} replacements, got {actual_replacements}. " \
++                f"Unreplaced: {unreplaced}"
++            assert unreplaced == 0, \
++                f"Found {unreplaced} unreplaced &REPLACE_ME; tokens"

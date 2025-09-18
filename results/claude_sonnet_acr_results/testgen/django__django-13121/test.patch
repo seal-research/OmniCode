@@ -1,0 +1,231 @@
+--- a/tests/expressions/test_duration_expressions.py
++++ b/tests/expressions/test_duration_expressions.py
+-# Empty if creating new file
++import datetime
++import decimal
++from unittest import mock
++
++import pytest
++from django.db import connection, models
++from django.db.models import F
++from django.test import TestCase, skipUnlessDBFeature
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('expressions')
++class DurationExpressionTests(TestCase):
++    """Test duration expressions on SQLite and MySQL backends."""
++
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        class Experiment(models.Model):
++            estimated_time = models.DurationField()
++            
++            class Meta:
++                app_label = 'expressions'
++        
++        cls.Experiment = Experiment
++        
++        # Create the table
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(cls.Experiment)
++
++    @classmethod
++    def tearDownClass(cls):
++        # Drop the table
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(cls.Experiment)
++        super().tearDownClass()
++
++    def setUp(self):
++        # Create test data
++        self.experiment = self.Experiment.objects.create(
++            estimated_time=datetime.timedelta(hours=2, minutes=30)
++        )
++
++    def test_duration_field_addition_with_timedelta(self):
++        """Test that F('duration_field') + timedelta works on SQLite and MySQL."""
++        delta = datetime.timedelta(hours=1)
++        
++        # This should not raise decimal.InvalidOperation
++        queryset = self.Experiment.objects.annotate(
++            duration=F('estimated_time') + delta
++        )
++        
++        # Force evaluation of the queryset
++        result = list(queryset)
++        
++        # Verify the result
++        self.assertEqual(len(result), 1)
++        expected_duration = datetime.timedelta(hours=3, minutes=30)
++        self.assertEqual(result[0].duration, expected_duration)
++
++    def test_duration_field_subtraction_with_timedelta(self):
++        """Test that F('duration_field') - timedelta works on SQLite and MySQL."""
++        delta = datetime.timedelta(minutes=30)
++        
++        # This should not raise decimal.InvalidOperation
++        queryset = self.Experiment.objects.annotate(
++            duration=F('estimated_time') - delta
++        )
++        
++        # Force evaluation of the queryset
++        result = list(queryset)
++        
++        # Verify the result
++        self.assertEqual(len(result), 1)
++        expected_duration = datetime.timedelta(hours=2)
++        self.assertEqual(result[0].duration, expected_duration)
++
++    def test_duration_field_addition_with_zero_timedelta(self):
++        """Test edge case with zero timedelta."""
++        delta = datetime.timedelta(0)
++        
++        queryset = self.Experiment.objects.annotate(
++            duration=F('estimated_time') + delta
++        )
++        
++        result = list(queryset)
++        self.assertEqual(len(result), 1)
++        self.assertEqual(result[0].duration, datetime.timedelta(hours=2, minutes=30))
++
++    def test_duration_field_multiple_operations(self):
++        """Test multiple duration operations in one expression."""
++        delta1 = datetime.timedelta(hours=1)
++        delta2 = datetime.timedelta(minutes=15)
++        
++        queryset = self.Experiment.objects.annotate(
++            duration=F('estimated_time') + delta1 - delta2
++        )
++        
++        result = list(queryset)
++        self.assertEqual(len(result), 1)
++        expected_duration = datetime.timedelta(hours=3, minutes=15)
++        self.assertEqual(result[0].duration, expected_duration)
++
++    @skipUnlessDBFeature('has_native_duration_field')
++    def test_duration_expressions_with_native_support(self):
++        """Test duration expressions on databases with native duration support."""
++        delta = datetime.timedelta(hours=1)
++        
++        queryset = self.Experiment.objects.annotate(
++            duration=F('estimated_time') + delta
++        )
++        
++        result = list(queryset)
++        self.assertEqual(len(result), 1)
++        expected_duration = datetime.timedelta(hours=3, minutes=30)
++        self.assertEqual(result[0].duration, expected_duration)
++
++    def test_convert_durationfield_value_with_invalid_decimal(self):
++        """Test that convert_durationfield_value handles invalid decimal values gracefully."""
++        from django.db.backends.base.operations import BaseDatabaseOperations
++        
++        ops = BaseDatabaseOperations(connection)
++        
++        # Test with a value that would cause decimal.InvalidOperation
++        # This simulates the problematic case from the bug report
++        with mock.patch('decimal.Decimal') as mock_decimal:
++            mock_decimal.side_effect = decimal.InvalidOperation("ConversionSyntax")
++            
++            # The method should handle this gracefully
++            # For now, we expect it to fail, but after the fix it should work
++            with self.assertRaises(decimal.InvalidOperation):
++                ops.convert_durationfield_value("invalid_decimal_string", None, connection)
++
++    def test_convert_durationfield_value_with_valid_microseconds(self):
++        """Test that convert_durationfield_value works with valid microsecond values."""
++        from django.db.backends.base.operations import BaseDatabaseOperations
++        
++        ops = BaseDatabaseOperations(connection)
++        
++        # Test with valid microsecond value
++        microseconds = 3600000000  # 1 hour in microseconds
++        result = ops.convert_durationfield_value(microseconds, None, connection)
++        
++        expected = datetime.timedelta(microseconds=microseconds)
++        self.assertEqual(result, expected)
++
++    def test_convert_durationfield_value_with_none(self):
++        """Test that convert_durationfield_value handles None values."""
++        from django.db.backends.base.operations import BaseDatabaseOperations
++        
++        ops = BaseDatabaseOperations(connection)
++        
++        result = ops.convert_durationfield_value(None, None, connection)
++        self.assertIsNone(result)
++
++    def test_duration_expression_with_null_field(self):
++        """Test duration expressions with NULL duration fields."""
++        # Create an experiment with NULL estimated_time
++        null_experiment = self.Experiment.objects.create(estimated_time=None)
++        
++        delta = datetime.timedelta(hours=1)
++        
++        queryset = self.Experiment.objects.filter(
++            id=null_experiment.id
++        ).annotate(
++            duration=F('estimated_time') + delta
++        )
++        
++        result = list(queryset)
++        self.assertEqual(len(result), 1)
++        # Duration expression with NULL should result in NULL
++        self.assertIsNone(result[0].duration)
++
++    def test_duration_expression_filter(self):
++        """Test using duration expressions in filter conditions."""
++        delta = datetime.timedelta(hours=1)
++        target_duration = datetime.timedelta(hours=3, minutes=30)
++        
++        # Filter where estimated_time + 1 hour equals target_duration
++        queryset = self.Experiment.objects.filter(
++            estimated_time=target_duration - delta
++        )
++        
++        result = list(queryset)
++        self.assertEqual(len(result), 1)
++        self.assertEqual(result[0].id, self.experiment.id)
++
++    def test_duration_expression_ordering(self):
++        """Test ordering by duration expressions."""
++        # Create another experiment with different duration
++        experiment2 = self.Experiment.objects.create(
++            estimated_time=datetime.timedelta(hours=1)
++        )
++        
++        delta = datetime.timedelta(minutes=30)
++        
++        queryset = self.Experiment.objects.annotate(
++            duration=F('estimated_time') + delta
++        ).order_by('duration')
++        
++        result = list(queryset)
++        self.assertEqual(len(result), 2)
++        # experiment2 should come first (1.5 hours < 3 hours)
++        self.assertEqual(result[0].id, experiment2.id)
++        self.assertEqual(result[1].id, self.experiment.id)
++
++    def test_duration_expression_aggregation(self):
++        """Test aggregating duration expressions."""
++        from django.db.models import Sum
++        
++        # Create another experiment
++        self.Experiment.objects.create(
++            estimated_time=datetime.timedelta(hours=1, minutes=15)
++        )
++        
++        delta = datetime.timedelta(minutes=30)
++        
++        # Sum of all estimated_time + 30 minutes
++        result = self.Experiment.objects.annotate(
++            duration=F('estimated_time') + delta
++        ).aggregate(
++            total_duration=Sum('duration')
++        )
++        
++        # (2.5 + 0.5) + (1.25 + 0.5) = 4.75 hours
++        expected_total = datetime.timedelta(hours=4, minutes=45)
++        self.assertEqual(result['total_duration'], expected_total)

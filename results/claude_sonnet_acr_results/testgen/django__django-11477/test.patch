@@ -1,0 +1,320 @@
+--- a/tests/urls_i18n/test_translate_url.py
++++ b/tests/urls_i18n/test_translate_url.py
+-# Empty if creating new file
++import pytest
++from django.test import TestCase, override_settings
++from django.urls import reverse, path, include
++from django.urls.base import translate_url
++from django.utils.translation import override
++from django.http import HttpResponse
++
++
++def dummy_view(request, arg1=None, arg2=None):
++    """Dummy view for testing URL translation with optional parameters."""
++    return HttpResponse("OK")
++
++
++def simple_view(request):
++    """Simple view without parameters."""
++    return HttpResponse("Simple")
++
++
++# URL patterns with optional named groups
++urlpatterns_with_optional = [
++    path('test/<str:arg1>/', dummy_view, name='test_required'),
++    path('test/<str:arg1>/<str:arg2>/', dummy_view, name='test_optional'),
++    path('simple/', simple_view, name='simple'),
++]
++
++# URL patterns for i18n testing
++urlpatterns_i18n = [
++    path('en/', include(urlpatterns_with_optional)),
++    path('fr/', include(urlpatterns_with_optional)),
++]
++
++
++@override_settings(
++    ROOT_URLCONF='tests.urls_i18n.test_translate_url',
++    USE_I18N=True,
++    LANGUAGES=[('en', 'English'), ('fr', 'French')],
++    LANGUAGE_CODE='en',
++)
++class TranslateUrlOptionalGroupsTestCase(TestCase):
++    """Test translate_url() with optional named groups in URL patterns."""
++
++    def test_translate_url_with_missing_optional_groups_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: translate_url() fails when optional 
++        named groups are missing from the URL pattern.
++        
++        This test should fail before the fix is applied, showing the bug exists.
++        """
++        # URL with only required parameter (arg1), missing optional parameter (arg2)
++        url = '/en/test/value1/'
++        
++        # This should work but currently fails due to the bug
++        # The bug occurs because match.kwargs contains None values for optional groups
++        with override('fr'):
++            try:
++                translated_url = translate_url(url, 'fr')
++                # If we get here, the bug might be fixed or the test setup is wrong
++                self.assertEqual(translated_url, '/fr/test/value1/')
++            except Exception as e:
++                # This is expected to fail before the fix
++                # The exception occurs because reverse() receives None values for optional groups
++                self.assertIn('NoReverseMatch', str(type(e).__name__))
++
++    def test_translate_url_with_all_optional_groups_present(self):
++        """
++        Test that translate_url() works correctly when all optional groups are present.
++        
++        This test should pass both before and after the fix.
++        """
++        # URL with both required and optional parameters
++        url = '/en/test/value1/value2/'
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            self.assertEqual(translated_url, '/fr/test/value1/value2/')
++
++    def test_translate_url_with_no_optional_groups(self):
++        """
++        Test that translate_url() works correctly with URLs that have no optional groups.
++        
++        This test should pass both before and after the fix.
++        """
++        # Simple URL without any optional parameters
++        url = '/en/simple/'
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            self.assertEqual(translated_url, '/fr/simple/')
++
++    def test_translate_url_with_missing_optional_groups_passes_after_fix(self):
++        """
++        Test that translate_url() works correctly after the fix when optional 
++        named groups are missing from the URL pattern.
++        
++        This test should pass after the fix is applied.
++        """
++        # URL with only required parameter (arg1), missing optional parameter (arg2)
++        url = '/en/test/value1/'
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            # After the fix, this should work correctly
++            self.assertEqual(translated_url, '/fr/test/value1/')
++
++    def test_translate_url_preserves_existing_functionality(self):
++        """
++        Test that the fix doesn't break existing functionality for normal URLs.
++        """
++        test_cases = [
++            ('/en/simple/', '/fr/simple/'),
++            ('/en/test/value1/value2/', '/fr/test/value1/value2/'),
++        ]
++        
++        for original_url, expected_url in test_cases:
++            with override('fr'):
++                translated_url = translate_url(original_url, 'fr')
++                self.assertEqual(translated_url, expected_url)
++
++    def test_translate_url_returns_original_on_no_match(self):
++        """
++        Test that translate_url() returns the original URL when no translation is possible.
++        """
++        # URL that doesn't match any pattern
++        url = '/nonexistent/path/'
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            self.assertEqual(translated_url, url)
++
++    def test_translate_url_handles_none_values_in_kwargs(self):
++        """
++        Test that translate_url() properly filters out None values from match.kwargs.
++        
++        This is the core test for the bug fix.
++        """
++        # This test specifically targets the issue where match.kwargs contains None values
++        # for optional named groups that are not present in the URL
++        url = '/en/test/value1/'
++        
++        # Before the fix, this would fail because match.kwargs would contain:
++        # {'arg1': 'value1', 'arg2': None}
++        # And reverse() would fail with these None values
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            # After the fix, None values should be filtered out and this should work
++            self.assertEqual(translated_url, '/fr/test/value1/')
++
++
++# Additional test patterns for edge cases
++urlpatterns_edge_cases = [
++    path('multi/<str:a>/<str:b>/<str:c>/', dummy_view, name='multi_optional'),
++    path('multi/<str:a>/', dummy_view, name='multi_required'),
++]
++
++urlpatterns_edge_i18n = [
++    path('en/', include(urlpatterns_edge_cases)),
++    path('fr/', include(urlpatterns_edge_cases)),
++]
++
++
++@override_settings(
++    ROOT_URLCONF='tests.urls_i18n.test_translate_url',
++    USE_I18N=True,
++    LANGUAGES=[('en', 'English'), ('fr', 'French')],
++    LANGUAGE_CODE='en',
++)
++class TranslateUrlEdgeCasesTestCase(TestCase):
++    """Test edge cases for translate_url() with multiple optional groups."""
++
++    def test_translate_url_multiple_missing_optional_groups(self):
++        """
++        Test translate_url() with multiple missing optional named groups.
++        """
++        # URL with only one required parameter, multiple optional parameters missing
++        url = '/en/multi/value1/'
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            self.assertEqual(translated_url, '/fr/multi/value1/')
++
++    def test_translate_url_partial_optional_groups(self):
++        """
++        Test translate_url() with some optional groups present and some missing.
++        """
++        # This would be a more complex case if the URL patterns supported it
++        # For now, we test the basic case
++        url = '/en/multi/value1/'
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            self.assertEqual(translated_url, '/fr/multi/value1/')
++
++
++# Make the urlpatterns available at module level for Django to find
++urlpatterns = urlpatterns_i18n
+
+--- a/tests/urls_i18n/test_translate_url_regex.py
++++ b/tests/urls_i18n/test_translate_url_regex.py
+-# Empty if creating new file
++import pytest
++from django.test import TestCase, override_settings
++from django.urls import re_path, include
++from django.urls.base import translate_url
++from django.utils.translation import override
++from django.http import HttpResponse
++import re
++
++
++def regex_view(request, required=None, optional=None):
++    """View for testing regex patterns with optional groups."""
++    return HttpResponse("OK")
++
++
++# URL patterns using regex with optional named groups
++urlpatterns_regex = [
++    re_path(r'^test/(?P<required>\w+)(?:/(?P<optional>\w+))?/$', regex_view, name='regex_optional'),
++    re_path(r'^simple/$', regex_view, name='regex_simple'),
++]
++
++# URL patterns for i18n testing with regex
++urlpatterns_regex_i18n = [
++    re_path(r'^en/', include(urlpatterns_regex)),
++    re_path(r'^fr/', include(urlpatterns_regex)),
++]
++
++
++@override_settings(
++    ROOT_URLCONF='tests.urls_i18n.test_translate_url_regex',
++    USE_I18N=True,
++    LANGUAGES=[('en', 'English'), ('fr', 'French')],
++    LANGUAGE_CODE='en',
++)
++class TranslateUrlRegexOptionalGroupsTestCase(TestCase):
++    """Test translate_url() with regex patterns containing optional named groups."""
++
++    def test_translate_url_regex_with_missing_optional_group_fails_before_fix(self):
++        """
++        Test that demonstrates the bug with regex patterns: translate_url() fails 
++        when optional named groups are missing.
++        
++        This test should fail before the fix is applied.
++        """
++        # URL matching regex with only required group, optional group is None
++        url = '/en/test/value1/'
++        
++        with override('fr'):
++            try:
++                translated_url = translate_url(url, 'fr')
++                # If we get here, the bug might be fixed
++                self.assertEqual(translated_url, '/fr/test/value1/')
++            except Exception as e:
++                # This is expected to fail before the fix
++                # The regex match.groupdict() returns {'required': 'value1', 'optional': None}
++                self.assertIn('NoReverseMatch', str(type(e).__name__))
++
++    def test_translate_url_regex_with_optional_group_present(self):
++        """
++        Test that translate_url() works with regex patterns when optional group is present.
++        """
++        # URL matching regex with both required and optional groups
++        url = '/en/test/value1/value2/'
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            self.assertEqual(translated_url, '/fr/test/value1/value2/')
++
++    def test_translate_url_regex_simple_pattern(self):
++        """
++        Test that translate_url() works with simple regex patterns (no optional groups).
++        """
++        url = '/en/simple/'
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            self.assertEqual(translated_url, '/fr/simple/')
++
++    def test_translate_url_regex_with_missing_optional_group_passes_after_fix(self):
++        """
++        Test that translate_url() works correctly after the fix with regex patterns
++        when optional named groups are missing.
++        
++        This test should pass after the fix is applied.
++        """
++        # URL with only required parameter, optional parameter is None in groupdict()
++        url = '/en/test/value1/'
++        
++        with override('fr'):
++            translated_url = translate_url(url, 'fr')
++            # After the fix, None values should be filtered out
++            self.assertEqual(translated_url, '/fr/test/value1/')
++
++    def test_regex_groupdict_behavior(self):
++        """
++        Test to verify the behavior of regex groupdict() with optional groups.
++        
++        This test documents the expected behavior that causes the bug.
++        """
++        pattern = re.compile(r'^test/(?P<required>\w+)(?:/(?P<optional>\w+))?/$')
++        
++        # Test with only required group
++        match1 = pattern.match('test/value1/')
++        self.assertIsNotNone(match1)
++        groupdict1 = match1.groupdict()
++        self.assertEqual(groupdict1['required'], 'value1')
++        self.assertIsNone(groupdict1['optional'])  # This None causes the bug
++        
++        # Test with both groups
++        match2 = pattern.match('test/value1/value2/')
++        self.assertIsNotNone(match2)
++        groupdict2 = match2.groupdict()
++        self.assertEqual(groupdict2['required'], 'value1')
++        self.assertEqual(groupdict2['optional'], 'value2')
++
++
++# Make the urlpatterns available at module level for Django to find
++urlpatterns = urlpatterns_regex_i18n

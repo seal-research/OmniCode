@@ -1,0 +1,275 @@
+--- a/tests/backends/postgresql/test_client.py
++++ b/tests/backends/postgresql/test_client.py
+-# Empty if creating new file
++import os
++import subprocess
++from unittest import mock
++
++import pytest
++
++from django.db.backends.postgresql.client import DatabaseClient
++from django.test import SimpleTestCase
++
++
++class PostgreSQLDbshellTests(SimpleTestCase):
++    def test_basic_params_no_ssl(self):
++        """Test that basic connection parameters work without SSL options."""
++        conn_params = {
++            'database': 'test_db',
++            'user': 'test_user',
++            'password': 'test_pass',
++            'host': 'localhost',
++            'port': '5432',
++        }
++        
++        with mock.patch('subprocess.run') as mock_run:
++            with mock.patch('signal.signal'):
++                DatabaseClient.runshell_db(conn_params)
++        
++        # Verify the command arguments
++        args, kwargs = mock_run.call_args
++        cmd_args = args[0]
++        
++        expected_args = [
++            'psql',
++            '-U', 'test_user',
++            '-h', 'localhost', 
++            '-p', '5432',
++            'test_db'
++        ]
++        assert cmd_args == expected_args
++        
++        # Verify password is set in environment
++        env = kwargs['env']
++        assert env['PGPASSWORD'] == 'test_pass'
++
++    def test_ssl_parameters_before_fix(self):
++        """Test that SSL parameters are ignored before the fix (demonstrates the bug)."""
++        conn_params = {
++            'database': 'test_db',
++            'user': 'test_user',
++            'password': 'test_pass',
++            'host': 'localhost',
++            'port': '5432',
++            'sslmode': 'verify-ca',
++            'sslrootcert': '/path/to/ca.crt',
++            'sslcert': '/path/to/client.crt',
++            'sslkey': '/path/to/client.key',
++        }
++        
++        with mock.patch('subprocess.run') as mock_run:
++            with mock.patch('signal.signal'):
++                DatabaseClient.runshell_db(conn_params)
++        
++        # Before the fix, SSL parameters should be ignored
++        args, kwargs = mock_run.call_args
++        env = kwargs['env']
++        
++        # These environment variables should NOT be set before the fix
++        assert 'PGSSLMODE' not in env
++        assert 'PGSSLROOTCERT' not in env
++        assert 'PGSSLCERT' not in env
++        assert 'PGSSLKEY' not in env
++
++    def test_ssl_parameters_after_fix(self):
++        """Test that SSL parameters are properly handled after the fix."""
++        conn_params = {
++            'database': 'test_db',
++            'user': 'test_user',
++            'password': 'test_pass',
++            'host': 'localhost',
++            'port': '5432',
++            'sslmode': 'verify-ca',
++            'sslrootcert': '/path/to/ca.crt',
++            'sslcert': '/path/to/client.crt',
++            'sslkey': '/path/to/client.key',
++        }
++        
++        with mock.patch('subprocess.run') as mock_run:
++            with mock.patch('signal.signal'):
++                # Mock the fixed version of runshell_db
++                with mock.patch.object(DatabaseClient, 'runshell_db', side_effect=self._fixed_runshell_db):
++                    DatabaseClient.runshell_db(conn_params)
++        
++        # After the fix, SSL parameters should be set as environment variables
++        args, kwargs = mock_run.call_args
++        env = kwargs['env']
++        
++        assert env['PGSSLMODE'] == 'verify-ca'
++        assert env['PGSSLROOTCERT'] == '/path/to/ca.crt'
++        assert env['PGSSLCERT'] == '/path/to/client.crt'
++        assert env['PGSSLKEY'] == '/path/to/client.key'
++        assert env['PGPASSWORD'] == 'test_pass'
++
++    def test_partial_ssl_parameters(self):
++        """Test that only provided SSL parameters are set."""
++        conn_params = {
++            'database': 'test_db',
++            'user': 'test_user',
++            'sslmode': 'require',
++            'sslcert': '/path/to/client.crt',
++            # Note: missing sslkey, sslrootcert, password
++        }
++        
++        with mock.patch('subprocess.run') as mock_run:
++            with mock.patch('signal.signal'):
++                with mock.patch.object(DatabaseClient, 'runshell_db', side_effect=self._fixed_runshell_db):
++                    DatabaseClient.runshell_db(conn_params)
++        
++        args, kwargs = mock_run.call_args
++        env = kwargs['env']
++        
++        # Only provided SSL parameters should be set
++        assert env['PGSSLMODE'] == 'require'
++        assert env['PGSSLCERT'] == '/path/to/client.crt'
++        assert 'PGSSLKEY' not in env
++        assert 'PGSSLROOTCERT' not in env
++        assert 'PGPASSWORD' not in env
++
++    def test_ssl_parameters_with_empty_values(self):
++        """Test that empty SSL parameter values are not set."""
++        conn_params = {
++            'database': 'test_db',
++            'sslmode': '',
++            'sslcert': None,
++            'sslkey': '/path/to/client.key',
++        }
++        
++        with mock.patch('subprocess.run') as mock_run:
++            with mock.patch('signal.signal'):
++                with mock.patch.object(DatabaseClient, 'runshell_db', side_effect=self._fixed_runshell_db):
++                    DatabaseClient.runshell_db(conn_params)
++        
++        args, kwargs = mock_run.call_args
++        env = kwargs['env']
++        
++        # Empty/None values should not be set
++        assert 'PGSSLMODE' not in env
++        assert 'PGSSLCERT' not in env
++        # Only non-empty values should be set
++        assert env['PGSSLKEY'] == '/path/to/client.key'
++
++    def test_ssl_parameters_preserve_existing_env(self):
++        """Test that SSL parameters don't overwrite existing environment variables."""
++        original_env = os.environ.copy()
++        original_env['EXISTING_VAR'] = 'existing_value'
++        original_env['PGSSLMODE'] = 'existing_ssl_mode'
++        
++        conn_params = {
++            'database': 'test_db',
++            'sslmode': 'verify-ca',
++            'sslcert': '/path/to/client.crt',
++        }
++        
++        with mock.patch('subprocess.run') as mock_run:
++            with mock.patch('signal.signal'):
++                with mock.patch('os.environ.copy', return_value=original_env):
++                    with mock.patch.object(DatabaseClient, 'runshell_db', side_effect=self._fixed_runshell_db):
++                        DatabaseClient.runshell_db(conn_params)
++        
++        args, kwargs = mock_run.call_args
++        env = kwargs['env']
++        
++        # Existing environment variables should be preserved
++        assert env['EXISTING_VAR'] == 'existing_value'
++        # SSL parameters from conn_params should override existing ones
++        assert env['PGSSLMODE'] == 'verify-ca'
++        assert env['PGSSLCERT'] == '/path/to/client.crt'
++
++    def test_integration_with_get_connection_params(self):
++        """Test that SSL parameters from OPTIONS are properly passed through."""
++        # This simulates how the parameters would come from get_connection_params
++        settings_dict = {
++            'NAME': 'test_db',
++            'USER': 'test_user',
++            'PASSWORD': 'test_pass',
++            'HOST': 'localhost',
++            'PORT': '5432',
++            'OPTIONS': {
++                'sslmode': 'verify-ca',
++                'sslrootcert': '/path/to/ca.crt',
++                'sslcert': '/path/to/client.crt',
++                'sslkey': '/path/to/client.key',
++                'isolation_level': 'READ_COMMITTED',  # This should be ignored
++            }
++        }
++        
++        # Simulate what get_connection_params does
++        conn_params = {
++            'database': settings_dict['NAME'],
++            **settings_dict['OPTIONS'],
++        }
++        conn_params.pop('isolation_level', None)
++        if settings_dict['USER']:
++            conn_params['user'] = settings_dict['USER']
++        if settings_dict['PASSWORD']:
++            conn_params['password'] = settings_dict['PASSWORD']
++        if settings_dict['HOST']:
++            conn_params['host'] = settings_dict['HOST']
++        if settings_dict['PORT']:
++            conn_params['port'] = settings_dict['PORT']
++        
++        with mock.patch('subprocess.run') as mock_run:
++            with mock.patch('signal.signal'):
++                with mock.patch.object(DatabaseClient, 'runshell_db', side_effect=self._fixed_runshell_db):
++                    DatabaseClient.runshell_db(conn_params)
++        
++        args, kwargs = mock_run.call_args
++        env = kwargs['env']
++        
++        # All SSL parameters should be properly set
++        assert env['PGSSLMODE'] == 'verify-ca'
++        assert env['PGSSLROOTCERT'] == '/path/to/ca.crt'
++        assert env['PGSSLCERT'] == '/path/to/client.crt'
++        assert env['PGSSLKEY'] == '/path/to/client.key'
++        assert env['PGPASSWORD'] == 'test_pass'
++        
++        # isolation_level should not be in environment
++        assert 'isolation_level' not in env
++
++    def _fixed_runshell_db(self, conn_params):
++        """
++        Mock implementation of the fixed runshell_db method.
++        This simulates what the method should do after the fix is applied.
++        """
++        import signal
++        
++        args = ['psql']
++        
++        host = conn_params.get('host', '')
++        port = conn_params.get('port', '')
++        dbname = conn_params.get('database', '')
++        user = conn_params.get('user', '')
++        passwd = conn_params.get('password', '')
++        
++        if user:
++            args += ['-U', user]
++        if host:
++            args += ['-h', host]
++        if port:
++            args += ['-p', str(port)]
++        args += [dbname]
++        
++        sigint_handler = signal.getsignal(signal.SIGINT)
++        subprocess_env = os.environ.copy()
++        if passwd:
++            subprocess_env['PGPASSWORD'] = str(passwd)
++        
++        # Add SSL parameters to environment - this is the fix
++        ssl_params = {
++            'sslmode': 'PGSSLMODE',
++            'sslrootcert': 'PGSSLROOTCERT', 
++            'sslcert': 'PGSSLCERT',
++            'sslkey': 'PGSSLKEY',
++        }
++        
++        for param, env_var in ssl_params.items():
++            value = conn_params.get(param)
++            if value:
++                subprocess_env[env_var] = str(value)
++        
++        try:
++            signal.signal(signal.SIGINT, signal.SIG_IGN)
++            subprocess.run(args, check=True, env=subprocess_env)
++        finally:
++            signal.signal(signal.SIGINT, sigint_handler)

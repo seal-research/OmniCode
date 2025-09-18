@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/core/sympify.py b/sympy/core/sympify.py\nindex a3f1ce2851..f86ab5b049 100644\n--- a/sympy/core/sympify.py\n+++ b/sympy/core/sympify.py\n@@ -507,13 +507,14 @@ def kernS(s):\n                     break\n             s = s[:j] + \")\" + s[j:]\n             i = j + 2  # the first char after 2nd )\n+        kern = None\n         if ' ' in s:\n             # get a unique kern\n             kern = '_'\n             while kern in s:\n                 kern += choice(string.ascii_letters + string.digits)\n             s = s.replace(' ', kern)\n-        hit = kern in s\n+        hit = kern is not None and kern in s\n \n     for i in range(2):\n         try:\n"
+}

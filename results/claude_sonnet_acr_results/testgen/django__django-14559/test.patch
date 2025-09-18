@@ -1,0 +1,244 @@
+--- a/tests/test_bulk_update_return_value.py
++++ b/tests/test_bulk_update_return_value.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++
++
++class TestModel(models.Model):
++    """Test model for bulk_update return value tests."""
++    name = models.CharField(max_length=100)
++    value = models.IntegerField(default=0)
++    
++    class Meta:
++        app_label = 'test_bulk_update'
++
++
++class BulkUpdateReturnValueTest(TestCase):
++    """Test that bulk_update returns the number of rows matched."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        # Create the test table
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(TestModel)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Clean up the test table
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(TestModel)
++        super().tearDownClass()
++    
++    def setUp(self):
++        """Set up test data."""
++        # Clear any existing data
++        TestModel.objects.all().delete()
++        
++        # Create test objects
++        self.obj1 = TestModel.objects.create(name="test1", value=1)
++        self.obj2 = TestModel.objects.create(name="test2", value=2)
++        self.obj3 = TestModel.objects.create(name="test3", value=3)
++        self.obj4 = TestModel.objects.create(name="test4", value=4)
++        self.obj5 = TestModel.objects.create(name="test5", value=5)
++    
++    def test_bulk_update_returns_none_before_fix(self):
++        """Test that bulk_update currently returns None (demonstrates the bug)."""
++        # Update some objects
++        self.obj1.name = "updated1"
++        self.obj2.name = "updated2"
++        
++        # This test demonstrates the current bug - bulk_update returns None
++        result = TestModel.objects.bulk_update([self.obj1, self.obj2], ['name'])
++        
++        # Before the fix, this should be None
++        self.assertIsNone(result)
++    
++    def test_bulk_update_should_return_count_after_fix(self):
++        """Test that bulk_update returns the number of rows updated after fix."""
++        # Update some objects
++        self.obj1.name = "updated1"
++        self.obj2.name = "updated2"
++        self.obj3.name = "updated3"
++        
++        # After the fix, this should return the number of rows updated
++        result = TestModel.objects.bulk_update([self.obj1, self.obj2, self.obj3], ['name'])
++        
++        # This test will fail before the fix is applied
++        self.assertEqual(result, 3)
++    
++    def test_bulk_update_return_value_single_object(self):
++        """Test bulk_update return value with single object."""
++        self.obj1.name = "single_update"
++        
++        result = TestModel.objects.bulk_update([self.obj1], ['name'])
++        self.assertEqual(result, 1)
++    
++    def test_bulk_update_return_value_multiple_fields(self):
++        """Test bulk_update return value when updating multiple fields."""
++        self.obj1.name = "multi_field1"
++        self.obj1.value = 100
++        self.obj2.name = "multi_field2"
++        self.obj2.value = 200
++        
++        result = TestModel.objects.bulk_update([self.obj1, self.obj2], ['name', 'value'])
++        self.assertEqual(result, 2)
++    
++    def test_bulk_update_return_value_empty_list(self):
++        """Test bulk_update return value with empty object list."""
++        result = TestModel.objects.bulk_update([], ['name'])
++        # Should return 0 for empty list, not None
++        self.assertEqual(result, 0)
++    
++    def test_bulk_update_return_value_with_batching(self):
++        """Test bulk_update return value when batching is involved."""
++        # Create more objects to test batching
++        extra_objects = []
++        for i in range(10):
++            obj = TestModel.objects.create(name=f"batch_test_{i}", value=i)
++            obj.name = f"batch_updated_{i}"
++            extra_objects.append(obj)
++        
++        # Use small batch size to force multiple batches
++        result = TestModel.objects.bulk_update(extra_objects, ['name'], batch_size=3)
++        self.assertEqual(result, 10)
++    
++    def test_bulk_update_return_value_partial_match(self):
++        """Test bulk_update return value when some objects don't exist in DB."""
++        # Create an object that exists in memory but not in DB
++        non_existent_obj = TestModel(id=9999, name="non_existent", value=999)
++        
++        # Update existing object
++        self.obj1.name = "partial_update"
++        
++        # This should only update the existing object
++        result = TestModel.objects.bulk_update([self.obj1, non_existent_obj], ['name'])
++        # Should return 1 (only the existing object was updated)
++        self.assertEqual(result, 1)
++    
++    def test_bulk_update_return_value_no_changes(self):
++        """Test bulk_update return value when no actual changes are made."""
++        # Don't modify the objects, just pass them to bulk_update
++        result = TestModel.objects.bulk_update([self.obj1, self.obj2], ['name'])
++        # Even if no changes are made, the rows are still "matched" and updated
++        self.assertEqual(result, 2)
++    
++    def test_bulk_update_consistency_with_update(self):
++        """Test that bulk_update return value is consistent with update() method."""
++        # Test update() method return value
++        update_result = TestModel.objects.filter(id__in=[self.obj1.id, self.obj2.id]).update(name="consistency_test")
++        self.assertEqual(update_result, 2)
++        
++        # Reset the names and test bulk_update
++        self.obj1.name = "bulk_consistency_test"
++        self.obj2.name = "bulk_consistency_test"
++        
++        bulk_update_result = TestModel.objects.bulk_update([self.obj1, self.obj2], ['name'])
++        self.assertEqual(bulk_update_result, 2)
++        
++        # Both methods should return the same count for the same number of objects
++        self.assertEqual(update_result, bulk_update_result)
++
++
++class BulkUpdateReturnValueTransactionTest(TransactionTestCase):
++    """Test bulk_update return value behavior with transactions."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        # Create the test table
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(TestModel)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Clean up the test table
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(TestModel)
++        super().tearDownClass()
++    
++    def setUp(self):
++        """Set up test data."""
++        # Clear any existing data
++        TestModel.objects.all().delete()
++        
++        # Create test objects
++        self.obj1 = TestModel.objects.create(name="trans_test1", value=1)
++        self.obj2 = TestModel.objects.create(name="trans_test2", value=2)
++    
++    def test_bulk_update_return_value_in_transaction(self):
++        """Test that bulk_update return value works correctly within transactions."""
++        from django.db import transaction
++        
++        self.obj1.name = "trans_updated1"
++        self.obj2.name = "trans_updated2"
++        
++        with transaction.atomic():
++            result = TestModel.objects.bulk_update([self.obj1, self.obj2], ['name'])
++            self.assertEqual(result, 2)
++        
++        # Verify the updates were actually applied
++        self.obj1.refresh_from_db()
++        self.obj2.refresh_from_db()
++        self.assertEqual(self.obj1.name, "trans_updated1")
++        self.assertEqual(self.obj2.name, "trans_updated2")
++
++
++class BulkUpdateReturnValueEdgeCaseTest(TestCase):
++    """Test edge cases for bulk_update return value."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        # Create the test table
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(TestModel)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Clean up the test table
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(TestModel)
++        super().tearDownClass()
++    
++    def setUp(self):
++        """Set up test data."""
++        # Clear any existing data
++        TestModel.objects.all().delete()
++    
++    def test_bulk_update_return_value_with_generator(self):
++        """Test bulk_update return value when passing a generator."""
++        # Create objects
++        objects = [TestModel.objects.create(name=f"gen_test_{i}", value=i) for i in range(3)]
++        
++        # Modify objects and create generator
++        for obj in objects:
++            obj.name = f"gen_updated_{obj.value}"
++        
++        obj_generator = (obj for obj in objects)
++        result = TestModel.objects.bulk_update(obj_generator, ['name'])
++        self.assertEqual(result, 3)
++    
++    def test_bulk_update_return_value_type_consistency(self):
++        """Test that bulk_update always returns an integer."""
++        # Test with empty list
++        result = TestModel.objects.bulk_update([], ['name'])
++        self.assertIsInstance(result, int)
++        self.assertEqual(result, 0)
++        
++        # Test with objects
++        obj = TestModel.objects.create(name="type_test", value=1)
++        obj.name = "type_updated"
++        
++        result = TestModel.objects.bulk_update([obj], ['name'])
++        self.assertIsInstance(result, int)
++        self.assertEqual(result, 1)

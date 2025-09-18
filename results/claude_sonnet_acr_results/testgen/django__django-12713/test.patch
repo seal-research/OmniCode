@@ -1,0 +1,262 @@
+--- a/tests/admin_widgets/test_formfield_for_manytomany.py
++++ b/tests/admin_widgets/test_formfield_for_manytomany.py
+-# Empty if creating new file
++import pytest
++from django.contrib import admin
++from django.contrib.admin.options import BaseModelAdmin
++from django.contrib.admin.sites import AdminSite
++from django.db import models
++from django.forms import widgets
++from django.test import TestCase, RequestFactory
++
++
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'admin_widgets'
++
++
++class Book(models.Model):
++    title = models.CharField(max_length=100)
++    authors = models.ManyToManyField(Author)
++    
++    class Meta:
++        app_label = 'admin_widgets'
++
++
++class CustomSelectMultiple(widgets.SelectMultiple):
++    """Custom widget for testing widget override functionality."""
++    pass
++
++
++class BookAdmin(BaseModelAdmin):
++    model = Book
++
++
++class TestFormfieldForManyToManyWidgetOverride(TestCase):
++    """Test suite for formfield_for_manytomany widget override functionality."""
++    
++    def setUp(self):
++        self.site = AdminSite()
++        self.admin = BookAdmin(Book, self.site)
++        self.factory = RequestFactory()
++        self.request = self.factory.get('/')
++        self.authors_field = Book._meta.get_field('authors')
++    
++    def test_formfield_for_manytomany_respects_widget_parameter(self):
++        """Test that formfield_for_manytomany respects explicitly passed widget parameter."""
++        custom_widget = CustomSelectMultiple()
++        
++        # Call formfield_for_manytomany with custom widget
++        formfield = self.admin.formfield_for_manytomany(
++            self.authors_field, 
++            self.request, 
++            widget=custom_widget
++        )
++        
++        # The custom widget should be preserved, not overridden
++        self.assertIsInstance(formfield.widget, CustomSelectMultiple)
++        self.assertEqual(formfield.widget, custom_widget)
++    
++    def test_formfield_for_manytomany_default_widget_when_none_provided(self):
++        """Test that formfield_for_manytomany uses default widget when none is provided."""
++        # Call formfield_for_manytomany without widget parameter
++        formfield = self.admin.formfield_for_manytomany(
++            self.authors_field, 
++            self.request
++        )
++        
++        # Should use default SelectMultiple widget
++        self.assertIsInstance(formfield.widget, widgets.SelectMultiple)
++        self.assertNotIsInstance(formfield.widget, CustomSelectMultiple)
++    
++    def test_formfield_for_manytomany_autocomplete_widget_override(self):
++        """Test widget override works even when field is in autocomplete_fields."""
++        # Create admin with autocomplete fields
++        class BookAdminWithAutocomplete(BaseModelAdmin):
++            model = Book
++            
++            def get_autocomplete_fields(self, request):
++                return ['authors']
++        
++        admin_with_autocomplete = BookAdminWithAutocomplete(Book, self.site)
++        custom_widget = CustomSelectMultiple()
++        
++        # Call with custom widget - should override autocomplete widget
++        formfield = admin_with_autocomplete.formfield_for_manytomany(
++            self.authors_field,
++            self.request,
++            widget=custom_widget
++        )
++        
++        # Custom widget should be preserved, not AutocompleteSelectMultiple
++        self.assertIsInstance(formfield.widget, CustomSelectMultiple)
++        self.assertEqual(formfield.widget, custom_widget)
++    
++    def test_formfield_for_manytomany_raw_id_widget_override(self):
++        """Test widget override works even when field is in raw_id_fields."""
++        # Create admin with raw_id_fields
++        class BookAdminWithRawId(BaseModelAdmin):
++            model = Book
++            raw_id_fields = ['authors']
++        
++        admin_with_raw_id = BookAdminWithRawId(Book, self.site)
++        custom_widget = CustomSelectMultiple()
++        
++        # Call with custom widget - should override raw_id widget
++        formfield = admin_with_raw_id.formfield_for_manytomany(
++            self.authors_field,
++            self.request,
++            widget=custom_widget
++        )
++        
++        # Custom widget should be preserved, not ManyToManyRawIdWidget
++        self.assertIsInstance(formfield.widget, CustomSelectMultiple)
++        self.assertEqual(formfield.widget, custom_widget)
++    
++    def test_formfield_for_manytomany_filter_horizontal_widget_override(self):
++        """Test widget override works even when field is in filter_horizontal."""
++        # Create admin with filter_horizontal
++        class BookAdminWithFilterHorizontal(BaseModelAdmin):
++            model = Book
++            filter_horizontal = ['authors']
++        
++        admin_with_filter = BookAdminWithFilterHorizontal(Book, self.site)
++        custom_widget = CustomSelectMultiple()
++        
++        # Call with custom widget - should override FilteredSelectMultiple widget
++        formfield = admin_with_filter.formfield_for_manytomany(
++            self.authors_field,
++            self.request,
++            widget=custom_widget
++        )
++        
++        # Custom widget should be preserved, not FilteredSelectMultiple
++        self.assertIsInstance(formfield.widget, CustomSelectMultiple)
++        self.assertEqual(formfield.widget, custom_widget)
++    
++    def test_formfield_for_manytomany_filter_vertical_widget_override(self):
++        """Test widget override works even when field is in filter_vertical."""
++        # Create admin with filter_vertical
++        class BookAdminWithFilterVertical(BaseModelAdmin):
++            model = Book
++            filter_vertical = ['authors']
++        
++        admin_with_filter = BookAdminWithFilterVertical(Book, self.site)
++        custom_widget = CustomSelectMultiple()
++        
++        # Call with custom widget - should override FilteredSelectMultiple widget
++        formfield = admin_with_filter.formfield_for_manytomany(
++            self.authors_field,
++            self.request,
++            widget=custom_widget
++        )
++        
++        # Custom widget should be preserved, not FilteredSelectMultiple
++        self.assertIsInstance(formfield.widget, CustomSelectMultiple)
++        self.assertEqual(formfield.widget, custom_widget)
++    
++    def test_formfield_for_manytomany_preserves_other_kwargs(self):
++        """Test that other kwargs are preserved when widget is overridden."""
++        custom_widget = CustomSelectMultiple()
++        custom_queryset = Author.objects.none()
++        
++        # Call with custom widget and other parameters
++        formfield = self.admin.formfield_for_manytomany(
++            self.authors_field,
++            self.request,
++            widget=custom_widget,
++            queryset=custom_queryset,
++            help_text="Custom help text"
++        )
++        
++        # Widget should be custom
++        self.assertIsInstance(formfield.widget, CustomSelectMultiple)
++        # Other parameters should be preserved
++        self.assertEqual(formfield.queryset, custom_queryset)
++        self.assertEqual(formfield.help_text, "Custom help text")
++    
++    def test_formfield_for_manytomany_widget_none_uses_default(self):
++        """Test that passing widget=None still allows default widget logic."""
++        # Call with widget=None
++        formfield = self.admin.formfield_for_manytomany(
++            self.authors_field,
++            self.request,
++            widget=None
++        )
++        
++        # Should still get a widget (the default one)
++        self.assertIsNotNone(formfield.widget)
++        self.assertIsInstance(formfield.widget, widgets.SelectMultiple)
++
++
++class TestFormfieldForManyToManyBugReproduction(TestCase):
++    """Test that reproduces the original bug before the fix."""
++    
++    def setUp(self):
++        self.site = AdminSite()
++        self.admin = BookAdmin(Book, self.site)
++        self.factory = RequestFactory()
++        self.request = self.factory.get('/')
++        self.authors_field = Book._meta.get_field('authors')
++    
++    def test_bug_reproduction_widget_override_ignored(self):
++        """
++        This test reproduces the original bug where widget parameter was ignored.
++        This test should FAIL before the fix is applied and PASS after the fix.
++        """
++        custom_widget = CustomSelectMultiple()
++        
++        # Before the fix, this would ignore the custom widget
++        formfield = self.admin.formfield_for_manytomany(
++            self.authors_field,
++            self.request,
++            widget=custom_widget
++        )
++        
++        # This assertion should fail before the fix (widget gets overridden)
++        # and pass after the fix (widget is preserved)
++        self.assertIsInstance(formfield.widget, CustomSelectMultiple,
++                            "Custom widget should be preserved, not overridden by admin defaults")
++        self.assertEqual(formfield.widget, custom_widget,
++                       "The exact widget instance should be preserved")
++
++
++class TestFormfieldForForeignKeyComparison(TestCase):
++    """Test to verify formfield_for_foreignkey behavior for comparison."""
++    
++    def setUp(self):
++        self.site = AdminSite()
++        self.admin = BookAdmin(Book, self.site)
++        self.factory = RequestFactory()
++        self.request = self.factory.get('/')
++        
++        # Create a ForeignKey field for comparison
++        class Publisher(models.Model):
++            name = models.CharField(max_length=100)
++            class Meta:
++                app_label = 'admin_widgets'
++        
++        class BookWithPublisher(models.Model):
++            title = models.CharField(max_length=100)
++            publisher = models.ForeignKey(Publisher, on_delete=models.CASCADE)
++            class Meta:
++                app_label = 'admin_widgets'
++        
++        self.publisher_field = BookWithPublisher._meta.get_field('publisher')
++    
++    def test_formfield_for_foreignkey_respects_widget_parameter(self):
++        """Test that formfield_for_foreignkey respects widget parameter (existing behavior)."""
++        custom_widget = widgets.Select()
++        
++        # Call formfield_for_foreignkey with custom widget
++        formfield = self.admin.formfield_for_foreignkey(
++            self.publisher_field,
++            self.request,
++            widget=custom_widget
++        )
++        
++        # The custom widget should be preserved
++        self.assertEqual(formfield.widget, custom_widget)
++        self.assertIsInstance(formfield.widget, widgets.Select)

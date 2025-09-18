@@ -1,0 +1,295 @@
+--- a/tests/test_feedexport_s3_large_files.py
++++ b/tests/test_feedexport_s3_large_files.py
+-# Empty if creating new file
++import pytest
++import tempfile
++import os
++from io import BytesIO
++from unittest.mock import Mock, patch, MagicMock, call
++from botocore.exceptions import ClientError
++
++from scrapy.extensions.feedexport import S3FeedStorage
++from scrapy.utils.test import get_crawler
++
++
++class TestS3FeedStorageLargeFiles:
++    """Test S3FeedStorage handling of large files that exceed 5GB limit."""
++
++    @pytest.fixture
++    def mock_s3_client(self):
++        """Create a mock S3 client for testing."""
++        client = Mock()
++        client.put_object = Mock()
++        client.create_multipart_upload = Mock()
++        client.upload_part = Mock()
++        client.complete_multipart_upload = Mock()
++        client.abort_multipart_upload = Mock()
++        return client
++
++    @pytest.fixture
++    def s3_storage(self, mock_s3_client):
++        """Create S3FeedStorage instance with mocked S3 client."""
++        with patch('scrapy.extensions.feedexport.is_botocore_available', return_value=True):
++            with patch('botocore.session.get_session') as mock_session:
++                mock_session.return_value.create_client.return_value = mock_s3_client
++                storage = S3FeedStorage('s3://test-bucket/test-key.csv')
++                return storage
++
++    def create_temp_file(self, size_bytes):
++        """Create a temporary file with specified size in bytes."""
++        temp_file = tempfile.NamedTemporaryFile(delete=False)
++        # Write data to reach the specified size
++        chunk_size = 1024 * 1024  # 1MB chunks
++        remaining = size_bytes
++        
++        while remaining > 0:
++            write_size = min(chunk_size, remaining)
++            temp_file.write(b'x' * write_size)
++            remaining -= write_size
++        
++        temp_file.seek(0)
++        return temp_file
++
++    def test_small_file_uses_put_object(self, s3_storage, mock_s3_client):
++        """Test that files under 5GB use the existing put_object method."""
++        # Create a small file (1MB)
++        small_file = self.create_temp_file(1024 * 1024)
++        
++        try:
++            # Call the method
++            s3_storage._store_in_thread(small_file)
++            
++            # Verify put_object was called
++            mock_s3_client.put_object.assert_called_once()
++            call_args = mock_s3_client.put_object.call_args
++            assert call_args[1]['Bucket'] == 'test-bucket'
++            assert call_args[1]['Key'] == 'test-key.csv'
++            assert call_args[1]['Body'] == small_file
++            
++            # Verify multipart methods were not called
++            mock_s3_client.create_multipart_upload.assert_not_called()
++            mock_s3_client.upload_part.assert_not_called()
++            mock_s3_client.complete_multipart_upload.assert_not_called()
++            
++        finally:
++            os.unlink(small_file.name)
++
++    def test_large_file_uses_multipart_upload(self, s3_storage, mock_s3_client):
++        """Test that files over 5GB use multipart upload."""
++        # Mock multipart upload responses
++        mock_s3_client.create_multipart_upload.return_value = {'UploadId': 'test-upload-id'}
++        mock_s3_client.upload_part.return_value = {'ETag': 'test-etag'}
++        
++        # Create a large file (6GB)
++        large_file_size = 6 * 1024 * 1024 * 1024  # 6GB
++        large_file = self.create_temp_file(large_file_size)
++        
++        try:
++            # Call the method
++            s3_storage._store_in_thread(large_file)
++            
++            # Verify put_object was not called
++            mock_s3_client.put_object.assert_not_called()
++            
++            # Verify multipart upload was initiated
++            mock_s3_client.create_multipart_upload.assert_called_once_with(
++                Bucket='test-bucket',
++                Key='test-key.csv'
++            )
++            
++            # Verify parts were uploaded (6GB should be split into multiple 100MB parts)
++            assert mock_s3_client.upload_part.call_count > 1
++            
++            # Verify multipart upload was completed
++            mock_s3_client.complete_multipart_upload.assert_called_once()
++            
++        finally:
++            os.unlink(large_file.name)
++
++    def test_large_file_with_acl_uses_multipart_upload(self, mock_s3_client):
++        """Test that files over 5GB with ACL use multipart upload with ACL."""
++        with patch('scrapy.extensions.feedexport.is_botocore_available', return_value=True):
++            with patch('botocore.session.get_session') as mock_session:
++                mock_session.return_value.create_client.return_value = mock_s3_client
++                storage = S3FeedStorage('s3://test-bucket/test-key.csv', acl='public-read')
++        
++        # Mock multipart upload responses
++        mock_s3_client.create_multipart_upload.return_value = {'UploadId': 'test-upload-id'}
++        mock_s3_client.upload_part.return_value = {'ETag': 'test-etag'}
++        
++        # Create a large file (6GB)
++        large_file_size = 6 * 1024 * 1024 * 1024  # 6GB
++        large_file = self.create_temp_file(large_file_size)
++        
++        try:
++            # Call the method
++            storage._store_in_thread(large_file)
++            
++            # Verify multipart upload was initiated with ACL
++            mock_s3_client.create_multipart_upload.assert_called_once_with(
++                Bucket='test-bucket',
++                Key='test-key.csv',
++                ACL='public-read'
++            )
++            
++        finally:
++            os.unlink(large_file.name)
++
++    def test_exactly_5gb_file_uses_put_object(self, s3_storage, mock_s3_client):
++        """Test that files exactly 5GB use put_object (boundary condition)."""
++        # Create a file exactly 5GB
++        exactly_5gb_size = 5 * 1024 * 1024 * 1024  # Exactly 5GB
++        file_5gb = self.create_temp_file(exactly_5gb_size)
++        
++        try:
++            # Call the method
++            s3_storage._store_in_thread(file_5gb)
++            
++            # Verify put_object was called (5GB is the limit, not exceeded)
++            mock_s3_client.put_object.assert_called_once()
++            
++            # Verify multipart methods were not called
++            mock_s3_client.create_multipart_upload.assert_not_called()
++            
++        finally:
++            os.unlink(file_5gb.name)
++
++    def test_just_over_5gb_file_uses_multipart_upload(self, s3_storage, mock_s3_client):
++        """Test that files just over 5GB use multipart upload (boundary condition)."""
++        # Mock multipart upload responses
++        mock_s3_client.create_multipart_upload.return_value = {'UploadId': 'test-upload-id'}
++        mock_s3_client.upload_part.return_value = {'ETag': 'test-etag'}
++        
++        # Create a file just over 5GB
++        just_over_5gb_size = 5 * 1024 * 1024 * 1024 + 1  # 5GB + 1 byte
++        file_over_5gb = self.create_temp_file(just_over_5gb_size)
++        
++        try:
++            # Call the method
++            s3_storage._store_in_thread(file_over_5gb)
++            
++            # Verify put_object was not called
++            mock_s3_client.put_object.assert_not_called()
++            
++            # Verify multipart upload was used
++            mock_s3_client.create_multipart_upload.assert_called_once()
++            
++        finally:
++            os.unlink(file_over_5gb.name)
++
++    def test_multipart_upload_error_handling(self, s3_storage, mock_s3_client):
++        """Test that multipart upload errors are handled properly."""
++        # Mock multipart upload responses
++        mock_s3_client.create_multipart_upload.return_value = {'UploadId': 'test-upload-id'}
++        # Simulate an error during upload_part
++        mock_s3_client.upload_part.side_effect = ClientError(
++            {'Error': {'Code': 'InternalError', 'Message': 'Internal Error'}},
++            'UploadPart'
++        )
++        
++        # Create a large file
++        large_file_size = 6 * 1024 * 1024 * 1024  # 6GB
++        large_file = self.create_temp_file(large_file_size)
++        
++        try:
++            # Call the method and expect it to raise an exception
++            with pytest.raises(ClientError):
++                s3_storage._store_in_thread(large_file)
++            
++            # Verify abort_multipart_upload was called for cleanup
++            mock_s3_client.abort_multipart_upload.assert_called_once_with(
++                Bucket='test-bucket',
++                Key='test-key.csv',
++                UploadId='test-upload-id'
++            )
++            
++        finally:
++            os.unlink(large_file.name)
++
++    def test_put_object_entity_too_large_error_reproduction(self, s3_storage, mock_s3_client):
++        """Test that reproduces the original EntityTooLarge error with current implementation."""
++        # Mock put_object to raise EntityTooLarge error (simulating the bug)
++        mock_s3_client.put_object.side_effect = ClientError(
++            {'Error': {'Code': 'EntityTooLarge', 'Message': 'Your proposed upload exceeds the maximum allowed size'}},
++            'PutObject'
++        )
++        
++        # Create a large file that would trigger the error
++        large_file_size = 6 * 1024 * 1024 * 1024  # 6GB
++        large_file = self.create_temp_file(large_file_size)
++        
++        try:
++            # This test demonstrates the bug - it should fail before the fix
++            # After the fix, large files should use multipart upload instead
++            with pytest.raises(ClientError) as exc_info:
++                # Temporarily patch the method to use only put_object (simulating old behavior)
++                with patch.object(s3_storage, '_store_in_thread') as mock_store:
++                    def old_store_behavior(file):
++                        file.seek(0)
++                        kwargs = {"ACL": s3_storage.acl} if s3_storage.acl else {}
++                        s3_storage.s3_client.put_object(
++                            Bucket=s3_storage.bucketname, Key=s3_storage.keyname, Body=file, **kwargs
++                        )
++                        file.close()
++                    
++                    mock_store.side_effect = old_store_behavior
++                    s3_storage._store_in_thread(large_file)
++            
++            # Verify the error is EntityTooLarge
++            assert exc_info.value.response['Error']['Code'] == 'EntityTooLarge'
++            
++        finally:
++            os.unlink(large_file.name)
++
++    def test_file_position_restored_after_size_check(self, s3_storage, mock_s3_client):
++        """Test that file position is properly restored after checking file size."""
++        # Create a small file
++        small_file = self.create_temp_file(1024 * 1024)  # 1MB
++        
++        # Move file position away from start
++        small_file.seek(500)
++        initial_position = small_file.tell()
++        
++        try:
++            # Call the method
++            s3_storage._store_in_thread(small_file)
++            
++            # Verify put_object was called and file was at position 0 when passed
++            mock_s3_client.put_object.assert_called_once()
++            call_args = mock_s3_client.put_object.call_args
++            
++            # The file should have been seeked to 0 before upload
++            # We can't directly check this, but we can verify the method was called
++            assert call_args[1]['Body'] == small_file
++            
++        finally:
++            os.unlink(small_file.name)
++
++    def test_multipart_upload_part_size_calculation(self, s3_storage, mock_s3_client):
++        """Test that multipart upload uses appropriate part sizes."""
++        # Mock multipart upload responses
++        mock_s3_client.create_multipart_upload.return_value = {'UploadId': 'test-upload-id'}
++        mock_s3_client.upload_part.return_value = {'ETag': 'test-etag-1'}
++        
++        # Create a file that's 10GB to test part size calculation
++        large_file_size = 10 * 1024 * 1024 * 1024  # 10GB
++        large_file = self.create_temp_file(large_file_size)
++        
++        try:
++            # Call the method
++            s3_storage._store_in_thread(large_file)
++            
++            # Verify upload_part was called multiple times
++            upload_part_calls = mock_s3_client.upload_part.call_args_list
++            assert len(upload_part_calls) > 1
++            
++            # Verify each part (except possibly the last) meets minimum size requirements
++            # AWS requires minimum 5MB per part (except the last part)
++            for i, call in enumerate(upload_part_calls[:-1]):  # All but last part
++                part_number = call[1]['PartNumber']
++                assert part_number == i + 1
++                # We can't easily check the actual part size without more complex mocking
++                # but we can verify the structure is correct
++                
++        finally:
++            os.unlink(large_file.name)

@@ -1,0 +1,183 @@
+--- a/tests/queries/test_in_bulk.py
++++ b/tests/queries/test_in_bulk.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('queries')
++class InBulkUniqueConstraintTests(TestCase):
++    """Test QuerySet.in_bulk() with UniqueConstraint fields."""
++
++    def setUp(self):
++        """Set up test models with different uniqueness configurations."""
++        
++        # Model with traditional unique=True field
++        class ArticleWithUniqueField(models.Model):
++            slug = models.CharField(max_length=255, unique=True)
++            title = models.CharField(max_length=255)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        # Model with UniqueConstraint on single field
++        class ArticleWithUniqueConstraint(models.Model):
++            slug = models.CharField(max_length=255)
++            title = models.CharField(max_length=255)
++            
++            class Meta:
++                app_label = 'queries'
++                constraints = [
++                    models.UniqueConstraint(fields=['slug'], name='unique_slug')
++                ]
++        
++        # Model with UniqueConstraint on multiple fields
++        class ArticleWithMultiFieldConstraint(models.Model):
++            slug = models.CharField(max_length=255)
++            category = models.CharField(max_length=100)
++            title = models.CharField(max_length=255)
++            
++            class Meta:
++                app_label = 'queries'
++                constraints = [
++                    models.UniqueConstraint(fields=['slug', 'category'], name='unique_slug_category')
++                ]
++        
++        # Model with no uniqueness on the field
++        class ArticleWithoutUnique(models.Model):
++            slug = models.CharField(max_length=255)
++            title = models.CharField(max_length=255)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        # Model with both unique=True and UniqueConstraint
++        class ArticleWithBothUnique(models.Model):
++            slug = models.CharField(max_length=255, unique=True)
++            title = models.CharField(max_length=255)
++            
++            class Meta:
++                app_label = 'queries'
++                constraints = [
++                    models.UniqueConstraint(fields=['title'], name='unique_title')
++                ]
++        
++        self.ArticleWithUniqueField = ArticleWithUniqueField
++        self.ArticleWithUniqueConstraint = ArticleWithUniqueConstraint
++        self.ArticleWithMultiFieldConstraint = ArticleWithMultiFieldConstraint
++        self.ArticleWithoutUnique = ArticleWithoutUnique
++        self.ArticleWithBothUnique = ArticleWithBothUnique
++
++    def test_in_bulk_with_unique_field_works(self):
++        """Test that in_bulk works with traditional unique=True fields."""
++        # This should work (existing functionality)
++        result = self.ArticleWithUniqueField.objects.in_bulk(field_name='slug')
++        self.assertEqual(result, {})
++        
++        # Test with actual data
++        article = self.ArticleWithUniqueField.objects.create(slug='test-slug', title='Test')
++        result = self.ArticleWithUniqueField.objects.in_bulk(['test-slug'], field_name='slug')
++        self.assertEqual(result, {'test-slug': article})
++
++    def test_in_bulk_with_unique_constraint_should_work(self):
++        """Test that in_bulk should work with single-field UniqueConstraint (this is the bug)."""
++        # This currently fails but should work after the fix
++        try:
++            result = self.ArticleWithUniqueConstraint.objects.in_bulk(field_name='slug')
++            self.assertEqual(result, {})
++            
++            # Test with actual data
++            article = self.ArticleWithUniqueConstraint.objects.create(slug='test-slug', title='Test')
++            result = self.ArticleWithUniqueConstraint.objects.in_bulk(['test-slug'], field_name='slug')
++            self.assertEqual(result, {'test-slug': article})
++        except ValueError as e:
++            # This is the current bug - it should not raise this error
++            self.assertIn("in_bulk()'s field_name must be a unique field", str(e))
++            pytest.fail("in_bulk() should work with UniqueConstraint fields but currently fails")
++
++    def test_in_bulk_with_multi_field_constraint_should_fail(self):
++        """Test that in_bulk fails with multi-field UniqueConstraint."""
++        # This should still fail because the constraint is on multiple fields
++        with self.assertRaises(ValueError) as cm:
++            self.ArticleWithMultiFieldConstraint.objects.in_bulk(field_name='slug')
++        
++        self.assertIn("in_bulk()'s field_name must be a unique field", str(cm.exception))
++
++    def test_in_bulk_with_non_unique_field_should_fail(self):
++        """Test that in_bulk fails with non-unique fields."""
++        # This should fail (existing behavior)
++        with self.assertRaises(ValueError) as cm:
++            self.ArticleWithoutUnique.objects.in_bulk(field_name='slug')
++        
++        self.assertIn("in_bulk()'s field_name must be a unique field", str(cm.exception))
++
++    def test_in_bulk_with_pk_always_works(self):
++        """Test that in_bulk always works with pk field."""
++        # This should always work regardless of constraints
++        result = self.ArticleWithoutUnique.objects.in_bulk(field_name='pk')
++        self.assertEqual(result, {})
++        
++        result = self.ArticleWithUniqueConstraint.objects.in_bulk(field_name='pk')
++        self.assertEqual(result, {})
++
++    def test_in_bulk_with_both_unique_types(self):
++        """Test in_bulk with model that has both unique=True and UniqueConstraint fields."""
++        # Both should work
++        result = self.ArticleWithBothUnique.objects.in_bulk(field_name='slug')
++        self.assertEqual(result, {})
++        
++        try:
++            result = self.ArticleWithBothUnique.objects.in_bulk(field_name='title')
++            self.assertEqual(result, {})
++        except ValueError:
++            pytest.fail("in_bulk() should work with UniqueConstraint fields")
++
++    def test_in_bulk_with_unique_constraint_and_data(self):
++        """Test in_bulk with UniqueConstraint field and actual data."""
++        # Create test data
++        article1 = self.ArticleWithUniqueConstraint.objects.create(slug='slug1', title='Title 1')
++        article2 = self.ArticleWithUniqueConstraint.objects.create(slug='slug2', title='Title 2')
++        
++        try:
++            # Test with specific slugs
++            result = self.ArticleWithUniqueConstraint.objects.in_bulk(['slug1', 'slug2'], field_name='slug')
++            expected = {'slug1': article1, 'slug2': article2}
++            self.assertEqual(result, expected)
++            
++            # Test with all objects
++            result = self.ArticleWithUniqueConstraint.objects.in_bulk(field_name='slug')
++            self.assertEqual(result, expected)
++            
++            # Test with non-existent slug
++            result = self.ArticleWithUniqueConstraint.objects.in_bulk(['nonexistent'], field_name='slug')
++            self.assertEqual(result, {})
++            
++        except ValueError:
++            pytest.fail("in_bulk() should work with UniqueConstraint fields")
++
++    def test_in_bulk_edge_cases_with_unique_constraint(self):
++        """Test edge cases for in_bulk with UniqueConstraint."""
++        try:
++            # Empty id_list
++            result = self.ArticleWithUniqueConstraint.objects.in_bulk([], field_name='slug')
++            self.assertEqual(result, {})
++            
++            # None id_list (should return all objects)
++            result = self.ArticleWithUniqueConstraint.objects.in_bulk(None, field_name='slug')
++            self.assertEqual(result, {})
++            
++        except ValueError:
++            pytest.fail("in_bulk() should work with UniqueConstraint fields")
++
++    def test_in_bulk_error_message_unchanged(self):
++        """Test that error messages remain the same for non-unique fields."""
++        with self.assertRaises(ValueError) as cm:
++            self.ArticleWithoutUnique.objects.in_bulk(field_name='slug')
++        
++        # Error message should be unchanged
++        self.assertEqual(
++            str(cm.exception),
++            "in_bulk()'s field_name must be a unique field but 'slug' isn't."
++        )

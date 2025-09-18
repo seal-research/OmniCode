@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/enums.py b/django/db/models/enums.py\nindex f48143ddaf..ac818cdf28 100644\n--- a/django/db/models/enums.py\n+++ b/django/db/models/enums.py\n@@ -61,6 +61,8 @@ class ChoicesMeta(enum.EnumMeta):\n class Choices(enum.Enum, metaclass=ChoicesMeta):\n     \"\"\"Class for creating enumerated choices.\"\"\"\n \n+    do_not_call_in_templates = True\n+\n     def __str__(self):\n         \"\"\"\n         Use value when cast to str, so that Choices set as model instance\n"
+}

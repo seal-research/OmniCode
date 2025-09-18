@@ -13,3 +13,9 @@
 [submodule "multi-swe-bench"]
 	path = multi-swe-bench
 	url = git@github.com:seal-research/multi-swe-bench.git
+
+[submodule "Agentless"]
+	path = baselines/Agentless
+	url = git@github.com:simonalford42/Agentless.git
+
+

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/auth/forms.py b/django/contrib/auth/forms.py\nindex a0cfed0995..192b9a6387 100644\n--- a/django/contrib/auth/forms.py\n+++ b/django/contrib/auth/forms.py\n@@ -192,6 +192,7 @@ class AuthenticationForm(forms.Form):\n         # Set the max length and label for the \"username\" field.\n         self.username_field = UserModel._meta.get_field(UserModel.USERNAME_FIELD)\n         self.fields['username'].max_length = self.username_field.max_length or 254\n+        self.fields['username'].widget.attrs['maxlength'] = str(self.username_field.max_length or 254)\n         if self.fields['username'].label is None:\n             self.fields['username'].label = capfirst(self.username_field.verbose_name)\n \n"
+}

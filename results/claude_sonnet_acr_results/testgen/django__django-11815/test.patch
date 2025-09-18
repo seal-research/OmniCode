@@ -1,0 +1,404 @@
+--- a/tests/migrations/test_enum_serialization.py
++++ b/tests/migrations/test_enum_serialization.py
+-# Empty if creating new file
++import pytest
++from enum import Enum
++from django.db import models
++from django.db.migrations.serializer import serializer_factory, EnumSerializer
++from django.utils.translation import gettext_lazy as _
++
++
++class Status(Enum):
++    """Test enum with translatable values."""
++    GOOD = _('Good')
++    BAD = _('Bad')
++    PENDING = _('Pending')
++
++    def __str__(self):
++        return self.name
++
++
++class SimpleStatus(Enum):
++    """Test enum with simple string values."""
++    ACTIVE = 'active'
++    INACTIVE = 'inactive'
++
++
++class IntStatus(Enum):
++    """Test enum with integer values."""
++    DRAFT = 1
++    PUBLISHED = 2
++
++
++class TestEnumSerialization:
++    """Test suite for enum serialization in Django migrations."""
++
++    def test_enum_serializer_uses_name_not_value(self):
++        """Test that EnumSerializer uses enum name instead of value."""
++        # Test with translatable enum value
++        serializer = EnumSerializer(Status.GOOD)
++        serialized, imports = serializer.serialize()
++        
++        # Should use name-based access, not value-based constructor
++        assert 'Status.GOOD' in serialized or 'Status[\'GOOD\']' in serialized
++        assert 'Status(\'Good\')' not in serialized
++        assert 'Status(_(' not in serialized
++
++    def test_enum_serializer_with_simple_string_values(self):
++        """Test enum serialization with simple string values."""
++        serializer = EnumSerializer(SimpleStatus.ACTIVE)
++        serialized, imports = serializer.serialize()
++        
++        # Should use name-based access
++        assert 'SimpleStatus.ACTIVE' in serialized or 'SimpleStatus[\'ACTIVE\']' in serialized
++        assert 'SimpleStatus(\'active\')' not in serialized
++
++    def test_enum_serializer_with_integer_values(self):
++        """Test enum serialization with integer values."""
++        serializer = EnumSerializer(IntStatus.DRAFT)
++        serialized, imports = serializer.serialize()
++        
++        # Should use name-based access
++        assert 'IntStatus.DRAFT' in serialized or 'IntStatus[\'DRAFT\']' in serialized
++        assert 'IntStatus(1)' not in serialized
++
++    def test_enum_serializer_imports(self):
++        """Test that enum serializer includes correct imports."""
++        serializer = EnumSerializer(Status.GOOD)
++        serialized, imports = serializer.serialize()
++        
++        # Should include the enum class module in imports
++        expected_import = 'tests.migrations.test_enum_serialization.Status'
++        assert any(expected_import in imp for imp in imports)
++
++    def test_serializer_factory_with_enum(self):
++        """Test that serializer_factory returns EnumSerializer for enum values."""
++        serializer = serializer_factory(Status.GOOD)
++        assert isinstance(serializer, EnumSerializer)
++
++    def test_enum_serialization_preserves_functionality(self):
++        """Test that serialized enum can be properly reconstructed."""
++        # This test ensures the serialized form is valid Python code
++        serializer = EnumSerializer(Status.GOOD)
++        serialized, imports = serializer.serialize()
++        
++        # The serialized form should be executable Python code
++        # that references the enum by name
++        assert 'Status' in serialized
++        assert 'GOOD' in serialized
++
++    def test_enum_with_translated_values_migration_compatibility(self):
++        """
++        Test that enum serialization works correctly when values are translated.
++        
++        This is the core issue: when enum values are translatable strings,
++        the migration should not break when the translation changes.
++        """
++        # Simulate what happens in a migration file
++        serializer = EnumSerializer(Status.GOOD)
++        serialized, imports = serializer.serialize()
++        
++        # The serialized form should not depend on the current translation
++        # It should use the enum name, not the translated value
++        assert '_(' not in serialized  # No translation function calls
++        assert 'Good' not in serialized  # No hardcoded translated value
++        assert 'Status.GOOD' in serialized or 'Status[\'GOOD\']' in serialized
++
++    def test_enum_serialization_different_enum_types(self):
++        """Test serialization works with different types of enum values."""
++        test_cases = [
++            (Status.GOOD, 'Status'),
++            (SimpleStatus.ACTIVE, 'SimpleStatus'), 
++            (IntStatus.DRAFT, 'IntStatus'),
++        ]
++        
++        for enum_value, enum_class_name in test_cases:
++            serializer = EnumSerializer(enum_value)
++            serialized, imports = serializer.serialize()
++            
++            # Should contain the enum class name and member name
++            assert enum_class_name in serialized
++            assert enum_value.name in serialized
++            
++            # Should not contain the value in constructor form
++            assert f'{enum_class_name}({repr(enum_value.value)})' not in serialized
++
++    def test_enum_serialization_edge_cases(self):
++        """Test enum serialization with edge cases."""
++        # Test enum with special characters in name
++        class SpecialEnum(Enum):
++            SPECIAL_CASE = 'special'
++            ANOTHER_CASE = 'another'
++        
++        serializer = EnumSerializer(SpecialEnum.SPECIAL_CASE)
++        serialized, imports = serializer.serialize()
++        
++        assert 'SpecialEnum' in serialized
++        assert 'SPECIAL_CASE' in serialized
++        assert 'SpecialEnum(\'special\')' not in serialized
++
++    def test_enum_serialization_backwards_compatibility(self):
++        """
++        Test that the new serialization approach maintains backwards compatibility.
++        
++        The serialized enum should still be a valid enum reference that can be
++        used in migration files without breaking existing functionality.
++        """
++        serializer = EnumSerializer(Status.BAD)
++        serialized, imports = serializer.serialize()
++        
++        # Should be a valid enum reference
++        assert 'Status' in serialized
++        assert 'BAD' in serialized
++        
++        # Should not be a constructor call that could fail with translation
++        assert not serialized.startswith('Status(')
++
++    def test_multiple_enum_serialization(self):
++        """Test serialization of multiple enum values from same enum."""
++        enum_values = [Status.GOOD, Status.BAD, Status.PENDING]
++        
++        for enum_value in enum_values:
++            serializer = EnumSerializer(enum_value)
++            serialized, imports = serializer.serialize()
++            
++            # Each should use name-based access
++            assert 'Status' in serialized
++            assert enum_value.name in serialized
++            assert f'Status({repr(enum_value.value)})' not in serialized
+
+--- a/tests/migrations/test_enum_migration_integration.py
++++ b/tests/migrations/test_enum_migration_integration.py
+-# Empty if creating new file
++import pytest
++from enum import Enum
++from django.db import models
++from django.db.migrations.writer import MigrationWriter
++from django.db.migrations.autodetector import MigrationAutodetector
++from django.db.migrations.state import ProjectState
++from django.utils.translation import gettext_lazy as _
++from django.test import TestCase, override_settings
++from django.apps import apps
++
++
++class StatusEnum(Enum):
++    """Test enum for migration integration tests."""
++    GOOD = _('Good')
++    BAD = _('Bad')
++    
++    def __str__(self):
++        return self.name
++
++
++class TestModel(models.Model):
++    """Test model with enum default value."""
++    status = models.CharField(max_length=20, default=StatusEnum.GOOD)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class TestEnumMigrationIntegration(TestCase):
++    """Integration tests for enum serialization in Django migrations."""
++
++    def test_enum_default_in_migration_file(self):
++        """
++        Test that enum defaults are properly serialized in migration files.
++        
++        This test verifies that when a model field has an enum default value,
++        the generated migration file uses the enum name rather than value.
++        """
++        # Create a mock migration with enum default
++        from django.db.migrations import Migration
++        from django.db.migrations.operations import CreateModel
++        
++        operation = CreateModel(
++            name='TestModel',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++                ('status', models.CharField(max_length=20, default=StatusEnum.GOOD)),
++            ],
++        )
++        
++        migration = Migration('0001_initial', 'test_app')
++        migration.operations = [operation]
++        
++        # Generate migration file content
++        writer = MigrationWriter(migration)
++        migration_string = writer.as_string()
++        
++        # The migration should use enum name, not value
++        assert 'StatusEnum.GOOD' in migration_string or 'StatusEnum[\'GOOD\']' in migration_string
++        assert 'StatusEnum(_(' not in migration_string
++        assert 'StatusEnum(\'Good\')' not in migration_string
++
++    def test_enum_serialization_with_translation_changes(self):
++        """
++        Test that enum serialization is robust against translation changes.
++        
++        This simulates the scenario described in the issue where translation
++        changes would break old migration files.
++        """
++        # Test with different language settings
++        with override_settings(LANGUAGE_CODE='en'):
++            from django.db.migrations.serializer import serializer_factory
++            
++            serializer = serializer_factory(StatusEnum.GOOD)
++            serialized_en, imports_en = serializer.serialize()
++            
++        with override_settings(LANGUAGE_CODE='es'):
++            # Even with different language, serialization should be the same
++            serializer = serializer_factory(StatusEnum.GOOD)
++            serialized_es, imports_es = serializer.serialize()
++            
++        # Serialization should be identical regardless of language
++        assert serialized_en == serialized_es
++        assert imports_en == imports_es
++        
++        # Should not contain language-specific content
++        assert '_(' not in serialized_en
++        assert 'Good' not in serialized_en  # No hardcoded English text
++
++    def test_migration_with_enum_field_creation(self):
++        """Test creating a migration that adds a field with enum default."""
++        # Simulate adding a field with enum default to existing model
++        from django.db.migrations.operations import AddField
++        
++        operation = AddField(
++            model_name='testmodel',
++            name='priority',
++            field=models.CharField(max_length=20, default=StatusEnum.BAD),
++        )
++        
++        # Serialize the operation
++        from django.db.migrations.serializer import serializer_factory
++        serializer = serializer_factory(operation)
++        serialized, imports = serializer.serialize()
++        
++        # The serialized operation should contain proper enum reference
++        assert 'StatusEnum' in serialized
++        assert 'BAD' in serialized
++        assert 'StatusEnum(_(' not in serialized
++
++    def test_enum_in_field_choices(self):
++        """Test enum serialization when used in field choices."""
++        choices = [(StatusEnum.GOOD, 'Good Status'), (StatusEnum.BAD, 'Bad Status')]
++        
++        from django.db.migrations.serializer import serializer_factory
++        serializer = serializer_factory(choices)
++        serialized, imports = serializer.serialize()
++        
++        # Should serialize enum members by name
++        assert 'StatusEnum.GOOD' in serialized or 'StatusEnum[\'GOOD\']' in serialized
++        assert 'StatusEnum.BAD' in serialized or 'StatusEnum[\'BAD\']' in serialized
++        
++        # Should not serialize by value
++        assert 'StatusEnum(_(' not in serialized
++
++    def test_complex_enum_migration_scenario(self):
++        """
++        Test a complex scenario with multiple enum usages in a migration.
++        
++        This tests the real-world scenario where enums are used in multiple
++        places within the same migration.
++        """
++        from django.db.migrations.operations import CreateModel, AddField
++        
++        # Create model with enum default
++        create_op = CreateModel(
++            name='Document',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++                ('status', models.CharField(max_length=20, default=StatusEnum.GOOD)),
++                ('priority', models.CharField(
++                    max_length=20, 
++                    choices=[(StatusEnum.GOOD, 'High'), (StatusEnum.BAD, 'Low')],
++                    default=StatusEnum.BAD
++                )),
++            ],
++        )
++        
++        # Add field with enum default
++        add_op = AddField(
++            model_name='document',
++            name='review_status',
++            field=models.CharField(max_length=20, default=StatusEnum.GOOD),
++        )
++        
++        operations = [create_op, add_op]
++        
++        # Serialize all operations
++        from django.db.migrations.serializer import serializer_factory
++        for operation in operations:
++            serializer = serializer_factory(operation)
++            serialized, imports = serializer.serialize()
++            
++            # All enum references should use name-based access
++            if 'StatusEnum' in serialized:
++                assert 'StatusEnum.GOOD' in serialized or 'StatusEnum[\'GOOD\']' in serialized
++                assert 'StatusEnum.BAD' in serialized or 'StatusEnum[\'BAD\']' in serialized
++                assert 'StatusEnum(_(' not in serialized
++
++    def test_enum_migration_file_generation(self):
++        """
++        Test end-to-end migration file generation with enum defaults.
++        
++        This test ensures that the complete migration generation process
++        produces correct enum serialization.
++        """
++        # Mock a model state change that would trigger migration
++        from django.db.migrations import Migration
++        from django.db.migrations.operations import CreateModel
++        
++        fields = [
++            ('id', models.AutoField(primary_key=True)),
++            ('name', models.CharField(max_length=100)),
++            ('status', models.CharField(max_length=20, default=StatusEnum.GOOD)),
++        ]
++        
++        operation = CreateModel(name='TestDocument', fields=fields)
++        migration = Migration('0001_initial', 'test_app')
++        migration.operations = [operation]
++        
++        # Generate the migration file
++        writer = MigrationWriter(migration)
++        migration_content = writer.as_string()
++        
++        # Verify the generated content
++        lines = migration_content.split('\n')
++        enum_lines = [line for line in lines if 'StatusEnum' in line]
++        
++        # Should have at least one line with enum reference
++        assert len(enum_lines) > 0
++        
++        # All enum references should be name-based
++        for line in enum_lines:
++            if 'default=' in line:
++                assert 'StatusEnum.GOOD' in line or 'StatusEnum[\'GOOD\']' in line
++                assert 'StatusEnum(_(' not in line
++                assert 'StatusEnum(\'Good\')' not in line
++
++    def test_enum_serialization_preserves_migration_validity(self):
++        """
++        Test that enum serialization produces valid Python code for migrations.
++        
++        This ensures that the serialized enum references can be properly
++        executed when the migration is applied.
++        """
++        from django.db.migrations.serializer import serializer_factory
++        
++        # Test various enum values
++        test_enums = [StatusEnum.GOOD, StatusEnum.BAD]
++        
++        for enum_value in test_enums:
++            serializer = serializer_factory(enum_value)
++            serialized, imports = serializer.serialize()
++            
++            # The serialized form should be valid Python syntax
++            # that references the enum by name
++            assert serialized.count('.') >= 1 or '[' in serialized  # Name-based access
++            assert not serialized.startswith('StatusEnum(')  # Not constructor call
++            
++            # Should include proper import information
++            assert len(imports) > 0
++            assert any('StatusEnum' in imp for imp in imports)

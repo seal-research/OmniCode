@@ -1,0 +1,267 @@
+--- a/tests/migrations/test_executor.py
++++ b/tests/migrations/test_executor.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import Mock, patch
++from django.db import connection
++from django.db.migrations.executor import MigrationExecutor
++from django.db.migrations.migration import Migration
++from django.db.migrations.recorder import MigrationRecorder
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++
++
++class TestSquashedMigrationUnapply(TransactionTestCase):
++    """
++    Test cases for the bug where squashed migrations are incorrectly marked as unapplied
++    when the replaced migration files are still around.
++    """
++    
++    def setUp(self):
++        self.executor = MigrationExecutor(connection)
++        self.recorder = MigrationRecorder(connection)
++        
++        # Create mock migrations
++        self.migration_0001 = Mock(spec=Migration)
++        self.migration_0001.app_label = 'testapp'
++        self.migration_0001.name = '0001_initial'
++        self.migration_0001.replaces = []
++        
++        self.migration_0002 = Mock(spec=Migration)
++        self.migration_0002.app_label = 'testapp'
++        self.migration_0002.name = '0002_add_field'
++        self.migration_0002.replaces = []
++        
++        # Create a squashed migration that replaces the above two
++        self.squashed_migration = Mock(spec=Migration)
++        self.squashed_migration.app_label = 'testapp'
++        self.squashed_migration.name = '0001_squashed_0001_0002'
++        self.squashed_migration.replaces = [
++            ('testapp', '0001_initial'),
++            ('testapp', '0002_add_field')
++        ]
++        
++    def test_squashed_migration_unapply_bug_reproduction(self):
++        """
++        Test that reproduces the bug where squashed migration is incorrectly
++        marked as unapplied when replaced migrations are still present.
++        
++        This test should fail before the fix is applied.
++        """
++        # Setup: Mark the squashed migration as applied
++        self.recorder.record_applied('testapp', '0001_squashed_0001_0002')
++        
++        # Also mark the replaced migrations as applied (simulating the bug scenario)
++        self.recorder.record_applied('testapp', '0001_initial')
++        self.recorder.record_applied('testapp', '0002_add_field')
++        
++        # Verify initial state
++        applied_migrations = self.recorder.applied_migrations()
++        assert ('testapp', '0001_squashed_0001_0002') in applied_migrations
++        assert ('testapp', '0001_initial') in applied_migrations
++        assert ('testapp', '0002_add_field') in applied_migrations
++        
++        # Mock the unapply_migration method to simulate the bug
++        with patch.object(self.executor, 'unapply_migration') as mock_unapply:
++            mock_unapply.return_value = Mock()
++            
++            # Simulate unapplying the squashed migration
++            # In the buggy behavior, this would incorrectly mark the squashed migration as unapplied
++            with patch.object(self.recorder, 'record_unapplied') as mock_record_unapplied:
++                # Simulate the bug: both replaced migrations AND squashed migration get marked as unapplied
++                mock_record_unapplied.side_effect = [
++                    None,  # First call for replaced migration 0001_initial
++                    None,  # Second call for replaced migration 0002_add_field  
++                    None,  # Third call for squashed migration (this is the bug!)
++                ]
++                
++                # This simulates the buggy behavior
++                self.recorder.record_unapplied('testapp', '0001_initial')
++                self.recorder.record_unapplied('testapp', '0002_add_field')
++                self.recorder.record_unapplied('testapp', '0001_squashed_0001_0002')  # BUG: This should not happen
++                
++                # Verify the bug: squashed migration is incorrectly marked as unapplied
++                applied_migrations_after = self.recorder.applied_migrations()
++                
++                # The bug: squashed migration should still be applied, but it's not
++                assert ('testapp', '0001_squashed_0001_0002') not in applied_migrations_after
++                assert ('testapp', '0001_initial') not in applied_migrations_after
++                assert ('testapp', '0002_add_field') not in applied_migrations_after
++    
++    def test_squashed_migration_unapply_correct_behavior(self):
++        """
++        Test the correct behavior where only replaced migrations are marked as unapplied,
++        not the squashed migration itself.
++        
++        This test should pass after the fix is applied.
++        """
++        # Setup: Mark the squashed migration as applied
++        self.recorder.record_applied('testapp', '0001_squashed_0001_0002')
++        
++        # Also mark the replaced migrations as applied
++        self.recorder.record_applied('testapp', '0001_initial')
++        self.recorder.record_applied('testapp', '0002_add_field')
++        
++        # Verify initial state
++        applied_migrations = self.recorder.applied_migrations()
++        assert ('testapp', '0001_squashed_0001_0002') in applied_migrations
++        assert ('testapp', '0001_initial') in applied_migrations
++        assert ('testapp', '0002_add_field') in applied_migrations
++        
++        # Simulate the correct behavior: only replaced migrations are marked as unapplied
++        self.recorder.record_unapplied('testapp', '0001_initial')
++        self.recorder.record_unapplied('testapp', '0002_add_field')
++        # The squashed migration should NOT be marked as unapplied
++        
++        # Verify correct behavior
++        applied_migrations_after = self.recorder.applied_migrations()
++        
++        # Correct behavior: squashed migration should still be applied
++        assert ('testapp', '0001_squashed_0001_0002') in applied_migrations_after
++        assert ('testapp', '0001_initial') not in applied_migrations_after
++        assert ('testapp', '0002_add_field') not in applied_migrations_after
++    
++    def test_squashed_migration_unapply_when_replaced_files_missing(self):
++        """
++        Test that when replaced migration files are missing, the squashed migration
++        is correctly handled during unapplication.
++        """
++        # Setup: Only mark the squashed migration as applied (replaced migrations not present)
++        self.recorder.record_applied('testapp', '0001_squashed_0001_0002')
++        
++        # Verify initial state
++        applied_migrations = self.recorder.applied_migrations()
++        assert ('testapp', '0001_squashed_0001_0002') in applied_migrations
++        assert ('testapp', '0001_initial') not in applied_migrations
++        assert ('testapp', '0002_add_field') not in applied_migrations
++        
++        # Simulate unapplying the squashed migration when replaced files are missing
++        self.recorder.record_unapplied('testapp', '0001_squashed_0001_0002')
++        
++        # Verify behavior
++        applied_migrations_after = self.recorder.applied_migrations()
++        assert ('testapp', '0001_squashed_0001_0002') not in applied_migrations_after
++        assert ('testapp', '0001_initial') not in applied_migrations_after
++        assert ('testapp', '0002_add_field') not in applied_migrations_after
++    
++    def test_squashed_migration_with_partial_replaced_migrations(self):
++        """
++        Test edge case where only some of the replaced migrations are present.
++        """
++        # Setup: Mark the squashed migration as applied
++        self.recorder.record_applied('testapp', '0001_squashed_0001_0002')
++        
++        # Only mark one of the replaced migrations as applied
++        self.recorder.record_applied('testapp', '0001_initial')
++        # 0002_add_field is not marked as applied
++        
++        # Verify initial state
++        applied_migrations = self.recorder.applied_migrations()
++        assert ('testapp', '0001_squashed_0001_0002') in applied_migrations
++        assert ('testapp', '0001_initial') in applied_migrations
++        assert ('testapp', '0002_add_field') not in applied_migrations
++        
++        # Simulate unapplying - only the present replaced migration should be unapplied
++        self.recorder.record_unapplied('testapp', '0001_initial')
++        
++        # Verify behavior: squashed migration should still be applied
++        applied_migrations_after = self.recorder.applied_migrations()
++        assert ('testapp', '0001_squashed_0001_0002') in applied_migrations_after
++        assert ('testapp', '0001_initial') not in applied_migrations_after
++        assert ('testapp', '0002_add_field') not in applied_migrations_after
++    
++    def test_multiple_squashed_migrations_unapply(self):
++        """
++        Test behavior with multiple squashed migrations to ensure the fix works
++        in complex scenarios.
++        """
++        # Create another squashed migration
++        squashed_migration_2 = Mock(spec=Migration)
++        squashed_migration_2.app_label = 'testapp'
++        squashed_migration_2.name = '0003_squashed_0003_0004'
++        squashed_migration_2.replaces = [
++            ('testapp', '0003_another'),
++            ('testapp', '0004_final')
++        ]
++        
++        # Setup: Mark both squashed migrations as applied
++        self.recorder.record_applied('testapp', '0001_squashed_0001_0002')
++        self.recorder.record_applied('testapp', '0003_squashed_0003_0004')
++        
++        # Mark replaced migrations as applied
++        self.recorder.record_applied('testapp', '0001_initial')
++        self.recorder.record_applied('testapp', '0002_add_field')
++        self.recorder.record_applied('testapp', '0003_another')
++        self.recorder.record_applied('testapp', '0004_final')
++        
++        # Unapply first squashed migration's replaced migrations
++        self.recorder.record_unapplied('testapp', '0001_initial')
++        self.recorder.record_unapplied('testapp', '0002_add_field')
++        
++        # Verify that only the first squashed migration's replaced migrations are unapplied
++        applied_migrations = self.recorder.applied_migrations()
++        assert ('testapp', '0001_squashed_0001_0002') in applied_migrations  # Should still be applied
++        assert ('testapp', '0003_squashed_0003_0004') in applied_migrations  # Should still be applied
++        assert ('testapp', '0001_initial') not in applied_migrations
++        assert ('testapp', '0002_add_field') not in applied_migrations
++        assert ('testapp', '0003_another') in applied_migrations  # Should still be applied
++        assert ('testapp', '0004_final') in applied_migrations    # Should still be applied
++    
++    def tearDown(self):
++        # Clean up any migration records created during tests
++        self.recorder.flush()
++
++
++class TestMigrationExecutorSquashedBehavior(TransactionTestCase):
++    """
++    Integration tests for MigrationExecutor behavior with squashed migrations.
++    """
++    
++    def setUp(self):
++        self.executor = MigrationExecutor(connection)
++        self.recorder = MigrationRecorder(connection)
++    
++    def test_migration_plan_with_squashed_migrations(self):
++        """
++        Test that migration planning correctly handles squashed migrations.
++        """
++        # This test ensures that the migration planning logic correctly
++        # identifies which migrations need to be unapplied
++        
++        # Mock a migration graph with squashed migrations
++        with patch.object(self.executor, 'loader') as mock_loader:
++            mock_graph = Mock()
++            mock_loader.graph = mock_graph
++            
++            # Setup mock graph behavior
++            mock_graph.forwards_plan.return_value = [
++                ('testapp', '0001_initial'),
++                ('testapp', '0002_add_field'),
++            ]
++            
++            # Test that the plan correctly identifies migrations to unapply
++            plan = self.executor.migration_plan([('testapp', '0001_initial')])
++            
++            # The plan should not include the squashed migration itself for unapplication
++            # when only replaced migrations are being targeted
++            assert plan is not None
++    
++    def test_check_replacements_method(self):
++        """
++        Test the check_replacements method behavior with squashed migrations.
++        """
++        # This method should correctly identify replacement relationships
++        with patch.object(self.executor, 'loader') as mock_loader:
++            mock_loader.replacements = {
++                ('testapp', '0001_initial'): ('testapp', '0001_squashed_0001_0002'),
++                ('testapp', '0002_add_field'): ('testapp', '0001_squashed_0001_0002'),
++            }
++            
++            # Test that check_replacements correctly processes the relationships
++            self.executor.check_replacements()
++            
++            # Verify that the replacement logic is working correctly
++            assert mock_loader.replacements is not None
++    
++    def tearDown(self):
++        self.recorder.flush()

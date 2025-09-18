@@ -1,0 +1,145 @@
+--- a/tests/template_tests/filter_tests/test_add.py
++++ b/tests/template_tests/filter_tests/test_add.py
+-# Empty if creating new file
++import pytest
++from django.template import Context, Template
++from django.utils.functional import lazy
++from django.utils.translation import gettext_lazy as _
++
++
++class TestAddFilter:
++    """Test cases for the add template filter with lazy strings."""
++
++    def test_add_filter_with_regular_strings(self):
++        """Test that add filter works with regular strings (existing functionality)."""
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': 'Hello ', 'arg': 'World'})
++        result = template.render(context)
++        assert result == 'Hello World'
++
++    def test_add_filter_with_numbers(self):
++        """Test that add filter works with numbers (existing functionality)."""
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': 5, 'arg': 3})
++        result = template.render(context)
++        assert result == '8'
++
++    def test_add_filter_with_string_and_number(self):
++        """Test that add filter works with string and number (existing functionality)."""
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': 'Count: ', 'arg': 42})
++        result = template.render(context)
++        assert result == 'Count: 42'
++
++    def test_add_filter_with_lazy_string_as_value(self):
++        """Test that add filter works when the first operand is a lazy string."""
++        # Create a lazy string using gettext_lazy
++        lazy_value = _('Hello ')
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': lazy_value, 'arg': 'World'})
++        result = template.render(context)
++        assert result == 'Hello World'
++
++    def test_add_filter_with_lazy_string_as_arg(self):
++        """Test that add filter works when the second operand is a lazy string."""
++        # Create a lazy string using gettext_lazy
++        lazy_arg = _('World')
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': 'Hello ', 'arg': lazy_arg})
++        result = template.render(context)
++        assert result == 'Hello World'
++
++    def test_add_filter_with_both_lazy_strings(self):
++        """Test that add filter works when both operands are lazy strings."""
++        # Create lazy strings using gettext_lazy
++        lazy_value = _('Hello ')
++        lazy_arg = _('World')
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': lazy_value, 'arg': lazy_arg})
++        result = template.render(context)
++        assert result == 'Hello World'
++
++    def test_add_filter_with_custom_lazy_string(self):
++        """Test that add filter works with custom lazy strings."""
++        # Create a custom lazy string using the lazy decorator
++        def get_greeting():
++            return 'Hello '
++        
++        lazy_greeting = lazy(get_greeting, str)()
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': lazy_greeting, 'arg': 'World'})
++        result = template.render(context)
++        assert result == 'Hello World'
++
++    def test_add_filter_with_lazy_string_and_number(self):
++        """Test that add filter works with lazy string and number."""
++        lazy_value = _('Count: ')
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': lazy_value, 'arg': 42})
++        result = template.render(context)
++        assert result == 'Count: 42'
++
++    def test_add_filter_with_empty_lazy_string(self):
++        """Test that add filter works with empty lazy strings."""
++        lazy_value = _('')
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': lazy_value, 'arg': 'World'})
++        result = template.render(context)
++        assert result == 'World'
++
++    def test_add_filter_with_none_values(self):
++        """Test that add filter handles None values gracefully (existing functionality)."""
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': None, 'arg': 'World'})
++        result = template.render(context)
++        # Should return empty string when concatenation fails
++        assert result == ''
++
++    def test_add_filter_with_incompatible_types(self):
++        """Test that add filter handles incompatible types gracefully (existing functionality)."""
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': [], 'arg': {}})
++        result = template.render(context)
++        # Should return empty string when concatenation fails
++        assert result == ''
++
++    def test_add_filter_preserves_lazy_behavior_before_fix(self):
++        """
++        Test that demonstrates the bug before the fix is applied.
++        This test should fail before the fix and pass after the fix.
++        """
++        # This test reproduces the exact scenario described in the issue
++        lazy_value = _('Hello ')
++        regular_string = 'World'
++        
++        # Before the fix, this would result in an empty string due to TypeError
++        # After the fix, this should work correctly
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': lazy_value, 'arg': regular_string})
++        result = template.render(context)
++        
++        # This assertion will fail before the fix (result would be '')
++        # and pass after the fix (result would be 'Hello World')
++        assert result == 'Hello World'
++
++    def test_add_filter_edge_case_unicode_lazy_strings(self):
++        """Test that add filter works with unicode lazy strings."""
++        # Test with unicode characters in lazy strings
++        lazy_value = _('Héllo ')
++        template = Template("{{ value|add:arg }}")
++        context = Context({'value': lazy_value, 'arg': 'Wörld'})
++        result = template.render(context)
++        assert result == 'Héllo Wörld'
++
++    def test_add_filter_multiple_lazy_operations(self):
++        """Test chaining multiple add operations with lazy strings."""
++        lazy_value1 = _('Hello')
++        lazy_value2 = _(' ')
++        template = Template("{{ value1|add:value2|add:value3 }}")
++        context = Context({
++            'value1': lazy_value1,
++            'value2': lazy_value2,
++            'value3': 'World'
++        })
++        result = template.render(context)
++        assert result == 'Hello World'

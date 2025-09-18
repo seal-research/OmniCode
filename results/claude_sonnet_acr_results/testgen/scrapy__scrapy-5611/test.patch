@@ -1,0 +1,359 @@
+--- a/tests/test_response_encoding_bom.py
++++ b/tests/test_response_encoding_bom.py
+-# Empty if creating new file
++import codecs
++import pytest
++from scrapy.http import HtmlResponse
++
++
++class TestBOMEncodingPrecedence:
++    """Test that BOM takes precedence over Content-Type header when detecting encoding."""
++
++    def test_utf8_bom_overrides_content_type_header(self):
++        """Test that UTF-8 BOM takes precedence over Content-Type charset declaration."""
++        # This test reproduces the bug described in the issue
++        # Content-Type says cp1251 but BOM indicates UTF-8
++        headers = {b'Content-Type': b'text/html; charset=cp1251'}
++        body = codecs.BOM_UTF8 + "<!DOCTYPE html>Привет!".encode('utf-8')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        # Before fix: this would fail because encoding would be 'cp1251'
++        # After fix: encoding should be 'utf-8' due to BOM precedence
++        assert response.encoding == 'utf-8'
++        assert response.text == "<!DOCTYPE html>Привет!"
++
++    def test_utf16_le_bom_overrides_content_type_header(self):
++        """Test that UTF-16 LE BOM takes precedence over Content-Type charset."""
++        headers = {b'Content-Type': b'text/html; charset=iso-8859-1'}
++        body = codecs.BOM_UTF16_LE + "<!DOCTYPE html>Hello".encode('utf-16le')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        assert response.encoding == 'utf-16'
++        assert "Hello" in response.text
++
++    def test_utf16_be_bom_overrides_content_type_header(self):
++        """Test that UTF-16 BE BOM takes precedence over Content-Type charset."""
++        headers = {b'Content-Type': b'text/html; charset=ascii'}
++        body = codecs.BOM_UTF16_BE + "<!DOCTYPE html>Test".encode('utf-16be')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        assert response.encoding == 'utf-16'
++        assert "Test" in response.text
++
++    def test_utf32_le_bom_overrides_content_type_header(self):
++        """Test that UTF-32 LE BOM takes precedence over Content-Type charset."""
++        headers = {b'Content-Type': b'text/html; charset=cp1252'}
++        body = codecs.BOM_UTF32_LE + "<!DOCTYPE html>Content".encode('utf-32le')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        assert response.encoding == 'utf-32'
++        assert "Content" in response.text
++
++    def test_utf32_be_bom_overrides_content_type_header(self):
++        """Test that UTF-32 BE BOM takes precedence over Content-Type charset."""
++        headers = {b'Content-Type': b'text/html; charset=windows-1251'}
++        body = codecs.BOM_UTF32_BE + "<!DOCTYPE html>Data".encode('utf-32be')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        assert response.encoding == 'utf-32'
++        assert "Data" in response.text
++
++    def test_no_bom_uses_content_type_header(self):
++        """Test that Content-Type header is used when no BOM is present."""
++        headers = {b'Content-Type': b'text/html; charset=utf-8'}
++        body = "<!DOCTYPE html>No BOM here".encode('utf-8')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        assert response.encoding == 'utf-8'
++        assert response.text == "<!DOCTYPE html>No BOM here"
++
++    def test_explicit_encoding_overrides_bom(self):
++        """Test that explicitly set encoding takes precedence over BOM."""
++        headers = {b'Content-Type': b'text/html; charset=cp1251'}
++        body = codecs.BOM_UTF8 + "<!DOCTYPE html>Test".encode('utf-8')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body,
++            encoding='iso-8859-1'  # Explicitly set encoding
++        )
++        
++        # Explicit encoding should take precedence over BOM
++        assert response.encoding == 'iso-8859-1'
++
++    def test_bom_overrides_meta_charset(self):
++        """Test that BOM takes precedence over meta charset declaration in HTML."""
++        headers = {}  # No Content-Type header
++        html_content = '<!DOCTYPE html><html><head><meta charset="cp1251"></head><body>Тест</body></html>'
++        body = codecs.BOM_UTF8 + html_content.encode('utf-8')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        assert response.encoding == 'utf-8'
++        assert "Тест" in response.text
++
++    def test_empty_body_no_bom(self):
++        """Test that empty body doesn't cause issues with BOM detection."""
++        headers = {b'Content-Type': b'text/html; charset=utf-8'}
++        body = b''
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        assert response.encoding == 'utf-8'
++        assert response.text == ""
++
++    def test_short_body_no_bom(self):
++        """Test that very short body without BOM works correctly."""
++        headers = {b'Content-Type': b'text/html; charset=utf-8'}
++        body = b'<'  # Single character, shorter than any BOM
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        assert response.encoding == 'utf-8'
++        assert response.text == "<"
++
++    def test_partial_bom_not_detected(self):
++        """Test that partial BOM sequences are not incorrectly detected."""
++        headers = {b'Content-Type': b'text/html; charset=utf-8'}
++        # Only first byte of UTF-8 BOM
++        body = b'\xef' + "<!DOCTYPE html>Test".encode('utf-8')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        # Should use Content-Type header since BOM is incomplete
++        assert response.encoding == 'utf-8'
++
++    def test_bom_caching_consistency(self):
++        """Test that BOM detection is cached and consistent across multiple calls."""
++        headers = {b'Content-Type': b'text/html; charset=cp1251'}
++        body = codecs.BOM_UTF8 + "<!DOCTYPE html>Cached".encode('utf-8')
++        
++        response = HtmlResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        # Multiple calls should return the same encoding
++        encoding1 = response.encoding
++        encoding2 = response.encoding
++        encoding3 = response.encoding
++        
++        assert encoding1 == encoding2 == encoding3 == 'utf-8'
++
++    def test_issue_reproduction_server_example(self):
++        """Test that reproduces the exact issue from the bug report."""
++        # This simulates the server example from the issue description
++        headers = {b'Content-Type': b'text/html; charset=cp1251'}
++        body = (codecs.BOM_UTF8 + 
++                "<!DOCTYPE html>".encode('utf-8') + 
++                "Привет!".encode('utf-8'))
++        
++        response = HtmlResponse(
++            url='http://0.0.0.0:8000',
++            headers=headers,
++            body=body
++        )
++        
++        # Before fix: encoding would be 'cp1251' and text would be garbled
++        # After fix: encoding should be 'utf-8' and text should be correct
++        assert response.encoding == 'utf-8'
++        assert response.text == "<!DOCTYPE html>Привет!"
++        # Text should NOT contain the garbled characters from the issue
++        assert "п»ї" not in response.text
++        assert "РџСЂРёРІРµС‚" not in response.text
+
+--- a/tests/test_response_text_bom_methods.py
++++ b/tests/test_response_text_bom_methods.py
+-# Empty if creating new file
++import codecs
++import pytest
++from scrapy.http.response.text import TextResponse
++
++
++class TestTextResponseBOMDetection:
++    """Test the internal BOM detection methods of TextResponse."""
++
++    def test_body_bom_encoding_method_utf8(self):
++        """Test _body_bom_encoding method detects UTF-8 BOM correctly."""
++        body = codecs.BOM_UTF8 + b"test content"
++        response = TextResponse(url='http://example.com', body=body)
++        
++        # Test the internal BOM detection method
++        bom_encoding = response._body_bom_encoding()
++        assert bom_encoding == 'utf-8'
++
++    def test_body_bom_encoding_method_utf16_le(self):
++        """Test _body_bom_encoding method detects UTF-16 LE BOM correctly."""
++        body = codecs.BOM_UTF16_LE + b"test content"
++        response = TextResponse(url='http://example.com', body=body)
++        
++        bom_encoding = response._body_bom_encoding()
++        assert bom_encoding == 'utf-16'
++
++    def test_body_bom_encoding_method_utf16_be(self):
++        """Test _body_bom_encoding method detects UTF-16 BE BOM correctly."""
++        body = codecs.BOM_UTF16_BE + b"test content"
++        response = TextResponse(url='http://example.com', body=body)
++        
++        bom_encoding = response._body_bom_encoding()
++        assert bom_encoding == 'utf-16'
++
++    def test_body_bom_encoding_method_utf32_le(self):
++        """Test _body_bom_encoding method detects UTF-32 LE BOM correctly."""
++        body = codecs.BOM_UTF32_LE + b"test content"
++        response = TextResponse(url='http://example.com', body=body)
++        
++        bom_encoding = response._body_bom_encoding()
++        assert bom_encoding == 'utf-32'
++
++    def test_body_bom_encoding_method_utf32_be(self):
++        """Test _body_bom_encoding method detects UTF-32 BE BOM correctly."""
++        body = codecs.BOM_UTF32_BE + b"test content"
++        response = TextResponse(url='http://example.com', body=body)
++        
++        bom_encoding = response._body_bom_encoding()
++        assert bom_encoding == 'utf-32'
++
++    def test_body_bom_encoding_method_no_bom(self):
++        """Test _body_bom_encoding method returns None when no BOM present."""
++        body = b"test content without BOM"
++        response = TextResponse(url='http://example.com', body=body)
++        
++        bom_encoding = response._body_bom_encoding()
++        assert bom_encoding is None
++
++    def test_body_bom_encoding_method_empty_body(self):
++        """Test _body_bom_encoding method handles empty body gracefully."""
++        body = b""
++        response = TextResponse(url='http://example.com', body=body)
++        
++        bom_encoding = response._body_bom_encoding()
++        assert bom_encoding is None
++
++    def test_body_bom_encoding_method_short_body(self):
++        """Test _body_bom_encoding method handles body shorter than BOM."""
++        body = b"x"  # Single byte, shorter than any BOM
++        response = TextResponse(url='http://example.com', body=body)
++        
++        bom_encoding = response._body_bom_encoding()
++        assert bom_encoding is None
++
++    def test_body_bom_encoding_method_caching(self):
++        """Test that _body_bom_encoding method results are cached."""
++        body = codecs.BOM_UTF8 + b"test content"
++        response = TextResponse(url='http://example.com', body=body)
++        
++        # Call multiple times to test caching
++        result1 = response._body_bom_encoding()
++        result2 = response._body_bom_encoding()
++        result3 = response._body_bom_encoding()
++        
++        assert result1 == result2 == result3 == 'utf-8'
++
++    def test_declared_encoding_priority_order(self):
++        """Test that _declared_encoding follows correct priority order with BOM."""
++        # Test with BOM and Content-Type header
++        headers = {b'Content-Type': b'text/html; charset=cp1251'}
++        body = codecs.BOM_UTF8 + b"<meta charset='iso-8859-1'>test"
++        
++        response = TextResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        # BOM should take precedence over both header and meta charset
++        declared_encoding = response._declared_encoding()
++        assert declared_encoding == 'utf-8'
++
++    def test_declared_encoding_explicit_encoding_priority(self):
++        """Test that explicit encoding takes precedence over BOM."""
++        headers = {b'Content-Type': b'text/html; charset=cp1251'}
++        body = codecs.BOM_UTF8 + b"test content"
++        
++        response = TextResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body,
++            encoding='ascii'  # Explicit encoding
++        )
++        
++        # Explicit encoding should override BOM
++        declared_encoding = response._declared_encoding()
++        assert declared_encoding == 'ascii'
++
++    def test_declared_encoding_fallback_to_headers(self):
++        """Test that headers encoding is used when no BOM present."""
++        headers = {b'Content-Type': b'text/html; charset=utf-8'}
++        body = b"test content without BOM"
++        
++        response = TextResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        declared_encoding = response._declared_encoding()
++        assert declared_encoding == 'utf-8'
++
++    def test_declared_encoding_fallback_to_body_declared(self):
++        """Test fallback to body declared encoding when no BOM or headers."""
++        headers = {}  # No Content-Type header
++        body = b'<meta charset="iso-8859-1">test content'
++        
++        response = TextResponse(
++            url='http://example.com',
++            headers=headers,
++            body=body
++        )
++        
++        declared_encoding = response._declared_encoding()
++        assert declared_encoding == 'iso-8859-1'

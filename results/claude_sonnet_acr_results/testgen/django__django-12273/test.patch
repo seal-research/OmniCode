@@ -1,0 +1,342 @@
+--- a/tests/model_inheritance/test_pk_reset.py
++++ b/tests/model_inheritance/test_pk_reset.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++
++
++class Item(models.Model):
++    """Base model with AutoField primary key."""
++    uid = models.AutoField(primary_key=True, editable=False)
++    f = models.BooleanField(default=False)
++    
++    def reset(self):
++        """Reset primary key and field value."""
++        self.uid = None
++        self.f = False
++    
++    class Meta:
++        app_label = 'model_inheritance'
++
++
++class Derived(Item):
++    """Child model inheriting from Item."""
++    extra_field = models.CharField(max_length=100, default='test')
++    
++    class Meta:
++        app_label = 'model_inheritance'
++
++
++class ItemWithUUID(models.Model):
++    """Base model with UUIDField primary key."""
++    import uuid
++    uid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
++    f = models.BooleanField(default=False)
++    
++    def reset(self):
++        """Reset primary key and field value."""
++        self.uid = None
++        self.f = False
++    
++    class Meta:
++        app_label = 'model_inheritance'
++
++
++class DerivedUUID(ItemWithUUID):
++    """Child model inheriting from ItemWithUUID."""
++    extra_field = models.CharField(max_length=100, default='test')
++    
++    class Meta:
++        app_label = 'model_inheritance'
++
++
++@override_settings(USE_TZ=False)
++class PrimaryKeyResetTestCase(TransactionTestCase):
++    """Test cases for primary key reset functionality in model inheritance."""
++    
++    def setUp(self):
++        """Set up test data."""
++        # Ensure tables exist
++        from django.core.management.color import no_style
++        from django.db import connection
++        
++        style = no_style()
++        sql = connection.ops.sql_table_creation_suffix()
++        
++        # Create tables if they don't exist
++        with connection.schema_editor() as schema_editor:
++            if not connection.introspection.table_names():
++                schema_editor.create_model(Item)
++                schema_editor.create_model(Derived)
++                schema_editor.create_model(ItemWithUUID)
++                schema_editor.create_model(DerivedUUID)
++    
++    def test_pk_reset_child_model_autofield_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: resetting pk on child model doesn't work.
++        This test should FAIL before the fix is applied.
++        """
++        # Create the first object
++        derived = Derived.objects.create(f=True, extra_field='original')
++        original_pk = derived.pk
++        
++        # Get the object through the parent model and access child
++        item = Item.objects.get(pk=derived.pk)
++        obj1 = item.derived
++        
++        # Reset the primary key - this should create a new object
++        obj1.reset()
++        obj1.extra_field = 'reset'
++        obj1.save()  # This should create a new object, not overwrite the existing one
++        
++        # The bug: the original object gets overwritten instead of creating a new one
++        # After the fix, this assertion should pass
++        try:
++            original_obj = Item.objects.get(pk=original_pk)
++            # If we can still find the original object with f=True, the bug is fixed
++            self.assertTrue(original_obj.f, "Original object should still exist with f=True")
++            
++            # There should be two objects now
++            self.assertEqual(Item.objects.count(), 2, "Should have 2 objects after reset")
++            self.assertEqual(Derived.objects.count(), 2, "Should have 2 derived objects after reset")
++            
++            # The new object should have f=False
++            new_obj = Derived.objects.get(extra_field='reset')
++            self.assertFalse(new_obj.f, "New object should have f=False")
++            self.assertNotEqual(new_obj.pk, original_pk, "New object should have different pk")
++            
++        except Item.DoesNotExist:
++            # This is the bug - the original object was overwritten
++            self.fail("Original object was overwritten instead of creating a new one")
++    
++    def test_pk_reset_child_model_autofield_after_fix(self):
++        """
++        Test that verifies the fix: resetting pk on child model creates new object.
++        This test should PASS after the fix is applied.
++        """
++        # Create the first object
++        derived = Derived.objects.create(f=True, extra_field='original')
++        original_pk = derived.pk
++        
++        # Reset the primary key on the child object
++        derived.reset()
++        derived.extra_field = 'new_object'
++        derived.save()  # Should create a new object
++        
++        # Verify original object still exists
++        original_obj = Item.objects.get(pk=original_pk)
++        self.assertTrue(original_obj.f, "Original object should still exist with f=True")
++        
++        # Verify new object was created
++        self.assertEqual(Item.objects.count(), 2, "Should have 2 objects after reset")
++        self.assertEqual(Derived.objects.count(), 2, "Should have 2 derived objects after reset")
++        
++        # Verify new object has correct values
++        new_obj = Derived.objects.get(extra_field='new_object')
++        self.assertFalse(new_obj.f, "New object should have f=False")
++        self.assertNotEqual(new_obj.pk, original_pk, "New object should have different pk")
++    
++    def test_pk_reset_child_model_uuid_fails_before_fix(self):
++        """
++        Test that demonstrates the bug with UUID primary keys.
++        This test should FAIL before the fix is applied.
++        """
++        # Create the first object
++        derived = DerivedUUID.objects.create(f=True, extra_field='original')
++        original_pk = derived.pk
++        
++        # Get the object through the parent model and access child
++        item = ItemWithUUID.objects.get(pk=derived.pk)
++        obj1 = item.deriveduuid
++        
++        # Reset the primary key - this should create a new object
++        obj1.reset()
++        obj1.extra_field = 'reset'
++        obj1.save()  # This should create a new object, not overwrite the existing one
++        
++        # The bug: the original object gets overwritten instead of creating a new one
++        try:
++            original_obj = ItemWithUUID.objects.get(pk=original_pk)
++            # If we can still find the original object with f=True, the bug is fixed
++            self.assertTrue(original_obj.f, "Original object should still exist with f=True")
++            
++            # There should be two objects now
++            self.assertEqual(ItemWithUUID.objects.count(), 2, "Should have 2 objects after reset")
++            self.assertEqual(DerivedUUID.objects.count(), 2, "Should have 2 derived objects after reset")
++            
++        except ItemWithUUID.DoesNotExist:
++            # This is the bug - the original object was overwritten
++            self.fail("Original object was overwritten instead of creating a new one")
++    
++    def test_pk_reset_direct_child_object(self):
++        """
++        Test resetting pk directly on child object (not through parent).
++        """
++        # Create the first object
++        derived = Derived.objects.create(f=True, extra_field='original')
++        original_pk = derived.pk
++        
++        # Reset pk directly on child object
++        derived.reset()
++        derived.extra_field = 'direct_reset'
++        derived.save()
++        
++        # Should create new object, original should still exist
++        self.assertEqual(Derived.objects.count(), 2, "Should have 2 objects after direct reset")
++        
++        # Original object should still exist
++        original_obj = Derived.objects.get(pk=original_pk)
++        self.assertTrue(original_obj.f, "Original object should still exist")
++        self.assertEqual(original_obj.extra_field, 'original')
++        
++        # New object should exist with reset values
++        new_obj = Derived.objects.get(extra_field='direct_reset')
++        self.assertFalse(new_obj.f, "New object should have f=False")
++        self.assertNotEqual(new_obj.pk, original_pk, "New object should have different pk")
++    
++    def test_pk_reset_multiple_inheritance_levels(self):
++        """
++        Test pk reset with multiple levels of inheritance.
++        """
++        # Create a third level of inheritance for this test
++        class GrandChild(Derived):
++            grand_field = models.CharField(max_length=50, default='grand')
++            
++            class Meta:
++                app_label = 'model_inheritance'
++        
++        # Create tables for the new model
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(GrandChild)
++        
++        # Create the first object
++        grandchild = GrandChild.objects.create(f=True, extra_field='original', grand_field='first')
++        original_pk = grandchild.pk
++        
++        # Reset pk and save
++        grandchild.uid = None
++        grandchild.f = False
++        grandchild.extra_field = 'new'
++        grandchild.grand_field = 'second'
++        grandchild.save()
++        
++        # Should create new object at all levels
++        self.assertEqual(Item.objects.count(), 2, "Should have 2 Item objects")
++        self.assertEqual(Derived.objects.count(), 2, "Should have 2 Derived objects")
++        self.assertEqual(GrandChild.objects.count(), 2, "Should have 2 GrandChild objects")
++        
++        # Original should still exist
++        original = GrandChild.objects.get(pk=original_pk)
++        self.assertTrue(original.f)
++        self.assertEqual(original.extra_field, 'original')
++        self.assertEqual(original.grand_field, 'first')
++        
++        # New object should exist
++        new_obj = GrandChild.objects.get(grand_field='second')
++        self.assertFalse(new_obj.f)
++        self.assertEqual(new_obj.extra_field, 'new')
++        self.assertNotEqual(new_obj.pk, original_pk)
++    
++    def test_pk_reset_with_force_insert(self):
++        """
++        Test that force_insert=True works correctly with pk reset.
++        """
++        derived = Derived.objects.create(f=True, extra_field='original')
++        original_pk = derived.pk
++        
++        # Reset pk and save with force_insert
++        derived.uid = None
++        derived.f = False
++        derived.extra_field = 'forced'
++        derived.save(force_insert=True)
++        
++        # Should create new object
++        self.assertEqual(Derived.objects.count(), 2)
++        
++        # Original should still exist
++        original = Derived.objects.get(pk=original_pk)
++        self.assertTrue(original.f)
++        
++        # New object should exist
++        new_obj = Derived.objects.get(extra_field='forced')
++        self.assertFalse(new_obj.f)
++        self.assertNotEqual(new_obj.pk, original_pk)
++    
++    def test_pk_reset_preserves_other_fields(self):
++        """
++        Test that resetting pk preserves other field values correctly.
++        """
++        derived = Derived.objects.create(f=True, extra_field='preserve_me')
++        
++        # Reset only the pk, keep other fields
++        derived.uid = None
++        derived.save()
++        
++        # Should have 2 objects now
++        self.assertEqual(Derived.objects.count(), 2)
++        
++        # Both objects should have the same extra_field value
++        objects = list(Derived.objects.all())
++        self.assertEqual(len(objects), 2)
++        for obj in objects:
++            self.assertEqual(obj.extra_field, 'preserve_me')
++        
++        # But different pk values
++        self.assertNotEqual(objects[0].pk, objects[1].pk)
++    
++    def test_normal_save_still_works(self):
++        """
++        Test that normal save operations (without pk reset) still work correctly.
++        """
++        derived = Derived.objects.create(f=True, extra_field='original')
++        original_pk = derived.pk
++        
++        # Modify field and save (without resetting pk)
++        derived.f = False
++        derived.extra_field = 'modified'
++        derived.save()
++        
++        # Should still have only 1 object
++        self.assertEqual(Derived.objects.count(), 1)
++        
++        # Object should be updated, not created new
++        updated_obj = Derived.objects.get(pk=original_pk)
++        self.assertFalse(updated_obj.f)
++        self.assertEqual(updated_obj.extra_field, 'modified')
++
++
++# Additional test to reproduce the exact scenario from the issue
++class SaveTestCase(TestCase):
++    """Reproduce the exact test case from the issue description."""
++    
++    def setUp(self):
++        """Set up as described in the issue."""
++        # Ensure tables exist
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(Item)
++            schema_editor.create_model(Derived)
++        
++        self.derived = Derived.objects.create(f=True)  # create the first object
++        item = Item.objects.get(pk=self.derived.pk)
++        obj1 = item.derived
++        obj1.reset()
++        obj1.save()  # the first object is overwritten (this is the bug)
++
++    def test_f_true(self):
++        """
++        This test demonstrates the bug from the issue.
++        It should FAIL before the fix because the original object gets overwritten.
++        After the fix, this test should PASS because the original object is preserved.
++        """
++        # Try to get the original object - this will fail if it was overwritten
++        try:
++            obj = Item.objects.get(pk=self.derived.pk)
++            # The original object should still have f=True
++            self.assertTrue(obj.f, "Original object should still exist with f=True")
++        except Item.DoesNotExist:
++            self.fail("Original object was overwritten instead of creating a new one")
++        
++        # There should be 2 objects total now (original + new)
++        self.assertEqual(Item.objects.count(), 2, "Should have 2 objects after pk reset")

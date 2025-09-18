@@ -1,0 +1,418 @@
+--- a/tests/auth_tests/test_tokens.py
++++ b/tests/auth_tests/test_tokens.py
+-# Empty if creating new file
++import pytest
++from datetime import datetime, timedelta
++from django.contrib.auth import get_user_model
++from django.contrib.auth.tokens import default_token_generator, PasswordResetTokenGenerator
++from django.test import TestCase, override_settings
++from django.contrib.auth.models import AbstractBaseUser
++from django.db import models
++
++
++class CustomUserWithEmail(AbstractBaseUser):
++    """Custom user model with email field for testing."""
++    email = models.EmailField(unique=True)
++    username = models.CharField(max_length=150, unique=True)
++    is_active = models.BooleanField(default=True)
++    
++    USERNAME_FIELD = 'username'
++    EMAIL_FIELD = 'email'
++    
++    class Meta:
++        app_label = 'auth_tests'
++
++
++class CustomUserWithoutEmail(AbstractBaseUser):
++    """Custom user model without email field for testing."""
++    username = models.CharField(max_length=150, unique=True)
++    is_active = models.BooleanField(default=True)
++    
++    USERNAME_FIELD = 'username'
++    
++    class Meta:
++        app_label = 'auth_tests'
++
++
++class PasswordResetTokenEmailChangeTests(TestCase):
++    """Test that password reset tokens are invalidated when email changes."""
++    
++    def setUp(self):
++        """Set up test data."""
++        User = get_user_model()
++        self.user = User.objects.create_user(
++            username='testuser',
++            email='original@example.com',
++            password='testpass123'
++        )
++        self.token_generator = PasswordResetTokenGenerator()
++    
++    def test_token_invalidated_when_email_changes_before_fix(self):
++        """
++        Test that demonstrates the bug: token remains valid after email change.
++        This test should FAIL before the fix is applied.
++        """
++        # Generate token with original email
++        original_token = self.token_generator.make_token(self.user)
++        
++        # Verify token is valid with original email
++        self.assertTrue(
++            self.token_generator.check_token(self.user, original_token),
++            "Token should be valid with original email"
++        )
++        
++        # Change user's email address
++        self.user.email = 'changed@example.com'
++        self.user.save()
++        
++        # Token should be invalid after email change (this will fail before fix)
++        # This assertion demonstrates the bug - it will fail because the token
++        # remains valid even after email change
++        with self.assertRaises(AssertionError, msg="Bug: Token remains valid after email change"):
++            self.assertFalse(
++                self.token_generator.check_token(self.user, original_token),
++                "Token should be invalid after email change"
++            )
++    
++    def test_token_invalidated_when_email_changes_after_fix(self):
++        """
++        Test that verifies the fix: token becomes invalid after email change.
++        This test should PASS after the fix is applied.
++        """
++        # Generate token with original email
++        original_token = self.token_generator.make_token(self.user)
++        
++        # Verify token is valid with original email
++        self.assertTrue(
++            self.token_generator.check_token(self.user, original_token),
++            "Token should be valid with original email"
++        )
++        
++        # Change user's email address
++        self.user.email = 'changed@example.com'
++        self.user.save()
++        
++        # After fix, token should be invalid after email change
++        self.assertFalse(
++            self.token_generator.check_token(self.user, original_token),
++            "Token should be invalid after email change"
++        )
++    
++    def test_new_token_valid_after_email_change(self):
++        """Test that a new token is valid after email change."""
++        # Change user's email address
++        self.user.email = 'changed@example.com'
++        self.user.save()
++        
++        # Generate new token with changed email
++        new_token = self.token_generator.make_token(self.user)
++        
++        # New token should be valid
++        self.assertTrue(
++            self.token_generator.check_token(self.user, new_token),
++            "New token should be valid with changed email"
++        )
++    
++    def test_token_remains_valid_when_email_unchanged(self):
++        """Test that token remains valid when email doesn't change."""
++        # Generate token
++        token = self.token_generator.make_token(self.user)
++        
++        # Verify token is valid
++        self.assertTrue(
++            self.token_generator.check_token(self.user, token),
++            "Token should be valid"
++        )
++        
++        # Save user without changing email
++        self.user.save()
++        
++        # Token should still be valid
++        self.assertTrue(
++            self.token_generator.check_token(self.user, token),
++            "Token should remain valid when email unchanged"
++        )
++    
++    def test_token_invalidated_when_email_set_to_none(self):
++        """Test token invalidation when email is set to None."""
++        # Generate token with email
++        token = self.token_generator.make_token(self.user)
++        
++        # Set email to None
++        self.user.email = None
++        self.user.save()
++        
++        # Token should be invalid
++        self.assertFalse(
++            self.token_generator.check_token(self.user, token),
++            "Token should be invalid when email set to None"
++        )
++    
++    def test_token_invalidated_when_email_set_from_none(self):
++        """Test token invalidation when email is set from None to a value."""
++        # Start with no email
++        self.user.email = None
++        self.user.save()
++        
++        # Generate token with no email
++        token = self.token_generator.make_token(self.user)
++        
++        # Set email to a value
++        self.user.email = 'newemail@example.com'
++        self.user.save()
++        
++        # Token should be invalid
++        self.assertFalse(
++            self.token_generator.check_token(self.user, token),
++            "Token should be invalid when email set from None"
++        )
++    
++    def test_multiple_email_changes_invalidate_all_previous_tokens(self):
++        """Test that multiple email changes invalidate all previous tokens."""
++        # Generate tokens with different email states
++        tokens = []
++        
++        # Token 1: original email
++        tokens.append(self.token_generator.make_token(self.user))
++        
++        # Token 2: first email change
++        self.user.email = 'first@example.com'
++        self.user.save()
++        tokens.append(self.token_generator.make_token(self.user))
++        
++        # Token 3: second email change
++        self.user.email = 'second@example.com'
++        self.user.save()
++        tokens.append(self.token_generator.make_token(self.user))
++        
++        # Only the latest token should be valid
++        self.assertFalse(
++            self.token_generator.check_token(self.user, tokens[0]),
++            "First token should be invalid"
++        )
++        self.assertFalse(
++            self.token_generator.check_token(self.user, tokens[1]),
++            "Second token should be invalid"
++        )
++        self.assertTrue(
++            self.token_generator.check_token(self.user, tokens[2]),
++            "Latest token should be valid"
++        )
++
++
++class PasswordResetTokenNoEmailFieldTests(TestCase):
++    """Test password reset tokens with user models that don't have email fields."""
++    
++    def test_token_generation_without_email_field(self):
++        """Test that token generation works for users without email field."""
++        # This test simulates a user model without an email field
++        # We'll mock the behavior by temporarily removing the email attribute
++        user = get_user_model().objects.create_user(
++            username='noemailuser',
++            password='testpass123'
++        )
++        
++        # Remove email attribute to simulate user without email field
++        if hasattr(user, 'email'):
++            delattr(user, 'email')
++        
++        token_generator = PasswordResetTokenGenerator()
++        
++        # Should not raise an exception
++        token = token_generator.make_token(user)
++        self.assertIsNotNone(token, "Token should be generated even without email field")
++        
++        # Token should be valid
++        self.assertTrue(
++            token_generator.check_token(user, token),
++            "Token should be valid for user without email field"
++        )
++    
++    def test_hash_value_consistency_without_email(self):
++        """Test that _make_hash_value is consistent for users without email."""
++        user = get_user_model().objects.create_user(
++            username='consistencyuser',
++            password='testpass123'
++        )
++        
++        # Remove email attribute
++        if hasattr(user, 'email'):
++            delattr(user, 'email')
++        
++        token_generator = PasswordResetTokenGenerator()
++        timestamp = 1234567890
++        
++        # Generate hash value multiple times
++        hash1 = token_generator._make_hash_value(user, timestamp)
++        hash2 = token_generator._make_hash_value(user, timestamp)
++        
++        self.assertEqual(hash1, hash2, "Hash values should be consistent")
++
++
++class PasswordResetTokenEdgeCaseTests(TestCase):
++    """Test edge cases for password reset token generation."""
++    
++    def setUp(self):
++        """Set up test data."""
++        User = get_user_model()
++        self.user = User.objects.create_user(
++            username='edgeuser',
++            email='edge@example.com',
++            password='testpass123'
++        )
++        self.token_generator = PasswordResetTokenGenerator()
++    
++    def test_empty_email_string(self):
++        """Test behavior with empty email string."""
++        # Set email to empty string
++        self.user.email = ''
++        self.user.save()
++        
++        token = self.token_generator.make_token(self.user)
++        
++        # Change to different empty-like value
++        self.user.email = None
++        self.user.save()
++        
++        # Token should be invalid due to email change
++        self.assertFalse(
++            self.token_generator.check_token(self.user, token),
++            "Token should be invalid when email changes from empty string to None"
++        )
++    
++    def test_whitespace_email_changes(self):
++        """Test that whitespace changes in email invalidate tokens."""
++        # Set email with whitespace
++        self.user.email = ' test@example.com '
++        self.user.save()
++        
++        token = self.token_generator.make_token(self.user)
++        
++        # Change email by removing whitespace
++        self.user.email = 'test@example.com'
++        self.user.save()
++        
++        # Token should be invalid
++        self.assertFalse(
++            self.token_generator.check_token(self.user, token),
++            "Token should be invalid when email whitespace changes"
++        )
++    
++    def test_case_sensitive_email_changes(self):
++        """Test that email case changes invalidate tokens."""
++        # Set email in lowercase
++        self.user.email = 'test@example.com'
++        self.user.save()
++        
++        token = self.token_generator.make_token(self.user)
++        
++        # Change email case
++        self.user.email = 'TEST@EXAMPLE.COM'
++        self.user.save()
++        
++        # Token should be invalid
++        self.assertFalse(
++            self.token_generator.check_token(self.user, token),
++            "Token should be invalid when email case changes"
++        )
++    
++    def test_unicode_email_changes(self):
++        """Test that unicode email changes invalidate tokens."""
++        # Set email with unicode characters
++        self.user.email = 'tëst@example.com'
++        self.user.save()
++        
++        token = self.token_generator.make_token(self.user)
++        
++        # Change email
++        self.user.email = 'test@example.com'
++        self.user.save()
++        
++        # Token should be invalid
++        self.assertFalse(
++            self.token_generator.check_token(self.user, token),
++            "Token should be invalid when unicode email changes"
++        )
++
++
++class PasswordResetTokenBackwardCompatibilityTests(TestCase):
++    """Test that the fix doesn't break existing functionality."""
++    
++    def setUp(self):
++        """Set up test data."""
++        User = get_user_model()
++        self.user = User.objects.create_user(
++            username='compatuser',
++            email='compat@example.com',
++            password='testpass123'
++        )
++        self.token_generator = PasswordResetTokenGenerator()
++    
++    def test_password_change_still_invalidates_token(self):
++        """Test that password changes still invalidate tokens."""
++        token = self.token_generator.make_token(self.user)
++        
++        # Change password
++        self.user.set_password('newpassword123')
++        self.user.save()
++        
++        # Token should be invalid
++        self.assertFalse(
++            self.token_generator.check_token(self.user, token),
++            "Token should be invalid after password change"
++        )
++    
++    def test_last_login_change_still_invalidates_token(self):
++        """Test that last_login changes still invalidate tokens."""
++        # Set initial last_login
++        self.user.last_login = datetime.now() - timedelta(days=1)
++        self.user.save()
++        
++        token = self.token_generator.make_token(self.user)
++        
++        # Change last_login
++        self.user.last_login = datetime.now()
++        self.user.save()
++        
++        # Token should be invalid
++        self.assertFalse(
++            self.token_generator.check_token(self.user, token),
++            "Token should be invalid after last_login change"
++        )
++    
++    def test_token_timeout_still_works(self):
++        """Test that token timeout functionality still works."""
++        # This test verifies that the timeout mechanism isn't broken
++        # We can't easily test actual timeout without mocking time,
++        # but we can verify the token generation still includes timestamp
++        token = self.token_generator.make_token(self.user)
++        
++        # Token should be valid immediately
++        self.assertTrue(
++            self.token_generator.check_token(self.user, token),
++            "Token should be valid immediately after generation"
++        )
++        
++        # Verify token format (should contain timestamp)
++        self.assertIn('-', token, "Token should contain timestamp separator")
++        parts = token.split('-')
++        self.assertEqual(len(parts), 2, "Token should have exactly 2 parts")
++    
++    def test_default_token_generator_behavior(self):
++        """Test that the default token generator still works correctly."""
++        # Test with the default token generator instance
++        token = default_token_generator.make_token(self.user)
++        
++        self.assertTrue(
++            default_token_generator.check_token(self.user, token),
++            "Default token generator should work correctly"
++        )
++        
++        # Change email and verify token is invalid
++        self.user.email = 'changed@example.com'
++        self.user.save()
++        
++        self.assertFalse(
++            default_token_generator.check_token(self.user, token),
++            "Default token generator should invalidate token after email change"
++        )

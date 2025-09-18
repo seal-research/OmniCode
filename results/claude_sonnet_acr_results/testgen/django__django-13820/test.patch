@@ -1,0 +1,239 @@
+--- a/tests/migrations/test_loader.py
++++ b/tests/migrations/test_loader.py
+-# Empty if creating new file
++import sys
++import types
++from unittest import mock
++
++import pytest
++
++from django.db.migrations.loader import MigrationLoader
++from django.test import TestCase, override_settings
++from django.apps import apps
++
++
++class MigrationLoaderNamespacePackageTests(TestCase):
++    """
++    Tests for the MigrationLoader's handling of namespace packages and
++    modules without __file__ attribute (e.g., in frozen environments).
++    """
++
++    def setUp(self):
++        self.loader = MigrationLoader(connection=None, load=False)
++
++    def test_namespace_package_rejected(self):
++        """
++        Test that true namespace packages (with non-list __path__) are rejected.
++        This test reproduces the current behavior that should be preserved.
++        """
++        # Create a mock namespace package with _NamespacePath-like __path__
++        namespace_module = types.ModuleType('test_namespace')
++        # Simulate namespace package: no __file__ and non-list __path__
++        namespace_module.__file__ = None
++        namespace_module.__path__ = mock.MagicMock()  # Non-list __path__
++        namespace_module.__path__.__class__.__name__ = '_NamespacePath'
++        
++        # Mock the import_module to return our namespace package
++        with mock.patch('django.db.migrations.loader.import_module', return_value=namespace_module):
++            with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                # Create a mock app config
++                mock_app_config = mock.MagicMock()
++                mock_app_config.label = 'test_app'
++                mock_get_configs.return_value = [mock_app_config]
++                
++                # Mock migrations_module to return a module name
++                with mock.patch.object(self.loader, 'migrations_module', return_value=('test_app.migrations', False)):
++                    self.loader.load_disk()
++                    
++                    # Namespace package should be in unmigrated_apps
++                    self.assertIn('test_app', self.loader.unmigrated_apps)
++                    self.assertNotIn('test_app', self.loader.migrated_apps)
++
++    def test_regular_package_without_file_in_frozen_environment_before_fix(self):
++        """
++        Test that demonstrates the bug: regular packages without __file__
++        are incorrectly rejected before the fix is applied.
++        This test should FAIL before the fix and PASS after the fix.
++        """
++        # Create a mock regular package without __file__ (frozen environment)
++        regular_module = types.ModuleType('test_regular')
++        # Simulate frozen environment: no __file__ but list __path__
++        regular_module.__file__ = None
++        regular_module.__path__ = ['/frozen/path/to/migrations']  # List __path__
++        
++        # Mock the import_module to return our regular package
++        with mock.patch('django.db.migrations.loader.import_module', return_value=regular_module):
++            with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                # Create a mock app config
++                mock_app_config = mock.MagicMock()
++                mock_app_config.label = 'test_app'
++                mock_get_configs.return_value = [mock_app_config]
++                
++                # Mock migrations_module to return a module name
++                with mock.patch.object(self.loader, 'migrations_module', return_value=('test_app.migrations', False)):
++                    # Mock pkgutil.iter_modules to simulate migrations
++                    with mock.patch('django.db.migrations.loader.pkgutil.iter_modules', return_value=[]):
++                        self.loader.load_disk()
++                        
++                        # Before fix: regular package without __file__ is incorrectly rejected
++                        # After fix: it should be accepted
++                        # This assertion will fail before the fix (demonstrating the bug)
++                        # and pass after the fix (verifying the solution)
++                        self.assertNotIn('test_app', self.loader.unmigrated_apps)
++                        self.assertIn('test_app', self.loader.migrated_apps)
++
++    def test_regular_package_with_file_still_works(self):
++        """
++        Test that regular packages with __file__ continue to work as before.
++        This ensures the fix doesn't break existing functionality.
++        """
++        # Create a mock regular package with __file__ (normal environment)
++        regular_module = types.ModuleType('test_regular')
++        regular_module.__file__ = '/path/to/migrations/__init__.py'
++        regular_module.__path__ = ['/path/to/migrations']
++        
++        # Mock the import_module to return our regular package
++        with mock.patch('django.db.migrations.loader.import_module', return_value=regular_module):
++            with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                # Create a mock app config
++                mock_app_config = mock.MagicMock()
++                mock_app_config.label = 'test_app'
++                mock_get_configs.return_value = [mock_app_config]
++                
++                # Mock migrations_module to return a module name
++                with mock.patch.object(self.loader, 'migrations_module', return_value=('test_app.migrations', False)):
++                    # Mock pkgutil.iter_modules to simulate migrations
++                    with mock.patch('django.db.migrations.loader.pkgutil.iter_modules', return_value=[]):
++                        self.loader.load_disk()
++                        
++                        # Regular package with __file__ should be accepted
++                        self.assertNotIn('test_app', self.loader.unmigrated_apps)
++                        self.assertIn('test_app', self.loader.migrated_apps)
++
++    def test_module_without_path_rejected(self):
++        """
++        Test that modules without __path__ (e.g., migrations.py file) are rejected.
++        This ensures the fix doesn't change this existing behavior.
++        """
++        # Create a mock module without __path__ (not a package)
++        module_without_path = types.ModuleType('test_module')
++        module_without_path.__file__ = '/path/to/migrations.py'
++        # No __path__ attribute
++        
++        # Mock the import_module to return our module
++        with mock.patch('django.db.migrations.loader.import_module', return_value=module_without_path):
++            with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                # Create a mock app config
++                mock_app_config = mock.MagicMock()
++                mock_app_config.label = 'test_app'
++                mock_get_configs.return_value = [mock_app_config]
++                
++                # Mock migrations_module to return a module name
++                with mock.patch.object(self.loader, 'migrations_module', return_value=('test_app.migrations', False)):
++                    self.loader.load_disk()
++                    
++                    # Module without __path__ should be rejected
++                    self.assertIn('test_app', self.loader.unmigrated_apps)
++                    self.assertNotIn('test_app', self.loader.migrated_apps)
++
++    def test_namespace_package_with_custom_path_type_rejected(self):
++        """
++        Test that namespace packages with custom __path__ types are rejected.
++        This tests the edge case of different namespace package implementations.
++        """
++        # Create a custom path type to simulate different namespace package implementations
++        class CustomNamespacePath:
++            def __init__(self, paths):
++                self._paths = paths
++            
++            def __iter__(self):
++                return iter(self._paths)
++        
++        # Create a mock namespace package with custom __path__ type
++        namespace_module = types.ModuleType('test_namespace')
++        namespace_module.__file__ = None
++        namespace_module.__path__ = CustomNamespacePath(['/path1', '/path2'])
++        
++        # Mock the import_module to return our namespace package
++        with mock.patch('django.db.migrations.loader.import_module', return_value=namespace_module):
++            with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                # Create a mock app config
++                mock_app_config = mock.MagicMock()
++                mock_app_config.label = 'test_app'
++                mock_get_configs.return_value = [mock_app_config]
++                
++                # Mock migrations_module to return a module name
++                with mock.patch.object(self.loader, 'migrations_module', return_value=('test_app.migrations', False)):
++                    self.loader.load_disk()
++                    
++                    # Custom namespace package should be rejected
++                    self.assertIn('test_app', self.loader.unmigrated_apps)
++                    self.assertNotIn('test_app', self.loader.migrated_apps)
++
++    def test_frozen_environment_with_migrations_loads_correctly(self):
++        """
++        Test that in a frozen environment, packages without __file__ but with
++        list __path__ can load migrations correctly after the fix.
++        """
++        # Create a mock regular package without __file__ (frozen environment)
++        regular_module = types.ModuleType('test_regular')
++        regular_module.__file__ = None
++        regular_module.__path__ = ['/frozen/path/to/migrations']
++        
++        # Create a mock migration module
++        migration_module = types.ModuleType('0001_initial')
++        migration_module.Migration = mock.MagicMock()
++        migration_module.Migration.return_value = mock.MagicMock()
++        
++        # Mock the import_module to return our modules
++        def mock_import_module(module_name):
++            if module_name.endswith('.migrations'):
++                return regular_module
++            elif module_name.endswith('.0001_initial'):
++                return migration_module
++            return mock.MagicMock()
++        
++        with mock.patch('django.db.migrations.loader.import_module', side_effect=mock_import_module):
++            with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                # Create a mock app config
++                mock_app_config = mock.MagicMock()
++                mock_app_config.label = 'test_app'
++                mock_get_configs.return_value = [mock_app_config]
++                
++                # Mock migrations_module to return a module name
++                with mock.patch.object(self.loader, 'migrations_module', return_value=('test_app.migrations', False)):
++                    # Mock pkgutil.iter_modules to simulate finding a migration
++                    with mock.patch('django.db.migrations.loader.pkgutil.iter_modules', 
++                                  return_value=[('', '0001_initial', False)]):
++                        self.loader.load_disk()
++                        
++                        # After fix: frozen environment package should be accepted and migrations loaded
++                        self.assertNotIn('test_app', self.loader.unmigrated_apps)
++                        self.assertIn('test_app', self.loader.migrated_apps)
++                        # Check that migration was actually loaded
++                        self.assertIn(('test_app', '0001_initial'), self.loader.disk_migrations)
++
++    def test_edge_case_none_path_attribute(self):
++        """
++        Test edge case where __path__ is None.
++        """
++        # Create a mock module with None __path__
++        module_with_none_path = types.ModuleType('test_module')
++        module_with_none_path.__file__ = None
++        module_with_none_path.__path__ = None
++        
++        # Mock the import_module to return our module
++        with mock.patch('django.db.migrations.loader.import_module', return_value=module_with_none_path):
++            with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                # Create a mock app config
++                mock_app_config = mock.MagicMock()
++                mock_app_config.label = 'test_app'
++                mock_get_configs.return_value = [mock_app_config]
++                
++                # Mock migrations_module to return a module name
++                with mock.patch.object(self.loader, 'migrations_module', return_value=('test_app.migrations', False)):
++                    self.loader.load_disk()
++                    
++                    # Module with None __path__ should be rejected
++                    self.assertIn('test_app', self.loader.unmigrated_apps)
++                    self.assertNotIn('test_app', self.loader.migrated_apps)

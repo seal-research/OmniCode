@@ -1,0 +1,264 @@
+--- a/tests/forms_tests/test_models.py
++++ b/tests/forms_tests/test_models.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.forms import ModelForm
++from django.forms.widgets import RadioSelect, Select
++from django.test import TestCase
++
++
++class BatchData(models.Model):
++    """Test model for foreign key relationships."""
++    name = models.CharField(max_length=100)
++    
++    def __str__(self):
++        return self.name
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class TestRun(models.Model):
++    """Test model with foreign key field that has blank=False."""
++    # Foreign key with null=True, blank=False - this should not show blank option with RadioSelect
++    data_file = models.ForeignKey(BatchData, on_delete=models.SET_NULL, null=True, blank=False)
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class TestRunOptional(models.Model):
++    """Test model with foreign key field that has blank=True."""
++    # Foreign key with null=True, blank=True - this should show blank option with RadioSelect
++    data_file = models.ForeignKey(BatchData, on_delete=models.SET_NULL, null=True, blank=True)
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class TestRunForm(ModelForm):
++    """Form using RadioSelect widget for foreign key field."""
++    class Meta:
++        model = TestRun
++        fields = ['data_file']
++        widgets = {'data_file': RadioSelect()}
++
++
++class TestRunOptionalForm(ModelForm):
++    """Form using RadioSelect widget for optional foreign key field."""
++    class Meta:
++        model = TestRunOptional
++        fields = ['data_file']
++        widgets = {'data_file': RadioSelect()}
++
++
++class TestRunSelectForm(ModelForm):
++    """Form using default Select widget for foreign key field."""
++    class Meta:
++        model = TestRun
++        fields = ['data_file']
++        widgets = {'data_file': Select()}
++
++
++class RadioSelectForeignKeyTests(TestCase):
++    """Test suite for RadioSelect widget behavior with foreign key fields."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        """Create test data for foreign key relationships."""
++        cls.batch_data1 = BatchData.objects.create(name="First Data File")
++        cls.batch_data2 = BatchData.objects.create(name="Second Data File")
++    
++    def test_radioselect_required_field_no_blank_option_before_fix(self):
++        """
++        Test that demonstrates the bug: RadioSelect shows blank option for required fields.
++        This test should FAIL before the fix is applied.
++        """
++        form = TestRunForm()
++        field = form.fields['data_file']
++        
++        # Get the choices from the field
++        choices = list(field.choices)
++        
++        # Before fix: this assertion should FAIL because blank choice is present
++        # The bug is that choices will include ('', '---------') even though blank=False
++        choice_values = [choice[0] for choice in choices]
++        
++        # This assertion will fail before the fix because '' will be in choice_values
++        with self.assertRaises(AssertionError):
++            self.assertNotIn('', choice_values, 
++                           "Blank choice should not be present for required RadioSelect field")
++    
++    def test_radioselect_required_field_no_blank_option_after_fix(self):
++        """
++        Test that verifies the fix: RadioSelect should not show blank option for required fields.
++        This test should PASS after the fix is applied.
++        """
++        form = TestRunForm()
++        field = form.fields['data_file']
++        
++        # Get the choices from the field
++        choices = list(field.choices)
++        choice_values = [choice[0] for choice in choices]
++        
++        # After fix: blank choice should not be present
++        self.assertNotIn('', choice_values, 
++                        "Blank choice should not be present for required RadioSelect field")
++        
++        # Verify that actual data choices are present
++        self.assertIn(self.batch_data1.pk, choice_values)
++        self.assertIn(self.batch_data2.pk, choice_values)
++        
++        # Verify the number of choices (should be 2, not 3)
++        self.assertEqual(len(choices), 2, 
++                        "Should only have choices for actual data, no blank choice")
++    
++    def test_radioselect_optional_field_has_blank_option(self):
++        """
++        Test that RadioSelect still shows blank option for optional fields (blank=True).
++        This ensures the fix doesn't break existing functionality.
++        """
++        form = TestRunOptionalForm()
++        field = form.fields['data_file']
++        
++        # Get the choices from the field
++        choices = list(field.choices)
++        choice_values = [choice[0] for choice in choices]
++        
++        # Optional field should still have blank choice
++        self.assertIn('', choice_values, 
++                     "Blank choice should be present for optional RadioSelect field")
++        
++        # Verify that actual data choices are also present
++        self.assertIn(self.batch_data1.pk, choice_values)
++        self.assertIn(self.batch_data2.pk, choice_values)
++        
++        # Verify the number of choices (should be 3: blank + 2 data choices)
++        self.assertEqual(len(choices), 3, 
++                        "Should have blank choice plus choices for actual data")
++    
++    def test_select_widget_still_has_blank_option_for_required_field(self):
++        """
++        Test that Select widget behavior is unchanged - it should still show blank option
++        even for required fields. This ensures the fix only affects RadioSelect.
++        """
++        form = TestRunSelectForm()
++        field = form.fields['data_file']
++        
++        # Get the choices from the field
++        choices = list(field.choices)
++        choice_values = [choice[0] for choice in choices]
++        
++        # Select widget should still have blank choice even for required fields
++        self.assertIn('', choice_values, 
++                     "Select widget should still have blank choice for required field")
++        
++        # Verify that actual data choices are also present
++        self.assertIn(self.batch_data1.pk, choice_values)
++        self.assertIn(self.batch_data2.pk, choice_values)
++    
++    def test_radioselect_form_rendering_no_checked_option(self):
++        """
++        Test that RadioSelect form rendering doesn't have any pre-selected option
++        for required fields when no initial value is provided.
++        """
++        form = TestRunForm()
++        
++        # Render the form field
++        rendered_html = str(form['data_file'])
++        
++        # After fix: no radio button should be checked by default
++        self.assertNotIn('checked="checked"', rendered_html,
++                        "No radio button should be checked by default for required field")
++        
++        # Verify that radio buttons for actual choices are present
++        self.assertIn(f'value="{self.batch_data1.pk}"', rendered_html)
++        self.assertIn(f'value="{self.batch_data2.pk}"', rendered_html)
++        
++        # Verify that no blank value radio button exists
++        self.assertNotIn('value=""', rendered_html,
++                        "No blank value radio button should exist for required field")
++    
++    def test_radioselect_form_rendering_with_initial_value(self):
++        """
++        Test that RadioSelect form rendering works correctly when initial value is provided.
++        """
++        form = TestRunForm(initial={'data_file': self.batch_data1.pk})
++        
++        # Render the form field
++        rendered_html = str(form['data_file'])
++        
++        # The radio button for the initial value should be checked
++        self.assertIn('checked="checked"', rendered_html,
++                     "Radio button for initial value should be checked")
++        
++        # Verify that the correct radio button is checked
++        # Look for the pattern: value="<pk>" and checked="checked" in the same input
++        import re
++        checked_pattern = rf'value="{self.batch_data1.pk}"[^>]*checked="checked"'
++        self.assertTrue(re.search(checked_pattern, rendered_html),
++                       "The radio button for the initial value should be checked")
++    
++    def test_radioselect_empty_label_property(self):
++        """
++        Test that the empty_label property is correctly set to None for required RadioSelect fields.
++        """
++        form = TestRunForm()
++        field = form.fields['data_file']
++        
++        # After fix: empty_label should be None for required RadioSelect fields
++        self.assertIsNone(field.empty_label,
++                         "empty_label should be None for required RadioSelect field")
++    
++    def test_radioselect_optional_empty_label_property(self):
++        """
++        Test that the empty_label property is correctly set for optional RadioSelect fields.
++        """
++        form = TestRunOptionalForm()
++        field = form.fields['data_file']
++        
++        # Optional field should still have empty_label
++        self.assertIsNotNone(field.empty_label,
++                           "empty_label should not be None for optional RadioSelect field")
++        self.assertEqual(field.empty_label, "---------",
++                        "empty_label should be default dash string for optional field")
++    
++    def test_select_widget_empty_label_property(self):
++        """
++        Test that Select widget empty_label behavior is unchanged.
++        """
++        form = TestRunSelectForm()
++        field = form.fields['data_file']
++        
++        # Select widget should still have empty_label even for required fields
++        self.assertIsNotNone(field.empty_label,
++                           "Select widget should still have empty_label for required field")
++    
++    def test_edge_case_radioselect_with_explicit_empty_label(self):
++        """
++        Test edge case where empty_label is explicitly set in form field definition.
++        """
++        class CustomTestRunForm(ModelForm):
++            class Meta:
++                model = TestRun
++                fields = ['data_file']
++                widgets = {'data_file': RadioSelect()}
++            
++            def __init__(self, *args, **kwargs):
++                super().__init__(*args, **kwargs)
++                # Explicitly set empty_label after form initialization
++                self.fields['data_file'].empty_label = "Custom Empty"
++        
++        form = CustomTestRunForm()
++        field = form.fields['data_file']
++        
++        # When explicitly set, the custom empty_label should be respected
++        # even for RadioSelect with required field
++        self.assertEqual(field.empty_label, "Custom Empty",
++                        "Explicitly set empty_label should be respected")
++        
++        choices = list(field.choices)
++        choice_values = [choice[0] for choice in choices]
++        self.assertIn('', choice_values,
++                     "Blank choice should be present when empty_label is explicitly set")

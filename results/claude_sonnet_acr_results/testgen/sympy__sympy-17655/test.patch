@@ -1,0 +1,160 @@
+--- a/sympy/geometry/tests/test_point.py
++++ b/sympy/geometry/tests/test_point.py
+-# This file already exists, we need to add tests to it
++import pytest
++from sympy import geometry as ge
++import sympy
++from sympy.geometry.exceptions import GeometryError
++
++
++def test_point_multiplication_commutativity():
++    """Test that point multiplication is commutative with scalars."""
++    point1 = ge.Point(0, 0)
++    point2 = ge.Point(1, 1)
++    scalar = sympy.sympify(2.0)
++    
++    # Test basic multiplication commutativity
++    result1 = point2 * scalar
++    result2 = scalar * point2
++    
++    assert result1 == result2
++    assert result1 == ge.Point(2.0, 2.0)
++
++
++def test_point_addition_with_scalar_multiplication_bug():
++    """Test the specific bug case: point1 + scalar * point2 should work."""
++    point1 = ge.Point(0, 0)
++    point2 = ge.Point(1, 1)
++    scalar = sympy.sympify(2.0)
++    
++    # This should work (and did work before)
++    result1 = point1 + point2 * scalar
++    
++    # This should also work (but failed before the fix)
++    result2 = point1 + scalar * point2
++    
++    # Both should give the same result
++    assert result1 == result2
++    assert result1 == ge.Point(2.0, 2.0)
++
++
++def test_point_rmul_with_various_scalars():
++    """Test right multiplication with various types of scalars."""
++    point = ge.Point(3, 4)
++    
++    # Test with integer
++    result1 = 2 * point
++    expected1 = ge.Point(6, 8)
++    assert result1 == expected1
++    
++    # Test with float
++    result2 = 1.5 * point
++    expected2 = ge.Point(4.5, 6.0)
++    assert result2 == expected2
++    
++    # Test with SymPy number
++    result3 = sympy.Rational(1, 2) * point
++    expected3 = ge.Point(sympy.Rational(3, 2), 2)
++    assert result3 == expected3
++    
++    # Test with symbolic expression
++    x = sympy.Symbol('x')
++    result4 = x * point
++    expected4 = ge.Point(3*x, 4*x)
++    assert result4 == expected4
++
++
++def test_point_multiplication_edge_cases():
++    """Test edge cases for point multiplication."""
++    point = ge.Point(1, 2, 3)  # 3D point
++    
++    # Test with zero
++    result1 = 0 * point
++    expected1 = ge.Point(0, 0, 0)
++    assert result1 == expected1
++    
++    # Test with negative scalar
++    result2 = -2 * point
++    expected2 = ge.Point(-2, -4, -6)
++    assert result2 == expected2
++    
++    # Test with complex expressions
++    x, y = sympy.symbols('x y')
++    expr = x + y
++    result3 = expr * point
++    expected3 = ge.Point((x + y), 2*(x + y), 3*(x + y))
++    assert result3 == expected3
++
++
++def test_point_multiplication_preserves_type():
++    """Test that multiplication preserves the appropriate Point type."""
++    # Test 2D point
++    point2d = ge.Point(1, 2)
++    result2d = 3 * point2d
++    assert isinstance(result2d, ge.Point2D)
++    
++    # Test 3D point
++    point3d = ge.Point(1, 2, 3)
++    result3d = 3 * point3d
++    assert isinstance(result3d, ge.Point3D)
++
++
++def test_point_multiplication_chain_operations():
++    """Test chaining multiplication and addition operations."""
++    p1 = ge.Point(1, 1)
++    p2 = ge.Point(2, 3)
++    p3 = ge.Point(0, 1)
++    
++    # Test complex expression: p1 + 2*p2 - 0.5*p3
++    result = p1 + 2*p2 - sympy.Rational(1, 2)*p3
++    expected = ge.Point(1 + 4 - 0, 1 + 6 - sympy.Rational(1, 2))
++    assert result == expected
++
++
++def test_point_rmul_fails_before_fix():
++    """Test that demonstrates the bug before the fix is applied.
++    
++    This test should fail before __rmul__ is implemented and pass after.
++    """
++    point1 = ge.Point(0, 0)
++    point2 = ge.Point(1, 1)
++    
++    # This should work
++    working_case = point1 + point2 * sympy.sympify(2.0)
++    
++    # This should also work after the fix
++    try:
++        failing_case = point1 + sympy.sympify(2.0) * point2
++        # If we get here, the fix is working
++        assert working_case == failing_case
++    except (GeometryError, TypeError) as e:
++        # If we get here, the bug still exists
++        pytest.fail(f"Bug still exists: {e}")
++
++
++def test_point_multiplication_associativity():
++    """Test that scalar multiplication is associative."""
++    point = ge.Point(1, 2)
++    a, b = 2, 3
++    
++    # Test (a * b) * point == a * (b * point)
++    result1 = (a * b) * point
++    result2 = a * (b * point)
++    
++    assert result1 == result2
++    assert result1 == ge.Point(6, 12)
++
++
++def test_point_multiplication_with_sympify():
++    """Test multiplication with sympified values."""
++    point = ge.Point(1, 2)
++    
++    # Test with sympified float
++    scalar1 = sympy.sympify(2.5)
++    result1 = scalar1 * point
++    assert result1 == ge.Point(2.5, 5.0)
++    
++    # Test with sympified fraction
++    scalar2 = sympy.sympify("3/4")
++    result2 = scalar2 * point
++    assert result2 == ge.Point(sympy.Rational(3, 4), sympy.Rational(3, 2))

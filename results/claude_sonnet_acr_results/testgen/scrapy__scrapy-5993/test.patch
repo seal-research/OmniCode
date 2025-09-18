@@ -1,0 +1,256 @@
+--- a/tests/test_utils_conf.py
++++ b/tests/test_utils_conf.py
++import pytest
++import warnings
++from unittest.mock import patch
++
++from scrapy.exceptions import ScrapyDeprecationWarning
++from scrapy.settings import BaseSettings
++from scrapy.utils.conf import build_component_list
++from scrapy.utils.deprecate import update_classpath
++
++
++class TestBuildComponentList:
++    """Test suite for build_component_list function."""
++
++    def test_build_component_list_with_dict(self):
++        """Test build_component_list with a simple dictionary."""
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware': 300,
++        }
++        result = build_component_list(compdict)
++        
++        # Should be sorted by priority (value)
++        expected = [
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware',
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware'
++        ]
++        assert result == expected
++
++    def test_build_component_list_with_custom_list(self):
++        """Test build_component_list with custom parameter as list."""
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
++        }
++        custom = [
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware',
++            'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware'
++        ]
++        
++        result = build_component_list(compdict, custom=custom)
++        
++        # When custom is a list/tuple, it should return the converted custom list
++        expected = [
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware',
++            'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware'
++        ]
++        assert result == expected
++
++    def test_build_component_list_with_custom_tuple(self):
++        """Test build_component_list with custom parameter as tuple."""
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
++        }
++        custom = (
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware',
++            'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware'
++        )
++        
++        result = build_component_list(compdict, custom=custom)
++        
++        # Should return tuple with converted components
++        expected = (
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware',
++            'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware'
++        )
++        assert result == expected
++        assert isinstance(result, tuple)
++
++    def test_build_component_list_with_custom_dict(self):
++        """Test build_component_list with custom parameter as dict."""
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
++        }
++        custom = {
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware': 300,
++        }
++        
++        result = build_component_list(compdict, custom=custom)
++        
++        # custom dict should be merged with compdict
++        expected = [
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware',
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware'
++        ]
++        assert result == expected
++
++    def test_build_component_list_with_none_values(self):
++        """Test build_component_list filters out None values."""
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware': None,
++            'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': 400,
++        }
++        
++        result = build_component_list(compdict)
++        
++        # None values should be filtered out
++        expected = [
++            'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware',
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware'
++        ]
++        assert result == expected
++
++    def test_build_component_list_with_base_settings(self):
++        """Test build_component_list with BaseSettings object."""
++        settings = BaseSettings()
++        settings.set('scrapy.downloadermiddlewares.retry.RetryMiddleware', 550, priority=10)
++        settings.set('scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware', 300, priority=20)
++        
++        result = build_component_list(settings)
++        
++        expected = [
++            'scrapy.downloadermiddlewares.httpauth.HttpAuthMiddleware',
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware'
++        ]
++        assert result == expected
++
++    def test_build_component_list_invalid_value_type(self):
++        """Test build_component_list raises ValueError for invalid value types."""
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 'invalid',
++        }
++        
++        with pytest.raises(ValueError, match="Invalid value invalid for component"):
++            build_component_list(compdict)
++
++    def test_build_component_list_duplicate_converted_paths(self):
++        """Test build_component_list raises ValueError for duplicate converted paths."""
++        # This would require paths that convert to the same object
++        # This is a bit tricky to test without actual duplicate paths
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
++        }
++        custom = [
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware',
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware'  # Duplicate
++        ]
++        
++        with pytest.raises(ValueError, match="Some paths in .* convert to the same object"):
++            build_component_list(compdict, custom=custom)
++
++    def test_build_component_list_current_signature_only(self):
++        """Test that build_component_list only accepts current signature parameters."""
++        # This test verifies that the old (base, custom) signature is no longer supported
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
++        }
++        
++        # Current signature should work
++        result = build_component_list(compdict, custom=None)
++        assert len(result) == 1
++        
++        # Test with all current parameters
++        result = build_component_list(compdict, custom=None, convert=update_classpath)
++        assert len(result) == 1
++
++    def test_build_component_list_no_backward_compatibility_code(self):
++        """Test that there is no backward compatibility code for old (base, custom) signature."""
++        # This test documents that the backward compatibility code mentioned in the issue
++        # is no longer present in the codebase
++        
++        import inspect
++        import scrapy.utils.conf
++        
++        # Get the source code of the function
++        source = inspect.getsource(scrapy.utils.conf.build_component_list)
++        
++        # Verify that there are no backward compatibility comments or code
++        assert "Backward compatibility" not in source
++        assert "old (base, custom)" not in source
++        assert "base, custom" not in source
++        
++        # Verify the function signature matches current expectation
++        sig = inspect.signature(scrapy.utils.conf.build_component_list)
++        params = list(sig.parameters.keys())
++        assert params == ['compdict', 'custom', 'convert']
++
++    def test_build_component_list_no_deprecation_warnings(self):
++        """Test that build_component_list does not emit any deprecation warnings."""
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
++        }
++        
++        # Test that no deprecation warnings are emitted during normal usage
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            result = build_component_list(compdict)
++            
++            # Filter for ScrapyDeprecationWarning
++            scrapy_warnings = [warning for warning in w 
++                             if issubclass(warning.category, ScrapyDeprecationWarning)]
++            assert len(scrapy_warnings) == 0, f"Unexpected deprecation warnings: {scrapy_warnings}"
++
++    def test_build_component_list_with_custom_convert_function(self):
++        """Test build_component_list with custom convert function."""
++        def custom_convert(path):
++            return path.upper()
++        
++        compdict = {
++            'middleware.a': 100,
++            'middleware.b': 200,
++        }
++        
++        result = build_component_list(compdict, convert=custom_convert)
++        
++        expected = ['MIDDLEWARE.A', 'MIDDLEWARE.B']
++        assert result == expected
++
++    def test_build_component_list_empty_dict(self):
++        """Test build_component_list with empty dictionary."""
++        result = build_component_list({})
++        assert result == []
++
++    def test_build_component_list_single_component(self):
++        """Test build_component_list with single component."""
++        compdict = {
++            'scrapy.downloadermiddlewares.retry.RetryMiddleware': 550,
++        }
++        
++        result = build_component_list(compdict)
++        
++        expected = ['scrapy.downloadermiddlewares.retry.RetryMiddleware']
++        assert result == expected
++
++    def test_build_component_list_preserves_existing_functionality(self):
++        """Test that build_component_list preserves all existing functionality."""
++        # This is a comprehensive test to ensure the current implementation
++        # works correctly for all expected use cases
++        
++        # Test case 1: Basic dictionary sorting
++        compdict1 = {
++            'component.c': 300,
++            'component.a': 100,
++            'component.b': 200,
++        }
++        result1 = build_component_list(compdict1)
++        assert result1 == ['component.a', 'component.b', 'component.c']
++        
++        # Test case 2: With custom list override
++        result2 = build_component_list(compdict1, custom=['custom.component'])
++        assert result2 == ['custom.component']
++        
++        # Test case 3: With custom dict merge
++        custom_dict = {'component.d': 50}
++        result3 = build_component_list(compdict1, custom=custom_dict)
++        assert result3 == ['component.d', 'component.a', 'component.b', 'component.c']
++        
++        # Test case 4: With None values filtered
++        compdict2 = {
++            'component.a': 100,
++            'component.b': None,
++            'component.c': 200,
++        }
++        result4 = build_component_list(compdict2)
++        assert result4 == ['component.a', 'component.c']

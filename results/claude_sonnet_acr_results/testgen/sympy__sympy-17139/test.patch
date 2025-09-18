@@ -1,0 +1,167 @@
+--- a/sympy/simplify/tests/test_fu_complex_exponent.py
++++ b/sympy/simplify/tests/test_fu_complex_exponent.py
+-# Empty if creating new file
++import pytest
++from sympy import *
++from sympy.simplify.fu import _TR56, TR6
++
++
++def test_simplify_cos_complex_exponent_bug():
++    """Test that reproduces the original bug with cos(x)**I."""
++    x = Symbol('x')
++    
++    # This should raise TypeError before the fix
++    with pytest.raises(TypeError, match="Invalid comparison of complex"):
++        simplify(cos(x)**I)
++
++
++def test_simplify_cos_complex_exponent_fixed():
++    """Test that cos(x)**I works after the fix."""
++    x = Symbol('x')
++    
++    # After the fix, this should not raise an error
++    # The expression should be returned unchanged since complex exponents
++    # are not handled by trigonometric simplifications
++    result = simplify(cos(x)**I)
++    expected = cos(x)**I
++    assert result == expected
++
++
++def test_tr6_complex_exponent():
++    """Test TR6 function directly with complex exponent."""
++    x = Symbol('x')
++    
++    # TR6 should handle complex exponents gracefully
++    result = TR6(cos(x)**I)
++    expected = cos(x)**I  # Should be unchanged
++    assert result == expected
++
++
++def test_tr56_complex_exponent():
++    """Test _TR56 helper function directly with complex exponent."""
++    x = Symbol('x')
++    
++    # _TR56 should handle complex exponents gracefully
++    result = _TR56(cos(x)**I, cos, sin, lambda x: 1 - x, max=4, pow=False)
++    expected = cos(x)**I  # Should be unchanged
++    assert result == expected
++
++
++def test_tr6_real_negative_exponent():
++    """Test that TR6 still works correctly with real negative exponents."""
++    x = Symbol('x')
++    
++    # Negative real exponents should be unchanged (existing behavior)
++    result = TR6(cos(x)**(-2))
++    expected = cos(x)**(-2)
++    assert result == expected
++
++
++def test_tr6_real_positive_exponent():
++    """Test that TR6 still works correctly with real positive exponents."""
++    x = Symbol('x')
++    
++    # Positive real exponents should be transformed (existing behavior)
++    result = TR6(cos(x)**2)
++    expected = 1 - sin(x)**2
++    assert result == expected
++    
++    result = TR6(cos(x)**4)
++    expected = (1 - sin(x)**2)**2
++    assert result == expected
++
++
++def test_tr6_large_real_exponent():
++    """Test that TR6 respects max parameter with real exponents."""
++    x = Symbol('x')
++    
++    # Exponents larger than max should be unchanged
++    result = TR6(cos(x)**6, max=4)
++    expected = cos(x)**6
++    assert result == expected
++    
++    # Exponents within max should be transformed
++    result = TR6(cos(x)**4, max=4)
++    expected = (1 - sin(x)**2)**2
++    assert result == expected
++
++
++def test_complex_exponents_various_forms():
++    """Test various forms of complex exponents."""
++    x = Symbol('x')
++    
++    # Pure imaginary exponent
++    result = simplify(cos(x)**I)
++    assert result == cos(x)**I
++    
++    # Complex exponent with real and imaginary parts
++    result = simplify(cos(x)**(1 + I))
++    assert result == cos(x)**(1 + I)
++    
++    # Multiple of I
++    result = simplify(cos(x)**(2*I))
++    assert result == cos(x)**(2*I)
++    
++    # Negative imaginary
++    result = simplify(cos(x)**(-I))
++    assert result == cos(x)**(-I)
++
++
++def test_sin_complex_exponent():
++    """Test that sin with complex exponents also works."""
++    x = Symbol('x')
++    
++    # sin should also handle complex exponents gracefully
++    result = simplify(sin(x)**I)
++    assert result == sin(x)**I
++    
++    result = simplify(sin(x)**(1 + I))
++    assert result == sin(x)**(1 + I)
++
++
++def test_mixed_expressions_with_complex_exponents():
++    """Test expressions mixing real and complex exponents."""
++    x = Symbol('x')
++    
++    # Expression with both real and complex exponents
++    expr = cos(x)**2 + cos(x)**I
++    result = simplify(expr)
++    
++    # The real exponent part should be simplified, complex part unchanged
++    expected = 1 - sin(x)**2 + cos(x)**I
++    assert result == expected
++
++
++def test_nested_complex_exponents():
++    """Test nested expressions with complex exponents."""
++    x = Symbol('x')
++    
++    # Nested expression
++    expr = cos(cos(x)**I)
++    result = simplify(expr)
++    
++    # Should not raise error and return unchanged
++    assert result == cos(cos(x)**I)
++
++
++def test_symbolic_complex_exponent():
++    """Test with symbolic complex exponents."""
++    x, y = symbols('x y')
++    
++    # Symbolic complex exponent
++    expr = cos(x)**(y*I)
++    result = simplify(expr)
++    
++    # Should not raise error and return unchanged
++    assert result == cos(x)**(y*I)
++
++
++def test_edge_case_zero_complex():
++    """Test edge case with zero times I."""
++    x = Symbol('x')
++    
++    # 0*I should be treated as 0 (real)
++    expr = cos(x)**(0*I)
++    result = simplify(expr)
++    expected = 1  # cos(x)**0 = 1
++    assert result == expected

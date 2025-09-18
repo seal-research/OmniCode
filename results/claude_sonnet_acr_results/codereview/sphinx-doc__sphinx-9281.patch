@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/util/inspect.py b/sphinx/util/inspect.py\nindex a415a7074..5e25fc648 100644\n--- a/sphinx/util/inspect.py\n+++ b/sphinx/util/inspect.py\n@@ -457,6 +457,8 @@ def object_description(object: Any) -> str:\n         else:\n             return \"frozenset({%s})\" % \", \".join(object_description(x)\n                                                  for x in sorted_values)\n+    if isinstance(object, enum.Enum):\n+        return f\"{object.__class__.__name__}.{object.name}\"\n     try:\n         s = repr(object)\n     except Exception as exc:\n"
+}

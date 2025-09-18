@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/translation/trans_real.py b/django/utils/translation/trans_real.py\nindex 7dcc77b46c..dd1b4eb101 100644\n--- a/django/utils/translation/trans_real.py\n+++ b/django/utils/translation/trans_real.py\n@@ -43,7 +43,7 @@ language_code_re = _lazy_re_compile(\n     re.IGNORECASE\n )\n \n-language_code_prefix_re = _lazy_re_compile(r'^/(\\w+([@-]\\w+)?)(/|$)')\n+language_code_prefix_re = _lazy_re_compile(r'^/(\\w+(?:[-@]\\w+)*)(/|$)')\n \n \n @receiver(setting_changed)\n"
+}

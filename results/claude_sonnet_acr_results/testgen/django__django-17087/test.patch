@@ -1,0 +1,245 @@
+--- a/tests/migrations/test_serializer_nested_classes.py
++++ b/tests/migrations/test_serializer_nested_classes.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.contrib.postgres.fields import ArrayField
++from django.db.migrations.serializer import serializer_factory
++
++
++class TestNestedClassSerialization:
++    """Test serialization of class methods from nested classes."""
++    
++    def test_nested_class_method_serialization(self):
++        """Test that class methods from nested classes are serialized with full qualified name."""
++        
++        # Create a model with nested class similar to the issue description
++        class Profile(models.Model):
++            class Capability(models.TextChoices):
++                BASIC = ("BASIC", "Basic")
++                PROFESSIONAL = ("PROFESSIONAL", "Professional")
++                
++                @classmethod
++                def default(cls):
++                    return [cls.BASIC]
++            
++            capabilities = ArrayField(
++                models.CharField(choices=Capability.choices, max_length=30, blank=True),
++                null=True,
++                default=Capability.default
++            )
++            
++            class Meta:
++                app_label = 'testapp'
++        
++        # Get the default function from the field
++        default_func = Profile._meta.get_field('capabilities').default
++        
++        # Serialize the function
++        serializer = serializer_factory(default_func)
++        serialized_string, imports = serializer.serialize()
++        
++        # The serialized string should include the full qualified name
++        # It should be "testapp.models.Profile.Capability.default" not "testapp.models.Capability.default"
++        expected_module = Profile.Capability.__module__
++        expected_qualname = Profile.Capability.__qualname__  # This should be "Profile.Capability"
++        expected_string = f"{expected_module}.{expected_qualname}.default"
++        
++        assert serialized_string == expected_string
++        assert f"import {expected_module}" in imports
++    
++    def test_nested_class_method_serialization_multiple_levels(self):
++        """Test serialization with multiple levels of nesting."""
++        
++        class OuterModel(models.Model):
++            class MiddleClass:
++                class InnerClass(models.TextChoices):
++                    OPTION1 = ("OPT1", "Option 1")
++                    OPTION2 = ("OPT2", "Option 2")
++                    
++                    @classmethod
++                    def get_default(cls):
++                        return cls.OPTION1
++            
++            field = models.CharField(
++                max_length=10,
++                default=MiddleClass.InnerClass.get_default
++            )
++            
++            class Meta:
++                app_label = 'testapp'
++        
++        # Get the default function
++        default_func = OuterModel._meta.get_field('field').default
++        
++        # Serialize the function
++        serializer = serializer_factory(default_func)
++        serialized_string, imports = serializer.serialize()
++        
++        # Should include full qualified name with all nesting levels
++        expected_module = OuterModel.MiddleClass.InnerClass.__module__
++        expected_qualname = OuterModel.MiddleClass.InnerClass.__qualname__
++        expected_string = f"{expected_module}.{expected_qualname}.get_default"
++        
++        assert serialized_string == expected_string
++        assert f"import {expected_module}" in imports
++    
++    def test_top_level_class_method_serialization_unchanged(self):
++        """Test that top-level class methods still work correctly (regression test)."""
++        
++        class TopLevelChoices(models.TextChoices):
++            CHOICE1 = ("C1", "Choice 1")
++            CHOICE2 = ("C2", "Choice 2")
++            
++            @classmethod
++            def get_default(cls):
++                return cls.CHOICE1
++        
++        class SimpleModel(models.Model):
++            field = models.CharField(
++                max_length=10,
++                default=TopLevelChoices.get_default
++            )
++            
++            class Meta:
++                app_label = 'testapp'
++        
++        # Get the default function
++        default_func = SimpleModel._meta.get_field('field').default
++        
++        # Serialize the function
++        serializer = serializer_factory(default_func)
++        serialized_string, imports = serializer.serialize()
++        
++        # For top-level classes, __name__ and __qualname__ should be the same
++        expected_module = TopLevelChoices.__module__
++        expected_qualname = TopLevelChoices.__qualname__  # Should be just "TopLevelChoices"
++        expected_string = f"{expected_module}.{expected_qualname}.get_default"
++        
++        assert serialized_string == expected_string
++        assert f"import {expected_module}" in imports
++    
++    def test_nested_class_method_before_fix_fails(self):
++        """Test that demonstrates the bug before the fix is applied."""
++        
++        class Profile(models.Model):
++            class Capability(models.TextChoices):
++                BASIC = ("BASIC", "Basic")
++                PROFESSIONAL = ("PROFESSIONAL", "Professional")
++                
++                @classmethod
++                def default(cls):
++                    return [cls.BASIC]
++            
++            capabilities = ArrayField(
++                models.CharField(choices=Capability.choices, max_length=30, blank=True),
++                null=True,
++                default=Capability.default
++            )
++            
++            class Meta:
++                app_label = 'testapp'
++        
++        # Get the default function
++        default_func = Profile._meta.get_field('capabilities').default
++        
++        # Serialize the function
++        serializer = serializer_factory(default_func)
++        serialized_string, imports = serializer.serialize()
++        
++        # The bug would produce "testapp.models.Capability.default"
++        # instead of "testapp.models.Profile.Capability.default"
++        expected_module = Profile.Capability.__module__
++        buggy_string = f"{expected_module}.Capability.default"  # Missing "Profile."
++        
++        # This test should pass after the fix - the serialized string should NOT be the buggy version
++        assert serialized_string != buggy_string
++        
++        # It should be the correct version with full qualified name
++        correct_string = f"{expected_module}.Profile.Capability.default"
++        assert serialized_string == correct_string
++    
++    def test_array_field_with_nested_class_default(self):
++        """Test the specific case from the issue: ArrayField with nested class default."""
++        
++        class Profile(models.Model):
++            class Capability(models.TextChoices):
++                BASIC = ("BASIC", "Basic")
++                PROFESSIONAL = ("PROFESSIONAL", "Professional")
++                
++                @classmethod
++                def default(cls):
++                    return [cls.BASIC]
++            
++            capabilities = ArrayField(
++                models.CharField(choices=Capability.choices, max_length=30, blank=True),
++                null=True,
++                default=Capability.default
++            )
++            
++            class Meta:
++                app_label = 'myapp'
++        
++        # Test that the field's default can be serialized correctly
++        field = Profile._meta.get_field('capabilities')
++        default_func = field.default
++        
++        # Serialize the default function
++        serializer = serializer_factory(default_func)
++        serialized_string, imports = serializer.serialize()
++        
++        # Should produce the correct qualified name
++        expected_module = Profile.Capability.__module__
++        expected_string = f"{expected_module}.Profile.Capability.default"
++        
++        assert serialized_string == expected_string
++        assert f"import {expected_module}" in imports
++        
++        # Verify the function actually works
++        assert default_func() == [Profile.Capability.BASIC]
++    
++    def test_migration_generation_compatibility(self):
++        """Test that the serialized function can be used in migration generation context."""
++        
++        class TestModel(models.Model):
++            class Status(models.TextChoices):
++                ACTIVE = ("active", "Active")
++                INACTIVE = ("inactive", "Inactive")
++                
++                @classmethod
++                def get_default_status(cls):
++                    return cls.ACTIVE
++            
++            status = models.CharField(
++                max_length=20,
++                default=Status.get_default_status
++            )
++            
++            class Meta:
++                app_label = 'testapp'
++        
++        # Get the default function and serialize it
++        default_func = TestModel._meta.get_field('status').default
++        serializer = serializer_factory(default_func)
++        serialized_string, imports = serializer.serialize()
++        
++        # The serialized string should be importable and executable
++        expected_module = TestModel.Status.__module__
++        expected_string = f"{expected_module}.TestModel.Status.get_default_status"
++        
++        assert serialized_string == expected_string
++        
++        # Verify that the serialized reference would work in a migration context
++        # (This simulates what would happen when the migration is applied)
++        import importlib
++        module = importlib.import_module(expected_module)
++        
++        # Navigate to the nested class method using the qualified name parts
++        parts = "TestModel.Status.get_default_status".split(".")
++        obj = module
++        for part in parts:
++            obj = getattr(obj, part)
++        
++        # The function should be callable and return the expected value
++        assert callable(obj)
++        assert obj() == TestModel.Status.ACTIVE

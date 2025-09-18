@@ -1,0 +1,328 @@
+--- a/tests/queries/test_multiple_inheritance_update.py
++++ b/tests/queries/test_multiple_inheritance_update.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('queries')
++class MultipleInheritanceUpdateTests(TransactionTestCase):
++    """
++    Test queryset update behavior with multiple inheritance.
++    
++    This test reproduces the bug where updating a child class that inherits
++    from multiple parent classes incorrectly updates the wrong parent records.
++    """
++    
++    def setUp(self):
++        """Set up test models for multiple inheritance scenario."""
++        
++        class Base(models.Model):
++            base_id = models.AutoField(primary_key=True)
++            field_base = models.IntegerField()
++            
++            class Meta:
++                app_label = 'queries'
++        
++        class OtherBase(models.Model):
++            otherbase_id = models.AutoField(primary_key=True)
++            field_otherbase = models.IntegerField()
++            
++            class Meta:
++                app_label = 'queries'
++        
++        class Child(Base, OtherBase):
++            class Meta:
++                app_label = 'queries'
++        
++        self.Base = Base
++        self.OtherBase = OtherBase
++        self.Child = Child
++        
++        # Create tables
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(Base)
++            schema_editor.create_model(OtherBase)
++            schema_editor.create_model(Child)
++    
++    def tearDown(self):
++        """Clean up test tables."""
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(self.Child)
++            schema_editor.delete_model(self.OtherBase)
++            schema_editor.delete_model(self.Base)
++    
++    def test_multiple_inheritance_update_bug_reproduction(self):
++        """
++        Test that reproduces the bug where Child.objects.update() 
++        incorrectly modifies OtherBase records instead of Child records.
++        
++        This test should FAIL before the fix is applied, demonstrating the bug.
++        """
++        # Create some OtherBase records that should NOT be affected
++        otherbase1 = self.OtherBase.objects.create(field_otherbase=100)
++        otherbase2 = self.OtherBase.objects.create(field_otherbase=101)
++        
++        # Create Child records
++        child1 = self.Child.objects.create(field_base=0, field_otherbase=0)
++        child2 = self.Child.objects.create(field_base=1, field_otherbase=1)
++        
++        # Verify initial state
++        self.assertEqual(self.OtherBase.objects.get(pk=1).field_otherbase, 100)
++        self.assertEqual(self.OtherBase.objects.get(pk=2).field_otherbase, 101)
++        self.assertEqual(self.Child.objects.get(pk=1).field_otherbase, 0)
++        self.assertEqual(self.Child.objects.get(pk=2).field_otherbase, 1)
++        
++        # This update should only affect Child records, not OtherBase records
++        updated_count = self.Child.objects.update(field_otherbase=55)
++        self.assertEqual(updated_count, 2)
++        
++        # Check that Child records were updated correctly
++        child1.refresh_from_db()
++        child2.refresh_from_db()
++        self.assertEqual(child1.field_otherbase, 55)
++        self.assertEqual(child2.field_otherbase, 55)
++        
++        # CRITICAL: OtherBase records should NOT have been modified
++        # This assertion will FAIL before the fix, demonstrating the bug
++        otherbase1.refresh_from_db()
++        otherbase2.refresh_from_db()
++        self.assertEqual(otherbase1.field_otherbase, 100, 
++                        "Bug: OtherBase record was incorrectly modified by Child update")
++        self.assertEqual(otherbase2.field_otherbase, 101,
++                        "Bug: OtherBase record was incorrectly modified by Child update")
++    
++    def test_multiple_inheritance_update_base_field(self):
++        """
++        Test updating a field from the first parent (Base) works correctly.
++        This should work correctly both before and after the fix.
++        """
++        # Create Child records
++        child1 = self.Child.objects.create(field_base=10, field_otherbase=20)
++        child2 = self.Child.objects.create(field_base=11, field_otherbase=21)
++        
++        # Update field from first parent
++        updated_count = self.Child.objects.update(field_base=99)
++        self.assertEqual(updated_count, 2)
++        
++        # Verify updates
++        child1.refresh_from_db()
++        child2.refresh_from_db()
++        self.assertEqual(child1.field_base, 99)
++        self.assertEqual(child2.field_base, 99)
++        # Other fields should remain unchanged
++        self.assertEqual(child1.field_otherbase, 20)
++        self.assertEqual(child2.field_otherbase, 21)
++    
++    def test_multiple_inheritance_update_both_fields(self):
++        """
++        Test updating fields from both parents simultaneously.
++        """
++        # Create Child records
++        child1 = self.Child.objects.create(field_base=10, field_otherbase=20)
++        child2 = self.Child.objects.create(field_base=11, field_otherbase=21)
++        
++        # Update fields from both parents
++        updated_count = self.Child.objects.update(field_base=88, field_otherbase=77)
++        self.assertEqual(updated_count, 2)
++        
++        # Verify updates
++        child1.refresh_from_db()
++        child2.refresh_from_db()
++        self.assertEqual(child1.field_base, 88)
++        self.assertEqual(child1.field_otherbase, 77)
++        self.assertEqual(child2.field_base, 88)
++        self.assertEqual(child2.field_otherbase, 77)
++    
++    def test_multiple_inheritance_update_with_filter(self):
++        """
++        Test updating with filters to ensure only specific Child records are updated.
++        """
++        # Create some OtherBase records that should NOT be affected
++        otherbase1 = self.OtherBase.objects.create(field_otherbase=200)
++        
++        # Create Child records
++        child1 = self.Child.objects.create(field_base=10, field_otherbase=30)
++        child2 = self.Child.objects.create(field_base=20, field_otherbase=40)
++        
++        # Update only Child records where field_base=10
++        updated_count = self.Child.objects.filter(field_base=10).update(field_otherbase=66)
++        self.assertEqual(updated_count, 1)
++        
++        # Verify only child1 was updated
++        child1.refresh_from_db()
++        child2.refresh_from_db()
++        self.assertEqual(child1.field_otherbase, 66)
++        self.assertEqual(child2.field_otherbase, 40)  # Should remain unchanged
++        
++        # Verify OtherBase record was not affected
++        otherbase1.refresh_from_db()
++        self.assertEqual(otherbase1.field_otherbase, 200)
++    
++    def test_multiple_inheritance_update_empty_queryset(self):
++        """
++        Test updating an empty queryset doesn't cause issues.
++        """
++        # Create some records but don't match any with the filter
++        self.Child.objects.create(field_base=10, field_otherbase=30)
++        
++        # Update with filter that matches nothing
++        updated_count = self.Child.objects.filter(field_base=999).update(field_otherbase=55)
++        self.assertEqual(updated_count, 0)
++    
++    def test_multiple_inheritance_update_edge_case_no_related_updates(self):
++        """
++        Test updating only fields from the main parent (no related updates needed).
++        """
++        # Create Child records
++        child1 = self.Child.objects.create(field_base=10, field_otherbase=20)
++        
++        # Update only field from main parent (Base)
++        updated_count = self.Child.objects.update(field_base=99)
++        self.assertEqual(updated_count, 1)
++        
++        # Verify update
++        child1.refresh_from_db()
++        self.assertEqual(child1.field_base, 99)
++        self.assertEqual(child1.field_otherbase, 20)  # Should remain unchanged
++
++
++@isolate_apps('queries')  
++class TripleInheritanceUpdateTests(TransactionTestCase):
++    """
++    Test queryset update behavior with triple inheritance to ensure
++    the fix works for more complex inheritance hierarchies.
++    """
++    
++    def setUp(self):
++        """Set up test models for triple inheritance scenario."""
++        
++        class FirstParent(models.Model):
++            first_id = models.AutoField(primary_key=True)
++            field_first = models.IntegerField()
++            
++            class Meta:
++                app_label = 'queries'
++        
++        class SecondParent(models.Model):
++            second_id = models.AutoField(primary_key=True)
++            field_second = models.IntegerField()
++            
++            class Meta:
++                app_label = 'queries'
++                
++        class ThirdParent(models.Model):
++            third_id = models.AutoField(primary_key=True)
++            field_third = models.IntegerField()
++            
++            class Meta:
++                app_label = 'queries'
++        
++        class TripleChild(FirstParent, SecondParent, ThirdParent):
++            class Meta:
++                app_label = 'queries'
++        
++        self.FirstParent = FirstParent
++        self.SecondParent = SecondParent
++        self.ThirdParent = ThirdParent
++        self.TripleChild = TripleChild
++        
++        # Create tables
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(FirstParent)
++            schema_editor.create_model(SecondParent)
++            schema_editor.create_model(ThirdParent)
++            schema_editor.create_model(TripleChild)
++    
++    def tearDown(self):
++        """Clean up test tables."""
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(self.TripleChild)
++            schema_editor.delete_model(self.ThirdParent)
++            schema_editor.delete_model(self.SecondParent)
++            schema_editor.delete_model(self.FirstParent)
++    
++    def test_triple_inheritance_update_second_parent(self):
++        """
++        Test updating fields from the second parent in triple inheritance.
++        """
++        # Create standalone parent records that should NOT be affected
++        second_parent = self.SecondParent.objects.create(field_second=500)
++        third_parent = self.ThirdParent.objects.create(field_third=600)
++        
++        # Create TripleChild record
++        child = self.TripleChild.objects.create(
++            field_first=1, field_second=2, field_third=3
++        )
++        
++        # Update field from second parent
++        updated_count = self.TripleChild.objects.update(field_second=222)
++        self.assertEqual(updated_count, 1)
++        
++        # Verify child was updated
++        child.refresh_from_db()
++        self.assertEqual(child.field_second, 222)
++        self.assertEqual(child.field_first, 1)   # Should remain unchanged
++        self.assertEqual(child.field_third, 3)   # Should remain unchanged
++        
++        # Verify standalone parent records were NOT affected
++        second_parent.refresh_from_db()
++        third_parent.refresh_from_db()
++        self.assertEqual(second_parent.field_second, 500)
++        self.assertEqual(third_parent.field_third, 600)
++    
++    def test_triple_inheritance_update_third_parent(self):
++        """
++        Test updating fields from the third parent in triple inheritance.
++        """
++        # Create standalone parent records that should NOT be affected
++        second_parent = self.SecondParent.objects.create(field_second=500)
++        third_parent = self.ThirdParent.objects.create(field_third=600)
++        
++        # Create TripleChild record
++        child = self.TripleChild.objects.create(
++            field_first=1, field_second=2, field_third=3
++        )
++        
++        # Update field from third parent
++        updated_count = self.TripleChild.objects.update(field_third=333)
++        self.assertEqual(updated_count, 1)
++        
++        # Verify child was updated
++        child.refresh_from_db()
++        self.assertEqual(child.field_third, 333)
++        self.assertEqual(child.field_first, 1)   # Should remain unchanged
++        self.assertEqual(child.field_second, 2)  # Should remain unchanged
++        
++        # Verify standalone parent records were NOT affected
++        second_parent.refresh_from_db()
++        third_parent.refresh_from_db()
++        self.assertEqual(second_parent.field_second, 500)
++        self.assertEqual(third_parent.field_third, 600)
++    
++    def test_triple_inheritance_update_all_fields(self):
++        """
++        Test updating fields from all three parents simultaneously.
++        """
++        # Create TripleChild record
++        child = self.TripleChild.objects.create(
++            field_first=10, field_second=20, field_third=30
++        )
++        
++        # Update fields from all parents
++        updated_count = self.TripleChild.objects.update(
++            field_first=111, field_second=222, field_third=333
++        )
++        self.assertEqual(updated_count, 1)
++        
++        # Verify all fields were updated
++        child.refresh_from_db()
++        self.assertEqual(child.field_first, 111)
++        self.assertEqual(child.field_second, 222)
++        self.assertEqual(child.field_third, 333)

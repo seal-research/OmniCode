@@ -1,0 +1,222 @@
+--- a/tests/db_functions/test_q_exists_combination.py
++++ b/tests/db_functions/test_q_exists_combination.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import Q, Exists
++from django.test import TestCase
++
++
++class Product(models.Model):
++    name = models.CharField(max_length=100)
++    price = models.DecimalField(max_digits=10, decimal_places=2)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class Category(models.Model):
++    name = models.CharField(max_length=100)
++    products = models.ManyToManyField(Product)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class TestQExistsCombination(TestCase):
++    """Test Q and Exists combination operations."""
++    
++    def setUp(self):
++        """Set up test data."""
++        self.product1 = Product.objects.create(name="Product 1", price=10.00)
++        self.product2 = Product.objects.create(name="Product 2", price=20.00)
++        self.category = Category.objects.create(name="Test Category")
++        self.category.products.add(self.product1, self.product2)
++    
++    def test_exists_and_q_works(self):
++        """Test that Exists(...) & Q(...) works correctly (baseline)."""
++        # This should work without issues
++        exists_query = Exists(Product.objects.all())
++        q_query = Q(name="Test Category")
++        
++        # This combination should work
++        combined = exists_query & q_query
++        
++        # Verify it's a Q object
++        self.assertIsInstance(combined, Q)
++        
++        # Verify it can be used in a queryset
++        result = Category.objects.filter(combined)
++        self.assertEqual(result.count(), 1)
++        self.assertEqual(result.first(), self.category)
++    
++    def test_q_and_exists_fails_before_fix(self):
++        """Test that Q(...) & Exists(...) raises TypeError before fix."""
++        # This should fail with TypeError before the fix
++        q_query = Q(name="Test Category")
++        exists_query = Exists(Product.objects.all())
++        
++        # This should raise TypeError before the fix is applied
++        with self.assertRaises(TypeError):
++            combined = q_query & exists_query
++    
++    def test_q_and_exists_works_after_fix(self):
++        """Test that Q(...) & Exists(...) works after fix is applied."""
++        # This test will pass after the fix is implemented
++        q_query = Q(name="Test Category")
++        exists_query = Exists(Product.objects.all())
++        
++        # This should work after the fix
++        combined = q_query & exists_query
++        
++        # Verify it's a Q object
++        self.assertIsInstance(combined, Q)
++        
++        # Verify it can be used in a queryset
++        result = Category.objects.filter(combined)
++        self.assertEqual(result.count(), 1)
++        self.assertEqual(result.first(), self.category)
++    
++    def test_exists_or_q_works(self):
++        """Test that Exists(...) | Q(...) works correctly (baseline)."""
++        # This should work without issues
++        exists_query = Exists(Product.objects.filter(name="Nonexistent"))
++        q_query = Q(name="Test Category")
++        
++        # This combination should work
++        combined = exists_query | q_query
++        
++        # Verify it's a Q object
++        self.assertIsInstance(combined, Q)
++        
++        # Verify it can be used in a queryset
++        result = Category.objects.filter(combined)
++        self.assertEqual(result.count(), 1)
++        self.assertEqual(result.first(), self.category)
++    
++    def test_q_or_exists_fails_before_fix(self):
++        """Test that Q(...) | Exists(...) raises TypeError before fix."""
++        # This should fail with TypeError before the fix
++        q_query = Q(name="Nonexistent Category")
++        exists_query = Exists(Product.objects.all())
++        
++        # This should raise TypeError before the fix is applied
++        with self.assertRaises(TypeError):
++            combined = q_query | exists_query
++    
++    def test_q_or_exists_works_after_fix(self):
++        """Test that Q(...) | Exists(...) works after fix is applied."""
++        # This test will pass after the fix is implemented
++        q_query = Q(name="Nonexistent Category")
++        exists_query = Exists(Product.objects.all())
++        
++        # This should work after the fix
++        combined = q_query | exists_query
++        
++        # Verify it's a Q object
++        self.assertIsInstance(combined, Q)
++        
++        # Verify it can be used in a queryset
++        result = Category.objects.filter(combined)
++        self.assertEqual(result.count(), 1)
++        self.assertEqual(result.first(), self.category)
++    
++    def test_commutativity_and_operation(self):
++        """Test that & operation is commutative between Q and Exists after fix."""
++        q_query = Q(name="Test Category")
++        exists_query = Exists(Product.objects.all())
++        
++        # Both directions should work and produce equivalent results
++        combined1 = exists_query & q_query  # This already works
++        combined2 = q_query & exists_query  # This should work after fix
++        
++        # Both should be Q objects
++        self.assertIsInstance(combined1, Q)
++        self.assertIsInstance(combined2, Q)
++        
++        # Both should produce the same query results
++        result1 = Category.objects.filter(combined1)
++        result2 = Category.objects.filter(combined2)
++        
++        self.assertEqual(list(result1), list(result2))
++        self.assertEqual(result1.count(), 1)
++        self.assertEqual(result2.count(), 1)
++    
++    def test_commutativity_or_operation(self):
++        """Test that | operation is commutative between Q and Exists after fix."""
++        q_query = Q(name="Nonexistent Category")
++        exists_query = Exists(Product.objects.all())
++        
++        # Both directions should work and produce equivalent results
++        combined1 = exists_query | q_query  # This already works
++        combined2 = q_query | exists_query  # This should work after fix
++        
++        # Both should be Q objects
++        self.assertIsInstance(combined1, Q)
++        self.assertIsInstance(combined2, Q)
++        
++        # Both should produce the same query results
++        result1 = Category.objects.filter(combined1)
++        result2 = Category.objects.filter(combined2)
++        
++        self.assertEqual(list(result1), list(result2))
++        self.assertEqual(result1.count(), 1)
++        self.assertEqual(result2.count(), 1)
++    
++    def test_empty_q_and_exists(self):
++        """Test combination with empty Q objects."""
++        empty_q = Q()
++        exists_query = Exists(Product.objects.all())
++        
++        # Test both directions
++        combined1 = exists_query & empty_q
++        combined2 = empty_q & exists_query
++        
++        self.assertIsInstance(combined1, Q)
++        self.assertIsInstance(combined2, Q)
++        
++        # Both should work in queries
++        result1 = Category.objects.filter(combined1)
++        result2 = Category.objects.filter(combined2)
++        
++        self.assertEqual(list(result1), list(result2))
++    
++    def test_complex_combination(self):
++        """Test more complex combinations of Q and Exists objects."""
++        q1 = Q(name="Test Category")
++        q2 = Q(name__icontains="Test")
++        exists_query = Exists(Product.objects.filter(price__gte=10))
++        
++        # Test complex combinations
++        combined1 = (q1 & exists_query) | q2
++        combined2 = q1 & (exists_query | q2)
++        
++        self.assertIsInstance(combined1, Q)
++        self.assertIsInstance(combined2, Q)
++        
++        # Should be usable in queries
++        result1 = Category.objects.filter(combined1)
++        result2 = Category.objects.filter(combined2)
++        
++        self.assertEqual(result1.count(), 1)
++        self.assertEqual(result2.count(), 1)
++    
++    def test_negated_exists_combination(self):
++        """Test combination with negated Exists objects."""
++        q_query = Q(name="Test Category")
++        exists_query = ~Exists(Product.objects.filter(name="Nonexistent"))
++        
++        # Test both directions
++        combined1 = exists_query & q_query
++        combined2 = q_query & exists_query
++        
++        self.assertIsInstance(combined1, Q)
++        self.assertIsInstance(combined2, Q)
++        
++        # Both should work in queries
++        result1 = Category.objects.filter(combined1)
++        result2 = Category.objects.filter(combined2)
++        
++        self.assertEqual(list(result1), list(result2))
++        self.assertEqual(result1.count(), 1)
++        self.assertEqual(result2.count(), 1)

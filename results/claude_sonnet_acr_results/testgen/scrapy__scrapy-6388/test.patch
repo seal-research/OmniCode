@@ -1,0 +1,243 @@
+--- a/tests/test_contracts.py
++++ b/tests/test_contracts.py
++import pytest
++from unittest.mock import Mock
++from scrapy.contracts import ContractsManager, Contract
++from scrapy.http import Request
++from scrapy.utils.test import TestResult
++
++
++class MockContract(Contract):
++    """Mock contract for testing purposes."""
++    
++    def __init__(self, method, *args):
++        self.method = method
++        self.args = args
++        self.request_cls = None
++    
++    def adjust_request_args(self, kwargs):
++        return kwargs
++    
++    def add_pre_hook(self, request, results):
++        return request
++    
++    def add_post_hook(self, request, results):
++        return request
++
++
++class TestContractsManagerExtractContracts:
++    """Test suite for ContractsManager.extract_contracts method."""
++    
++    @pytest.fixture
++    def contracts_manager(self):
++        """Create a ContractsManager instance with mock contracts."""
++        contracts = {'test': MockContract, 'url': MockContract}
++        return ContractsManager(contracts)
++    
++    def test_extract_contracts_with_valid_contract(self, contracts_manager):
++        """Test that valid contracts are extracted correctly."""
++        def test_method():
++            """
++            @test arg1 arg2
++            @url http://example.com
++            """
++            pass
++        
++        contracts = contracts_manager.extract_contracts(test_method)
++        assert len(contracts) == 2
++        assert contracts[0].args == ('arg1', 'arg2')
++        assert contracts[1].args == ('http://example.com',)
++    
++    def test_extract_contracts_with_malformed_contract_space_before_name(self, contracts_manager):
++        """Test that contracts with space before name are skipped without error."""
++        def test_method():
++            """
++            @ foo bar
++            @test valid_contract
++            """
++            pass
++        
++        # This should not raise an exception and should extract only the valid contract
++        contracts = contracts_manager.extract_contracts(test_method)
++        assert len(contracts) == 1
++        assert contracts[0].args == ('valid_contract',)
++    
++    def test_extract_contracts_with_malformed_contract_special_chars(self, contracts_manager):
++        """Test that contracts with special characters are skipped without error."""
++        def test_method():
++            """
++            @!invalid contract
++            @test valid_contract
++            @#another invalid
++            """
++            pass
++        
++        # Should extract only the valid contract
++        contracts = contracts_manager.extract_contracts(test_method)
++        assert len(contracts) == 1
++        assert contracts[0].args == ('valid_contract',)
++    
++    def test_extract_contracts_with_only_at_symbol(self, contracts_manager):
++        """Test that lines with only @ symbol are skipped without error."""
++        def test_method():
++            """
++            @
++            @test valid_contract
++            """
++            pass
++        
++        contracts = contracts_manager.extract_contracts(test_method)
++        assert len(contracts) == 1
++        assert contracts[0].args == ('valid_contract',)
++    
++    def test_extract_contracts_with_empty_contract_name(self, contracts_manager):
++        """Test that contracts with empty names are skipped without error."""
++        def test_method():
++            """
++            @ 
++            @test valid_contract
++            """
++            pass
++        
++        contracts = contracts_manager.extract_contracts(test_method)
++        assert len(contracts) == 1
++        assert contracts[0].args == ('valid_contract',)
++    
++    def test_extract_contracts_with_mixed_valid_invalid(self, contracts_manager):
++        """Test extraction with mix of valid and invalid contract lines."""
++        def test_method():
++            """
++            @test first_valid
++            @ invalid space
++            @url http://example.com
++            @!invalid_special
++            @test second_valid
++            @ another invalid
++            """
++            pass
++        
++        contracts = contracts_manager.extract_contracts(test_method)
++        assert len(contracts) == 3
++        assert contracts[0].args == ('first_valid',)
++        assert contracts[1].args == ('http://example.com',)
++        assert contracts[2].args == ('second_valid',)
++    
++    def test_extract_contracts_with_no_contracts(self, contracts_manager):
++        """Test that methods with no contracts return empty list."""
++        def test_method():
++            """
++            This is a regular docstring
++            with no contracts at all.
++            """
++            pass
++        
++        contracts = contracts_manager.extract_contracts(test_method)
++        assert len(contracts) == 0
++    
++    def test_extract_contracts_with_only_invalid_contracts(self, contracts_manager):
++        """Test that methods with only invalid contracts return empty list."""
++        def test_method():
++            """
++            @ invalid space
++            @!invalid special
++            @ another invalid
++            """
++            pass
++        
++        contracts = contracts_manager.extract_contracts(test_method)
++        assert len(contracts) == 0
++    
++    def test_from_method_with_malformed_contracts(self, contracts_manager):
++        """Test that from_method handles malformed contracts gracefully."""
++        def test_method():
++            """
++            @ foo bar
++            @test valid_contract
++            """
++            pass
++        
++        results = TestResult()
++        
++        # This should not raise an exception
++        request = contracts_manager.from_method(test_method, results)
++        
++        # Should return None or a valid request, but not crash
++        assert request is None or isinstance(request, Request)
++    
++    def test_from_method_with_only_malformed_contracts(self, contracts_manager):
++        """Test that from_method returns None when all contracts are malformed."""
++        def test_method():
++            """
++            @ foo bar
++            @!invalid special
++            @ another invalid
++            """
++            pass
++        
++        results = TestResult()
++        
++        # Should return None since no valid contracts were found
++        request = contracts_manager.from_method(test_method, results)
++        assert request is None
++
++
++class TestContractsManagerBugReproduction:
++    """Test suite specifically for reproducing the original bug."""
++    
++    @pytest.fixture
++    def contracts_manager(self):
++        """Create a ContractsManager instance with mock contracts."""
++        contracts = {'test': MockContract}
++        return ContractsManager(contracts)
++    
++    def test_bug_reproduction_space_before_contract_name(self, contracts_manager):
++        """
++        Reproduce the original bug: calling from_method() on a method with 
++        '@ foo' in the docstring should not produce an unhandled exception.
++        
++        This test demonstrates the bug that would occur before the fix.
++        """
++        def test_method():
++            """
++            @ foo
++            """
++            pass
++        
++        results = TestResult()
++        
++        # Before the fix, this would raise an AssertionError
++        # After the fix, this should handle gracefully and return None
++        request = contracts_manager.from_method(test_method, results)
++        assert request is None
++    
++    def test_bug_reproduction_multiple_malformed_contracts(self, contracts_manager):
++        """Test multiple malformed contract patterns that would cause the bug."""
++        def test_method():
++            """
++            @ foo
++            @ bar baz
++            @!invalid
++            @ 
++            """
++            pass
++        
++        results = TestResult()
++        
++        # Should handle all malformed contracts gracefully
++        request = contracts_manager.from_method(test_method, results)
++        assert request is None
++    
++    def test_extract_contracts_assertion_error_reproduction(self, contracts_manager):
++        """
++        Direct test of extract_contracts with malformed input that would 
++        trigger the original AssertionError.
++        """
++        def test_method():
++            """@ foo"""
++            pass
++        
++        # Before fix: would raise AssertionError due to assert m is not None
++        # After fix: should return empty list
++        contracts = contracts_manager.extract_contracts(test_method)
++        assert isinstance(contracts, list)
++        assert len(contracts) == 0

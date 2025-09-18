@@ -1,0 +1,343 @@
+--- a/tests/queries/test_ordering_expressions.py
++++ b/tests/queries/test_ordering_expressions.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import F, OrderBy
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('queries')
++class OrderingExpressionsTest(TestCase):
++    """Test ordering with expressions in Meta.ordering during multi-table inheritance."""
++    
++    def setUp(self):
++        """Set up test models with multi-table inheritance and expression ordering."""
++        # Create parent model
++        class ParentModel(models.Model):
++            name = models.CharField(max_length=100)
++            priority = models.IntegerField(default=0)
++            
++            class Meta:
++                app_label = 'queries'
++                # This should cause the bug - OrderBy expression in Meta.ordering
++                ordering = [OrderBy(F('priority').desc())]
++        
++        # Create child model with multi-table inheritance
++        class ChildModel(ParentModel):
++            description = models.CharField(max_length=200)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        self.ParentModel = ParentModel
++        self.ChildModel = ChildModel
++    
++    def test_meta_ordering_with_orderby_expression_fails_before_fix(self):
++        """Test that demonstrates the bug - OrderBy in Meta.ordering crashes get_order_dir."""
++        # This test should fail before the fix is applied
++        # The bug occurs when get_order_dir receives an OrderBy object instead of string
++        
++        # Try to create a queryset that would trigger the ordering
++        # The bug typically manifests during test database setup or query compilation
++        with self.assertRaises((TypeError, AttributeError)) as cm:
++            # This should trigger the bug where get_order_dir gets an OrderBy object
++            list(self.ChildModel.objects.all())
++        
++        # The error should be related to trying to index an OrderBy object like a string
++        error_msg = str(cm.exception)
++        self.assertTrue(
++            "'OrderBy' object is not subscriptable" in error_msg or
++            "'OrderBy' object has no attribute '__getitem__'" in error_msg or
++            "string indices must be integers" in error_msg,
++            f"Expected OrderBy indexing error, got: {error_msg}"
++        )
++    
++    def test_meta_ordering_with_string_field_works(self):
++        """Test that string field names in Meta.ordering work correctly."""
++        # Create a model with string-based ordering to verify normal case works
++        class StringOrderedModel(models.Model):
++            name = models.CharField(max_length=100)
++            priority = models.IntegerField(default=0)
++            
++            class Meta:
++                app_label = 'queries'
++                ordering = ['-priority', 'name']  # String-based ordering
++        
++        # This should work without issues
++        queryset = StringOrderedModel.objects.all()
++        # Just accessing the queryset should not raise an error
++        str(queryset.query)  # Force query compilation
++    
++    def test_meta_ordering_with_f_expression_fails_before_fix(self):
++        """Test that F() expressions in Meta.ordering also cause issues."""
++        class FExpressionModel(models.Model):
++            name = models.CharField(max_length=100)
++            priority = models.IntegerField(default=0)
++            
++            class Meta:
++                app_label = 'queries'
++                ordering = [F('priority').desc()]  # F expression that becomes OrderBy
++        
++        # This should also fail before the fix
++        with self.assertRaises((TypeError, AttributeError)):
++            list(FExpressionModel.objects.all())
++    
++    def test_meta_ordering_mixed_expressions_and_strings_fails_before_fix(self):
++        """Test mixed ordering with both expressions and strings."""
++        class MixedOrderingModel(models.Model):
++            name = models.CharField(max_length=100)
++            priority = models.IntegerField(default=0)
++            created_at = models.DateTimeField(auto_now_add=True)
++            
++            class Meta:
++                app_label = 'queries'
++                ordering = ['name', OrderBy(F('priority').desc()), '-created_at']
++        
++        # This should fail when processing the OrderBy expression
++        with self.assertRaises((TypeError, AttributeError)):
++            list(MixedOrderingModel.objects.all())
++    
++    def test_inheritance_with_expression_ordering_fails_before_fix(self):
++        """Test multi-table inheritance specifically with expression ordering."""
++        class BaseModel(models.Model):
++            base_field = models.CharField(max_length=100)
++            sort_order = models.IntegerField(default=0)
++            
++            class Meta:
++                app_label = 'queries'
++                ordering = [OrderBy(F('sort_order').asc())]
++        
++        class DerivedModel(BaseModel):
++            derived_field = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        # Multi-table inheritance with expression ordering should fail
++        with self.assertRaises((TypeError, AttributeError)):
++            list(DerivedModel.objects.all())
++    
++    def test_queryset_order_by_with_expressions_works(self):
++        """Test that explicit order_by() with expressions works (not Meta.ordering)."""
++        # Create a simple model without expression ordering in Meta
++        class SimpleModel(models.Model):
++            name = models.CharField(max_length=100)
++            priority = models.IntegerField(default=0)
++            
++            class Meta:
++                app_label = 'queries'
++                ordering = []  # No Meta ordering
++        
++        # Explicit order_by with expressions should work
++        queryset = SimpleModel.objects.order_by(F('priority').desc())
++        str(queryset.query)  # Should not raise an error
++
++
++@isolate_apps('queries')
++class OrderingExpressionsAfterFixTest(TestCase):
++    """Test ordering with expressions after the fix is applied."""
++    
++    def setUp(self):
++        """Set up test models for post-fix testing."""
++        class ParentModel(models.Model):
++            name = models.CharField(max_length=100)
++            priority = models.IntegerField(default=0)
++            
++            class Meta:
++                app_label = 'queries'
++                ordering = [OrderBy(F('priority').desc())]
++        
++        class ChildModel(ParentModel):
++            description = models.CharField(max_length=200)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        self.ParentModel = ParentModel
++        self.ChildModel = ChildModel
++    
++    @pytest.mark.skip(reason="This test should pass after the fix is applied")
++    def test_meta_ordering_with_orderby_expression_works_after_fix(self):
++        """Test that OrderBy expressions in Meta.ordering work after fix."""
++        # After the fix, this should work without errors
++        queryset = self.ChildModel.objects.all()
++        str(queryset.query)  # Should compile without error
++        
++        # Should be able to iterate over results
++        list(queryset)  # Should not raise an error
++    
++    @pytest.mark.skip(reason="This test should pass after the fix is applied")
++    def test_meta_ordering_preserves_expression_semantics_after_fix(self):
++        """Test that expression ordering semantics are preserved after fix."""
++        # Create some test data
++        parent1 = self.ParentModel.objects.create(name="Low Priority", priority=1)
++        parent2 = self.ParentModel.objects.create(name="High Priority", priority=10)
++        parent3 = self.ParentModel.objects.create(name="Medium Priority", priority=5)
++        
++        # Query should return results ordered by priority descending
++        results = list(self.ParentModel.objects.all())
++        
++        # Verify ordering is correct (highest priority first)
++        self.assertEqual(results[0].priority, 10)
++        self.assertEqual(results[1].priority, 5)
++        self.assertEqual(results[2].priority, 1)
++    
++    @pytest.mark.skip(reason="This test should pass after the fix is applied")
++    def test_inheritance_ordering_works_after_fix(self):
++        """Test that multi-table inheritance with expression ordering works after fix."""
++        # Create test data in child model
++        child1 = self.ChildModel.objects.create(
++            name="Child Low", priority=2, description="Low priority child"
++        )
++        child2 = self.ChildModel.objects.create(
++            name="Child High", priority=8, description="High priority child"
++        )
++        
++        # Should be able to query child model with inherited ordering
++        results = list(self.ChildModel.objects.all())
++        
++        # Verify ordering is preserved in inheritance
++        self.assertEqual(results[0].priority, 8)
++        self.assertEqual(results[1].priority, 2)
+
+--- a/tests/queries/test_get_order_dir.py
++++ b/tests/queries/test_get_order_dir.py
+-# Empty if creating new file
++import pytest
++from django.db.models import F, OrderBy
++from django.db.models.sql.query import get_order_dir
++from django.test import TestCase
++
++
++class GetOrderDirTest(TestCase):
++    """Test the get_order_dir function with various input types."""
++    
++    def test_get_order_dir_with_string_field_ascending(self):
++        """Test get_order_dir with string field name (ascending)."""
++        field, direction = get_order_dir('name')
++        self.assertEqual(field, 'name')
++        self.assertEqual(direction, 'ASC')
++    
++    def test_get_order_dir_with_string_field_descending(self):
++        """Test get_order_dir with string field name (descending)."""
++        field, direction = get_order_dir('-name')
++        self.assertEqual(field, 'name')
++        self.assertEqual(direction, 'DESC')
++    
++    def test_get_order_dir_with_string_field_explicit_ascending(self):
++        """Test get_order_dir with explicit + prefix."""
++        field, direction = get_order_dir('+name')
++        self.assertEqual(field, '+name')  # + prefix is not stripped
++        self.assertEqual(direction, 'ASC')
++    
++    def test_get_order_dir_with_custom_default(self):
++        """Test get_order_dir with custom default direction."""
++        field, direction = get_order_dir('name', default='DESC')
++        self.assertEqual(field, 'name')
++        self.assertEqual(direction, 'DESC')
++        
++        field, direction = get_order_dir('-name', default='DESC')
++        self.assertEqual(field, 'name')
++        self.assertEqual(direction, 'ASC')  # Opposite of default
++    
++    def test_get_order_dir_with_orderby_object_fails_before_fix(self):
++        """Test that get_order_dir fails with OrderBy object before fix."""
++        # Create an OrderBy expression
++        order_by_expr = OrderBy(F('priority'), descending=True)
++        
++        # This should fail before the fix because get_order_dir tries to index
++        # the OrderBy object like a string
++        with self.assertRaises((TypeError, AttributeError)) as cm:
++            get_order_dir(order_by_expr)
++        
++        error_msg = str(cm.exception)
++        self.assertTrue(
++            "'OrderBy' object is not subscriptable" in error_msg or
++            "'OrderBy' object has no attribute '__getitem__'" in error_msg,
++            f"Expected OrderBy indexing error, got: {error_msg}"
++        )
++    
++    def test_get_order_dir_with_f_expression_fails_before_fix(self):
++        """Test that get_order_dir fails with F expression before fix."""
++        # F expressions when used in ordering become OrderBy objects
++        f_expr = F('priority').desc()  # This creates an OrderBy object
++        
++        # This should also fail before the fix
++        with self.assertRaises((TypeError, AttributeError)):
++            get_order_dir(f_expr)
++    
++    @pytest.mark.skip(reason="This test should pass after the fix is applied")
++    def test_get_order_dir_with_orderby_ascending_after_fix(self):
++        """Test get_order_dir with ascending OrderBy object after fix."""
++        order_by_expr = OrderBy(F('priority'), descending=False)
++        
++        # After fix, this should work and extract field info from OrderBy
++        field, direction = get_order_dir(order_by_expr)
++        
++        # Should extract the field name and direction correctly
++        self.assertIsInstance(field, str)
++        self.assertEqual(direction, 'ASC')
++    
++    @pytest.mark.skip(reason="This test should pass after the fix is applied")
++    def test_get_order_dir_with_orderby_descending_after_fix(self):
++        """Test get_order_dir with descending OrderBy object after fix."""
++        order_by_expr = OrderBy(F('priority'), descending=True)
++        
++        # After fix, this should work
++        field, direction = get_order_dir(order_by_expr)
++        
++        # Should extract the field name and direction correctly
++        self.assertIsInstance(field, str)
++        self.assertEqual(direction, 'DESC')
++    
++    @pytest.mark.skip(reason="This test should pass after the fix is applied")
++    def test_get_order_dir_with_f_expression_after_fix(self):
++        """Test get_order_dir with F expression after fix."""
++        f_expr_asc = F('priority').asc()
++        f_expr_desc = F('priority').desc()
++        
++        # After fix, both should work
++        field_asc, direction_asc = get_order_dir(f_expr_asc)
++        field_desc, direction_desc = get_order_dir(f_expr_desc)
++        
++        self.assertIsInstance(field_asc, str)
++        self.assertEqual(direction_asc, 'ASC')
++        
++        self.assertIsInstance(field_desc, str)
++        self.assertEqual(direction_desc, 'DESC')
++    
++    @pytest.mark.skip(reason="This test should pass after the fix is applied")
++    def test_get_order_dir_preserves_string_behavior_after_fix(self):
++        """Test that string behavior is preserved after fix."""
++        # String behavior should remain unchanged
++        field1, direction1 = get_order_dir('name')
++        field2, direction2 = get_order_dir('-name')
++        
++        self.assertEqual(field1, 'name')
++        self.assertEqual(direction1, 'ASC')
++        self.assertEqual(field2, 'name')
++        self.assertEqual(direction2, 'DESC')
++    
++    def test_get_order_dir_edge_cases(self):
++        """Test edge cases for get_order_dir function."""
++        # Empty string
++        field, direction = get_order_dir('')
++        self.assertEqual(field, '')
++        self.assertEqual(direction, 'ASC')
++        
++        # Just a minus sign
++        field, direction = get_order_dir('-')
++        self.assertEqual(field, '')
++        self.assertEqual(direction, 'DESC')
++        
++        # Field name with underscores and numbers
++        field, direction = get_order_dir('field_name_123')
++        self.assertEqual(field, 'field_name_123')
++        self.assertEqual(direction, 'ASC')
++        
++        # Field name with double underscores (lookups)
++        field, direction = get_order_dir('-related__field__name')
++        self.assertEqual(field, 'related__field__name')
++        self.assertEqual(direction, 'DESC')

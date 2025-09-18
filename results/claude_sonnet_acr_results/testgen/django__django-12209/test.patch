@@ -1,0 +1,283 @@
+--- a/tests/model_save_pk_default/test_save_with_explicit_pk.py
++++ b/tests/model_save_pk_default/test_save_with_explicit_pk.py
++import pytest
++from uuid import uuid4
++from django.db import models, IntegrityError
++from django.test import TestCase, TransactionTestCase
++from django.db import transaction
++
++
++class SampleUUID(models.Model):
++    """Model with UUID primary key that has a default value."""
++    id = models.UUIDField(primary_key=True, default=uuid4)
++    name = models.CharField(blank=True, max_length=100)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class SampleUUIDNoDefault(models.Model):
++    """Model with UUID primary key that has no default value."""
++    id = models.UUIDField(primary_key=True)
++    name = models.CharField(blank=True, max_length=100)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class SampleAutoField(models.Model):
++    """Model with AutoField primary key (has implicit default)."""
++    name = models.CharField(blank=True, max_length=100)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class TestSaveWithExplicitPK(TransactionTestCase):
++    """Test saving model instances with explicit pk values when pk field has a default."""
++    
++    def setUp(self):
++        """Create tables for test models."""
++        from django.db import connection
++        from django.core.management.color import no_style
++        from django.core.management.sql import sql_create_index
++        
++        style = no_style()
++        
++        # Create tables for our test models
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(SampleUUID)
++            schema_editor.create_model(SampleUUIDNoDefault)
++            schema_editor.create_model(SampleAutoField)
++    
++    def tearDown(self):
++        """Drop tables for test models."""
++        from django.db import connection
++        
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(SampleUUID)
++            schema_editor.delete_model(SampleUUIDNoDefault)
++            schema_editor.delete_model(SampleAutoField)
++    
++    def test_save_with_explicit_pk_should_update_existing_object(self):
++        """
++        Test that saving a model instance with an explicit pk value
++        should UPDATE an existing object, not INSERT a new one.
++        This reproduces the bug described in the issue.
++        """
++        # Create an initial object
++        s0 = SampleUUID.objects.create()
++        original_id = s0.id
++        original_name = s0.name
++        
++        # Create a new instance with the same pk but different data
++        s1 = SampleUUID(pk=s0.pk, name='Test 1')
++        
++        # This should UPDATE the existing object, not INSERT a new one
++        s1.save()
++        
++        # Verify that only one object exists with the given pk
++        objects = SampleUUID.objects.filter(pk=original_id)
++        assert objects.count() == 1
++        
++        # Verify that the object was updated
++        updated_object = objects.first()
++        assert updated_object.id == original_id
++        assert updated_object.name == 'Test 1'
++        
++        # Verify total count hasn't increased
++        assert SampleUUID.objects.count() == 1
++    
++    def test_save_with_explicit_pk_nonexistent_object_should_insert(self):
++        """
++        Test that saving a model instance with an explicit pk value
++        that doesn't exist should INSERT a new object.
++        """
++        # Generate a UUID that doesn't exist in the database
++        new_id = uuid4()
++        
++        # Create an instance with explicit pk
++        s1 = SampleUUID(pk=new_id, name='New Object')
++        s1.save()
++        
++        # Verify the object was created
++        assert SampleUUID.objects.filter(pk=new_id).exists()
++        created_object = SampleUUID.objects.get(pk=new_id)
++        assert created_object.name == 'New Object'
++        assert SampleUUID.objects.count() == 1
++    
++    def test_save_without_explicit_pk_should_insert_with_default(self):
++        """
++        Test that saving a model instance without an explicit pk value
++        should INSERT with the default value (existing behavior should be preserved).
++        """
++        # Create an instance without explicit pk
++        s1 = SampleUUID(name='Auto PK')
++        s1.save()
++        
++        # Verify the object was created with a generated UUID
++        assert s1.pk is not None
++        assert SampleUUID.objects.filter(pk=s1.pk).exists()
++        created_object = SampleUUID.objects.get(pk=s1.pk)
++        assert created_object.name == 'Auto PK'
++        assert SampleUUID.objects.count() == 1
++    
++    def test_save_with_explicit_pk_no_default_field_should_work(self):
++        """
++        Test that the behavior works correctly for pk fields without defaults.
++        This should work the same way regardless of the bug fix.
++        """
++        # Generate a UUID for testing
++        test_id = uuid4()
++        
++        # Create an instance with explicit pk (no default on field)
++        s1 = SampleUUIDNoDefault(pk=test_id, name='No Default')
++        s1.save()
++        
++        # Create another instance with same pk but different data
++        s2 = SampleUUIDNoDefault(pk=test_id, name='Updated')
++        s2.save()
++        
++        # Verify that the object was updated, not duplicated
++        objects = SampleUUIDNoDefault.objects.filter(pk=test_id)
++        assert objects.count() == 1
++        updated_object = objects.first()
++        assert updated_object.name == 'Updated'
++        assert SampleUUIDNoDefault.objects.count() == 1
++    
++    def test_multiple_saves_with_explicit_pk_should_update(self):
++        """
++        Test that multiple saves with the same explicit pk should
++        continue to update the same object.
++        """
++        # Create initial object
++        s0 = SampleUUID.objects.create(name='Initial')
++        original_id = s0.pk
++        
++        # Update multiple times with explicit pk
++        for i in range(3):
++            s_update = SampleUUID(pk=original_id, name=f'Update {i}')
++            s_update.save()
++        
++        # Verify only one object exists
++        assert SampleUUID.objects.count() == 1
++        final_object = SampleUUID.objects.get(pk=original_id)
++        assert final_object.name == 'Update 2'
++    
++    def test_force_insert_with_explicit_pk_should_fail_if_exists(self):
++        """
++        Test that using force_insert=True with an explicit pk
++        should fail if the object already exists.
++        """
++        # Create initial object
++        s0 = SampleUUID.objects.create(name='Initial')
++        
++        # Try to force insert with same pk - should fail
++        s1 = SampleUUID(pk=s0.pk, name='Forced Insert')
++        
++        with pytest.raises(IntegrityError):
++            s1.save(force_insert=True)
++    
++    def test_force_update_with_explicit_pk_should_work_if_exists(self):
++        """
++        Test that using force_update=True with an explicit pk
++        should work if the object exists.
++        """
++        # Create initial object
++        s0 = SampleUUID.objects.create(name='Initial')
++        
++        # Force update with same pk - should work
++        s1 = SampleUUID(pk=s0.pk, name='Forced Update')
++        s1.save(force_update=True)
++        
++        # Verify update worked
++        updated_object = SampleUUID.objects.get(pk=s0.pk)
++        assert updated_object.name == 'Forced Update'
++        assert SampleUUID.objects.count() == 1
++    
++    def test_autofield_behavior_unchanged(self):
++        """
++        Test that AutoField behavior is unchanged by the fix.
++        AutoFields should continue to work as before.
++        """
++        # Create object with AutoField
++        s1 = SampleAutoField(name='Auto Field Test')
++        s1.save()
++        
++        # Get the auto-generated pk
++        auto_pk = s1.pk
++        assert auto_pk is not None
++        
++        # Create another instance with explicit pk
++        s2 = SampleAutoField(pk=auto_pk, name='Updated Auto Field')
++        s2.save()
++        
++        # Verify update worked
++        assert SampleAutoField.objects.count() == 1
++        updated_object = SampleAutoField.objects.get(pk=auto_pk)
++        assert updated_object.name == 'Updated Auto Field'
++    
++    def test_state_adding_flag_behavior(self):
++        """
++        Test that the _state.adding flag behaves correctly in different scenarios.
++        """
++        # Test 1: New instance without explicit pk
++        s1 = SampleUUID(name='New without PK')
++        assert s1._state.adding is True
++        s1.save()
++        assert s1._state.adding is False
++        
++        # Test 2: New instance with explicit pk
++        test_id = uuid4()
++        s2 = SampleUUID(pk=test_id, name='New with PK')
++        assert s2._state.adding is True
++        s2.save()
++        assert s2._state.adding is False
++        
++        # Test 3: Instance loaded from database
++        s3 = SampleUUID.objects.get(pk=test_id)
++        assert s3._state.adding is False
++        s3.name = 'Modified'
++        s3.save()
++        assert s3._state.adding is False
++    
++    def test_loaddata_scenario(self):
++        """
++        Test the scenario mentioned in the issue where loaddata
++        command behavior changes when loading fixtures multiple times.
++        This simulates what happens during fixture loading.
++        """
++        # Simulate first fixture load
++        fixture_id = uuid4()
++        s1 = SampleUUID(pk=fixture_id, name='Fixture Data')
++        s1.save()
++        
++        # Simulate second fixture load (same data)
++        # This should update, not fail with integrity error
++        s2 = SampleUUID(pk=fixture_id, name='Fixture Data')
++        s2.save()
++        
++        # Verify only one object exists
++        assert SampleUUID.objects.filter(pk=fixture_id).count() == 1
++        assert SampleUUID.objects.count() == 1
++    
++    def test_edge_case_none_pk_with_default(self):
++        """
++        Test edge case where pk is explicitly set to None
++        but field has a default.
++        """
++        # Create instance with explicit None pk
++        s1 = SampleUUID(pk=None, name='None PK')
++        s1.save()
++        
++        # Should get a generated UUID
++        assert s1.pk is not None
++        assert SampleUUID.objects.filter(pk=s1.pk).exists()
++        
++        # Save again - should update the same object
++        s1.name = 'Updated None PK'
++        s1.save()
++        
++        assert SampleUUID.objects.count() == 1
++        updated_object = SampleUUID.objects.get(pk=s1.pk)
++        assert updated_object.name == 'Updated None PK'

@@ -6,7 +6,7 @@ Welcome to **OmniCode[CodeArena]**! This repository allows you to evaluate perfo
 
 CodeArena requires `Python 3.13` and its dependecies can be installed via `pip install -r requirements.txt`
 
-CodeArena is currently set up to work with a specific swebench and multiswebench version which can be installed using: 
+CodeArena is currently set up to work with a specific swebench and multiswebench version which can be installed using:
 
 ```bash
 git clone git@github.com:seal-research/SWE-bench.git
@@ -28,7 +28,8 @@ git submodule update --init --recursive
 cd <submodule_path>
 pip install .
 ```
-> NOTE: Running `pip install .` in multi-swe-bench installs multi=swe-bench as package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local CodeArena. 
+
+> NOTE: Running `pip install .` in multi-swe-bench installs multi=swe-bench as package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local CodeArena.
 
 ## CodeArena Evaluation
 
@@ -94,10 +95,12 @@ In this section you will find instructions on the different specifications of ou
 ---
 
 ## Java Support
-* **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
+
+- **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
 
 <!-- Datasets are currently included in repo -->
-<!-- 0. Download data from huggingface (it is expected to be placed under multiswebench_local/mswebench_dataset) --> 
+<!-- 0. Download data from huggingface (it is expected to be placed under multiswebench_local/mswebench_dataset) -->
+
 1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench_local/prepare_eval`
 2. From the multiswebench_local directory, `run python prepare_eval.py`
 3. From the codearena directory, run `python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids "INSERT YOUR INSTANCE HERE EX: elastic/logstash:17021" --mswe_phase all --force_rebuild True --clean True`
@@ -123,6 +126,7 @@ Custom preds file can look like this for example:
 Should be saved in a json format and can replace gold in the example call above.
 
 ### MSWEBugFixing for newly onboarded Java Tasks
+
 Prerequisites:
 
 0. Multiswebench `[org]__[repo]_dataset.jsonl` for new instance should be present
@@ -130,6 +134,7 @@ Prerequisites:
 2. From the multiswebench_local directory, `run python prepare_eval.py`
 
 Example Command:
+
 ```bash
 # run without /scratch and apptainer
 python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids mockito__mockito_3173 --mswe_phase all --force_rebuild True --clean True --use_apptainer False --g2 False
@@ -151,20 +156,21 @@ You can run test generation testing as follows. The tags work how they work for 
 python codearena.py --MSWETestGeneration --dataset_name data/multiswebench_data/mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
 ```
 
-#### Example Command to run MSWETestGeneration on newly onboarded instances: 
+#### Example Command to run MSWETestGeneration on newly onboarded instances:
+
 ```bash
 python codearena.py --MSWETestGeneration --dataset_name data/codearena_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586
 ```
 
 ### Java Style Review
+
 Java style review has been configured to work using two different types of tools: Checkstyle and PMD
 
-#### Example Command to run Java Style Review: 
+#### Example Command to run Java Style Review:
+
 ```bash
 python codearena.py --StyleReview --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache/dubbo:10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle]
 ```
-
-
 
 #### File Formats
 
@@ -223,7 +229,6 @@ Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each 
 
    - Theoretically, the pipeline should not need to be changed to work for other languages supported by Multi-SWE-Bench. However, this remains untested.
 
-
 ## LLM API Key
 
 You can generate a free API key for the Gemini LLM by following the instructions at https://ai.google.dev/gemini-api/docs/api-key. This key is required to run the evaluation tasks that involve LLMs. Note that the free tier has rate limits, so don't run too many tasks in parallel.
@@ -255,6 +260,7 @@ python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_insta
 ### Running SWE-Agent for Java Instances
 
 Prerequisites:
+
 - Instance should be present in `data/codearena_instances_java.json`
 - Base image should already built in your local docker (e.g. MSWEBugFixing)
 
@@ -265,21 +271,23 @@ python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_insta
 ```
 
 ### Running SWE-Agent for Java Style Review
+
 Prerequisites:
-- Dataset should be downloaded from 
-https://drive.google.com/file/d/1ZVg-rVXU9hPN0iO1qsxm-Ru7a5AUmwJU/view?usp=drive_link (PMD)
-https://drive.google.com/file/d/15yDXDq9S-mOOYoNT0na7MqiodvJ8Rf4g/view?usp=drive_link (Checkstyle)
+
+- Dataset should be downloaded from
+  https://drive.google.com/file/d/1ZVg-rVXU9hPN0iO1qsxm-Ru7a5AUmwJU/view?usp=drive_link (PMD)
+  https://drive.google.com/file/d/15yDXDq9S-mOOYoNT0na7MqiodvJ8Rf4g/view?usp=drive_link (Checkstyle)
 - Base image should already built in your local docker (e.g. MSWEBugFixing)
 
 ```bash
 python baselines/sweagent/convert_style_errors_to_sweagent_from_dataset.py --org apache --repo dubbo --pr_number 10638 --style_tool pmd --output sweagent_input.json
 ```
+
 OR (to use only errors of files modified in gold patch)
 
 ```bash
 python baselines/sweagent/convert_filtered_style_errors_to_sweagent_from_dataset.py --org apache --repo dubbo --pr_number 10638 --style_tool pmd --output sweagent_input.json
 ```
-
 
 ```bash
 python baselines/sweagent/sweagent_regular.py -i sweagent_input.json -o sweagent_pmd_apache_dubbo_10638_results --mode stylereview --style_tool pmd --model_name "gemini/gemini-2.5-flash" --api_key $GEMINI_API_KEY
@@ -288,9 +296,46 @@ python baselines/sweagent/sweagent_regular.py -i sweagent_input.json -o sweagent
 ## Adding Bad Patches
 
 ### Option 1: Agentless Generation
-Follow instructions found here: https://github.com/seal-research/OmniCode/blob/main/adding_tasks.md
+
+#### General Setup:
+
+There is a codearena_local dataset used by agentless. This dataset does not automatically update when there are changes to `mswebench_instances.json` or `codearena_instances.json`. If you change these files, you must make a trivial change to `baselines/Agentless/codearena_local/codearena_local.py` in order for them to be reflected in Agentless.
+
+#### Usage:
+
+In the submodule folder under `baselines/Agentless` you can modify the values inside `run.sh`. There are existing examples in this file for openrouter. The general structure is as follows:
+
+```bash
+run_id=$1
+instance=$2
+dataset=$3
+use_apptainer=true
+runs=25
+
+bash full_bad_patch_gen.sh "$instance" "$runs" "$run_id" {model name here (e.g. gemma-2-9b-it, llama-3-8b-instruct)} {provider name here (e.g. google, openrouter)} 'codearena_local' {coding language here (e.g. python, java, cpp)} "$dataset" "$use_apptainer"
+```
+
+`run_id`, `instance`, and `dataset` are taken as arguments when running `bash run.sh`. The `run_id` is the name of the run. `instance` is one of the instance_ids from the codearena dataset. `dataset` is the location where you want successfully generated bad patches to be placed. This should include the file name, not just the directory.
+
+#### Adding bad patches back to dataset:
+
+Wherever you have chosen to put your bad patches, they should be in one .jsonl file. You may chose to add these back to the dataset however you chose, but note that the entries in the .jsonl have several key values. The extra keys include a reason for the bad patch having failed a test and the instance id for the bad patch. Both of this values can be omitted when adding back to the dataset.
+
+#### Adding reviews:
+
+At this point, the dataset will include bad patch entries but they are not yet complete. You should add reviews for each of the bad patches as well. You can accomplish this by running:
+
+```bash
+python baselines/badpatchllm/generate_review.py \
+--output_dir {your chosen output directory} \
+--api_key {your api key (at this time must be a gemini api key)} \
+--input_tasks {data/multiswebench_data/mswebench_instances.json or data/codearena_instances.json}\
+--num_reviews_per_patch 1 \
+--instance_ids {instance ids that you added bad patches for}
+```
 
 ### Option 2: LLM Sourced Generation
+
 ```bash
 python baselines/badpatchllm/generate_bad.py \
     -o baselines/badpatchllm/logs/gemini_outputs \
@@ -305,6 +350,7 @@ python baselines/badpatchllm/generate_bad.py \
 Note: Raw diff files will also be outputted and found under the user specified output directory for ease of use.
 
 ### Generating Reviews
+
 ```bash
 python baselines/badpatchllm/generate_review.py \
     --input_tasks data/codearena_instances.json \
@@ -312,6 +358,8 @@ python baselines/badpatchllm/generate_review.py \
     --output_dir baselines/badpatchllm/logs/gemini_outputs \
     --instance_ids astropy__astropy-13033
 ```
+
+You will need to move the data back to the original dataset. The reviews will not be added in place.
 
 ## Deploying experiments on Google Cloud
 

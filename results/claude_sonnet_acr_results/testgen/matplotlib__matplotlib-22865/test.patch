@@ -1,0 +1,244 @@
+--- a/lib/matplotlib/tests/test_colorbar_drawedges_extend.py
++++ b/lib/matplotlib/tests/test_colorbar_drawedges_extend.py
+-# Empty if creating new file
++import pytest
++import numpy as np
++import matplotlib as mpl
++import matplotlib.pyplot as plt
++from matplotlib.colors import from_levels_and_colors
++from matplotlib.colorbar import Colorbar
++import matplotlib.patches as mpatches
++
++
++class TestColorbarDrawedgesExtend:
++    """Test colorbar edge drawing with extend functionality."""
++
++    def setup_method(self):
++        """Set up test fixtures."""
++        # Create a simple colormap and norm with extensions
++        self.my_cmap = mpl.cm.viridis
++        self.bounds = np.arange(10)
++        self.nb_colors = len(self.bounds) + 1
++        self.colors = self.my_cmap(np.linspace(100, 255, self.nb_colors).astype(int))
++        
++    def create_colorbar_with_extend(self, extend='both', drawedges=True, orientation='horizontal'):
++        """Helper method to create a colorbar with specified parameters."""
++        my_cmap, my_norm = from_levels_and_colors(self.bounds, self.colors, extend=extend)
++        
++        fig = plt.figure(figsize=(5, 1))
++        ax = plt.subplot(111)
++        cbar = Colorbar(ax, cmap=my_cmap, norm=my_norm, 
++                       orientation=orientation, drawedges=drawedges)
++        return fig, ax, cbar
++
++    def test_colorbar_drawedges_extend_both_reproduces_bug(self):
++        """Test that reproduces the original bug - missing edges at extremities with extend='both'."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='both', drawedges=True)
++        
++        # Before fix: dividers should be missing boundary segments
++        # This test should fail before the fix is applied
++        divider_segments = cbar.dividers.get_segments()
++        
++        # With the bug, we expect fewer segments than we should have
++        # The bug causes [1:-1] slicing which removes boundary segments
++        expected_segments_with_bug = len(cbar._y) - 3  # [1:-1] removes 2 segments
++        
++        # This assertion should pass before the fix (demonstrating the bug)
++        assert len(divider_segments) == expected_segments_with_bug, \
++            f"Bug reproduction failed: expected {expected_segments_with_bug} segments, got {len(divider_segments)}"
++        
++        plt.close(fig)
++
++    def test_colorbar_drawedges_extend_both_should_have_all_edges(self):
++        """Test that colorbar with drawedges=True and extend='both' should draw all edges."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='both', drawedges=True)
++        
++        # After fix: should have edges at all boundaries including extremities
++        divider_segments = cbar.dividers.get_segments()
++        
++        # We should have segments for all boundaries when extensions are present
++        # This includes the boundaries between main colorbar and extensions
++        expected_segments_after_fix = len(cbar._y) - 1  # All internal boundaries
++        
++        # This assertion should pass after the fix
++        assert len(divider_segments) >= expected_segments_after_fix - 1, \
++            f"Missing edge segments: expected at least {expected_segments_after_fix - 1} segments, got {len(divider_segments)}"
++        
++        plt.close(fig)
++
++    def test_colorbar_drawedges_extend_min_only(self):
++        """Test colorbar with drawedges=True and extend='min'."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='min', drawedges=True)
++        
++        divider_segments = cbar.dividers.get_segments()
++        
++        # Should have edge at lower boundary but not upper
++        assert len(divider_segments) > 0, "Should have divider segments when drawedges=True"
++        
++        # Check that we have the lower boundary edge when extend='min'
++        assert cbar._extend_lower(), "Should extend lower with extend='min'"
++        assert not cbar._extend_upper(), "Should not extend upper with extend='min'"
++        
++        plt.close(fig)
++
++    def test_colorbar_drawedges_extend_max_only(self):
++        """Test colorbar with drawedges=True and extend='max'."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='max', drawedges=True)
++        
++        divider_segments = cbar.dividers.get_segments()
++        
++        # Should have edge at upper boundary but not lower
++        assert len(divider_segments) > 0, "Should have divider segments when drawedges=True"
++        
++        # Check that we have the upper boundary edge when extend='max'
++        assert not cbar._extend_lower(), "Should not extend lower with extend='max'"
++        assert cbar._extend_upper(), "Should extend upper with extend='max'"
++        
++        plt.close(fig)
++
++    def test_colorbar_drawedges_no_extend(self):
++        """Test colorbar with drawedges=True and no extensions."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='neither', drawedges=True)
++        
++        divider_segments = cbar.dividers.get_segments()
++        
++        # Should have internal edges but not boundary edges when no extensions
++        expected_segments = len(cbar._y) - 3  # [1:-1] behavior for no extensions
++        
++        assert len(divider_segments) == expected_segments, \
++            f"Expected {expected_segments} segments for no extensions, got {len(divider_segments)}"
++        
++        # Verify no extensions
++        assert not cbar._extend_lower(), "Should not extend lower with extend='neither'"
++        assert not cbar._extend_upper(), "Should not extend upper with extend='neither'"
++        
++        plt.close(fig)
++
++    def test_colorbar_no_drawedges_with_extend(self):
++        """Test colorbar with drawedges=False and extend='both'."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='both', drawedges=False)
++        
++        divider_segments = cbar.dividers.get_segments()
++        
++        # Should have no divider segments when drawedges=False
++        assert len(divider_segments) == 0, \
++            f"Expected no segments when drawedges=False, got {len(divider_segments)}"
++        
++        plt.close(fig)
++
++    def test_colorbar_drawedges_vertical_orientation(self):
++        """Test colorbar with drawedges=True, extend='both', and vertical orientation."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='both', drawedges=True, 
++                                                        orientation='vertical')
++        
++        divider_segments = cbar.dividers.get_segments()
++        
++        # Should have divider segments for vertical orientation too
++        assert len(divider_segments) > 0, "Should have divider segments for vertical orientation"
++        
++        # Verify orientation
++        assert cbar.orientation == 'vertical', "Should have vertical orientation"
++        
++        plt.close(fig)
++
++    def test_extension_patches_have_edges_when_drawedges_true(self):
++        """Test that extension patches have proper edge properties when drawedges=True."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='both', drawedges=True)
++        
++        # Check that extension patches exist
++        assert len(cbar._extend_patches) > 0, "Should have extension patches"
++        
++        # After fix: extension patches should have proper edge properties when drawedges=True
++        for patch in cbar._extend_patches:
++            if cbar.drawedges:
++                # Extension patches should have non-zero linewidth when drawedges=True
++                # This assertion will fail before the fix
++                assert patch.get_linewidth() > 0, \
++                    "Extension patches should have non-zero linewidth when drawedges=True"
++                
++                # Should have proper edge color
++                assert patch.get_edgecolor() is not None, \
++                    "Extension patches should have edge color when drawedges=True"
++        
++        plt.close(fig)
++
++    def test_extension_patches_no_edges_when_drawedges_false(self):
++        """Test that extension patches have no edges when drawedges=False."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='both', drawedges=False)
++        
++        # Check that extension patches exist
++        assert len(cbar._extend_patches) > 0, "Should have extension patches"
++        
++        # Extension patches should have zero linewidth when drawedges=False
++        for patch in cbar._extend_patches:
++            assert patch.get_linewidth() == 0, \
++                "Extension patches should have zero linewidth when drawedges=False"
++        
++        plt.close(fig)
++
++    def test_divider_properties_consistency(self):
++        """Test that dividers have consistent properties."""
++        fig, ax, cbar = self.create_colorbar_with_extend(extend='both', drawedges=True)
++        
++        # Check divider properties
++        divider_linewidths = cbar.dividers.get_linewidths()
++        divider_colors = cbar.dividers.get_colors()
++        
++        assert len(divider_linewidths) > 0, "Should have divider linewidths"
++        assert len(divider_colors) > 0, "Should have divider colors"
++        
++        # All linewidths should be the same
++        if len(divider_linewidths) > 1:
++            assert all(lw == divider_linewidths[0] for lw in divider_linewidths), \
++                "All divider linewidths should be consistent"
++        
++        plt.close(fig)
++
++    def test_edge_case_single_color_segment(self):
++        """Test edge case with minimal color segments."""
++        # Create a colorbar with minimal segments
++        bounds = np.array([0, 1])
++        colors = [self.my_cmap(0.5)]
++        my_cmap, my_norm = from_levels_and_colors(bounds, colors, extend='both')
++        
++        fig = plt.figure(figsize=(5, 1))
++        ax = plt.subplot(111)
++        cbar = Colorbar(ax, cmap=my_cmap, norm=my_norm, 
++                       orientation='horizontal', drawedges=True)
++        
++        # Should handle minimal case without errors
++        divider_segments = cbar.dividers.get_segments()
++        
++        # Even with minimal segments, should not crash
++        assert isinstance(divider_segments, list), "Should return list of segments"
++        
++        plt.close(fig)
++
++    def test_regression_original_issue_reproduction(self):
++        """Test that reproduces the exact issue from the bug report."""
++        # Exact reproduction of the original issue code
++        my_cmap = mpl.cm.viridis
++        bounds = np.arange(10)
++        nb_colors = len(bounds) + 1
++        colors = my_cmap(np.linspace(100, 255, nb_colors).astype(int))
++        my_cmap, my_norm = from_levels_and_colors(bounds, colors, extend='both')
++
++        fig = plt.figure(figsize=(5, 1))
++        ax = plt.subplot(111)
++        cbar = mpl.colorbar.ColorbarBase(ax, cmap=my_cmap, norm=my_norm, 
++                                        orientation='horizontal', drawedges=True)
++        
++        # The bug: missing edges at extremities
++        # Before fix: dividers would be missing boundary segments
++        divider_segments = cbar.dividers.get_segments()
++        
++        # This test documents the current behavior and will need to be updated after fix
++        # The exact assertion depends on the implementation details
++        assert isinstance(divider_segments, list), "Should have divider segments list"
++        
++        # Check that we have extensions
++        assert cbar._extend_lower(), "Should have lower extension"
++        assert cbar._extend_upper(), "Should have upper extension"
++        assert cbar.drawedges, "Should have drawedges enabled"
++        
++        plt.close(fig)

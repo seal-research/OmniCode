@@ -1,0 +1,196 @@
+--- a/test/test_external_downloader_ffmpeg_location.py
++++ b/test/test_external_downloader_ffmpeg_location.py
+-# Empty if creating new file
++#!/usr/bin/env python
++# coding: utf-8
++from __future__ import unicode_literals
++
++import os
++import sys
++import tempfile
++import unittest
++import shutil
++from unittest.mock import patch, MagicMock
++
++# Add the parent directory to the path to import youtube_dl modules
++sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++
++from youtube_dl.downloader.external import FFmpegFD, get_external_downloader
++from youtube_dl.YoutubeDL import YoutubeDL
++from youtube_dl.postprocessor.ffmpeg import FFmpegPostProcessor
++
++
++class TestFFmpegExternalDownloaderLocation(unittest.TestCase):
++    """Test that FFmpegFD respects the ffmpeg-location parameter."""
++
++    def setUp(self):
++        """Set up test fixtures."""
++        self.temp_dir = tempfile.mkdtemp()
++        self.fake_ffmpeg_path = os.path.join(self.temp_dir, 'ffmpeg')
++        self.fake_ffmpeg_exe = self.fake_ffmpeg_path + ('.exe' if os.name == 'nt' else '')
++        
++        # Create a fake ffmpeg executable
++        with open(self.fake_ffmpeg_exe, 'w') as f:
++            f.write('#!/bin/bash\necho "fake ffmpeg"')
++        os.chmod(self.fake_ffmpeg_exe, 0o755)
++
++    def tearDown(self):
++        """Clean up test fixtures."""
++        shutil.rmtree(self.temp_dir, ignore_errors=True)
++
++    def test_ffmpeg_fd_without_ffmpeg_location_parameter(self):
++        """Test that FFmpegFD works normally when ffmpeg-location is not specified."""
++        # Mock YoutubeDL instance without ffmpeg_location
++        ydl = YoutubeDL({})
++        
++        with patch('youtube_dl.postprocessor.ffmpeg.FFmpegPostProcessor._determine_executables') as mock_determine:
++            # Mock the FFmpegPostProcessor to return a standard ffmpeg path
++            mock_pp = MagicMock()
++            mock_pp.executable = 'ffmpeg'
++            mock_determine.return_value = None
++            
++            with patch('youtube_dl.postprocessor.ffmpeg.FFmpegPostProcessor.__init__', return_value=None):
++                with patch.object(FFmpegPostProcessor, 'executable', 'ffmpeg'):
++                    # Create FFmpegFD instance
++                    fd = FFmpegFD(ydl, {})
++                    
++                    # Should use default ffmpeg executable
++                    self.assertEqual(fd.exe, 'ffmpeg')
++
++    def test_ffmpeg_fd_with_ffmpeg_location_directory(self):
++        """Test that FFmpegFD uses ffmpeg-location when specified as directory."""
++        # Mock YoutubeDL instance with ffmpeg_location as directory
++        ydl = YoutubeDL({'ffmpeg_location': self.temp_dir})
++        
++        with patch('youtube_dl.postprocessor.ffmpeg.FFmpegPostProcessor._determine_executables') as mock_determine:
++            mock_determine.return_value = None
++            
++            with patch.object(FFmpegPostProcessor, 'executable', self.fake_ffmpeg_exe):
++                # Create FFmpegFD instance
++                fd = FFmpegFD(ydl, {})
++                
++                # Should use ffmpeg from the specified location
++                self.assertEqual(fd.exe, self.fake_ffmpeg_exe)
++
++    def test_ffmpeg_fd_with_ffmpeg_location_full_path(self):
++        """Test that FFmpegFD uses ffmpeg-location when specified as full path."""
++        # Mock YoutubeDL instance with ffmpeg_location as full path
++        ydl = YoutubeDL({'ffmpeg_location': self.fake_ffmpeg_exe})
++        
++        with patch('youtube_dl.postprocessor.ffmpeg.FFmpegPostProcessor._determine_executables') as mock_determine:
++            mock_determine.return_value = None
++            
++            with patch.object(FFmpegPostProcessor, 'executable', self.fake_ffmpeg_exe):
++                # Create FFmpegFD instance
++                fd = FFmpegFD(ydl, {})
++                
++                # Should use the exact ffmpeg path specified
++                self.assertEqual(fd.exe, self.fake_ffmpeg_exe)
++
++    def test_ffmpeg_fd_make_cmd_uses_correct_executable(self):
++        """Test that FFmpegFD._make_cmd uses the correct executable path."""
++        # Mock YoutubeDL instance with ffmpeg_location
++        ydl = YoutubeDL({'ffmpeg_location': self.temp_dir})
++        
++        with patch('youtube_dl.postprocessor.ffmpeg.FFmpegPostProcessor._determine_executables') as mock_determine:
++            mock_determine.return_value = None
++            
++            with patch.object(FFmpegPostProcessor, 'executable', self.fake_ffmpeg_exe):
++                # Create FFmpegFD instance
++                fd = FFmpegFD(ydl, {})
++                
++                # Mock info_dict for testing
++                info_dict = {
++                    'url': 'http://example.com/video.mp4',
++                    'protocol': 'http'
++                }
++                
++                # Test that _make_cmd would use the correct executable
++                # Note: FFmpegFD inherits _make_cmd from ExternalFD, which uses self.exe
++                self.assertEqual(fd.exe, self.fake_ffmpeg_exe)
++
++    def test_ffmpeg_fd_available_method_respects_ffmpeg_location(self):
++        """Test that FFmpegFD.available() respects ffmpeg_location parameter."""
++        with patch('youtube_dl.postprocessor.ffmpeg.FFmpegPostProcessor.available', True):
++            # Test that available method works correctly
++            self.assertTrue(FFmpegFD.available())
++
++    def test_get_external_downloader_returns_ffmpeg_fd(self):
++        """Test that get_external_downloader returns FFmpegFD for 'ffmpeg'."""
++        downloader_class = get_external_downloader('ffmpeg')
++        self.assertEqual(downloader_class, FFmpegFD)
++
++    def test_ffmpeg_fd_inheritance_from_external_fd(self):
++        """Test that FFmpegFD properly inherits from ExternalFD."""
++        from youtube_dl.downloader.external import ExternalFD
++        
++        # Verify inheritance
++        self.assertTrue(issubclass(FFmpegFD, ExternalFD))
++
++    def test_ffmpeg_fd_supports_method(self):
++        """Test that FFmpegFD.supports() method works correctly."""
++        # Test various protocols that FFmpegFD should support
++        supported_protocols = ['http', 'https', 'ftp', 'ftps', 'm3u8', 'rtsp', 'rtmp', 'mms', 'http_dash_segments']
++        
++        for protocol in supported_protocols:
++            info_dict = {'protocol': protocol}
++            self.assertTrue(FFmpegFD.supports(info_dict), 
++                          f"FFmpegFD should support protocol: {protocol}")
++        
++        # Test unsupported protocol
++        unsupported_info = {'protocol': 'unsupported_protocol'}
++        self.assertFalse(FFmpegFD.supports(unsupported_info))
++
++    def test_ffmpeg_fd_integration_with_youtubedl(self):
++        """Test integration of FFmpegFD with YoutubeDL when ffmpeg_location is set."""
++        # Mock YoutubeDL with external downloader and ffmpeg location
++        params = {
++            'external_downloader': 'ffmpeg',
++            'ffmpeg_location': self.temp_dir,
++            'external_downloader_args': ['-ss', '00:00:00.00', '-to', '00:01:00.00']
++        }
++        ydl = YoutubeDL(params)
++        
++        with patch('youtube_dl.postprocessor.ffmpeg.FFmpegPostProcessor._determine_executables') as mock_determine:
++            mock_determine.return_value = None
++            
++            with patch.object(FFmpegPostProcessor, 'executable', self.fake_ffmpeg_exe):
++                # Get the downloader that would be used
++                from youtube_dl.downloader import get_suitable_downloader
++                
++                info_dict = {
++                    'url': 'http://example.com/video.mp4',
++                    'protocol': 'http',
++                    'ext': 'mp4'
++                }
++                
++                # This should return FFmpegFD when external_downloader is 'ffmpeg'
++                downloader_class = get_suitable_downloader(info_dict, params)
++                
++                # Create downloader instance
++                downloader = downloader_class(ydl, params)
++                
++                # If it's FFmpegFD, it should use the correct executable
++                if isinstance(downloader, FFmpegFD):
++                    self.assertEqual(downloader.exe, self.fake_ffmpeg_exe)
++
++    def test_ffmpeg_fd_fallback_when_ffmpeg_location_invalid(self):
++        """Test that FFmpegFD falls back gracefully when ffmpeg_location is invalid."""
++        # Mock YoutubeDL instance with invalid ffmpeg_location
++        invalid_path = '/nonexistent/path/to/ffmpeg'
++        ydl = YoutubeDL({'ffmpeg_location': invalid_path})
++        
++        with patch('youtube_dl.postprocessor.ffmpeg.FFmpegPostProcessor._determine_executables') as mock_determine:
++            mock_determine.return_value = None
++            
++            # Mock FFmpegPostProcessor to return None when location is invalid
++            with patch.object(FFmpegPostProcessor, 'executable', None):
++                # Create FFmpegFD instance - should not crash
++                fd = FFmpegFD(ydl, {})
++                
++                # Should handle the case gracefully
++                self.assertIsNotNone(fd)
++
++
++if __name__ == '__main__':
++    unittest.main()

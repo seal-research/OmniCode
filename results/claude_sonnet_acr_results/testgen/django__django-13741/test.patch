@@ -1,0 +1,260 @@
+--- a/tests/auth_tests/test_forms.py
++++ b/tests/auth_tests/test_forms.py
+-import datetime
+-from unittest import mock
+-
+-from django.contrib.auth import get_user_model
+-from django.contrib.auth.forms import (
+-    AdminPasswordChangeForm, AuthenticationForm, PasswordChangeForm,
+-    PasswordResetForm, ReadOnlyPasswordHashField, SetPasswordForm,
+-    UserChangeForm, UserCreationForm, UsernameField,
+-)
+-from django.contrib.auth.models import User
+-from django.contrib.sites.models import Site
+-from django.core import mail
+-from django.core.exceptions import ValidationError
+-from django.forms.fields import CharField, Field, IntegerField
+-from django.test import SimpleTestCase, TestCase, override_settings
+-from django.utils import translation
+-from django.utils.text import capfirst
+-from django.utils.translation import gettext as _
+-
+-from .models import CustomUser, CustomUserWithoutIsActiveField
+-
+-
+-class ReadOnlyPasswordHashTest(SimpleTestCase):
+-
+-    def test_bug_19349_render_with_none_value(self):
+-        # Rendering the widget with value set to None
+-        # mustn't raise an exception.
+-        field = ReadOnlyPasswordHashField()
+-        html = field.widget.render(name='password', value=None, attrs={})
+-        self.assertIn(_("No password set."), html)
+-
+-    def test_render_with_empty_string_value(self):
+-        field = ReadOnlyPasswordHashField()
+-        html = field.widget.render(name='password', value='', attrs={})
+-        self.assertIn(_("No password set."), html)
++import datetime
++from unittest import mock
++
++from django.contrib.auth import get_user_model
++from django.contrib.auth.forms import (
++    AdminPasswordChangeForm, AuthenticationForm, PasswordChangeForm,
++    PasswordResetForm, ReadOnlyPasswordHashField, SetPasswordForm,
++    UserChangeForm, UserCreationForm, UsernameField,
++)
++from django.contrib.auth.models import User
++from django.contrib.sites.models import Site
++from django.core import mail
++from django.core.exceptions import ValidationError
++from django.forms.fields import CharField, Field, IntegerField
++from django.test import SimpleTestCase, TestCase, override_settings
++from django.utils import translation
++from django.utils.text import capfirst
++from django.utils.translation import gettext as _
++
++from .models import CustomUser, CustomUserWithoutIsActiveField
++
++
++class ReadOnlyPasswordHashTest(SimpleTestCase):
++
++    def test_bug_19349_render_with_none_value(self):
++        # Rendering the widget with value set to None
++        # mustn't raise an exception.
++        field = ReadOnlyPasswordHashField()
++        html = field.widget.render(name='password', value=None, attrs={})
++        self.assertIn(_("No password set."), html)
++
++    def test_render_with_empty_string_value(self):
++        field = ReadOnlyPasswordHashField()
++        html = field.widget.render(name='password', value='', attrs={})
++        self.assertIn(_("No password set."), html)
++
++    def test_disabled_property_set_by_default(self):
++        """Test that ReadOnlyPasswordHashField has disabled=True by default."""
++        field = ReadOnlyPasswordHashField()
++        self.assertTrue(field.disabled)
++
++    def test_disabled_property_can_be_overridden(self):
++        """Test that disabled property can be explicitly overridden."""
++        field = ReadOnlyPasswordHashField(disabled=False)
++        self.assertFalse(field.disabled)
++
++    def test_disabled_field_ignores_user_input(self):
++        """Test that disabled field ignores user input and returns initial value."""
++        field = ReadOnlyPasswordHashField()
++        initial_value = 'pbkdf2_sha256$initial_hash'
++        user_input = 'pbkdf2_sha256$tampered_hash'
++        
++        # Test bound_data method returns initial value when disabled
++        bound_value = field.bound_data(user_input, initial_value)
++        self.assertEqual(bound_value, initial_value)
++
++    def test_disabled_field_has_changed_always_false(self):
++        """Test that disabled field always reports no changes."""
++        field = ReadOnlyPasswordHashField()
++        initial_value = 'pbkdf2_sha256$initial_hash'
++        user_input = 'pbkdf2_sha256$tampered_hash'
++        
++        # Test has_changed method returns False when disabled
++        has_changed = field.has_changed(initial_value, user_input)
++        self.assertFalse(has_changed)
++
++    def test_non_disabled_field_behavior_unchanged(self):
++        """Test that explicitly non-disabled field behaves as before."""
++        field = ReadOnlyPasswordHashField(disabled=False)
++        initial_value = 'pbkdf2_sha256$initial_hash'
++        user_input = 'pbkdf2_sha256$tampered_hash'
++        
++        # When not disabled, bound_data should still return initial (existing behavior)
++        bound_value = field.bound_data(user_input, initial_value)
++        self.assertEqual(bound_value, initial_value)
++        
++        # has_changed should still return False (existing behavior)
++        has_changed = field.has_changed(initial_value, user_input)
++        self.assertFalse(has_changed)
++
++
++class UserChangeFormDisabledPasswordTest(TestCase):
++    """Test that UserChangeForm works correctly with disabled ReadOnlyPasswordHashField."""
++
++    def setUp(self):
++        self.user = User.objects.create_user(
++            username='testuser',
++            email='test@example.com',
++            password='testpass123'
++        )
++
++    def test_form_with_disabled_password_field_ignores_tampering(self):
++        """Test that form ignores password tampering when field is disabled."""
++        original_password = self.user.password
++        
++        # Create form with initial data
++        form = UserChangeForm(instance=self.user)
++        
++        # Verify password field is disabled
++        self.assertTrue(form.fields['password'].disabled)
++        
++        # Simulate form submission with tampered password data
++        tampered_data = {
++            'username': 'testuser',
++            'email': 'test@example.com',
++            'password': 'pbkdf2_sha256$tampered_hash',
++            'first_name': '',
++            'last_name': '',
++            'is_active': True,
++            'is_staff': False,
++            'is_superuser': False,
++            'date_joined': self.user.date_joined,
++        }
++        
++        form = UserChangeForm(data=tampered_data, instance=self.user)
++        
++        # Form should be valid and password should remain unchanged
++        self.assertTrue(form.is_valid())
++        saved_user = form.save()
++        self.assertEqual(saved_user.password, original_password)
++
++    def test_clean_password_method_still_works_but_not_needed(self):
++        """Test that clean_password method still works but is redundant with disabled field."""
++        original_password = self.user.password
++        
++        # Create form and simulate tampering
++        tampered_data = {
++            'username': 'testuser',
++            'email': 'test@example.com',
++            'password': 'pbkdf2_sha256$tampered_hash',
++            'first_name': '',
++            'last_name': '',
++            'is_active': True,
++            'is_staff': False,
++            'is_superuser': False,
++            'date_joined': self.user.date_joined,
++        }
++        
++        form = UserChangeForm(data=tampered_data, instance=self.user)
++        
++        # The clean_password method should still return the initial value
++        form.is_valid()  # Trigger cleaning
++        cleaned_password = form.clean_password()
++        self.assertEqual(cleaned_password, original_password)
++
++    def test_custom_form_without_clean_password_works(self):
++        """Test that custom forms without clean_password method work correctly."""
++        from django import forms
++        from django.contrib.auth.forms import ReadOnlyPasswordHashField
++        
++        class CustomUserChangeForm(forms.ModelForm):
++            password = ReadOnlyPasswordHashField(
++                label="Password",
++                help_text="Raw passwords are not stored."
++            )
++            
++            class Meta:
++                model = User
++                fields = ['username', 'email', 'password']
++        
++        original_password = self.user.password
++        
++        # Create form without clean_password method
++        form = CustomUserChangeForm(instance=self.user)
++        
++        # Verify password field is disabled
++        self.assertTrue(form.fields['password'].disabled)
++        
++        # Simulate tampering
++        tampered_data = {
++            'username': 'testuser',
++            'email': 'test@example.com',
++            'password': 'pbkdf2_sha256$tampered_hash',
++        }
++        
++        form = CustomUserChangeForm(data=tampered_data, instance=self.user)
++        
++        # Form should be valid and password should remain unchanged
++        self.assertTrue(form.is_valid())
++        saved_user = form.save()
++        self.assertEqual(saved_user.password, original_password)
++
++    def test_backward_compatibility_with_explicit_disabled_false(self):
++        """Test backward compatibility when explicitly setting disabled=False."""
++        from django import forms
++        from django.contrib.auth.forms import ReadOnlyPasswordHashField
++        
++        class LegacyUserChangeForm(forms.ModelForm):
++            password = ReadOnlyPasswordHashField(
++                label="Password",
++                disabled=False,  # Explicitly disable the new behavior
++                help_text="Raw passwords are not stored."
++            )
++            
++            class Meta:
++                model = User
++                fields = ['username', 'email', 'password']
++            
++            def clean_password(self):
++                # Legacy clean_password method still needed when disabled=False
++                return self.initial.get('password')
++        
++        original_password = self.user.password
++        
++        # Create form with disabled=False
++        form = LegacyUserChangeForm(instance=self.user)
++        
++        # Verify password field is not disabled
++        self.assertFalse(form.fields['password'].disabled)
++        
++        # Simulate tampering
++        tampered_data = {
++            'username': 'testuser',
++            'email': 'test@example.com',
++            'password': 'pbkdf2_sha256$tampered_hash',
++        }
++        
++        form = LegacyUserChangeForm(data=tampered_data, instance=self.user)
++        
++        # Form should be valid and clean_password should handle the protection
++        self.assertTrue(form.is_valid())
++        saved_user = form.save()
++        self.assertEqual(saved_user.password, original_password)

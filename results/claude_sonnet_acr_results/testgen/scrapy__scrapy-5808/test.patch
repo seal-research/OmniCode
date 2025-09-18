@@ -1,0 +1,339 @@
+--- a/tests/test_commands_genspider.py
++++ b/tests/test_commands_genspider.py
+-# Empty if creating new file
++import os
++import tempfile
++import shutil
++from pathlib import Path
++from unittest.mock import patch, MagicMock
++import pytest
++
++from scrapy.commands.genspider import Command, extract_domain
++from scrapy.utils.test import get_crawler
++from scrapy.utils.url import add_http_if_no_scheme
++
++
++class TestGenspiderCommand:
++    """Test suite for the genspider command bug fix."""
++
++    def setup_method(self):
++        """Set up test environment for each test."""
++        self.crawler = get_crawler()
++        self.command = Command()
++        self.command.settings = self.crawler.settings
++        self.command.crawler_process = MagicMock()
++        
++        # Create a temporary directory for templates
++        self.temp_dir = tempfile.mkdtemp()
++        self.templates_dir = Path(self.temp_dir) / "templates"
++        self.templates_dir.mkdir()
++        
++        # Create a basic template file
++        basic_template = self.templates_dir / "basic.tmpl"
++        basic_template.write_text("""
++import scrapy
++
++class $classname(scrapy.Spider):
++    name = '$name'
++    allowed_domains = ['$domain']
++    start_urls = ['$start_urls']
++
++    def parse(self, response):
++        pass
++""")
++        
++        # Mock the templates_dir property
++        self.command.templates_dir = self.templates_dir
++
++    def teardown_method(self):
++        """Clean up after each test."""
++        shutil.rmtree(self.temp_dir)
++
++    def test_extract_domain_with_https_scheme(self):
++        """Test that extract_domain works correctly with https URLs."""
++        # This test demonstrates the current behavior - it extracts domain correctly
++        # but doesn't preserve the scheme information
++        domain = extract_domain("https://example.com")
++        assert domain == "example.com"
++
++    def test_extract_domain_with_http_scheme(self):
++        """Test that extract_domain works correctly with http URLs."""
++        domain = extract_domain("http://example.com")
++        assert domain == "example.com"
++
++    def test_extract_domain_without_scheme(self):
++        """Test that extract_domain works correctly without scheme."""
++        domain = extract_domain("example.com")
++        assert domain == "example.com"
++
++    def test_extract_domain_with_path(self):
++        """Test that extract_domain extracts only domain from URL with path."""
++        domain = extract_domain("https://example.com/path/to/page")
++        assert domain == "example.com"
++
++    def test_add_http_if_no_scheme_preserves_https(self):
++        """Test that add_http_if_no_scheme preserves existing https scheme."""
++        url = "https://example.com"
++        result = add_http_if_no_scheme(url)
++        assert result == "https://example.com"
++
++    def test_add_http_if_no_scheme_preserves_http(self):
++        """Test that add_http_if_no_scheme preserves existing http scheme."""
++        url = "http://example.com"
++        result = add_http_if_no_scheme(url)
++        assert result == "http://example.com"
++
++    def test_add_http_if_no_scheme_adds_http_when_missing(self):
++        """Test that add_http_if_no_scheme adds http when no scheme is present."""
++        url = "example.com"
++        result = add_http_if_no_scheme(url)
++        assert result == "http://example.com"
++
++    def test_add_http_if_no_scheme_handles_other_schemes(self):
++        """Test that add_http_if_no_scheme preserves other schemes like ftp."""
++        url = "ftp://example.com"
++        result = add_http_if_no_scheme(url)
++        assert result == "ftp://example.com"
++
++    @patch('scrapy.commands.genspider.render_templatefile')
++    @patch('shutil.copyfile')
++    def test_genspider_run_with_https_url_before_fix(self, mock_copyfile, mock_render):
++        """Test that demonstrates the bug: https URLs cause issues before fix."""
++        # This test shows the current problematic behavior
++        # The domain extraction works but the URL scheme information is lost
++        
++        # Mock the spider existence check
++        self.command._spider_exists = MagicMock(return_value=False)
++        
++        # Create a temporary spider file path
++        spider_file = Path(self.temp_dir) / "testspider.py"
++        
++        with patch('scrapy.commands.genspider.Path') as mock_path:
++            mock_path.return_value = spider_file
++            
++            # Run the command with https URL
++            args = ["testspider", "https://example.com"]
++            opts = MagicMock()
++            opts.list = False
++            opts.dump = None
++            opts.force = False
++            opts.template = "basic"
++            opts.edit = False
++            
++            self.command.run(args, opts)
++            
++            # Verify that render_templatefile was called
++            assert mock_render.called
++            
++            # Get the template variables that were passed
++            call_args = mock_render.call_args
++            tvars = call_args[1]  # keyword arguments
++            
++            # The bug: domain should be 'example.com' but start_urls is not properly handled
++            assert tvars['domain'] == 'example.com'
++            assert tvars['name'] == 'testspider'
++            
++            # This test demonstrates that the current implementation doesn't handle
++            # the URL scheme properly in template variables
++
++    @patch('scrapy.commands.genspider.render_templatefile')
++    @patch('shutil.copyfile')
++    def test_genspider_run_with_http_url_before_fix(self, mock_copyfile, mock_render):
++        """Test genspider with http URL - should work correctly."""
++        # Mock the spider existence check
++        self.command._spider_exists = MagicMock(return_value=False)
++        
++        # Create a temporary spider file path
++        spider_file = Path(self.temp_dir) / "testspider.py"
++        
++        with patch('scrapy.commands.genspider.Path') as mock_path:
++            mock_path.return_value = spider_file
++            
++            # Run the command with http URL
++            args = ["testspider", "http://example.com"]
++            opts = MagicMock()
++            opts.list = False
++            opts.dump = None
++            opts.force = False
++            opts.template = "basic"
++            opts.edit = False
++            
++            self.command.run(args, opts)
++            
++            # Verify that render_templatefile was called
++            assert mock_render.called
++            
++            # Get the template variables that were passed
++            call_args = mock_render.call_args
++            tvars = call_args[1]  # keyword arguments
++            
++            assert tvars['domain'] == 'example.com'
++            assert tvars['name'] == 'testspider'
++
++    @patch('scrapy.commands.genspider.render_templatefile')
++    @patch('shutil.copyfile')
++    def test_genspider_run_without_scheme_before_fix(self, mock_copyfile, mock_render):
++        """Test genspider without URL scheme - should work correctly."""
++        # Mock the spider existence check
++        self.command._spider_exists = MagicMock(return_value=False)
++        
++        # Create a temporary spider file path
++        spider_file = Path(self.temp_dir) / "testspider.py"
++        
++        with patch('scrapy.commands.genspider.Path') as mock_path:
++            mock_path.return_value = spider_file
++            
++            # Run the command without scheme
++            args = ["testspider", "example.com"]
++            opts = MagicMock()
++            opts.list = False
++            opts.dump = None
++            opts.force = False
++            opts.template = "basic"
++            opts.edit = False
++            
++            self.command.run(args, opts)
++            
++            # Verify that render_templatefile was called
++            assert mock_render.called
++            
++            # Get the template variables that were passed
++            call_args = mock_render.call_args
++            tvars = call_args[1]  # keyword arguments
++            
++            assert tvars['domain'] == 'example.com'
++            assert tvars['name'] == 'testspider'
++
++    def test_genspider_run_with_invalid_args(self):
++        """Test that genspider raises UsageError with invalid arguments."""
++        from scrapy.exceptions import UsageError
++        
++        opts = MagicMock()
++        opts.list = False
++        opts.dump = None
++        
++        # Test with no arguments
++        with pytest.raises(UsageError):
++            self.command.run([], opts)
++        
++        # Test with only one argument
++        with pytest.raises(UsageError):
++            self.command.run(["testspider"], opts)
++        
++        # Test with too many arguments
++        with pytest.raises(UsageError):
++            self.command.run(["testspider", "example.com", "extra"], opts)
++
++    def test_genspider_list_templates(self):
++        """Test that list templates functionality works."""
++        opts = MagicMock()
++        opts.list = True
++        
++        with patch('builtins.print') as mock_print:
++            self.command.run([], opts)
++            
++            # Verify that print was called to list templates
++            assert mock_print.called
++            # Should print "Available templates:" and the basic template
++            calls = [str(call) for call in mock_print.call_args_list]
++            assert any("Available templates:" in call for call in calls)
++            assert any("basic" in call for call in calls)
++
++    def test_genspider_dump_template(self):
++        """Test that dump template functionality works."""
++        opts = MagicMock()
++        opts.list = False
++        opts.dump = "basic"
++        
++        with patch('builtins.print') as mock_print:
++            self.command.run([], opts)
++            
++            # Verify that the template content was printed
++            assert mock_print.called
++            printed_content = str(mock_print.call_args[0][0])
++            assert "$classname" in printed_content
++            assert "$name" in printed_content
++            assert "$domain" in printed_content
++
++    def test_genspider_dump_nonexistent_template(self):
++        """Test dumping a template that doesn't exist."""
++        opts = MagicMock()
++        opts.list = False
++        opts.dump = "nonexistent"
++        
++        with patch('builtins.print') as mock_print:
++            self.command.run([], opts)
++            
++            # Should print error message about template not found
++            calls = [str(call) for call in mock_print.call_args_list]
++            assert any("Unable to find template" in call for call in calls)
++
++    @patch('scrapy.commands.genspider.render_templatefile')
++    @patch('shutil.copyfile')
++    def test_genspider_with_complex_urls(self, mock_copyfile, mock_render):
++        """Test genspider with complex URLs containing paths, queries, etc."""
++        # Mock the spider existence check
++        self.command._spider_exists = MagicMock(return_value=False)
++        
++        # Create a temporary spider file path
++        spider_file = Path(self.temp_dir) / "testspider.py"
++        
++        with patch('scrapy.commands.genspider.Path') as mock_path:
++            mock_path.return_value = spider_file
++            
++            # Test with complex URL
++            args = ["testspider", "https://subdomain.example.com/path?query=value#fragment"]
++            opts = MagicMock()
++            opts.list = False
++            opts.dump = None
++            opts.force = False
++            opts.template = "basic"
++            opts.edit = False
++            
++            self.command.run(args, opts)
++            
++            # Verify that render_templatefile was called
++            assert mock_render.called
++            
++            # Get the template variables that were passed
++            call_args = mock_render.call_args
++            tvars = call_args[1]  # keyword arguments
++            
++            # Domain should be extracted correctly
++            assert tvars['domain'] == 'subdomain.example.com'
++            assert tvars['name'] == 'testspider'
++
++    def test_url_scheme_preservation_requirement(self):
++        """Test that demonstrates the requirement for URL scheme preservation.
++        
++        This test shows what the fix should accomplish:
++        - URLs with schemes should preserve their schemes
++        - URLs without schemes should get http:// added
++        - The genspider command should use add_http_if_no_scheme utility
++        """
++        # Test cases that show the expected behavior after fix
++        test_cases = [
++            ("https://example.com", "https://example.com"),
++            ("http://example.com", "http://example.com"),
++            ("example.com", "http://example.com"),
++            ("ftp://example.com", "ftp://example.com"),
++            ("https://subdomain.example.com/path", "https://subdomain.example.com/path"),
++        ]
++        
++        for input_url, expected_output in test_cases:
++            result = add_http_if_no_scheme(input_url)
++            assert result == expected_output, f"Failed for input: {input_url}"
++
++    def test_extract_domain_edge_cases(self):
++        """Test extract_domain with various edge cases."""
++        # Test with port numbers
++        assert extract_domain("https://example.com:8080") == "example.com:8080"
++        
++        # Test with IP addresses
++        assert extract_domain("http://192.168.1.1") == "192.168.1.1"
++        
++        # Test with localhost
++        assert extract_domain("http://localhost:8000") == "localhost:8000"
++        
++        # Test with just domain and port
++        assert extract_domain("example.com:8080") == "example.com:8080"

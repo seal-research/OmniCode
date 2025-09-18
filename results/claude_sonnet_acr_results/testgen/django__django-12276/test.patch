@@ -1,0 +1,133 @@
+--- a/tests/forms_tests/tests/test_widgets.py
++++ b/tests/forms_tests/tests/test_widgets.py
+-# This will be added to the existing test file
++import pytest
++from django.forms import FileField, Form
++from django.forms.widgets import FileInput, ClearableFileInput
++from django.core.files.uploadedfile import SimpleUploadedFile
++from django.test import TestCase
++
++
++class FileInputRequiredAttributeTests(TestCase):
++    """Test that FileInput doesn't display required attribute when initial data exists."""
++    
++    def test_file_input_required_attribute_without_initial_data(self):
++        """Test that FileInput shows required attribute when no initial data exists."""
++        widget = FileInput()
++        # When no initial data is provided, required attribute should be shown
++        self.assertTrue(widget.use_required_attribute(initial=None))
++        self.assertTrue(widget.use_required_attribute(initial=''))
++        self.assertTrue(widget.use_required_attribute(initial=False))
++    
++    def test_file_input_required_attribute_with_initial_data(self):
++        """Test that FileInput doesn't show required attribute when initial data exists."""
++        widget = FileInput()
++        # When initial data exists (file already uploaded), required attribute should not be shown
++        fake_file = SimpleUploadedFile("test.txt", b"file content")
++        self.assertFalse(widget.use_required_attribute(initial=fake_file))
++        self.assertFalse(widget.use_required_attribute(initial="existing_file.txt"))
++        self.assertFalse(widget.use_required_attribute(initial=True))
++    
++    def test_clearable_file_input_required_attribute_without_initial_data(self):
++        """Test that ClearableFileInput shows required attribute when no initial data exists."""
++        widget = ClearableFileInput()
++        # When no initial data is provided, required attribute should be shown
++        self.assertTrue(widget.use_required_attribute(initial=None))
++        self.assertTrue(widget.use_required_attribute(initial=''))
++        self.assertTrue(widget.use_required_attribute(initial=False))
++    
++    def test_clearable_file_input_required_attribute_with_initial_data(self):
++        """Test that ClearableFileInput doesn't show required attribute when initial data exists."""
++        widget = ClearableFileInput()
++        # When initial data exists (file already uploaded), required attribute should not be shown
++        fake_file = SimpleUploadedFile("test.txt", b"file content")
++        self.assertFalse(widget.use_required_attribute(initial=fake_file))
++        self.assertFalse(widget.use_required_attribute(initial="existing_file.txt"))
++        self.assertFalse(widget.use_required_attribute(initial=True))
++    
++    def test_file_input_and_clearable_file_input_consistency(self):
++        """Test that FileInput and ClearableFileInput behave consistently regarding required attribute."""
++        file_input = FileInput()
++        clearable_file_input = ClearableFileInput()
++        
++        # Test cases with no initial data
++        test_cases_no_data = [None, '', False]
++        for initial in test_cases_no_data:
++            with self.subTest(initial=initial):
++                self.assertEqual(
++                    file_input.use_required_attribute(initial),
++                    clearable_file_input.use_required_attribute(initial),
++                    f"FileInput and ClearableFileInput should behave the same for initial={initial}"
++                )
++        
++        # Test cases with initial data
++        fake_file = SimpleUploadedFile("test.txt", b"file content")
++        test_cases_with_data = [fake_file, "existing_file.txt", True, "some_value"]
++        for initial in test_cases_with_data:
++            with self.subTest(initial=initial):
++                self.assertEqual(
++                    file_input.use_required_attribute(initial),
++                    clearable_file_input.use_required_attribute(initial),
++                    f"FileInput and ClearableFileInput should behave the same for initial={initial}"
++                )
++    
++    def test_file_input_form_integration_without_initial(self):
++        """Test FileInput in a form context without initial data."""
++        class TestForm(Form):
++            file_field = FileField(required=True, widget=FileInput())
++        
++        form = TestForm()
++        # The widget should indicate it uses the required attribute when no initial data
++        widget = form.fields['file_field'].widget
++        self.assertTrue(widget.use_required_attribute(initial=None))
++    
++    def test_file_input_form_integration_with_initial(self):
++        """Test FileInput in a form context with initial data."""
++        class TestForm(Form):
++            file_field = FileField(required=True, widget=FileInput())
++        
++        fake_file = SimpleUploadedFile("test.txt", b"file content")
++        form = TestForm(initial={'file_field': fake_file})
++        
++        # The widget should not use the required attribute when initial data exists
++        widget = form.fields['file_field'].widget
++        self.assertFalse(widget.use_required_attribute(initial=fake_file))
++    
++    def test_clearable_file_input_form_integration_without_initial(self):
++        """Test ClearableFileInput in a form context without initial data."""
++        class TestForm(Form):
++            file_field = FileField(required=True, widget=ClearableFileInput())
++        
++        form = TestForm()
++        # The widget should indicate it uses the required attribute when no initial data
++        widget = form.fields['file_field'].widget
++        self.assertTrue(widget.use_required_attribute(initial=None))
++    
++    def test_clearable_file_input_form_integration_with_initial(self):
++        """Test ClearableFileInput in a form context with initial data."""
++        class TestForm(Form):
++            file_field = FileField(required=True, widget=ClearableFileInput())
++        
++        fake_file = SimpleUploadedFile("test.txt", b"file content")
++        form = TestForm(initial={'file_field': fake_file})
++        
++        # The widget should not use the required attribute when initial data exists
++        widget = form.fields['file_field'].widget
++        self.assertFalse(widget.use_required_attribute(initial=fake_file))
++    
++    def test_file_input_inheritance_behavior(self):
++        """Test that FileInput properly inherits from Widget and overrides use_required_attribute."""
++        widget = FileInput()
++        
++        # FileInput should override the default Widget behavior
++        # Default Widget.use_required_attribute returns not self.is_hidden (True for non-hidden widgets)
++        # But FileInput should consider initial data
++        
++        # Without initial data, should behave like default Widget (return True for non-hidden)
++        self.assertTrue(widget.use_required_attribute(initial=None))
++        
++        # With initial data, should return False (different from default Widget behavior)
++        self.assertFalse(widget.use_required_attribute(initial="some_file.txt"))
++        
++        # Verify it's not hidden (sanity check)
++        self.assertFalse(widget.is_hidden)

@@ -1,0 +1,264 @@
+--- a/testing/test_mark_expression.py
++++ b/testing/test_mark_expression.py
+-import pytest
+-
+-from _pytest.mark.expression import Expression
+-from _pytest.mark.expression import ParseError
+-
+-
+-def evaluate(input: str, matcher: Callable[[str], bool]) -> bool:
+-    return Expression.compile(input).evaluate(matcher)
+-
+-
+-def test_empty_is_false() -> None:
+-    assert not evaluate("", lambda ident: False)
+-    assert not evaluate("", lambda ident: True)
+-
+-
+-def test_ident() -> None:
+-    assert evaluate("ident", lambda ident: True)
+-    assert not evaluate("ident", lambda ident: False)
+-
+-
+-def test_or_precedence() -> None:
+-    assert evaluate("a and b or c", lambda ident: ident == "c")
+-
+-
+-def test_and_precedence() -> None:
+-    assert not evaluate("a and b or c", lambda ident: ident == "a")
+-
+-
+-def test_not_precedence() -> None:
+-    assert not evaluate("not a or b", lambda ident: False)
+-
+-
+-def test_not() -> None:
+-    assert evaluate("not a", lambda ident: False)
+-    assert not evaluate("not a", lambda ident: True)
+-
+-
+-def test_parentheses() -> None:
+-    assert evaluate("(a and b) or c", lambda ident: ident == "a")
+-    assert not evaluate("a and (b or c)", lambda ident: ident == "a")
+-
+-
+-def test_simple() -> None:
+-    assert evaluate("a", lambda ident: ident == "a")
+-    assert evaluate("a", lambda ident: True)
+-    assert not evaluate("a", lambda ident: False)
+-    assert not evaluate("b", lambda ident: ident == "a")
+-
+-
+-def test_keyword() -> None:
+-    assert evaluate("not", lambda ident: ident == "not")
+-
+-
+-def test_parse_error() -> None:
+-    with pytest.raises(ParseError):
+-        evaluate("(", lambda ident: False)
+-    with pytest.raises(ParseError):
+-        evaluate(")", lambda ident: False)
+-    with pytest.raises(ParseError):
+-        evaluate("not", lambda ident: False)
+-
+-
+-def test_trailing_garbage() -> None:
+-    with pytest.raises(ParseError):
+-        evaluate("a b", lambda ident: False)
+-
+-
+-def test_issue7650() -> None:
+-    """
+-    Ensure we can parse strings with special characters
+-    """
+-    assert evaluate("m[7]", lambda ident: ident == "m[7]")
+-    assert evaluate("m[a7]", lambda ident: ident == "m[a7]")
+-    assert evaluate("a-b", lambda ident: ident == "a-b")
+-    assert evaluate("a+b", lambda ident: ident == "a+b")
+-    assert evaluate("a.b", lambda ident: ident == "a.b")
+-    assert evaluate("a:b", lambda ident: ident == "a:b")
++import pytest
++from typing import Callable
++
++from _pytest.mark.expression import Expression
++from _pytest.mark.expression import ParseError
++
++
++def evaluate(input: str, matcher: Callable[[str], bool]) -> bool:
++    return Expression.compile(input).evaluate(matcher)
++
++
++def test_empty_is_false() -> None:
++    assert not evaluate("", lambda ident: False)
++    assert not evaluate("", lambda ident: True)
++
++
++def test_ident() -> None:
++    assert evaluate("ident", lambda ident: True)
++    assert not evaluate("ident", lambda ident: False)
++
++
++def test_or_precedence() -> None:
++    assert evaluate("a and b or c", lambda ident: ident == "c")
++
++
++def test_and_precedence() -> None:
++    assert not evaluate("a and b or c", lambda ident: ident == "a")
++
++
++def test_not_precedence() -> None:
++    assert not evaluate("not a or b", lambda ident: False)
++
++
++def test_not() -> None:
++    assert evaluate("not a", lambda ident: False)
++    assert not evaluate("not a", lambda ident: True)
++
++
++def test_parentheses() -> None:
++    assert evaluate("(a and b) or c", lambda ident: ident == "a")
++    assert not evaluate("a and (b or c)", lambda ident: ident == "a")
++
++
++def test_simple() -> None:
++    assert evaluate("a", lambda ident: ident == "a")
++    assert evaluate("a", lambda ident: True)
++    assert not evaluate("a", lambda ident: False)
++    assert not evaluate("b", lambda ident: ident == "a")
++
++
++def test_keyword() -> None:
++    assert evaluate("not", lambda ident: ident == "not")
++
++
++def test_parse_error() -> None:
++    with pytest.raises(ParseError):
++        evaluate("(", lambda ident: False)
++    with pytest.raises(ParseError):
++        evaluate(")", lambda ident: False)
++    with pytest.raises(ParseError):
++        evaluate("not", lambda ident: False)
++
++
++def test_trailing_garbage() -> None:
++    with pytest.raises(ParseError):
++        evaluate("a b", lambda ident: False)
++
++
++def test_issue7650() -> None:
++    """
++    Ensure we can parse strings with special characters
++    """
++    assert evaluate("m[7]", lambda ident: ident == "m[7]")
++    assert evaluate("m[a7]", lambda ident: ident == "m[a7]")
++    assert evaluate("a-b", lambda ident: ident == "a-b")
++    assert evaluate("a+b", lambda ident: ident == "a+b")
++    assert evaluate("a.b", lambda ident: ident == "a.b")
++    assert evaluate("a:b", lambda ident: ident == "a:b")
++
++
++def test_python_literals_compilation() -> None:
++    """
++    Test that Python literals (False, True, None) can be compiled without crashing.
++    
++    This test reproduces the bug where Expression.compile("False") crashes the interpreter
++    on debug builds for Python 3.8+. The issue occurs because these literals are treated
++    as regular identifiers and compiled as ast.Name nodes instead of ast.Constant nodes,
++    which violates Python's compile-time assertions.
++    """
++    # These should not crash the interpreter
++    expr_false = Expression.compile("False")
++    expr_true = Expression.compile("True") 
++    expr_none = Expression.compile("None")
++    
++    # Verify they can be evaluated
++    # False literal should always evaluate to False regardless of matcher
++    assert not expr_false.evaluate(lambda ident: True)
++    assert not expr_false.evaluate(lambda ident: False)
++    
++    # True literal should always evaluate to True regardless of matcher
++    assert expr_true.evaluate(lambda ident: True)
++    assert expr_true.evaluate(lambda ident: False)
++    
++    # None literal should always evaluate to False regardless of matcher
++    assert not expr_none.evaluate(lambda ident: True)
++    assert not expr_none.evaluate(lambda ident: False)
++
++
++def test_python_literals_in_expressions() -> None:
++    """
++    Test that Python literals work correctly in complex expressions.
++    """
++    # Test False in expressions
++    assert not evaluate("False and a", lambda ident: True)
++    assert not evaluate("a and False", lambda ident: True)
++    assert evaluate("False or a", lambda ident: ident == "a")
++    assert evaluate("a or False", lambda ident: ident == "a")
++    assert evaluate("not False", lambda ident: False)
++    
++    # Test True in expressions  
++    assert evaluate("True and a", lambda ident: ident == "a")
++    assert evaluate("a and True", lambda ident: ident == "a")
++    assert evaluate("True or a", lambda ident: False)
++    assert evaluate("a or True", lambda ident: False)
++    assert not evaluate("not True", lambda ident: True)
++    
++    # Test None in expressions (None should behave like False)
++    assert not evaluate("None and a", lambda ident: True)
++    assert not evaluate("a and None", lambda ident: True)
++    assert evaluate("None or a", lambda ident: ident == "a")
++    assert evaluate("a or None", lambda ident: ident == "a")
++    assert evaluate("not None", lambda ident: False)
++
++
++def test_python_literals_with_parentheses() -> None:
++    """
++    Test that Python literals work correctly with parentheses.
++    """
++    assert not evaluate("(False)", lambda ident: True)
++    assert evaluate("(True)", lambda ident: False)
++    assert not evaluate("(None)", lambda ident: True)
++    
++    assert not evaluate("(False and a)", lambda ident: True)
++    assert evaluate("(True or a)", lambda ident: False)
++    assert evaluate("(None or a)", lambda ident: ident == "a")
++
++
++def test_python_literals_edge_cases() -> None:
++    """
++    Test edge cases with Python literals.
++    """
++    # Multiple literals
++    assert not evaluate("False and True", lambda ident: True)
++    assert evaluate("False or True", lambda ident: False)
++    assert not evaluate("True and False", lambda ident: True)
++    assert evaluate("True or False", lambda ident: False)
++    
++    # Literals with None
++    assert not evaluate("False and None", lambda ident: True)
++    assert not evaluate("True and None", lambda ident: True)
++    assert evaluate("False or None", lambda ident: True)
++    assert evaluate("True or None", lambda ident: False)
++    
++    # Complex expressions
++    assert not evaluate("False and True and None", lambda ident: True)
++    assert evaluate("False or True or None", lambda ident: False)
++    assert evaluate("not False and not None", lambda ident: False)
++
++
++def test_python_literals_case_sensitivity() -> None:
++    """
++    Test that only exact case matches are treated as literals.
++    """
++    # These should be treated as regular identifiers, not literals
++    assert evaluate("false", lambda ident: ident == "false")
++    assert evaluate("true", lambda ident: ident == "true") 
++    assert evaluate("none", lambda ident: ident == "none")
++    assert evaluate("FALSE", lambda ident: ident == "FALSE")
++    assert evaluate("TRUE", lambda ident: ident == "TRUE")
++    assert evaluate("NONE", lambda ident: ident == "NONE")
++    
++    # Only exact case should be treated as literals
++    assert not evaluate("False", lambda ident: ident == "False")  # Should be literal False
++    assert evaluate("True", lambda ident: ident == "True")        # Should be literal True
++    assert not evaluate("None", lambda ident: ident == "None")    # Should be literal None

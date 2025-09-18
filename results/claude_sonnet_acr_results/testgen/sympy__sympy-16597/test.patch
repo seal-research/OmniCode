@@ -1,0 +1,205 @@
+--- a/sympy/core/tests/test_assumptions_finite_even.py
++++ b/sympy/core/tests/test_assumptions_finite_even.py
+-# Empty if creating new file
++import pytest
++from sympy import Symbol, I, oo, pi, E, S
++from sympy.core.numbers import Integer, Rational, Float
++
++
++class TestFiniteEvenAssumptions:
++    """Test suite for the bug where is_even does not imply is_finite."""
++    
++    def test_even_symbol_should_be_finite(self):
++        """Test that a symbol declared as even should be finite.
++        
++        This is the main test case that reproduces the bug described in the issue.
++        Before the fix, m.is_finite would return None instead of True.
++        """
++        m = Symbol('m', even=True)
++        
++        # This should be True since even numbers are integers and integers are finite
++        assert m.is_finite is True, "Even symbols should be finite"
++        assert m.is_even is True, "Symbol should maintain its even property"
++        assert m.is_integer is True, "Even symbols should be integers"
++    
++    def test_odd_symbol_should_be_finite(self):
++        """Test that a symbol declared as odd should also be finite.
++        
++        Since odd numbers are also integers, they should be finite too.
++        """
++        n = Symbol('n', odd=True)
++        
++        assert n.is_finite is True, "Odd symbols should be finite"
++        assert n.is_odd is True, "Symbol should maintain its odd property"
++        assert n.is_integer is True, "Odd symbols should be integers"
++    
++    def test_integer_symbol_should_be_finite(self):
++        """Test that a symbol declared as integer should be finite."""
++        k = Symbol('k', integer=True)
++        
++        assert k.is_finite is True, "Integer symbols should be finite"
++        assert k.is_integer is True, "Symbol should maintain its integer property"
++    
++    def test_rational_symbol_should_be_finite(self):
++        """Test that a symbol declared as rational should be finite."""
++        r = Symbol('r', rational=True)
++        
++        assert r.is_finite is True, "Rational symbols should be finite"
++        assert r.is_rational is True, "Symbol should maintain its rational property"
++    
++    def test_real_symbol_finite_is_none(self):
++        """Test that a symbol declared as real has undetermined finiteness.
++        
++        Real numbers can be infinite (like oo), so we can't assume they're finite.
++        """
++        x = Symbol('x', real=True)
++        
++        # Real symbols should have undetermined finiteness since reals include infinity
++        assert x.is_finite is None, "Real symbols should have undetermined finiteness"
++        assert x.is_real is True, "Symbol should maintain its real property"
++    
++    def test_complex_symbol_finite_is_none(self):
++        """Test that a symbol declared as complex has undetermined finiteness."""
++        z = Symbol('z', complex=True)
++        
++        # Complex symbols should have undetermined finiteness
++        assert z.is_finite is None, "Complex symbols should have undetermined finiteness"
++        assert z.is_complex is True, "Symbol should maintain its complex property"
++    
++    def test_finite_symbol_implications(self):
++        """Test that explicitly finite symbols work correctly."""
++        f = Symbol('f', finite=True)
++        
++        assert f.is_finite is True, "Explicitly finite symbols should be finite"
++        # Finite doesn't imply any specific number type
++        assert f.is_real is None, "Finite symbols don't imply real"
++        assert f.is_integer is None, "Finite symbols don't imply integer"
++    
++    def test_infinite_symbol_implications(self):
++        """Test that explicitly infinite symbols work correctly."""
++        inf = Symbol('inf', infinite=True)
++        
++        assert inf.is_finite is False, "Infinite symbols should not be finite"
++        assert inf.is_infinite is True, "Symbol should maintain its infinite property"
++        # Infinite symbols can't be even or odd
++        assert inf.is_even is False, "Infinite symbols can't be even"
++        assert inf.is_odd is False, "Infinite symbols can't be odd"
++        assert inf.is_integer is False, "Infinite symbols can't be integer"
++    
++    def test_zero_is_even_and_finite(self):
++        """Test that zero is both even and finite."""
++        zero = S.Zero
++        
++        assert zero.is_even is True, "Zero should be even"
++        assert zero.is_finite is True, "Zero should be finite"
++        assert zero.is_integer is True, "Zero should be integer"
++    
++    def test_concrete_even_integers_are_finite(self):
++        """Test that concrete even integer values are finite."""
++        even_numbers = [Integer(0), Integer(2), Integer(-4), Integer(100)]
++        
++        for num in even_numbers:
++            assert num.is_even is True, f"{num} should be even"
++            assert num.is_finite is True, f"{num} should be finite"
++            assert num.is_integer is True, f"{num} should be integer"
++    
++    def test_concrete_odd_integers_are_finite(self):
++        """Test that concrete odd integer values are finite."""
++        odd_numbers = [Integer(1), Integer(-3), Integer(5), Integer(99)]
++        
++        for num in odd_numbers:
++            assert num.is_odd is True, f"{num} should be odd"
++            assert num.is_finite is True, f"{num} should be finite"
++            assert num.is_integer is True, f"{num} should be integer"
++    
++    def test_rational_numbers_are_finite(self):
++        """Test that rational numbers are finite."""
++        rationals = [Rational(1, 2), Rational(-3, 4), Rational(7, 3)]
++        
++        for num in rationals:
++            assert num.is_rational is True, f"{num} should be rational"
++            assert num.is_finite is True, f"{num} should be finite"
++    
++    def test_float_numbers_are_finite(self):
++        """Test that float numbers are finite."""
++        floats = [Float(1.5), Float(-2.7), Float(0.0)]
++        
++        for num in floats:
++            assert num.is_finite is True, f"{num} should be finite"
++    
++    def test_symbolic_constants_finiteness(self):
++        """Test finiteness of symbolic constants."""
++        # These should be finite
++        assert pi.is_finite is True, "pi should be finite"
++        assert E.is_finite is True, "E should be finite"
++        assert I.is_finite is True, "I should be finite"
++        
++        # Infinity should not be finite
++        assert oo.is_finite is False, "oo should not be finite"
++        assert (-oo).is_finite is False, "-oo should not be finite"
++    
++    def test_even_symbol_with_other_assumptions(self):
++        """Test even symbols combined with other assumptions."""
++        # Even and positive
++        m_pos = Symbol('m_pos', even=True, positive=True)
++        assert m_pos.is_finite is True, "Even positive symbols should be finite"
++        assert m_pos.is_even is True, "Symbol should be even"
++        assert m_pos.is_positive is True, "Symbol should be positive"
++        
++        # Even and negative
++        m_neg = Symbol('m_neg', even=True, negative=True)
++        assert m_neg.is_finite is True, "Even negative symbols should be finite"
++        assert m_neg.is_even is True, "Symbol should be even"
++        assert m_neg.is_negative is True, "Symbol should be negative"
++    
++    def test_odd_symbol_with_other_assumptions(self):
++        """Test odd symbols combined with other assumptions."""
++        # Odd and positive
++        n_pos = Symbol('n_pos', odd=True, positive=True)
++        assert n_pos.is_finite is True, "Odd positive symbols should be finite"
++        assert n_pos.is_odd is True, "Symbol should be odd"
++        assert n_pos.is_positive is True, "Symbol should be positive"
++        
++        # Odd and negative
++        n_neg = Symbol('n_neg', odd=True, negative=True)
++        assert n_neg.is_finite is True, "Odd negative symbols should be finite"
++        assert n_neg.is_odd is True, "Symbol should be odd"
++        assert n_neg.is_negative is True, "Symbol should be negative"
++    
++    def test_prime_numbers_are_finite(self):
++        """Test that prime numbers are finite."""
++        p = Symbol('p', prime=True)
++        
++        assert p.is_finite is True, "Prime symbols should be finite"
++        assert p.is_prime is True, "Symbol should maintain its prime property"
++        assert p.is_integer is True, "Prime symbols should be integers"
++        assert p.is_positive is True, "Prime symbols should be positive"
++    
++    def test_composite_numbers_are_finite(self):
++        """Test that composite numbers are finite."""
++        c = Symbol('c', composite=True)
++        
++        assert c.is_finite is True, "Composite symbols should be finite"
++        assert c.is_composite is True, "Symbol should maintain its composite property"
++        assert c.is_integer is True, "Composite symbols should be integers"
++        assert c.is_positive is True, "Composite symbols should be positive"
++    
++    def test_assumption_consistency(self):
++        """Test that the assumption system maintains consistency."""
++        # Test that contradictory assumptions are handled properly
++        m = Symbol('m', even=True)
++        
++        # Even implies integer, rational, real, complex, finite
++        assert m.is_integer is True
++        assert m.is_rational is True
++        assert m.is_real is True
++        assert m.is_complex is True
++        assert m.is_finite is True
++        
++        # Even implies not odd
++        assert m.is_odd is False
++        
++        # Even doesn't determine sign
++        assert m.is_positive is None
++        assert m.is_negative is None
++        assert m.is_zero is None

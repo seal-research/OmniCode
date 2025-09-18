@@ -1,0 +1,337 @@
+--- a/tests/forms_tests/test_formsets.py
++++ b/tests/forms_tests/test_formsets.py
+-# Empty if creating new file
++import pytest
++from django.forms import modelformset_factory, ModelForm
++from django.test import TestCase
++from django.db import models
++
++
++class TestModel(models.Model):
++    """Test model for formset testing."""
++    name = models.CharField(max_length=100)
++    value = models.IntegerField(default=0)
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class TestModelForm(ModelForm):
++    """Test form for the test model."""
++    class Meta:
++        model = TestModel
++        fields = ['name', 'value']
++
++
++class ModelFormsetCanAddTests(TestCase):
++    """Test suite for the can_add functionality in model formsets."""
++    
++    def setUp(self):
++        """Set up test data."""
++        self.test_obj1 = TestModel.objects.create(name="Object 1", value=10)
++        self.test_obj2 = TestModel.objects.create(name="Object 2", value=20)
++    
++    def test_can_add_default_true(self):
++        """Test that can_add defaults to True for backward compatibility."""
++        FormSet = modelformset_factory(TestModel, form=TestModelForm)
++        formset = FormSet(queryset=TestModel.objects.all())
++        
++        # Should have can_add attribute set to True by default
++        self.assertTrue(hasattr(formset, 'can_add'))
++        self.assertTrue(formset.can_add)
++    
++    def test_can_add_false_prevents_new_object_creation(self):
++        """Test that can_add=False prevents new objects from being created."""
++        FormSet = modelformset_factory(TestModel, form=TestModelForm, can_add=False)
++        formset = FormSet(queryset=TestModel.objects.all())
++        
++        # Should have can_add set to False
++        self.assertFalse(formset.can_add)
++        
++        # Simulate form data that would normally create a new object
++        form_data = {
++            'form-TOTAL_FORMS': '3',  # 2 existing + 1 new
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            
++            # Existing objects
++            'form-0-id': str(self.test_obj1.id),
++            'form-0-name': 'Updated Object 1',
++            'form-0-value': '15',
++            
++            'form-1-id': str(self.test_obj2.id),
++            'form-1-name': 'Updated Object 2',
++            'form-1-value': '25',
++            
++            # New object (should be ignored)
++            'form-2-name': 'New Object',
++            'form-2-value': '30',
++        }
++        
++        formset = FormSet(data=form_data, queryset=TestModel.objects.all())
++        
++        # Formset should be valid
++        self.assertTrue(formset.is_valid())
++        
++        # Save should not create new objects
++        initial_count = TestModel.objects.count()
++        saved_objects = formset.save()
++        final_count = TestModel.objects.count()
++        
++        # Count should remain the same (no new objects created)
++        self.assertEqual(initial_count, final_count)
++        
++        # Only existing objects should be in saved_objects
++        self.assertEqual(len(saved_objects), 2)
++        
++        # Verify existing objects were updated
++        self.test_obj1.refresh_from_db()
++        self.test_obj2.refresh_from_db()
++        self.assertEqual(self.test_obj1.name, 'Updated Object 1')
++        self.assertEqual(self.test_obj1.value, 15)
++        self.assertEqual(self.test_obj2.name, 'Updated Object 2')
++        self.assertEqual(self.test_obj2.value, 25)
++    
++    def test_can_add_true_allows_new_object_creation(self):
++        """Test that can_add=True allows new objects to be created."""
++        FormSet = modelformset_factory(TestModel, form=TestModelForm, can_add=True)
++        formset = FormSet(queryset=TestModel.objects.all())
++        
++        # Should have can_add set to True
++        self.assertTrue(formset.can_add)
++        
++        # Simulate form data that creates a new object
++        form_data = {
++            'form-TOTAL_FORMS': '3',  # 2 existing + 1 new
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            
++            # Existing objects
++            'form-0-id': str(self.test_obj1.id),
++            'form-0-name': 'Updated Object 1',
++            'form-0-value': '15',
++            
++            'form-1-id': str(self.test_obj2.id),
++            'form-1-name': 'Updated Object 2',
++            'form-1-value': '25',
++            
++            # New object
++            'form-2-name': 'New Object',
++            'form-2-value': '30',
++        }
++        
++        formset = FormSet(data=form_data, queryset=TestModel.objects.all())
++        
++        # Formset should be valid
++        self.assertTrue(formset.is_valid())
++        
++        # Save should create new objects
++        initial_count = TestModel.objects.count()
++        saved_objects = formset.save()
++        final_count = TestModel.objects.count()
++        
++        # Count should increase by 1
++        self.assertEqual(final_count, initial_count + 1)
++        
++        # All objects should be in saved_objects
++        self.assertEqual(len(saved_objects), 3)
++        
++        # Verify new object was created
++        new_obj = TestModel.objects.get(name='New Object')
++        self.assertEqual(new_obj.value, 30)
++    
++    def test_can_add_false_with_extra_zero(self):
++        """Test that can_add=False works even when extra=0."""
++        FormSet = modelformset_factory(
++            TestModel, 
++            form=TestModelForm, 
++            can_add=False, 
++            extra=0
++        )
++        formset = FormSet(queryset=TestModel.objects.all())
++        
++        # Should have can_add set to False
++        self.assertFalse(formset.can_add)
++        
++        # Simulate JavaScript adding extra forms despite extra=0
++        form_data = {
++            'form-TOTAL_FORMS': '4',  # 2 existing + 2 extra (simulating JS manipulation)
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            
++            # Existing objects
++            'form-0-id': str(self.test_obj1.id),
++            'form-0-name': 'Object 1',
++            'form-0-value': '10',
++            
++            'form-1-id': str(self.test_obj2.id),
++            'form-1-name': 'Object 2',
++            'form-1-value': '20',
++            
++            # Extra forms added via JavaScript
++            'form-2-name': 'JS Added Object 1',
++            'form-2-value': '100',
++            
++            'form-3-name': 'JS Added Object 2',
++            'form-3-value': '200',
++        }
++        
++        formset = FormSet(data=form_data, queryset=TestModel.objects.all())
++        
++        # Formset should be valid
++        self.assertTrue(formset.is_valid())
++        
++        # Save should not create new objects despite the extra form data
++        initial_count = TestModel.objects.count()
++        saved_objects = formset.save()
++        final_count = TestModel.objects.count()
++        
++        # Count should remain the same
++        self.assertEqual(initial_count, final_count)
++        
++        # Only existing objects should be saved
++        self.assertEqual(len(saved_objects), 2)
++        
++        # Verify no new objects were created
++        self.assertFalse(TestModel.objects.filter(name='JS Added Object 1').exists())
++        self.assertFalse(TestModel.objects.filter(name='JS Added Object 2').exists())
++    
++    def test_can_add_false_save_new_objects_returns_empty_list(self):
++        """Test that save_new_objects returns empty list when can_add=False."""
++        FormSet = modelformset_factory(TestModel, form=TestModelForm, can_add=False)
++        
++        form_data = {
++            'form-TOTAL_FORMS': '3',
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            
++            # Existing objects
++            'form-0-id': str(self.test_obj1.id),
++            'form-0-name': 'Object 1',
++            'form-0-value': '10',
++            
++            'form-1-id': str(self.test_obj2.id),
++            'form-1-name': 'Object 2',
++            'form-1-value': '20',
++            
++            # New object data
++            'form-2-name': 'New Object',
++            'form-2-value': '30',
++        }
++        
++        formset = FormSet(data=form_data, queryset=TestModel.objects.all())
++        self.assertTrue(formset.is_valid())
++        
++        # save_new_objects should return empty list
++        new_objects = formset.save_new_objects()
++        self.assertEqual(new_objects, [])
++        self.assertEqual(len(new_objects), 0)
++    
++    def test_can_add_true_save_new_objects_creates_objects(self):
++        """Test that save_new_objects creates objects when can_add=True."""
++        FormSet = modelformset_factory(TestModel, form=TestModelForm, can_add=True)
++        
++        form_data = {
++            'form-TOTAL_FORMS': '3',
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            
++            # Existing objects
++            'form-0-id': str(self.test_obj1.id),
++            'form-0-name': 'Object 1',
++            'form-0-value': '10',
++            
++            'form-1-id': str(self.test_obj2.id),
++            'form-1-name': 'Object 2',
++            'form-1-value': '20',
++            
++            # New object data
++            'form-2-name': 'New Object',
++            'form-2-value': '30',
++        }
++        
++        formset = FormSet(data=form_data, queryset=TestModel.objects.all())
++        self.assertTrue(formset.is_valid())
++        
++        # save_new_objects should create and return new objects
++        initial_count = TestModel.objects.count()
++        new_objects = formset.save_new_objects()
++        final_count = TestModel.objects.count()
++        
++        self.assertEqual(len(new_objects), 1)
++        self.assertEqual(final_count, initial_count + 1)
++        self.assertEqual(new_objects[0].name, 'New Object')
++        self.assertEqual(new_objects[0].value, 30)
++    
++    def test_can_add_parameter_passed_to_formset_factory(self):
++        """Test that can_add parameter is properly passed through formset_factory."""
++        # Test with can_add=False
++        FormSetFalse = modelformset_factory(TestModel, form=TestModelForm, can_add=False)
++        formset_false = FormSetFalse(queryset=TestModel.objects.all())
++        self.assertFalse(formset_false.can_add)
++        
++        # Test with can_add=True
++        FormSetTrue = modelformset_factory(TestModel, form=TestModelForm, can_add=True)
++        formset_true = FormSetTrue(queryset=TestModel.objects.all())
++        self.assertTrue(formset_true.can_add)
++        
++        # Test default behavior (should be True)
++        FormSetDefault = modelformset_factory(TestModel, form=TestModelForm)
++        formset_default = FormSetDefault(queryset=TestModel.objects.all())
++        self.assertTrue(formset_default.can_add)
++    
++    def test_can_add_with_can_delete_combination(self):
++        """Test that can_add works correctly in combination with can_delete."""
++        FormSet = modelformset_factory(
++            TestModel, 
++            form=TestModelForm, 
++            can_add=False, 
++            can_delete=True
++        )
++        
++        form_data = {
++            'form-TOTAL_FORMS': '3',
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            
++            # First object - keep
++            'form-0-id': str(self.test_obj1.id),
++            'form-0-name': 'Object 1',
++            'form-0-value': '10',
++            
++            # Second object - delete
++            'form-1-id': str(self.test_obj2.id),
++            'form-1-name': 'Object 2',
++            'form-1-value': '20',
++            'form-1-DELETE': 'on',
++            
++            # New object - should be ignored due to can_add=False
++            'form-2-name': 'New Object',
++            'form-2-value': '30',
++        }
++        
++        formset = FormSet(data=form_data, queryset=TestModel.objects.all())
++        self.assertTrue(formset.is_valid())
++        
++        initial_count = TestModel.objects.count()
++        saved_objects = formset.save()
++        final_count = TestModel.objects.count()
++        
++        # Should have deleted one object but not created any new ones
++        self.assertEqual(final_count, initial_count - 1)
++        
++        # Only the non-deleted object should be in saved_objects
++        self.assertEqual(len(saved_objects), 1)
++        self.assertEqual(saved_objects[0].id, self.test_obj1.id)
++        
++        # Verify the second object was deleted
++        self.assertFalse(TestModel.objects.filter(id=self.test_obj2.id).exists())
++        
++        # Verify no new object was created
++        self.assertFalse(TestModel.objects.filter(name='New Object').exists())

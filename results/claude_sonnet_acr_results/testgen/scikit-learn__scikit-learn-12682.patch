@@ -1,0 +1,6 @@
+{
+  "instance_id": "scikit-learn__scikit-learn-12682",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/scikit-learn__scikit-learn-12682/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/scikit-learn__scikit-learn-12682/scikit-learn__scikit-learn-12682.pred"
+}

@@ -1,0 +1,222 @@
+--- a/sympy/matrices/tests/test_matrix_hstack_vstack_bug.py
++++ b/sympy/matrices/tests/test_matrix_hstack_vstack_bug.py
+-# Empty if creating new file
++import pytest
++from sympy import Matrix
++
++
++class TestMatrixHstackVstackBug:
++    """Test suite for Matrix hstack and vstack behavior with zero-dimension matrices.
++    
++    This addresses the regression in sympy 1.1 where hstack and vstack changed
++    behavior when dealing with matrices that have zero rows or columns.
++    """
++
++    def test_hstack_zero_rows_expected_behavior(self):
++        """Test that hstack with zero-row matrices returns correct column count.
++        
++        This test reproduces the issue described where in sympy 1.0:
++        Matrix.hstack(zeros(0,0), zeros(0,1), zeros(0,2), zeros(0,3)).shape == (0, 6)
++        but in sympy 1.1 it returns (0, 3).
++        
++        The expected behavior is that columns should be summed: 0+1+2+3 = 6 columns.
++        """
++        M1 = Matrix.zeros(0, 0)
++        M2 = Matrix.zeros(0, 1) 
++        M3 = Matrix.zeros(0, 2)
++        M4 = Matrix.zeros(0, 3)
++        
++        result = Matrix.hstack(M1, M2, M3, M4)
++        
++        # Should have 0 rows and 0+1+2+3=6 columns
++        assert result.shape == (0, 6), f"Expected (0, 6) but got {result.shape}"
++
++    def test_hstack_zero_rows_single_matrices(self):
++        """Test hstack with individual zero-row matrices."""
++        # Test with single matrices
++        assert Matrix.hstack(Matrix.zeros(0, 0)).shape == (0, 0)
++        assert Matrix.hstack(Matrix.zeros(0, 1)).shape == (0, 1)
++        assert Matrix.hstack(Matrix.zeros(0, 5)).shape == (0, 5)
++
++    def test_hstack_zero_rows_pairs(self):
++        """Test hstack with pairs of zero-row matrices."""
++        # Test with pairs
++        result1 = Matrix.hstack(Matrix.zeros(0, 0), Matrix.zeros(0, 1))
++        assert result1.shape == (0, 1), f"Expected (0, 1) but got {result1.shape}"
++        
++        result2 = Matrix.hstack(Matrix.zeros(0, 1), Matrix.zeros(0, 2))
++        assert result2.shape == (0, 3), f"Expected (0, 3) but got {result2.shape}"
++        
++        result3 = Matrix.hstack(Matrix.zeros(0, 0), Matrix.zeros(0, 0))
++        assert result3.shape == (0, 0), f"Expected (0, 0) but got {result3.shape}"
++
++    def test_hstack_zero_rows_different_orders(self):
++        """Test hstack with different orderings of zero-row matrices."""
++        M1 = Matrix.zeros(0, 0)
++        M2 = Matrix.zeros(0, 1)
++        M3 = Matrix.zeros(0, 2)
++        
++        # Different orders should give same total columns
++        result1 = Matrix.hstack(M1, M2, M3)
++        result2 = Matrix.hstack(M2, M1, M3)
++        result3 = Matrix.hstack(M3, M2, M1)
++        
++        expected_cols = 0 + 1 + 2  # = 3
++        assert result1.shape == (0, expected_cols)
++        assert result2.shape == (0, expected_cols)
++        assert result3.shape == (0, expected_cols)
++
++    def test_hstack_non_zero_rows_works_correctly(self):
++        """Test that hstack still works correctly with non-zero row matrices.
++        
++        This verifies that the fix doesn't break existing functionality.
++        """
++        M1 = Matrix.zeros(1, 0)
++        M2 = Matrix.zeros(1, 1)
++        M3 = Matrix.zeros(1, 2)
++        M4 = Matrix.zeros(1, 3)
++        
++        result = Matrix.hstack(M1, M2, M3, M4)
++        
++        # Should have 1 row and 0+1+2+3=6 columns
++        assert result.shape == (1, 6), f"Expected (1, 6) but got {result.shape}"
++
++    def test_hstack_mixed_zero_nonzero_rows(self):
++        """Test hstack with mix of zero and non-zero row matrices."""
++        # This should raise an error due to incompatible row counts
++        M1 = Matrix.zeros(0, 2)
++        M2 = Matrix.zeros(1, 3)
++        
++        with pytest.raises(Exception):  # Should raise ShapeError
++            Matrix.hstack(M1, M2)
++
++    def test_vstack_zero_cols_expected_behavior(self):
++        """Test that vstack with zero-column matrices returns correct row count.
++        
++        This is the analogous test for vstack - it should sum rows when columns are zero.
++        """
++        M1 = Matrix.zeros(0, 0)
++        M2 = Matrix.zeros(1, 0)
++        M3 = Matrix.zeros(2, 0)
++        M4 = Matrix.zeros(3, 0)
++        
++        result = Matrix.vstack(M1, M2, M3, M4)
++        
++        # Should have 0+1+2+3=6 rows and 0 columns
++        assert result.shape == (6, 0), f"Expected (6, 0) but got {result.shape}"
++
++    def test_vstack_zero_cols_single_matrices(self):
++        """Test vstack with individual zero-column matrices."""
++        assert Matrix.vstack(Matrix.zeros(0, 0)).shape == (0, 0)
++        assert Matrix.vstack(Matrix.zeros(1, 0)).shape == (1, 0)
++        assert Matrix.vstack(Matrix.zeros(5, 0)).shape == (5, 0)
++
++    def test_vstack_zero_cols_pairs(self):
++        """Test vstack with pairs of zero-column matrices."""
++        result1 = Matrix.vstack(Matrix.zeros(0, 0), Matrix.zeros(1, 0))
++        assert result1.shape == (1, 0), f"Expected (1, 0) but got {result1.shape}"
++        
++        result2 = Matrix.vstack(Matrix.zeros(1, 0), Matrix.zeros(2, 0))
++        assert result2.shape == (3, 0), f"Expected (3, 0) but got {result2.shape}"
++        
++        result3 = Matrix.vstack(Matrix.zeros(0, 0), Matrix.zeros(0, 0))
++        assert result3.shape == (0, 0), f"Expected (0, 0) but got {result3.shape}"
++
++    def test_vstack_zero_cols_different_orders(self):
++        """Test vstack with different orderings of zero-column matrices."""
++        M1 = Matrix.zeros(0, 0)
++        M2 = Matrix.zeros(1, 0)
++        M3 = Matrix.zeros(2, 0)
++        
++        # Different orders should give same total rows
++        result1 = Matrix.vstack(M1, M2, M3)
++        result2 = Matrix.vstack(M2, M1, M3)
++        result3 = Matrix.vstack(M3, M2, M1)
++        
++        expected_rows = 0 + 1 + 2  # = 3
++        assert result1.shape == (expected_rows, 0)
++        assert result2.shape == (expected_rows, 0)
++        assert result3.shape == (expected_rows, 0)
++
++    def test_vstack_non_zero_cols_works_correctly(self):
++        """Test that vstack still works correctly with non-zero column matrices."""
++        M1 = Matrix.zeros(0, 1)
++        M2 = Matrix.zeros(1, 1)
++        M3 = Matrix.zeros(2, 1)
++        M4 = Matrix.zeros(3, 1)
++        
++        result = Matrix.vstack(M1, M2, M3, M4)
++        
++        # Should have 0+1+2+3=6 rows and 1 column
++        assert result.shape == (6, 1), f"Expected (6, 1) but got {result.shape}"
++
++    def test_vstack_mixed_zero_nonzero_cols(self):
++        """Test vstack with mix of zero and non-zero column matrices."""
++        # This should raise an error due to incompatible column counts
++        M1 = Matrix.zeros(2, 0)
++        M2 = Matrix.zeros(3, 1)
++        
++        with pytest.raises(Exception):  # Should raise ShapeError
++            Matrix.vstack(M1, M2)
++
++    def test_hstack_empty_args(self):
++        """Test hstack with no arguments."""
++        result = Matrix.hstack()
++        # Should return empty matrix
++        assert result.shape == (0, 0)
++
++    def test_vstack_empty_args(self):
++        """Test vstack with no arguments."""
++        result = Matrix.vstack()
++        # Should return empty matrix
++        assert result.shape == (0, 0)
++
++    def test_hstack_regression_specific_case(self):
++        """Test the exact case mentioned in the bug report.
++        
++        This is the failing test case that should pass after the fix.
++        """
++        # This is the exact case from the bug report
++        M1 = Matrix.zeros(0, 0)
++        M2 = Matrix.zeros(0, 1)
++        M3 = Matrix.zeros(0, 2)
++        M4 = Matrix.zeros(0, 3)
++        
++        # This should return (0, 6) as it did in sympy 1.0
++        result = Matrix.hstack(M1, M2, M3, M4)
++        assert result.shape == (0, 6), f"Regression test failed: expected (0, 6) but got {result.shape}"
++
++    def test_vstack_regression_specific_case(self):
++        """Test the analogous case for vstack."""
++        M1 = Matrix.zeros(0, 0)
++        M2 = Matrix.zeros(1, 0)
++        M3 = Matrix.zeros(2, 0)
++        M4 = Matrix.zeros(3, 0)
++        
++        # This should return (6, 0)
++        result = Matrix.vstack(M1, M2, M3, M4)
++        assert result.shape == (6, 0), f"vstack regression test failed: expected (6, 0) but got {result.shape}"
++
++    def test_hstack_with_content_matrices(self):
++        """Test hstack behavior with matrices that have actual content."""
++        # Test that the fix doesn't break normal matrices with content
++        M1 = Matrix([[1, 2]])  # 1x2
++        M2 = Matrix([[3, 4, 5]])  # 1x3
++        
++        result = Matrix.hstack(M1, M2)
++        expected = Matrix([[1, 2, 3, 4, 5]])  # 1x5
++        
++        assert result == expected
++        assert result.shape == (1, 5)
++
++    def test_vstack_with_content_matrices(self):
++        """Test vstack behavior with matrices that have actual content."""
++        # Test that the fix doesn't break normal matrices with content
++        M1 = Matrix([[1, 2]])  # 1x2
++        M2 = Matrix([[3, 4]])  # 1x2
++        
++        result = Matrix.vstack(M1, M2)
++        expected = Matrix([[1, 2], [3, 4]])  # 2x2
++        
++        assert result == expected
++        assert result.shape == (2, 2)

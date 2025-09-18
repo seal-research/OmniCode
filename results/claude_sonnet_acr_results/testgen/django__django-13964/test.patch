@@ -1,0 +1,250 @@
+--- a/tests/model_fields/test_foreign_key_non_numeric_pk.py
++++ b/tests/model_fields/test_foreign_key_non_numeric_pk.py
+-# Empty if creating new file
++import pytest
++from django.db import models, transaction
++from django.test import TestCase, TransactionTestCase
++from django.db.utils import IntegrityError
++
++
++class Product(models.Model):
++    """Model with CharField primary key to test the bug."""
++    sku = models.CharField(primary_key=True, max_length=50)
++    name = models.CharField(max_length=100, default="Test Product")
++
++    class Meta:
++        app_label = 'model_fields'
++
++
++class Order(models.Model):
++    """Model with foreign key to Product."""
++    product = models.ForeignKey(Product, on_delete=models.CASCADE)
++    quantity = models.IntegerField(default=1)
++
++    class Meta:
++        app_label = 'model_fields'
++
++
++class ProductWithIntPK(models.Model):
++    """Model with integer primary key for comparison."""
++    id = models.AutoField(primary_key=True)
++    name = models.CharField(max_length=100, default="Test Product")
++
++    class Meta:
++        app_label = 'model_fields'
++
++
++class OrderWithIntPK(models.Model):
++    """Model with foreign key to ProductWithIntPK."""
++    product = models.ForeignKey(ProductWithIntPK, on_delete=models.CASCADE)
++    quantity = models.IntegerField(default=1)
++
++    class Meta:
++        app_label = 'model_fields'
++
++
++class ForeignKeyNonNumericPKTestCase(TransactionTestCase):
++    """Test case for foreign key assignments with non-numeric primary keys."""
++
++    def test_foreign_key_assignment_after_pk_set_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: when a related object's primary key
++        is set after assignment, the foreign key field doesn't get updated.
++        This test should fail before the fix is applied.
++        """
++        with transaction.atomic():
++            order = Order()
++            order.product = Product()  # Product with no SKU set yet
++            order.product.sku = "foo"  # Set SKU after assignment
++            order.product.save()
++            order.save()
++            
++            # This assertion should fail before the fix - demonstrates the bug
++            # The foreign key field contains empty string instead of "foo"
++            with self.assertRaises(AssertionError):
++                assert Order.objects.filter(product=order.product).exists()
++            
++            # This assertion succeeds but shouldn't - shows data loss
++            assert Order.objects.filter(product_id="").exists()
++
++    def test_foreign_key_assignment_with_pk_set_before_assignment_works(self):
++        """
++        Test that when the primary key is set before assignment,
++        everything works correctly (this should pass both before and after fix).
++        """
++        with transaction.atomic():
++            order = Order()
++            order.product = Product(sku="bar")  # SKU set before assignment
++            order.product.save()
++            order.save()
++            
++            # This should work correctly
++            assert Order.objects.filter(product=order.product).exists()
++            assert not Order.objects.filter(product_id="").exists()
++
++    def test_foreign_key_assignment_after_pk_set_works_after_fix(self):
++        """
++        Test that after the fix, setting the primary key after assignment
++        works correctly. This test should pass after the fix is applied.
++        """
++        with transaction.atomic():
++            order = Order()
++            order.product = Product()  # Product with no SKU set yet
++            order.product.sku = "baz"  # Set SKU after assignment
++            order.product.save()
++            order.save()
++            
++            # After the fix, this should work correctly
++            assert Order.objects.filter(product=order.product).exists()
++            assert not Order.objects.filter(product_id="").exists()
++            
++            # Verify the foreign key field was updated correctly
++            order.refresh_from_db()
++            assert order.product_id == "baz"
++
++    def test_foreign_key_assignment_with_none_pk_still_raises_error(self):
++        """
++        Test that the existing behavior for None primary keys is preserved.
++        This should raise a ValueError both before and after the fix.
++        """
++        with self.assertRaises(ValueError) as cm:
++            with transaction.atomic():
++                order = Order()
++                order.product = Product()  # Product with no SKU set
++                # Don't set the SKU - leave it as None/empty
++                order.product.save()  # This will fail because SKU is required
++                order.save()
++        
++        # The error should mention unsaved related object
++        self.assertIn("prohibited to prevent data loss", str(cm.exception))
++
++    def test_foreign_key_assignment_with_integer_pk_works(self):
++        """
++        Test that integer primary keys work correctly (baseline test).
++        This should work both before and after the fix.
++        """
++        with transaction.atomic():
++            order = OrderWithIntPK()
++            order.product = ProductWithIntPK()  # Auto PK will be None initially
++            order.product.save()  # This sets the auto PK
++            order.save()
++            
++            # This should work correctly with integer PKs
++            assert OrderWithIntPK.objects.filter(product=order.product).exists()
++            assert not OrderWithIntPK.objects.filter(product_id__isnull=True).exists()
++
++    def test_foreign_key_assignment_multiple_updates(self):
++        """
++        Test that multiple updates to the primary key are handled correctly.
++        """
++        with transaction.atomic():
++            order = Order()
++            order.product = Product()
++            
++            # Set SKU multiple times
++            order.product.sku = "first"
++            order.product.sku = "second"
++            order.product.sku = "final"
++            
++            order.product.save()
++            order.save()
++            
++            # Should use the final value
++            assert Order.objects.filter(product=order.product).exists()
++            assert Order.objects.filter(product_id="final").exists()
++            order.refresh_from_db()
++            assert order.product_id == "final"
++
++    def test_foreign_key_assignment_pk_change_after_save(self):
++        """
++        Test that changing the primary key after both objects are saved
++        updates the foreign key correctly on subsequent saves.
++        """
++        with transaction.atomic():
++            # Initial setup
++            order = Order()
++            order.product = Product(sku="initial")
++            order.product.save()
++            order.save()
++            
++            # Verify initial state
++            assert order.product_id == "initial"
++            
++            # Change the primary key
++            order.product.sku = "changed"
++            order.product.save()
++            order.save()  # This should update the foreign key
++            
++            # Verify the foreign key was updated
++            order.refresh_from_db()
++            assert order.product_id == "changed"
++            assert Order.objects.filter(product_id="changed").exists()
++            assert not Order.objects.filter(product_id="initial").exists()
++
++    def test_foreign_key_assignment_empty_string_vs_none(self):
++        """
++        Test the difference between None and empty string primary keys.
++        """
++        # Test with None (should raise error)
++        with self.assertRaises(ValueError):
++            with transaction.atomic():
++                order = Order()
++                product = Product()
++                # Don't set SKU, it will be None/empty
++                order.product = product
++                order.product.save()  # This should fail
++                order.save()
++
++    def test_foreign_key_assignment_cached_relationship(self):
++        """
++        Test that cached relationships are handled correctly.
++        """
++        with transaction.atomic():
++            order = Order()
++            product = Product()
++            order.product = product
++            
++            # Access the relationship to cache it
++            _ = order.product
++            
++            # Now set the primary key
++            product.sku = "cached_test"
++            product.save()
++            order.save()
++            
++            # Verify it works with cached relationships
++            assert order.product_id == "cached_test"
++            assert Order.objects.filter(product=product).exists()
++
++    def test_foreign_key_assignment_transaction_rollback(self):
++        """
++        Test that transaction rollback works correctly with the fix.
++        """
++        try:
++            with transaction.atomic():
++                order = Order()
++                order.product = Product()
++                order.product.sku = "rollback_test"
++                order.product.save()
++                order.save()
++                
++                # Force a rollback
++                raise Exception("Force rollback")
++        except Exception:
++            pass
++        
++        # Verify nothing was saved
++        assert not Order.objects.filter(product_id="rollback_test").exists()
++        assert not Product.objects.filter(sku="rollback_test").exists()
++
++    def test_foreign_key_assignment_edge_case_empty_string_pk(self):
++        """
++        Test edge case where primary key is explicitly set to empty string.
++        """
++        with self.assertRaises(IntegrityError):
++            with transaction.atomic():
++                order = Order()
++                order.product = Product()
++                order.product.sku = ""  # Explicitly set to empty string
++                order.product.save()  # This should fail due to empty PK
++                order.save()

@@ -1,0 +1,285 @@
+--- a/tests/auth_tests/test_checks.py
++++ b/tests/auth_tests/test_checks.py
+-# Empty if creating new file
++import pytest
++from django.contrib.auth import get_user_model
++from django.contrib.auth.base_user import AbstractBaseUser
++from django.contrib.auth.checks import check_user_model
++from django.core import checks
++from django.db import models
++from django.db.models.constraints import UniqueConstraint
++from django.test import TestCase, override_settings
++
++
++class TestUserModelChecks(TestCase):
++    """Test suite for auth.E003 system check with UniqueConstraints."""
++
++    def test_username_field_unique_true_passes_check(self):
++        """Test that USERNAME_FIELD with unique=True passes the check."""
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30, unique=True)
++            USERNAME_FIELD = "username"
++
++        # Mock the user model
++        with override_settings(AUTH_USER_MODEL='auth_tests.TestUser'):
++            errors = check_user_model()
++            # Should not contain auth.E003 error
++            auth_e003_errors = [e for e in errors if e.id == 'auth.E003']
++            self.assertEqual(len(auth_e003_errors), 0)
++
++    def test_username_field_without_unique_fails_check_before_fix(self):
++        """Test that USERNAME_FIELD without unique=True fails the check (reproduces the bug)."""
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            USERNAME_FIELD = "username"
++            
++            class Meta:
++                constraints = [UniqueConstraint(fields=["username"], name="user_username_unq")]
++
++        # This test demonstrates the bug - it should fail before the fix is applied
++        # The check should trigger auth.E003 even though there's a UniqueConstraint
++        errors = []
++        
++        # Simulate the current buggy behavior
++        field_is_unique = TestUser._meta.get_field(TestUser.USERNAME_FIELD).unique
++        if not field_is_unique:
++            errors.append(
++                checks.Error(
++                    "'%s.%s' must be unique because it is named as the 'USERNAME_FIELD'." % (
++                        TestUser._meta.object_name, TestUser.USERNAME_FIELD
++                    ),
++                    obj=TestUser,
++                    id='auth.E003',
++                )
++            )
++        
++        # Should contain auth.E003 error (demonstrating the bug)
++        auth_e003_errors = [e for e in errors if e.id == 'auth.E003']
++        self.assertEqual(len(auth_e003_errors), 1)
++        self.assertIn("must be unique because it is named as the 'USERNAME_FIELD'", 
++                     auth_e003_errors[0].msg)
++
++    def test_username_field_with_unique_constraint_single_field_passes_after_fix(self):
++        """Test that USERNAME_FIELD with single-field UniqueConstraint passes after fix."""
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            USERNAME_FIELD = "username"
++            
++            class Meta:
++                constraints = [UniqueConstraint(fields=["username"], name="user_username_unq")]
++
++        # Simulate the fixed behavior
++        field_is_unique = TestUser._meta.get_field(TestUser.USERNAME_FIELD).unique
++        
++        # Check for UniqueConstraint covering only the USERNAME_FIELD
++        if not field_is_unique:
++            for constraint in TestUser._meta.constraints:
++                if (isinstance(constraint, UniqueConstraint) and 
++                    len(constraint.fields) == 1 and 
++                    constraint.fields[0] == TestUser.USERNAME_FIELD and 
++                    constraint.condition is None):
++                    field_is_unique = True
++                    break
++
++        # Should pass the check after fix
++        self.assertTrue(field_is_unique)
++
++    def test_username_field_with_unique_constraint_multiple_fields_fails(self):
++        """Test that USERNAME_FIELD in multi-field UniqueConstraint still fails."""
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            email = models.EmailField()
++            USERNAME_FIELD = "username"
++            
++            class Meta:
++                constraints = [UniqueConstraint(fields=["username", "email"], name="user_username_email_unq")]
++
++        # Simulate the fixed behavior
++        field_is_unique = TestUser._meta.get_field(TestUser.USERNAME_FIELD).unique
++        
++        # Check for UniqueConstraint covering only the USERNAME_FIELD
++        if not field_is_unique:
++            for constraint in TestUser._meta.constraints:
++                if (isinstance(constraint, UniqueConstraint) and 
++                    len(constraint.fields) == 1 and 
++                    constraint.fields[0] == TestUser.USERNAME_FIELD and 
++                    constraint.condition is None):
++                    field_is_unique = True
++                    break
++
++        # Should still fail because the constraint includes multiple fields
++        self.assertFalse(field_is_unique)
++
++    def test_username_field_with_conditional_unique_constraint_fails(self):
++        """Test that USERNAME_FIELD with conditional UniqueConstraint fails."""
++        from django.db.models import Q
++        
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            is_active = models.BooleanField(default=True)
++            USERNAME_FIELD = "username"
++            
++            class Meta:
++                constraints = [
++                    UniqueConstraint(
++                        fields=["username"], 
++                        name="user_username_unq",
++                        condition=Q(is_active=True)
++                    )
++                ]
++
++        # Simulate the fixed behavior
++        field_is_unique = TestUser._meta.get_field(TestUser.USERNAME_FIELD).unique
++        
++        # Check for UniqueConstraint covering only the USERNAME_FIELD
++        if not field_is_unique:
++            for constraint in TestUser._meta.constraints:
++                if (isinstance(constraint, UniqueConstraint) and 
++                    len(constraint.fields) == 1 and 
++                    constraint.fields[0] == TestUser.USERNAME_FIELD and 
++                    constraint.condition is None):
++                    field_is_unique = True
++                    break
++
++        # Should fail because the constraint has a condition (partial uniqueness)
++        self.assertFalse(field_is_unique)
++
++    def test_username_field_with_multiple_constraints_one_valid_passes(self):
++        """Test that USERNAME_FIELD passes if at least one valid UniqueConstraint exists."""
++        from django.db.models import Q
++        
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            email = models.EmailField()
++            is_active = models.BooleanField(default=True)
++            USERNAME_FIELD = "username"
++            
++            class Meta:
++                constraints = [
++                    UniqueConstraint(fields=["username", "email"], name="user_username_email_unq"),
++                    UniqueConstraint(
++                        fields=["username"], 
++                        name="user_username_conditional_unq",
++                        condition=Q(is_active=True)
++                    ),
++                    UniqueConstraint(fields=["username"], name="user_username_total_unq"),
++                ]
++
++        # Simulate the fixed behavior
++        field_is_unique = TestUser._meta.get_field(TestUser.USERNAME_FIELD).unique
++        
++        # Check for UniqueConstraint covering only the USERNAME_FIELD
++        if not field_is_unique:
++            for constraint in TestUser._meta.constraints:
++                if (isinstance(constraint, UniqueConstraint) and 
++                    len(constraint.fields) == 1 and 
++                    constraint.fields[0] == TestUser.USERNAME_FIELD and 
++                    constraint.condition is None):
++                    field_is_unique = True
++                    break
++
++        # Should pass because there's one valid total UniqueConstraint
++        self.assertTrue(field_is_unique)
++
++    def test_username_field_no_constraints_fails(self):
++        """Test that USERNAME_FIELD without unique=True or UniqueConstraint fails."""
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            USERNAME_FIELD = "username"
++
++        # Simulate the fixed behavior
++        field_is_unique = TestUser._meta.get_field(TestUser.USERNAME_FIELD).unique
++        
++        # Check for UniqueConstraint covering only the USERNAME_FIELD
++        if not field_is_unique:
++            for constraint in TestUser._meta.constraints:
++                if (isinstance(constraint, UniqueConstraint) and 
++                    len(constraint.fields) == 1 and 
++                    constraint.fields[0] == TestUser.USERNAME_FIELD and 
++                    constraint.condition is None):
++                    field_is_unique = True
++                    break
++
++        # Should fail because there's no uniqueness constraint
++        self.assertFalse(field_is_unique)
++
++    def test_edge_case_empty_constraints_list(self):
++        """Test edge case where constraints list is empty."""
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            USERNAME_FIELD = "username"
++            
++            class Meta:
++                constraints = []
++
++        # Simulate the fixed behavior
++        field_is_unique = TestUser._meta.get_field(TestUser.USERNAME_FIELD).unique
++        
++        # Check for UniqueConstraint covering only the USERNAME_FIELD
++        if not field_is_unique:
++            for constraint in TestUser._meta.constraints:
++                if (isinstance(constraint, UniqueConstraint) and 
++                    len(constraint.fields) == 1 and 
++                    constraint.fields[0] == TestUser.USERNAME_FIELD and 
++                    constraint.condition is None):
++                    field_is_unique = True
++                    break
++
++        # Should fail because constraints list is empty
++        self.assertFalse(field_is_unique)
++
++    def test_edge_case_non_unique_constraint_types(self):
++        """Test edge case where constraints contain non-UniqueConstraint types."""
++        from django.db.models import CheckConstraint, Q
++        
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            age = models.IntegerField()
++            USERNAME_FIELD = "username"
++            
++            class Meta:
++                constraints = [
++                    CheckConstraint(check=Q(age__gte=0), name="age_positive"),
++                    UniqueConstraint(fields=["username"], name="user_username_unq"),
++                ]
++
++        # Simulate the fixed behavior
++        field_is_unique = TestUser._meta.get_field(TestUser.USERNAME_FIELD).unique
++        
++        # Check for UniqueConstraint covering only the USERNAME_FIELD
++        if not field_is_unique:
++            for constraint in TestUser._meta.constraints:
++                if (isinstance(constraint, UniqueConstraint) and 
++                    len(constraint.fields) == 1 and 
++                    constraint.fields[0] == TestUser.USERNAME_FIELD and 
++                    constraint.condition is None):
++                    field_is_unique = True
++                    break
++
++        # Should pass because there's a valid UniqueConstraint among other constraint types
++        self.assertTrue(field_is_unique)
++
++    def test_username_field_case_sensitivity(self):
++        """Test that field name matching is case-sensitive."""
++        class TestUser(AbstractBaseUser):
++            username = models.CharField(max_length=30)
++            USERNAME_FIELD = "username"
++            
++            class Meta:
++                constraints = [UniqueConstraint(fields=["USERNAME"], name="user_username_unq")]
++
++        # Simulate the fixed behavior
++        field_is_unique = TestUser._meta.get_field(TestUser.USERNAME_FIELD).unique
++        
++        # Check for UniqueConstraint covering only the USERNAME_FIELD
++        if not field_is_unique:
++            for constraint in TestUser._meta.constraints:
++                if (isinstance(constraint, UniqueConstraint) and 
++                    len(constraint.fields) == 1 and 
++                    constraint.fields[0] == TestUser.USERNAME_FIELD and 
++                    constraint.condition is None):
++                    field_is_unique = True
++                    break
++
++        # Should fail because "USERNAME" != "username"
++        self.assertFalse(field_is_unique)

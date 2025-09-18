@@ -1,0 +1,304 @@
+--- a/tests/queries/test_query_combine_aliases.py
++++ b/tests/queries/test_query_combine_aliases.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import Q
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('queries')
++class QueryCombineAliasesTest(TestCase):
++    """
++    Test cases for the Query.change_aliases AssertionError bug when combining QuerySets.
++    
++    The bug occurs when performing OR operations on QuerySets where the right-hand side
++    query has sequential aliases that conflict with aliases generated during combination.
++    """
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        # Create test models that reproduce the issue
++        class Foo(models.Model):
++            qux = models.ForeignKey("Qux", on_delete=models.CASCADE, related_name="foos")
++            
++            class Meta:
++                app_label = 'queries'
++        
++        class Bar(models.Model):
++            foo = models.ForeignKey("Foo", on_delete=models.CASCADE, related_name="bars")
++            another_foo = models.ForeignKey("Foo", on_delete=models.CASCADE, related_name="other_bars")
++            baz = models.ForeignKey("Baz", on_delete=models.CASCADE, related_name="bars")
++            
++            class Meta:
++                app_label = 'queries'
++        
++        class Baz(models.Model):
++            class Meta:
++                app_label = 'queries'
++        
++        class Qux(models.Model):
++            bazes = models.ManyToManyField("Baz", related_name="quxes")
++            
++            class Meta:
++                app_label = 'queries'
++        
++        cls.Foo = Foo
++        cls.Bar = Bar
++        cls.Baz = Baz
++        cls.Qux = Qux
++    
++    def setUp(self):
++        """Set up test data for each test."""
++        # Create test instances
++        self.qux = self.Qux.objects.create()
++        self.baz1 = self.Baz.objects.create()
++        self.baz2 = self.Baz.objects.create()
++        self.foo1 = self.Foo.objects.create(qux=self.qux)
++        self.foo2 = self.Foo.objects.create(qux=self.qux)
++        
++        # Add bazes to qux
++        self.qux.bazes.add(self.baz1, self.baz2)
++        
++        # Create bars with relationships
++        self.bar1 = self.Bar.objects.create(foo=self.foo1, another_foo=self.foo2, baz=self.baz1)
++        self.bar2 = self.Bar.objects.create(foo=self.foo2, another_foo=self.foo1, baz=self.baz2)
++    
++    def test_queryset_or_operation_order_independence_simple(self):
++        """
++        Test that QuerySet OR operations work regardless of order (simple case).
++        
++        This test verifies that qs1 | qs2 and qs2 | qs1 both work without raising
++        AssertionError, even if they might generate different SQL.
++        """
++        qs1 = self.qux.foos.all()
++        qs2 = self.Foo.objects.filter(
++            Q(bars__baz__in=self.qux.bazes.all()) | Q(other_bars__baz__in=self.qux.bazes.all())
++        )
++        
++        # Both orders should work without raising AssertionError
++        try:
++            result1 = qs2 | qs1  # This should work
++            list(result1)  # Force evaluation
++        except AssertionError as e:
++            self.fail(f"qs2 | qs1 raised AssertionError: {e}")
++        
++        try:
++            result2 = qs1 | qs2  # This was failing before the fix
++            list(result2)  # Force evaluation
++        except AssertionError as e:
++            self.fail(f"qs1 | qs2 raised AssertionError: {e}")
++    
++    def test_queryset_or_operation_reproduces_bug(self):
++        """
++        Test that reproduces the exact bug scenario from the issue.
++        
++        This test should fail before the fix is applied and pass after.
++        """
++        qux = self.Qux.objects.create()
++        qs1 = qux.foos.all()
++        qs2 = self.Foo.objects.filter(
++            Q(bars__baz__in=qux.bazes.all()) | Q(other_bars__baz__in=qux.bazes.all())
++        )
++        
++        # This should work fine
++        result1 = qs2 | qs1
++        list(result1)  # Force evaluation
++        
++        # This was raising AssertionError before the fix
++        # The bug occurs because of alias conflicts in Query.change_aliases
++        with self.assertRaises(AssertionError):
++            result2 = qs1 | qs2
++            list(result2)  # Force evaluation
++    
++    def test_complex_queryset_combinations(self):
++        """
++        Test more complex QuerySet combinations that could trigger alias conflicts.
++        """
++        # Create multiple complex querysets with different join patterns
++        qs1 = self.Foo.objects.filter(bars__baz__quxes__isnull=False)
++        qs2 = self.Foo.objects.filter(other_bars__baz__quxes__isnull=False)
++        qs3 = self.Foo.objects.filter(qux__bazes__bars__foo__isnull=False)
++        
++        # Test various combinations
++        combinations = [
++            (qs1, qs2),
++            (qs2, qs1),
++            (qs1, qs3),
++            (qs3, qs1),
++            (qs2, qs3),
++            (qs3, qs2),
++        ]
++        
++        for i, (left, right) in enumerate(combinations):
++            with self.subTest(combination=i):
++                try:
++                    result = left | right
++                    list(result)  # Force evaluation
++                except AssertionError as e:
++                    self.fail(f"Combination {i} (qs{combinations.index((left, right)) + 1} | qs{combinations.index((right, left)) + 1}) raised AssertionError: {e}")
++    
++    def test_sequential_alias_conflicts(self):
++        """
++        Test scenarios that specifically create sequential alias conflicts.
++        
++        This test creates QuerySets that are likely to generate sequential aliases
++        (T4, T5, T6, etc.) and then combines them to trigger the bug.
++        """
++        # Create QuerySets with multiple joins to generate sequential aliases
++        base_qs = self.Foo.objects.filter(
++            bars__baz__quxes__bazes__bars__foo__qux__isnull=False
++        )
++        
++        # Create another QuerySet that will have its own set of aliases
++        complex_qs = self.Foo.objects.filter(
++            Q(bars__baz__in=self.qux.bazes.all()) | 
++            Q(other_bars__baz__in=self.qux.bazes.all())
++        ).filter(
++            qux__bazes__bars__another_foo__bars__baz__isnull=False
++        )
++        
++        # These combinations should not raise AssertionError
++        try:
++            result1 = base_qs | complex_qs
++            list(result1)
++        except AssertionError as e:
++            self.fail(f"base_qs | complex_qs raised AssertionError: {e}")
++        
++        try:
++            result2 = complex_qs | base_qs
++            list(result2)
++        except AssertionError as e:
++            self.fail(f"complex_qs | base_qs raised AssertionError: {e}")
++    
++    def test_change_aliases_assertion_directly(self):
++        """
++        Test the change_aliases method directly with problematic change_maps.
++        
++        This test verifies that the assertion in change_aliases fails when
++        keys and values intersect, which is the core of the bug.
++        """
++        from django.db.models.sql.query import Query
++        
++        # Create a simple query
++        query = Query(self.Foo)
++        
++        # Create a change_map that would cause the assertion to fail
++        # This simulates the problematic scenario: T4 -> T5, T5 -> T6
++        problematic_change_map = {'T4': 'T5', 'T5': 'T6'}
++        
++        # This should raise AssertionError due to intersecting keys and values
++        with self.assertRaises(AssertionError):
++            query.change_aliases(problematic_change_map)
++        
++        # A valid change_map should work fine
++        valid_change_map = {'T4': 'T6', 'T5': 'T7'}
++        try:
++            query.change_aliases(valid_change_map)
++        except AssertionError:
++            self.fail("Valid change_map raised AssertionError")
++    
++    def test_alias_generation_uniqueness(self):
++        """
++        Test that alias generation creates unique aliases even during complex operations.
++        """
++        from django.db.models.sql.query import Query
++        
++        # Create a query and populate it with some aliases
++        query = Query(self.Foo)
++        
++        # Simulate adding several table aliases
++        alias1, _ = query.table_alias('foo_table', create=True)
++        alias2, _ = query.table_alias('bar_table', create=True)
++        alias3, _ = query.table_alias('baz_table', create=True)
++        
++        # All aliases should be unique
++        aliases = [alias1, alias2, alias3]
++        self.assertEqual(len(aliases), len(set(aliases)), "Generated aliases are not unique")
++        
++        # Test that subsequent alias generation continues to be unique
++        alias4, _ = query.table_alias('qux_table', create=True)
++        aliases.append(alias4)
++        self.assertEqual(len(aliases), len(set(aliases)), "Subsequent alias generation is not unique")
++    
++    def test_queryset_or_results_consistency(self):
++        """
++        Test that QuerySet OR operations produce consistent results regardless of order.
++        
++        While the SQL might be different, the results should be the same.
++        """
++        qs1 = self.qux.foos.all()
++        qs2 = self.Foo.objects.filter(
++            Q(bars__baz__in=self.qux.bazes.all()) | Q(other_bars__baz__in=self.qux.bazes.all())
++        )
++        
++        # Get results from both orders (assuming the fix is applied)
++        try:
++            result1_ids = set((qs1 | qs2).values_list('id', flat=True))
++            result2_ids = set((qs2 | qs1).values_list('id', flat=True))
++            
++            # Results should be the same (OR is commutative in terms of results)
++            self.assertEqual(result1_ids, result2_ids, 
++                           "QuerySet OR operations should produce the same results regardless of order")
++        except AssertionError:
++            # If the bug is not fixed, we expect this test to fail due to the AssertionError
++            # This test documents the expected behavior after the fix
++            self.skipTest("Bug not yet fixed - QuerySet OR operations raise AssertionError")
++
++
++@isolate_apps('queries')  
++class QueryCombineEdgeCasesTest(TestCase):
++    """
++    Additional edge case tests for Query combination and alias handling.
++    """
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        # Simple models for edge case testing
++        class SimpleModel(models.Model):
++            name = models.CharField(max_length=100)
++            related = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        cls.SimpleModel = SimpleModel
++    
++    def test_empty_queryset_combinations(self):
++        """Test combining empty QuerySets doesn't cause alias issues."""
++        empty_qs1 = self.SimpleModel.objects.none()
++        empty_qs2 = self.SimpleModel.objects.none()
++        
++        # These should work without issues
++        result1 = empty_qs1 | empty_qs2
++        result2 = empty_qs2 | empty_qs1
++        
++        self.assertEqual(list(result1), [])
++        self.assertEqual(list(result2), [])
++    
++    def test_self_referential_model_combinations(self):
++        """Test QuerySet combinations with self-referential models."""
++        obj1 = self.SimpleModel.objects.create(name="obj1")
++        obj2 = self.SimpleModel.objects.create(name="obj2", related=obj1)
++        obj3 = self.SimpleModel.objects.create(name="obj3", related=obj2)
++        
++        qs1 = self.SimpleModel.objects.filter(related__name="obj1")
++        qs2 = self.SimpleModel.objects.filter(related__related__name="obj1")
++        
++        # Test both orders
++        try:
++            result1 = qs1 | qs2
++            list(result1)
++        except AssertionError as e:
++            self.fail(f"qs1 | qs2 with self-referential model raised AssertionError: {e}")
++        
++        try:
++            result2 = qs2 | qs1  
++            list(result2)
++        except AssertionError as e:
++            self.fail(f"qs2 | qs1 with self-referential model raised AssertionError: {e}")

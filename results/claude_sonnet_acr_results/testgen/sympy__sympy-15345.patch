@@ -1,0 +1,6 @@
+{
+  "instance_id": "sympy__sympy-15345",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/sympy__sympy-15345/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/sympy__sympy-15345/sympy__sympy-15345.pred"
+}

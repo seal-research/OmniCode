@@ -1,0 +1,208 @@
+--- a/tests/forms_tests/widget_tests/test_selectdatewidget.py
++++ b/tests/forms_tests/widget_tests/test_selectdatewidget.py
+-# Empty if creating new file
++import datetime
++import sys
++import pytest
++from django import forms
++from django.forms import SelectDateWidget
++from django.test import SimpleTestCase
++
++
++class SelectDateWidgetOverflowTests(SimpleTestCase):
++    """Test SelectDateWidget handling of OverflowError conditions."""
++
++    def setUp(self):
++        self.widget = SelectDateWidget()
++
++    def test_value_from_datadict_with_overflow_year(self):
++        """Test that extremely large year values don't cause OverflowError crash."""
++        # Use a value larger than sys.maxsize to trigger OverflowError
++        large_year = str(sys.maxsize + 1)
++        data = {
++            'test_year': large_year,
++            'test_month': '1',
++            'test_day': '1'
++        }
++        
++        # This should not raise OverflowError, but return a pseudo-ISO date string
++        result = self.widget.value_from_datadict(data, {}, 'test')
++        
++        # Should return a string in the format "year-month-day"
++        expected = f"{large_year}-1-1"
++        self.assertEqual(result, expected)
++
++    def test_value_from_datadict_with_overflow_month(self):
++        """Test that extremely large month values don't cause OverflowError crash."""
++        large_month = str(sys.maxsize + 1)
++        data = {
++            'test_year': '2023',
++            'test_month': large_month,
++            'test_day': '1'
++        }
++        
++        result = self.widget.value_from_datadict(data, {}, 'test')
++        expected = f"2023-{large_month}-1"
++        self.assertEqual(result, expected)
++
++    def test_value_from_datadict_with_overflow_day(self):
++        """Test that extremely large day values don't cause OverflowError crash."""
++        large_day = str(sys.maxsize + 1)
++        data = {
++            'test_year': '2023',
++            'test_month': '1',
++            'test_day': large_day
++        }
++        
++        result = self.widget.value_from_datadict(data, {}, 'test')
++        expected = f"2023-1-{large_day}"
++        self.assertEqual(result, expected)
++
++    def test_value_from_datadict_with_multiple_overflow_values(self):
++        """Test handling when multiple date components have overflow values."""
++        large_value = str(sys.maxsize + 1)
++        data = {
++            'test_year': large_value,
++            'test_month': large_value,
++            'test_day': large_value
++        }
++        
++        result = self.widget.value_from_datadict(data, {}, 'test')
++        expected = f"{large_value}-{large_value}-{large_value}"
++        self.assertEqual(result, expected)
++
++    def test_value_from_datadict_with_extremely_large_values(self):
++        """Test with values that would definitely cause overflow."""
++        # Use the specific value from the issue description
++        extremely_large = "1234567821345678"
++        data = {
++            'test_year': extremely_large,
++            'test_month': '1',
++            'test_day': '1'
++        }
++        
++        result = self.widget.value_from_datadict(data, {}, 'test')
++        expected = f"{extremely_large}-1-1"
++        self.assertEqual(result, expected)
++
++    def test_value_from_datadict_normal_values_still_work(self):
++        """Test that normal date values still work correctly after the fix."""
++        data = {
++            'test_year': '2023',
++            'test_month': '12',
++            'test_day': '25'
++        }
++        
++        result = self.widget.value_from_datadict(data, {}, 'test')
++        
++        # Should return a properly formatted date string, not the raw values
++        # The exact format depends on DATE_INPUT_FORMATS setting
++        self.assertIsInstance(result, str)
++        # Should not be the pseudo-ISO format since these are valid values
++        self.assertNotEqual(result, "2023-12-25")
++
++    def test_value_from_datadict_invalid_date_still_works(self):
++        """Test that invalid dates (like Feb 31) still work as before."""
++        data = {
++            'test_year': '2023',
++            'test_month': '2',
++            'test_day': '31'  # Invalid: February doesn't have 31 days
++        }
++        
++        result = self.widget.value_from_datadict(data, {}, 'test')
++        # Should return pseudo-ISO format for invalid dates
++        self.assertEqual(result, "2023-2-31")
++
++    def test_value_from_datadict_empty_values(self):
++        """Test that empty values are handled correctly."""
++        data = {
++            'test_year': '',
++            'test_month': '',
++            'test_day': ''
++        }
++        
++        result = self.widget.value_from_datadict(data, {}, 'test')
++        self.assertIsNone(result)
++
++    def test_value_from_datadict_partial_values(self):
++        """Test handling when only some date components are provided."""
++        data = {
++            'test_year': '2023',
++            'test_month': '',
++            'test_day': '1'
++        }
++        
++        result = self.widget.value_from_datadict(data, {}, 'test')
++        # Should return data.get(name) when not all components are present
++        self.assertIsNone(result)  # Since 'test' key doesn't exist in data
++
++    def test_overflow_error_direct_reproduction(self):
++        """Direct test to reproduce the OverflowError scenario from the issue."""
++        # This test verifies the exact scenario described in the issue
++        widget = SelectDateWidget()
++        
++        # Simulate the data that would come from the URL parameters
++        # ?my_date_day=1&my_date_month=1&my_date_year=1234567821345678
++        data = {
++            'my_date_day': '1',
++            'my_date_month': '1', 
++            'my_date_year': '1234567821345678'
++        }
++        
++        # Before the fix, this would raise OverflowError
++        # After the fix, it should return a pseudo-ISO date string
++        result = widget.value_from_datadict(data, {}, 'my_date')
++        
++        # Should not raise an exception and should return the pseudo-ISO format
++        self.assertEqual(result, "1234567821345678-1-1")
++
++
++class SelectDateWidgetFormIntegrationTests(SimpleTestCase):
++    """Integration tests with Django forms to ensure the fix works end-to-end."""
++
++    def test_form_validation_with_overflow_values(self):
++        """Test that forms with SelectDateWidget handle overflow gracefully."""
++        
++        class TestForm(forms.Form):
++            my_date = forms.DateField(widget=SelectDateWidget())
++        
++        # Simulate form data with overflow values
++        form_data = {
++            'my_date_day': '1',
++            'my_date_month': '1',
++            'my_date_year': str(sys.maxsize + 1)
++        }
++        
++        # This should not crash the server
++        form = TestForm(data=form_data)
++        
++        # The form should be invalid (due to invalid date), but not crash
++        self.assertFalse(form.is_valid())
++        
++        # Should have validation errors for the date field
++        self.assertIn('my_date', form.errors)
++
++    def test_form_validation_with_issue_reproduction_values(self):
++        """Test form validation with the exact values from the issue description."""
++        
++        class ReproForm(forms.Form):
++            my_date = forms.DateField(widget=SelectDateWidget())
++        
++        # Exact data from the issue: my_date_day=1&my_date_month=1&my_date_year=1234567821345678
++        form_data = {
++            'my_date_day': '1',
++            'my_date_month': '1',
++            'my_date_year': '1234567821345678'
++        }
++        
++        # This should not raise OverflowError
++        form = ReproForm(data=form_data)
++        
++        # Should be able to call is_valid() without crashing
++        is_valid = form.is_valid()
++        
++        # The form should be invalid due to the invalid date
++        self.assertFalse(is_valid)
++        
++        # Should have errors for the date field
++        self.assertIn('my_date', form.errors)

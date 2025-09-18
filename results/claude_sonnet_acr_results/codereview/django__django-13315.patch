@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/forms/models.py b/django/forms/models.py\nindex 5d115458a1..9054809b94 100644\n--- a/django/forms/models.py\n+++ b/django/forms/models.py\n@@ -1154,7 +1154,7 @@ class ModelChoiceIterator:\n     def __iter__(self):\n         if self.field.empty_label is not None:\n             yield (\"\", self.field.empty_label)\n-        queryset = self.queryset\n+        queryset = self.queryset.distinct()\n         # Can't use iterator() when queryset uses prefetch_related()\n         if not queryset._prefetch_related_lookups:\n             queryset = queryset.iterator()\n"
+}

@@ -110,12 +110,18 @@ def load_mswebench_dataset(instance_ids: list,
                             f_mswedataset.write(json.dumps(item) + "\n")
                             break
 
-def create_multiswebench_config(predictions, dataset_path, max_workers, force_rebuild, run_id, timeout, bad_patch_index = -1, phase="all"):
-    """Set up configuration for Multi-SWE-Bench evaluation."""
-    data_dir = Path("./multiswebench_local/data")
-    
+def create_multiswebench_config(predictions, 
+                                dataset_path, 
+                                max_workers, 
+                                force_rebuild, 
+                                run_id, 
+                                timeout, 
+                                bad_patch_index = -1, 
+                                phase="all",
+                                use_apptainer: bool = False,
+                                data_dir: Path = Path("./multiswebench_local/data")):
+    """Set up configuration for Multi-SWE-Bench evaluation."""    
     patch_file_sub_path = Path("patches") / f"{run_id}_patches.jsonl"
-    patch_path = Path("data") / patch_file_sub_path
     patch_file = data_dir / patch_file_sub_path
     print(f"Writing {len(predictions)} patches to {patch_file}...")
     with open(patch_file, 'w', encoding='utf-8') as f:
@@ -132,7 +138,7 @@ def create_multiswebench_config(predictions, dataset_path, max_workers, force_re
                         "org": org,
                         "repo": repo,
                         "number": number,
-                        "fix_patch": bad_patch[bad_patch_index],
+                        "fix_patch": bad_patch[bad_patch_index]["patch"],
                     }
                     f.write(json.dumps(patch_data) + "\n")
             else:
@@ -151,14 +157,14 @@ def create_multiswebench_config(predictions, dataset_path, max_workers, force_re
     print(f"Creating configuration for phase: {phase}...")
     config = {
         "mode": mode,
-        "workdir": str("data/workdir"),
-        "patch_files": [str(patch_path)],
-        "dataset_files": ["data/datasets/dataset.jsonl"],
+        "workdir": str(data_dir / "workdir"),
+        "patch_files": [str(patch_file)],
+        "dataset_files": [str(data_dir / "datasets/dataset.jsonl")],
         "force_build": force_rebuild,
-        "output_dir": str("data/output"),
+        "output_dir": str(data_dir / "output"),
         "specifics": [],
         "skips": [],
-        "repo_dir": str("data/repos"),
+        "repo_dir": str(data_dir / "repos"),
         "need_clone": True,
         "global_env": [],
         "clear_env": True,
@@ -166,9 +172,10 @@ def create_multiswebench_config(predictions, dataset_path, max_workers, force_re
         "max_workers": max_workers,
         "max_workers_build_image": max(1, max_workers // 2),
         "max_workers_run_instance": max(1, max_workers // 2),
-        "log_dir": str("data/logs"),
+        "log_dir": str(data_dir / "logs"),
         "log_level": "INFO",
-        "log_to_console": True
+        "log_to_console": True,
+        "use_apptainer": use_apptainer,
     }
     
     config_file = data_dir / f"{run_id}_{phase}_config.json"
@@ -243,63 +250,38 @@ def run_with_timeout(cmd, timeout_seconds=1800):
 
 def run_multiswebench_phase(config_file, phase="all", timeout=1800):
     """Run a specific phase of Multi-SWE-Bench evaluation."""
-    # Save original directory
-    original_dir = os.getcwd()
-    print(f"Starting in: {original_dir}")
-    config_file = os.path.abspath(config_file)
-    try:
-        # CHange into the multiswebench directory
-        os.chdir("./multiswebench_local")
-        print(f"Now in: {os.getcwd()}")
-        current_dir = os.getcwd()
+    script_path = "./multiswebench_local/multi_swe_bench/harness/run_evaluation.py"
 
-        # Validate config file
-        if not config_file:
-            print("Error: No config file provided")
-            return None
-
-        # Prepare the command
-        
-        script_path = "./multi_swe_bench/harness/run_evaluation.py"
-        cmd = [sys.executable, script_path, "--config", config_file]
-        # module_name = "multi_swe_bench.harness.run_evaluation"
-        # cmd = [
-        #     sys.executable, "-m", module_name,
-        #     "--config", config_file
-        # ]
-
-        env = os.environ.copy()
-        env["PYTHONPATH"] = str(current_dir)  # Ensure Python can find the modules
-
-        print(f"Running command with {timeout}s timeout: {' '.join(cmd)}")
-
-        # Run the command
-        stdout, stderr, returncode = run_with_timeout(cmd, timeout)
-
-        if returncode != 0:
-            print(f"Command failed with code {returncode}")
-            print(f"STDOUT: {stdout}")
-            print(f"STDERR: {stderr}")
-            return None
-
-        # Process results
-        try:
-            with open(config_file, 'r') as f:
-                config_data = json.load(f)
-            
-            final_report_path = Path(config_data["output_dir"]) / "final_report.json"
-            if final_report_path.exists():
-                with open(final_report_path, 'r') as f:
-                    return json.load(f)
-        except Exception as e:
-            print(f"Error loading report: {e}")
-        
+    # Validate inputs
+    if not os.path.exists(script_path):
+        print(f"Script not found: {script_path}")
         return None
 
-    finally:
-        # Always go back
-        os.chdir(original_dir)
-        print(f"Returned to: {os.getcwd()}")
+    if not config_file:
+        print("Error: No config file provided")
+        return None
+
+    # Run the subprocess
+    cmd = [sys.executable, script_path, "--config", config_file]
+    stdout, stderr, returncode = run_with_timeout(cmd, timeout)
+
+    if returncode != 0:
+        print(f"Command failed with code {returncode}")
+        return None
+
+    # Process results
+    try:
+        with open(config_file, 'r') as f:
+            config_data = json.load(f)
+
+        final_report_path = Path(config_data["output_dir"]) / "final_report.json"
+        if final_report_path.exists():
+            with open(final_report_path, 'r') as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"Error loading report: {e}")
+
+    return None
 
 def run_instance(
         instances: list,
@@ -318,29 +300,6 @@ def run_instance(
                 print(f"Total instances: {report.get('total_instances', 0)}")
                 print(f"Resolved instances: {report.get('resolved_instances', 0)}")
                 print(f"Unresolved instances: {report.get('unresolved_instances', 0)}")
-
-                workdir_path = Path("multiswebench_local/data/workdir")
-                config_path = Path(config_file)
-                dataset_path = Path("multiswebench_local/data/datasets")
-                patch_path = Path(f"multiswebench_local/data/patches")
-                logs_path = Path("multiswebench_local/data/logs")
-                output_path = Path("multiswebench_local/data/output")
-                if workdir_path.exists():
-                    new_workdir_path = Path(f"multiswebench_runs/TestGeneration/{runid}/{Path(predictions_path).stem}") / f"{tag}"
-                    
-                    # handle existing directory
-                    if new_workdir_path.exists():
-                        print(f"Workdir path {new_workdir_path} already exists, removing...")
-                        shutil.rmtree(new_workdir_path)
-                    shutil.copytree(workdir_path, new_workdir_path)
-                    shutil.copy(config_path, new_workdir_path / config_path.name)
-                    shutil.copytree(dataset_path, new_workdir_path / dataset_path.name)
-                    shutil.copytree(patch_path, new_workdir_path / patch_path.name)
-                    shutil.copytree(logs_path, new_workdir_path / logs_path.name)
-                    shutil.copytree(output_path, new_workdir_path / output_path.name)
-                    print(f"Copied workdir to {new_workdir_path}")
-                else:
-                    print(f"Workdir path {workdir_path} does not exist")
                 return report
             else:
                 print("Multi-SWE-Bench BugFixing evaluation failed to produce a report")
@@ -360,6 +319,8 @@ def run_instances(
         timeout: int,
         predictions_path,
         dataset_path: str = "./multiswebench_local/data/datasets/dataset.jsonl",
+        use_apptainer: bool = False,
+        instance_ids: list = None
     ):
     """
     Run all instances for the given predictions in parallel.
@@ -379,17 +340,21 @@ def run_instances(
     print(f"Running instances with gold patch...")
     
     success_dict = {}
-    clean_directories()
     instance_dict = {}
     for instance in instances:
         instance_dict[instance["instance_id"]] = instance
+    base_path = Path(f"multiswebench_runs/TestGeneration/{run_id}/{Path(predictions_path).stem}/gold/")
+    clean_directories(base_path)
+    load_mswebench_dataset(instance_ids, predictions, mswebench_dataset_path=f"{base_path}/data/datasets/") # if using local jsonl, this is just the same as gold predictions but with original labels
     config_file = create_multiswebench_config(
         predictions=instance_dict, 
         dataset_path=dataset_path, 
         max_workers=max_workers, 
         force_rebuild=force_rebuild, 
         run_id=run_id, 
-        timeout=timeout
+        timeout=timeout,
+        use_apptainer=use_apptainer,
+        data_dir=Path(f"multiswebench_runs/TestGeneration/{run_id}/{Path(predictions_path).stem}/gold/data/")
     )
     report = run_instance(
         instances=instance_dict,
@@ -407,7 +372,9 @@ def run_instances(
     max_bad_patches = max([len(instance_dict[instance_id].get("bad_patches", [])) for instance_id in instance_dict])
     for i in range(max_bad_patches):
         print(f"Running instances with bad patch index: {i}")
-        clean_directories()
+        base_path = Path(f"multiswebench_runs/TestGeneration/{run_id}/{Path(predictions_path).stem}/bad_patch_{i}/")
+        clean_directories(base_path)
+        load_mswebench_dataset(instance_ids, predictions, mswebench_dataset_path=f"{base_path}/data/datasets/") # if using local jsonl, this is just the same as gold predictions but with original labels
         config_file = create_multiswebench_config(
             predictions=instance_dict, 
             dataset_path=dataset_path, 
@@ -415,7 +382,9 @@ def run_instances(
             force_rebuild=force_rebuild, 
             run_id=run_id, 
             timeout=timeout, 
-            bad_patch_index=i
+            bad_patch_index=i,
+            use_apptainer=use_apptainer,
+            data_dir=Path(f"multiswebench_runs/TestGeneration/{run_id}/{Path(predictions_path).stem}/bad_patch_{i}/data/")
         )
         report = run_instance(
             instances=instance_dict,
@@ -453,8 +422,8 @@ def run_instances(
 
     
 
-def clean_directories():
-    data_dir = Path("./multiswebench_local/data")
+def clean_directories(base_path):
+    data_dir = Path(f"{base_path}/data")
     dirs_to_remove = [
         "workdir",
         "logs",
@@ -492,6 +461,7 @@ def main(
         open_file_limit: int,
         run_id: str,
         timeout: int,
+        use_apptainer: bool = False,
     ):
     """
     Run evaluation harness for the given dataset and predictions.
@@ -499,8 +469,7 @@ def main(
     # set open file limit
     assert len(run_id) > 0, "Run ID must be provided"
     resource.setrlimit(resource.RLIMIT_NOFILE, (open_file_limit, open_file_limit))
-    
-    clean_directories()
+    base_path = f"multiswebench_runs/TestGeneration/{run_id}/{Path(predictions_path).stem}"
 
     # load predictions as map of instance_id to prediction
     if predictions_path == 'gold':
@@ -533,14 +502,11 @@ def main(
     else:
         dataset = get_gold_predictions(dataset_name, instance_ids, split)
 
-    # full_dataset = load_swebench_dataset(dataset_name, split, instance_ids, full=True) # if using local jsonl, this is just the same as gold predictions but with original labels
-    load_mswebench_dataset(instance_ids, predictions) # if using local jsonl, this is just the same as gold predictions but with original labels
-    
     if not dataset:
         print("No instances to run.")
     else:
         # dataset => instances in function
-        run_instances(predictions, dataset, cache_level, clean, force_rebuild, max_workers, run_id, timeout, predictions_path=predictions_path)
+        run_instances(predictions, dataset, cache_level, clean, force_rebuild, max_workers, run_id, timeout, predictions_path=predictions_path, use_apptainer=use_apptainer, dataset_path=f"{base_path}data/datasets/dataset.jsonl", instance_ids=instance_ids)
 
 
 

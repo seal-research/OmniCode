@@ -1,0 +1,285 @@
+--- a/tests/migrations/test_operations.py
++++ b/tests/migrations/test_operations.py
+-# This file already exists, we need to add our tests to it
++import pytest
++from django.db import models
++from django.db.migrations.operations.models import CreateModel, AlterModelOptions
++from django.db.migrations.state import ProjectState
++
++
++class TestCreateModelReduceAlterModelOptions:
++    """Test CreateModel.reduce() behavior with AlterModelOptions operations."""
++    
++    def test_create_model_reduce_alter_model_options_empty_clears_options(self):
++        """
++        Test that when AlterModelOptions with empty options is reduced into CreateModel,
++        the model options are properly cleared.
++        This test reproduces the bug described in the issue.
++        """
++        # Create a CreateModel operation with some initial options
++        create_op = CreateModel(
++            name="TestModel",
++            fields=[
++                ("id", models.AutoField(primary_key=True)),
++                ("name", models.CharField(max_length=100)),
++            ],
++            options={
++                "verbose_name": "Test Model",
++                "ordering": ["name"],
++                "permissions": [("can_test", "Can test")],
++            }
++        )
++        
++        # Create an AlterModelOptions operation that clears all options
++        alter_op = AlterModelOptions(
++            name="TestModel",
++            options={}
++        )
++        
++        # Reduce the operations
++        result = create_op.reduce(alter_op, "testapp")
++        
++        # Should return a single CreateModel operation
++        assert len(result) == 1
++        assert isinstance(result[0], CreateModel)
++        
++        # The resulting CreateModel should have empty options
++        # This assertion will fail before the fix is applied
++        assert result[0].options == {}
++    
++    def test_create_model_reduce_alter_model_options_partial_update(self):
++        """
++        Test that when AlterModelOptions with partial options is reduced into CreateModel,
++        only the specified options are kept and others are cleared.
++        """
++        # Create a CreateModel operation with multiple options
++        create_op = CreateModel(
++            name="TestModel",
++            fields=[
++                ("id", models.AutoField(primary_key=True)),
++                ("name", models.CharField(max_length=100)),
++            ],
++            options={
++                "verbose_name": "Test Model",
++                "ordering": ["name"],
++                "permissions": [("can_test", "Can test")],
++                "managed": True,
++            }
++        )
++        
++        # Create an AlterModelOptions operation that only sets verbose_name
++        alter_op = AlterModelOptions(
++            name="TestModel",
++            options={
++                "verbose_name": "Updated Test Model",
++            }
++        )
++        
++        # Reduce the operations
++        result = create_op.reduce(alter_op, "testapp")
++        
++        # Should return a single CreateModel operation
++        assert len(result) == 1
++        assert isinstance(result[0], CreateModel)
++        
++        # The resulting CreateModel should only have the verbose_name option
++        # Other ALTER_OPTION_KEYS should be cleared
++        expected_options = {"verbose_name": "Updated Test Model"}
++        assert result[0].options == expected_options
++    
++    def test_create_model_reduce_alter_model_options_preserves_non_alter_options(self):
++        """
++        Test that options not in ALTER_OPTION_KEYS are preserved when reducing
++        AlterModelOptions into CreateModel.
++        """
++        # Create a CreateModel operation with both ALTER_OPTION_KEYS and other options
++        create_op = CreateModel(
++            name="TestModel",
++            fields=[
++                ("id", models.AutoField(primary_key=True)),
++                ("name", models.CharField(max_length=100)),
++            ],
++            options={
++                "verbose_name": "Test Model",  # This is in ALTER_OPTION_KEYS
++                "ordering": ["name"],  # This is in ALTER_OPTION_KEYS
++                "db_table": "custom_table",  # This is NOT in ALTER_OPTION_KEYS
++                "proxy": True,  # This is NOT in ALTER_OPTION_KEYS
++            }
++        )
++        
++        # Create an AlterModelOptions operation with empty options
++        alter_op = AlterModelOptions(
++            name="TestModel",
++            options={}
++        )
++        
++        # Reduce the operations
++        result = create_op.reduce(alter_op, "testapp")
++        
++        # Should return a single CreateModel operation
++        assert len(result) == 1
++        assert isinstance(result[0], CreateModel)
++        
++        # The resulting CreateModel should preserve non-ALTER_OPTION_KEYS options
++        # but clear ALTER_OPTION_KEYS options
++        expected_options = {
++            "db_table": "custom_table",
++            "proxy": True,
++        }
++        assert result[0].options == expected_options
++    
++    def test_create_model_reduce_alter_model_options_adds_new_options(self):
++        """
++        Test that AlterModelOptions can add new options to CreateModel.
++        """
++        # Create a CreateModel operation with minimal options
++        create_op = CreateModel(
++            name="TestModel",
++            fields=[
++                ("id", models.AutoField(primary_key=True)),
++                ("name", models.CharField(max_length=100)),
++            ],
++            options={
++                "db_table": "custom_table",  # Not in ALTER_OPTION_KEYS
++            }
++        )
++        
++        # Create an AlterModelOptions operation that adds new options
++        alter_op = AlterModelOptions(
++            name="TestModel",
++            options={
++                "verbose_name": "New Test Model",
++                "ordering": ["name"],
++                "managed": False,
++            }
++        )
++        
++        # Reduce the operations
++        result = create_op.reduce(alter_op, "testapp")
++        
++        # Should return a single CreateModel operation
++        assert len(result) == 1
++        assert isinstance(result[0], CreateModel)
++        
++        # The resulting CreateModel should have both the preserved and new options
++        expected_options = {
++            "db_table": "custom_table",  # Preserved
++            "verbose_name": "New Test Model",  # Added
++            "ordering": ["name"],  # Added
++            "managed": False,  # Added
++        }
++        assert result[0].options == expected_options
++    
++    def test_create_model_reduce_alter_model_options_different_model_name(self):
++        """
++        Test that CreateModel.reduce() doesn't reduce AlterModelOptions for different models.
++        """
++        # Create a CreateModel operation
++        create_op = CreateModel(
++            name="TestModel",
++            fields=[
++                ("id", models.AutoField(primary_key=True)),
++            ],
++            options={"verbose_name": "Test Model"}
++        )
++        
++        # Create an AlterModelOptions operation for a different model
++        alter_op = AlterModelOptions(
++            name="DifferentModel",
++            options={}
++        )
++        
++        # Reduce the operations
++        result = create_op.reduce(alter_op, "testapp")
++        
++        # Should not reduce - returns None (handled by super().reduce())
++        assert result is None or result is False
++    
++    def test_create_model_reduce_preserves_other_attributes(self):
++        """
++        Test that reducing AlterModelOptions into CreateModel preserves
++        all other attributes (fields, bases, managers).
++        """
++        # Create a CreateModel operation with various attributes
++        create_op = CreateModel(
++            name="TestModel",
++            fields=[
++                ("id", models.AutoField(primary_key=True)),
++                ("name", models.CharField(max_length=100)),
++            ],
++            options={"verbose_name": "Test Model"},
++            bases=(models.Model,),
++            managers=[("objects", models.Manager())],
++        )
++        
++        # Create an AlterModelOptions operation
++        alter_op = AlterModelOptions(
++            name="TestModel",
++            options={"ordering": ["name"]}
++        )
++        
++        # Reduce the operations
++        result = create_op.reduce(alter_op, "testapp")
++        
++        # Should return a single CreateModel operation
++        assert len(result) == 1
++        reduced_op = result[0]
++        
++        # Check that all attributes are preserved
++        assert reduced_op.name == create_op.name
++        assert reduced_op.fields == create_op.fields
++        assert reduced_op.bases == create_op.bases
++        assert reduced_op.managers == create_op.managers
++        
++        # Check that options are correctly updated
++        assert reduced_op.options == {"ordering": ["name"]}
++
++    def test_alter_model_options_keys_coverage(self):
++        """
++        Test that all ALTER_OPTION_KEYS are properly handled in the reduction.
++        This ensures our fix covers all the options that AlterModelOptions manages.
++        """
++        # Get all ALTER_OPTION_KEYS
++        alter_option_keys = AlterModelOptions.ALTER_OPTION_KEYS
++        
++        # Create initial options with all ALTER_OPTION_KEYS set
++        initial_options = {}
++        for key in alter_option_keys:
++            if key in ["permissions", "default_permissions"]:
++                initial_options[key] = [("test_perm", "Test permission")]
++            elif key in ["ordering"]:
++                initial_options[key] = ["name"]
++            elif key in ["managed", "select_on_save"]:
++                initial_options[key] = True
++            else:
++                initial_options[key] = f"test_{key}"
++        
++        # Add a non-ALTER_OPTION_KEYS option
++        initial_options["db_table"] = "custom_table"
++        
++        # Create a CreateModel operation
++        create_op = CreateModel(
++            name="TestModel",
++            fields=[("id", models.AutoField(primary_key=True))],
++            options=initial_options
++        )
++        
++        # Create an AlterModelOptions operation that clears all options
++        alter_op = AlterModelOptions(
++            name="TestModel",
++            options={}
++        )
++        
++        # Reduce the operations
++        result = create_op.reduce(alter_op, "testapp")
++        
++        # Should return a single CreateModel operation
++        assert len(result) == 1
++        reduced_op = result[0]
++        
++        # All ALTER_OPTION_KEYS should be cleared
++        for key in alter_option_keys:
++            assert key not in reduced_op.options
++        
++        # Non-ALTER_OPTION_KEYS should be preserved
++        assert reduced_op.options.get("db_table") == "custom_table"

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/solvers/solveset.py b/sympy/solvers/solveset.py\nindex 445be3e0e8..66117c100b 100644\n--- a/sympy/solvers/solveset.py\n+++ b/sympy/solvers/solveset.py\n@@ -540,9 +540,9 @@ def _solve_trig(f, symbol, domain):\n     else:\n         sol = sol1\n     if sol is None:\n-        raise NotImplementedError(filldedent('''\n-            Solution to this kind of trigonometric equations\n-            is yet to be implemented'''))\n+        from sympy.sets.conditionset import ConditionSet\n+        from sympy import Eq\n+        return ConditionSet(symbol, Eq(f, 0), domain)\n     return sol\n \n \n"
+}

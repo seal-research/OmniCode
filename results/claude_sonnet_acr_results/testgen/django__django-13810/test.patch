@@ -1,0 +1,319 @@
+--- a/tests/handlers/test_middleware_not_used_bug.py
++++ b/tests/handlers/test_middleware_not_used_bug.py
+-# Empty if creating new file
++import asyncio
++import pytest
++from unittest.mock import Mock, patch
++
++from django.core.exceptions import MiddlewareNotUsed, ImproperlyConfigured
++from django.core.handlers.base import BaseHandler
++from django.test import RequestFactory, override_settings
++from django.http import HttpResponse
++
++
++class SyncMiddleware:
++    """A synchronous middleware that doesn't support async."""
++    sync_capable = True
++    async_capable = False
++    
++    def __init__(self, get_response):
++        self.get_response = get_response
++    
++    def __call__(self, request):
++        return self.get_response(request)
++
++
++class AsyncMiddleware:
++    """An asynchronous middleware."""
++    sync_capable = False
++    async_capable = True
++    
++    def __init__(self, get_response):
++        self.get_response = get_response
++    
++    async def __call__(self, request):
++        return await self.get_response(request)
++
++
++class MiddlewareNotUsedRaiser:
++    """Middleware that raises MiddlewareNotUsed during instantiation."""
++    sync_capable = True
++    async_capable = False
++    
++    def __init__(self, get_response):
++        raise MiddlewareNotUsed("This middleware is not used")
++
++
++class MiddlewareNotUsedRaiserAsync:
++    """Async middleware that raises MiddlewareNotUsed during instantiation."""
++    sync_capable = False
++    async_capable = True
++    
++    def __init__(self, get_response):
++        raise MiddlewareNotUsed("This async middleware is not used")
++
++
++class TestMiddlewareNotUsedBug:
++    """Test suite for the MiddlewareNotUsed bug in ASGI context."""
++    
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.handler = BaseHandler()
++        self.request_factory = RequestFactory()
++    
++    def test_middleware_not_used_preserves_handler_state_sync_context(self):
++        """
++        Test that MiddlewareNotUsed doesn't poison the middleware chain in sync context.
++        This test should pass both before and after the fix.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.SyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.SyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            # This should work fine in sync context
++            self.handler.load_middleware(is_async=False)
++            assert self.handler._middleware_chain is not None
++            
++            # Verify the chain works
++            request = self.request_factory.get('/')
++            response = self.handler.get_response(request)
++            assert isinstance(response, HttpResponse)
++    
++    def test_middleware_not_used_preserves_handler_state_async_context_bug_reproduction(self):
++        """
++        Test that reproduces the bug: MiddlewareNotUsed poisons the middleware chain in async context.
++        This test should FAIL before the fix is applied, demonstrating the bug.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',  # This will poison the chain
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            # Load middleware in async context
++            self.handler.load_middleware(is_async=True)
++            assert self.handler._middleware_chain is not None
++            
++            # The bug: the middleware chain should be async but gets poisoned
++            # This will fail before the fix because the handler becomes sync after MiddlewareNotUsed
++            assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                "Middleware chain should be async but was poisoned by MiddlewareNotUsed"
++    
++    def test_middleware_not_used_preserves_handler_state_mixed_middleware(self):
++        """
++        Test with mixed sync/async middleware where MiddlewareNotUsed is raised.
++        This demonstrates the bug in a more complex scenario.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.SyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            self.handler.load_middleware(is_async=True)
++            assert self.handler._middleware_chain is not None
++            
++            # The final middleware chain should be async since we're in async context
++            # and the last middleware is async
++            assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                "Final middleware chain should be async"
++    
++    def test_middleware_not_used_async_middleware_raises_exception(self):
++        """
++        Test that async middleware raising MiddlewareNotUsed doesn't poison the chain.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiserAsync',
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            self.handler.load_middleware(is_async=True)
++            assert self.handler._middleware_chain is not None
++            
++            # Should remain async
++            assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                "Middleware chain should remain async after async MiddlewareNotUsed"
++    
++    def test_multiple_middleware_not_used_in_sequence(self):
++        """
++        Test multiple consecutive MiddlewareNotUsed exceptions don't accumulate poison.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            self.handler.load_middleware(is_async=True)
++            assert self.handler._middleware_chain is not None
++            
++            # Should still be async despite multiple MiddlewareNotUsed
++            assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                "Multiple MiddlewareNotUsed should not poison the chain"
++    
++    def test_middleware_not_used_at_beginning_of_chain(self):
++        """
++        Test MiddlewareNotUsed at the beginning of the middleware chain.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.SyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            self.handler.load_middleware(is_async=True)
++            assert self.handler._middleware_chain is not None
++            
++            # The chain should be determined by the actual middleware, not the skipped one
++            # Since we're in async context and have async middleware, it should be async
++            assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                "Chain should be async when MiddlewareNotUsed is at the beginning"
++    
++    def test_middleware_not_used_at_end_of_chain(self):
++        """
++        Test MiddlewareNotUsed at the end of the middleware chain.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.SyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            self.handler.load_middleware(is_async=True)
++            assert self.handler._middleware_chain is not None
++            
++            # Should be async since we're in async context
++            assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                "Chain should be async when MiddlewareNotUsed is at the end"
++    
++    @patch('tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser.__init__')
++    def test_middleware_not_used_handler_state_tracking(self, mock_init):
++        """
++        Test that handler_is_async state is correctly tracked when MiddlewareNotUsed is raised.
++        This test verifies the internal state management.
++        """
++        # Make the middleware raise MiddlewareNotUsed
++        mock_init.side_effect = MiddlewareNotUsed("Test exception")
++        
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            # Patch the load_middleware method to capture internal state
++            original_load_middleware = self.handler.load_middleware
++            handler_states = []
++            
++            def patched_load_middleware(is_async=False):
++                # Call original but capture state during execution
++                self.handler._captured_states = []
++                return original_load_middleware(is_async)
++            
++            self.handler.load_middleware = patched_load_middleware
++            self.handler.load_middleware(is_async=True)
++            
++            # Verify the final chain is async
++            assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                "Final middleware chain should be async despite MiddlewareNotUsed"
++    
++    def test_edge_case_all_middleware_not_used(self):
++        """
++        Test edge case where all middleware raise MiddlewareNotUsed.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            self.handler.load_middleware(is_async=True)
++            assert self.handler._middleware_chain is not None
++            
++            # Should be async since we requested async context
++            assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                "Chain should be async even when all middleware are not used"
++    
++    def test_sync_context_not_affected_by_bug(self):
++        """
++        Test that the bug doesn't affect synchronous context.
++        This should pass both before and after the fix.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.SyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.SyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            self.handler.load_middleware(is_async=False)
++            assert self.handler._middleware_chain is not None
++            
++            # Should be sync (not a coroutine function)
++            assert not asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                "Chain should be sync in sync context"
++
++
++class TestMiddlewareNotUsedIntegration:
++    """Integration tests for MiddlewareNotUsed behavior."""
++    
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.handler = BaseHandler()
++    
++    def test_middleware_not_used_with_debug_logging(self):
++        """
++        Test that MiddlewareNotUsed logging works correctly and doesn't affect handler state.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=True):
++            with patch('django.core.handlers.base.logger') as mock_logger:
++                self.handler.load_middleware(is_async=True)
++                
++                # Verify logging was called
++                mock_logger.debug.assert_called()
++                
++                # Verify chain is still async
++                assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                    "Middleware chain should be async despite MiddlewareNotUsed with logging"
++    
++    def test_middleware_not_used_without_debug_logging(self):
++        """
++        Test MiddlewareNotUsed behavior without debug logging.
++        """
++        middleware_classes = [
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++            'tests.handlers.test_middleware_not_used_bug.MiddlewareNotUsedRaiser',
++            'tests.handlers.test_middleware_not_used_bug.AsyncMiddleware',
++        ]
++        
++        with override_settings(MIDDLEWARE=middleware_classes, DEBUG=False):
++            with patch('django.core.handlers.base.logger') as mock_logger:
++                self.handler.load_middleware(is_async=True)
++                
++                # Verify no logging was called
++                mock_logger.debug.assert_not_called()
++                
++                # Verify chain is still async
++                assert asyncio.iscoroutinefunction(self.handler._middleware_chain), \
++                    "Middleware chain should be async despite MiddlewareNotUsed without logging"

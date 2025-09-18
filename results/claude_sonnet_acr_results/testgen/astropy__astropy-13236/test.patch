@@ -1,0 +1,277 @@
+--- a/astropy/table/tests/test_structured_array_warning.py
++++ b/astropy/table/tests/test_structured_array_warning.py
+-# Empty if creating new file
++import pytest
++import warnings
++import numpy as np
++from astropy.table import Table, Column
++from astropy.table.ndarray_mixin import NdarrayMixin
++
++
++class TestStructuredArrayWarning:
++    """Test FutureWarning for automatic conversion of structured arrays to NdarrayMixin."""
++    
++    def setup_method(self):
++        """Set up test data."""
++        # Create a structured numpy array
++        self.structured_array = np.array(
++            [(1, 2.5, 'a'), (3, 4.5, 'b'), (5, 6.5, 'c')],
++            dtype=[('x', 'i4'), ('y', 'f8'), ('z', 'U1')]
++        )
++        
++        # Create a regular numpy array for comparison
++        self.regular_array = np.array([1, 2, 3])
++    
++    def test_convert_col_for_table_structured_array_warning(self):
++        """Test that _convert_col_for_table issues FutureWarning for structured arrays."""
++        t = Table()
++        
++        # This should trigger the FutureWarning
++        with pytest.warns(FutureWarning, match="Automatic conversion of structured numpy arrays to NdarrayMixin is deprecated"):
++            data, is_mixin = t._convert_col_for_table(self.structured_array)
++        
++        # Verify the data was converted to NdarrayMixin
++        assert isinstance(data, NdarrayMixin)
++        assert is_mixin is True
++        
++        # Verify the data content is preserved
++        assert len(data) == 3
++        assert data.dtype == self.structured_array.dtype
++        np.testing.assert_array_equal(data, self.structured_array)
++    
++    def test_convert_col_for_table_regular_array_no_warning(self):
++        """Test that _convert_col_for_table does not warn for regular arrays."""
++        t = Table()
++        
++        # This should NOT trigger any warning
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")  # Turn warnings into errors
++            data, is_mixin = t._convert_col_for_table(self.regular_array)
++        
++        # Regular arrays should not be converted to mixins
++        assert not isinstance(data, NdarrayMixin)
++        assert is_mixin is False
++    
++    def test_convert_col_for_table_column_no_warning(self):
++        """Test that _convert_col_for_table does not warn for Column objects."""
++        t = Table()
++        col = Column(self.structured_array)
++        
++        # This should NOT trigger any warning
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")  # Turn warnings into errors
++            data, is_mixin = t._convert_col_for_table(col)
++        
++        # Column objects should pass through unchanged
++        assert isinstance(data, Column)
++        assert is_mixin is False
++    
++    def test_convert_col_for_table_existing_mixin_no_warning(self):
++        """Test that _convert_col_for_table does not warn for existing mixins."""
++        t = Table()
++        mixin = self.structured_array.view(NdarrayMixin)
++        
++        # This should NOT trigger any warning
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")  # Turn warnings into errors
++            data, is_mixin = t._convert_col_for_table(mixin)
++        
++        # Existing mixins should pass through unchanged
++        assert isinstance(data, NdarrayMixin)
++        assert is_mixin is True
++    
++    def test_add_column_structured_array_warning(self):
++        """Test that add_column issues FutureWarning for structured arrays."""
++        t = Table()
++        
++        # This should trigger the FutureWarning
++        with pytest.warns(FutureWarning, match="Automatic conversion of structured numpy arrays to NdarrayMixin is deprecated"):
++            t.add_column(self.structured_array, name='test_col')
++        
++        # Verify the column was added as NdarrayMixin
++        assert 'test_col' in t.colnames
++        assert isinstance(t['test_col'], NdarrayMixin)
++        
++        # Verify the data content is preserved
++        assert len(t['test_col']) == 3
++        assert t['test_col'].dtype == self.structured_array.dtype
++        np.testing.assert_array_equal(t['test_col'], self.structured_array)
++    
++    def test_add_column_regular_array_no_warning(self):
++        """Test that add_column does not warn for regular arrays."""
++        t = Table()
++        
++        # This should NOT trigger any warning
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")  # Turn warnings into errors
++            t.add_column(self.regular_array, name='test_col')
++        
++        # Regular arrays should be converted to Column
++        assert 'test_col' in t.colnames
++        assert isinstance(t['test_col'], Column)
++        assert not isinstance(t['test_col'], NdarrayMixin)
++    
++    def test_add_column_column_no_warning(self):
++        """Test that add_column does not warn for Column objects."""
++        t = Table()
++        col = Column(self.structured_array, name='test_col')
++        
++        # This should NOT trigger any warning
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")  # Turn warnings into errors
++            t.add_column(col)
++        
++        # Column objects should be added as-is
++        assert 'test_col' in t.colnames
++        assert isinstance(t['test_col'], Column)
++    
++    def test_add_column_existing_mixin_no_warning(self):
++        """Test that add_column does not warn for existing mixins."""
++        t = Table()
++        mixin = self.structured_array.view(NdarrayMixin)
++        
++        # This should NOT trigger any warning
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")  # Turn warnings into errors
++            t.add_column(mixin, name='test_col')
++        
++        # Existing mixins should be added as-is
++        assert 'test_col' in t.colnames
++        assert isinstance(t['test_col'], NdarrayMixin)
++    
++    def test_warning_message_content(self):
++        """Test that the warning message contains the expected content."""
++        t = Table()
++        
++        with pytest.warns(FutureWarning) as warning_info:
++            t._convert_col_for_table(self.structured_array)
++        
++        warning_message = str(warning_info[0].message)
++        assert "Automatic conversion of structured numpy arrays to NdarrayMixin is deprecated" in warning_message
++        assert "Please wrap the array in a Column object explicitly" in warning_message
++        assert "In astropy 5.2, structured arrays will be added as Column objects" in warning_message
++    
++    def test_warning_stacklevel_convert_col_for_table(self):
++        """Test that the warning has appropriate stacklevel for _convert_col_for_table."""
++        t = Table()
++        
++        # Capture the warning and check it points to this test function
++        with pytest.warns(FutureWarning) as warning_info:
++            t._convert_col_for_table(self.structured_array)
++        
++        # The warning should be issued and captured
++        assert len(warning_info) == 1
++        assert warning_info[0].category == FutureWarning
++    
++    def test_warning_stacklevel_add_column(self):
++        """Test that the warning has appropriate stacklevel for add_column."""
++        t = Table()
++        
++        # Capture the warning and check it points to this test function
++        with pytest.warns(FutureWarning) as warning_info:
++            t.add_column(self.structured_array, name='test_col')
++        
++        # The warning should be issued and captured
++        assert len(warning_info) == 1
++        assert warning_info[0].category == FutureWarning
++    
++    def test_multiple_structured_arrays_multiple_warnings(self):
++        """Test that multiple structured arrays trigger multiple warnings."""
++        t = Table()
++        
++        # Create another structured array
++        structured_array2 = np.array(
++            [(10, 20.5), (30, 40.5)],
++            dtype=[('a', 'i4'), ('b', 'f8')]
++        )
++        
++        # Each structured array should trigger its own warning
++        with pytest.warns(FutureWarning) as warning_info:
++            t.add_column(self.structured_array, name='col1')
++            t.add_column(structured_array2, name='col2')
++        
++        # Should have two warnings
++        assert len(warning_info) == 2
++        for warning in warning_info:
++            assert warning.category == FutureWarning
++            assert "Automatic conversion of structured numpy arrays to NdarrayMixin is deprecated" in str(warning.message)
++    
++    def test_no_warning_for_empty_dtype(self):
++        """Test that arrays with empty dtype (len(dtype) == 0) don't trigger warning."""
++        t = Table()
++        
++        # Create an array with empty dtype
++        empty_dtype_array = np.array([1, 2, 3])  # Regular array has len(dtype) == 0
++        
++        # This should NOT trigger any warning
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")  # Turn warnings into errors
++            data, is_mixin = t._convert_col_for_table(empty_dtype_array)
++        
++        # Should not be converted to mixin
++        assert not isinstance(data, NdarrayMixin)
++        assert is_mixin is False
++    
++    def test_no_warning_for_single_field_dtype(self):
++        """Test that arrays with single field dtype (len(dtype) == 1) don't trigger warning."""
++        t = Table()
++        
++        # Create an array with single field dtype
++        single_field_array = np.array(
++            [(1,), (2,), (3,)],
++            dtype=[('x', 'i4')]
++        )
++        
++        # This SHOULD trigger warning since len(dtype) > 1 is False but len(dtype.names) > 0
++        # Actually, let's check what len(dtype) returns for single field
++        assert len(single_field_array.dtype) == 1
++        
++        # This should NOT trigger warning since len(dtype) == 1, not > 1
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")  # Turn warnings into errors
++            data, is_mixin = t._convert_col_for_table(single_field_array)
++        
++        # Should not be converted to mixin
++        assert not isinstance(data, NdarrayMixin)
++        assert is_mixin is False
++
++
++class TestStructuredArrayWarningIntegration:
++    """Integration tests for structured array warning in real usage scenarios."""
++    
++    def test_table_initialization_with_structured_array(self):
++        """Test that table initialization handles structured arrays correctly."""
++        structured_array = np.array(
++            [(1, 2.5, 'a'), (3, 4.5, 'b')],
++            dtype=[('x', 'i4'), ('y', 'f8'), ('z', 'U1')]
++        )
++        
++        # Table initialization should not trigger the warning since it uses different code path
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")
++            t = Table(structured_array)
++        
++        # Should create separate columns for each field
++        assert 'x' in t.colnames
++        assert 'y' in t.colnames
++        assert 'z' in t.colnames
++    
++    def test_workaround_with_column_wrapper(self):
++        """Test that wrapping in Column avoids the warning."""
++        structured_array = np.array(
++            [(1, 2.5, 'a'), (3, 4.5, 'b')],
++            dtype=[('x', 'i4'), ('y', 'f8'), ('z', 'U1')]
++        )
++        
++        t = Table()
++        col = Column(structured_array)
++        
++        # This should NOT trigger any warning
++        with warnings.catch_warnings():
++            warnings.simplefilter("error")
++            t.add_column(col, name='structured_col')
++        
++        # Should be added as Column, not NdarrayMixin
++        assert 'structured_col' in t.colnames
++        assert isinstance(t['structured_col'], Column)
++        assert not isinstance(t['structured_col'], NdarrayMixin)

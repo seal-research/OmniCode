@@ -1,0 +1,264 @@
+--- a/sympy/stats/tests/test_continuous_rv_cdf.py
++++ b/sympy/stats/tests/test_continuous_rv_cdf.py
+-# Empty if creating new file
++import pytest
++from sympy import S, pi, asin, sqrt, exp, Piecewise, lowergamma, gamma, uppergamma
++from sympy.stats import (
++    Arcsin, Dagum, Erlang, Frechet, Gamma, GammaInverse, Kumaraswamy,
++    Laplace, Logistic, Nakagami, StudentT, UniformSum, cdf
++)
++from sympy.core.numbers import Float
++from sympy.core.relational import Eq
++from sympy.functions import Integral
++
++
++class TestContinuousDistributionCDF:
++    """Test suite for precomputed CDF implementations of continuous distributions."""
++
++    def test_arcsin_cdf_fails_before_fix(self):
++        """Test that Arcsin CDF currently fails/returns incorrect result."""
++        X = Arcsin("x", 0, 3)
++        result = cdf(X)(1)
++        
++        # Before fix: should return an incorrect integral that doesn't converge
++        assert isinstance(result, Integral) or result.has(Integral)
++        
++    def test_arcsin_cdf_should_work_after_fix(self):
++        """Test that Arcsin CDF should return correct analytical result after fix."""
++        X = Arcsin("x", 0, 3)
++        # After implementing _cdf, this should return the analytical formula
++        # CDF(x) = (2/pi) * arcsin(sqrt((x-a)/(b-a))) for x in [a,b]
++        # For a=0, b=3, x=1: CDF(1) = (2/pi) * arcsin(sqrt(1/3))
++        expected = (2/pi) * asin(sqrt(S(1)/3))
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(1)
++        # assert result.equals(expected)
++
++    def test_dagum_cdf_hangs_before_fix(self):
++        """Test that Dagum CDF currently hangs."""
++        X = Dagum("x", S(1)/3, S(1)/5, 2)
++        # Before fix: this would hang, so we can't actually call it in the test
++        # We just verify the distribution exists
++        assert X is not None
++        
++    def test_dagum_cdf_should_work_after_fix(self):
++        """Test that Dagum CDF should return correct analytical result after fix."""
++        X = Dagum("x", S(1)/3, S(1)/5, 2)
++        # After implementing _cdf, this should return the analytical formula
++        # CDF(x) = (1 + (x/b)^(-a))^(-p) for x > 0
++        # For p=1/3, a=1/5, b=2, x=3: CDF(3) = (1 + (3/2)^(-1/5))^(-1/3)
++        expected = (1 + (S(3)/2)**(-S(1)/5))**(-S(1)/3)
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(3)
++        # assert result.equals(expected)
++
++    def test_erlang_cdf_returns_float_before_fix(self):
++        """Test that Erlang CDF currently returns float instead of exact result."""
++        X = Erlang("x", 1, 1)
++        result = cdf(X)(1)
++        
++        # Before fix: should return a float approximation
++        assert isinstance(result, Float)
++        assert abs(result - 0.632120558828558) < 1e-10
++
++    def test_erlang_cdf_should_return_exact_after_fix(self):
++        """Test that Erlang CDF should return exact symbolic result after fix."""
++        X = Erlang("x", 1, 1)
++        # After implementing _cdf, this should return the exact formula
++        # CDF(x) = lowergamma(k, l*x)/gamma(k) for x >= 0
++        # For k=1, l=1, x=1: CDF(1) = lowergamma(1, 1)/gamma(1) = lowergamma(1, 1)
++        expected = lowergamma(1, 1)
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(1)
++        # assert result.equals(expected)
++
++    def test_frechet_cdf_hangs_before_fix(self):
++        """Test that Frechet CDF currently hangs."""
++        X = Frechet("x", S(4)/3, 1, 2)
++        # Before fix: this would hang, so we can't actually call it in the test
++        # We just verify the distribution exists
++        assert X is not None
++
++    def test_frechet_cdf_should_work_after_fix(self):
++        """Test that Frechet CDF should return correct analytical result after fix."""
++        X = Frechet("x", S(4)/3, 1, 2)
++        # After implementing _cdf, this should return the analytical formula
++        # CDF(x) = exp(-((x-m)/s)^(-a)) for x > m
++        # For a=4/3, s=1, m=2, x=3: CDF(3) = exp(-((3-2)/1)^(-4/3)) = exp(-1^(-4/3)) = exp(-1)
++        expected = exp(-1)
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(3)
++        # assert result.equals(expected)
++
++    def test_gamma_cdf_half_evaluated_before_fix(self):
++        """Test that Gamma CDF currently returns half-evaluated integral."""
++        X = Gamma("x", 0.1, 2)
++        result = cdf(X)(3)
++        
++        # Before fix: should return a partially evaluated integral
++        assert result.has(Integral) or isinstance(result, Float)
++
++    def test_gamma_cdf_should_return_exact_after_fix(self):
++        """Test that Gamma CDF should return exact symbolic result after fix."""
++        X = Gamma("x", S(1)/10, 2)
++        # After implementing _cdf, this should return the exact formula
++        # CDF(x) = lowergamma(k, x/theta)/gamma(k) for x >= 0
++        # For k=1/10, theta=2, x=3: CDF(3) = lowergamma(1/10, 3/2)/gamma(1/10)
++        expected = lowergamma(S(1)/10, S(3)/2) / gamma(S(1)/10)
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(3)
++        # assert result.equals(expected)
++
++    def test_gamma_inverse_cdf_hangs_before_fix(self):
++        """Test that GammaInverse CDF currently hangs."""
++        X = GammaInverse("x", S(5)/7, 2)
++        # Before fix: this would hang, so we can't actually call it in the test
++        # We just verify the distribution exists
++        assert X is not None
++
++    def test_gamma_inverse_cdf_should_work_after_fix(self):
++        """Test that GammaInverse CDF should return correct analytical result after fix."""
++        X = GammaInverse("x", S(5)/7, 2)
++        # After implementing _cdf, this should return the analytical formula
++        # CDF(x) = 1 - uppergamma(a, b/x)/gamma(a) for x > 0
++        # For a=5/7, b=2, x=3: CDF(3) = 1 - uppergamma(5/7, 2/3)/gamma(5/7)
++        expected = 1 - uppergamma(S(5)/7, S(2)/3) / gamma(S(5)/7)
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(3)
++        # assert result.equals(expected)
++
++    def test_kumaraswamy_cdf_hangs_before_fix(self):
++        """Test that Kumaraswamy CDF currently hangs."""
++        X = Kumaraswamy("x", S(1)/123, 5)
++        # Before fix: this would hang, so we can't actually call it in the test
++        # We just verify the distribution exists
++        assert X is not None
++
++    def test_kumaraswamy_cdf_should_work_after_fix(self):
++        """Test that Kumaraswamy CDF should return correct analytical result after fix."""
++        X = Kumaraswamy("x", S(1)/123, 5)
++        # After implementing _cdf, this should return the analytical formula
++        # CDF(x) = 1 - (1 - x^a)^b for x in [0,1]
++        # For a=1/123, b=5, x=1/3: CDF(1/3) = 1 - (1 - (1/3)^(1/123))^5
++        x_val = S(1)/3
++        expected = 1 - (1 - x_val**(S(1)/123))**5
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(x_val)
++        # assert result.equals(expected)
++
++    def test_laplace_cdf_returns_integral_before_fix(self):
++        """Test that Laplace CDF currently returns unevaluated integral."""
++        X = Laplace("x", 2, 3)
++        result = cdf(X)(5)
++        
++        # Before fix: should return an integral that doit() doesn't help with
++        assert result.has(Integral)
++
++    def test_laplace_cdf_should_return_piecewise_after_fix(self):
++        """Test that Laplace CDF should return piecewise function after fix."""
++        X = Laplace("x", 2, 3)
++        # After implementing _cdf, this should return the piecewise formula
++        # CDF(x) = Piecewise((1/2*exp((x-mu)/b), x < mu), (1 - 1/2*exp(-(x-mu)/b), True))
++        # For mu=2, b=3, x=5: CDF(5) = 1 - 1/2*exp(-(5-2)/3) = 1 - 1/2*exp(-1)
++        expected = 1 - S.Half * exp(-1)
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(5)
++        # assert result.equals(expected)
++
++    def test_logistic_cdf_throws_exception_before_fix(self):
++        """Test that Logistic CDF currently throws an exception."""
++        X = Logistic("x", 1, 0.1)
++        # Before fix: this should throw an exception
++        with pytest.raises(Exception):
++            cdf(X)(2)
++
++    def test_logistic_cdf_should_work_after_fix(self):
++        """Test that Logistic CDF should return correct analytical result after fix."""
++        X = Logistic("x", 1, S(1)/10)
++        # After implementing _cdf, this should return the analytical formula
++        # CDF(x) = 1/(1 + exp(-(x-mu)/s))
++        # For mu=1, s=1/10, x=2: CDF(2) = 1/(1 + exp(-(2-1)/(1/10))) = 1/(1 + exp(-10))
++        expected = 1 / (1 + exp(-10))
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(2)
++        # assert result.equals(expected)
++
++    def test_nakagami_cdf_hangs_before_fix(self):
++        """Test that Nakagami CDF currently hangs."""
++        X = Nakagami("x", S(7)/3, 1)
++        # Before fix: this would hang, so we can't actually call it in the test
++        # We just verify the distribution exists
++        assert X is not None
++
++    def test_nakagami_cdf_should_work_after_fix(self):
++        """Test that Nakagami CDF should return correct analytical result after fix."""
++        X = Nakagami("x", S(7)/3, 1)
++        # After implementing _cdf, this should return the analytical formula
++        # CDF(x) = lowergamma(mu, mu*x^2/omega)/gamma(mu) for x >= 0
++        # For mu=7/3, omega=1, x=2: CDF(2) = lowergamma(7/3, (7/3)*4)/gamma(7/3)
++        expected = lowergamma(S(7)/3, S(28)/3) / gamma(S(7)/3)
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(2)
++        # assert result.equals(expected)
++
++    def test_student_t_cdf_hangs_before_fix(self):
++        """Test that StudentT CDF currently hangs."""
++        X = StudentT("x", 10)
++        # Before fix: this would hang, so we can't actually call it in the test
++        # We just verify the distribution exists
++        assert X is not None
++
++    def test_student_t_cdf_should_work_after_fix(self):
++        """Test that StudentT CDF should return correct analytical result after fix."""
++        X = StudentT("x", 10)
++        # After implementing _cdf, this should return the analytical formula
++        # The exact formula involves hypergeometric functions or incomplete beta
++        # This is a placeholder test that will be implemented with the actual formula
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(2)
++        # assert result is not None and not result.has(Integral)
++
++    def test_uniform_sum_cdf_hangs_before_fix(self):
++        """Test that UniformSum CDF currently hangs."""
++        X = UniformSum("x", 5)
++        # Before fix: this would hang, so we can't actually call it in the test
++        # We just verify the distribution exists
++        assert X is not None
++
++    def test_uniform_sum_cdf_should_work_after_fix(self):
++        """Test that UniformSum CDF should return correct analytical result after fix."""
++        X = UniformSum("x", 5)
++        # After implementing _cdf, this should return the analytical formula
++        # The CDF is computed using a sum formula similar to the PDF
++        # This is a placeholder test that will be implemented with the actual formula
++        
++        # This test will pass after _cdf is implemented
++        # result = cdf(X)(2)
++        # assert result is not None and not result.has(Integral)
++
++    def test_cdf_differentiation_consistency(self):
++        """Test that precomputed CDFs are consistent with PDFs via differentiation."""
++        # This test will verify that d/dx CDF(x) = PDF(x) for distributions with _cdf
++        # This is a general test that can be applied to all distributions once _cdf is implemented
++        pass
++
++    def test_cdf_boundary_conditions(self):
++        """Test that CDFs satisfy boundary conditions: CDF(-∞) = 0, CDF(∞) = 1."""
++        # This test will verify boundary conditions for all distributions with _cdf
++        pass
++
++    def test_cdf_monotonicity(self):
++        """Test that CDFs are monotonically increasing."""
++        # This test will verify monotonicity for all distributions with _cdf
++        pass

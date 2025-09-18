@@ -1,0 +1,203 @@
+--- a/tests/admin_utils/test_display_for_field.py
++++ b/tests/admin_utils/test_display_for_field.py
+-# Empty if creating new file
++import json
++import pytest
++from django.contrib.admin.utils import display_for_field
++from django.db import models
++from django.forms.fields import InvalidJSONInput
++from django.test import TestCase
++
++
++class TestJSONFieldDisplayForField(TestCase):
++    """Test cases for JSONField display in admin when readonly."""
++
++    def setUp(self):
++        """Set up test data."""
++        self.empty_value_display = '-'
++        
++        # Create a mock JSONField instance
++        self.json_field = models.JSONField()
++        
++    def test_display_for_field_json_dict_value(self):
++        """Test that JSONField dict values are displayed as valid JSON strings."""
++        value = {"foo": "bar", "nested": {"key": "value"}}
++        
++        result = display_for_field(value, self.json_field, self.empty_value_display)
++        
++        # Should return valid JSON string, not Python dict representation
++        expected = '{"foo": "bar", "nested": {"key": "value"}}'
++        self.assertEqual(result, expected)
++        
++        # Verify it's valid JSON
++        self.assertEqual(json.loads(result), value)
++        
++    def test_display_for_field_json_list_value(self):
++        """Test that JSONField list values are displayed as valid JSON strings."""
++        value = [1, 2, {"key": "value"}, "string"]
++        
++        result = display_for_field(value, self.json_field, self.empty_value_display)
++        
++        # Should return valid JSON string
++        expected = '[1, 2, {"key": "value"}, "string"]'
++        self.assertEqual(result, expected)
++        
++        # Verify it's valid JSON
++        self.assertEqual(json.loads(result), value)
++        
++    def test_display_for_field_json_string_value(self):
++        """Test that JSONField string values are displayed as valid JSON strings."""
++        value = "simple string"
++        
++        result = display_for_field(value, self.json_field, self.empty_value_display)
++        
++        # Should return valid JSON string with quotes
++        expected = '"simple string"'
++        self.assertEqual(result, expected)
++        
++        # Verify it's valid JSON
++        self.assertEqual(json.loads(result), value)
++        
++    def test_display_for_field_json_number_value(self):
++        """Test that JSONField number values are displayed as valid JSON strings."""
++        value = 42
++        
++        result = display_for_field(value, self.json_field, self.empty_value_display)
++        
++        # Should return valid JSON string
++        expected = '42'
++        self.assertEqual(result, expected)
++        
++        # Verify it's valid JSON
++        self.assertEqual(json.loads(result), value)
++        
++    def test_display_for_field_json_boolean_value(self):
++        """Test that JSONField boolean values are displayed as valid JSON strings."""
++        value = True
++        
++        result = display_for_field(value, self.json_field, self.empty_value_display)
++        
++        # Should return valid JSON string (lowercase 'true')
++        expected = 'true'
++        self.assertEqual(result, expected)
++        
++        # Verify it's valid JSON
++        self.assertEqual(json.loads(result), value)
++        
++    def test_display_for_field_json_null_value(self):
++        """Test that JSONField null values are displayed correctly."""
++        value = None
++        
++        result = display_for_field(value, self.json_field, self.empty_value_display)
++        
++        # Should return empty_value_display for None
++        self.assertEqual(result, self.empty_value_display)
++        
++    def test_display_for_field_json_with_custom_encoder(self):
++        """Test that JSONField with custom encoder works correctly."""
++        import decimal
++        
++        class DecimalEncoder(json.JSONEncoder):
++            def default(self, obj):
++                if isinstance(obj, decimal.Decimal):
++                    return float(obj)
++                return super().default(obj)
++        
++        json_field_with_encoder = models.JSONField(encoder=DecimalEncoder)
++        value = {"price": decimal.Decimal("19.99")}
++        
++        result = display_for_field(value, json_field_with_encoder, self.empty_value_display)
++        
++        # Should use the custom encoder
++        expected = '{"price": 19.99}'
++        self.assertEqual(result, expected)
++        
++    def test_display_for_field_json_invalid_json_input(self):
++        """Test that InvalidJSONInput is handled correctly."""
++        # This test demonstrates the bug - before the fix, this would fail
++        # because display_for_field doesn't handle JSONField specially
++        
++        # Simulate what happens when forms.JSONField.bound_data encounters invalid JSON
++        invalid_json_value = InvalidJSONInput('{"invalid": json}')
++        
++        result = display_for_field(invalid_json_value, self.json_field, self.empty_value_display)
++        
++        # Should return the raw string value for InvalidJSONInput
++        expected = '{"invalid": json}'
++        self.assertEqual(result, expected)
++        
++    def test_display_for_field_json_complex_nested_structure(self):
++        """Test that complex nested JSON structures are displayed correctly."""
++        value = {
++            "users": [
++                {"id": 1, "name": "John", "active": True},
++                {"id": 2, "name": "Jane", "active": False}
++            ],
++            "metadata": {
++                "total": 2,
++                "page": 1,
++                "filters": None
++            }
++        }
++        
++        result = display_for_field(value, self.json_field, self.empty_value_display)
++        
++        # Should return valid JSON string
++        parsed_result = json.loads(result)
++        self.assertEqual(parsed_result, value)
++        
++        # Verify specific formatting (JSON uses double quotes, not single quotes)
++        self.assertIn('"users":', result)
++        self.assertIn('"name": "John"', result)
++        self.assertIn('"active": true', result)  # JSON boolean is lowercase
++        self.assertIn('"active": false', result)
++        
++    def test_display_for_field_preserves_other_field_types(self):
++        """Test that the fix doesn't break existing functionality for other field types."""
++        # Test that other field types still work as expected
++        
++        # BooleanField
++        bool_field = models.BooleanField()
++        result = display_for_field(True, bool_field, self.empty_value_display)
++        # This should use the _boolean_icon, but we'll just check it's not JSON formatted
++        self.assertNotEqual(result, 'true')  # Should not be JSON formatted
++        
++        # CharField
++        char_field = models.CharField()
++        result = display_for_field("test string", char_field, self.empty_value_display)
++        self.assertEqual(result, "test string")  # Should not be JSON formatted
++        
++        # IntegerField
++        int_field = models.IntegerField()
++        result = display_for_field(42, int_field, self.empty_value_display)
++        # Should be formatted as number, not JSON
++        self.assertIsInstance(result, str)
++        
++    def test_display_for_field_json_demonstrates_bug_before_fix(self):
++        """
++        This test demonstrates the bug that exists before the fix is applied.
++        
++        Before the fix, JSONField values fall through to display_for_value(),
++        which calls str() on the value, resulting in Python dict representation
++        with single quotes instead of valid JSON with double quotes.
++        """
++        value = {"foo": "bar"}
++        
++        # This test will fail before the fix is applied
++        result = display_for_field(value, self.json_field, self.empty_value_display)
++        
++        # The bug: without the fix, this would return "{'foo': 'bar'}" (Python dict repr)
++        # With the fix: this should return '{"foo": "bar"}' (valid JSON)
++        
++        # Test that result is valid JSON (this will fail before fix)
++        try:
++            parsed = json.loads(result)
++            self.assertEqual(parsed, value)
++        except json.JSONDecodeError:
++            self.fail(f"Result '{result}' is not valid JSON. This indicates the bug is present.")
++            
++        # Test that result uses double quotes, not single quotes
++        self.assertIn('"foo":', result)
++        self.assertIn('"bar"', result)
++        self.assertNotIn("'foo':", result)
++        self.assertNotIn("'bar'", result)

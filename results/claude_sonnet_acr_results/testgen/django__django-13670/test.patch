@@ -1,0 +1,137 @@
+--- a/tests/utils_tests/test_dateformat.py
++++ b/tests/utils_tests/test_dateformat.py
+-# Empty if creating new file
++import datetime
++import pytest
++from django.utils import dateformat
++
++
++class TestDateFormatYearFormatting:
++    """Test suite for the 'y' format character in Django's dateformat module."""
++
++    def test_y_format_years_less_than_1000(self):
++        """Test that 'y' format correctly handles years < 1000 with leading zeros."""
++        # Test the specific case mentioned in the issue
++        dt = datetime.datetime(123, 4, 5, 6, 7)
++        result = dateformat.format(dt, "y")
++        assert result == "23", f"Expected '23' for year 123, got '{result}'"
++
++    def test_y_format_single_digit_years(self):
++        """Test that 'y' format correctly handles single-digit years."""
++        dt = datetime.datetime(9, 4, 5, 6, 7)
++        result = dateformat.format(dt, "y")
++        assert result == "09", f"Expected '09' for year 9, got '{result}'"
++
++    def test_y_format_two_digit_years(self):
++        """Test that 'y' format correctly handles two-digit years."""
++        dt = datetime.datetime(99, 4, 5, 6, 7)
++        result = dateformat.format(dt, "y")
++        assert result == "99", f"Expected '99' for year 99, got '{result}'"
++
++    def test_y_format_three_digit_years(self):
++        """Test that 'y' format correctly handles three-digit years."""
++        test_cases = [
++            (100, "00"),
++            (105, "05"),
++            (123, "23"),
++            (199, "99"),
++            (999, "99"),
++        ]
++        
++        for year, expected in test_cases:
++            dt = datetime.datetime(year, 4, 5, 6, 7)
++            result = dateformat.format(dt, "y")
++            assert result == expected, f"Expected '{expected}' for year {year}, got '{result}'"
++
++    def test_y_format_normal_years(self):
++        """Test that 'y' format works correctly for normal years (>= 1000)."""
++        test_cases = [
++            (1000, "00"),
++            (1999, "99"),
++            (2000, "00"),
++            (2023, "23"),
++            (2099, "99"),
++        ]
++        
++        for year, expected in test_cases:
++            dt = datetime.datetime(year, 4, 5, 6, 7)
++            result = dateformat.format(dt, "y")
++            assert result == expected, f"Expected '{expected}' for year {year}, got '{result}'"
++
++    def test_y_format_consistency_with_python_strftime(self):
++        """Test that Django's 'y' format is consistent with Python's strftime('%y')."""
++        # Test years that Python's strftime can handle (>= 1900)
++        test_years = [1900, 1999, 2000, 2023, 2099]
++        
++        for year in test_years:
++            dt = datetime.datetime(year, 4, 5, 6, 7)
++            django_result = dateformat.format(dt, "y")
++            python_result = dt.strftime("%y")
++            assert django_result == python_result, (
++                f"Django result '{django_result}' != Python result '{python_result}' for year {year}"
++            )
++
++    def test_y_format_edge_cases(self):
++        """Test edge cases for 'y' format."""
++        # Test year 1 (minimum possible year)
++        dt = datetime.datetime(1, 1, 1)
++        result = dateformat.format(dt, "y")
++        assert result == "01", f"Expected '01' for year 1, got '{result}'"
++        
++        # Test year 10
++        dt = datetime.datetime(10, 1, 1)
++        result = dateformat.format(dt, "y")
++        assert result == "10", f"Expected '10' for year 10, got '{result}'"
++
++    def test_y_format_with_date_objects(self):
++        """Test that 'y' format works with date objects (not just datetime)."""
++        dt = datetime.date(123, 4, 5)
++        result = dateformat.format(dt, "y")
++        assert result == "23", f"Expected '23' for date year 123, got '{result}'"
++
++    def test_y_format_in_complex_format_string(self):
++        """Test 'y' format as part of a more complex format string."""
++        dt = datetime.datetime(123, 4, 5, 6, 7)
++        result = dateformat.format(dt, "d/m/y H:i")
++        assert "23" in result, f"Expected '23' to be in result '{result}'"
++        assert result == "05/04/23 06:07", f"Expected '05/04/23 06:07', got '{result}'"
++
++    def test_dateformat_class_y_method_directly(self):
++        """Test the DateFormat.y() method directly."""
++        dt = datetime.datetime(123, 4, 5, 6, 7)
++        df = dateformat.DateFormat(dt)
++        result = df.y()
++        assert result == "23", f"Expected '23' from DateFormat.y() for year 123, got '{result}'"
++
++    def test_y_format_preserves_existing_functionality(self):
++        """Test that the fix doesn't break existing functionality for normal years."""
++        # Test a range of normal years to ensure backward compatibility
++        normal_years = [1970, 1980, 1990, 2000, 2010, 2020, 2030]
++        
++        for year in normal_years:
++            dt = datetime.datetime(year, 6, 15, 12, 30)
++            result = dateformat.format(dt, "y")
++            expected = str(year % 100).zfill(2)
++            assert result == expected, (
++                f"Expected '{expected}' for year {year}, got '{result}'"
++            )
++
++    def test_y_format_bug_reproduction(self):
++        """Reproduce the exact bug described in the issue."""
++        # This test reproduces the exact scenario from the GitHub issue
++        dt = datetime.datetime(123, 4, 5, 6, 7)
++        result = dateformat.format(dt, "y")
++        
++        # Before the fix, this would return '3' instead of '23'
++        assert result == "23", (
++            f"Bug reproduction failed: expected '23' for year 123, got '{result}'. "
++            f"This should match Python's strftime behavior."
++        )
++        
++        # Verify it matches Python's behavior for years >= 1900
++        dt_modern = datetime.datetime(2023, 4, 5, 6, 7)
++        django_result = dateformat.format(dt_modern, "y")
++        python_result = dt_modern.strftime("%y")
++        assert django_result == python_result, (
++            f"Modern year handling broken: Django '{django_result}' != Python '{python_result}'"
++        )

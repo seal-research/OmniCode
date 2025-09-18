@@ -1,0 +1,249 @@
+--- a/tests/test_contracts_exception_handling.py
++++ b/tests/test_contracts_exception_handling.py
+-# Empty if creating new file
++import pytest
++import sys
++from unittest.mock import Mock, MagicMock
++from unittest import TestResult
++
++from scrapy.http import Request, Response
++from scrapy.contracts import Contract
++
++
++class TestContract(Contract):
++    """Test contract class for testing exception handling"""
++    name = "test"
++    
++    def __init__(self, method, *args):
++        super().__init__(method, *args)
++        self.pre_process_called = False
++        self.post_process_called = False
++    
++    def pre_process(self, response):
++        self.pre_process_called = True
++    
++    def post_process(self, output):
++        self.post_process_called = True
++
++
++class TestContractExceptionHandling:
++    """Test suite for Contract exception handling bugs"""
++    
++    def setup_method(self):
++        """Setup test fixtures"""
++        self.mock_method = Mock()
++        self.mock_method.__name__ = "test_method"
++        self.mock_method.__doc__ = "@test"
++        
++        self.contract = TestContract(self.mock_method)
++        self.results = TestResult()
++        
++        # Create a mock response
++        self.response = Mock(spec=Response)
++        
++    def test_add_pre_hook_keyboard_interrupt_propagates(self):
++        """Test that KeyboardInterrupt in pre_process propagates and is not swallowed by return in finally"""
++        # Create a contract that raises KeyboardInterrupt in pre_process
++        class KeyboardInterruptContract(TestContract):
++            def pre_process(self, response):
++                raise KeyboardInterrupt("User interrupted")
++        
++        contract = KeyboardInterruptContract(self.mock_method)
++        
++        # Create a request with a callback that returns a list
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        
++        # Add the pre-hook
++        modified_request = contract.add_pre_hook(request, self.results)
++        
++        # The wrapper should propagate KeyboardInterrupt, not swallow it
++        with pytest.raises(KeyboardInterrupt, match="User interrupted"):
++            modified_request.callback(self.response)
++    
++    def test_add_pre_hook_exception_in_except_block_propagates(self):
++        """Test that exceptions raised in except blocks are not swallowed by return in finally"""
++        # Mock results.addError to raise an exception
++        def mock_add_error(*args):
++            raise RuntimeError("Error in error handling")
++        
++        self.results.addError = mock_add_error
++        
++        # Create a contract that raises an exception in pre_process
++        class ExceptionContract(TestContract):
++            def pre_process(self, response):
++                raise ValueError("Test exception")
++        
++        contract = ExceptionContract(self.mock_method)
++        
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        modified_request = contract.add_pre_hook(request, self.results)
++        
++        # The RuntimeError from addError should propagate, not be swallowed
++        with pytest.raises(RuntimeError, match="Error in error handling"):
++            modified_request.callback(self.response)
++    
++    def test_add_pre_hook_async_callback_exception_propagates(self):
++        """Test that TypeError for async callbacks propagates and is not swallowed"""
++        async def async_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=async_callback)
++        modified_request = self.contract.add_pre_hook(request, self.results)
++        
++        # The TypeError should propagate, not be swallowed by return in finally
++        with pytest.raises(TypeError, match="Contracts don't support async callbacks"):
++            modified_request.callback(self.response)
++    
++    def test_add_post_hook_keyboard_interrupt_propagates(self):
++        """Test that KeyboardInterrupt in post_process propagates and is not swallowed by return in finally"""
++        # Create a contract that raises KeyboardInterrupt in post_process
++        class KeyboardInterruptContract(TestContract):
++            def post_process(self, output):
++                raise KeyboardInterrupt("User interrupted")
++        
++        contract = KeyboardInterruptContract(self.mock_method)
++        
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        modified_request = contract.add_post_hook(request, self.results)
++        
++        # The wrapper should propagate KeyboardInterrupt, not swallow it
++        with pytest.raises(KeyboardInterrupt, match="User interrupted"):
++            modified_request.callback(self.response)
++    
++    def test_add_post_hook_exception_in_except_block_propagates(self):
++        """Test that exceptions raised in except blocks are not swallowed by return in finally"""
++        # Mock results.addError to raise an exception
++        def mock_add_error(*args):
++            raise RuntimeError("Error in error handling")
++        
++        self.results.addError = mock_add_error
++        
++        # Create a contract that raises an exception in post_process
++        class ExceptionContract(TestContract):
++            def post_process(self, output):
++                raise ValueError("Test exception")
++        
++        contract = ExceptionContract(self.mock_method)
++        
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        modified_request = contract.add_post_hook(request, self.results)
++        
++        # The RuntimeError from addError should propagate, not be swallowed
++        with pytest.raises(RuntimeError, match="Error in error handling"):
++            modified_request.callback(self.response)
++    
++    def test_add_pre_hook_normal_operation_still_works(self):
++        """Test that normal operation still works after fixing the exception swallowing bug"""
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        modified_request = self.contract.add_pre_hook(request, self.results)
++        
++        # Normal operation should work and return the expected result
++        result = modified_request.callback(self.response)
++        assert result == ["item1", "item2"]
++        assert self.contract.pre_process_called
++        assert self.results.testsRun == 1
++    
++    def test_add_post_hook_normal_operation_still_works(self):
++        """Test that normal operation still works after fixing the exception swallowing bug"""
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        modified_request = self.contract.add_post_hook(request, self.results)
++        
++        # Normal operation should work and return the expected result
++        result = modified_request.callback(self.response)
++        assert result == ["item1", "item2"]
++        assert self.contract.post_process_called
++        assert self.results.testsRun == 1
++    
++    def test_add_pre_hook_assertion_error_recorded_but_callback_executes(self):
++        """Test that AssertionError in pre_process is recorded but callback still executes"""
++        class AssertionContract(TestContract):
++            def pre_process(self, response):
++                assert False, "Test assertion failure"
++        
++        contract = AssertionContract(self.mock_method)
++        
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        modified_request = contract.add_pre_hook(request, self.results)
++        
++        # Should not raise exception, but record failure and return callback result
++        result = modified_request.callback(self.response)
++        assert result == ["item1", "item2"]
++        assert self.results.testsRun == 1
++        assert len(self.results.failures) == 1
++    
++    def test_add_post_hook_assertion_error_recorded_but_output_returned(self):
++        """Test that AssertionError in post_process is recorded but output is still returned"""
++        class AssertionContract(TestContract):
++            def post_process(self, output):
++                assert False, "Test assertion failure"
++        
++        contract = AssertionContract(self.mock_method)
++        
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        modified_request = contract.add_post_hook(request, self.results)
++        
++        # Should not raise exception, but record failure and return output
++        result = modified_request.callback(self.response)
++        assert result == ["item1", "item2"]
++        assert self.results.testsRun == 1
++        assert len(self.results.failures) == 1
++    
++    def test_add_pre_hook_base_exception_propagates(self):
++        """Test that BaseException subclasses (like SystemExit) propagate correctly"""
++        class SystemExitContract(TestContract):
++            def pre_process(self, response):
++                raise SystemExit("System exit")
++        
++        contract = SystemExitContract(self.mock_method)
++        
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        modified_request = contract.add_pre_hook(request, self.results)
++        
++        # SystemExit should propagate, not be swallowed
++        with pytest.raises(SystemExit, match="System exit"):
++            modified_request.callback(self.response)
++    
++    def test_add_post_hook_base_exception_propagates(self):
++        """Test that BaseException subclasses (like SystemExit) propagate correctly"""
++        class SystemExitContract(TestContract):
++            def post_process(self, output):
++                raise SystemExit("System exit")
++        
++        contract = SystemExitContract(self.mock_method)
++        
++        def test_callback(response, **kwargs):
++            return ["item1", "item2"]
++        
++        request = Request("http://example.com", callback=test_callback)
++        modified_request = contract.add_post_hook(request, self.results)
++        
++        # SystemExit should propagate, not be swallowed
++        with pytest.raises(SystemExit, match="System exit"):
++            modified_request.callback(self.response)

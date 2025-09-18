@@ -6,6 +6,7 @@ import base64
 import fcntl, os, json
 import subprocess
 import shutil
+import os
 
 from datasets import load_dataset, load_from_disk
 from tqdm import tqdm
@@ -33,6 +34,7 @@ CONFIG_FILE_MAP = {
     "testgen-cpp": CUR_DIR / "testgen_cpp.yaml",
     "stylereview": CUR_DIR / "stylereview.yaml",
     "reviewfix": CUR_DIR / "reviewfix.yaml",
+    "reviewfix-java": CUR_DIR / "reviewfix_java.yaml",
 }
 
 # Add style review config map for Java
@@ -124,7 +126,11 @@ def str2bool(v):
         raise ArgumentTypeError("Boolean value expected.")
 
 def get_reviewfix_faux_problem_statement(instance: dict) -> str:
-    bad_patch = [bp for bp in instance['bad_patches'] if bp['source'] == 'badpatchllm'][0]
+    if 'bad_patches' not in instance or len(instance['bad_patches']) == 0:
+        logger.warning(f"Instance {instance['instance_id']} does not have any bad patches, cannot generate faux problem statement.")
+        return None
+    bad_patch = instance['bad_patches'][0]    
+    # bad_patch = [bp for bp in instance['bad_patches'] if bp['source'] == 'badpatchllm'][0]
     problem_statement = instance['problem_statement']
     bad_patch_text = bad_patch['patch']
     review = bad_patch['review']
@@ -176,9 +182,12 @@ def run_sweagent_single(
 
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
 
-        if mode == 'reviewfix':
+        if mode == 'reviewfix' or mode == 'reviewfix-java':
             # use the problem statement to inject prompt, hacky way to modify prompt easily
-            fp.write(get_reviewfix_faux_problem_statement(instance))
+            prompt = get_reviewfix_faux_problem_statement(instance)
+            if prompt is None:
+                return "", ""
+            fp.write(prompt)
         else:
             fp.write(instance['problem_statement'])
 
@@ -455,9 +464,9 @@ if __name__ == '__main__':
     parser.add_argument("-i", "--input_tasks", type=str, required=True)
     parser.add_argument("--instance_ids", type=str, required=False, default=None)
     parser.add_argument("-o", "--output_dir", type=str, required=True)
-    parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash-preview-04-17")
+    parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash")
     parser.add_argument("-k", "--api_key", type=str, default=None)
-    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "bugfixing-cpp", "testgen-cpp", "stylereview", "reviewfix"])
+    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "bugfixing-cpp", "testgen-cpp", "stylereview", "reviewfix", "reviewfix-java"])
     parser.add_argument("--thinking_budget", type=int, default=0)
     parser.add_argument("--style_tool", type=str, default=None, choices=["checkstyle", "pmd"], help="Style review tool to use (Java)")
     parser.add_argument("--use_apptainer", type=str2bool, default=False, help="run with docker or apptainer")

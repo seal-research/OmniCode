@@ -1,0 +1,252 @@
+--- a/tests/template_tests/test_custom_tags.py
++++ b/tests/template_tests/test_custom_tags.py
+-# Empty if creating new file
++import pytest
++from django.template import Context, Template, TemplateSyntaxError
++from django.template.library import Library
++from django.test import TestCase
++
++
++class CustomTagsKwargsTest(TestCase):
++    """Test custom template tags with keyword-only arguments."""
++
++    def setUp(self):
++        """Set up test library and register test tags."""
++        self.library = Library()
++
++    def test_simple_tag_kwonly_arg_with_default_works(self):
++        """Test that simple_tag with keyword-only arg with default accepts the argument."""
++        @self.library.simple_tag
++        def hello(*, greeting='hello'):
++            return f'{greeting} world'
++
++        # Register the tag
++        self.library.tag('hello', hello)
++
++        # Test that providing the keyword argument works
++        template = Template("{% load custom_tags %}{% hello greeting='hi' %}")
++        context = Context({})
++        
++        # This should work and not raise TemplateSyntaxError
++        result = template.render(context)
++        self.assertEqual(result.strip(), 'hi world')
++
++    def test_simple_tag_kwonly_arg_with_default_uses_default(self):
++        """Test that simple_tag with keyword-only arg uses default when not provided."""
++        @self.library.simple_tag
++        def hello(*, greeting='hello'):
++            return f'{greeting} world'
++
++        # Register the tag
++        self.library.tag('hello', hello)
++
++        # Test that not providing the keyword argument uses default
++        template = Template("{% load custom_tags %}{% hello %}")
++        context = Context({})
++        
++        result = template.render(context)
++        self.assertEqual(result.strip(), 'hello world')
++
++    def test_simple_tag_kwonly_required_arg_works(self):
++        """Test that simple_tag with required keyword-only arg works correctly."""
++        @self.library.simple_tag
++        def hi(*, greeting):
++            return f'{greeting} world'
++
++        # Register the tag
++        self.library.tag('hi', hi)
++
++        # Test that providing the required keyword argument works
++        template = Template("{% load custom_tags %}{% hi greeting='hello' %}")
++        context = Context({})
++        
++        result = template.render(context)
++        self.assertEqual(result.strip(), 'hello world')
++
++    def test_simple_tag_kwonly_required_arg_missing_raises_error(self):
++        """Test that simple_tag with required keyword-only arg raises error when missing."""
++        @self.library.simple_tag
++        def hi(*, greeting):
++            return f'{greeting} world'
++
++        # Register the tag
++        self.library.tag('hi', hi)
++
++        # Test that not providing the required keyword argument raises error
++        template = Template("{% load custom_tags %}{% hi %}")
++        context = Context({})
++        
++        with self.assertRaises(TemplateSyntaxError) as cm:
++            template.render(context)
++        
++        self.assertIn("did not receive value(s) for the argument(s): 'greeting'", str(cm.exception))
++
++    def test_simple_tag_duplicate_kwarg_correct_error_message(self):
++        """Test that duplicate keyword arguments show correct error message."""
++        @self.library.simple_tag
++        def hi(*, greeting):
++            return f'{greeting} world'
++
++        # Register the tag
++        self.library.tag('hi', hi)
++
++        # Test that providing duplicate keyword arguments shows correct error
++        with self.assertRaises(TemplateSyntaxError) as cm:
++            Template("{% load custom_tags %}{% hi greeting='hi' greeting='hello' %}")
++        
++        # Should show "multiple values" error, not "unexpected keyword argument"
++        self.assertIn("received multiple values for keyword argument 'greeting'", str(cm.exception))
++        self.assertNotIn("unexpected keyword argument", str(cm.exception))
++
++    def test_simple_tag_unexpected_kwarg_error_message(self):
++        """Test that truly unexpected keyword arguments show correct error message."""
++        @self.library.simple_tag
++        def hello(*, greeting='hello'):
++            return f'{greeting} world'
++
++        # Register the tag
++        self.library.tag('hello', hello)
++
++        # Test that providing unexpected keyword arguments shows correct error
++        with self.assertRaises(TemplateSyntaxError) as cm:
++            Template("{% load custom_tags %}{% hello unknown='value' %}")
++        
++        self.assertIn("received unexpected keyword argument 'unknown'", str(cm.exception))
++
++    def test_simple_tag_mixed_args_and_kwargs(self):
++        """Test simple_tag with mix of positional and keyword-only arguments."""
++        @self.library.simple_tag
++        def greet(name, *, greeting='hello', punctuation='!'):
++            return f'{greeting} {name}{punctuation}'
++
++        # Register the tag
++        self.library.tag('greet', greet)
++
++        # Test with positional arg and keyword args
++        template = Template("{% load custom_tags %}{% greet 'world' greeting='hi' punctuation='.' %}")
++        context = Context({})
++        
++        result = template.render(context)
++        self.assertEqual(result.strip(), 'hi world.')
++
++    def test_simple_tag_mixed_args_with_defaults(self):
++        """Test simple_tag with positional args and keyword-only args with defaults."""
++        @self.library.simple_tag
++        def greet(name, *, greeting='hello'):
++            return f'{greeting} {name}'
++
++        # Register the tag
++        self.library.tag('greet', greet)
++
++        # Test with positional arg only (using default for keyword arg)
++        template = Template("{% load custom_tags %}{% greet 'world' %}")
++        context = Context({})
++        
++        result = template.render(context)
++        self.assertEqual(result.strip(), 'hello world')
++
++        # Test with positional arg and explicit keyword arg
++        template = Template("{% load custom_tags %}{% greet 'world' greeting='hi' %}")
++        context = Context({})
++        
++        result = template.render(context)
++        self.assertEqual(result.strip(), 'hi world')
++
++    def test_inclusion_tag_kwonly_arg_with_default_works(self):
++        """Test that inclusion_tag with keyword-only arg with default accepts the argument."""
++        @self.library.inclusion_tag('test_template.html')
++        def show_greeting(*, greeting='hello'):
++            return {'greeting': f'{greeting} world'}
++
++        # Register the tag
++        self.library.tag('show_greeting', show_greeting)
++
++        # Test that providing the keyword argument works
++        # Note: This test focuses on the parsing, not the actual template rendering
++        template = Template("{% load custom_tags %}{% show_greeting greeting='hi' %}")
++        context = Context({})
++        
++        # The parsing should not raise TemplateSyntaxError
++        # The actual rendering might fail due to missing template, but parsing should work
++        try:
++            template.render(context)
++        except Exception as e:
++            # If it fails, it should not be due to unexpected keyword argument
++            self.assertNotIn("unexpected keyword argument", str(e))
++
++    def test_inclusion_tag_duplicate_kwarg_correct_error_message(self):
++        """Test that inclusion_tag duplicate keyword arguments show correct error message."""
++        @self.library.inclusion_tag('test_template.html')
++        def show_greeting(*, greeting):
++            return {'greeting': f'{greeting} world'}
++
++        # Register the tag
++        self.library.tag('show_greeting', show_greeting)
++
++        # Test that providing duplicate keyword arguments shows correct error
++        with self.assertRaises(TemplateSyntaxError) as cm:
++            Template("{% load custom_tags %}{% show_greeting greeting='hi' greeting='hello' %}")
++        
++        # Should show "multiple values" error, not "unexpected keyword argument"
++        self.assertIn("received multiple values for keyword argument 'greeting'", str(cm.exception))
++        self.assertNotIn("unexpected keyword argument", str(cm.exception))
++
++    def test_simple_tag_with_varkw_accepts_any_kwarg(self):
++        """Test that simple_tag with **kwargs accepts any keyword argument."""
++        @self.library.simple_tag
++        def flexible(*, greeting='hello', **kwargs):
++            extra = ', '.join(f'{k}={v}' for k, v in kwargs.items())
++            result = f'{greeting} world'
++            if extra:
++                result += f' ({extra})'
++            return result
++
++        # Register the tag
++        self.library.tag('flexible', flexible)
++
++        # Test that any keyword arguments are accepted
++        template = Template("{% load custom_tags %}{% flexible greeting='hi' extra='value' another='test' %}")
++        context = Context({})
++        
++        result = template.render(context)
++        # Should not raise TemplateSyntaxError for "unexpected" arguments
++        self.assertIn('hi world', result)
++
++    def test_edge_case_kwonly_with_context(self):
++        """Test keyword-only args work with takes_context=True."""
++        @self.library.simple_tag(takes_context=True)
++        def context_greet(context, *, greeting='hello'):
++            return f'{greeting} from context'
++
++        # Register the tag
++        self.library.tag('context_greet', context_greet)
++
++        # Test that keyword argument works with context
++        template = Template("{% load custom_tags %}{% context_greet greeting='hi' %}")
++        context = Context({})
++        
++        result = template.render(context)
++        self.assertEqual(result.strip(), 'hi from context')
++
++    def test_edge_case_empty_kwonly_defaults(self):
++        """Test edge case where kwonly_defaults might be None or empty."""
++        # This tests the condition in parse_bits where kwonly_defaults might be None
++        @self.library.simple_tag
++        def no_defaults(*, required_arg):
++            return f'got {required_arg}'
++
++        # Register the tag
++        self.library.tag('no_defaults', no_defaults)
++
++        # Test that required keyword-only arg works
++        template = Template("{% load custom_tags %}{% no_defaults required_arg='value' %}")
++        context = Context({})
++        
++        result = template.render(context)
++        self.assertEqual(result.strip(), 'got value')
++
++        # Test that missing required arg raises appropriate error
++        with self.assertRaises(TemplateSyntaxError) as cm:
++            Template("{% load custom_tags %}{% no_defaults %}")
++        
++        self.assertIn("did not receive value(s) for the argument(s): 'required_arg'", str(cm.exception))

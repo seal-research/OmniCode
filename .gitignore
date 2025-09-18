@@ -218,3 +218,4 @@ temp_BugFixing_python_style_predictions.json
 testgen_mockito3424.json
 testgen_mockito3424.jsonl
 slurm_logs/
+data/agentless_results/*

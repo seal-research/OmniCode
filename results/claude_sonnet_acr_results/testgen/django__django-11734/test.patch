@@ -1,0 +1,227 @@
+--- a/tests/queries/test_outerref_exclude.py
++++ b/tests/queries/test_outerref_exclude.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import Exists, OuterRef, Q
++from django.test import TestCase
++
++
++class Category(models.Model):
++    name = models.CharField(max_length=100)
++
++    class Meta:
++        app_label = 'queries'
++
++
++class Tag(models.Model):
++    name = models.CharField(max_length=100)
++    category = models.ForeignKey(Category, on_delete=models.CASCADE)
++
++    class Meta:
++        app_label = 'queries'
++
++
++class Item(models.Model):
++    name = models.CharField(max_length=100)
++    tags = models.ManyToManyField(Tag)
++
++    class Meta:
++        app_label = 'queries'
++
++
++class Number(models.Model):
++    num = models.IntegerField()
++
++    class Meta:
++        app_label = 'queries'
++
++
++class OuterRefExcludeTests(TestCase):
++    """Test OuterRef behavior in exclude() and ~Q() operations."""
++
++    @classmethod
++    def setUpTestData(cls):
++        # Create test data
++        cls.category1 = Category.objects.create(name='Category 1')
++        cls.category2 = Category.objects.create(name='Category 2')
++        
++        cls.tag1 = Tag.objects.create(name='Tag 1', category=cls.category1)
++        cls.tag2 = Tag.objects.create(name='Tag 2', category=cls.category2)
++        
++        cls.item1 = Item.objects.create(name='Item 1')
++        cls.item1.tags.add(cls.tag1)
++        
++        cls.item2 = Item.objects.create(name='Item 2')
++        cls.item2.tags.add(cls.tag2)
++        
++        cls.number1 = Number.objects.create(num=1)
++        cls.number2 = Number.objects.create(num=2)
++
++    def test_outerref_in_filter_works(self):
++        """Test that OuterRef works correctly in filter() - this should pass."""
++        # This is the working case from the issue description
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.filter(tags__category_id=OuterRef('pk'))
++            )
++        ).filter(foo=True)
++        
++        # This should work without raising an exception
++        result = list(qs)
++        # We expect number1 to match since item1 has tag1 with category1 (pk=1)
++        self.assertEqual(len(result), 1)
++        self.assertEqual(result[0].pk, self.number1.pk)
++
++    def test_outerref_in_exclude_fails_before_fix(self):
++        """Test that OuterRef in exclude() fails before the fix is applied."""
++        # This is the failing case from the issue description
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.exclude(tags__category_id=OuterRef('pk'))
++            )
++        ).filter(foo=True)
++        
++        # This should raise ValueError before the fix
++        with self.assertRaises(ValueError) as cm:
++            list(qs)
++        
++        self.assertIn('reference to an outer query', str(cm.exception))
++        self.assertIn('may only be used in a subquery', str(cm.exception))
++
++    def test_outerref_in_negated_q_fails_before_fix(self):
++        """Test that OuterRef in ~Q() fails before the fix is applied."""
++        # This is the failing case from the issue description
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.filter(~Q(tags__category_id=OuterRef('pk')))
++            )
++        ).filter(foo=True)
++        
++        # This should raise ValueError before the fix
++        with self.assertRaises(ValueError) as cm:
++            list(qs)
++        
++        self.assertIn('reference to an outer query', str(cm.exception))
++        self.assertIn('may only be used in a subquery', str(cm.exception))
++
++    def test_outerref_in_exclude_works_after_fix(self):
++        """Test that OuterRef in exclude() works correctly after the fix."""
++        # This test will pass after the fix is applied
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.exclude(tags__category_id=OuterRef('pk'))
++            )
++        ).filter(foo=True)
++        
++        # After the fix, this should work without raising an exception
++        # We expect number2 to match since no items are excluded for category2
++        result = list(qs)
++        self.assertEqual(len(result), 1)
++        self.assertEqual(result[0].pk, self.number2.pk)
++
++    def test_outerref_in_negated_q_works_after_fix(self):
++        """Test that OuterRef in ~Q() works correctly after the fix."""
++        # This test will pass after the fix is applied
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.filter(~Q(tags__category_id=OuterRef('pk')))
++            )
++        ).filter(foo=True)
++        
++        # After the fix, this should work without raising an exception
++        # We expect number2 to match since the negated Q excludes items with category1
++        result = list(qs)
++        self.assertEqual(len(result), 1)
++        self.assertEqual(result[0].pk, self.number2.pk)
++
++    def test_outerref_in_complex_exclude_expression(self):
++        """Test OuterRef in more complex exclude expressions."""
++        # Test with multiple conditions in exclude
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.exclude(
++                    tags__category_id=OuterRef('pk'),
++                    name__startswith='Item'
++                )
++            )
++        ).filter(foo=True)
++        
++        # This should work after the fix
++        result = list(qs)
++        # Both numbers should match since no items are excluded for either category
++        # when both conditions must be met
++        self.assertEqual(len(result), 2)
++
++    def test_outerref_in_nested_q_objects(self):
++        """Test OuterRef in nested Q objects with negation."""
++        # Test with nested Q objects
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.filter(
++                    ~Q(tags__category_id=OuterRef('pk')) | Q(name='Nonexistent')
++                )
++            )
++        ).filter(foo=True)
++        
++        # This should work after the fix
++        result = list(qs)
++        # We expect number2 to match
++        self.assertEqual(len(result), 1)
++        self.assertEqual(result[0].pk, self.number2.pk)
++
++    def test_outerref_multiple_levels_of_nesting(self):
++        """Test OuterRef with multiple levels of query nesting."""
++        # Test with subquery inside exclude inside exists
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.exclude(
++                    tags__in=Tag.objects.filter(category_id=OuterRef('pk'))
++                )
++            )
++        ).filter(foo=True)
++        
++        # This should work after the fix
++        result = list(qs)
++        # We expect number2 to match since item2 is not excluded
++        self.assertEqual(len(result), 1)
++        self.assertEqual(result[0].pk, self.number2.pk)
++
++    def test_outerref_edge_case_empty_queryset(self):
++        """Test OuterRef behavior with empty querysets in exclude."""
++        # Create a scenario with no matching items
++        Item.objects.all().delete()
++        
++        qs = Number.objects.annotate(
++            foo=Exists(
++                Item.objects.exclude(tags__category_id=OuterRef('pk'))
++            )
++        ).filter(foo=True)
++        
++        # Should work without error and return empty result
++        result = list(qs)
++        self.assertEqual(len(result), 0)
++
++    def test_outerref_preserve_existing_functionality(self):
++        """Test that the fix preserves existing OuterRef functionality in filter."""
++        # Ensure that normal OuterRef usage in filter still works
++        qs1 = Number.objects.annotate(
++            has_items=Exists(
++                Item.objects.filter(tags__category_id=OuterRef('pk'))
++            )
++        ).filter(has_items=True)
++        
++        qs2 = Number.objects.annotate(
++            has_items=Exists(
++                Item.objects.filter(tags__category__pk=OuterRef('pk'))
++            )
++        ).filter(has_items=True)
++        
++        # Both should work and return the same result
++        result1 = list(qs1)
++        result2 = list(qs2)
++        
++        self.assertEqual(len(result1), 1)
++        self.assertEqual(len(result2), 1)
++        self.assertEqual(result1[0].pk, result2[0].pk)
++        self.assertEqual(result1[0].pk, self.number1.pk)

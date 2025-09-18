@@ -1,0 +1,238 @@
+--- a/tests/admin_scripts/test_subparser_error_formatting.py
++++ b/tests/admin_scripts/test_subparser_error_formatting.py
+-# Empty if creating new file
++import pytest
++import sys
++from io import StringIO
++from unittest.mock import patch
++
++from django.core.management import execute_from_command_line
++from django.core.management.base import BaseCommand, CommandError
++from django.test import SimpleTestCase
++
++
++class TestSubparserCommand(BaseCommand):
++    """Test command that uses subparsers to reproduce the bug."""
++    
++    def add_arguments(self, parser):
++        subparsers = parser.add_subparsers(required=True, dest='subcommand')
++        
++        # Add a 'create' subcommand that requires a 'name' argument
++        create_parser = subparsers.add_parser('create', help='Create something')
++        create_parser.add_argument('name', help='Name of the thing to create')
++        
++        # Add a 'delete' subcommand that requires an 'id' argument
++        delete_parser = subparsers.add_parser('delete', help='Delete something')
++        delete_parser.add_argument('id', type=int, help='ID of the thing to delete')
++        
++    def handle(self, *args, **options):
++        return f"Handled {options['subcommand']}"
++
++
++class SubparserErrorFormattingTests(SimpleTestCase):
++    """Test that subparsers retain proper error formatting from CommandParser."""
++    
++    def setUp(self):
++        # Register our test command
++        from django.core.management import get_commands
++        self.original_commands = get_commands()
++        
++    def tearDown(self):
++        # Clean up any command registration changes
++        pass
++    
++    def test_main_parser_missing_subcommand_shows_usage_message(self):
++        """Test that missing subcommand shows proper usage message (this should work)."""
++        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
++            with patch('sys.argv', ['manage.py', 'testsubparser']):
++                # Mock the command registration
++                with patch('django.core.management.get_commands') as mock_get_commands:
++                    mock_get_commands.return_value = {'testsubparser': 'tests.admin_scripts.test_subparser_error_formatting'}
++                    
++                    with patch('django.core.management.load_command_class') as mock_load:
++                        mock_load.return_value = TestSubparserCommand
++                        
++                        with pytest.raises(SystemExit):
++                            execute_from_command_line(['manage.py', 'testsubparser'])
++                        
++                        stderr_output = mock_stderr.getvalue()
++                        # Should show usage message, not a stack trace
++                        assert 'usage:' in stderr_output
++                        assert 'error: the following arguments are required:' in stderr_output
++                        assert 'Traceback' not in stderr_output
++
++    def test_subparser_missing_required_argument_before_fix(self):
++        """Test that demonstrates the bug - subparser missing args cause stack trace."""
++        # This test should fail before the fix is applied
++        command = TestSubparserCommand()
++        parser = command.create_parser('manage.py', 'testsubparser')
++        
++        # Test that subparser missing required argument raises CommandError (the bug)
++        with pytest.raises(CommandError) as exc_info:
++            parser.parse_args(['create'])  # Missing required 'name' argument
++            
++        # The bug is that this raises CommandError instead of showing usage
++        assert "Error: the following arguments are required: name" in str(exc_info.value)
++
++    def test_subparser_missing_required_argument_after_fix(self):
++        """Test that after fix, subparser missing args show proper usage message."""
++        # This test should pass after the fix is applied
++        command = TestSubparserCommand()
++        command._called_from_command_line = True  # Simulate command line usage
++        parser = command.create_parser('manage.py', 'testsubparser')
++        
++        # After fix, this should show usage message instead of raising CommandError
++        with patch('sys.stderr', new_callable=StringIO) as mock_stderr:
++            with pytest.raises(SystemExit):  # argparse exits on error when called from command line
++                parser.parse_args(['create'])  # Missing required 'name' argument
++                
++            stderr_output = mock_stderr.getvalue()
++            assert 'usage:' in stderr_output
++            assert 'error: the following arguments are required: name' in stderr_output
++
++    def test_subparser_with_valid_arguments_works(self):
++        """Test that subparsers work correctly with valid arguments."""
++        command = TestSubparserCommand()
++        parser = command.create_parser('manage.py', 'testsubparser')
++        
++        # Test valid arguments work
++        args = parser.parse_args(['create', 'myname'])
++        assert args.subcommand == 'create'
++        assert args.name == 'myname'
++        
++        args = parser.parse_args(['delete', '123'])
++        assert args.subcommand == 'delete'
++        assert args.id == 123
++
++    def test_subparser_inherits_missing_args_message(self):
++        """Test that subparsers inherit missing_args_message from parent CommandParser."""
++        command = TestSubparserCommand()
++        command.missing_args_message = "Custom missing args message"
++        parser = command.create_parser('manage.py', 'testsubparser')
++        
++        # Get the subparser
++        subparsers_action = None
++        for action in parser._actions:
++            if hasattr(action, 'choices'):
++                subparsers_action = action
++                break
++        
++        assert subparsers_action is not None
++        create_parser = subparsers_action.choices['create']
++        
++        # After fix, subparser should inherit missing_args_message
++        # This test will fail before fix because subparsers use ArgumentParser, not CommandParser
++        assert hasattr(create_parser, 'missing_args_message')
++
++    def test_subparser_inherits_called_from_command_line(self):
++        """Test that subparsers inherit called_from_command_line from parent CommandParser."""
++        command = TestSubparserCommand()
++        command._called_from_command_line = True
++        parser = command.create_parser('manage.py', 'testsubparser')
++        
++        # Get the subparser
++        subparsers_action = None
++        for action in parser._actions:
++            if hasattr(action, 'choices'):
++                subparsers_action = action
++                break
++        
++        assert subparsers_action is not None
++        create_parser = subparsers_action.choices['create']
++        
++        # After fix, subparser should inherit called_from_command_line
++        # This test will fail before fix because subparsers use ArgumentParser, not CommandParser
++        assert hasattr(create_parser, 'called_from_command_line')
++        assert create_parser.called_from_command_line is True
++
++    def test_multiple_subparsers_all_inherit_properties(self):
++        """Test that all subparsers inherit CommandParser properties."""
++        command = TestSubparserCommand()
++        command._called_from_command_line = True
++        command.missing_args_message = "Test message"
++        parser = command.create_parser('manage.py', 'testsubparser')
++        
++        # Get the subparsers action
++        subparsers_action = None
++        for action in parser._actions:
++            if hasattr(action, 'choices'):
++                subparsers_action = action
++                break
++        
++        assert subparsers_action is not None
++        
++        # Check that both subparsers inherit the properties
++        for subparser_name in ['create', 'delete']:
++            subparser = subparsers_action.choices[subparser_name]
++            assert hasattr(subparser, 'missing_args_message')
++            assert hasattr(subparser, 'called_from_command_line')
++            assert subparser.called_from_command_line is True
++            assert subparser.missing_args_message == "Test message"
++
++    def test_nested_subparsers_inherit_properties(self):
++        """Test that nested subparsers also inherit CommandParser properties."""
++        class NestedSubparserCommand(BaseCommand):
++            def add_arguments(self, parser):
++                subparsers = parser.add_subparsers(required=True, dest='subcommand')
++                
++                # Add a subcommand that itself has subparsers
++                manage_parser = subparsers.add_parser('manage', help='Manage things')
++                manage_subparsers = manage_parser.add_subparsers(required=True, dest='manage_action')
++                
++                create_parser = manage_subparsers.add_parser('create', help='Create in manage')
++                create_parser.add_argument('name', help='Name to create')
++                
++            def handle(self, *args, **options):
++                pass
++        
++        command = NestedSubparserCommand()
++        command._called_from_command_line = True
++        parser = command.create_parser('manage.py', 'nested')
++        
++        # Navigate to nested subparser
++        subparsers_action = None
++        for action in parser._actions:
++            if hasattr(action, 'choices'):
++                subparsers_action = action
++                break
++        
++        manage_parser = subparsers_action.choices['manage']
++        
++        # Get nested subparsers
++        nested_subparsers_action = None
++        for action in manage_parser._actions:
++            if hasattr(action, 'choices'):
++                nested_subparsers_action = action
++                break
++        
++        create_parser = nested_subparsers_action.choices['create']
++        
++        # Nested subparser should also inherit CommandParser properties
++        assert hasattr(create_parser, 'called_from_command_line')
++        assert hasattr(create_parser, 'missing_args_message')
++
++    def test_subparser_error_method_behavior(self):
++        """Test that subparser error method behaves like CommandParser.error()."""
++        command = TestSubparserCommand()
++        parser = command.create_parser('manage.py', 'testsubparser')
++        
++        # Get a subparser
++        subparsers_action = None
++        for action in parser._actions:
++            if hasattr(action, 'choices'):
++                subparsers_action = action
++                break
++        
++        create_parser = subparsers_action.choices['create']
++        
++        # Test error behavior when not called from command line
++        create_parser.called_from_command_line = False
++        with pytest.raises(CommandError) as exc_info:
++            create_parser.error("Test error message")
++        assert "Error: Test error message" in str(exc_info.value)
++        
++        # Test error behavior when called from command line
++        create_parser.called_from_command_line = True
++        with patch('sys.stderr', new_callable=StringIO):
++            with pytest.raises(SystemExit):
++                create_parser.error("Test error message")

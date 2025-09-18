@@ -1,0 +1,221 @@
+--- a/tests/utils_tests/test_datastructures.py
++++ b/tests/utils_tests/test_datastructures.py
+-import copy
+-import pickle
+-
+-from django.test import SimpleTestCase
+-from django.utils.datastructures import (
+-    CaseInsensitiveMapping, DictWrapper, ImmutableList, MultiValueDict,
+-    OrderedSet,
+-)
+-
+-
+-class OrderedSetTests(SimpleTestCase):
+-    def test_init_list(self):
+-        ordered_set = OrderedSet([1, 1, 2, 3, 2])
+-        self.assertEqual(list(ordered_set), [1, 2, 3])
+-
+-    def test_init_generator(self):
+-        ordered_set = OrderedSet(x for x in [1, 1, 2, 3, 2])
+-        self.assertEqual(list(ordered_set), [1, 2, 3])
+-
+-    def test_init_empty(self):
+-        ordered_set = OrderedSet()
+-        self.assertEqual(len(ordered_set), 0)
+-
+-    def test_add(self):
+-        ordered_set = OrderedSet()
+-        ordered_set.add(1)
+-        ordered_set.add(2)
+-        ordered_set.add(1)  # Duplicate
+-        self.assertEqual(list(ordered_set), [1, 2])
+-
+-    def test_remove(self):
+-        ordered_set = OrderedSet([1, 2, 3])
+-        ordered_set.remove(2)
+-        self.assertEqual(list(ordered_set), [1, 3])
+-
+-    def test_remove_keyerror(self):
+-        ordered_set = OrderedSet([1, 2, 3])
+-        with self.assertRaises(KeyError):
+-            ordered_set.remove(4)
+-
+-    def test_discard(self):
+-        ordered_set = OrderedSet([1, 2, 3])
+-        ordered_set.discard(2)
+-        ordered_set.discard(4)  # Should not raise
+-        self.assertEqual(list(ordered_set), [1, 3])
+-
+-    def test_iter(self):
+-        ordered_set = OrderedSet([1, 2, 3])
+-        self.assertEqual(list(ordered_set), [1, 2, 3])
+-
+-    def test_contains(self):
+-        ordered_set = OrderedSet([1, 2, 3])
+-        self.assertIn(2, ordered_set)
+-        self.assertNotIn(4, ordered_set)
+-
+-    def test_bool(self):
+-        ordered_set = OrderedSet()
+-        self.assertFalse(ordered_set)
+-        ordered_set.add(1)
+-        self.assertTrue(ordered_set)
+-
+-    def test_len(self):
+-        ordered_set = OrderedSet([1, 2, 3])
+-        self.assertEqual(len(ordered_set), 3)
++import copy
++import pickle
++
++from django.test import SimpleTestCase
++from django.utils.datastructures import (
++    CaseInsensitiveMapping, DictWrapper, ImmutableList, MultiValueDict,
++    OrderedSet,
++)
++
++
++class OrderedSetTests(SimpleTestCase):
++    def test_init_list(self):
++        ordered_set = OrderedSet([1, 1, 2, 3, 2])
++        self.assertEqual(list(ordered_set), [1, 2, 3])
++
++    def test_init_generator(self):
++        ordered_set = OrderedSet(x for x in [1, 1, 2, 3, 2])
++        self.assertEqual(list(ordered_set), [1, 2, 3])
++
++    def test_init_empty(self):
++        ordered_set = OrderedSet()
++        self.assertEqual(len(ordered_set), 0)
++
++    def test_add(self):
++        ordered_set = OrderedSet()
++        ordered_set.add(1)
++        ordered_set.add(2)
++        ordered_set.add(1)  # Duplicate
++        self.assertEqual(list(ordered_set), [1, 2])
++
++    def test_remove(self):
++        ordered_set = OrderedSet([1, 2, 3])
++        ordered_set.remove(2)
++        self.assertEqual(list(ordered_set), [1, 3])
++
++    def test_remove_keyerror(self):
++        ordered_set = OrderedSet([1, 2, 3])
++        with self.assertRaises(KeyError):
++            ordered_set.remove(4)
++
++    def test_discard(self):
++        ordered_set = OrderedSet([1, 2, 3])
++        ordered_set.discard(2)
++        ordered_set.discard(4)  # Should not raise
++        self.assertEqual(list(ordered_set), [1, 3])
++
++    def test_iter(self):
++        ordered_set = OrderedSet([1, 2, 3])
++        self.assertEqual(list(ordered_set), [1, 2, 3])
++
++    def test_contains(self):
++        ordered_set = OrderedSet([1, 2, 3])
++        self.assertIn(2, ordered_set)
++        self.assertNotIn(4, ordered_set)
++
++    def test_bool(self):
++        ordered_set = OrderedSet()
++        self.assertFalse(ordered_set)
++        ordered_set.add(1)
++        self.assertTrue(ordered_set)
++
++    def test_len(self):
++        ordered_set = OrderedSet([1, 2, 3])
++        self.assertEqual(len(ordered_set), 3)
++
++    def test_reversed_fails_without_implementation(self):
++        """Test that reversed() fails on OrderedSet without __reversed__ method."""
++        ordered_set = OrderedSet([1, 2, 3])
++        # This test demonstrates the bug - reversed() should work but doesn't
++        with self.assertRaises(TypeError):
++            list(reversed(ordered_set))
++
++    def test_reversed_with_implementation(self):
++        """Test that reversed() works correctly on OrderedSet with __reversed__ method."""
++        ordered_set = OrderedSet([1, 2, 3, 4, 5])
++        # After implementing __reversed__, this should return items in reverse order
++        try:
++            reversed_list = list(reversed(ordered_set))
++            self.assertEqual(reversed_list, [5, 4, 3, 2, 1])
++        except TypeError:
++            # This will fail before the fix is implemented
++            self.fail("OrderedSet should support reversed() after implementing __reversed__")
++
++    def test_reversed_empty_set(self):
++        """Test that reversed() works on an empty OrderedSet."""
++        ordered_set = OrderedSet()
++        try:
++            reversed_list = list(reversed(ordered_set))
++            self.assertEqual(reversed_list, [])
++        except TypeError:
++            # This will fail before the fix is implemented
++            self.fail("OrderedSet should support reversed() even when empty")
++
++    def test_reversed_single_item(self):
++        """Test that reversed() works on OrderedSet with single item."""
++        ordered_set = OrderedSet([42])
++        try:
++            reversed_list = list(reversed(ordered_set))
++            self.assertEqual(reversed_list, [42])
++        except TypeError:
++            # This will fail before the fix is implemented
++            self.fail("OrderedSet should support reversed() with single item")
++
++    def test_reversed_maintains_type(self):
++        """Test that reversed() returns an iterator, not a list."""
++        ordered_set = OrderedSet([1, 2, 3])
++        try:
++            reversed_iter = reversed(ordered_set)
++            # Should be an iterator, not a list
++            self.assertNotIsInstance(reversed_iter, list)
++            # Should be able to iterate through it
++            items = []
++            for item in reversed_iter:
++                items.append(item)
++            self.assertEqual(items, [3, 2, 1])
++        except TypeError:
++            # This will fail before the fix is implemented
++            self.fail("OrderedSet should support reversed() and return an iterator")
++
++    def test_reversed_with_strings(self):
++        """Test that reversed() works with string items in OrderedSet."""
++        ordered_set = OrderedSet(['a', 'b', 'c', 'd'])
++        try:
++            reversed_list = list(reversed(ordered_set))
++            self.assertEqual(reversed_list, ['d', 'c', 'b', 'a'])
++        except TypeError:
++            # This will fail before the fix is implemented
++            self.fail("OrderedSet should support reversed() with string items")
++
++    def test_reversed_preserves_order_after_modifications(self):
++        """Test that reversed() reflects the current order after modifications."""
++        ordered_set = OrderedSet([1, 2, 3])
++        ordered_set.add(4)
++        ordered_set.remove(2)
++        # Current order should be [1, 3, 4]
++        try:
++            reversed_list = list(reversed(ordered_set))
++            self.assertEqual(reversed_list, [4, 3, 1])
++        except TypeError:
++            # This will fail before the fix is implemented
++            self.fail("OrderedSet should support reversed() after modifications")
++
++    def test_reversed_multiple_calls(self):
++        """Test that multiple calls to reversed() work correctly."""
++        ordered_set = OrderedSet([1, 2, 3])
++        try:
++            # Multiple calls should return the same result
++            reversed_list1 = list(reversed(ordered_set))
++            reversed_list2 = list(reversed(ordered_set))
++            self.assertEqual(reversed_list1, [3, 2, 1])
++            self.assertEqual(reversed_list2, [3, 2, 1])
++            self.assertEqual(reversed_list1, reversed_list2)
++        except TypeError:
++            # This will fail before the fix is implemented
++            self.fail("OrderedSet should support multiple calls to reversed()")

@@ -1,0 +1,165 @@
+--- a/tests/model_fields/test_filefield.py
++++ b/tests/model_fields/test_filefield.py
++import pytest
++import random
++from django.core.files.storage import FileSystemStorage, default_storage
++from django.db import models
++from django.test import TestCase
++
++
++class FileFieldDeconstructTests(TestCase):
++    """Test FileField deconstruct method with callable storage."""
++
++    def test_callable_storage_returning_default_storage_is_preserved(self):
++        """
++        Test that callable storage is preserved in deconstruct even when it returns default_storage.
++        This is the main bug described in the issue.
++        """
++        def get_storage():
++            return default_storage
++
++        # Create a FileField with callable storage that returns default_storage
++        field = models.FileField(storage=get_storage)
++        
++        # Deconstruct the field
++        name, path, args, kwargs = field.deconstruct()
++        
++        # The storage parameter should be included in kwargs even though the callable returns default_storage
++        self.assertIn('storage', kwargs)
++        self.assertEqual(kwargs['storage'], get_storage)
++
++    def test_callable_storage_returning_non_default_storage_is_preserved(self):
++        """
++        Test that callable storage is preserved when it returns non-default storage.
++        This should work both before and after the fix.
++        """
++        other_storage = FileSystemStorage(location='/tmp/other')
++        
++        def get_storage():
++            return other_storage
++
++        field = models.FileField(storage=get_storage)
++        name, path, args, kwargs = field.deconstruct()
++        
++        # Storage should be included
++        self.assertIn('storage', kwargs)
++        self.assertEqual(kwargs['storage'], get_storage)
++
++    def test_callable_storage_randomly_returning_default_storage(self):
++        """
++        Test the exact scenario described in the issue where a callable
++        randomly returns either default_storage or another storage.
++        """
++        other_storage = FileSystemStorage(location='/tmp/other')
++        
++        def get_storage():
++            return random.choice([default_storage, other_storage])
++
++        field = models.FileField(storage=get_storage)
++        name, path, args, kwargs = field.deconstruct()
++        
++        # Storage should always be included regardless of what the callable returns
++        self.assertIn('storage', kwargs)
++        self.assertEqual(kwargs['storage'], get_storage)
++
++    def test_non_callable_default_storage_is_omitted(self):
++        """
++        Test that when default_storage is explicitly passed (not via callable),
++        it is omitted from deconstruct as expected.
++        """
++        field = models.FileField(storage=default_storage)
++        name, path, args, kwargs = field.deconstruct()
++        
++        # Storage should not be included when it's explicitly default_storage
++        self.assertNotIn('storage', kwargs)
++
++    def test_non_callable_non_default_storage_is_preserved(self):
++        """
++        Test that non-default storage instances are preserved in deconstruct.
++        """
++        other_storage = FileSystemStorage(location='/tmp/other')
++        field = models.FileField(storage=other_storage)
++        name, path, args, kwargs = field.deconstruct()
++        
++        # Storage should be included
++        self.assertIn('storage', kwargs)
++        self.assertEqual(kwargs['storage'], other_storage)
++
++    def test_no_storage_parameter_defaults_to_default_storage(self):
++        """
++        Test that when no storage is provided, default_storage is used
++        and omitted from deconstruct.
++        """
++        field = models.FileField()
++        name, path, args, kwargs = field.deconstruct()
++        
++        # Storage should not be included when using default
++        self.assertNotIn('storage', kwargs)
++        # But the field should use default_storage internally
++        self.assertEqual(field.storage, default_storage)
++
++    def test_callable_storage_attribute_is_preserved(self):
++        """
++        Test that the _storage_callable attribute is properly set and preserved.
++        """
++        def get_storage():
++            return default_storage
++
++        field = models.FileField(storage=get_storage)
++        
++        # The field should have the _storage_callable attribute
++        self.assertTrue(hasattr(field, '_storage_callable'))
++        self.assertEqual(field._storage_callable, get_storage)
++        
++        # The storage should be the evaluated result
++        self.assertEqual(field.storage, default_storage)
++
++    def test_migration_consistency_with_callable_storage(self):
++        """
++        Test that repeated calls to deconstruct return consistent results
++        for callable storage, simulating the makemigrations scenario.
++        """
++        other_storage = FileSystemStorage(location='/tmp/other')
++        
++        def get_storage():
++            # This could return different values on different calls
++            return random.choice([default_storage, other_storage])
++
++        field = models.FileField(storage=get_storage)
++        
++        # Multiple calls to deconstruct should return the same storage reference
++        result1 = field.deconstruct()
++        result2 = field.deconstruct()
++        result3 = field.deconstruct()
++        
++        # All should include storage and reference the same callable
++        for result in [result1, result2, result3]:
++            name, path, args, kwargs = result
++            self.assertIn('storage', kwargs)
++            self.assertEqual(kwargs['storage'], get_storage)
++
++    def test_callable_storage_with_lambda(self):
++        """
++        Test that lambda functions work as callable storage.
++        """
++        other_storage = FileSystemStorage(location='/tmp/other')
++        storage_func = lambda: other_storage
++        
++        field = models.FileField(storage=storage_func)
++        name, path, args, kwargs = field.deconstruct()
++        
++        self.assertIn('storage', kwargs)
++        self.assertEqual(kwargs['storage'], storage_func)
++
++    def test_callable_storage_returning_default_storage_with_lambda(self):
++        """
++        Test lambda that returns default_storage is preserved in deconstruct.
++        """
++        storage_func = lambda: default_storage
++        
++        field = models.FileField(storage=storage_func)
++        name, path, args, kwargs = field.deconstruct()
++        
++        # Should be included even though it returns default_storage
++        self.assertIn('storage', kwargs)
++        self.assertEqual(kwargs['storage'], storage_func)

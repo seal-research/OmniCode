@@ -1,0 +1,363 @@
+--- a/tests/prefetch_related/test_prefetch_slicing.py
++++ b/tests/prefetch_related/test_prefetch_slicing.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import Prefetch
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++
++from .models import Category, Post
++
++
++class PrefetchSlicingTests(TestCase):
++    """Test cases for Prefetch objects with sliced querysets."""
++
++    @classmethod
++    def setUpTestData(cls):
++        # Create test categories
++        cls.category1 = Category.objects.create(name="Technology")
++        cls.category2 = Category.objects.create(name="Science")
++        cls.category3 = Category.objects.create(name="Sports")
++        
++        # Create test posts for category1
++        cls.posts_cat1 = []
++        for i in range(5):
++            post = Post.objects.create(
++                title=f"Tech Post {i+1}",
++                content=f"Content for tech post {i+1}",
++                category=cls.category1
++            )
++            cls.posts_cat1.append(post)
++        
++        # Create test posts for category2
++        cls.posts_cat2 = []
++        for i in range(3):
++            post = Post.objects.create(
++                title=f"Science Post {i+1}",
++                content=f"Content for science post {i+1}",
++                category=cls.category2
++            )
++            cls.posts_cat2.append(post)
++        
++        # Create test posts for category3 (no posts)
++        # This tests the case where a category has no related objects
++
++    def test_prefetch_with_sliced_queryset_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: Prefetch with sliced queryset raises TypeError.
++        This test should fail before the fix is applied.
++        """
++        with self.assertRaises(TypeError) as cm:
++            list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.all()[:3],
++                    to_attr='example_posts',
++                )
++            ))
++        
++        self.assertIn("Cannot filter a query once a slice has been taken", str(cm.exception))
++
++    def test_prefetch_with_sliced_queryset_basic_functionality(self):
++        """
++        Test that Prefetch with sliced queryset works correctly after fix.
++        This test should pass after the fix is applied.
++        """
++        # This test will initially fail, but should pass after the fix
++        try:
++            categories = list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.all()[:3],
++                    to_attr='example_posts',
++                )
++            ))
++            
++            # Verify we got all categories
++            self.assertEqual(len(categories), 3)
++            
++            # Check category1 - should have 3 posts (limited by slice)
++            cat1 = next(c for c in categories if c.name == "Technology")
++            self.assertEqual(len(cat1.example_posts), 3)
++            
++            # Check category2 - should have 3 posts (all available posts)
++            cat2 = next(c for c in categories if c.name == "Science")
++            self.assertEqual(len(cat2.example_posts), 3)
++            
++            # Check category3 - should have 0 posts
++            cat3 = next(c for c in categories if c.name == "Sports")
++            self.assertEqual(len(cat3.example_posts), 0)
++            
++        except TypeError as e:
++            if "Cannot filter a query once a slice has been taken" in str(e):
++                self.fail("Prefetch with sliced queryset should work after fix")
++            else:
++                raise
++
++    def test_prefetch_with_sliced_queryset_ordering(self):
++        """
++        Test that Prefetch with sliced and ordered queryset works correctly.
++        """
++        try:
++            categories = list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.order_by('-id')[:2],
++                    to_attr='latest_posts',
++                )
++            ))
++            
++            # Check that we get the latest posts (highest IDs first)
++            cat1 = next(c for c in categories if c.name == "Technology")
++            self.assertEqual(len(cat1.latest_posts), 2)
++            
++            # Verify ordering - should be descending by ID
++            if len(cat1.latest_posts) >= 2:
++                self.assertGreater(cat1.latest_posts[0].id, cat1.latest_posts[1].id)
++                
++        except TypeError as e:
++            if "Cannot filter a query once a slice has been taken" in str(e):
++                self.fail("Prefetch with sliced and ordered queryset should work after fix")
++            else:
++                raise
++
++    def test_prefetch_with_sliced_queryset_filtered(self):
++        """
++        Test that Prefetch with sliced and filtered queryset works correctly.
++        """
++        try:
++            categories = list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.filter(title__icontains='Tech')[:2],
++                    to_attr='tech_posts',
++                )
++            ))
++            
++            # Check category1 - should have 2 tech posts
++            cat1 = next(c for c in categories if c.name == "Technology")
++            self.assertEqual(len(cat1.tech_posts), 2)
++            for post in cat1.tech_posts:
++                self.assertIn('Tech', post.title)
++            
++            # Check category2 - should have 0 tech posts
++            cat2 = next(c for c in categories if c.name == "Science")
++            self.assertEqual(len(cat2.tech_posts), 0)
++            
++        except TypeError as e:
++            if "Cannot filter a query once a slice has been taken" in str(e):
++                self.fail("Prefetch with sliced and filtered queryset should work after fix")
++            else:
++                raise
++
++    def test_prefetch_with_slice_zero_limit(self):
++        """
++        Test that Prefetch with slice that returns no results works correctly.
++        """
++        try:
++            categories = list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.all()[:0],  # Empty slice
++                    to_attr='no_posts',
++                )
++            ))
++            
++            # All categories should have empty lists
++            for category in categories:
++                self.assertEqual(len(category.no_posts), 0)
++                
++        except TypeError as e:
++            if "Cannot filter a query once a slice has been taken" in str(e):
++                self.fail("Prefetch with empty slice should work after fix")
++            else:
++                raise
++
++    def test_prefetch_with_slice_start_offset(self):
++        """
++        Test that Prefetch with slice that has start offset works correctly.
++        """
++        try:
++            categories = list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.order_by('id')[1:3],  # Skip first, take next 2
++                    to_attr='middle_posts',
++                )
++            ))
++            
++            # Check category1 - should have 2 posts, skipping the first one
++            cat1 = next(c for c in categories if c.name == "Technology")
++            self.assertEqual(len(cat1.middle_posts), 2)
++            
++            # Verify we skipped the first post
++            all_cat1_posts = list(Post.objects.filter(category=cat1).order_by('id'))
++            if len(all_cat1_posts) >= 3:
++                expected_posts = all_cat1_posts[1:3]
++                actual_post_ids = [p.id for p in cat1.middle_posts]
++                expected_post_ids = [p.id for p in expected_posts]
++                self.assertEqual(actual_post_ids, expected_post_ids)
++                
++        except TypeError as e:
++            if "Cannot filter a query once a slice has been taken" in str(e):
++                self.fail("Prefetch with offset slice should work after fix")
++            else:
++                raise
++
++    def test_prefetch_multiple_sliced_querysets(self):
++        """
++        Test that multiple Prefetch objects with sliced querysets work correctly.
++        """
++        try:
++            categories = list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.order_by('id')[:2],
++                    to_attr='first_posts',
++                ),
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.order_by('-id')[:2],
++                    to_attr='last_posts',
++                )
++            ))
++            
++            # Check that both prefetches work
++            cat1 = next(c for c in categories if c.name == "Technology")
++            self.assertEqual(len(cat1.first_posts), 2)
++            self.assertEqual(len(cat1.last_posts), 2)
++            
++            # Verify different ordering
++            if len(cat1.first_posts) >= 2 and len(cat1.last_posts) >= 2:
++                self.assertLess(cat1.first_posts[0].id, cat1.first_posts[1].id)
++                self.assertGreater(cat1.last_posts[0].id, cat1.last_posts[1].id)
++                
++        except TypeError as e:
++            if "Cannot filter a query once a slice has been taken" in str(e):
++                self.fail("Multiple Prefetch objects with sliced querysets should work after fix")
++            else:
++                raise
++
++    def test_prefetch_sliced_queryset_preserves_regular_prefetch(self):
++        """
++        Test that using sliced querysets doesn't break regular prefetch_related.
++        """
++        try:
++            # Test regular prefetch still works
++            categories_regular = list(Category.objects.prefetch_related('post_set'))
++            
++            # Test sliced prefetch
++            categories_sliced = list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.all()[:3],
++                    to_attr='limited_posts',
++                )
++            ))
++            
++            # Both should work
++            self.assertEqual(len(categories_regular), 3)
++            self.assertEqual(len(categories_sliced), 3)
++            
++            # Regular prefetch should get all posts
++            cat1_regular = next(c for c in categories_regular if c.name == "Technology")
++            self.assertEqual(len(cat1_regular.post_set.all()), 5)
++            
++            # Sliced prefetch should get limited posts
++            cat1_sliced = next(c for c in categories_sliced if c.name == "Technology")
++            self.assertEqual(len(cat1_sliced.limited_posts), 3)
++            
++        except TypeError as e:
++            if "Cannot filter a query once a slice has been taken" in str(e):
++                self.fail("Sliced prefetch should not break regular prefetch functionality")
++            else:
++                raise
++
++    def test_prefetch_sliced_queryset_with_select_related(self):
++        """
++        Test that Prefetch with sliced queryset works with select_related.
++        """
++        try:
++            categories = list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.select_related('category')[:2],
++                    to_attr='posts_with_category',
++                )
++            ))
++            
++            # Check that prefetch works with select_related
++            cat1 = next(c for c in categories if c.name == "Technology")
++            self.assertEqual(len(cat1.posts_with_category), 2)
++            
++            # Verify select_related worked (category should be cached)
++            for post in cat1.posts_with_category:
++                # This should not trigger additional queries
++                self.assertEqual(post.category.name, "Technology")
++                
++        except TypeError as e:
++            if "Cannot filter a query once a slice has been taken" in str(e):
++                self.fail("Prefetch with sliced queryset and select_related should work after fix")
++            else:
++                raise
++
++    def test_prefetch_sliced_queryset_edge_cases(self):
++        """
++        Test edge cases for Prefetch with sliced querysets.
++        """
++        try:
++            # Test with very large slice
++            categories = list(Category.objects.prefetch_related(
++                Prefetch(
++                    'post_set',
++                    queryset=Post.objects.all()[:1000],  # Much larger than available data
++                    to_attr='many_posts',
++                )
++            ))
++            
++            # Should get all available posts, not fail
++            cat1 = next(c for c in categories if c.name == "Technology")
++            self.assertEqual(len(cat1.many_posts), 5)  # All available posts
++            
++            cat2 = next(c for c in categories if c.name == "Science")
++            self.assertEqual(len(cat2.many_posts), 3)  # All available posts
++            
++        except TypeError as e:
++            if "Cannot filter a query once a slice has been taken" in str(e):
++                self.fail("Prefetch with large slice should work after fix")
++            else:
++                raise
+
+--- a/tests/prefetch_related/models.py
++++ b/tests/prefetch_related/models.py
+-# Empty if creating new file
++from django.db import models
++
++
++class Category(models.Model):
++    name = models.CharField(max_length=100)
++    
++    def __str__(self):
++        return self.name
++    
++    class Meta:
++        app_label = 'prefetch_related'
++
++
++class Post(models.Model):
++    title = models.CharField(max_length=200)
++    content = models.TextField()
++    category = models.ForeignKey(Category, on_delete=models.CASCADE)
++    created_at = models.DateTimeField(auto_now_add=True)
++    
++    def __str__(self):
++        return self.title
++    
++    class Meta:
++        app_label = 'prefetch_related'
+
+--- a/tests/prefetch_related/__init__.py
++++ b/tests/prefetch_related/__init__.py
+-# Empty if creating new file
++# Test package for prefetch_related functionality

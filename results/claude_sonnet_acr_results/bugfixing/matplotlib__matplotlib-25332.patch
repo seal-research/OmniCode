@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/text.py b/lib/matplotlib/text.py\nindex 58d071d01e..922201159f 100644\n--- a/lib/matplotlib/text.py\n+++ b/lib/matplotlib/text.py\n@@ -236,6 +236,8 @@ class Text(Artist):\n         d = super().__getstate__()\n         # remove the cached _renderer (if it exists)\n         d['_renderer'] = None\n+        # remove the _grouper (if it exists) to avoid pickling weakref objects\n+        d['_grouper'] = None\n         return d\n \n     def contains(self, mouseevent):\n"
+}

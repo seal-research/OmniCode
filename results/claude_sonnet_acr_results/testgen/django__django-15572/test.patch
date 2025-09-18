@@ -1,0 +1,209 @@
+--- a/tests/template_tests/test_autoreload.py
++++ b/tests/template_tests/test_autoreload.py
+-# Empty if creating new file
++import os
++import tempfile
++from pathlib import Path
++from unittest import mock
++
++import pytest
++from django.template import engines
++from django.template.autoreload import get_template_directories, template_changed
++from django.template.backends.django import DjangoTemplates
++from django.test import override_settings
++from django.utils.autoreload import file_changed
++
++
++class TestTemplateAutoreload:
++    """Test suite for template autoreload functionality with empty string handling."""
++
++    def test_get_template_directories_filters_empty_strings(self):
++        """
++        Test that get_template_directories filters out empty strings from DIRS.
++        This is the core bug fix - empty strings should not be converted to project root.
++        """
++        # Create a mock backend with empty string in dirs
++        mock_backend = mock.Mock(spec=DjangoTemplates)
++        mock_backend.engine.dirs = ['', '/valid/path', '']
++        mock_backend.engine.template_loaders = []
++        
++        with mock.patch('django.template.engines.all', return_value=[mock_backend]):
++            directories = get_template_directories()
++            
++        # Convert to strings for easier assertion
++        dir_strings = [str(d) for d in directories]
++        
++        # Should contain the valid path but not the current working directory
++        # (which would be the result of normalizing empty strings)
++        cwd_str = str(Path.cwd())
++        valid_path_str = str(Path.cwd() / 'valid' / 'path')
++        
++        assert valid_path_str in dir_strings
++        # The current working directory should NOT be in the results
++        # because empty strings should be filtered out
++        assert cwd_str not in dir_strings
++
++    def test_get_template_directories_handles_all_empty_strings(self):
++        """
++        Test that get_template_directories handles the case where all DIRS are empty strings.
++        """
++        mock_backend = mock.Mock(spec=DjangoTemplates)
++        mock_backend.engine.dirs = ['', '', '']
++        mock_backend.engine.template_loaders = []
++        
++        with mock.patch('django.template.engines.all', return_value=[mock_backend]):
++            directories = get_template_directories()
++            
++        # Should return empty set when all dirs are empty strings
++        assert len(directories) == 0
++
++    def test_get_template_directories_preserves_valid_paths(self):
++        """
++        Test that get_template_directories preserves valid paths while filtering empty strings.
++        """
++        mock_backend = mock.Mock(spec=DjangoTemplates)
++        mock_backend.engine.dirs = ['/path1', '', '/path2', '']
++        mock_backend.engine.template_loaders = []
++        
++        with mock.patch('django.template.engines.all', return_value=[mock_backend]):
++            directories = get_template_directories()
++            
++        dir_strings = [str(d) for d in directories]
++        
++        # Should contain both valid paths
++        expected_path1 = str(Path.cwd() / 'path1')
++        expected_path2 = str(Path.cwd() / 'path2')
++        
++        assert expected_path1 in dir_strings
++        assert expected_path2 in dir_strings
++        assert len(directories) == 2
++
++    @override_settings(TEMPLATES=[{
++        'BACKEND': 'django.template.backends.django.DjangoTemplates',
++        'DIRS': [''],  # This is the problematic configuration
++        'APP_DIRS': False,
++        'OPTIONS': {},
++    }])
++    def test_template_changed_with_empty_string_dirs_bug_reproduction(self):
++        """
++        Test that reproduces the bug where empty string in DIRS causes
++        template_changed to always return True, breaking autoreload.
++        
++        This test should FAIL before the fix is applied and PASS after.
++        """
++        # Create a temporary file that's not in any template directory
++        with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as tmp_file:
++            tmp_path = Path(tmp_file.name)
++            
++        try:
++            # Before the fix, this would return True because empty string
++            # gets normalized to project root, making every file appear
++            # to be in a template directory
++            result = template_changed(sender=None, file_path=tmp_path)
++            
++            # After the fix, this should return None (not True) because
++            # the file is not actually in any valid template directory
++            assert result is None, (
++                "template_changed should return None for files not in template directories, "
++                "but returned True due to empty string in DIRS being normalized to project root"
++            )
++            
++        finally:
++            # Clean up
++            if tmp_path.exists():
++                tmp_path.unlink()
++
++    @override_settings(TEMPLATES=[{
++        'BACKEND': 'django.template.backends.django.DjangoTemplates',
++        'DIRS': ['/valid/template/dir'],
++        'APP_DIRS': False,
++        'OPTIONS': {},
++    }])
++    def test_template_changed_with_valid_dirs_works_correctly(self):
++        """
++        Test that template_changed works correctly with valid template directories.
++        """
++        # Create a temporary directory structure
++        with tempfile.TemporaryDirectory() as temp_dir:
++            template_dir = Path(temp_dir) / 'templates'
++            template_dir.mkdir()
++            template_file = template_dir / 'test.html'
++            template_file.write_text('<html></html>')
++            
++            # Mock the template directories to include our test directory
++            with mock.patch('django.template.autoreload.get_template_directories', 
++                          return_value={template_dir}):
++                # File in template directory should trigger template_changed
++                result = template_changed(sender=None, file_path=template_file)
++                assert result is True
++                
++                # File outside template directory should not trigger
++                other_file = Path(temp_dir) / 'other.html'
++                other_file.write_text('<html></html>')
++                result = template_changed(sender=None, file_path=other_file)
++                assert result is None
++
++    def test_template_changed_ignores_python_files(self):
++        """
++        Test that template_changed ignores .py files regardless of location.
++        """
++        with tempfile.NamedTemporaryFile(suffix='.py', delete=False) as tmp_file:
++            tmp_path = Path(tmp_file.name)
++            
++        try:
++            # Python files should always be ignored
++            result = template_changed(sender=None, file_path=tmp_path)
++            assert result is None
++            
++        finally:
++            if tmp_path.exists():
++                tmp_path.unlink()
++
++    @pytest.mark.parametrize("dirs_config", [
++        [''],  # Single empty string
++        ['', ''],  # Multiple empty strings
++        ['', '/valid/path'],  # Mixed empty and valid
++        ['/valid/path', ''],  # Valid then empty
++        ['', '/path1', '', '/path2', ''],  # Multiple mixed
++    ])
++    def test_various_empty_string_configurations(self, dirs_config):
++        """
++        Test various configurations that include empty strings in DIRS.
++        All should be handled gracefully without breaking autoreload.
++        """
++        mock_backend = mock.Mock(spec=DjangoTemplates)
++        mock_backend.engine.dirs = dirs_config
++        mock_backend.engine.template_loaders = []
++        
++        with mock.patch('django.template.engines.all', return_value=[mock_backend]):
++            # This should not raise any exceptions
++            directories = get_template_directories()
++            
++            # Should not contain the current working directory
++            cwd = Path.cwd()
++            assert cwd not in directories
++            
++            # Should only contain valid paths (non-empty after filtering)
++            valid_paths = [d for d in dirs_config if d]
++            expected_count = len(valid_paths)
++            assert len(directories) == expected_count
++
++    def test_integration_with_real_django_templates_backend(self):
++        """
++        Integration test using actual Django templates backend configuration.
++        """
++        # Test configuration that would cause the bug
++        templates_config = [{
++            'BACKEND': 'django.template.backends.django.DjangoTemplates',
++            'DIRS': [''],  # Problematic empty string
++            'APP_DIRS': False,
++            'OPTIONS': {},
++        }]
++        
++        with override_settings(TEMPLATES=templates_config):
++            # This should work without causing autoreload issues
++            directories = get_template_directories()
++            
++            # Should not include current working directory
++            cwd = Path.cwd()
++            assert cwd not in directories

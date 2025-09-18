@@ -1,0 +1,317 @@
+--- a/tests/model_fields/test_reverse_related.py
++++ b/tests/model_fields/test_reverse_related.py
++import pytest
++from django.db import models
++from django.test import TestCase
++from django.core.checks import run_checks
++from django.apps import apps
++from django.test.utils import isolate_apps
++
++
++class TestManyToManyRelHashable(TestCase):
++    """Test that ManyToManyRel with through_fields can be hashed properly."""
++
++    @isolate_apps('test_app')
++    def test_many_to_many_rel_with_through_fields_list_is_hashable(self):
++        """
++        Test that ManyToManyRel with through_fields as a list can be hashed.
++        This reproduces the bug where through_fields=['child', 'parent'] 
++        causes TypeError: unhashable type: 'list' when checking models.
++        """
++        # Create the models that reproduce the issue
++        class Parent(models.Model):
++            name = models.CharField(max_length=256)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class ProxyParent(Parent):
++            class Meta:
++                proxy = True
++                app_label = 'test_app'
++
++        class Child(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
++            many_to_many_field = models.ManyToManyField(
++                to=Parent,
++                through="ManyToManyModel",
++                through_fields=['child', 'parent'],
++                related_name="something"
++            )
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class ManyToManyModel(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='+')
++            child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='+')
++            second_child = models.ForeignKey(Child, on_delete=models.CASCADE, null=True, default=None)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # This should not raise TypeError: unhashable type: 'list'
++        # The bug occurs during model checking, specifically when checking field name clashes
++        try:
++            errors = run_checks(app_configs=[apps.get_app_config('test_app')])
++            # If we get here without exception, the bug is fixed
++            self.assertIsInstance(errors, list)
++        except TypeError as e:
++            if "unhashable type: 'list'" in str(e):
++                self.fail("ManyToManyRel.identity contains unhashable through_fields list")
++            else:
++                raise
++
++    @isolate_apps('test_app')
++    def test_many_to_many_rel_identity_is_hashable_with_list_through_fields(self):
++        """
++        Test that the identity property of ManyToManyRel returns a hashable tuple
++        even when through_fields is a list.
++        """
++        class Parent(models.Model):
++            name = models.CharField(max_length=256)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class Child(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class ManyToManyModel(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='+')
++            child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='+')
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Create a ManyToManyField with through_fields as a list
++        field = models.ManyToManyField(
++            to=Parent,
++            through=ManyToManyModel,
++            through_fields=['child', 'parent'],
++            related_name="test_relation"
++        )
++        
++        # Set up the field properly
++        field.contribute_to_class(Child, 'many_to_many_field')
++        
++        # Get the reverse relation
++        reverse_rel = field.remote_field
++        
++        # Test that the identity is hashable
++        identity = reverse_rel.identity
++        self.assertIsInstance(identity, tuple)
++        
++        # This should not raise TypeError: unhashable type: 'list'
++        try:
++            hash_value = hash(identity)
++            self.assertIsInstance(hash_value, int)
++        except TypeError as e:
++            if "unhashable type: 'list'" in str(e):
++                self.fail("ManyToManyRel.identity is not hashable due to list in through_fields")
++            else:
++                raise
++
++    @isolate_apps('test_app')
++    def test_many_to_many_rel_hash_method_works(self):
++        """
++        Test that the __hash__ method of ManyToManyRel works properly
++        when through_fields is a list.
++        """
++        class Parent(models.Model):
++            name = models.CharField(max_length=256)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class Child(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class ManyToManyModel(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='+')
++            child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='+')
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Create a ManyToManyField with through_fields as a list
++        field = models.ManyToManyField(
++            to=Parent,
++            through=ManyToManyModel,
++            through_fields=['child', 'parent'],
++            related_name="test_relation"
++        )
++        
++        # Set up the field properly
++        field.contribute_to_class(Child, 'many_to_many_field')
++        
++        # Get the reverse relation
++        reverse_rel = field.remote_field
++        
++        # Test that __hash__ works
++        try:
++            hash_value = hash(reverse_rel)
++            self.assertIsInstance(hash_value, int)
++        except TypeError as e:
++            if "unhashable type: 'list'" in str(e):
++                self.fail("ManyToManyRel.__hash__ fails due to unhashable through_fields list")
++            else:
++                raise
++
++    @isolate_apps('test_app')
++    def test_many_to_many_rel_with_none_through_fields_still_works(self):
++        """
++        Test that ManyToManyRel still works when through_fields is None
++        to ensure we don't break existing functionality.
++        """
++        class Parent(models.Model):
++            name = models.CharField(max_length=256)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class Child(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
++            many_to_many_field = models.ManyToManyField(
++                to=Parent,
++                related_name="test_relation"
++            )
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Get the reverse relation
++        reverse_rel = Child._meta.get_field('many_to_many_field').remote_field
++        
++        # Test that identity and hash work when through_fields is None
++        identity = reverse_rel.identity
++        self.assertIsInstance(identity, tuple)
++        
++        hash_value = hash(reverse_rel)
++        self.assertIsInstance(hash_value, int)
++
++    @isolate_apps('test_app')
++    def test_many_to_many_rel_equality_and_hashing_consistency(self):
++        """
++        Test that equal ManyToManyRel objects have the same hash,
++        even when through_fields is a list.
++        """
++        class Parent(models.Model):
++            name = models.CharField(max_length=256)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class Child(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class ManyToManyModel(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='+')
++            child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='+')
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Create two identical ManyToManyFields
++        field1 = models.ManyToManyField(
++            to=Parent,
++            through=ManyToManyModel,
++            through_fields=['child', 'parent'],
++            related_name="test_relation1"
++        )
++        
++        field2 = models.ManyToManyField(
++            to=Parent,
++            through=ManyToManyModel,
++            through_fields=['child', 'parent'],
++            related_name="test_relation2"
++        )
++        
++        # Set up the fields properly
++        field1.contribute_to_class(Child, 'many_to_many_field1')
++        field2.contribute_to_class(Child, 'many_to_many_field2')
++        
++        # Get the reverse relations
++        rel1 = field1.remote_field
++        rel2 = field2.remote_field
++        
++        # Test that both can be hashed (this would fail before the fix)
++        try:
++            hash1 = hash(rel1)
++            hash2 = hash(rel2)
++            self.assertIsInstance(hash1, int)
++            self.assertIsInstance(hash2, int)
++        except TypeError as e:
++            if "unhashable type: 'list'" in str(e):
++                self.fail("ManyToManyRel hashing fails with list through_fields")
++            else:
++                raise
++
++    @isolate_apps('test_app')
++    def test_many_to_many_rel_can_be_used_in_set(self):
++        """
++        Test that ManyToManyRel objects with list through_fields can be used in sets,
++        which requires them to be hashable.
++        """
++        class Parent(models.Model):
++            name = models.CharField(max_length=256)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class Child(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'test_app'
++
++        class ManyToManyModel(models.Model):
++            parent = models.ForeignKey(Parent, on_delete=models.CASCADE, related_name='+')
++            child = models.ForeignKey(Child, on_delete=models.CASCADE, related_name='+')
++            
++            class Meta:
++                app_label = 'test_app'
++
++        # Create ManyToManyFields with through_fields as lists
++        field1 = models.ManyToManyField(
++            to=Parent,
++            through=ManyToManyModel,
++            through_fields=['child', 'parent'],
++            related_name="test_relation1"
++        )
++        
++        field2 = models.ManyToManyField(
++            to=Parent,
++            through=ManyToManyModel,
++            through_fields=['child', 'parent'],
++            related_name="test_relation2"
++        )
++        
++        # Set up the fields properly
++        field1.contribute_to_class(Child, 'many_to_many_field1')
++        field2.contribute_to_class(Child, 'many_to_many_field2')
++        
++        # Get the reverse relations
++        rel1 = field1.remote_field
++        rel2 = field2.remote_field
++        
++        # Test that they can be used in a set (requires hashability)
++        try:
++            relation_set = {rel1, rel2}
++            self.assertIsInstance(relation_set, set)
++            self.assertIn(rel1, relation_set)
++            self.assertIn(rel2, relation_set)
++        except TypeError as e:
++            if "unhashable type: 'list'" in str(e):
++                self.fail("ManyToManyRel objects cannot be used in sets due to unhashable through_fields")
++            else:
++                raise

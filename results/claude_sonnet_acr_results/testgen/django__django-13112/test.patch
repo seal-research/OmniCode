@@ -1,0 +1,174 @@
+--- a/tests/migrations/test_utils.py
++++ b/tests/migrations/test_utils.py
+-# Empty if creating new file
++import pytest
++from django.db.migrations.operations.utils import resolve_relation
++from django.db import models
++from django.apps import AppConfig
++from django.test import TestCase
++
++
++class TestResolveRelation(TestCase):
++    """Test cases for the resolve_relation function with mixed-case app names."""
++
++    def test_resolve_relation_with_mixed_case_app_name(self):
++        """
++        Test that resolve_relation preserves the original case of app labels
++        when resolving model references with mixed-case app names.
++        
++        This test reproduces the bug where 'DJ_RegLogin.Category' gets
++        converted to 'dj_reglogin.category' instead of 'DJ_RegLogin.category'.
++        """
++        # Test with mixed-case app name and model name
++        result = resolve_relation('DJ_RegLogin.Category')
++        expected = ('DJ_RegLogin', 'category')
++        self.assertEqual(result, expected)
++
++    def test_resolve_relation_preserves_app_case_various_formats(self):
++        """
++        Test that resolve_relation preserves app label case for various
++        mixed-case formats while converting model names to lowercase.
++        """
++        test_cases = [
++            ('DJ_RegLogin.Category', ('DJ_RegLogin', 'category')),
++            ('MyApp.MyModel', ('MyApp', 'mymodel')),
++            ('UPPERCASE_APP.SomeModel', ('UPPERCASE_APP', 'somemodel')),
++            ('lowercase_app.AnotherModel', ('lowercase_app', 'anothermodel')),
++            ('Mixed_Case_App.TestModel', ('Mixed_Case_App', 'testmodel')),
++        ]
++        
++        for model_ref, expected in test_cases:
++            with self.subTest(model_ref=model_ref):
++                result = resolve_relation(model_ref)
++                self.assertEqual(result, expected)
++
++    def test_resolve_relation_without_dot_preserves_app_label_case(self):
++        """
++        Test that resolve_relation preserves app_label case when provided
++        separately and only converts model name to lowercase.
++        """
++        result = resolve_relation('Category', app_label='DJ_RegLogin')
++        expected = ('DJ_RegLogin', 'category')
++        self.assertEqual(result, expected)
++
++    def test_resolve_relation_with_model_instance(self):
++        """
++        Test that resolve_relation works correctly with actual model instances.
++        """
++        # Create a mock model with meta attributes
++        class MockMeta:
++            app_label = 'DJ_RegLogin'
++            model_name = 'category'
++        
++        class MockModel:
++            _meta = MockMeta()
++        
++        model = MockModel()
++        result = resolve_relation(model)
++        expected = ('DJ_RegLogin', 'category')
++        self.assertEqual(result, expected)
++
++    def test_resolve_relation_recursive_relationship(self):
++        """
++        Test that resolve_relation handles recursive relationships correctly
++        while preserving app label case.
++        """
++        result = resolve_relation('self', app_label='DJ_RegLogin', model_name='Category')
++        expected = ('DJ_RegLogin', 'Category')
++        self.assertEqual(result, expected)
++
++    def test_resolve_relation_raises_error_for_missing_app_label(self):
++        """
++        Test that resolve_relation raises TypeError when app_label is missing
++        for unscoped model relationships.
++        """
++        with self.assertRaises(TypeError) as cm:
++            resolve_relation('Category')
++        
++        self.assertIn('app_label must be provided', str(cm.exception))
++
++    def test_resolve_relation_raises_error_for_recursive_without_params(self):
++        """
++        Test that resolve_relation raises TypeError when recursive relationship
++        is used without required parameters.
++        """
++        with self.assertRaises(TypeError) as cm:
++            resolve_relation('self')
++        
++        self.assertIn('app_label and model_name must be provided', str(cm.exception))
++
++    def test_resolve_relation_edge_cases(self):
++        """
++        Test edge cases for resolve_relation function.
++        """
++        # Test with numbers in app name
++        result = resolve_relation('App123.Model456')
++        expected = ('App123', 'model456')
++        self.assertEqual(result, expected)
++        
++        # Test with underscores and hyphens (though hyphens aren't valid in Python identifiers)
++        result = resolve_relation('my_app_name.MyModelName')
++        expected = ('my_app_name', 'mymodelname')
++        self.assertEqual(result, expected)
++        
++        # Test with single character app and model names
++        result = resolve_relation('A.B')
++        expected = ('A', 'b')
++        self.assertEqual(result, expected)
++
++
++class TestMixedCaseAppNameIntegration(TestCase):
++    """
++    Integration tests that simulate the actual Django migration scenario
++    with mixed-case app names.
++    """
++
++    def test_foreign_key_reference_with_mixed_case_app(self):
++        """
++        Test that ForeignKey references work correctly with mixed-case app names.
++        This simulates the actual bug scenario described in the issue.
++        """
++        # Test the specific case from the bug report
++        model_reference = 'DJ_RegLogin.Category'
++        app_label, model_name = resolve_relation(model_reference)
++        
++        # The app label should preserve original case
++        self.assertEqual(app_label, 'DJ_RegLogin')
++        # The model name should be lowercase
++        self.assertEqual(model_name, 'category')
++        
++        # This should match what Django expects when looking up the app
++        # The bug was that 'dj_reglogin' was being generated instead of 'DJ_RegLogin'
++        self.assertNotEqual(app_label, 'dj_reglogin')
++
++    def test_multiple_foreign_key_references_same_app(self):
++        """
++        Test multiple model references from the same mixed-case app.
++        """
++        references = [
++            'DJ_RegLogin.Category',
++            'DJ_RegLogin.Content', 
++            'DJ_RegLogin.User'
++        ]
++        
++        for ref in references:
++            app_label, model_name = resolve_relation(ref)
++            # All should preserve the same app label case
++            self.assertEqual(app_label, 'DJ_RegLogin')
++            # All model names should be lowercase
++            self.assertTrue(model_name.islower())
++
++    def test_cross_app_references_with_mixed_case(self):
++        """
++        Test references between apps with different case patterns.
++        """
++        test_cases = [
++            ('DJ_RegLogin.Category', 'DJ_RegLogin', 'category'),
++            ('auth.User', 'auth', 'user'),
++            ('MyOtherApp.SomeModel', 'MyOtherApp', 'somemodel'),
++        ]
++        
++        for ref, expected_app, expected_model in test_cases:
++            app_label, model_name = resolve_relation(ref)
++            self.assertEqual(app_label, expected_app)
++            self.assertEqual(model_name, expected_model)

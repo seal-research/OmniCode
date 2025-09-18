@@ -1,0 +1,298 @@
+--- a/tests/backends/base/test_operations.py
++++ b/tests/backends/base/test_operations.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import Mock, patch, MagicMock
++from django.db import transaction
++from django.db.backends.base.operations import BaseDatabaseOperations
++from django.test import TestCase
++
++
++class TestExecuteSqlFlush(TestCase):
++    """Test suite for the execute_sql_flush method signature simplification."""
++    
++    def setUp(self):
++        """Set up test fixtures."""
++        self.mock_connection = Mock()
++        self.mock_connection.alias = 'test_db'
++        self.mock_connection.features.can_rollback_ddl = True
++        self.mock_cursor = Mock()
++        self.mock_connection.cursor.return_value.__enter__.return_value = self.mock_cursor
++        self.mock_connection.cursor.return_value.__exit__.return_value = None
++        
++        self.operations = BaseDatabaseOperations(self.mock_connection)
++    
++    def test_execute_sql_flush_with_old_signature_fails(self):
++        """Test that the old signature with 'using' parameter should fail after the fix."""
++        sql_list = ['DELETE FROM table1;', 'DELETE FROM table2;']
++        
++        # This test should fail after the fix is applied since the 'using' parameter is removed
++        with self.assertRaises(TypeError):
++            self.operations.execute_sql_flush('test_db', sql_list)
++    
++    @patch('django.db.transaction.atomic')
++    def test_execute_sql_flush_new_signature_success(self, mock_atomic):
++        """Test that the new signature without 'using' parameter works correctly."""
++        sql_list = ['DELETE FROM table1;', 'DELETE FROM table2;']
++        
++        # Mock the atomic context manager
++        mock_atomic.return_value.__enter__.return_value = None
++        mock_atomic.return_value.__exit__.return_value = None
++        
++        # This should work with the new signature
++        self.operations.execute_sql_flush(sql_list)
++        
++        # Verify that transaction.atomic was called with the connection alias
++        mock_atomic.assert_called_once_with(
++            using=self.mock_connection.alias,
++            savepoint=self.mock_connection.features.can_rollback_ddl
++        )
++        
++        # Verify that SQL statements were executed
++        expected_calls = [
++            pytest.mock.call('DELETE FROM table1;'),
++            pytest.mock.call('DELETE FROM table2;')
++        ]
++        self.mock_cursor.execute.assert_has_calls(expected_calls)
++    
++    @patch('django.db.transaction.atomic')
++    def test_execute_sql_flush_uses_connection_alias(self, mock_atomic):
++        """Test that the method uses self.connection.alias instead of passed parameter."""
++        sql_list = ['TRUNCATE table1;']
++        
++        # Set a specific alias
++        self.mock_connection.alias = 'custom_db_alias'
++        
++        # Mock the atomic context manager
++        mock_atomic.return_value.__enter__.return_value = None
++        mock_atomic.return_value.__exit__.return_value = None
++        
++        self.operations.execute_sql_flush(sql_list)
++        
++        # Verify that the connection's alias was used
++        mock_atomic.assert_called_once_with(
++            using='custom_db_alias',
++            savepoint=self.mock_connection.features.can_rollback_ddl
++        )
++    
++    @patch('django.db.transaction.atomic')
++    def test_execute_sql_flush_empty_sql_list(self, mock_atomic):
++        """Test that the method handles empty SQL list correctly."""
++        sql_list = []
++        
++        # Mock the atomic context manager
++        mock_atomic.return_value.__enter__.return_value = None
++        mock_atomic.return_value.__exit__.return_value = None
++        
++        self.operations.execute_sql_flush(sql_list)
++        
++        # Verify that transaction.atomic was still called
++        mock_atomic.assert_called_once_with(
++            using=self.mock_connection.alias,
++            savepoint=self.mock_connection.features.can_rollback_ddl
++        )
++        
++        # Verify that no SQL was executed
++        self.mock_cursor.execute.assert_not_called()
++    
++    @patch('django.db.transaction.atomic')
++    def test_execute_sql_flush_preserves_savepoint_behavior(self, mock_atomic):
++        """Test that the method preserves the savepoint behavior from connection features."""
++        sql_list = ['DELETE FROM test_table;']
++        
++        # Test with savepoint disabled
++        self.mock_connection.features.can_rollback_ddl = False
++        
++        # Mock the atomic context manager
++        mock_atomic.return_value.__enter__.return_value = None
++        mock_atomic.return_value.__exit__.return_value = None
++        
++        self.operations.execute_sql_flush(sql_list)
++        
++        # Verify that savepoint=False was passed
++        mock_atomic.assert_called_once_with(
++            using=self.mock_connection.alias,
++            savepoint=False
++        )
++    
++    def test_execute_sql_flush_method_signature(self):
++        """Test that the method signature has been simplified correctly."""
++        import inspect
++        
++        # Get the method signature
++        sig = inspect.signature(self.operations.execute_sql_flush)
++        params = list(sig.parameters.keys())
++        
++        # After the fix, should only have 'sql_list' parameter (excluding 'self')
++        expected_params = ['sql_list']
++        self.assertEqual(params, expected_params, 
++                        "Method signature should only contain 'sql_list' parameter")
++    
++    @patch('django.db.transaction.atomic')
++    def test_execute_sql_flush_multiple_sql_statements(self, mock_atomic):
++        """Test that multiple SQL statements are executed in order."""
++        sql_list = [
++            'DELETE FROM auth_user;',
++            'DELETE FROM auth_group;', 
++            'DELETE FROM django_content_type;'
++        ]
++        
++        # Mock the atomic context manager
++        mock_atomic.return_value.__enter__.return_value = None
++        mock_atomic.return_value.__exit__.return_value = None
++        
++        self.operations.execute_sql_flush(sql_list)
++        
++        # Verify all SQL statements were executed in order
++        expected_calls = [
++            pytest.mock.call('DELETE FROM auth_user;'),
++            pytest.mock.call('DELETE FROM auth_group;'),
++            pytest.mock.call('DELETE FROM django_content_type;')
++        ]
++        self.mock_cursor.execute.assert_has_calls(expected_calls, any_order=False)
+
+--- a/tests/management/commands/test_flush.py
++++ b/tests/management/commands/test_flush.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import Mock, patch, MagicMock
++from django.core.management.commands.flush import Command
++from django.core.management.base import CommandError
++from django.test import TestCase, override_settings
++from django.db import connections
++from io import StringIO
++
++
++class TestFlushCommandExecuteSqlFlush(TestCase):
++    """Test suite for the flush command's usage of execute_sql_flush."""
++    
++    def setUp(self):
++        """Set up test fixtures."""
++        self.command = Command()
++        self.mock_connection = Mock()
++        self.mock_connection.alias = 'default'
++        self.mock_connection.settings_dict = {'NAME': 'test_db'}
++        self.mock_ops = Mock()
++        self.mock_connection.ops = self.mock_ops
++    
++    @patch('django.core.management.commands.flush.sql_flush')
++    @patch('django.core.management.commands.flush.connections')
++    @patch('django.core.management.commands.flush.apps')
++    @patch('builtins.input', return_value='yes')
++    def test_flush_command_calls_execute_sql_flush_with_new_signature(
++        self, mock_input, mock_apps, mock_connections, mock_sql_flush
++    ):
++        """Test that flush command calls execute_sql_flush with simplified signature."""
++        # Setup mocks
++        mock_connections.__getitem__.return_value = self.mock_connection
++        mock_sql_flush.return_value = ['DELETE FROM table1;', 'DELETE FROM table2;']
++        mock_apps.get_app_configs.return_value = []
++        
++        # Execute the command
++        self.command.handle(database='default', verbosity=1, interactive=True)
++        
++        # Verify that execute_sql_flush was called with only sql_list (no database parameter)
++        expected_sql_list = ['DELETE FROM table1;', 'DELETE FROM table2;']
++        self.mock_ops.execute_sql_flush.assert_called_once_with(expected_sql_list)
++    
++    @patch('django.core.management.commands.flush.sql_flush')
++    @patch('django.core.management.commands.flush.connections')
++    @patch('django.core.management.commands.flush.apps')
++    @patch('builtins.input', return_value='no')
++    def test_flush_command_does_not_call_execute_sql_flush_when_cancelled(
++        self, mock_input, mock_apps, mock_connections, mock_sql_flush
++    ):
++        """Test that execute_sql_flush is not called when user cancels."""
++        # Setup mocks
++        mock_connections.__getitem__.return_value = self.mock_connection
++        mock_sql_flush.return_value = ['DELETE FROM table1;']
++        mock_apps.get_app_configs.return_value = []
++        
++        # Execute the command
++        self.command.handle(database='default', verbosity=1, interactive=True)
++        
++        # Verify that execute_sql_flush was not called
++        self.mock_ops.execute_sql_flush.assert_not_called()
++    
++    @patch('django.core.management.commands.flush.sql_flush')
++    @patch('django.core.management.commands.flush.connections')
++    @patch('django.core.management.commands.flush.apps')
++    def test_flush_command_non_interactive_calls_execute_sql_flush(
++        self, mock_apps, mock_connections, mock_sql_flush
++    ):
++        """Test that non-interactive flush calls execute_sql_flush with new signature."""
++        # Setup mocks
++        mock_connections.__getitem__.return_value = self.mock_connection
++        mock_sql_flush.return_value = ['TRUNCATE table1;']
++        mock_apps.get_app_configs.return_value = []
++        
++        # Execute the command non-interactively
++        self.command.handle(database='default', verbosity=1, interactive=False)
++        
++        # Verify that execute_sql_flush was called with only sql_list
++        expected_sql_list = ['TRUNCATE table1;']
++        self.mock_ops.execute_sql_flush.assert_called_once_with(expected_sql_list)
++    
++    @patch('django.core.management.commands.flush.sql_flush')
++    @patch('django.core.management.commands.flush.connections')
++    @patch('django.core.management.commands.flush.apps')
++    @patch('builtins.input', return_value='yes')
++    def test_flush_command_handles_execute_sql_flush_exception(
++        self, mock_input, mock_apps, mock_connections, mock_sql_flush
++    ):
++        """Test that flush command properly handles exceptions from execute_sql_flush."""
++        # Setup mocks
++        mock_connections.__getitem__.return_value = self.mock_connection
++        mock_sql_flush.return_value = ['DELETE FROM table1;']
++        mock_apps.get_app_configs.return_value = []
++        
++        # Make execute_sql_flush raise an exception
++        self.mock_ops.execute_sql_flush.side_effect = Exception("Database error")
++        
++        # Verify that CommandError is raised
++        with self.assertRaises(CommandError) as cm:
++            self.command.handle(database='default', verbosity=1, interactive=True)
++        
++        # Verify the error message contains expected text
++        self.assertIn("Database default couldn't be flushed", str(cm.exception))
++        
++        # Verify that execute_sql_flush was called with correct signature
++        expected_sql_list = ['DELETE FROM table1;']
++        self.mock_ops.execute_sql_flush.assert_called_once_with(expected_sql_list)
++    
++    @patch('django.core.management.commands.flush.sql_flush')
++    @patch('django.core.management.commands.flush.connections')
++    @patch('django.core.management.commands.flush.apps')
++    @patch('builtins.input', return_value='yes')
++    def test_flush_command_with_empty_sql_list(
++        self, mock_input, mock_apps, mock_connections, mock_sql_flush
++    ):
++        """Test that flush command handles empty SQL list correctly."""
++        # Setup mocks
++        mock_connections.__getitem__.return_value = self.mock_connection
++        mock_sql_flush.return_value = []  # Empty SQL list
++        mock_apps.get_app_configs.return_value = []
++        
++        # Execute the command
++        self.command.handle(database='default', verbosity=1, interactive=True)
++        
++        # Verify that execute_sql_flush was called with empty list
++        self.mock_ops.execute_sql_flush.assert_called_once_with([])
++    
++    def test_flush_command_backward_compatibility_failure(self):
++        """Test that old calling pattern would fail after the fix."""
++        # This test demonstrates that the old calling pattern should fail
++        # after the signature change is implemented
++        
++        # Create a mock that expects the old signature (with database parameter)
++        old_style_mock = Mock()
++        
++        # This should raise TypeError when called with new signature
++        with self.assertRaises(TypeError):
++            # Simulate calling with old signature expectations
++            old_style_mock.execute_sql_flush('database_name', ['SQL'])
++            
++        # But new signature should work
++        new_style_mock = Mock()
++        new_style_mock.execute_sql_flush(['SQL'])  # Should not raise
++        new_style_mock.execute_sql_flush.assert_called_once_with(['SQL'])

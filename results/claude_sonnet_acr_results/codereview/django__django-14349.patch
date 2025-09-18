@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/validators.py b/django/core/validators.py\nindex a385819510..8e39d794db 100644\n--- a/django/core/validators.py\n+++ b/django/core/validators.py\n@@ -101,6 +101,9 @@ class URLValidator(RegexValidator):\n     def __call__(self, value):\n         if not isinstance(value, str):\n             raise ValidationError(self.message, code=self.code, params={'value': value})\n+        # Check for forbidden characters that should not be in URLs\n+        if '\\n' in value or '\\r' in value or '\\t' in value:\n+            raise ValidationError(self.message, code=self.code, params={'value': value})\n         # Check if the scheme is valid.\n         scheme = value.split('://')[0].lower()\n         if scheme not in self.schemes:\n"
+}

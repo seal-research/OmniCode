@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/dateformat.py b/django/utils/dateformat.py\nindex afd36d79e0..5793ca6634 100644\n--- a/django/utils/dateformat.py\n+++ b/django/utils/dateformat.py\n@@ -326,7 +326,7 @@ class DateFormat(TimeFormat):\n \n     def y(self):\n         \"Year, 2 digits; e.g. '99'\"\n-        return str(self.data.year)[2:]\n+        return str(self.data.year % 100).zfill(2)\n \n     def Y(self):\n         \"Year, 4 digits; e.g. '1999'\"\n"
+}

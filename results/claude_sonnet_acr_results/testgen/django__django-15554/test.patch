@@ -1,0 +1,266 @@
+--- a/tests/queries/test_filtered_relation.py
++++ b/tests/queries/test_filtered_relation.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import F, Q, Case, When, FilteredRelation
++from django.test import TestCase
++
++
++class MyRelation(models.Model):
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class NestedRelation(models.Model):
++    myrelation = models.ForeignKey(MyRelation, on_delete=models.CASCADE)
++    zone = models.CharField(max_length=50, null=True, blank=True)
++    is_all = models.BooleanField(default=False)
++    price = models.DecimalField(max_digits=10, decimal_places=2)
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class MainModel(models.Model):
++    name = models.CharField(max_length=100)
++    zone = models.CharField(max_length=50, null=True, blank=True)
++    myrelation = models.ForeignKey(MyRelation, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class MultipleFilteredRelationTests(TestCase):
++    """Test cases for multiple FilteredRelation with same base relation but different conditions."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        # Create test data
++        cls.relation1 = MyRelation.objects.create(name="Relation 1")
++        cls.relation2 = MyRelation.objects.create(name="Relation 2")
++        
++        # Create nested relations with different conditions
++        cls.nested_all_1 = NestedRelation.objects.create(
++            myrelation=cls.relation1, 
++            is_all=True, 
++            price=100.00
++        )
++        cls.nested_zone_1 = NestedRelation.objects.create(
++            myrelation=cls.relation1, 
++            zone="zone1", 
++            is_all=False, 
++            price=150.00
++        )
++        cls.nested_all_2 = NestedRelation.objects.create(
++            myrelation=cls.relation2, 
++            is_all=True, 
++            price=200.00
++        )
++        
++        # Create main models
++        cls.main1 = MainModel.objects.create(
++            name="Main 1", 
++            zone="zone1", 
++            myrelation=cls.relation1
++        )
++        cls.main2 = MainModel.objects.create(
++            name="Main 2", 
++            zone="zone2", 
++            myrelation=cls.relation2
++        )
++    
++    def test_multiple_filtered_relations_same_base_different_conditions_generates_separate_joins(self):
++        """
++        Test that multiple FilteredRelations with the same base relation but different 
++        conditions generate separate SQL JOINs instead of reusing the same join.
++        This is the main bug reproduction test.
++        """
++        qs = MainModel.objects.alias(
++            relation_zone=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__zone=F("zone"))
++            ),
++            relation_all=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__is_all=True)
++            ),
++            price_zone=F("relation_zone__price")
++        ).annotate(
++            price_final=Case(
++                When(
++                    price_zone__isnull=True,
++                    then=F("relation_all__price"),
++                ),
++                default=F("price_zone")
++            )
++        )
++        
++        # Get the raw SQL query
++        sql_query = str(qs.query)
++        
++        # Before the fix, this would fail because only one JOIN would be generated
++        # After the fix, we should see two separate JOINs for the same table with different aliases
++        
++        # Count the number of JOINs to the nested relation table
++        join_count = sql_query.upper().count('JOIN "QUERIES_NESTEDRELATION"')
++        
++        # We should have at least 2 JOINs - one for each FilteredRelation
++        self.assertGreaterEqual(
++            join_count, 2, 
++            f"Expected at least 2 JOINs for nested relation, but found {join_count}. "
++            f"SQL: {sql_query}"
++        )
++        
++        # Verify that both filtered relation aliases are present in the query
++        self.assertIn('relation_zone', sql_query.lower())
++        self.assertIn('relation_all', sql_query.lower())
++    
++    def test_multiple_filtered_relations_different_aliases_work_correctly(self):
++        """
++        Test that the query with multiple FilteredRelations actually returns correct results.
++        """
++        qs = MainModel.objects.alias(
++            relation_zone=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__zone=F("zone"))
++            ),
++            relation_all=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__is_all=True)
++            ),
++            price_zone=F("relation_zone__price")
++        ).annotate(
++            price_final=Case(
++                When(
++                    price_zone__isnull=True,
++                    then=F("relation_all__price"),
++                ),
++                default=F("price_zone")
++            )
++        )
++        
++        # Execute the query and check results
++        results = list(qs.values('name', 'price_final'))
++        
++        # main1 should use zone price (150.00) since it has a matching zone
++        # main2 should use all price (200.00) since it doesn't have a matching zone
++        expected_results = [
++            {'name': 'Main 1', 'price_final': 150.00},
++            {'name': 'Main 2', 'price_final': 200.00},
++        ]
++        
++        self.assertEqual(len(results), 2)
++        for expected in expected_results:
++            self.assertIn(expected, results)
++    
++    def test_single_filtered_relation_still_works(self):
++        """
++        Test that single FilteredRelation continues to work as before (regression test).
++        """
++        qs = MainModel.objects.alias(
++            relation_all=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__is_all=True)
++            )
++        ).annotate(
++            price_all=F("relation_all__price")
++        )
++        
++        results = list(qs.values('name', 'price_all'))
++        
++        expected_results = [
++            {'name': 'Main 1', 'price_all': 100.00},
++            {'name': 'Main 2', 'price_all': 200.00},
++        ]
++        
++        self.assertEqual(len(results), 2)
++        for expected in expected_results:
++            self.assertIn(expected, results)
++    
++    def test_three_filtered_relations_same_base_different_conditions(self):
++        """
++        Test with three FilteredRelations to ensure the fix works for multiple relations.
++        """
++        # Add another nested relation for testing
++        NestedRelation.objects.create(
++            myrelation=self.relation1, 
++            zone="special", 
++            is_all=False, 
++            price=300.00
++        )
++        
++        qs = MainModel.objects.alias(
++            relation_zone=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__zone=F("zone"))
++            ),
++            relation_all=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__is_all=True)
++            ),
++            relation_special=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__zone="special")
++            )
++        )
++        
++        sql_query = str(qs.query)
++        
++        # Should have at least 3 JOINs for the three different FilteredRelations
++        join_count = sql_query.upper().count('JOIN "QUERIES_NESTEDRELATION"')
++        self.assertGreaterEqual(
++            join_count, 3,
++            f"Expected at least 3 JOINs for nested relation, but found {join_count}. "
++            f"SQL: {sql_query}"
++        )
++    
++    def test_filtered_relation_with_same_condition_can_be_reused(self):
++        """
++        Test that FilteredRelations with identical conditions can still be reused (regression test).
++        """
++        qs = MainModel.objects.alias(
++            relation_all_1=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__is_all=True)
++            ),
++            relation_all_2=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__is_all=True)
++            )
++        )
++        
++        # This should work without errors and potentially reuse joins for identical conditions
++        sql_query = str(qs.query)
++        
++        # The query should execute successfully
++        results = list(qs.values('name'))
++        self.assertEqual(len(results), 2)
++    
++    def test_filtered_relation_different_base_relations(self):
++        """
++        Test that FilteredRelations with different base relations work correctly (regression test).
++        """
++        # Create another relation structure for testing
++        other_relation = MyRelation.objects.create(name="Other Relation")
++        other_nested = NestedRelation.objects.create(
++            myrelation=other_relation,
++            is_all=True,
++            price=500.00
++        )
++        
++        # This should work as before since they're different base relations
++        qs = MainModel.objects.alias(
++            relation_nested=FilteredRelation(
++                "myrelation__nestedrelation",
++                condition=Q(myrelation__nestedrelation__is_all=True)
++            )
++        )
++        
++        sql_query = str(qs.query)
++        results = list(qs.values('name'))
++        
++        # Should work without issues
++        self.assertEqual(len(results), 2)

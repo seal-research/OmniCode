@@ -17,8 +17,6 @@ from tqdm import tqdm
 def build_prompt(
     instance: dict,
     mode: str,
-    working_dir: str | None = None,
-    pylint_feedback: str | None = None,
 ) -> str:
     """
     Return the appropriate prompt text for the given mode.
@@ -26,78 +24,51 @@ def build_prompt(
     base = instance["problem_statement"].strip()
     repo = instance["repo"]
 
-    if mode == "bugfixing":
+    if mode.startswith("bugfixing"):
         return base
 
-    if mode == "testgen":
+    if mode.startswith("testgen"):
         return f"""
 ROLE: autonomous software-engineer inside **{repo}**
 
-GOAL: write thorough pytest unit tests only.
-- Cover the behaviour / bug described below
-- Include at least one test that fails before a fix
-- Put tests in the existing suite if present.
-
-CONTEXT:
+<problem_description>
 {base}
+</problem_description>
 
-OUTPUT: add tests; finish with **ALL TESTS ADDED**.
+Can you help me implement a test that successfully reproduces the problem specified in the <problem_description>?
+The test must be created in the repository's existing test suite and should be runable with the repository's testing infrastructure / tooling.
+Do not make any changes to the non-test code in the repository since we only need to create a reproduction test.
 """.strip()
-
-    if mode == "stylereview":
-        feedback = pylint_feedback or base
+    
+    if mode.startswith("reviewfix"):
+        if 'bad_patches' not in instance or len(instance['bad_patches']) == 0:
+            logger.warning(f"Instance {instance['instance_id']} does not have any bad patches, cannot generate faux problem statement.")
+            return None
+        bad_patch = instance['bad_patches'][0]    
+        problem_statement = instance['problem_statement']
+        bad_patch_text = bad_patch['patch']
+        review = bad_patch['review']
         return f"""
-You have recently generated a patch to resolve an issue within this repository.
-Pylint has been run on the modified files and has produced the following
-feedback:
-<lint_report>
-{feedback.strip()}
-</lint_report>
+ROLE: autonomous software-engineer inside **{repo}**
+        
+<problem_description>
+{problem_statement}
+</problem_description>
 
-Please resolve the Pylint feedback to the best of your ability, while
-preserving the functionality of the code.
-""".strip()
+Here is a previous patch attempt that failed to resolve this issue.
 
-    if mode == "codereview":
-        bp_raw = instance.get("bad_patches", [])
-        if isinstance(bp_raw, str):
-            try:
-                bp_raw = json.loads(bp_raw)
-            except Exception:
-                bp_raw = []
+<bad_patch>
+{bad_patch_text}
+</bad_patch>
 
-        blocks = []
-        for item in bp_raw:
-            idx   = item.get("idx", "?")
-            patch = item.get("patch", "").strip()
-            blocks.append(
-                f"[Candidate patch #{idx} – did **not** fix the bug]\n"
-                "```diff\n" + patch + "\n```"
-            )
-        bad_patches = "\n\n".join(blocks) or "_none supplied_"
-        working_dir = working_dir or "<repo>"
+Here is a review that attempts to explain why the patch failed:
 
-        return f"""
-<uploaded_files>
-{working_dir}
-</uploaded_files>
-I've uploaded a Python code repository in **{working_dir}**.
+<review>
+{review}
+</review>
 
-Pull-request description
-------------------------
-{base}
+Implement a fix for the given problem description keeping the failed patch and review in mind. Use insight from them to **avoid repeating the same mistakes** and to **guide your reasoning**."""
 
-Failed candidate patches
-------------------------
-{bad_patches}
-
-Your job
---------
-Analyse why the above attempts failed.
-Make the minimal changes to **non-test** files so the PR requirements are met.
-You may create and run reproduction scripts under `bash`.
-When done, apply your fix.
-""".strip()
 
     raise ValueError(f"Unsupported mode '{mode}'")
 
@@ -116,7 +87,6 @@ def run_aider_single(
     output_dir: Path,
     model_provider: str,
     mode: str,
-    pylint_feedback: str | None = None,
 ) -> Tuple[Optional[str], dict]:
 
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -136,8 +106,6 @@ def run_aider_single(
         prompt_text = build_prompt(
             instance,
             mode,
-            working_dir=str(temp_path) if mode == "codereview" else None,
-            pylint_feedback=pylint_feedback,
         )
         prompt_path.write_text(prompt_text, encoding="utf-8")
         logger.info("Prompt written to %s", prompt_path)
@@ -198,11 +166,6 @@ def run_aider_single(
         inst_dir.mkdir(parents=True, exist_ok=True)
         (inst_dir / "fix.patch").write_text(diff)
 
-        if mode == "codereview":
-            review_src = temp_path / "REVIEW.md"
-            if review_src.exists():
-                shutil.copy(review_src, inst_dir / "REVIEW.md")
-
         meta = {
             "instance_id": instance["instance_id"],
             "mode": mode,
@@ -225,7 +188,6 @@ def main(
     model_provider: str,
     instance_ids: list[str] | None,
     mode: str,
-    style_feedback_path: Path | None,
 ):
 
     # load dataset ----------------------------------------------------------- #
@@ -246,11 +208,6 @@ def main(
     if instance_ids:
         data = [d for d in data if d["instance_id"] in instance_ids]
 
-    # read pylint feedback file once ---------------------------------------- #
-    pylint_feedback = None
-    if mode == "stylereview" and style_feedback_path:
-        pylint_feedback = Path(style_feedback_path).read_text(encoding="utf-8")
-
     output_dir_path.mkdir(parents=True, exist_ok=True)
     preds_path = output_dir_path / "all_preds.jsonl"
     done = set()
@@ -258,26 +215,24 @@ def main(
         done = {json.loads(l)["instance_id"] for l in preds_path.read_text().splitlines()}
 
     # iterate ---------------------------------------------------------------- #
-    with preds_path.open("a+") as sink:
-        for inst in tqdm(data, desc=f"Inference with {model_name}"):
-            if inst["instance_id"] in done:
-                continue
+    for inst in tqdm(data, desc=f"Inference with {model_name}"):
+        if inst["instance_id"] in done:
+            continue
 
-            for i in range(NUM_RETRIES):
-                err, res = run_aider_single(
-                    inst,
-                    model_name, api_key, output_dir_path,
-                    model_provider, mode,
-                    pylint_feedback=pylint_feedback,
-                )
-                if res['model_patch'] is not None and res['model_patch'] != '':
-                    break
+        for i in range(NUM_RETRIES):
+            err, res = run_aider_single(
+                inst,
+                model_name, api_key, output_dir_path,
+                model_provider, mode,
+            )
+            if res['model_patch'] is not None and res['model_patch'] != '':
+                break
 
+        if err:
+            logger.error("%s: %s", inst["instance_id"], err)
+            continue
 
-            if err:
-                logger.error("%s: %s", inst["instance_id"], err)
-                continue
-
+        with preds_path.open("a+") as sink:
             sink.write(json.dumps(res) + "\n")
             sink.flush()
 
@@ -290,15 +245,12 @@ if __name__ == "__main__":
     p = ArgumentParser()
     p.add_argument("-i", "--input_tasks", required=True)
     p.add_argument("-o", "--output_dir", required=True)
-    p.add_argument("-m", "--model_name",
-                   default="gemini/gemini-2.0-flash")
+    p.add_argument("-m", "--model_name", required=True)
     p.add_argument("-k", "--api_key", default=None)
-    p.add_argument("--model_provider", default="gemini")
+    p.add_argument("--model_provider", required=True)
     p.add_argument("--mode", default="bugfixing",
-                   choices=["bugfixing", "testgen", "stylereview", "codereview"])
+                   choices=["bugfixing", "testgen"])
     p.add_argument("--instance_ids", default=None)
-    p.add_argument("--style_feedback", default=None,
-                   help="Path to a pylint/ruff feedback file (used with --mode stylereview)")
     args = p.parse_args()
 
     main(
@@ -309,5 +261,4 @@ if __name__ == "__main__":
         mode=args.mode,
         model_provider=args.model_provider.upper(),
         instance_ids=args.instance_ids.split(",") if args.instance_ids else None,
-        style_feedback_path=Path(args.style_feedback) if args.style_feedback else None,
     )

@@ -1,0 +1,240 @@
+--- a/sympy/algebras/tests/test_quaternion_rotation_matrix.py
++++ b/sympy/algebras/tests/test_quaternion_rotation_matrix.py
+-# Empty if creating new file
++import pytest
++from sympy import symbols, cos, sin, pi, trigsimp, sqrt, Matrix, simplify
++from sympy.algebras.quaternion import Quaternion
++
++
++class TestQuaternionRotationMatrix:
++    """Test suite for Quaternion.to_rotation_matrix() method."""
++
++    def test_rotation_around_x_axis_bug_reproduction(self):
++        """
++        Test that reproduces the bug described in the issue.
++        This test should fail before the fix is applied.
++        
++        For a rotation around x-axis by angle x, the quaternion is:
++        q = Quaternion(cos(x/2), sin(x/2), 0, 0)
++        
++        The expected rotation matrix should be:
++        [[1,      0,       0],
++         [0, cos(x), -sin(x)],
++         [0, sin(x),  cos(x)]]
++        
++        But the buggy implementation produces:
++        [[1,      0,      0],
++         [0, cos(x), sin(x)],
++         [0, sin(x), cos(x)]]
++        """
++        x = symbols('x')
++        q = Quaternion(cos(x/2), sin(x/2), 0, 0)
++        result = trigsimp(q.to_rotation_matrix())
++        
++        # Expected correct rotation matrix for rotation around x-axis
++        expected = Matrix([
++            [1,      0,       0],
++            [0, cos(x), -sin(x)],
++            [0, sin(x),  cos(x)]
++        ])
++        
++        # This assertion should pass after the fix
++        assert result == expected, f"Expected {expected}, but got {result}"
++
++    def test_rotation_around_y_axis(self):
++        """Test rotation around y-axis."""
++        x = symbols('x')
++        q = Quaternion(cos(x/2), 0, sin(x/2), 0)
++        result = trigsimp(q.to_rotation_matrix())
++        
++        expected = Matrix([
++            [cos(x),  0, sin(x)],
++            [     0,  1,      0],
++            [-sin(x), 0, cos(x)]
++        ])
++        
++        assert result == expected
++
++    def test_rotation_around_z_axis(self):
++        """Test rotation around z-axis."""
++        x = symbols('x')
++        q = Quaternion(cos(x/2), 0, 0, sin(x/2))
++        result = trigsimp(q.to_rotation_matrix())
++        
++        expected = Matrix([
++            [cos(x), -sin(x), 0],
++            [sin(x),  cos(x), 0],
++            [     0,       0, 1]
++        ])
++        
++        assert result == expected
++
++    def test_identity_quaternion(self):
++        """Test that identity quaternion produces identity matrix."""
++        q = Quaternion(1, 0, 0, 0)
++        result = q.to_rotation_matrix()
++        
++        expected = Matrix([
++            [1, 0, 0],
++            [0, 1, 0],
++            [0, 0, 1]
++        ])
++        
++        assert result == expected
++
++    def test_90_degree_rotations(self):
++        """Test specific 90-degree rotations around each axis."""
++        # 90-degree rotation around x-axis
++        q_x = Quaternion(cos(pi/4), sin(pi/4), 0, 0)
++        result_x = simplify(q_x.to_rotation_matrix())
++        expected_x = Matrix([
++            [1,  0,  0],
++            [0,  0, -1],
++            [0,  1,  0]
++        ])
++        assert result_x == expected_x
++
++        # 90-degree rotation around y-axis
++        q_y = Quaternion(cos(pi/4), 0, sin(pi/4), 0)
++        result_y = simplify(q_y.to_rotation_matrix())
++        expected_y = Matrix([
++            [ 0, 0, 1],
++            [ 0, 1, 0],
++            [-1, 0, 0]
++        ])
++        assert result_y == expected_y
++
++        # 90-degree rotation around z-axis
++        q_z = Quaternion(cos(pi/4), 0, 0, sin(pi/4))
++        result_z = simplify(q_z.to_rotation_matrix())
++        expected_z = Matrix([
++            [0, -1, 0],
++            [1,  0, 0],
++            [0,  0, 1]
++        ])
++        assert result_z == expected_z
++
++    def test_180_degree_rotations(self):
++        """Test 180-degree rotations around each axis."""
++        # 180-degree rotation around x-axis
++        q_x = Quaternion(0, 1, 0, 0)
++        result_x = q_x.to_rotation_matrix()
++        expected_x = Matrix([
++            [1,  0,  0],
++            [0, -1,  0],
++            [0,  0, -1]
++        ])
++        assert result_x == expected_x
++
++        # 180-degree rotation around y-axis
++        q_y = Quaternion(0, 0, 1, 0)
++        result_y = q_y.to_rotation_matrix()
++        expected_y = Matrix([
++            [-1, 0,  0],
++            [ 0, 1,  0],
++            [ 0, 0, -1]
++        ])
++        assert result_y == expected_y
++
++        # 180-degree rotation around z-axis
++        q_z = Quaternion(0, 0, 0, 1)
++        result_z = q_z.to_rotation_matrix()
++        expected_z = Matrix([
++            [-1,  0, 0],
++            [ 0, -1, 0],
++            [ 0,  0, 1]
++        ])
++        assert result_z == expected_z
++
++    def test_arbitrary_unit_quaternion(self):
++        """Test with an arbitrary normalized quaternion."""
++        # Quaternion representing rotation around axis (1,1,1) by 120 degrees
++        q = Quaternion(1, 1, 1, 1).normalize()
++        result = q.to_rotation_matrix()
++        
++        # The result should be orthogonal (R * R.T = I)
++        identity = simplify(result * result.T)
++        expected_identity = Matrix([
++            [1, 0, 0],
++            [0, 1, 0],
++            [0, 0, 1]
++        ])
++        assert identity == expected_identity
++        
++        # The determinant should be 1
++        assert simplify(result.det()) == 1
++
++    def test_quaternion_with_point_transformation(self):
++        """Test 4x4 transformation matrix generation."""
++        x = symbols('x')
++        q = Quaternion(cos(x/2), sin(x/2), 0, 0)
++        point = (1, 1, 1)
++        result = trigsimp(q.to_rotation_matrix(point))
++        
++        # Should be a 4x4 matrix
++        assert result.shape == (4, 4)
++        
++        # Bottom row should be [0, 0, 0, 1]
++        assert result[3, :] == Matrix([[0, 0, 0, 1]])
++        
++        # Top-left 3x3 should be the same as the 3x3 rotation matrix
++        rotation_3x3 = trigsimp(q.to_rotation_matrix())
++        assert result[:3, :3] == rotation_3x3
++
++    def test_conjugate_quaternion_inverse_rotation(self):
++        """Test that conjugate quaternion produces inverse rotation."""
++        x = symbols('x')
++        q = Quaternion(cos(x/2), sin(x/2), 0, 0)
++        q_conj = q._eval_conjugate()
++        
++        R = q.to_rotation_matrix()
++        R_inv = q_conj.to_rotation_matrix()
++        
++        # R * R_inv should be identity
++        identity = simplify(R * R_inv)
++        expected_identity = Matrix([
++            [1, 0, 0],
++            [0, 1, 0],
++            [0, 0, 1]
++        ])
++        assert identity == expected_identity
++
++    def test_edge_case_zero_vector_components(self):
++        """Test edge cases with zero vector components."""
++        # Pure scalar quaternion (no rotation)
++        q1 = Quaternion(1, 0, 0, 0)
++        result1 = q1.to_rotation_matrix()
++        expected1 = Matrix([
++            [1, 0, 0],
++            [0, 1, 0],
++            [0, 0, 1]
++        ])
++        assert result1 == expected1
++
++        # Quaternion with only one non-zero vector component
++        q2 = Quaternion(sqrt(2)/2, sqrt(2)/2, 0, 0)  # 90-degree rotation around x
++        result2 = simplify(q2.to_rotation_matrix())
++        expected2 = Matrix([
++            [1,  0,  0],
++            [0,  0, -1],
++            [0,  1,  0]
++        ])
++        assert result2 == expected2
++
++    def test_numerical_consistency(self):
++        """Test numerical consistency with specific values."""
++        # Test with pi/6 rotation around x-axis
++        q = Quaternion(cos(pi/12), sin(pi/12), 0, 0)
++        result = q.to_rotation_matrix()
++        
++        # Check that the matrix is orthogonal
++        product = simplify(result * result.T)
++        identity = Matrix([
++            [1, 0, 0],
++            [0, 1, 0],
++            [0, 0, 1]
++        ])
++        assert product == identity
++        
++        # Check determinant is 1
++        assert simplify(result.det()) == 1

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/simplify/fu.py b/sympy/simplify/fu.py\nindex ad1130ef96..c2640a34b9 100644\n--- a/sympy/simplify/fu.py\n+++ b/sympy/simplify/fu.py\n@@ -501,6 +501,9 @@ def _f(rv):\n         if not (rv.is_Pow and rv.base.func == f):\n             return rv\n \n+        # Check if exponent is real before attempting comparisons\n+        if not rv.exp.is_real:\n+            return rv\n         if (rv.exp < 0) == True:\n             return rv\n         if (rv.exp > max) == True:\n"
+}

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/views/debug.py b/django/views/debug.py\nindex 7a89f7bd15..485b1328f2 100644\n--- a/django/views/debug.py\n+++ b/django/views/debug.py\n@@ -397,7 +397,7 @@ class ExceptionReporter:\n     def get_traceback_frames(self):\n         def explicit_or_implicit_cause(exc_value):\n             explicit = getattr(exc_value, '__cause__', None)\n-            suppress_context = getattr(exc_value, '__suppress_context__', None)\n+            suppress_context = getattr(exc_value, '__suppress_context__', False)\n             implicit = getattr(exc_value, '__context__', None)\n             return explicit or (None if suppress_context else implicit)\n \n"
+}

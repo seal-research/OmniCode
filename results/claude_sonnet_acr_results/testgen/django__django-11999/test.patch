@@ -1,0 +1,240 @@
+--- a/tests/model_fields/test_get_display_override.py
++++ b/tests/model_fields/test_get_display_override.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase
++
++
++class TestGetDisplayOverride(TestCase):
++    """Test that get_FOO_display() methods can be overridden in Django 2.2+."""
++
++    def test_get_display_override_works(self):
++        """Test that overriding get_FOO_display() method works correctly."""
++        
++        class FooBar(models.Model):
++            foo_bar = models.CharField(
++                max_length=10,
++                choices=[(1, 'foo'), (2, 'bar')]
++            )
++            
++            def get_foo_bar_display(self):
++                return "something"
++            
++            class Meta:
++                app_label = 'test'
++        
++        # Create an instance
++        instance = FooBar(foo_bar=1)
++        
++        # The overridden method should be called, not the default one
++        assert instance.get_foo_bar_display() == "something"
++        
++        # Test with different value to ensure override always works
++        instance.foo_bar = 2
++        assert instance.get_foo_bar_display() == "something"
++
++    def test_get_display_default_behavior_preserved(self):
++        """Test that default get_FOO_display() behavior works when not overridden."""
++        
++        class DefaultModel(models.Model):
++            status = models.CharField(
++                max_length=10,
++                choices=[('active', 'Active'), ('inactive', 'Inactive')]
++            )
++            
++            class Meta:
++                app_label = 'test'
++        
++        # Create an instance
++        instance = DefaultModel(status='active')
++        
++        # Should return the display value from choices
++        assert instance.get_status_display() == "Active"
++        
++        instance.status = 'inactive'
++        assert instance.get_status_display() == "Inactive"
++        
++        # Test with value not in choices
++        instance.status = 'unknown'
++        assert instance.get_status_display() == "unknown"
++
++    def test_get_display_override_with_inheritance(self):
++        """Test that get_FOO_display() override works with model inheritance."""
++        
++        class BaseModel(models.Model):
++            status = models.CharField(
++                max_length=10,
++                choices=[('draft', 'Draft'), ('published', 'Published')]
++            )
++            
++            class Meta:
++                app_label = 'test'
++                abstract = True
++        
++        class ChildModel(BaseModel):
++            def get_status_display(self):
++                return "Custom: " + super().get_status_display()
++            
++            class Meta:
++                app_label = 'test'
++        
++        instance = ChildModel(status='draft')
++        assert instance.get_status_display() == "Custom: Draft"
++
++    def test_get_display_override_multiple_fields(self):
++        """Test overriding get_FOO_display() for multiple fields."""
++        
++        class MultiFieldModel(models.Model):
++            field1 = models.CharField(
++                max_length=10,
++                choices=[('a', 'A'), ('b', 'B')]
++            )
++            field2 = models.CharField(
++                max_length=10,
++                choices=[('x', 'X'), ('y', 'Y')]
++            )
++            
++            def get_field1_display(self):
++                return "Override1"
++            
++            def get_field2_display(self):
++                return "Override2"
++            
++            class Meta:
++                app_label = 'test'
++        
++        instance = MultiFieldModel(field1='a', field2='x')
++        assert instance.get_field1_display() == "Override1"
++        assert instance.get_field2_display() == "Override2"
++
++    def test_get_display_override_with_no_choices(self):
++        """Test that fields without choices don't get get_FOO_display() methods."""
++        
++        class NoChoicesModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test'
++        
++        instance = NoChoicesModel(name="test")
++        
++        # Should not have get_name_display method
++        assert not hasattr(instance, 'get_name_display')
++
++    def test_get_display_override_edge_cases(self):
++        """Test edge cases for get_FOO_display() override."""
++        
++        class EdgeCaseModel(models.Model):
++            # Field with empty choices
++            empty_choices = models.CharField(
++                max_length=10,
++                choices=[]
++            )
++            
++            # Field with None value in choices
++            nullable_choice = models.CharField(
++                max_length=10,
++                choices=[(None, 'None Value'), ('value', 'Value')],
++                null=True,
++                blank=True
++            )
++            
++            def get_empty_choices_display(self):
++                return "Empty Override"
++            
++            def get_nullable_choice_display(self):
++                return "Nullable Override"
++            
++            class Meta:
++                app_label = 'test'
++        
++        instance = EdgeCaseModel()
++        assert instance.get_empty_choices_display() == "Empty Override"
++        assert instance.get_nullable_choice_display() == "Nullable Override"
++
++    def test_get_display_method_signature(self):
++        """Test that overridden get_FOO_display() methods have correct signature."""
++        
++        class SignatureModel(models.Model):
++            status = models.CharField(
++                max_length=10,
++                choices=[('active', 'Active')]
++            )
++            
++            def get_status_display(self):
++                # Should be able to access self and field value
++                return f"Status: {self.status}"
++            
++            class Meta:
++                app_label = 'test'
++        
++        instance = SignatureModel(status='active')
++        assert instance.get_status_display() == "Status: active"
++
++    def test_get_display_override_fails_before_fix(self):
++        """Test that demonstrates the bug - this should fail before the fix is applied."""
++        
++        class BugDemonstrationModel(models.Model):
++            choice_field = models.CharField(
++                max_length=10,
++                choices=[('value1', 'Display1'), ('value2', 'Display2')]
++            )
++            
++            def get_choice_field_display(self):
++                return "This should be returned but won't be in Django 2.2+ without fix"
++            
++            class Meta:
++                app_label = 'test'
++        
++        instance = BugDemonstrationModel(choice_field='value1')
++        
++        # Before fix: this would return "Display1" (from choices)
++        # After fix: this should return the overridden value
++        result = instance.get_choice_field_display()
++        
++        # This assertion will fail before the fix is applied
++        # demonstrating the bug exists
++        assert result == "This should be returned but won't be in Django 2.2+ without fix"
++
++    def test_get_display_override_with_property(self):
++        """Test that get_FOO_display() can be overridden as a property."""
++        
++        class PropertyModel(models.Model):
++            status = models.CharField(
++                max_length=10,
++                choices=[('active', 'Active'), ('inactive', 'Inactive')]
++            )
++            
++            @property
++            def get_status_display(self):
++                return f"Property: {dict(self._meta.get_field('status').choices).get(self.status, self.status)}"
++            
++            class Meta:
++                app_label = 'test'
++        
++        instance = PropertyModel(status='active')
++        assert instance.get_status_display == "Property: Active"
++
++    def test_get_display_override_with_classmethod(self):
++        """Test interaction between get_FOO_display() override and classmethods."""
++        
++        class ClassMethodModel(models.Model):
++            type_field = models.CharField(
++                max_length=10,
++                choices=[('type1', 'Type 1'), ('type2', 'Type 2')]
++            )
++            
++            def get_type_field_display(self):
++                return "Instance method override"
++            
++            @classmethod
++            def get_default_type_display(cls):
++                return "Class method"
++            
++            class Meta:
++                app_label = 'test'
++        
++        instance = ClassMethodModel(type_field='type1')
++        assert instance.get_type_field_display() == "Instance method override"
++        assert ClassMethodModel.get_default_type_display() == "Class method"

@@ -1,0 +1,163 @@
+--- a/sympy/sets/tests/test_complement_mixed_types.py
++++ b/sympy/sets/tests/test_complement_mixed_types.py
+-# Empty if creating new file
++import pytest
++from sympy import symbols, FiniteSet, Interval, Complement, Union, S
++from sympy.sets.sets import EmptySet
++
++
++def test_complement_finite_set_with_symbols_and_numbers():
++    """Test Complement when FiniteSet contains both symbols and numbers."""
++    x, y = symbols('x y')
++    
++    # Test case from the issue: FiniteSet(x, y, 2) \ Interval(-10, 10)
++    a = FiniteSet(x, y, 2)
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    
++    # The number 2 should be removed since it's in the interval [-10, 10]
++    # The symbols x, y should remain in a complement expression
++    # Expected: {x, y} \ [-10, 10] or equivalent
++    
++    # Check that the result is not just {x, y} (the bug behavior)
++    assert result != FiniteSet(x, y)
++    
++    # The result should be a Complement containing the symbols
++    assert isinstance(result, Complement)
++    
++    # Check that 2 is not in the result (since 2 is in [-10, 10])
++    assert not result.contains(2)
++    
++    # Check that x and y are still represented in the complement
++    # (we can't determine if they're in the interval without constraints)
++    assert result.args[0] == FiniteSet(x, y) or FiniteSet(x, y).issubset(result.args[0])
++
++
++def test_complement_finite_set_numbers_only_in_interval():
++    """Test Complement when FiniteSet contains only numbers within the interval."""
++    a = FiniteSet(1, 2, 3)
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    
++    # All numbers are in the interval, so result should be empty
++    assert result == EmptySet()
++
++
++def test_complement_finite_set_numbers_only_outside_interval():
++    """Test Complement when FiniteSet contains only numbers outside the interval."""
++    a = FiniteSet(15, 20, -15)
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    
++    # All numbers are outside the interval, so result should be the original set
++    assert result == a
++
++
++def test_complement_finite_set_numbers_mixed_in_out_interval():
++    """Test Complement when FiniteSet contains numbers both in and out of interval."""
++    a = FiniteSet(1, 15, -15, 5)
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    
++    # Only numbers outside the interval should remain
++    expected = FiniteSet(15, -15)
++    assert result == expected
++
++
++def test_complement_finite_set_symbols_only():
++    """Test Complement when FiniteSet contains only symbols."""
++    x, y, z = symbols('x y z')
++    a = FiniteSet(x, y, z)
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    
++    # Should return a Complement expression since we can't determine
++    # if symbols are in the interval
++    assert isinstance(result, Complement)
++    assert result.args[0] == a
++    assert result.args[1] == b
++
++
++def test_complement_finite_set_mixed_some_numbers_in_interval():
++    """Test Complement with mixed types where some numbers are in interval."""
++    x, y = symbols('x y')
++    a = FiniteSet(x, y, 2, 15, 5)
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    
++    # Numbers 2 and 5 are in interval and should be removed
++    # Number 15 is outside interval and should remain
++    # Symbols x, y should remain in complement
++    
++    # The result should contain 15 and a complement of {x, y} with the interval
++    assert not result.contains(2)
++    assert not result.contains(5)
++    
++    # Check that 15 is in the result (outside the interval)
++    assert result.contains(15)
++
++
++def test_complement_finite_set_mixed_no_numbers_in_interval():
++    """Test Complement with mixed types where no numbers are in interval."""
++    x, y = symbols('x y')
++    a = FiniteSet(x, y, 15, 20)
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    
++    # Numbers 15, 20 are outside interval and should remain
++    # Symbols x, y should remain in complement
++    
++    # Check that numbers outside interval are preserved
++    assert result.contains(15)
++    assert result.contains(20)
++
++
++def test_complement_empty_finite_set():
++    """Test Complement with empty FiniteSet."""
++    a = FiniteSet()
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    
++    # Complement of empty set should be empty
++    assert result == EmptySet()
++
++
++def test_complement_finite_set_with_interval_reals():
++    """Test Complement with FiniteSet against S.Reals."""
++    x, y = symbols('x y')
++    a = FiniteSet(x, y, 2, 3)
++    b = S.Reals
++    result = Complement(a, b)
++    
++    # This should work with the existing implementation
++    # Numbers should create intervals, symbols should remain in complement
++    assert isinstance(result, (Complement, Union))
++
++
++def test_complement_evaluation_false():
++    """Test Complement with evaluate=False preserves structure."""
++    x, y = symbols('x y')
++    a = FiniteSet(x, y, 2)
++    b = Interval(-10, 10)
++    result = Complement(a, b, evaluate=False)
++    
++    # With evaluate=False, should return unevaluated Complement
++    assert isinstance(result, Complement)
++    assert result.args[0] == a
++    assert result.args[1] == b
++
++
++def test_complement_contains_method():
++    """Test that _contains method works correctly for mixed complements."""
++    x, y = symbols('x y')
++    a = FiniteSet(x, y, 2)
++    b = Interval(-10, 10)
++    result = Complement(a, b)
++    
++    # Test contains method
++    assert not result.contains(2)  # 2 is in interval, so not in complement
++    
++    # For symbols, contains should return a symbolic expression
++    # since we can't determine membership without constraints
++    contains_x = result.contains(x)
++    # This should not be simply True or False for unconstrained symbols

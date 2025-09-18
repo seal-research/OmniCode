@@ -1,0 +1,287 @@
+--- a/tests/test_validators.py
++++ b/tests/test_validators.py
+-# Empty if creating new file
++import pytest
++from django.core.exceptions import ValidationError
++from django.core.validators import (
++    RegexValidator, EmailValidator, URLValidator,
++    validate_ipv4_address, validate_ipv6_address, validate_ipv46_address
++)
++
++
++class TestValidatorValueInParams:
++    """Test that validators include the provided value in ValidationError params."""
++
++    def test_regex_validator_includes_value_in_params_before_fix(self):
++        """Test that RegexValidator fails to include value in params before fix."""
++        validator = RegexValidator(r'^\d+$', message='%(value)s is not a valid number.')
++        
++        with pytest.raises(ValidationError) as exc_info:
++            validator('abc123')
++        
++        # Before fix: This should fail because params is None
++        error = exc_info.value
++        assert error.params is None
++        
++        # The error message should not be interpolated
++        assert str(error) == "['%(value)s is not a valid number.']"
++
++    def test_regex_validator_includes_value_in_params_after_fix(self):
++        """Test that RegexValidator includes value in params after fix."""
++        validator = RegexValidator(r'^\d+$', message='%(value)s is not a valid number.')
++        
++        with pytest.raises(ValidationError) as exc_info:
++            validator('abc123')
++        
++        # After fix: This should pass because params includes value
++        error = exc_info.value
++        assert error.params is not None
++        assert 'value' in error.params
++        assert error.params['value'] == 'abc123'
++        
++        # The error message should be interpolated when accessed
++        messages = list(error)
++        assert 'abc123 is not a valid number.' in messages[0]
++
++    def test_email_validator_includes_value_in_params_before_fix(self):
++        """Test that EmailValidator fails to include value in params before fix."""
++        validator = EmailValidator(message='%(value)s is not a valid email.')
++        
++        with pytest.raises(ValidationError) as exc_info:
++            validator('invalid-email')
++        
++        # Before fix: This should fail because params is None
++        error = exc_info.value
++        assert error.params is None
++        
++        # The error message should not be interpolated
++        assert str(error) == "['%(value)s is not a valid email.']"
++
++    def test_email_validator_includes_value_in_params_after_fix(self):
++        """Test that EmailValidator includes value in params after fix."""
++        validator = EmailValidator(message='%(value)s is not a valid email.')
++        
++        with pytest.raises(ValidationError) as exc_info:
++            validator('invalid-email')
++        
++        # After fix: This should pass because params includes value
++        error = exc_info.value
++        assert error.params is not None
++        assert 'value' in error.params
++        assert error.params['value'] == 'invalid-email'
++        
++        # The error message should be interpolated when accessed
++        messages = list(error)
++        assert 'invalid-email is not a valid email.' in messages[0]
++
++    def test_email_validator_multiple_validation_points(self):
++        """Test that EmailValidator includes value in params for all validation points."""
++        validator = EmailValidator(message='%(value)s is not valid.')
++        
++        # Test empty value
++        with pytest.raises(ValidationError) as exc_info:
++            validator('')
++        error = exc_info.value
++        assert error.params is not None
++        assert error.params['value'] == ''
++        
++        # Test no @ symbol
++        with pytest.raises(ValidationError) as exc_info:
++            validator('invalid')
++        error = exc_info.value
++        assert error.params is not None
++        assert error.params['value'] == 'invalid'
++        
++        # Test invalid user part
++        with pytest.raises(ValidationError) as exc_info:
++            validator('invalid..user@example.com')
++        error = exc_info.value
++        assert error.params is not None
++        assert error.params['value'] == 'invalid..user@example.com'
++
++    def test_url_validator_includes_value_in_params_before_fix(self):
++        """Test that URLValidator fails to include value in params before fix."""
++        validator = URLValidator(message='%(value)s is not a valid URL.')
++        
++        with pytest.raises(ValidationError) as exc_info:
++            validator('invalid-url')
++        
++        # Before fix: This should fail because params is None
++        error = exc_info.value
++        assert error.params is None
++        
++        # The error message should not be interpolated
++        assert str(error) == "['%(value)s is not a valid URL.']"
++
++    def test_url_validator_includes_value_in_params_after_fix(self):
++        """Test that URLValidator includes value in params after fix."""
++        validator = URLValidator(message='%(value)s is not a valid URL.')
++        
++        with pytest.raises(ValidationError) as exc_info:
++            validator('invalid-url')
++        
++        # After fix: This should pass because params includes value
++        error = exc_info.value
++        assert error.params is not None
++        assert 'value' in error.params
++        assert error.params['value'] == 'invalid-url'
++        
++        # The error message should be interpolated when accessed
++        messages = list(error)
++        assert 'invalid-url is not a valid URL.' in messages[0]
++
++    def test_url_validator_multiple_validation_points(self):
++        """Test that URLValidator includes value in params for all validation points."""
++        validator = URLValidator(message='%(value)s is invalid.')
++        
++        # Test non-string value
++        with pytest.raises(ValidationError) as exc_info:
++            validator(123)
++        error = exc_info.value
++        assert error.params is not None
++        assert error.params['value'] == 123
++        
++        # Test invalid scheme
++        with pytest.raises(ValidationError) as exc_info:
++            validator('invalid://example.com')
++        error = exc_info.value
++        assert error.params is not None
++        assert error.params['value'] == 'invalid://example.com'
++
++    def test_validate_ipv4_address_includes_value_in_params_before_fix(self):
++        """Test that validate_ipv4_address fails to include value in params before fix."""
++        with pytest.raises(ValidationError) as exc_info:
++            validate_ipv4_address('invalid-ip')
++        
++        # Before fix: This should fail because params is None
++        error = exc_info.value
++        assert error.params is None
++
++    def test_validate_ipv4_address_includes_value_in_params_after_fix(self):
++        """Test that validate_ipv4_address includes value in params after fix."""
++        with pytest.raises(ValidationError) as exc_info:
++            validate_ipv4_address('invalid-ip')
++        
++        # After fix: This should pass because params includes value
++        error = exc_info.value
++        assert error.params is not None
++        assert 'value' in error.params
++        assert error.params['value'] == 'invalid-ip'
++
++    def test_validate_ipv6_address_includes_value_in_params_before_fix(self):
++        """Test that validate_ipv6_address fails to include value in params before fix."""
++        with pytest.raises(ValidationError) as exc_info:
++            validate_ipv6_address('invalid-ipv6')
++        
++        # Before fix: This should fail because params is None
++        error = exc_info.value
++        assert error.params is None
++
++    def test_validate_ipv6_address_includes_value_in_params_after_fix(self):
++        """Test that validate_ipv6_address includes value in params after fix."""
++        with pytest.raises(ValidationError) as exc_info:
++            validate_ipv6_address('invalid-ipv6')
++        
++        # After fix: This should pass because params includes value
++        error = exc_info.value
++        assert error.params is not None
++        assert 'value' in error.params
++        assert error.params['value'] == 'invalid-ipv6'
++
++    def test_validate_ipv46_address_includes_value_in_params_before_fix(self):
++        """Test that validate_ipv46_address fails to include value in params before fix."""
++        with pytest.raises(ValidationError) as exc_info:
++            validate_ipv46_address('invalid-ip')
++        
++        # Before fix: This should fail because params is None
++        error = exc_info.value
++        assert error.params is None
++
++    def test_validate_ipv46_address_includes_value_in_params_after_fix(self):
++        """Test that validate_ipv46_address includes value in params after fix."""
++        with pytest.raises(ValidationError) as exc_info:
++            validate_ipv46_address('invalid-ip')
++        
++        # After fix: This should pass because params includes value
++        error = exc_info.value
++        assert error.params is not None
++        assert 'value' in error.params
++        assert error.params['value'] == 'invalid-ip'
++
++    def test_custom_error_message_with_value_placeholder(self):
++        """Test that custom error messages can use %(value)s placeholder after fix."""
++        # Test with RegexValidator
++        validator = RegexValidator(
++            r'^\d+$', 
++            message='The value "%(value)s" contains non-numeric characters.'
++        )
++        
++        with pytest.raises(ValidationError) as exc_info:
++            validator('abc123')
++        
++        error = exc_info.value
++        messages = list(error)
++        assert 'The value "abc123" contains non-numeric characters.' in messages[0]
++
++    def test_existing_functionality_preserved(self):
++        """Test that existing functionality is preserved after the fix."""
++        # Test that validators still work with default messages
++        regex_validator = RegexValidator(r'^\d+$')
++        email_validator = EmailValidator()
++        url_validator = URLValidator()
++        
++        # These should still raise ValidationError with default messages
++        with pytest.raises(ValidationError):
++            regex_validator('abc')
++        
++        with pytest.raises(ValidationError):
++            email_validator('invalid-email')
++        
++        with pytest.raises(ValidationError):
++            url_validator('invalid-url')
++        
++        with pytest.raises(ValidationError):
++            validate_ipv4_address('invalid')
++        
++        with pytest.raises(ValidationError):
++            validate_ipv6_address('invalid')
++        
++        with pytest.raises(ValidationError):
++            validate_ipv46_address('invalid')
++
++    def test_valid_values_still_pass(self):
++        """Test that valid values still pass validation after the fix."""
++        regex_validator = RegexValidator(r'^\d+$')
++        email_validator = EmailValidator()
++        url_validator = URLValidator()
++        
++        # These should not raise any exceptions
++        regex_validator('123')
++        email_validator('test@example.com')
++        url_validator('http://example.com')
++        validate_ipv4_address('192.168.1.1')
++        validate_ipv6_address('2001:db8::1')
++        validate_ipv46_address('192.168.1.1')
++        validate_ipv46_address('2001:db8::1')
++
++    def test_edge_cases_with_value_parameter(self):
++        """Test edge cases to ensure value parameter is always included."""
++        validator = RegexValidator(r'^\d+$', message='%(value)s failed validation.')
++        
++        # Test with None (should be converted to string)
++        with pytest.raises(ValidationError) as exc_info:
++            validator(None)
++        error = exc_info.value
++        assert error.params['value'] is None
++        
++        # Test with empty string
++        with pytest.raises(ValidationError) as exc_info:
++            validator('')
++        error = exc_info.value
++        assert error.params['value'] == ''
++        
++        # Test with special characters
++        with pytest.raises(ValidationError) as exc_info:
++            validator('!@#$%')
++        error = exc_info.value
++        assert error.params['value'] == '!@#$%'

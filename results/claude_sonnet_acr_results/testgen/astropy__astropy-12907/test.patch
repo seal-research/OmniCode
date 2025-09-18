@@ -1,0 +1,169 @@
+--- a/astropy/modeling/tests/test_separable_nested_compound.py
++++ b/astropy/modeling/tests/test_separable_nested_compound.py
+-# Empty if creating new file
++import pytest
++import numpy as np
++from astropy.modeling import models as m
++from astropy.modeling.separable import separability_matrix
++
++
++class TestSeparabilityMatrixNestedCompound:
++    """Test separability_matrix with nested CompoundModels."""
++
++    def test_simple_compound_model_separability(self):
++        """Test that simple compound models have correct separability."""
++        # Simple compound model: Linear1D & Linear1D
++        cm = m.Linear1D(10) & m.Linear1D(5)
++        sep_matrix = separability_matrix(cm)
++        
++        # Should be diagonal - each output depends only on its corresponding input
++        expected = np.array([[True, False],
++                           [False, True]])
++        
++        assert np.array_equal(sep_matrix, expected), \
++            f"Expected diagonal matrix, got {sep_matrix}"
++
++    def test_complex_flat_compound_model_separability(self):
++        """Test separability of flat compound model with multiple components."""
++        # Flat compound model: Pix2Sky_TAN & Linear1D & Linear1D
++        model = m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5)
++        sep_matrix = separability_matrix(model)
++        
++        # Expected: Pix2Sky_TAN couples first two inputs/outputs, Linear1Ds are independent
++        expected = np.array([[True,  True, False, False],
++                           [True,  True, False, False],
++                           [False, False, True, False],
++                           [False, False, False, True]])
++        
++        assert np.array_equal(sep_matrix, expected), \
++            f"Expected block diagonal matrix, got {sep_matrix}"
++
++    def test_nested_compound_model_separability_bug(self):
++        """Test the bug case: nested compound models should preserve separability."""
++        # This is the failing case from the issue
++        cm = m.Linear1D(10) & m.Linear1D(5)  # Simple compound model
++        nested_model = m.Pix2Sky_TAN() & cm  # Nested compound model
++        
++        sep_matrix = separability_matrix(nested_model)
++        
++        # Should be the same as the flat version - separability should be preserved
++        expected = np.array([[True,  True, False, False],
++                           [True,  True, False, False],
++                           [False, False, True, False],
++                           [False, False, False, True]])
++        
++        assert np.array_equal(sep_matrix, expected), \
++            f"Nested compound model should preserve separability. Expected:\n{expected}\nGot:\n{sep_matrix}"
++
++    def test_deeply_nested_compound_models(self):
++        """Test separability with deeply nested compound models."""
++        # Create nested structure: ((Linear1D & Linear1D) & Linear1D) & Linear1D
++        inner = m.Linear1D(1) & m.Linear1D(2)
++        middle = inner & m.Linear1D(3)
++        outer = middle & m.Linear1D(4)
++        
++        sep_matrix = separability_matrix(outer)
++        
++        # Should be completely diagonal - all Linear1D models are independent
++        expected = np.array([[True, False, False, False],
++                           [False, True, False, False],
++                           [False, False, True, False],
++                           [False, False, False, True]])
++        
++        assert np.array_equal(sep_matrix, expected), \
++            f"Deeply nested compound model should preserve separability. Expected:\n{expected}\nGot:\n{sep_matrix}"
++
++    def test_mixed_nested_compound_models(self):
++        """Test separability with mixed nested compound models."""
++        # Create a more complex nested structure
++        linear_pair = m.Linear1D(1) & m.Linear1D(2)
++        complex_model = m.Pix2Sky_TAN() & linear_pair
++        
++        sep_matrix = separability_matrix(complex_model)
++        
++        # Pix2Sky_TAN couples first two, Linear1D models are independent
++        expected = np.array([[True,  True, False, False],
++                           [True,  True, False, False],
++                           [False, False, True, False],
++                           [False, False, False, True]])
++        
++        assert np.array_equal(sep_matrix, expected), \
++            f"Mixed nested compound model should preserve separability. Expected:\n{expected}\nGot:\n{sep_matrix}"
++
++    def test_nested_with_non_separable_models(self):
++        """Test nested compound models where some components are non-separable."""
++        # Create nested model with non-separable component
++        separable_pair = m.Linear1D(1) & m.Linear1D(2)
++        # Polynomial2D is non-separable (2 inputs, 1 output, couples both inputs)
++        nested_model = m.Polynomial2D(degree=1) & separable_pair
++        
++        sep_matrix = separability_matrix(nested_model)
++        
++        # Polynomial2D couples first two inputs to first output, Linear1Ds are independent
++        expected = np.array([[True,  True, False, False],
++                           [False, False, True, False],
++                           [False, False, False, True]])
++        
++        assert np.array_equal(sep_matrix, expected), \
++            f"Nested model with non-separable component. Expected:\n{expected}\nGot:\n{sep_matrix}"
++
++    def test_regression_original_issue_example(self):
++        """Test the exact example from the original issue report."""
++        # Reproduce the exact issue scenario
++        cm = m.Linear1D(10) & m.Linear1D(5)
++        
++        # First verify the simple compound model works
++        simple_sep = separability_matrix(cm)
++        expected_simple = np.array([[True, False],
++                                  [False, True]])
++        assert np.array_equal(simple_sep, expected_simple)
++        
++        # Then verify the flat compound model works
++        flat_model = m.Pix2Sky_TAN() & m.Linear1D(10) & m.Linear1D(5)
++        flat_sep = separability_matrix(flat_model)
++        expected_flat = np.array([[True,  True, False, False],
++                                [True,  True, False, False],
++                                [False, False, True, False],
++                                [False, False, False, True]])
++        assert np.array_equal(flat_sep, expected_flat)
++        
++        # Finally verify the nested model works (this was the bug)
++        nested_model = m.Pix2Sky_TAN() & cm
++        nested_sep = separability_matrix(nested_model)
++        
++        # Should be identical to the flat version
++        assert np.array_equal(nested_sep, expected_flat), \
++            f"Nested model should match flat model. Expected:\n{expected_flat}\nGot:\n{nested_sep}"
++
++    def test_multiple_nesting_levels(self):
++        """Test separability with multiple levels of nesting."""
++        # Create multiple nesting levels
++        level1 = m.Linear1D(1) & m.Linear1D(2)
++        level2 = level1 & m.Linear1D(3)
++        level3 = level2 & m.Linear1D(4)
++        level4 = level3 & m.Linear1D(5)
++        
++        sep_matrix = separability_matrix(level4)
++        
++        # All should be independent (diagonal)
++        expected = np.eye(5, dtype=bool)
++        
++        assert np.array_equal(sep_matrix, expected), \
++            f"Multiple nesting levels should preserve separability. Expected:\n{expected}\nGot:\n{sep_matrix}"
++
++    def test_nested_compound_with_different_operators(self):
++        """Test that the fix doesn't break other compound operators."""
++        # Test with composition (|) operator
++        inner = m.Linear1D(1) & m.Linear1D(2)
++        # Create a simple mapping to compose with
++        mapping = m.Mapping([0, 1])
++        composed = mapping | inner
++        
++        sep_matrix = separability_matrix(composed)
++        
++        # Should preserve the separability of the inner compound model
++        expected = np.array([[True, False],
++                           [False, True]])
++        
++        assert np.array_equal(sep_matrix, expected), \
++            f"Composition with nested compound should work. Expected:\n{expected}\nGot:\n{sep_matrix}"

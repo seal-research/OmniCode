@@ -1,0 +1,171 @@
+--- a/sympy/parsing/tests/test_sympy_parser.py
++++ b/sympy/parsing/tests/test_sympy_parser.py
+-# This file already exists, we need to add tests to it
++import pytest
++from sympy import Lt, Le, Gt, Ge, Eq, Ne, Symbol, Integer
++from sympy.parsing.sympy_parser import parse_expr
++
++
++def test_parse_expr_evaluate_false_for_relationals():
++    """Test that parse_expr respects evaluate=False for relational operators."""
++    
++    # Test strict less than
++    result = parse_expr('1 < 2', evaluate=False)
++    expected = Lt(1, 2, evaluate=False)
++    assert result == expected
++    assert str(result) == '1 < 2'
++    
++    # Test less than or equal
++    result = parse_expr('1 <= 2', evaluate=False)
++    expected = Le(1, 2, evaluate=False)
++    assert result == expected
++    assert str(result) == '1 <= 2'
++    
++    # Test strict greater than
++    result = parse_expr('2 > 1', evaluate=False)
++    expected = Gt(2, 1, evaluate=False)
++    assert result == expected
++    assert str(result) == '2 > 1'
++    
++    # Test greater than or equal
++    result = parse_expr('2 >= 1', evaluate=False)
++    expected = Ge(2, 1, evaluate=False)
++    assert result == expected
++    assert str(result) == '2 >= 1'
++    
++    # Test equality
++    result = parse_expr('1 == 1', evaluate=False)
++    expected = Eq(1, 1, evaluate=False)
++    assert result == expected
++    assert str(result) == 'Eq(1, 1)'
++    
++    # Test inequality
++    result = parse_expr('1 != 2', evaluate=False)
++    expected = Ne(1, 2, evaluate=False)
++    assert result == expected
++    assert str(result) == 'Ne(1, 2)'
++
++
++def test_parse_expr_evaluate_false_with_symbols():
++    """Test that parse_expr with evaluate=False works with symbolic expressions."""
++    x = Symbol('x')
++    y = Symbol('y')
++    
++    # Test with symbols
++    result = parse_expr('x < y', evaluate=False)
++    expected = Lt(x, y, evaluate=False)
++    assert result == expected
++    assert str(result) == 'x < y'
++    
++    # Test with mixed symbols and numbers
++    result = parse_expr('x <= 5', evaluate=False)
++    expected = Le(x, 5, evaluate=False)
++    assert result == expected
++    assert str(result) == 'x <= 5'
++
++
++def test_parse_expr_evaluate_false_complex_expressions():
++    """Test that parse_expr with evaluate=False works with complex relational expressions."""
++    x = Symbol('x')
++    
++    # Test with arithmetic expressions
++    result = parse_expr('x + 1 < 2*x', evaluate=False)
++    # The arithmetic should still be unevaluated due to evaluate=False
++    assert result.func == Lt
++    assert str(result) == 'x + 1 < 2*x'
++    
++    # Test with parentheses
++    result = parse_expr('(x + 1) >= (2*x - 1)', evaluate=False)
++    assert result.func == Ge
++    assert str(result) == 'x + 1 >= 2*x - 1'
++
++
++def test_parse_expr_evaluate_true_still_works():
++    """Test that the default behavior (evaluate=True) still works correctly."""
++    
++    # These should evaluate to Boolean values
++    assert parse_expr('1 < 2') is True
++    assert parse_expr('2 < 1') is False
++    assert parse_expr('1 == 1') is True
++    assert parse_expr('1 != 1') is False
++    assert parse_expr('2 >= 1') is True
++    assert parse_expr('1 > 2') is False
++
++
++def test_parse_expr_evaluate_false_prevents_evaluation():
++    """Test that evaluate=False prevents immediate evaluation to True/False."""
++    
++    # These should NOT evaluate to Boolean values when evaluate=False
++    result = parse_expr('1 < 2', evaluate=False)
++    assert result is not True
++    assert result.func == Lt
++    
++    result = parse_expr('2 < 1', evaluate=False)
++    assert result is not False
++    assert result.func == Lt
++    
++    result = parse_expr('1 == 1', evaluate=False)
++    assert result is not True
++    assert result.func == Eq
++
++
++def test_parse_expr_evaluate_false_chained_comparisons():
++    """Test that chained comparisons work with evaluate=False."""
++    x = Symbol('x')
++    
++    # Simple chained comparison
++    result = parse_expr('1 < x < 3', evaluate=False)
++    # This should be parsed as (1 < x) & (x < 3) or similar structure
++    # The exact structure may vary, but it should not evaluate to a boolean
++    assert not isinstance(result, bool)
++    
++    # Another chained comparison
++    result = parse_expr('0 <= x <= 1', evaluate=False)
++    assert not isinstance(result, bool)
++
++
++def test_parse_expr_evaluate_false_edge_cases():
++    """Test edge cases for evaluate=False with relationals."""
++    
++    # Test with floating point numbers
++    result = parse_expr('1.5 < 2.5', evaluate=False)
++    expected = Lt(1.5, 2.5, evaluate=False)
++    assert result == expected
++    
++    # Test with negative numbers
++    result = parse_expr('-1 > -2', evaluate=False)
++    expected = Gt(-1, -2, evaluate=False)
++    assert result == expected
++    
++    # Test with zero
++    result = parse_expr('0 == 0', evaluate=False)
++    expected = Eq(0, 0, evaluate=False)
++    assert result == expected
++
++
++def test_parse_expr_evaluate_false_preserves_order():
++    """Test that evaluate=False preserves the order of arguments."""
++    
++    # The order should be preserved as entered
++    result1 = parse_expr('1 < 2', evaluate=False)
++    result2 = parse_expr('2 > 1', evaluate=False)
++    
++    # These should be different expressions even though they're logically equivalent
++    assert result1 != result2
++    assert result1.args == (1, 2)
++    assert result2.args == (2, 1)
++
++
++def test_parse_expr_bug_reproduction():
++    """Test that reproduces the exact bug described in the issue."""
++    
++    # This is the exact case from the issue description
++    result = parse_expr('1 < 2', evaluate=False)
++    
++    # Should NOT return True
++    assert result is not True
++    
++    # Should return the equivalent of Lt(1, 2, evaluate=False)
++    expected = Lt(1, 2, evaluate=False)
++    assert result == expected
++    assert str(result) == '1 < 2'

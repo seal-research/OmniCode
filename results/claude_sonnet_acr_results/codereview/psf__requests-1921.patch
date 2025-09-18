@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/requests/sessions.py b/requests/sessions.py\nindex a023e4ec..f7c94365 100644\n--- a/requests/sessions.py\n+++ b/requests/sessions.py\n@@ -59,6 +59,11 @@ def merge_setting(request_setting, session_setting, dict_class=OrderedDict):\n         if v is None:\n             del merged_setting[k]\n \n+    # Remove keys that are set to None in session_setting as well.\n+    for (k, v) in session_setting.items():\n+        if v is None and k in merged_setting:\n+            del merged_setting[k]\n+\n     return merged_setting\n \n \n"
+}

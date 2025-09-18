@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/deprecation.py b/django/utils/deprecation.py\nindex b2c681b33c..9b2b7b79f5 100644\n--- a/django/utils/deprecation.py\n+++ b/django/utils/deprecation.py\n@@ -130,7 +130,8 @@ class MiddlewareMixin:\n                 self.process_request,\n                 thread_sensitive=True,\n             )(request)\n-        response = response or await self.get_response(request)\n+        if response is None:\n+            response = await self.get_response(request)\n         if hasattr(self, 'process_response'):\n             response = await sync_to_async(\n                 self.process_response,\n"
+}

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py\nindex 54f3258eac..b41507514f 100644\n--- a/django/db/models/sql/query.py\n+++ b/django/db/models/sql/query.py\n@@ -1027,7 +1027,9 @@ class Query(BaseExpression):\n         reuse_aliases = [\n             a\n             for a, j in self.alias_map.items()\n-            if (reuse is None or a in reuse) and j.equals(join)\n+            if (reuse is None or a in reuse) and (\n+                j == join if join.filtered_relation else j.equals(join)\n+            )\n         ]\n         if reuse_aliases:\n             if join.table_alias in reuse_aliases:\n"
+}

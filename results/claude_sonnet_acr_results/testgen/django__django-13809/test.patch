@@ -1,0 +1,297 @@
+--- a/tests/management/commands/test_runserver.py
++++ b/tests/management/commands/test_runserver.py
+-# Empty if creating new file
++import pytest
++import sys
++from io import StringIO
++from unittest import mock
++
++from django.core.management import call_command
++from django.core.management.base import CommandError
++from django.core.management.commands.runserver import Command as RunserverCommand
++from django.test import TestCase, override_settings
++
++
++class RunserverSkipChecksTests(TestCase):
++    """Test suite for the --skip-checks option in runserver command."""
++
++    def setUp(self):
++        """Set up test fixtures."""
++        self.command = RunserverCommand()
++        self.stdout = StringIO()
++        self.stderr = StringIO()
++
++    def test_runserver_has_requires_system_checks_enabled(self):
++        """Test that runserver command has system checks enabled by default."""
++        # Before the fix, requires_system_checks was []
++        # After the fix, it should be a non-empty list to enable system checks
++        self.assertNotEqual(self.command.requires_system_checks, [])
++        self.assertTrue(self.command.requires_system_checks)
++
++    def test_runserver_skip_checks_option_available(self):
++        """Test that --skip-checks option is available in runserver command."""
++        parser = self.command.create_parser('manage.py', 'runserver')
++        
++        # Check that --skip-checks is in the help text
++        help_text = parser.format_help()
++        self.assertIn('--skip-checks', help_text)
++        self.assertIn('Skip system checks', help_text)
++
++    @mock.patch('django.core.management.commands.runserver.Command.run')
++    @mock.patch('django.core.management.base.BaseCommand.check')
++    def test_runserver_runs_system_checks_by_default(self, mock_check, mock_run):
++        """Test that system checks are run by default when starting runserver."""
++        # Mock the run method to prevent actual server startup
++        mock_run.return_value = None
++        
++        # Call runserver without --skip-checks
++        call_command('runserver', '--noreload', stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify that system checks were called
++        mock_check.assert_called_once()
++
++    @mock.patch('django.core.management.commands.runserver.Command.run')
++    @mock.patch('django.core.management.base.BaseCommand.check')
++    def test_runserver_skips_checks_with_skip_checks_option(self, mock_check, mock_run):
++        """Test that system checks are skipped when --skip-checks is used."""
++        # Mock the run method to prevent actual server startup
++        mock_run.return_value = None
++        
++        # Call runserver with --skip-checks
++        call_command('runserver', '--skip-checks', '--noreload', stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify that system checks were NOT called
++        mock_check.assert_not_called()
++
++    def test_runserver_skip_checks_option_parsing(self):
++        """Test that --skip-checks option is properly parsed."""
++        parser = self.command.create_parser('manage.py', 'runserver')
++        
++        # Test parsing with --skip-checks
++        options = parser.parse_args(['--skip-checks', '--noreload'])
++        self.assertTrue(options.skip_checks)
++        
++        # Test parsing without --skip-checks
++        options = parser.parse_args(['--noreload'])
++        self.assertFalse(options.skip_checks)
++
++    @mock.patch('django.core.management.commands.runserver.Command.run')
++    @mock.patch('django.core.management.base.BaseCommand.check')
++    def test_runserver_skip_checks_with_address_and_port(self, mock_check, mock_run):
++        """Test that --skip-checks works with address and port arguments."""
++        # Mock the run method to prevent actual server startup
++        mock_run.return_value = None
++        
++        # Call runserver with --skip-checks and address:port
++        call_command('runserver', '127.0.0.1:8080', '--skip-checks', '--noreload', 
++                    stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify that system checks were NOT called
++        mock_check.assert_not_called()
++
++    @mock.patch('django.core.management.commands.runserver.Command.run')
++    @mock.patch('django.core.management.base.BaseCommand.check')
++    def test_runserver_skip_checks_with_other_options(self, mock_check, mock_run):
++        """Test that --skip-checks works with other runserver options."""
++        # Mock the run method to prevent actual server startup
++        mock_run.return_value = None
++        
++        # Call runserver with --skip-checks and other options
++        call_command('runserver', '--skip-checks', '--noreload', '--nothreading',
++                    stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify that system checks were NOT called
++        mock_check.assert_not_called()
++
++    def test_runserver_command_consistency_with_other_commands(self):
++        """Test that runserver is consistent with other commands that support --skip-checks."""
++        from django.core.management.commands.migrate import Command as MigrateCommand
++        
++        migrate_command = MigrateCommand()
++        runserver_command = RunserverCommand()
++        
++        # Both commands should have requires_system_checks enabled
++        self.assertTrue(migrate_command.requires_system_checks)
++        self.assertTrue(runserver_command.requires_system_checks)
++        
++        # Both should support --skip-checks option
++        migrate_parser = migrate_command.create_parser('manage.py', 'migrate')
++        runserver_parser = runserver_command.create_parser('manage.py', 'runserver')
++        
++        migrate_help = migrate_parser.format_help()
++        runserver_help = runserver_parser.format_help()
++        
++        self.assertIn('--skip-checks', migrate_help)
++        self.assertIn('--skip-checks', runserver_help)
++
++    @mock.patch('django.core.management.commands.runserver.Command.run')
++    def test_runserver_preserves_existing_functionality(self, mock_run):
++        """Test that existing runserver functionality is preserved."""
++        # Mock the run method to prevent actual server startup
++        mock_run.return_value = None
++        
++        # Test that runserver still works with existing options
++        call_command('runserver', '--noreload', '--skip-checks', 
++                    stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify run was called (server would start)
++        mock_run.assert_called_once()
++
++    @mock.patch('django.core.management.commands.runserver.Command.run')
++    @mock.patch('django.core.management.base.BaseCommand.check')
++    def test_runserver_check_failure_behavior(self, mock_check, mock_run):
++        """Test behavior when system checks fail and --skip-checks is not used."""
++        from django.core.management.base import SystemCheckError
++        
++        # Mock check to raise SystemCheckError
++        mock_check.side_effect = SystemCheckError('Test check failure')
++        mock_run.return_value = None
++        
++        # Verify that SystemCheckError is raised when checks fail
++        with self.assertRaises(SystemCheckError):
++            call_command('runserver', '--noreload', stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify that run was NOT called (server should not start)
++        mock_run.assert_not_called()
++
++    @mock.patch('django.core.management.commands.runserver.Command.run')
++    @mock.patch('django.core.management.base.BaseCommand.check')
++    def test_runserver_skip_checks_bypasses_check_failures(self, mock_check, mock_run):
++        """Test that --skip-checks bypasses system check failures."""
++        from django.core.management.base import SystemCheckError
++        
++        # Mock check to raise SystemCheckError (but it shouldn't be called)
++        mock_check.side_effect = SystemCheckError('Test check failure')
++        mock_run.return_value = None
++        
++        # With --skip-checks, no exception should be raised
++        call_command('runserver', '--skip-checks', '--noreload', 
++                    stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify that check was NOT called
++        mock_check.assert_not_called()
++        # Verify that run WAS called (server should start)
++        mock_run.assert_called_once()
++
++    def test_runserver_help_text_includes_skip_checks(self):
++        """Test that runserver help text includes --skip-checks option."""
++        parser = self.command.create_parser('manage.py', 'runserver')
++        help_text = parser.format_help()
++        
++        # Verify --skip-checks is documented
++        self.assertIn('--skip-checks', help_text)
++        self.assertIn('Skip system checks', help_text)
++        
++        # Verify other existing options are still there
++        self.assertIn('--noreload', help_text)
++        self.assertIn('--nothreading', help_text)
++        self.assertIn('--ipv6', help_text)
+
+--- a/tests/management/commands/test_runserver_staticfiles.py
++++ b/tests/management/commands/test_runserver_staticfiles.py
+-# Empty if creating new file
++import pytest
++from io import StringIO
++from unittest import mock
++
++from django.contrib.staticfiles.management.commands.runserver import Command as StaticFilesRunserverCommand
++from django.core.management import call_command
++from django.test import TestCase
++
++
++class StaticFilesRunserverSkipChecksTests(TestCase):
++    """Test suite for the --skip-checks option in staticfiles runserver command."""
++
++    def setUp(self):
++        """Set up test fixtures."""
++        self.command = StaticFilesRunserverCommand()
++        self.stdout = StringIO()
++        self.stderr = StringIO()
++
++    def test_staticfiles_runserver_inherits_skip_checks_functionality(self):
++        """Test that staticfiles runserver inherits --skip-checks from base runserver."""
++        # The staticfiles runserver inherits from the core runserver command
++        # so it should automatically get the --skip-checks functionality
++        
++        # Check that it has system checks enabled (inherited from parent)
++        self.assertTrue(self.command.requires_system_checks)
++
++    def test_staticfiles_runserver_skip_checks_option_available(self):
++        """Test that --skip-checks option is available in staticfiles runserver command."""
++        parser = self.command.create_parser('manage.py', 'runserver')
++        
++        # Check that --skip-checks is in the help text
++        help_text = parser.format_help()
++        self.assertIn('--skip-checks', help_text)
++        self.assertIn('Skip system checks', help_text)
++
++    @mock.patch('django.contrib.staticfiles.management.commands.runserver.Command.run')
++    @mock.patch('django.core.management.base.BaseCommand.check')
++    def test_staticfiles_runserver_runs_system_checks_by_default(self, mock_check, mock_run):
++        """Test that system checks are run by default in staticfiles runserver."""
++        # Mock the run method to prevent actual server startup
++        mock_run.return_value = None
++        
++        # Call runserver without --skip-checks
++        call_command('runserver', '--noreload', stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify that system checks were called
++        mock_check.assert_called_once()
++
++    @mock.patch('django.contrib.staticfiles.management.commands.runserver.Command.run')
++    @mock.patch('django.core.management.base.BaseCommand.check')
++    def test_staticfiles_runserver_skips_checks_with_skip_checks_option(self, mock_check, mock_run):
++        """Test that system checks are skipped when --skip-checks is used in staticfiles runserver."""
++        # Mock the run method to prevent actual server startup
++        mock_run.return_value = None
++        
++        # Call runserver with --skip-checks
++        call_command('runserver', '--skip-checks', '--noreload', stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify that system checks were NOT called
++        mock_check.assert_not_called()
++
++    @mock.patch('django.contrib.staticfiles.management.commands.runserver.Command.run')
++    @mock.patch('django.core.management.base.BaseCommand.check')
++    def test_staticfiles_runserver_skip_checks_with_staticfiles_options(self, mock_check, mock_run):
++        """Test that --skip-checks works with staticfiles-specific options."""
++        # Mock the run method to prevent actual server startup
++        mock_run.return_value = None
++        
++        # Call runserver with --skip-checks and staticfiles options
++        call_command('runserver', '--skip-checks', '--nostatic', '--noreload',
++                    stdout=self.stdout, stderr=self.stderr)
++        
++        # Verify that system checks were NOT called
++        mock_check.assert_not_called()
++
++    def test_staticfiles_runserver_option_parsing_with_skip_checks(self):
++        """Test that --skip-checks option is properly parsed with other staticfiles options."""
++        parser = self.command.create_parser('manage.py', 'runserver')
++        
++        # Test parsing with --skip-checks and staticfiles options
++        options = parser.parse_args(['--skip-checks', '--nostatic', '--noreload'])
++        self.assertTrue(options.skip_checks)
++        self.assertFalse(options.use_static_handler)
++        
++        # Test parsing with --skip-checks and --insecure
++        options = parser.parse_args(['--skip-checks', '--insecure', '--noreload'])
++        self.assertTrue(options.skip_checks)
++        self.assertTrue(options.insecure_serving)
++
++    def test_staticfiles_runserver_help_includes_all_options(self):
++        """Test that staticfiles runserver help includes both --skip-checks and staticfiles options."""
++        parser = self.command.create_parser('manage.py', 'runserver')
++        help_text = parser.format_help()
++        
++        # Verify --skip-checks is documented
++        self.assertIn('--skip-checks', help_text)
++        self.assertIn('Skip system checks', help_text)
++        
++        # Verify staticfiles options are still there
++        self.assertIn('--nostatic', help_text)
++        self.assertIn('--insecure', help_text)
++        
++        # Verify core runserver options are still there
++        self.assertIn('--noreload', help_text)
++        self.assertIn('--nothreading', help_text)

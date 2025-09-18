@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sympy/parsing/latex/_parse_latex_antlr.py b/sympy/parsing/latex/_parse_latex_antlr.py\nindex 2e4a45ad20..1dec625960 100644\n--- a/sympy/parsing/latex/_parse_latex_antlr.py\n+++ b/sympy/parsing/latex/_parse_latex_antlr.py\n@@ -386,6 +386,8 @@ def convert_frac(frac):\n     if expr_top == 1:\n         return inverse_denom\n     else:\n+        # Use Mul with evaluate=False to preserve the fraction structure\n+        # This ensures proper precedence for nested fractions\n         return sympy.Mul(expr_top, inverse_denom, evaluate=False)\n \n def convert_binom(binom):\n"
+}

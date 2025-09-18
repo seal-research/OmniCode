@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/views/generic/base.py b/django/views/generic/base.py\nindex ea5baca08d..7d38ba9ea4 100644\n--- a/django/views/generic/base.py\n+++ b/django/views/generic/base.py\n@@ -159,8 +159,9 @@ class TemplateView(TemplateResponseMixin, ContextMixin, View):\n     def get(self, request, *args, **kwargs):\n         # RemovedInDjango40Warning: when the deprecation ends, replace with:\n         #   context = self.get_context_data()\n+        context = self.get_context_data(**kwargs)\n         context_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)\n-        context = self.get_context_data(**context_kwargs)\n+        context.update(context_kwargs)\n         return self.render_to_response(context)\n \n \n"
+}

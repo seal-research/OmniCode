@@ -169,6 +169,13 @@ def setup_multiswebench_config(
                 raise RuntimeError("No patch found in data")
 
     # Get unique repos for image building
+    for pred in predictions:
+        if not pred.get("org") or not pred.get("repo"):
+            instance_info = pred["instance_id"].split("_")
+            pred["org"] = instance_info[0]
+            pred["repo"] = instance_info[2]
+            pred["number"] = instance_info[-1]
+            pred["patch"] = pred.get("model_patch", "")
     unique_repos = {f"{pred['org']}/{pred['repo']}" for pred in predictions}
     print(f"Will build images for these repos: {unique_repos}")
 
@@ -626,8 +633,14 @@ def main():
                     predictions = predictions[:args.max_instances]
             except Exception as e:
                 print(f"Error loading predictions file: {e}")
-                return        
-
+                try:
+                    predictions = []
+                    with open(predictions_map["MSWEBugFixing"], 'r') as f:
+                        for line in f:
+                            predictions.append(json.loads(line))
+                except Exception as e:
+                    print(f"Error loading fallback predictions file: {e}")
+                    return        
         # Clean existing images if needed
         if args.force_rebuild:
             clean_docker_images(mswe_image_prefix, args.use_apptainer)
@@ -695,6 +708,7 @@ def main():
             open_file_limit=args.open_file_limit,
             run_id=args.run_id,
             timeout=args.timeout,
+            use_apptainer=args.use_apptainer,
         )
 
 

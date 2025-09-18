@@ -1,0 +1,168 @@
+--- a/test/test_jsinterp.py
++++ b/test/test_jsinterp.py
++import pytest
++from youtube_dl.jsinterp import JSInterpreter
++
++
++class TestJSInterpreterNoneComparison:
++    """Test cases for JSInterpreter handling None values in comparisons."""
++
++    def test_none_greater_than_comparison_fails_before_fix(self):
++        """Test that comparing int > None raises TypeError before fix."""
++        jsi = JSInterpreter('')
++        
++        # This should fail before the fix is applied
++        with pytest.raises(JSInterpreter.Exception) as exc_info:
++            jsi._operator('>', 0, 'null', '0 > null', {}, 100)
++        
++        # Verify the error message contains the expected TypeError
++        assert "Failed to evaluate 0 > None" in str(exc_info.value)
++        assert "TypeError" in str(exc_info.value)
++
++    def test_none_less_than_comparison_fails_before_fix(self):
++        """Test that comparing int < None raises TypeError before fix."""
++        jsi = JSInterpreter('')
++        
++        with pytest.raises(JSInterpreter.Exception) as exc_info:
++            jsi._operator('<', 5, 'null', '5 < null', {}, 100)
++        
++        assert "Failed to evaluate 5 < None" in str(exc_info.value)
++        assert "TypeError" in str(exc_info.value)
++
++    def test_none_greater_than_comparison_passes_after_fix(self):
++        """Test that comparing int > None works correctly after fix."""
++        jsi = JSInterpreter('')
++        
++        # After fix, this should work and return True (0 > 0 is False in JS)
++        result = jsi._operator('>', 0, 'null', '0 > null', {}, 100)
++        assert result is False  # 0 > 0 should be False
++        
++        # Test with positive number
++        result = jsi._operator('>', 5, 'null', '5 > null', {}, 100)
++        assert result is True  # 5 > 0 should be True
++
++    def test_none_less_than_comparison_passes_after_fix(self):
++        """Test that comparing int < None works correctly after fix."""
++        jsi = JSInterpreter('')
++        
++        # After fix, this should work
++        result = jsi._operator('<', 0, 'null', '0 < null', {}, 100)
++        assert result is False  # 0 < 0 should be False
++        
++        result = jsi._operator('<', -1, 'null', '-1 < null', {}, 100)
++        assert result is True  # -1 < 0 should be True
++
++    def test_none_greater_equal_comparison_passes_after_fix(self):
++        """Test that comparing int >= None works correctly after fix."""
++        jsi = JSInterpreter('')
++        
++        result = jsi._operator('>=', 0, 'null', '0 >= null', {}, 100)
++        assert result is True  # 0 >= 0 should be True
++        
++        result = jsi._operator('>=', -1, 'null', '-1 >= null', {}, 100)
++        assert result is False  # -1 >= 0 should be False
++
++    def test_none_less_equal_comparison_passes_after_fix(self):
++        """Test that comparing int <= None works correctly after fix."""
++        jsi = JSInterpreter('')
++        
++        result = jsi._operator('<=', 0, 'null', '0 <= null', {}, 100)
++        assert result is True  # 0 <= 0 should be True
++        
++        result = jsi._operator('<=', 1, 'null', '1 <= null', {}, 100)
++        assert result is False  # 1 <= 0 should be False
++
++    def test_none_equality_comparison_passes_after_fix(self):
++        """Test that comparing values == None works correctly after fix."""
++        jsi = JSInterpreter('')
++        
++        # In JavaScript, null == 0 is false, but we need to handle the comparison
++        result = jsi._operator('==', 0, 'null', '0 == null', {}, 100)
++        # JavaScript loose equality: 0 == null is false
++        assert result is False
++        
++        result = jsi._operator('!=', 0, 'null', '0 != null', {}, 100)
++        assert result is True
++
++    def test_none_arithmetic_operations_pass_after_fix(self):
++        """Test that arithmetic operations with None work correctly after fix."""
++        jsi = JSInterpreter('')
++        
++        # Addition: 5 + null should be 5 + 0 = 5
++        result = jsi._operator('+', 5, 'null', '5 + null', {}, 100)
++        assert result == 5
++        
++        # Subtraction: 5 - null should be 5 - 0 = 5
++        result = jsi._operator('-', 5, 'null', '5 - null', {}, 100)
++        assert result == 5
++        
++        # Multiplication: 5 * null should be 5 * 0 = 0
++        result = jsi._operator('*', 5, 'null', '5 * null', {}, 100)
++        assert result == 0
++
++    def test_none_on_left_side_comparison_passes_after_fix(self):
++        """Test that None on left side of comparison works correctly after fix."""
++        jsi = JSInterpreter('')
++        
++        # Test None > 5 (should be 0 > 5 = False)
++        result = jsi._operator('>', None, '5', 'null > 5', {}, 100)
++        assert result is False
++        
++        # Test None < 5 (should be 0 < 5 = True)
++        result = jsi._operator('<', None, '5', 'null < 5', {}, 100)
++        assert result is True
++
++    def test_both_none_comparison_passes_after_fix(self):
++        """Test that None compared to None works correctly after fix."""
++        jsi = JSInterpreter('')
++        
++        # Test null > null (should be 0 > 0 = False)
++        result = jsi._operator('>', None, 'null', 'null > null', {}, 100)
++        assert result is False
++        
++        # Test null == null (should be true in JavaScript)
++        result = jsi._operator('==', None, 'null', 'null == null', {}, 100)
++        assert result is True
++
++    def test_edge_cases_with_undefined(self):
++        """Test edge cases with undefined values."""
++        jsi = JSInterpreter('')
++        
++        # Test with undefined value
++        result = jsi._operator('>', 0, jsi.undefined, '0 > undefined', {}, 100)
++        assert result is False  # 0 > 0 should be False (undefined coerces to 0)
++        
++        result = jsi._operator('==', jsi.undefined, 'null', 'undefined == null', {}, 100)
++        assert result is True  # undefined == null is true in JavaScript
++
++    def test_complex_expression_with_none_values(self):
++        """Test complex expressions that might contain None values."""
++        jsi = JSInterpreter('')
++        
++        # Test a more complex scenario that might occur in real YouTube JS
++        local_vars = {'a': None, 'b': 5}
++        
++        # This simulates the kind of expression that was failing
++        result = jsi._operator('>', 0, None, '0 > a', local_vars, 100)
++        assert result is False
++        
++        result = jsi._operator('>', local_vars['b'], None, 'b > null', local_vars, 100)
++        assert result is True
++
++    def test_youtube_specific_scenario(self):
++        """Test the specific scenario from the YouTube bug report."""
++        jsi = JSInterpreter('')
++        
++        # This reproduces the exact error from the bug report: "0 > None"
++        # Before fix: should raise TypeError
++        # After fix: should return False (0 > 0 in JavaScript)
++        
++        try:
++            result = jsi._operator('>', 0, None, '0 > None', {}, 100)
++            # If we get here, the fix is working
++            assert result is False
++        except JSInterpreter.Exception as e:
++            # If we get the exception, the bug is still present
++            assert "Failed to evaluate 0 > None" in str(e)
++            assert "TypeError" in str(e)
++            pytest.fail("Bug still present: TypeError when comparing 0 > None")

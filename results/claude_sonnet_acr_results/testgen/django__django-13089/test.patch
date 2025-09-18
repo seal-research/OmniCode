@@ -1,0 +1,218 @@
+--- a/tests/cache/test_db_backend.py
++++ b/tests/cache/test_db_backend.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import Mock, patch, MagicMock
++from django.core.cache.backends.db import DatabaseCache
++from django.core.cache import cache
++from django.test import TestCase, override_settings
++from django.db import connections
++from django.utils import timezone
++
++
++class TestDatabaseCacheCullBug(TestCase):
++    """Test cases for the _cull method bug where cursor.fetchone() returns None."""
++    
++    def setUp(self):
++        """Set up test cache instance."""
++        self.cache = DatabaseCache('test_table', {
++            'LOCATION': 'test_cache_table',
++            'OPTIONS': {
++                'MAX_ENTRIES': 10,
++                'CULL_FREQUENCY': 3,
++            }
++        })
++    
++    def test_cull_with_none_fetchone_result_reproduces_bug(self):
++        """
++        Test that reproduces the original bug where cursor.fetchone() returns None.
++        This test should fail before the fix is applied.
++        """
++        # Mock the database connection and cursor
++        mock_connection = Mock()
++        mock_cursor = Mock()
++        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
++        mock_connection.ops.quote_name.return_value = 'test_table'
++        mock_connection.ops.adapt_datetimefield_value.return_value = timezone.now()
++        mock_connection.ops.cache_key_culling_sql.return_value = "SELECT cache_key FROM %s ORDER BY cache_key LIMIT 1 OFFSET %%s"
++        
++        # Set up cursor.fetchone() to return valid result first (for COUNT), then None (for culling query)
++        mock_cursor.fetchone.side_effect = [
++            [15],  # First call: COUNT(*) returns 15 (more than max_entries=10)
++            None   # Second call: culling query returns None (reproduces the bug)
++        ]
++        
++        with patch('django.core.cache.backends.db.connections', {'default': mock_connection}):
++            with patch('django.core.cache.backends.db.router.db_for_write', return_value='default'):
++                # This should raise TypeError: 'NoneType' object is not subscriptable
++                with pytest.raises(TypeError, match="'NoneType' object is not subscriptable"):
++                    self.cache._cull('default', mock_cursor, timezone.now())
++    
++    def test_cull_with_none_fetchone_result_after_fix(self):
++        """
++        Test that verifies the fix works when cursor.fetchone() returns None.
++        This test should pass after the fix is applied.
++        """
++        # Mock the database connection and cursor
++        mock_connection = Mock()
++        mock_cursor = Mock()
++        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
++        mock_connection.ops.quote_name.return_value = 'test_table'
++        mock_connection.ops.adapt_datetimefield_value.return_value = timezone.now()
++        mock_connection.ops.cache_key_culling_sql.return_value = "SELECT cache_key FROM %s ORDER BY cache_key LIMIT 1 OFFSET %%s"
++        
++        # Set up cursor.fetchone() to return valid result first (for COUNT), then None (for culling query)
++        mock_cursor.fetchone.side_effect = [
++            [15],  # First call: COUNT(*) returns 15 (more than max_entries=10)
++            None   # Second call: culling query returns None (should be handled gracefully)
++        ]
++        
++        with patch('django.core.cache.backends.db.connections', {'default': mock_connection}):
++            with patch('django.core.cache.backends.db.router.db_for_write', return_value='default'):
++                # This should not raise an exception after the fix
++                try:
++                    self.cache._cull('default', mock_cursor, timezone.now())
++                except TypeError as e:
++                    if "'NoneType' object is not subscriptable" in str(e):
++                        pytest.fail("The bug still exists: cursor.fetchone() returned None but was not handled properly")
++                    else:
++                        raise
++        
++        # Verify that the DELETE query was not executed when fetchone() returned None
++        execute_calls = mock_cursor.execute.call_args_list
++        # Should have 3 calls: DELETE expired, SELECT COUNT, SELECT culling query
++        # But NOT the final DELETE call since fetchone() returned None
++        assert len(execute_calls) == 3
++        
++        # Verify the calls were made in the expected order
++        assert "DELETE FROM test_table WHERE expires <" in execute_calls[0][0][0]
++        assert "SELECT COUNT(*) FROM test_table" in execute_calls[1][0][0]
++        assert "SELECT cache_key FROM test_table ORDER BY cache_key LIMIT 1 OFFSET" in execute_calls[2][0][0]
++    
++    def test_cull_with_valid_fetchone_result(self):
++        """
++        Test that _cull works correctly when cursor.fetchone() returns a valid result.
++        This test verifies that normal functionality is preserved.
++        """
++        # Mock the database connection and cursor
++        mock_connection = Mock()
++        mock_cursor = Mock()
++        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
++        mock_connection.ops.quote_name.return_value = 'test_table'
++        mock_connection.ops.adapt_datetimefield_value.return_value = timezone.now()
++        mock_connection.ops.cache_key_culling_sql.return_value = "SELECT cache_key FROM %s ORDER BY cache_key LIMIT 1 OFFSET %%s"
++        
++        # Set up cursor.fetchone() to return valid results
++        mock_cursor.fetchone.side_effect = [
++            [15],           # First call: COUNT(*) returns 15 (more than max_entries=10)
++            ['cache_key_5'] # Second call: culling query returns a valid cache key
++        ]
++        
++        with patch('django.core.cache.backends.db.connections', {'default': mock_connection}):
++            with patch('django.core.cache.backends.db.router.db_for_write', return_value='default'):
++                # This should work normally
++                self.cache._cull('default', mock_cursor, timezone.now())
++        
++        # Verify that all expected queries were executed
++        execute_calls = mock_cursor.execute.call_args_list
++        assert len(execute_calls) == 4
++        
++        # Verify the calls were made in the expected order
++        assert "DELETE FROM test_table WHERE expires <" in execute_calls[0][0][0]
++        assert "SELECT COUNT(*) FROM test_table" in execute_calls[1][0][0]
++        assert "SELECT cache_key FROM test_table ORDER BY cache_key LIMIT 1 OFFSET" in execute_calls[2][0][0]
++        assert "DELETE FROM test_table WHERE cache_key <" in execute_calls[3][0][0]
++        
++        # Verify the final DELETE was called with the correct cache key
++        assert execute_calls[3][0][1] == ['cache_key_5']
++    
++    def test_cull_when_count_below_max_entries(self):
++        """
++        Test that _cull doesn't perform culling when entry count is below max_entries.
++        """
++        # Mock the database connection and cursor
++        mock_connection = Mock()
++        mock_cursor = Mock()
++        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
++        mock_connection.ops.quote_name.return_value = 'test_table'
++        mock_connection.ops.adapt_datetimefield_value.return_value = timezone.now()
++        
++        # Set up cursor.fetchone() to return count below max_entries
++        mock_cursor.fetchone.return_value = [5]  # Below max_entries=10
++        
++        with patch('django.core.cache.backends.db.connections', {'default': mock_connection}):
++            with patch('django.core.cache.backends.db.router.db_for_write', return_value='default'):
++                self.cache._cull('default', mock_cursor, timezone.now())
++        
++        # Verify only the expired deletion and count queries were executed
++        execute_calls = mock_cursor.execute.call_args_list
++        assert len(execute_calls) == 2
++        assert "DELETE FROM test_table WHERE expires <" in execute_calls[0][0][0]
++        assert "SELECT COUNT(*) FROM test_table" in execute_calls[1][0][0]
++    
++    def test_cull_with_zero_cull_frequency(self):
++        """
++        Test that _cull calls clear() when cull_frequency is 0.
++        """
++        # Set cull_frequency to 0
++        self.cache._cull_frequency = 0
++        
++        mock_connection = Mock()
++        mock_cursor = Mock()
++        
++        with patch.object(self.cache, 'clear') as mock_clear:
++            self.cache._cull('default', mock_cursor, timezone.now())
++            mock_clear.assert_called_once()
++    
++    def test_cull_race_condition_scenario(self):
++        """
++        Test the race condition scenario where entries are deleted between 
++        COUNT and culling queries, causing fetchone() to return None.
++        """
++        # Mock the database connection and cursor
++        mock_connection = Mock()
++        mock_cursor = Mock()
++        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
++        mock_connection.ops.quote_name.return_value = 'test_table'
++        mock_connection.ops.adapt_datetimefield_value.return_value = timezone.now()
++        mock_connection.ops.cache_key_culling_sql.return_value = "SELECT cache_key FROM %s ORDER BY cache_key LIMIT 1 OFFSET %%s"
++        
++        # Simulate race condition: COUNT shows 20 entries, but by the time we run
++        # the culling query, other processes have deleted entries, so offset is too high
++        mock_cursor.fetchone.side_effect = [
++            [20],  # COUNT shows 20 entries (triggers culling since max_entries=10)
++            None   # But culling query finds no entry at offset (race condition)
++        ]
++        
++        with patch('django.core.cache.backends.db.connections', {'default': mock_connection}):
++            with patch('django.core.cache.backends.db.router.db_for_write', return_value='default'):
++                # Should handle the race condition gracefully without raising an exception
++                self.cache._cull('default', mock_cursor, timezone.now())
++        
++        # Verify that the method completed without attempting the final DELETE
++        execute_calls = mock_cursor.execute.call_args_list
++        assert len(execute_calls) == 3  # DELETE expired, COUNT, culling query (but no final DELETE)
++    
++    def test_cull_edge_case_empty_table(self):
++        """
++        Test _cull behavior when the cache table is empty.
++        """
++        # Mock the database connection and cursor
++        mock_connection = Mock()
++        mock_cursor = Mock()
++        mock_connection.cursor.return_value.__enter__.return_value = mock_cursor
++        mock_connection.ops.quote_name.return_value = 'test_table'
++        mock_connection.ops.adapt_datetimefield_value.return_value = timezone.now()
++        
++        # Empty table scenario
++        mock_cursor.fetchone.return_value = [0]  # COUNT returns 0
++        
++        with patch('django.core.cache.backends.db.connections', {'default': mock_connection}):
++            with patch('django.core.cache.backends.db.router.db_for_write', return_value='default'):
++                self.cache._cull('default', mock_cursor, timezone.now())
++        
++        # Should only execute DELETE expired and COUNT queries
++        execute_calls = mock_cursor.execute.call_args_list
++        assert len(execute_calls) == 2
++        assert "DELETE FROM test_table WHERE expires <" in execute_calls[0][0][0]
++        assert "SELECT COUNT(*) FROM test_table" in execute_calls[1][0][0]

@@ -1,0 +1,163 @@
+--- a/test/test_utils.py
++++ b/test/test_utils.py
+-# Empty if creating new file
++#!/usr/bin/env python
++# coding: utf-8
++from __future__ import unicode_literals
++
++import unittest
++
++from youtube_dl.utils import unified_strdate
++
++
++class TestUnifiedStrdate(unittest.TestCase):
++    def test_unified_strdate_with_ordinal_suffixes_3rd(self):
++        """Test that unified_strdate handles dates with '3rd' ordinal suffix"""
++        # This test should fail before the fix is applied
++        result = unified_strdate('January 3rd, 2019')
++        self.assertEqual(result, '20190103')
++        
++    def test_unified_strdate_with_ordinal_suffixes_23rd(self):
++        """Test that unified_strdate handles dates with '23rd' ordinal suffix"""
++        # This test should fail before the fix is applied
++        result = unified_strdate('January 23rd, 2019')
++        self.assertEqual(result, '20190123')
++        
++    def test_unified_strdate_with_ordinal_suffixes_1st(self):
++        """Test that unified_strdate handles dates with '1st' ordinal suffix"""
++        result = unified_strdate('January 1st, 2019')
++        self.assertEqual(result, '20190101')
++        
++    def test_unified_strdate_with_ordinal_suffixes_2nd(self):
++        """Test that unified_strdate handles dates with '2nd' ordinal suffix"""
++        result = unified_strdate('January 2nd, 2019')
++        self.assertEqual(result, '20190102')
++        
++    def test_unified_strdate_with_ordinal_suffixes_4th(self):
++        """Test that unified_strdate handles dates with '4th' ordinal suffix"""
++        result = unified_strdate('January 4th, 2019')
++        self.assertEqual(result, '20190104')
++        
++    def test_unified_strdate_with_ordinal_suffixes_21st(self):
++        """Test that unified_strdate handles dates with '21st' ordinal suffix"""
++        result = unified_strdate('January 21st, 2019')
++        self.assertEqual(result, '20190121')
++        
++    def test_unified_strdate_with_ordinal_suffixes_22nd(self):
++        """Test that unified_strdate handles dates with '22nd' ordinal suffix"""
++        result = unified_strdate('January 22nd, 2019')
++        self.assertEqual(result, '20190122')
++        
++    def test_unified_strdate_with_ordinal_suffixes_31st(self):
++        """Test that unified_strdate handles dates with '31st' ordinal suffix"""
++        result = unified_strdate('January 31st, 2019')
++        self.assertEqual(result, '20190131')
++        
++    def test_unified_strdate_with_ordinal_suffixes_different_formats(self):
++        """Test that unified_strdate handles ordinal suffixes in different date formats"""
++        # Test with abbreviated month
++        result = unified_strdate('Feb 3rd, 2019')
++        self.assertEqual(result, '20190203')
++        
++        # Test with day-first format
++        result = unified_strdate('3rd February 2019')
++        self.assertEqual(result, '20190203')
++        
++        # Test with abbreviated month and day-first
++        result = unified_strdate('23rd Feb 2019')
++        self.assertEqual(result, '20190223')
++        
++    def test_unified_strdate_without_ordinal_suffixes_unchanged(self):
++        """Test that unified_strdate still works correctly for dates without ordinal suffixes"""
++        # These should continue to work as before
++        result = unified_strdate('January 3, 2019')
++        self.assertEqual(result, '20190103')
++        
++        result = unified_strdate('January 23, 2019')
++        self.assertEqual(result, '20190123')
++        
++        result = unified_strdate('2019-01-03')
++        self.assertEqual(result, '20190103')
++        
++        result = unified_strdate('03/01/2019')
++        self.assertEqual(result, '20190103')
++        
++    def test_unified_strdate_edge_cases_with_ordinals(self):
++        """Test edge cases with ordinal suffixes"""
++        # Test with extra whitespace
++        result = unified_strdate('January  3rd,  2019')
++        self.assertEqual(result, '20190103')
++        
++        # Test with different case
++        result = unified_strdate('JANUARY 3RD, 2019')
++        self.assertEqual(result, '20190103')
++        
++        # Test with time components (should be ignored)
++        result = unified_strdate('January 3rd, 2019 10:30 AM')
++        self.assertEqual(result, '20190103')
++        
++    def test_unified_strdate_ordinals_comprehensive_range(self):
++        """Test a comprehensive range of ordinal suffixes to ensure all work correctly"""
++        test_cases = [
++            ('January 1st, 2019', '20190101'),
++            ('January 2nd, 2019', '20190102'),
++            ('January 3rd, 2019', '20190103'),
++            ('January 4th, 2019', '20190104'),
++            ('January 5th, 2019', '20190105'),
++            ('January 11th, 2019', '20190111'),
++            ('January 12th, 2019', '20190112'),
++            ('January 13th, 2019', '20190113'),
++            ('January 21st, 2019', '20190121'),
++            ('January 22nd, 2019', '20190122'),
++            ('January 23rd, 2019', '20190123'),
++            ('January 24th, 2019', '20190124'),
++            ('January 30th, 2019', '20190130'),
++            ('January 31st, 2019', '20190131'),
++        ]
++        
++        for date_str, expected in test_cases:
++            with self.subTest(date_str=date_str):
++                result = unified_strdate(date_str)
++                self.assertEqual(result, expected, 
++                    f"Failed for date string: {date_str}, got {result}, expected {expected}")
++                
++    def test_unified_strdate_ordinals_different_months(self):
++        """Test ordinal suffixes work across different months"""
++        test_cases = [
++            ('February 3rd, 2019', '20190203'),
++            ('March 23rd, 2019', '20190323'),
++            ('April 3rd, 2019', '20190403'),
++            ('May 23rd, 2019', '20190523'),
++            ('June 3rd, 2019', '20190603'),
++            ('July 23rd, 2019', '20190723'),
++            ('August 3rd, 2019', '20190803'),
++            ('September 23rd, 2019', '20190923'),
++            ('October 3rd, 2019', '20191003'),
++            ('November 23rd, 2019', '20191123'),
++            ('December 3rd, 2019', '20191203'),
++        ]
++        
++        for date_str, expected in test_cases:
++            with self.subTest(date_str=date_str):
++                result = unified_strdate(date_str)
++                self.assertEqual(result, expected,
++                    f"Failed for date string: {date_str}, got {result}, expected {expected}")
++                
++    def test_unified_strdate_ordinals_should_not_affect_non_day_numbers(self):
++        """Test that ordinal removal doesn't affect numbers that aren't days"""
++        # This tests that we don't accidentally remove ordinals from years or other parts
++        # Note: This is a hypothetical case to ensure our regex is precise
++        result = unified_strdate('January 3rd, 2019')
++        self.assertEqual(result, '20190103')
++        
++        # Test that None input still returns None
++        result = unified_strdate(None)
++        self.assertIsNone(result)
++        
++        # Test that invalid dates still return None
++        result = unified_strdate('Invalid date string')
++        self.assertIsNone(result)
++
++
++if __name__ == '__main__':
++    unittest.main()

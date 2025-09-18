@@ -1,0 +1,278 @@
+--- a/tests/view_tests/test_debug_suppress_context.py
++++ b/tests/view_tests/test_debug_suppress_context.py
+-# Empty if creating new file
++import pytest
++import sys
++from django.http import HttpRequest
++from django.views.debug import ExceptionReporter
++from django.views.generic import View
++
++
++class TestSuppressContextView(View):
++    """Test view that demonstrates exception chaining with suppress_context."""
++    
++    def get(self, request, *args, **kwargs):
++        try:
++            raise RuntimeError('original error')
++        except Exception as exc:
++            raise ValueError('new error') from None
++
++
++class TestExplicitCauseView(View):
++    """Test view that demonstrates explicit exception chaining."""
++    
++    def get(self, request, *args, **kwargs):
++        try:
++            raise RuntimeError('original error')
++        except Exception as exc:
++            raise ValueError('new error') from exc
++
++
++class TestImplicitCauseView(View):
++    """Test view that demonstrates implicit exception chaining."""
++    
++    def get(self, request, *args, **kwargs):
++        try:
++            raise RuntimeError('original error')
++        except Exception:
++            raise ValueError('new error')
++
++
++class TestDebugSuppressContext:
++    """Test suite for PEP 415 __suppress_context__ support in Django debug views."""
++    
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.request = HttpRequest()
++        self.request.method = 'GET'
++        self.request.path = '/test/'
++    
++    def test_suppress_context_with_raise_from_none(self):
++        """Test that 'raise ... from None' properly suppresses context in debug view."""
++        # Create an exception with suppressed context
++        try:
++            try:
++                raise RuntimeError('original error')
++            except Exception:
++                raise ValueError('new error') from None
++        except Exception as exc:
++            exc_type = type(exc)
++            exc_value = exc
++            tb = exc.__traceback__
++        
++        # Create ExceptionReporter and get traceback frames
++        reporter = ExceptionReporter(self.request, exc_type, exc_value, tb)
++        frames = reporter.get_traceback_frames()
++        
++        # Verify that __suppress_context__ is respected
++        assert exc_value.__suppress_context__ is True
++        assert exc_value.__context__ is not None  # Context exists but should be suppressed
++        assert exc_value.__cause__ is None  # No explicit cause
++        
++        # The frames should not include the suppressed context
++        # We should only see frames from the ValueError, not the RuntimeError
++        exception_types_in_frames = []
++        for frame in frames:
++            if 'exc_cause' in frame and frame['exc_cause']:
++                exception_types_in_frames.append(type(frame['exc_cause']).__name__)
++        
++        # With proper suppress_context handling, we shouldn't see RuntimeError
++        assert 'RuntimeError' not in exception_types_in_frames
++    
++    def test_explicit_cause_with_raise_from_exception(self):
++        """Test that 'raise ... from exc' shows explicit cause in debug view."""
++        original_exc = None
++        try:
++            try:
++                raise RuntimeError('original error')
++            except Exception as exc:
++                original_exc = exc
++                raise ValueError('new error') from exc
++        except Exception as exc:
++            exc_type = type(exc)
++            exc_value = exc
++            tb = exc.__traceback__
++        
++        # Create ExceptionReporter and get traceback frames
++        reporter = ExceptionReporter(self.request, exc_type, exc_value, tb)
++        frames = reporter.get_traceback_frames()
++        
++        # Verify explicit cause is preserved
++        assert exc_value.__suppress_context__ is False
++        assert exc_value.__context__ is original_exc
++        assert exc_value.__cause__ is original_exc
++        
++        # The frames should include the explicit cause
++        found_runtime_error = False
++        for frame in frames:
++            if 'exc_cause' in frame and frame['exc_cause']:
++                if isinstance(frame['exc_cause'], RuntimeError):
++                    found_runtime_error = True
++                    break
++        
++        assert found_runtime_error, "Explicit cause should be included in frames"
++    
++    def test_implicit_cause_without_suppression(self):
++        """Test that implicit exception chaining works when not suppressed."""
++        try:
++            try:
++                raise RuntimeError('original error')
++            except Exception:
++                raise ValueError('new error')  # No 'from' clause
++        except Exception as exc:
++            exc_type = type(exc)
++            exc_value = exc
++            tb = exc.__traceback__
++        
++        # Create ExceptionReporter and get traceback frames
++        reporter = ExceptionReporter(self.request, exc_type, exc_value, tb)
++        frames = reporter.get_traceback_frames()
++        
++        # Verify implicit cause is preserved
++        assert exc_value.__suppress_context__ is False
++        assert exc_value.__context__ is not None
++        assert exc_value.__cause__ is None  # No explicit cause
++        
++        # The frames should include the implicit context
++        found_runtime_error = False
++        for frame in frames:
++            if 'exc_cause' in frame and frame['exc_cause']:
++                if isinstance(frame['exc_cause'], RuntimeError):
++                    found_runtime_error = True
++                    break
++        
++        assert found_runtime_error, "Implicit context should be included in frames"
++    
++    def test_explicit_or_implicit_cause_function_behavior(self):
++        """Test the explicit_or_implicit_cause function directly."""
++        # Create an exception with suppressed context
++        try:
++            try:
++                raise RuntimeError('original error')
++            except Exception:
++                raise ValueError('new error') from None
++        except Exception as exc:
++            exc_type = type(exc)
++            exc_value = exc
++            tb = exc.__traceback__
++        
++        reporter = ExceptionReporter(self.request, exc_type, exc_value, tb)
++        
++        # Access the nested function by calling get_traceback_frames and inspecting
++        # We'll test the behavior indirectly through the frames
++        frames = reporter.get_traceback_frames()
++        
++        # For suppressed context, exc_cause should be None
++        for frame in frames:
++            if 'exc_cause' in frame:
++                # When context is suppressed, exc_cause should be None
++                if exc_value.__suppress_context__:
++                    assert frame['exc_cause'] is None or not isinstance(frame['exc_cause'], RuntimeError)
++    
++    def test_exception_cycle_detection_with_suppress_context(self):
++        """Test that exception cycle detection works with suppress_context."""
++        # Create a more complex scenario to test cycle detection
++        try:
++            try:
++                raise RuntimeError('original error')
++            except Exception:
++                raise ValueError('new error') from None
++        except Exception as exc:
++            exc_type = type(exc)
++            exc_value = exc
++            tb = exc.__traceback__
++        
++        reporter = ExceptionReporter(self.request, exc_type, exc_value, tb)
++        
++        # This should not raise any warnings or errors
++        frames = reporter.get_traceback_frames()
++        assert isinstance(frames, list)
++    
++    def test_no_exception_case(self):
++        """Test behavior when no exception is provided."""
++        reporter = ExceptionReporter(self.request, None, None, None)
++        frames = reporter.get_traceback_frames()
++        assert frames == []
++    
++    def test_exception_with_no_context_or_cause(self):
++        """Test exception with neither context nor cause."""
++        try:
++            raise ValueError('standalone error')
++        except Exception as exc:
++            exc_type = type(exc)
++            exc_value = exc
++            tb = exc.__traceback__
++        
++        reporter = ExceptionReporter(self.request, exc_type, exc_value, tb)
++        frames = reporter.get_traceback_frames()
++        
++        # Should handle gracefully
++        assert isinstance(frames, list)
++        for frame in frames:
++            if 'exc_cause' in frame:
++                assert frame['exc_cause'] is None
++    
++    def test_suppress_context_attribute_values(self):
++        """Test different values of __suppress_context__ attribute."""
++        # Test with __suppress_context__ = True
++        try:
++            try:
++                raise RuntimeError('original')
++            except Exception:
++                raise ValueError('new') from None
++        except Exception as exc:
++            assert exc.__suppress_context__ is True
++            
++        # Test with __suppress_context__ = False (implicit chaining)
++        try:
++            try:
++                raise RuntimeError('original')
++            except Exception:
++                raise ValueError('new')
++        except Exception as exc:
++            assert exc.__suppress_context__ is False
++            
++        # Test with explicit chaining
++        try:
++            try:
++                raise RuntimeError('original')
++            except Exception as orig:
++                raise ValueError('new') from orig
++        except Exception as exc:
++            assert exc.__suppress_context__ is False
++    
++    def test_nested_exception_chains_with_suppression(self):
++        """Test complex nested exception chains with mixed suppression."""
++        try:
++            try:
++                try:
++                    raise RuntimeError('level 1')
++                except Exception:
++                    raise ValueError('level 2') from None  # Suppress level 1
++            except Exception:
++                raise TypeError('level 3')  # Don't suppress level 2
++        except Exception as exc:
++            exc_type = type(exc)
++            exc_value = exc
++            tb = exc.__traceback__
++        
++        reporter = ExceptionReporter(self.request, exc_type, exc_value, tb)
++        frames = reporter.get_traceback_frames()
++        
++        # Should handle complex chaining correctly
++        assert isinstance(frames, list)
++        
++        # The RuntimeError should be suppressed, but ValueError should be visible
++        found_runtime_error = False
++        found_value_error = False
++        
++        for frame in frames:
++            if 'exc_cause' in frame and frame['exc_cause']:
++                if isinstance(frame['exc_cause'], RuntimeError):
++                    found_runtime_error = True
++                elif isinstance(frame['exc_cause'], ValueError):
++                    found_value_error = True
++        
++        # RuntimeError should be suppressed, ValueError should be visible as context
++        assert not found_runtime_error, "RuntimeError should be suppressed"
++        assert found_value_error, "ValueError should be visible as context"

@@ -1,0 +1,6 @@
+{
+  "instance_id": "django__django-15103",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/django__django-15103/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/django__django-15103/django__django-15103.pred"
+}

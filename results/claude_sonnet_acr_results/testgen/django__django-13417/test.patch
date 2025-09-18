@@ -1,0 +1,182 @@
+--- a/tests/queries/test_ordered_property.py
++++ b/tests/queries/test_ordered_property.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import Count, Sum, Avg
++from django.test import TestCase
++
++
++class OrderedModel(models.Model):
++    """Test model with default ordering."""
++    name = models.CharField(max_length=100)
++    value = models.IntegerField()
++    
++    class Meta:
++        ordering = ['name']
++        app_label = 'queries'
++
++
++class UnorderedModel(models.Model):
++    """Test model without default ordering."""
++    name = models.CharField(max_length=100)
++    value = models.IntegerField()
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class QuerySetOrderedPropertyTests(TestCase):
++    """Test cases for QuerySet.ordered property with GROUP BY queries."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        # Create test data
++        OrderedModel.objects.create(name='Alice', value=10)
++        OrderedModel.objects.create(name='Bob', value=20)
++        OrderedModel.objects.create(name='Charlie', value=30)
++        
++        UnorderedModel.objects.create(name='Alice', value=10)
++        UnorderedModel.objects.create(name='Bob', value=20)
++        UnorderedModel.objects.create(name='Charlie', value=30)
++    
++    def test_ordered_property_without_annotations(self):
++        """Test that ordered property works correctly for regular queries."""
++        # Model with default ordering
++        qs = OrderedModel.objects.all()
++        self.assertTrue(qs.ordered)
++        self.assertTrue(qs.query.default_ordering)
++        
++        # Model without default ordering
++        qs = UnorderedModel.objects.all()
++        self.assertFalse(qs.ordered)
++        self.assertTrue(qs.query.default_ordering)  # default_ordering is True by default
++    
++    def test_ordered_property_with_explicit_order_by(self):
++        """Test that explicit order_by makes queryset ordered."""
++        # With explicit ordering
++        qs = OrderedModel.objects.order_by('value')
++        self.assertTrue(qs.ordered)
++        
++        qs = UnorderedModel.objects.order_by('value')
++        self.assertTrue(qs.ordered)
++    
++    def test_ordered_property_with_annotations_no_aggregates(self):
++        """Test that annotations without aggregates preserve ordering."""
++        from django.db.models import F
++        
++        # Annotations without aggregates should preserve ordering
++        qs = OrderedModel.objects.annotate(double_value=F('value') * 2)
++        self.assertTrue(qs.ordered)
++        
++        qs = UnorderedModel.objects.annotate(double_value=F('value') * 2)
++        self.assertFalse(qs.ordered)
++    
++    def test_ordered_property_with_aggregate_annotations_bug_reproduction(self):
++        """Test that reproduces the bug: annotate with aggregates should make ordered=False when only default ordering exists."""
++        # This test should FAIL before the fix is applied
++        # Model with default ordering + aggregate annotation
++        qs = OrderedModel.objects.annotate(count=Count('pk'))
++        
++        # Check that group_by is set (this causes the issue)
++        self.assertTrue(qs.query.group_by)
++        
++        # The bug: ordered should be False because GROUP BY removes default ordering
++        # but currently returns True
++        # After fix, this should be False
++        self.assertFalse(qs.ordered, 
++                        "QuerySet with GROUP BY and only default ordering should not be considered ordered")
++        
++        # Verify the SQL doesn't have ORDER BY clause
++        sql = str(qs.query)
++        self.assertNotIn('ORDER BY', sql.upper())
++    
++    def test_ordered_property_with_aggregate_annotations_and_explicit_ordering(self):
++        """Test that explicit ordering works with aggregate annotations."""
++        # Model with default ordering + aggregate annotation + explicit ordering
++        qs = OrderedModel.objects.annotate(count=Count('pk')).order_by('name')
++        
++        # Should be ordered because of explicit order_by
++        self.assertTrue(qs.ordered)
++        
++        # Verify the SQL has ORDER BY clause
++        sql = str(qs.query)
++        self.assertIn('ORDER BY', sql.upper())
++    
++    def test_ordered_property_with_multiple_aggregates(self):
++        """Test with multiple aggregate annotations."""
++        qs = OrderedModel.objects.annotate(
++            count=Count('pk'),
++            avg_value=Avg('value'),
++            sum_value=Sum('value')
++        )
++        
++        # Should not be ordered due to GROUP BY with only default ordering
++        self.assertFalse(qs.ordered)
++        
++        # But with explicit ordering, should be ordered
++        qs_ordered = qs.order_by('name')
++        self.assertTrue(qs_ordered.ordered)
++    
++    def test_ordered_property_unordered_model_with_aggregates(self):
++        """Test that unordered models with aggregates remain unordered."""
++        qs = UnorderedModel.objects.annotate(count=Count('pk'))
++        
++        # Should not be ordered (no default ordering and no explicit ordering)
++        self.assertFalse(qs.ordered)
++    
++    def test_ordered_property_empty_queryset(self):
++        """Test that empty querysets are considered ordered."""
++        qs = OrderedModel.objects.none()
++        self.assertTrue(qs.ordered)
++        
++        qs = UnorderedModel.objects.none()
++        self.assertTrue(qs.ordered)
++    
++    def test_ordered_property_with_values_and_aggregates(self):
++        """Test ordered property with values() and aggregates."""
++        # values() with aggregates creates GROUP BY
++        qs = OrderedModel.objects.values('name').annotate(count=Count('pk'))
++        
++        # Should not be ordered due to GROUP BY with only default ordering
++        self.assertFalse(qs.ordered)
++        
++        # With explicit ordering
++        qs_ordered = qs.order_by('name')
++        self.assertTrue(qs_ordered.ordered)
++    
++    def test_ordered_property_edge_cases(self):
++        """Test edge cases for ordered property."""
++        # Filter + annotate with aggregates
++        qs = OrderedModel.objects.filter(value__gt=15).annotate(count=Count('pk'))
++        self.assertFalse(qs.ordered)
++        
++        # Exclude + annotate with aggregates
++        qs = OrderedModel.objects.exclude(value__lt=15).annotate(count=Count('pk'))
++        self.assertFalse(qs.ordered)
++        
++        # Distinct + annotate with aggregates
++        qs = OrderedModel.objects.distinct().annotate(count=Count('pk'))
++        self.assertFalse(qs.ordered)
++    
++    def test_sql_generation_matches_ordered_property(self):
++        """Test that the SQL generation matches what ordered property reports."""
++        # Regular query with default ordering
++        qs1 = OrderedModel.objects.all()
++        sql1 = str(qs1.query)
++        self.assertTrue(qs1.ordered)
++        self.assertIn('ORDER BY', sql1.upper())
++        
++        # Query with aggregates (should not have ORDER BY due to GROUP BY)
++        qs2 = OrderedModel.objects.annotate(count=Count('pk'))
++        sql2 = str(qs2.query)
++        self.assertFalse(qs2.ordered)
++        self.assertNotIn('ORDER BY', sql2.upper())
++        self.assertIn('GROUP BY', sql2.upper())
++        
++        # Query with aggregates and explicit ordering (should have ORDER BY)
++        qs3 = OrderedModel.objects.annotate(count=Count('pk')).order_by('name')
++        sql3 = str(qs3.query)
++        self.assertTrue(qs3.ordered)
++        self.assertIn('ORDER BY', sql3.upper())
++        self.assertIn('GROUP BY', sql3.upper())

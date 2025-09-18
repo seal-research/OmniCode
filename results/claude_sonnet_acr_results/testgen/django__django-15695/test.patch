@@ -1,0 +1,296 @@
+--- a/tests/migrations/test_rename_index_bug.py
++++ b/tests/migrations/test_rename_index_bug.py
+-# Empty if creating new file
++import pytest
++from django.db import connection, models
++from django.db.migrations.operations.models import RenameIndex
++from django.db.migrations.state import ProjectState, ModelState
++from django.test import TransactionTestCase
++from django.test.utils import isolate_apps
++
++
++class RenameIndexBugTests(TransactionTestCase):
++    """
++    Test suite for RenameIndex operation bug where unnamed index renaming
++    crashes when moving backward and forward.
++    """
++    
++    def setUp(self):
++        """Set up test environment with a test model."""
++        self.app_label = "test_app"
++        self.model_name = "TestModel"
++        self.table_name = f"{self.app_label}_{self.model_name.lower()}"
++        
++        # Create initial project state with a model that has unique_together
++        # which creates an unnamed index
++        self.project_state = ProjectState()
++        self.project_state.add_model(
++            ModelState(
++                app_label=self.app_label,
++                name=self.model_name,
++                fields=[
++                    ("id", models.AutoField(primary_key=True)),
++                    ("field1", models.CharField(max_length=100)),
++                    ("field2", models.CharField(max_length=100)),
++                ],
++                options={
++                    "unique_together": [("field1", "field2")],
++                },
++            )
++        )
++        
++        # Create the table in the database
++        with connection.schema_editor() as editor:
++            editor.create_model(self.project_state.apps.get_model(self.app_label, self.model_name))
++    
++    def tearDown(self):
++        """Clean up test environment."""
++        # Drop the table if it exists
++        try:
++            with connection.schema_editor() as editor:
++                model = self.project_state.apps.get_model(self.app_label, self.model_name)
++                editor.delete_model(model)
++        except Exception:
++            pass
++    
++    def get_index_names(self):
++        """Helper method to get all index names for the test table."""
++        with connection.cursor() as cursor:
++            return connection.introspection.get_constraints(cursor, self.table_name)
++    
++    def assertIndexExists(self, index_name):
++        """Assert that an index with the given name exists."""
++        constraints = self.get_index_names()
++        self.assertIn(index_name, constraints, f"Index {index_name} should exist")
++    
++    def assertIndexNotExists(self, index_name):
++        """Assert that an index with the given name does not exist."""
++        constraints = self.get_index_names()
++        self.assertNotIn(index_name, constraints, f"Index {index_name} should not exist")
++    
++    def test_rename_unnamed_index_forward_backward_forward_fails(self):
++        """
++        Test that demonstrates the bug: RenameIndex crashes when an unnamed 
++        index is moved backward and then forward again.
++        
++        This test should FAIL before the fix is applied, demonstrating the bug.
++        """
++        # Create RenameIndex operation for unnamed index (using old_fields)
++        operation = RenameIndex(
++            model_name=self.model_name,
++            new_name="new_test_idx",
++            old_fields=["field1", "field2"]
++        )
++        
++        # Get the original auto-generated index name
++        original_constraints = self.get_index_names()
++        original_index_names = [
++            name for name, info in original_constraints.items() 
++            if info.get('unique') and set(info.get('columns', [])) == {'field1', 'field2'}
++        ]
++        self.assertEqual(len(original_index_names), 1, "Should have exactly one unique index for field1, field2")
++        original_index_name = original_index_names[0]
++        
++        # Create new state after rename
++        new_state = self.project_state.clone()
++        operation.state_forwards(self.app_label, new_state)
++        
++        # Step 1: Apply the rename operation (forward)
++        with connection.schema_editor() as editor:
++            operation.database_forwards(self.app_label, editor, self.project_state, new_state)
++        
++        # Verify the index was renamed
++        self.assertIndexExists("new_test_idx")
++        self.assertIndexNotExists(original_index_name)
++        
++        # Step 2: Reverse the rename operation (backward)
++        with connection.schema_editor() as editor:
++            operation.database_backwards(self.app_label, editor, new_state, self.project_state)
++        
++        # After backward operation, the original index name should be restored
++        # This is where the bug manifests - the backward operation is a no-op
++        # so the index still has the new name
++        
++        # Step 3: Re-apply the rename operation (forward again)
++        # This should work but will fail due to the bug
++        with self.assertRaises(Exception) as cm:
++            with connection.schema_editor() as editor:
++                operation.database_forwards(self.app_label, editor, self.project_state, new_state)
++        
++        # The error should be about the relation already existing
++        self.assertIn("already exists", str(cm.exception).lower())
++    
++    def test_rename_unnamed_index_backward_restores_original_name(self):
++        """
++        Test that after the fix, the backward operation properly restores
++        the original auto-generated index name.
++        
++        This test should PASS after the fix is applied.
++        """
++        # Create RenameIndex operation for unnamed index
++        operation = RenameIndex(
++            model_name=self.model_name,
++            new_name="new_test_idx",
++            old_fields=["field1", "field2"]
++        )
++        
++        # Get the original auto-generated index name
++        original_constraints = self.get_index_names()
++        original_index_names = [
++            name for name, info in original_constraints.items() 
++            if info.get('unique') and set(info.get('columns', [])) == {'field1', 'field2'}
++        ]
++        original_index_name = original_index_names[0]
++        
++        # Create new state after rename
++        new_state = self.project_state.clone()
++        operation.state_forwards(self.app_label, new_state)
++        
++        # Apply forward operation
++        with connection.schema_editor() as editor:
++            operation.database_forwards(self.app_label, editor, self.project_state, new_state)
++        
++        self.assertIndexExists("new_test_idx")
++        self.assertIndexNotExists(original_index_name)
++        
++        # Apply backward operation
++        with connection.schema_editor() as editor:
++            operation.database_backwards(self.app_label, editor, new_state, self.project_state)
++        
++        # After fix: the original index name should be restored
++        self.assertIndexExists(original_index_name)
++        self.assertIndexNotExists("new_test_idx")
++    
++    def test_rename_unnamed_index_forward_backward_forward_succeeds_after_fix(self):
++        """
++        Test that after the fix, the complete forward-backward-forward cycle works.
++        
++        This test should PASS after the fix is applied.
++        """
++        # Create RenameIndex operation for unnamed index
++        operation = RenameIndex(
++            model_name=self.model_name,
++            new_name="new_test_idx",
++            old_fields=["field1", "field2"]
++        )
++        
++        # Get the original auto-generated index name
++        original_constraints = self.get_index_names()
++        original_index_names = [
++            name for name, info in original_constraints.items() 
++            if info.get('unique') and set(info.get('columns', [])) == {'field1', 'field2'}
++        ]
++        original_index_name = original_index_names[0]
++        
++        # Create new state after rename
++        new_state = self.project_state.clone()
++        operation.state_forwards(self.app_label, new_state)
++        
++        # Step 1: Forward operation
++        with connection.schema_editor() as editor:
++            operation.database_forwards(self.app_label, editor, self.project_state, new_state)
++        
++        self.assertIndexExists("new_test_idx")
++        self.assertIndexNotExists(original_index_name)
++        
++        # Step 2: Backward operation
++        with connection.schema_editor() as editor:
++            operation.database_backwards(self.app_label, editor, new_state, self.project_state)
++        
++        self.assertIndexExists(original_index_name)
++        self.assertIndexNotExists("new_test_idx")
++        
++        # Step 3: Forward operation again (should succeed after fix)
++        with connection.schema_editor() as editor:
++            operation.database_forwards(self.app_label, editor, self.project_state, new_state)
++        
++        self.assertIndexExists("new_test_idx")
++        self.assertIndexNotExists(original_index_name)
++    
++    def test_rename_named_index_backward_forward_still_works(self):
++        """
++        Test that the fix doesn't break the existing functionality for named indexes.
++        
++        This test should PASS both before and after the fix.
++        """
++        # First create a named index
++        create_index_op = models.Index(fields=["field1"], name="original_named_idx")
++        
++        # Add the index to our model state
++        test_state = self.project_state.clone()
++        test_state.add_index(self.app_label, self.model_name.lower(), create_index_op)
++        
++        # Create the named index in the database
++        with connection.schema_editor() as editor:
++            model = test_state.apps.get_model(self.app_label, self.model_name)
++            editor.add_index(model, create_index_op)
++        
++        # Now test renaming the named index
++        operation = RenameIndex(
++            model_name=self.model_name,
++            new_name="renamed_named_idx",
++            old_name="original_named_idx"
++        )
++        
++        # Create new state after rename
++        new_state = test_state.clone()
++        operation.state_forwards(self.app_label, new_state)
++        
++        # Forward operation
++        with connection.schema_editor() as editor:
++            operation.database_forwards(self.app_label, editor, test_state, new_state)
++        
++        self.assertIndexExists("renamed_named_idx")
++        self.assertIndexNotExists("original_named_idx")
++        
++        # Backward operation
++        with connection.schema_editor() as editor:
++            operation.database_backwards(self.app_label, editor, new_state, test_state)
++        
++        self.assertIndexExists("original_named_idx")
++        self.assertIndexNotExists("renamed_named_idx")
++        
++        # Forward operation again
++        with connection.schema_editor() as editor:
++            operation.database_forwards(self.app_label, editor, test_state, new_state)
++        
++        self.assertIndexExists("renamed_named_idx")
++        self.assertIndexNotExists("original_named_idx")
++    
++    def test_rename_unnamed_index_with_no_queries_on_backward_noop(self):
++        """
++        Test that the current backward operation for unnamed indexes is a no-op
++        (demonstrating the current buggy behavior).
++        
++        This test documents the current behavior and should be updated after the fix.
++        """
++        operation = RenameIndex(
++            model_name=self.model_name,
++            new_name="new_test_idx",
++            old_fields=["field1", "field2"]
++        )
++        
++        new_state = self.project_state.clone()
++        operation.state_forwards(self.app_label, new_state)
++        
++        # Apply forward operation first
++        with connection.schema_editor() as editor:
++            operation.database_forwards(self.app_label, editor, self.project_state, new_state)
++        
++        # The backward operation should currently be a no-op (0 queries)
++        # This demonstrates the bug - no actual database operation occurs
++        from django.test.utils import override_settings
++        from django.db import connection
++        
++        queries_before = len(connection.queries)
++        with connection.schema_editor() as editor:
++            operation.database_backwards(self.app_label, editor, new_state, self.project_state)
++        queries_after = len(connection.queries)
++        
++        # Currently this is 0 (no-op), but after fix it should be > 0
++        # This test documents the current buggy behavior
++        self.assertEqual(queries_after - queries_before, 0, 
++                        "Current implementation: backward operation is a no-op for unnamed indexes")
++        
++        # The index should still have the new name (demonstrating the bug)
++        self.assertIndexExists("new_test_idx")

@@ -1,0 +1,230 @@
+--- a/tests/migrations/test_autodetector.py
++++ b/tests/migrations/test_autodetector.py
+-# This will be added to the existing test file
++    def test_rename_model_and_field_together(self):
++        """
++        Test that renaming a model and field simultaneously doesn't crash.
++        This reproduces the bug where the autodetector crashes with a KeyError
++        when trying to rename both a model and a field in the same migration.
++        """
++        # Create initial state with a model and field
++        before = self.make_project_state([
++            self.author_name,  # Author model with name field
++        ])
++        
++        # Create target state with renamed model and field
++        after = self.make_project_state([
++            ModelState(
++                "testapp",
++                "Writer",  # Renamed from Author
++                [
++                    ("id", models.AutoField(primary_key=True)),
++                    ("full_name", models.CharField(max_length=255)),  # Renamed from name
++                ],
++            ),
++        ])
++        
++        # Mock the questioner to automatically answer 'yes' to rename questions
++        questioner = MigrationQuestioner(defaults={'ask_rename_model': True, 'ask_rename': True})
++        autodetector = MigrationAutodetector(before, after, questioner)
++        
++        # This should not crash with KeyError
++        changes = autodetector.changes(graph=self.get_changes_graph(before))
++        
++        # Verify that we get the expected operations
++        self.assertNumberMigrations(changes, 'testapp', 1)
++        self.assertOperationTypes(changes, 'testapp', 0, ['RenameModel', 'RenameField'])
++        
++        # Verify the rename model operation
++        rename_model_op = changes['testapp'][0].operations[0]
++        self.assertEqual(rename_model_op.old_name, 'Author')
++        self.assertEqual(rename_model_op.new_name, 'Writer')
++        
++        # Verify the rename field operation
++        rename_field_op = changes['testapp'][0].operations[1]
++        self.assertEqual(rename_field_op.model_name, 'Writer')
++        self.assertEqual(rename_field_op.old_name, 'name')
++        self.assertEqual(rename_field_op.new_name, 'full_name')
++
++    def test_rename_model_and_multiple_fields_together(self):
++        """
++        Test renaming a model with multiple field renames simultaneously.
++        This tests the edge case where multiple fields are renamed along with the model.
++        """
++        # Create initial state
++        before = self.make_project_state([
++            ModelState(
++                "testapp",
++                "Person",
++                [
++                    ("id", models.AutoField(primary_key=True)),
++                    ("first_name", models.CharField(max_length=100)),
++                    ("last_name", models.CharField(max_length=100)),
++                    ("email_address", models.EmailField()),
++                ],
++            ),
++        ])
++        
++        # Create target state with renamed model and fields
++        after = self.make_project_state([
++            ModelState(
++                "testapp",
++                "Individual",  # Renamed from Person
++                [
++                    ("id", models.AutoField(primary_key=True)),
++                    ("given_name", models.CharField(max_length=100)),  # Renamed from first_name
++                    ("family_name", models.CharField(max_length=100)),  # Renamed from last_name
++                    ("email", models.EmailField()),  # Renamed from email_address
++                ],
++            ),
++        ])
++        
++        # Mock questioner to answer yes to all renames
++        questioner = MigrationQuestioner(defaults={'ask_rename_model': True, 'ask_rename': True})
++        autodetector = MigrationAutodetector(before, after, questioner)
++        
++        # This should not crash
++        changes = autodetector.changes(graph=self.get_changes_graph(before))
++        
++        # Verify we get the expected number of operations
++        self.assertNumberMigrations(changes, 'testapp', 1)
++        operations = changes['testapp'][0].operations
++        
++        # Should have 1 RenameModel + 3 RenameField operations
++        self.assertEqual(len(operations), 4)
++        self.assertIsInstance(operations[0], migrations.RenameModel)
++        for i in range(1, 4):
++            self.assertIsInstance(operations[i], migrations.RenameField)
++
++    def test_rename_model_only_no_field_rename(self):
++        """
++        Test that renaming only a model (without field renames) still works correctly.
++        This ensures our fix doesn't break the normal model rename functionality.
++        """
++        before = self.make_project_state([
++            self.author_name,
++        ])
++        
++        after = self.make_project_state([
++            ModelState(
++                "testapp",
++                "Writer",  # Only model renamed, field stays the same
++                [
++                    ("id", models.AutoField(primary_key=True)),
++                    ("name", models.CharField(max_length=255)),  # Field name unchanged
++                ],
++            ),
++        ])
++        
++        questioner = MigrationQuestioner(defaults={'ask_rename_model': True})
++        autodetector = MigrationAutodetector(before, after, questioner)
++        
++        changes = autodetector.changes(graph=self.get_changes_graph(before))
++        
++        # Should only have a RenameModel operation
++        self.assertNumberMigrations(changes, 'testapp', 1)
++        self.assertOperationTypes(changes, 'testapp', 0, ['RenameModel'])
++        
++        rename_op = changes['testapp'][0].operations[0]
++        self.assertEqual(rename_op.old_name, 'Author')
++        self.assertEqual(rename_op.new_name, 'Writer')
++
++    def test_rename_field_only_no_model_rename(self):
++        """
++        Test that renaming only a field (without model rename) still works correctly.
++        This ensures our fix doesn't break the normal field rename functionality.
++        """
++        before = self.make_project_state([
++            self.author_name,
++        ])
++        
++        after = self.make_project_state([
++            ModelState(
++                "testapp",
++                "Author",  # Model name unchanged
++                [
++                    ("id", models.AutoField(primary_key=True)),
++                    ("full_name", models.CharField(max_length=255)),  # Field renamed
++                ],
++            ),
++        ])
++        
++        questioner = MigrationQuestioner(defaults={'ask_rename': True})
++        autodetector = MigrationAutodetector(before, after, questioner)
++        
++        changes = autodetector.changes(graph=self.get_changes_graph(before))
++        
++        # Should only have a RenameField operation
++        self.assertNumberMigrations(changes, 'testapp', 1)
++        self.assertOperationTypes(changes, 'testapp', 0, ['RenameField'])
++        
++        rename_op = changes['testapp'][0].operations[0]
++        self.assertEqual(rename_op.model_name, 'Author')
++        self.assertEqual(rename_op.old_name, 'name')
++        self.assertEqual(rename_op.new_name, 'full_name')
++
++    def test_rename_model_and_field_with_foreign_key(self):
++        """
++        Test renaming a model and field when the model has foreign key relationships.
++        This tests a more complex scenario to ensure the fix works with related fields.
++        """
++        # Create initial state with related models
++        before = self.make_project_state([
++            self.author_name,
++            ModelState(
++                "testapp",
++                "Book",
++                [
++                    ("id", models.AutoField(primary_key=True)),
++                    ("title", models.CharField(max_length=200)),
++                    ("author", models.ForeignKey("testapp.Author", models.CASCADE)),
++                ],
++            ),
++        ])
++        
++        # Rename the Author model and its name field
++        after = self.make_project_state([
++            ModelState(
++                "testapp",
++                "Writer",  # Renamed from Author
++                [
++                    ("id", models.AutoField(primary_key=True)),
++                    ("full_name", models.CharField(max_length=255)),  # Renamed from name
++                ],
++            ),
++            ModelState(
++                "testapp",
++                "Book",
++                [
++                    ("id", models.AutoField(primary_key=True)),
++                    ("title", models.CharField(max_length=200)),
++                    ("author", models.ForeignKey("testapp.Writer", models.CASCADE)),  # Updated FK reference
++                ],
++            ),
++        ])
++        
++        questioner = MigrationQuestioner(defaults={'ask_rename_model': True, 'ask_rename': True})
++        autodetector = MigrationAutodetector(before, after, questioner)
++        
++        # This should not crash even with foreign key relationships
++        changes = autodetector.changes(graph=self.get_changes_graph(before))
++        
++        # Verify we get migrations for the renamed model and field
++        self.assertNumberMigrations(changes, 'testapp', 1)
++        operations = changes['testapp'][0].operations
++        
++        # Should have RenameModel, RenameField, and AlterField operations
++        self.assertGreaterEqual(len(operations), 2)
++        
++        # Find the RenameModel operation
++        rename_model_ops = [op for op in operations if isinstance(op, migrations.RenameModel)]
++        self.assertEqual(len(rename_model_ops), 1)
++        self.assertEqual(rename_model_ops[0].old_name, 'Author')
++        self.assertEqual(rename_model_ops[0].new_name, 'Writer')
++        
++        # Find the RenameField operation
++        rename_field_ops = [op for op in operations if isinstance(op, migrations.RenameField)]
++        self.assertEqual(len(rename_field_ops), 1)
++        self.assertEqual(rename_field_ops[0].model_name, 'Writer')
++        self.assertEqual(rename_field_ops[0].old_name, 'name')
++        self.assertEqual(rename_field_ops[0].new_name, 'full_name')

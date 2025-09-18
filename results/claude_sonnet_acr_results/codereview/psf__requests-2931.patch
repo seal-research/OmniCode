@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/requests/models.py b/requests/models.py\nindex 9c624d3c..8bce13cd 100644\n--- a/requests/models.py\n+++ b/requests/models.py\n@@ -80,8 +80,10 @@ class RequestEncodingMixin(object):\n         if parameters are supplied as a dict.\n         \"\"\"\n \n-        if isinstance(data, (str, bytes)):\n+        if isinstance(data, str):\n             return to_native_string(data)\n+        elif isinstance(data, bytes):\n+            return data\n         elif hasattr(data, 'read'):\n             return data\n         elif hasattr(data, '__iter__'):\n"
+}

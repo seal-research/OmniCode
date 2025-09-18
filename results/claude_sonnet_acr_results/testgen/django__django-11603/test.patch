@@ -1,0 +1,315 @@
+--- a/tests/aggregation/test_distinct_aggregates.py
++++ b/tests/aggregation/test_distinct_aggregates.py
+-# Empty if creating new file
++import pytest
++from django.core.exceptions import FieldError
++from django.db import models
++from django.db.models import Avg, Count, Max, Min, Sum
++from django.test import TestCase, override_settings
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('aggregation')
++class DistinctAggregateTests(TestCase):
++    """Test DISTINCT support for aggregate functions."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        # Create test model
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            value = models.IntegerField()
++            score = models.DecimalField(max_digits=10, decimal_places=2)
++            
++            class Meta:
++                app_label = 'aggregation'
++        
++        cls.TestModel = TestModel
++        
++        # Create the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.create_model(cls.TestModel)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Drop the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.delete_model(cls.TestModel)
++        super().tearDownClass()
++    
++    @classmethod
++    def _get_connection(cls):
++        from django.db import connection
++        return connection
++    
++    def setUp(self):
++        # Create test data with duplicates to test DISTINCT functionality
++        self.TestModel.objects.create(name='A', value=10, score=10.5)
++        self.TestModel.objects.create(name='B', value=20, score=20.5)
++        self.TestModel.objects.create(name='A', value=10, score=10.5)  # Duplicate
++        self.TestModel.objects.create(name='C', value=30, score=30.5)
++        self.TestModel.objects.create(name='B', value=20, score=20.5)  # Duplicate
++    
++    def tearDown(self):
++        self.TestModel.objects.all().delete()
++    
++    def test_avg_allows_distinct_parameter(self):
++        """Test that Avg aggregate accepts distinct=True parameter without raising TypeError."""
++        # This should not raise an exception
++        try:
++            avg_agg = Avg('value', distinct=True)
++            self.assertTrue(avg_agg.allow_distinct)
++            self.assertTrue(avg_agg.distinct)
++        except TypeError as e:
++            self.fail(f"Avg should allow distinct parameter, but raised: {e}")
++    
++    def test_sum_allows_distinct_parameter(self):
++        """Test that Sum aggregate accepts distinct=True parameter without raising TypeError."""
++        # This should not raise an exception
++        try:
++            sum_agg = Sum('value', distinct=True)
++            self.assertTrue(sum_agg.allow_distinct)
++            self.assertTrue(sum_agg.distinct)
++        except TypeError as e:
++            self.fail(f"Sum should allow distinct parameter, but raised: {e}")
++    
++    def test_min_allows_distinct_parameter(self):
++        """Test that Min aggregate accepts distinct=True parameter without raising TypeError."""
++        # This should not raise an exception
++        try:
++            min_agg = Min('value', distinct=True)
++            self.assertTrue(min_agg.allow_distinct)
++            self.assertTrue(min_agg.distinct)
++        except TypeError as e:
++            self.fail(f"Min should allow distinct parameter, but raised: {e}")
++    
++    def test_max_allows_distinct_parameter(self):
++        """Test that Max aggregate accepts distinct=True parameter without raising TypeError."""
++        # This should not raise an exception
++        try:
++            max_agg = Max('value', distinct=True)
++            self.assertTrue(max_agg.allow_distinct)
++            self.assertTrue(max_agg.distinct)
++        except TypeError as e:
++            self.fail(f"Max should allow distinct parameter, but raised: {e}")
++    
++    def test_avg_distinct_false_before_fix(self):
++        """Test that demonstrates the bug - Avg should raise TypeError with distinct=True before fix."""
++        # This test should fail before the fix is applied
++        with self.assertRaises(TypeError) as cm:
++            Avg('value', distinct=True)
++        self.assertIn("does not allow distinct", str(cm.exception))
++    
++    def test_sum_distinct_false_before_fix(self):
++        """Test that demonstrates the bug - Sum should raise TypeError with distinct=True before fix."""
++        # This test should fail before the fix is applied
++        with self.assertRaises(TypeError) as cm:
++            Sum('value', distinct=True)
++        self.assertIn("does not allow distinct", str(cm.exception))
++    
++    def test_min_distinct_false_before_fix(self):
++        """Test that demonstrates the bug - Min should raise TypeError with distinct=True before fix."""
++        # This test should fail before the fix is applied
++        with self.assertRaises(TypeError) as cm:
++            Min('value', distinct=True)
++        self.assertIn("does not allow distinct", str(cm.exception))
++    
++    def test_max_distinct_false_before_fix(self):
++        """Test that demonstrates the bug - Max should raise TypeError with distinct=True before fix."""
++        # This test should fail before the fix is applied
++        with self.assertRaises(TypeError) as cm:
++            Max('value', distinct=True)
++        self.assertIn("does not allow distinct", str(cm.exception))
++    
++    def test_avg_distinct_sql_generation(self):
++        """Test that Avg with distinct=True generates correct SQL."""
++        avg_agg = Avg('value', distinct=True)
++        # Test SQL generation
++        from django.db import connection
++        compiler = self.TestModel.objects.all().query.get_compiler(connection.alias)
++        sql, params = avg_agg.as_sql(compiler, connection)
++        self.assertIn('AVG(DISTINCT', sql)
++    
++    def test_sum_distinct_sql_generation(self):
++        """Test that Sum with distinct=True generates correct SQL."""
++        sum_agg = Sum('value', distinct=True)
++        # Test SQL generation
++        from django.db import connection
++        compiler = self.TestModel.objects.all().query.get_compiler(connection.alias)
++        sql, params = sum_agg.as_sql(compiler, connection)
++        self.assertIn('SUM(DISTINCT', sql)
++    
++    def test_min_distinct_sql_generation(self):
++        """Test that Min with distinct=True generates correct SQL."""
++        min_agg = Min('value', distinct=True)
++        # Test SQL generation
++        from django.db import connection
++        compiler = self.TestModel.objects.all().query.get_compiler(connection.alias)
++        sql, params = min_agg.as_sql(compiler, connection)
++        self.assertIn('MIN(DISTINCT', sql)
++    
++    def test_max_distinct_sql_generation(self):
++        """Test that Max with distinct=True generates correct SQL."""
++        max_agg = Max('value', distinct=True)
++        # Test SQL generation
++        from django.db import connection
++        compiler = self.TestModel.objects.all().query.get_compiler(connection.alias)
++        sql, params = max_agg.as_sql(compiler, connection)
++        self.assertIn('MAX(DISTINCT', sql)
++    
++    def test_avg_distinct_functionality(self):
++        """Test that Avg with distinct=True works correctly in queries."""
++        # Test with regular avg (should include duplicates)
++        regular_avg = self.TestModel.objects.aggregate(avg_val=Avg('value'))['avg_val']
++        
++        # Test with distinct avg (should exclude duplicates)
++        distinct_avg = self.TestModel.objects.aggregate(avg_val=Avg('value', distinct=True))['avg_val']
++        
++        # With our test data: values are [10, 20, 10, 30, 20]
++        # Regular avg: (10+20+10+30+20)/5 = 18
++        # Distinct avg: (10+20+30)/3 = 20
++        self.assertEqual(float(regular_avg), 18.0)
++        self.assertEqual(float(distinct_avg), 20.0)
++    
++    def test_sum_distinct_functionality(self):
++        """Test that Sum with distinct=True works correctly in queries."""
++        # Test with regular sum (should include duplicates)
++        regular_sum = self.TestModel.objects.aggregate(sum_val=Sum('value'))['sum_val']
++        
++        # Test with distinct sum (should exclude duplicates)
++        distinct_sum = self.TestModel.objects.aggregate(sum_val=Sum('value', distinct=True))['sum_val']
++        
++        # With our test data: values are [10, 20, 10, 30, 20]
++        # Regular sum: 10+20+10+30+20 = 90
++        # Distinct sum: 10+20+30 = 60
++        self.assertEqual(regular_sum, 90)
++        self.assertEqual(distinct_sum, 60)
++    
++    def test_min_max_distinct_functionality(self):
++        """Test that Min/Max with distinct=True work correctly (though functionally equivalent)."""
++        # Test Min
++        regular_min = self.TestModel.objects.aggregate(min_val=Min('value'))['min_val']
++        distinct_min = self.TestModel.objects.aggregate(min_val=Min('value', distinct=True))['min_val']
++        self.assertEqual(regular_min, distinct_min)
++        self.assertEqual(regular_min, 10)
++        
++        # Test Max
++        regular_max = self.TestModel.objects.aggregate(max_val=Max('value'))['max_val']
++        distinct_max = self.TestModel.objects.aggregate(max_val=Max('value', distinct=True))['max_val']
++        self.assertEqual(regular_max, distinct_max)
++        self.assertEqual(regular_max, 30)
++    
++    def test_count_distinct_still_works(self):
++        """Test that Count with distinct=True still works (regression test)."""
++        # Count should already support distinct
++        regular_count = self.TestModel.objects.aggregate(count_val=Count('value'))['count_val']
++        distinct_count = self.TestModel.objects.aggregate(count_val=Count('value', distinct=True))['count_val']
++        
++        # With our test data: values are [10, 20, 10, 30, 20]
++        # Regular count: 5
++        # Distinct count: 3 (10, 20, 30)
++        self.assertEqual(regular_count, 5)
++        self.assertEqual(distinct_count, 3)
++    
++    def test_aggregates_without_distinct_still_work(self):
++        """Test that aggregates without distinct parameter still work normally."""
++        # Test that existing functionality is preserved
++        results = self.TestModel.objects.aggregate(
++            avg_val=Avg('value'),
++            sum_val=Sum('value'),
++            min_val=Min('value'),
++            max_val=Max('value'),
++            count_val=Count('value')
++        )
++        
++        self.assertEqual(float(results['avg_val']), 18.0)
++        self.assertEqual(results['sum_val'], 90)
++        self.assertEqual(results['min_val'], 10)
++        self.assertEqual(results['max_val'], 30)
++        self.assertEqual(results['count_val'], 5)
++    
++    def test_distinct_false_parameter(self):
++        """Test that distinct=False works correctly."""
++        # Test that explicitly setting distinct=False works
++        avg_agg = Avg('value', distinct=False)
++        sum_agg = Sum('value', distinct=False)
++        min_agg = Min('value', distinct=False)
++        max_agg = Max('value', distinct=False)
++        
++        self.assertFalse(avg_agg.distinct)
++        self.assertFalse(sum_agg.distinct)
++        self.assertFalse(min_agg.distinct)
++        self.assertFalse(max_agg.distinct)
++    
++    def test_repr_includes_distinct(self):
++        """Test that the repr of aggregates includes distinct when True."""
++        avg_agg = Avg('value', distinct=True)
++        sum_agg = Sum('value', distinct=True)
++        min_agg = Min('value', distinct=True)
++        max_agg = Max('value', distinct=True)
++        
++        # The _get_repr_options method should include distinct in the representation
++        self.assertIn('distinct', avg_agg._get_repr_options())
++        self.assertIn('distinct', sum_agg._get_repr_options())
++        self.assertIn('distinct', min_agg._get_repr_options())
++        self.assertIn('distinct', max_agg._get_repr_options())
++    
++    def test_edge_case_empty_queryset(self):
++        """Test distinct aggregates with empty queryset."""
++        # Clear all data
++        self.TestModel.objects.all().delete()
++        
++        results = self.TestModel.objects.aggregate(
++            avg_val=Avg('value', distinct=True),
++            sum_val=Sum('value', distinct=True),
++            min_val=Min('value', distinct=True),
++            max_val=Max('value', distinct=True)
++        )
++        
++        # All should be None for empty queryset
++        self.assertIsNone(results['avg_val'])
++        self.assertIsNone(results['sum_val'])
++        self.assertIsNone(results['min_val'])
++        self.assertIsNone(results['max_val'])
++    
++    def test_edge_case_single_value(self):
++        """Test distinct aggregates with single value."""
++        # Clear all data and add single record
++        self.TestModel.objects.all().delete()
++        self.TestModel.objects.create(name='Single', value=42, score=42.0)
++        
++        results = self.TestModel.objects.aggregate(
++            avg_val=Avg('value', distinct=True),
++            sum_val=Sum('value', distinct=True),
++            min_val=Min('value', distinct=True),
++            max_val=Max('value', distinct=True)
++        )
++        
++        self.assertEqual(float(results['avg_val']), 42.0)
++        self.assertEqual(results['sum_val'], 42)
++        self.assertEqual(results['min_val'], 42)
++        self.assertEqual(results['max_val'], 42)
++    
++    def test_edge_case_all_same_values(self):
++        """Test distinct aggregates when all values are the same."""
++        # Clear all data and add records with same value
++        self.TestModel.objects.all().delete()
++        for i in range(5):
++            self.TestModel.objects.create(name=f'Same{i}', value=100, score=100.0)
++        
++        results = self.TestModel.objects.aggregate(
++            avg_val=Avg('value', distinct=True),
++            sum_val=Sum('value', distinct=True),
++            min_val=Min('value', distinct=True),
++            max_val=Max('value', distinct=True),
++            count_val=Count('value', distinct=True)
++        )
++        
++        # With all same values, distinct should give single value results
++        self.assertEqual(float(results['avg_val']), 100.0)
++        self.assertEqual(results['sum_val'], 100)  # Only one distinct value
++        self.assertEqual(results['min_val'], 100)
++        self.assertEqual(results['max_val'], 100)
++        self.assertEqual(results['count_val'], 1)  # Only one distinct value

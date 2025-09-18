@@ -1,0 +1,394 @@
+--- a/tests/management/test_output_wrapper_flush.py
++++ b/tests/management/test_output_wrapper_flush.py
+-# Empty if creating new file
++import io
++import pytest
++from unittest.mock import Mock, patch
++
++from django.core.management.base import OutputWrapper, BaseCommand
++from django.core.management import call_command
++from django.test import TestCase
++
++
++class TestOutputWrapperFlush(TestCase):
++    """Test that OutputWrapper properly handles flush() calls."""
++
++    def test_output_wrapper_flush_with_flushable_stream(self):
++        """Test that OutputWrapper.flush() calls the underlying stream's flush() method."""
++        # Create a mock stream with flush method
++        mock_stream = Mock()
++        mock_stream.flush = Mock()
++        
++        # Create OutputWrapper with the mock stream
++        wrapper = OutputWrapper(mock_stream)
++        
++        # Call flush on the wrapper
++        wrapper.flush()
++        
++        # Verify that the underlying stream's flush was called
++        mock_stream.flush.assert_called_once()
++
++    def test_output_wrapper_flush_with_non_flushable_stream(self):
++        """Test that OutputWrapper.flush() handles streams without flush() gracefully."""
++        # Create a mock stream without flush method
++        mock_stream = Mock(spec=[])  # spec=[] means no methods
++        
++        # Create OutputWrapper with the mock stream
++        wrapper = OutputWrapper(mock_stream)
++        
++        # Call flush on the wrapper - should not raise an exception
++        try:
++            wrapper.flush()
++        except AttributeError:
++            self.fail("OutputWrapper.flush() should handle streams without flush() method")
++
++    def test_output_wrapper_flush_with_stringio(self):
++        """Test that OutputWrapper.flush() works with StringIO streams."""
++        # Create a StringIO stream (which has flush method)
++        string_stream = io.StringIO()
++        
++        # Create OutputWrapper with StringIO
++        wrapper = OutputWrapper(string_stream)
++        
++        # Write something to the wrapper
++        wrapper.write("test message")
++        
++        # Call flush - should not raise an exception
++        wrapper.flush()
++        
++        # Verify content is still accessible
++        self.assertEqual(string_stream.getvalue(), "test message\n")
++
++    def test_output_wrapper_flush_delegation_before_fix(self):
++        """Test that demonstrates the bug - flush() not working through __getattr__."""
++        # Create a mock stream with flush method
++        mock_stream = Mock()
++        mock_stream.flush = Mock()
++        
++        # Create OutputWrapper with the mock stream
++        wrapper = OutputWrapper(mock_stream)
++        
++        # Remove the explicit flush method to simulate the bug condition
++        if hasattr(wrapper, 'flush'):
++            delattr(wrapper, 'flush')
++        
++        # Try to call flush through __getattr__ delegation
++        try:
++            flush_method = getattr(wrapper, 'flush')
++            flush_method()
++            # If we get here, __getattr__ delegation worked
++            mock_stream.flush.assert_called_once()
++        except AttributeError:
++            # This would be the bug condition - __getattr__ not properly delegating
++            self.fail("__getattr__ should delegate flush() to underlying stream")
++
++    def test_base_command_stdout_flush(self):
++        """Test that BaseCommand.stdout.flush() works properly."""
++        # Create a mock stdout
++        mock_stdout = Mock()
++        mock_stdout.flush = Mock()
++        
++        # Create a BaseCommand with mock stdout
++        command = BaseCommand(stdout=mock_stdout)
++        
++        # Call flush on command's stdout
++        command.stdout.flush()
++        
++        # Verify the underlying stdout's flush was called
++        mock_stdout.flush.assert_called_once()
++
++    def test_base_command_stderr_flush(self):
++        """Test that BaseCommand.stderr.flush() works properly."""
++        # Create a mock stderr
++        mock_stderr = Mock()
++        mock_stderr.flush = Mock()
++        
++        # Create a BaseCommand with mock stderr
++        command = BaseCommand(stderr=mock_stderr)
++        
++        # Call flush on command's stderr
++        command.stderr.flush()
++        
++        # Verify the underlying stderr's flush was called
++        mock_stderr.flush.assert_called_once()
++
++    def test_migrate_command_flush_behavior(self):
++        """Test that migrate command can call flush() without errors."""
++        from django.core.management.commands.migrate import Command as MigrateCommand
++        
++        # Create mock streams
++        mock_stdout = Mock()
++        mock_stdout.flush = Mock()
++        mock_stdout.write = Mock()
++        
++        # Create migrate command with mock stdout
++        command = MigrateCommand(stdout=mock_stdout)
++        
++        # Simulate the flush call that happens during migration progress
++        command.stdout.write("  Applying myapp.0001_initial...", ending="")
++        command.stdout.flush()
++        
++        # Verify flush was called
++        mock_stdout.flush.assert_called()
++
++    def test_output_wrapper_preserves_other_methods(self):
++        """Test that OutputWrapper still properly delegates other methods."""
++        # Create a mock stream with various methods
++        mock_stream = Mock()
++        mock_stream.write = Mock(return_value=None)
++        mock_stream.isatty = Mock(return_value=False)
++        mock_stream.flush = Mock()
++        
++        # Create OutputWrapper
++        wrapper = OutputWrapper(mock_stream)
++        
++        # Test that other methods still work through delegation
++        wrapper.isatty()
++        mock_stream.isatty.assert_called_once()
++        
++        # Test that flush works
++        wrapper.flush()
++        mock_stream.flush.assert_called_once()
++
++    def test_output_wrapper_write_and_flush_integration(self):
++        """Test the integration of write() and flush() methods."""
++        # Create a StringIO to capture output
++        output_stream = io.StringIO()
++        
++        # Create OutputWrapper
++        wrapper = OutputWrapper(output_stream)
++        
++        # Write without ending newline (like migrate command does)
++        wrapper.write("Processing...", ending="")
++        
++        # Flush to ensure immediate output
++        wrapper.flush()
++        
++        # Write completion message
++        wrapper.write(" DONE")
++        
++        # Verify the output
++        result = output_stream.getvalue()
++        self.assertEqual(result, "Processing... DONE\n")
++
++    @patch('sys.stdout')
++    def test_real_stdout_flush_behavior(self, mock_stdout):
++        """Test flush behavior with real stdout-like object."""
++        mock_stdout.flush = Mock()
++        mock_stdout.write = Mock()
++        
++        # Create OutputWrapper with mocked stdout
++        wrapper = OutputWrapper(mock_stdout)
++        
++        # Simulate migrate command behavior
++        wrapper.write("  Applying migration...", ending="")
++        wrapper.flush()  # This should immediately flush to terminal
++        
++        # Verify flush was called
++        mock_stdout.flush.assert_called()
++        
++        # Complete the message
++        wrapper.write(" OK")
++        
++        # Verify the sequence of calls
++        expected_calls = [
++            (("  Applying migration...",), {}),
++            ((" OK\n",), {})
++        ]
++        actual_calls = [(call.args, call.kwargs) for call in mock_stdout.write.call_args_list]
++        self.assertEqual(actual_calls, expected_calls)
+
+--- a/tests/management/commands/test_migrate_flush.py
++++ b/tests/management/commands/test_migrate_flush.py
+-# Empty if creating new file
++import io
++import time
++from unittest.mock import Mock, patch, MagicMock
++
++from django.core.management import call_command
++from django.core.management.commands.migrate import Command as MigrateCommand
++from django.test import TestCase, override_settings
++from django.db import connection
++from django.db.migrations.executor import MigrationExecutor
++
++
++class TestMigrateCommandFlush(TestCase):
++    """Test that migrate command properly flushes output during migration progress."""
++
++    def setUp(self):
++        """Set up test fixtures."""
++        self.mock_stdout = Mock()
++        self.mock_stdout.write = Mock()
++        self.mock_stdout.flush = Mock()
++        self.mock_stdout.isatty = Mock(return_value=True)
++
++    def test_migrate_command_calls_flush_during_progress(self):
++        """Test that migrate command calls flush() during migration progress callbacks."""
++        # Create migrate command with mock stdout
++        command = MigrateCommand(stdout=self.mock_stdout)
++        
++        # Mock the migration progress callback behavior
++        # This simulates what happens when a migration is being applied
++        command.migration_progress_callback("apply_start", "myapp.0001_initial", False)
++        
++        # Verify that flush was called after writing the "Applying..." message
++        self.mock_stdout.flush.assert_called()
++
++    def test_migrate_command_flush_on_apply_start(self):
++        """Test flush is called when migration application starts."""
++        command = MigrateCommand(stdout=self.mock_stdout)
++        
++        # Reset mock to clear any previous calls
++        self.mock_stdout.reset_mock()
++        
++        # Simulate apply_start callback
++        command.migration_progress_callback("apply_start", "myapp.0001_initial", False)
++        
++        # Check that write was called with ending="" (no newline)
++        write_calls = self.mock_stdout.write.call_args_list
++        self.assertTrue(any("Applying" in str(call) and "ending" in str(call) for call in write_calls))
++        
++        # Check that flush was called after the write
++        self.mock_stdout.flush.assert_called()
++
++    def test_migrate_command_flush_on_unapply_start(self):
++        """Test flush is called when migration unapplication starts."""
++        command = MigrateCommand(stdout=self.mock_stdout)
++        
++        # Reset mock
++        self.mock_stdout.reset_mock()
++        
++        # Simulate unapply_start callback
++        command.migration_progress_callback("unapply_start", "myapp.0001_initial", False)
++        
++        # Check that flush was called
++        self.mock_stdout.flush.assert_called()
++
++    def test_migrate_command_flush_on_render_start(self):
++        """Test flush is called when model state rendering starts."""
++        command = MigrateCommand(stdout=self.mock_stdout)
++        
++        # Reset mock
++        self.mock_stdout.reset_mock()
++        
++        # Simulate render_start callback
++        command.migration_progress_callback("render_start", None, False)
++        
++        # Check that flush was called
++        self.mock_stdout.flush.assert_called()
++
++    def test_migrate_command_no_flush_on_success_callbacks(self):
++        """Test that flush is not called on success callbacks (they complete the line)."""
++        command = MigrateCommand(stdout=self.mock_stdout)
++        
++        # Reset mock
++        self.mock_stdout.reset_mock()
++        
++        # Simulate apply_success callback
++        command.migration_progress_callback("apply_success", "myapp.0001_initial", False)
++        
++        # Success callbacks should write the completion (like " OK") but not flush
++        # because they complete the line with a newline
++        write_calls = self.mock_stdout.write.call_args_list
++        self.assertTrue(len(write_calls) > 0)
++        
++        # Flush should not be called for success callbacks
++        self.mock_stdout.flush.assert_not_called()
++
++    def test_migrate_command_output_sequence_with_flush(self):
++        """Test the complete output sequence including flush calls."""
++        # Use StringIO to capture actual output
++        output_stream = io.StringIO()
++        command = MigrateCommand(stdout=output_stream)
++        
++        # Mock the flush method to track calls
++        original_flush = output_stream.flush
++        flush_call_count = 0
++        
++        def counting_flush():
++            nonlocal flush_call_count
++            flush_call_count += 1
++            return original_flush()
++        
++        output_stream.flush = counting_flush
++        
++        # Simulate a complete migration sequence
++        command.migration_progress_callback("apply_start", "myapp.0001_initial", False)
++        command.migration_progress_callback("apply_success", "myapp.0001_initial", False)
++        
++        # Check that flush was called during the sequence
++        self.assertGreater(flush_call_count, 0, "flush() should have been called during migration progress")
++        
++        # Check the output format
++        output = output_stream.getvalue()
++        self.assertIn("Applying myapp.0001_initial", output)
++        self.assertIn("OK", output)
++
++    def test_migrate_command_flush_with_fake_migration(self):
++        """Test flush behavior with fake migrations."""
++        command = MigrateCommand(stdout=self.mock_stdout)
++        
++        # Reset mock
++        self.mock_stdout.reset_mock()
++        
++        # Simulate fake migration
++        command.migration_progress_callback("apply_start", "myapp.0001_initial", True)  # fake=True
++        
++        # Should still call flush even for fake migrations
++        self.mock_stdout.flush.assert_called()
++
++    def test_migrate_command_flush_error_handling(self):
++        """Test that migrate command handles flush errors gracefully."""
++        # Create a mock stdout that raises an exception on flush
++        error_stdout = Mock()
++        error_stdout.write = Mock()
++        error_stdout.flush = Mock(side_effect=AttributeError("No flush method"))
++        error_stdout.isatty = Mock(return_value=True)
++        
++        command = MigrateCommand(stdout=error_stdout)
++        
++        # This should not raise an exception even if flush fails
++        try:
++            command.migration_progress_callback("apply_start", "myapp.0001_initial", False)
++        except AttributeError:
++            self.fail("migrate command should handle flush errors gracefully")
++
++    @patch('django.core.management.commands.migrate.MigrationExecutor')
++    def test_migrate_command_integration_with_executor(self, mock_executor_class):
++        """Test integration between migrate command and migration executor."""
++        # Create a mock executor
++        mock_executor = Mock()
++        mock_executor.migration_plan.return_value = []
++        mock_executor.loader.unmigrated_apps = set()
++        mock_executor_class.return_value = mock_executor
++        
++        # Create command with our mock stdout
++        command = MigrateCommand(stdout=self.mock_stdout)
++        
++        # Run the command
++        command.handle(verbosity=1, interactive=False, dry_run=False)
++        
++        # Verify that the command was set up to handle progress callbacks
++        # The executor should have been created and the command should be ready to flush
++        mock_executor_class.assert_called_once()
++
++    def test_migrate_command_verbosity_affects_flush_calls(self):
++        """Test that verbosity level affects when flush is called."""
++        # Test with verbosity 0 (quiet)
++        command_quiet = MigrateCommand(stdout=self.mock_stdout)
++        self.mock_stdout.reset_mock()
++        
++        # With verbosity 0, progress callbacks might not write anything
++        # so flush might not be called
++        command_quiet.verbosity = 0
++        command_quiet.migration_progress_callback("apply_start", "myapp.0001_initial", False)
++        
++        # Test with verbosity 1 (normal)
++        command_normal = MigrateCommand(stdout=self.mock_stdout)
++        self.mock_stdout.reset_mock()
++        
++        command_normal.verbosity = 1
++        command_normal.migration_progress_callback("apply_start", "myapp.0001_initial", False)
++        
++        # With verbosity 1, flush should be called
++        self.mock_stdout.flush.assert_called()

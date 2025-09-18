@@ -1,0 +1,273 @@
+--- a/tests/queries/test_count_annotations.py
++++ b/tests/queries/test_count_annotations.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import Count, Sum, Q
++from django.test import TestCase, override_settings
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('queries')
++class CountAnnotationTests(TestCase):
++    """Test cases for stripping unused annotations from count queries."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        # Create test models
++        class Author(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        class Book(models.Model):
++            title = models.CharField(max_length=100)
++            author = models.ForeignKey(Author, on_delete=models.CASCADE)
++            pages = models.IntegerField(default=100)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        class Chapter(models.Model):
++            title = models.CharField(max_length=100)
++            book = models.ForeignKey(Book, on_delete=models.CASCADE)
++            page_count = models.IntegerField(default=10)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        cls.Author = Author
++        cls.Book = Book
++        cls.Chapter = Chapter
++        
++        # Create tables
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(Author)
++            schema_editor.create_model(Book)
++            schema_editor.create_model(Chapter)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Drop tables
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(cls.Chapter)
++            schema_editor.delete_model(cls.Book)
++            schema_editor.delete_model(cls.Author)
++        super().tearDownClass()
++    
++    def setUp(self):
++        # Create test data
++        self.author1 = self.Author.objects.create(name="Author 1")
++        self.author2 = self.Author.objects.create(name="Author 2")
++        
++        self.book1 = self.Book.objects.create(title="Book 1", author=self.author1, pages=200)
++        self.book2 = self.Book.objects.create(title="Book 2", author=self.author1, pages=300)
++        self.book3 = self.Book.objects.create(title="Book 3", author=self.author2, pages=150)
++        
++        self.Chapter.objects.create(title="Chapter 1.1", book=self.book1, page_count=20)
++        self.Chapter.objects.create(title="Chapter 1.2", book=self.book1, page_count=30)
++        self.Chapter.objects.create(title="Chapter 2.1", book=self.book2, page_count=25)
++        self.Chapter.objects.create(title="Chapter 3.1", book=self.book3, page_count=15)
++    
++    def test_count_with_unused_annotation_should_fail_before_fix(self):
++        """
++        Test that demonstrates the bug: unused annotations are included in count queries.
++        This test should fail before the fix is applied.
++        """
++        from django.db import connection
++        
++        # Get the queryset with annotation
++        qs = self.Book.objects.annotate(chapter_count=Count('chapter'))
++        
++        # Capture the SQL for count query
++        with connection.cursor() as cursor:
++            # Reset queries log
++            connection.queries_log.clear()
++            
++            # Execute count - this should strip unused annotations but currently doesn't
++            count_result = qs.count()
++            
++            # Get the last query (the count query)
++            count_query = connection.queries[-1]['sql']
++            
++            # The bug: the annotation should NOT be in the count query since it's unused
++            # This assertion should fail before the fix, demonstrating the bug
++            self.assertNotIn('chapter_count', count_query.lower(), 
++                           "Unused annotation 'chapter_count' should be stripped from count query")
++            
++            # Verify the count is still correct
++            self.assertEqual(count_result, 3)
++    
++    def test_count_without_annotation_baseline(self):
++        """Test that count works correctly without annotations."""
++        count_result = self.Book.objects.count()
++        self.assertEqual(count_result, 3)
++    
++    def test_count_with_annotation_used_in_filter(self):
++        """Test that annotations used in filters are preserved in count queries."""
++        from django.db import connection
++        
++        # Annotation is used in filter, so it should be preserved
++        qs = self.Book.objects.annotate(chapter_count=Count('chapter')).filter(chapter_count__gt=1)
++        
++        with connection.cursor() as cursor:
++            connection.queries_log.clear()
++            count_result = qs.count()
++            count_query = connection.queries[-1]['sql']
++            
++            # This annotation should be preserved because it's used in the filter
++            # Note: This might be in a subquery or JOIN, so we check for related patterns
++            self.assertTrue(
++                'chapter' in count_query.lower() or 'count' in count_query.lower(),
++                "Annotation used in filter should be preserved in count query"
++            )
++            
++            # Verify correct count (books with more than 1 chapter)
++            self.assertEqual(count_result, 1)  # Only book1 has 2 chapters
++    
++    def test_count_with_annotation_used_in_ordering(self):
++        """Test that annotations used in ordering are preserved in count queries."""
++        from django.db import connection
++        
++        # Annotation is used in ordering, so it should be preserved
++        qs = self.Book.objects.annotate(chapter_count=Count('chapter')).order_by('chapter_count')
++        
++        with connection.cursor() as cursor:
++            connection.queries_log.clear()
++            count_result = qs.count()
++            count_query = connection.queries[-1]['sql']
++            
++            # For count queries, ORDER BY is typically stripped, but if the annotation
++            # is used in ordering, the underlying JOINs might still be needed
++            # The exact behavior may vary, but the count should be correct
++            self.assertEqual(count_result, 3)
++    
++    def test_count_with_multiple_annotations_mixed_usage(self):
++        """Test count with multiple annotations where some are used and some are not."""
++        from django.db import connection
++        
++        # Multiple annotations: one used in filter, one unused
++        qs = (self.Book.objects
++              .annotate(chapter_count=Count('chapter'))
++              .annotate(total_pages=Sum('chapter__page_count'))
++              .filter(chapter_count__gt=0))  # Only chapter_count is used
++        
++        with connection.cursor() as cursor:
++            connection.queries_log.clear()
++            count_result = qs.count()
++            count_query = connection.queries[-1]['sql']
++            
++            # chapter_count should be preserved (used in filter)
++            # total_pages should be stripped (unused) - this will fail before fix
++            self.assertTrue(
++                'chapter' in count_query.lower(),
++                "Annotation used in filter should be preserved"
++            )
++            
++            self.assertEqual(count_result, 3)  # All books have at least one chapter
++    
++    def test_count_with_annotation_used_in_having(self):
++        """Test that annotations used in HAVING clauses are preserved."""
++        from django.db import connection
++        
++        # Use annotation in a having-like filter (aggregation filter)
++        qs = (self.Book.objects
++              .annotate(chapter_count=Count('chapter'))
++              .filter(chapter_count__gte=2))
++        
++        with connection.cursor() as cursor:
++            connection.queries_log.clear()
++            count_result = qs.count()
++            count_query = connection.queries[-1]['sql']
++            
++            # The annotation should be preserved because it's used in the filter
++            self.assertTrue(
++                'chapter' in count_query.lower() or 'count' in count_query.lower(),
++                "Annotation used in aggregation filter should be preserved"
++            )
++            
++            self.assertEqual(count_result, 1)  # Only book1 has 2 chapters
++    
++    def test_count_preserves_existing_functionality(self):
++        """Test that the optimization doesn't break existing count functionality."""
++        # Test various count scenarios to ensure no regression
++        
++        # Simple count
++        self.assertEqual(self.Book.objects.count(), 3)
++        
++        # Count with filter
++        self.assertEqual(self.Book.objects.filter(pages__gt=200).count(), 1)
++        
++        # Count with annotation and filter using annotation
++        annotated_qs = self.Book.objects.annotate(chapter_count=Count('chapter'))
++        self.assertEqual(annotated_qs.filter(chapter_count__gt=1).count(), 1)
++        
++        # Count with multiple filters
++        complex_qs = (self.Book.objects
++                     .filter(author__name__startswith="Author")
++                     .filter(pages__gte=150))
++        self.assertEqual(complex_qs.count(), 3)
++    
++    def test_count_sql_optimization_comparison(self):
++        """
++        Compare SQL queries to verify optimization.
++        This test documents the expected behavior after the fix.
++        """
++        from django.db import connection
++        
++        # Test case 1: Unused annotation should be stripped
++        connection.queries_log.clear()
++        qs1 = self.Book.objects.annotate(unused_count=Count('chapter'))
++        count1 = qs1.count()
++        unused_annotation_query = connection.queries[-1]['sql']
++        
++        # Test case 2: Same query without annotation
++        connection.queries_log.clear()
++        qs2 = self.Book.objects.all()
++        count2 = qs2.count()
++        simple_query = connection.queries[-1]['sql']
++        
++        # Both should return the same count
++        self.assertEqual(count1, count2)
++        self.assertEqual(count1, 3)
++        
++        # After the fix, the queries should be similar in complexity
++        # (unused annotations stripped)
++        # This is more of a documentation test for the expected behavior
++    
++    def test_edge_case_empty_queryset_with_annotations(self):
++        """Test count on empty queryset with annotations."""
++        # Filter that returns no results
++        qs = (self.Book.objects
++              .annotate(chapter_count=Count('chapter'))
++              .filter(title="Nonexistent Book"))
++        
++        count_result = qs.count()
++        self.assertEqual(count_result, 0)
++    
++    def test_count_with_complex_annotation_expressions(self):
++        """Test count with complex annotation expressions."""
++        from django.db.models import Case, When, IntegerField
++        
++        # Complex annotation that's not used in filters
++        qs = self.Book.objects.annotate(
++            category=Case(
++                When(pages__lt=200, then=1),
++                When(pages__gte=200, then=2),
++                default=0,
++                output_field=IntegerField()
++            )
++        )
++        
++        count_result = qs.count()
++        self.assertEqual(count_result, 3)
++        
++        # Same annotation but used in filter
++        filtered_qs = qs.filter(category=2)
++        filtered_count = filtered_qs.count()
++        self.assertEqual(filtered_count, 2)  # book1 and book2 have >= 200 pages

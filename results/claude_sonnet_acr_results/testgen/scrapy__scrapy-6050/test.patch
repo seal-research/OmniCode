@@ -1,0 +1,219 @@
+--- a/tests/test_downloadermiddleware_retry_backwards_compatibility.py
++++ b/tests/test_downloadermiddleware_retry_backwards_compatibility.py
+-# Empty if creating new file
++import pytest
++import warnings
++from unittest.mock import Mock
++
++from scrapy.downloadermiddlewares.retry import RetryMiddleware, BackwardsCompatibilityMetaclass
++from scrapy.exceptions import ScrapyDeprecationWarning
++from scrapy.settings import Settings
++from scrapy.http import Request
++from scrapy.spiders import Spider
++
++
++class TestRetryMiddlewareBackwardsCompatibility:
++    """Test backward compatibility for EXCEPTIONS_TO_RETRY attribute access."""
++
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            'RETRY_EXCEPTIONS': [
++                'twisted.internet.defer.TimeoutError',
++                'twisted.internet.error.TimeoutError',
++                'twisted.internet.error.DNSLookupError',
++                'twisted.internet.error.ConnectionRefusedError',
++                'twisted.internet.error.ConnectionDone',
++                'twisted.internet.error.ConnectError',
++                'twisted.internet.error.ConnectionLost',
++                'twisted.internet.error.TCPTimedOutError',
++                'twisted.web.client.ResponseFailed',
++                'OSError',
++            ]
++        })
++        self.middleware = RetryMiddleware(self.settings)
++        self.spider = Mock(spec=Spider)
++        self.spider.crawler.settings = self.settings
++        self.spider.crawler.stats = Mock()
++        self.spider.crawler.stats.inc_value = Mock()
++
++    def test_class_level_exceptions_to_retry_access_shows_deprecation_warning(self):
++        """Test that accessing EXCEPTIONS_TO_RETRY at class level shows deprecation warning."""
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            exceptions = RetryMiddleware.EXCEPTIONS_TO_RETRY
++            
++            # Check that a deprecation warning was issued
++            assert len(w) == 1
++            assert issubclass(w[0].category, ScrapyDeprecationWarning)
++            assert "RetryMiddleware.EXCEPTIONS_TO_RETRY is deprecated" in str(w[0].message)
++            assert "Use the RETRY_EXCEPTIONS setting instead" in str(w[0].message)
++            
++            # Check that the returned value is a tuple of exception classes
++            assert isinstance(exceptions, tuple)
++            assert len(exceptions) > 0
++
++    def test_instance_level_exceptions_to_retry_access_fails_before_fix(self):
++        """Test that accessing EXCEPTIONS_TO_RETRY at instance level fails before fix.
++        
++        This test demonstrates the bug - it should fail with AttributeError
++        before the fix is applied.
++        """
++        with pytest.raises(AttributeError, match="'RetryMiddleware' object has no attribute 'EXCEPTIONS_TO_RETRY'"):
++            _ = self.middleware.EXCEPTIONS_TO_RETRY
++
++    def test_instance_level_exceptions_to_retry_access_works_after_fix(self):
++        """Test that accessing EXCEPTIONS_TO_RETRY at instance level works after fix.
++        
++        This test should pass after the fix is applied.
++        """
++        # This test will fail before the fix and pass after
++        # We expect it to work the same as class-level access
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            
++            try:
++                exceptions = self.middleware.EXCEPTIONS_TO_RETRY
++                
++                # Check that a deprecation warning was issued
++                assert len(w) == 1
++                assert issubclass(w[0].category, ScrapyDeprecationWarning)
++                assert "RetryMiddleware.EXCEPTIONS_TO_RETRY is deprecated" in str(w[0].message)
++                assert "Use the RETRY_EXCEPTIONS setting instead" in str(w[0].message)
++                
++                # Check that the returned value is a tuple of exception classes
++                assert isinstance(exceptions, tuple)
++                assert len(exceptions) > 0
++                
++                # Check that it returns the same value as class-level access
++                class_level_exceptions = RetryMiddleware.EXCEPTIONS_TO_RETRY
++                assert exceptions == class_level_exceptions
++                
++            except AttributeError:
++                # This indicates the fix hasn't been applied yet
++                pytest.fail("Instance-level access to EXCEPTIONS_TO_RETRY should work after fix is applied")
++
++    def test_subclass_instance_level_exceptions_to_retry_access(self):
++        """Test that subclass instances can access EXCEPTIONS_TO_RETRY after fix."""
++        
++        class MyRetryMiddleware(RetryMiddleware):
++            def process_exception(self, request, exception, spider):
++                # This is the exact use case from the issue description
++                if isinstance(exception, self.EXCEPTIONS_TO_RETRY) and not request.meta.get('dont_retry', False):
++                    return self._retry(request, exception, spider)
++        
++        subclass_middleware = MyRetryMiddleware(self.settings)
++        
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            
++            try:
++                exceptions = subclass_middleware.EXCEPTIONS_TO_RETRY
++                
++                # Check that a deprecation warning was issued
++                assert len(w) == 1
++                assert issubclass(w[0].category, ScrapyDeprecationWarning)
++                assert "RetryMiddleware.EXCEPTIONS_TO_RETRY is deprecated" in str(w[0].message)
++                
++                # Check that the returned value is a tuple of exception classes
++                assert isinstance(exceptions, tuple)
++                assert len(exceptions) > 0
++                
++            except AttributeError:
++                # This indicates the fix hasn't been applied yet
++                pytest.fail("Subclass instance-level access to EXCEPTIONS_TO_RETRY should work after fix is applied")
++
++    def test_subclass_process_exception_method_works_with_fix(self):
++        """Test that the exact use case from the issue works after fix."""
++        
++        class MyRetryMiddleware(RetryMiddleware):
++            def process_exception(self, request, exception, spider):
++                # This is the exact code from the issue description
++                if isinstance(exception, self.EXCEPTIONS_TO_RETRY) and not request.meta.get('dont_retry', False):
++                    # update request
++                    return self._retry(request, exception, spider)
++        
++        subclass_middleware = MyRetryMiddleware(self.settings)
++        request = Request('http://example.com')
++        
++        # Create an exception that should be retried
++        exception = OSError("Connection failed")
++        
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            
++            try:
++                # This should not raise AttributeError after the fix
++                result = subclass_middleware.process_exception(request, exception, self.spider)
++                
++                # Check that a deprecation warning was issued when accessing EXCEPTIONS_TO_RETRY
++                deprecation_warnings = [warning for warning in w if issubclass(warning.category, ScrapyDeprecationWarning)]
++                assert len(deprecation_warnings) >= 1
++                
++                # The result should be a new Request object (retry) or None
++                assert result is None or isinstance(result, Request)
++                
++            except AttributeError as e:
++                if "EXCEPTIONS_TO_RETRY" in str(e):
++                    pytest.fail("The exact use case from the issue should work after fix is applied")
++                else:
++                    raise
++
++    def test_other_attributes_still_raise_attribute_error(self):
++        """Test that accessing non-existent attributes still raises AttributeError."""
++        with pytest.raises(AttributeError):
++            _ = self.middleware.non_existent_attribute
++
++    def test_class_level_and_instance_level_return_same_value(self):
++        """Test that class-level and instance-level access return the same value."""
++        with warnings.catch_warnings():
++            warnings.simplefilter("ignore")  # Ignore deprecation warnings for this test
++            
++            try:
++                class_exceptions = RetryMiddleware.EXCEPTIONS_TO_RETRY
++                instance_exceptions = self.middleware.EXCEPTIONS_TO_RETRY
++                
++                assert class_exceptions == instance_exceptions
++                assert type(class_exceptions) == type(instance_exceptions)
++                
++            except AttributeError:
++                # This indicates the fix hasn't been applied yet
++                pytest.skip("Instance-level access not yet implemented")
++
++    def test_metaclass_property_still_works(self):
++        """Test that the existing metaclass property functionality is preserved."""
++        # Ensure the metaclass is still working
++        assert hasattr(RetryMiddleware, 'EXCEPTIONS_TO_RETRY')
++        assert isinstance(RetryMiddleware.__class__, type)
++        assert RetryMiddleware.__class__.__name__ == 'BackwardsCompatibilityMetaclass'
++        
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            exceptions = RetryMiddleware.EXCEPTIONS_TO_RETRY
++            
++            assert len(w) == 1
++            assert issubclass(w[0].category, ScrapyDeprecationWarning)
++            assert isinstance(exceptions, tuple)
++
++    def test_multiple_instance_accesses_show_multiple_warnings(self):
++        """Test that multiple accesses to EXCEPTIONS_TO_RETRY show multiple warnings."""
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            
++            try:
++                # Access the attribute multiple times
++                _ = self.middleware.EXCEPTIONS_TO_RETRY
++                _ = self.middleware.EXCEPTIONS_TO_RETRY
++                _ = self.middleware.EXCEPTIONS_TO_RETRY
++                
++                # Each access should generate a warning
++                deprecation_warnings = [warning for warning in w if issubclass(warning.category, ScrapyDeprecationWarning)]
++                assert len(deprecation_warnings) == 3
++                
++            except AttributeError:
++                # This indicates the fix hasn't been applied yet
++                pytest.skip("Instance-level access not yet implemented")

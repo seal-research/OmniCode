@@ -1,0 +1,273 @@
+--- a/tests/model_inheritance/test_mti_parent_link_order.py
++++ b/tests/model_inheritance/test_mti_parent_link_order.py
+-# Empty if creating new file
++import pytest
++from django.core.exceptions import ImproperlyConfigured
++from django.db import models
++from django.test import TestCase
++
++
++class MTIParentLinkOrderTests(TestCase):
++    """
++    Test cases for Model-Table Inheritance (MTI) parent link field ordering bug.
++    
++    The issue is that when a model has multiple OneToOneField references to the
++    same parent model, the order of field declaration affects whether Django
++    correctly identifies the parent link field marked with parent_link=True.
++    """
++
++    def test_parent_link_after_other_onetoonefield_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: when parent_link=True field is declared
++        after another OneToOneField to the same parent, it raises ImproperlyConfigured.
++        
++        This test should fail before the fix is applied.
++        """
++        with self.assertRaises(ImproperlyConfigured) as cm:
++            class Document(models.Model):
++                class Meta:
++                    app_label = 'test_app'
++
++            class Picking(Document):
++                # This OneToOneField is declared first but doesn't have parent_link=True
++                origin = models.OneToOneField(
++                    Document, 
++                    related_name='picking', 
++                    on_delete=models.PROTECT
++                )
++                # This OneToOneField has parent_link=True but is declared second
++                document_ptr = models.OneToOneField(
++                    Document, 
++                    on_delete=models.CASCADE, 
++                    parent_link=True, 
++                    related_name='+'
++                )
++                
++                class Meta:
++                    app_label = 'test_app'
++
++        # The error message should mention adding parent_link=True to the origin field
++        self.assertIn('Add parent_link=True to', str(cm.exception))
++        self.assertIn('origin', str(cm.exception))
++
++    def test_parent_link_before_other_onetoonefield_works(self):
++        """
++        Test that when parent_link=True field is declared before other OneToOneFields,
++        it works correctly (this is the current workaround).
++        """
++        try:
++            class Document(models.Model):
++                class Meta:
++                    app_label = 'test_app'
++
++            class Picking(Document):
++                # This OneToOneField has parent_link=True and is declared first
++                document_ptr = models.OneToOneField(
++                    Document, 
++                    on_delete=models.CASCADE, 
++                    parent_link=True, 
++                    related_name='+'
++                )
++                # This OneToOneField is declared second but doesn't have parent_link=True
++                origin = models.OneToOneField(
++                    Document, 
++                    related_name='picking', 
++                    on_delete=models.PROTECT
++                )
++                
++                class Meta:
++                    app_label = 'test_app'
++                    
++            # Should not raise any exception
++            self.assertTrue(hasattr(Picking, 'document_ptr'))
++            self.assertTrue(hasattr(Picking, 'origin'))
++            
++        except ImproperlyConfigured:
++            self.fail("Should not raise ImproperlyConfigured when parent_link field is first")
++
++    def test_parent_link_after_other_onetoonefield_works_after_fix(self):
++        """
++        Test that after the fix, parent_link=True field can be declared in any order
++        and Django will correctly identify it as the parent link.
++        
++        This test should pass after the fix is applied.
++        """
++        try:
++            class Document(models.Model):
++                class Meta:
++                    app_label = 'test_app'
++
++            class Picking(Document):
++                # This OneToOneField is declared first but doesn't have parent_link=True
++                origin = models.OneToOneField(
++                    Document, 
++                    related_name='picking', 
++                    on_delete=models.PROTECT
++                )
++                # This OneToOneField has parent_link=True but is declared second
++                document_ptr = models.OneToOneField(
++                    Document, 
++                    on_delete=models.CASCADE, 
++                    parent_link=True, 
++                    related_name='+'
++                )
++                
++                class Meta:
++                    app_label = 'test_app'
++                    
++            # Should not raise any exception after fix
++            self.assertTrue(hasattr(Picking, 'document_ptr'))
++            self.assertTrue(hasattr(Picking, 'origin'))
++            
++            # Verify that the correct field is used as primary key
++            self.assertTrue(Picking._meta.pk.remote_field.parent_link)
++            self.assertEqual(Picking._meta.pk.name, 'document_ptr')
++            
++        except ImproperlyConfigured:
++            self.fail("Should not raise ImproperlyConfigured after fix regardless of field order")
++
++    def test_multiple_onetoonefield_no_parent_link_raises_error(self):
++        """
++        Test that when there are multiple OneToOneFields to parent but none
++        has parent_link=True, it raises ImproperlyConfigured.
++        """
++        with self.assertRaises(ImproperlyConfigured) as cm:
++            class Document(models.Model):
++                class Meta:
++                    app_label = 'test_app'
++
++            class Picking(Document):
++                # Neither field has parent_link=True
++                origin = models.OneToOneField(
++                    Document, 
++                    related_name='picking', 
++                    on_delete=models.PROTECT
++                )
++                reference = models.OneToOneField(
++                    Document, 
++                    related_name='reference_picking', 
++                    on_delete=models.PROTECT
++                )
++                
++                class Meta:
++                    app_label = 'test_app'
++
++        self.assertIn('Add parent_link=True', str(cm.exception))
++
++    def test_single_onetoonefield_without_parent_link_works(self):
++        """
++        Test that when there's only one OneToOneField to parent without
++        parent_link=True, it should work (Django auto-detects it).
++        """
++        try:
++            class Document(models.Model):
++                class Meta:
++                    app_label = 'test_app'
++
++            class Picking(Document):
++                # Single OneToOneField without explicit parent_link=True
++                # Django should auto-detect this as the parent link
++                document_ptr = models.OneToOneField(
++                    Document, 
++                    on_delete=models.CASCADE, 
++                    related_name='+'
++                )
++                
++                class Meta:
++                    app_label = 'test_app'
++                    
++            # Should work fine
++            self.assertTrue(hasattr(Picking, 'document_ptr'))
++            
++        except ImproperlyConfigured:
++            self.fail("Should not raise ImproperlyConfigured for single OneToOneField")
++
++    def test_parent_link_field_order_independence_complex(self):
++        """
++        Test a more complex scenario with multiple OneToOneFields where
++        parent_link=True field is in the middle of the declaration order.
++        """
++        try:
++            class Document(models.Model):
++                class Meta:
++                    app_label = 'test_app'
++
++            class Picking(Document):
++                # First OneToOneField - not parent link
++                origin = models.OneToOneField(
++                    Document, 
++                    related_name='picking_origin', 
++                    on_delete=models.PROTECT
++                )
++                # Second OneToOneField - this is the parent link
++                document_ptr = models.OneToOneField(
++                    Document, 
++                    on_delete=models.CASCADE, 
++                    parent_link=True, 
++                    related_name='+'
++                )
++                # Third OneToOneField - not parent link
++                reference = models.OneToOneField(
++                    Document, 
++                    related_name='picking_reference', 
++                    on_delete=models.PROTECT
++                )
++                
++                class Meta:
++                    app_label = 'test_app'
++                    
++            # Should work after fix regardless of order
++            self.assertTrue(hasattr(Picking, 'document_ptr'))
++            self.assertTrue(hasattr(Picking, 'origin'))
++            self.assertTrue(hasattr(Picking, 'reference'))
++            
++            # Verify correct parent link is identified
++            self.assertTrue(Picking._meta.pk.remote_field.parent_link)
++            self.assertEqual(Picking._meta.pk.name, 'document_ptr')
++            
++        except ImproperlyConfigured:
++            self.fail("Should not raise ImproperlyConfigured after fix with complex field order")
++
++    def test_edge_case_parent_link_last_position(self):
++        """
++        Test edge case where parent_link=True field is declared last.
++        """
++        try:
++            class Document(models.Model):
++                class Meta:
++                    app_label = 'test_app'
++
++            class Picking(Document):
++                # Multiple OneToOneFields before the parent link
++                origin = models.OneToOneField(
++                    Document, 
++                    related_name='picking_origin', 
++                    on_delete=models.PROTECT
++                )
++                reference = models.OneToOneField(
++                    Document, 
++                    related_name='picking_reference', 
++                    on_delete=models.PROTECT
++                )
++                source = models.OneToOneField(
++                    Document, 
++                    related_name='picking_source', 
++                    on_delete=models.PROTECT
++                )
++                # Parent link field declared last
++                document_ptr = models.OneToOneField(
++                    Document, 
++                    on_delete=models.CASCADE, 
++                    parent_link=True, 
++                    related_name='+'
++                )
++                
++                class Meta:
++                    app_label = 'test_app'
++                    
++            # Should work after fix
++            self.assertTrue(hasattr(Picking, 'document_ptr'))
++            self.assertEqual(Picking._meta.pk.name, 'document_ptr')
++            
++        except ImproperlyConfigured:
++            self.fail("Should not raise ImproperlyConfigured when parent_link field is last")

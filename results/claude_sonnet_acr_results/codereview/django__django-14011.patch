@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/servers/basehttp.py b/django/core/servers/basehttp.py\nindex 14dab517c9..3106022c50 100644\n--- a/django/core/servers/basehttp.py\n+++ b/django/core/servers/basehttp.py\n@@ -81,6 +81,12 @@ class ThreadedWSGIServer(socketserver.ThreadingMixIn, WSGIServer):\n     \"\"\"A threaded version of the WSGIServer\"\"\"\n     daemon_threads = True\n \n+    def server_close(self):\n+        # Close all database connections to prevent \"database is being accessed by other users\" errors\n+        # when the test database is destroyed after LiveServerTestCase tests\n+        connections.close_all()\n+        super().server_close()\n+\n \n class ServerHandler(simple_server.ServerHandler):\n     http_version = '1.1'\n"
+}

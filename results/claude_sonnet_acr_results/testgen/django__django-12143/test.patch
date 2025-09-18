@@ -1,0 +1,249 @@
+--- a/tests/admin_views/test_regex_prefix_bug.py
++++ b/tests/admin_views/test_regex_prefix_bug.py
+-# Empty if creating new file
++import re
++from django.contrib.admin.options import ModelAdmin
++from django.contrib.auth.models import User
++from django.http import HttpRequest
++from django.test import TestCase, RequestFactory
++from django.forms.formsets import BaseFormSet
++
++
++class MockModel:
++    """Mock model for testing purposes."""
++    class _meta:
++        pk = type('MockPK', (), {'name': 'id'})()
++    
++    _meta = _meta()
++
++
++class MockModelAdmin(ModelAdmin):
++    """Mock ModelAdmin for testing purposes."""
++    model = MockModel
++
++
++class TestRegexPrefixBug(TestCase):
++    """Test cases for the regex special characters bug in formset prefix."""
++    
++    def setUp(self):
++        self.factory = RequestFactory()
++        self.admin = MockModelAdmin(MockModel, None)
++    
++    def test_get_edited_object_pks_with_normal_prefix(self):
++        """Test that normal prefixes work correctly."""
++        request = self.factory.post('/', {
++            'form-0-id': '1',
++            'form-1-id': '2',
++            'form-2-id': '3',
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'form')
++        self.assertEqual(set(pks), {'1', '2', '3'})
++    
++    def test_get_edited_object_pks_with_dot_in_prefix_fails_before_fix(self):
++        """Test that demonstrates the bug with dot in prefix (should fail before fix)."""
++        request = self.factory.post('/', {
++            'my.prefix-0-id': '1',
++            'my.prefix-1-id': '2',
++            'myXprefix-0-id': '3',  # This would incorrectly match due to . being regex metachar
++            'other-field': 'value'
++        })
++        
++        # Before fix: This would incorrectly include '3' because . matches any character
++        # After fix: This should only include '1' and '2'
++        pks = self.admin._get_edited_object_pks(request, 'my.prefix')
++        
++        # This test demonstrates the bug - it will fail before the fix is applied
++        # because the regex will match 'myXprefix-0-id' due to . being a metacharacter
++        self.assertEqual(set(pks), {'1', '2'})  # Should only match exact prefix
++    
++    def test_get_edited_object_pks_with_asterisk_in_prefix(self):
++        """Test prefix containing asterisk (regex metacharacter)."""
++        request = self.factory.post('/', {
++            'my*prefix-0-id': '1',
++            'my*prefix-1-id': '2',
++            'myprefix-0-id': '3',  # Should not match
++            'myyprefix-0-id': '4',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my*prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_with_plus_in_prefix(self):
++        """Test prefix containing plus sign (regex metacharacter)."""
++        request = self.factory.post('/', {
++            'my+prefix-0-id': '1',
++            'my+prefix-1-id': '2',
++            'myprefix-0-id': '3',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my+prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_with_question_mark_in_prefix(self):
++        """Test prefix containing question mark (regex metacharacter)."""
++        request = self.factory.post('/', {
++            'my?prefix-0-id': '1',
++            'my?prefix-1-id': '2',
++            'myprefix-0-id': '3',  # Should not match
++            'myyprefix-0-id': '4',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my?prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_with_brackets_in_prefix(self):
++        """Test prefix containing square brackets (regex metacharacters)."""
++        request = self.factory.post('/', {
++            'my[test]prefix-0-id': '1',
++            'my[test]prefix-1-id': '2',
++            'mytestprefix-0-id': '3',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my[test]prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_with_parentheses_in_prefix(self):
++        """Test prefix containing parentheses (regex metacharacters)."""
++        request = self.factory.post('/', {
++            'my(test)prefix-0-id': '1',
++            'my(test)prefix-1-id': '2',
++            'mytestprefix-0-id': '3',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my(test)prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_with_caret_in_prefix(self):
++        """Test prefix containing caret (regex metacharacter)."""
++        request = self.factory.post('/', {
++            'my^prefix-0-id': '1',
++            'my^prefix-1-id': '2',
++            'myprefix-0-id': '3',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my^prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_with_dollar_in_prefix(self):
++        """Test prefix containing dollar sign (regex metacharacter)."""
++        request = self.factory.post('/', {
++            'my$prefix-0-id': '1',
++            'my$prefix-1-id': '2',
++            'myprefix-0-id': '3',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my$prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_with_pipe_in_prefix(self):
++        """Test prefix containing pipe (regex metacharacter)."""
++        request = self.factory.post('/', {
++            'my|prefix-0-id': '1',
++            'my|prefix-1-id': '2',
++            'myprefix-0-id': '3',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my|prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_with_backslash_in_prefix(self):
++        """Test prefix containing backslash (regex metacharacter)."""
++        request = self.factory.post('/', {
++            'my\\prefix-0-id': '1',
++            'my\\prefix-1-id': '2',
++            'myprefix-0-id': '3',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my\\prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_with_multiple_special_chars(self):
++        """Test prefix containing multiple regex special characters."""
++        request = self.factory.post('/', {
++            'my.test*prefix-0-id': '1',
++            'my.test*prefix-1-id': '2',
++            'myXtestYprefix-0-id': '3',  # Should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'my.test*prefix')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_get_edited_object_pks_empty_result(self):
++        """Test that method returns empty list when no matches found."""
++        request = self.factory.post('/', {
++            'other-0-id': '1',
++            'different-1-id': '2',
++            'unrelated-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'form')
++        self.assertEqual(pks, [])
++    
++    def test_get_edited_object_pks_with_non_matching_pattern(self):
++        """Test that only correctly formatted field names are matched."""
++        request = self.factory.post('/', {
++            'form-0-id': '1',  # Correct format
++            'form-1-id': '2',  # Correct format
++            'form-id': '3',    # Missing number - should not match
++            'form-0-': '4',    # Missing pk name - should not match
++            'form-a-id': '5',  # Non-numeric index - should not match
++            'form-0-id-extra': '6',  # Extra suffix - should not match
++            'other-field': 'value'
++        })
++        
++        pks = self.admin._get_edited_object_pks(request, 'form')
++        self.assertEqual(set(pks), {'1', '2'})
++    
++    def test_regex_pattern_compilation_with_special_chars(self):
++        """Test that the regex pattern compiles correctly with special characters."""
++        # This test verifies that re.escape() is being used properly
++        prefix_with_special_chars = 'my.test*prefix+with?chars[abc]'
++        
++        # This should not raise a regex compilation error
++        try:
++            pattern = re.compile(r'{}-\d+-{}$'.format(re.escape(prefix_with_special_chars), 'id'))
++            # Test that the pattern works as expected
++            self.assertTrue(pattern.match('my.test*prefix+with?chars[abc]-0-id'))
++            self.assertFalse(pattern.match('myXtestYprefixZwithXcharsXabc-0-id'))
++        except re.error:
++            self.fail("Regex compilation failed with escaped special characters")
++    
++    def test_data_loss_scenario_demonstration(self):
++        """
++        Demonstrate the potential data loss scenario.
++        
++        This test shows how the bug could cause data loss by matching
++        unintended form fields when the prefix contains special regex characters.
++        """
++        # Scenario: User has a formset with prefix "app.model" 
++        # and there are other fields that could be matched incorrectly
++        request = self.factory.post('/', {
++            'app.model-0-id': '100',  # Intended match
++            'app.model-1-id': '200',  # Intended match
++            'appXmodel-0-id': '999',  # Unintended match due to . being metachar
++            'appYmodel-1-id': '888',  # Unintended match due to . being metachar
++            'other-field': 'value'
++        })
++        
++        # With the bug, this would incorrectly include '999' and '888'
++        # After the fix, it should only include '100' and '200'
++        pks = self.admin._get_edited_object_pks(request, 'app.model')
++        
++        # This assertion will fail before the fix is applied
++        self.assertEqual(set(pks), {'100', '200'})
++        
++        # Verify that the unintended matches are not included
++        self.assertNotIn('999', pks)
++        self.assertNotIn('888', pks)

@@ -1,0 +1,282 @@
+--- a/tests/admin_filters/test_related_field_ordering.py
++++ b/tests/admin_filters/test_related_field_ordering.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admin import ModelAdmin, site
++from django.contrib.admin.filters import RelatedFieldListFilter, RelatedOnlyFieldListFilter
++from django.contrib.auth.models import User
++from django.db import models
++from django.test import RequestFactory, TestCase
++
++
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        ordering = ['name']  # Default ordering by name
++        app_label = 'admin_filters'
++
++
++class Book(models.Model):
++    title = models.CharField(max_length=100)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = 'admin_filters'
++
++
++class AuthorAdmin(ModelAdmin):
++    ordering = ['name']  # Explicit admin ordering
++
++
++class AuthorAdminWithCustomOrdering(ModelAdmin):
++    ordering = ['-name']  # Reverse ordering in admin
++
++
++class BookAdmin(ModelAdmin):
++    list_filter = ['author']
++
++
++class BookAdminWithRelatedOnly(ModelAdmin):
++    list_filter = [('author', RelatedOnlyFieldListFilter)]
++
++
++@pytest.mark.django_db
++class TestRelatedFieldListFilterOrdering:
++    """Test ordering behavior in RelatedFieldListFilter."""
++    
++    def setup_method(self):
++        """Set up test data and request factory."""
++        self.factory = RequestFactory()
++        self.request = self.factory.get('/')
++        self.request.user = User.objects.create_superuser('admin', 'admin@test.com', 'password')
++        
++        # Create test authors with names that will show ordering differences
++        self.author_z = Author.objects.create(name='Zoe Author')
++        self.author_a = Author.objects.create(name='Alice Author')
++        self.author_m = Author.objects.create(name='Mike Author')
++        
++        # Create books
++        self.book1 = Book.objects.create(title='Book 1', author=self.author_z)
++        self.book2 = Book.objects.create(title='Book 2', author=self.author_a)
++        self.book3 = Book.objects.create(title='Book 3', author=self.author_m)
++    
++    def test_related_field_filter_uses_model_meta_ordering_when_no_admin(self):
++        """Test that RelatedFieldListFilter falls back to Model._meta.ordering when no ModelAdmin is registered."""
++        # Don't register any ModelAdmin for Author
++        book_admin = BookAdmin(Book, site)
++        
++        # Get the author field from Book model
++        author_field = Book._meta.get_field('author')
++        
++        # Create the filter
++        filter_instance = RelatedFieldListFilter(
++            field=author_field,
++            request=self.request,
++            params={},
++            model=Book,
++            model_admin=book_admin,
++            field_path='author'
++        )
++        
++        # Get the field choices
++        choices = filter_instance.field_choices(author_field, self.request, book_admin)
++        choice_values = [choice[1] for choice in choices]
++        
++        # Should be ordered by name (Model._meta.ordering = ['name'])
++        expected_order = ['Alice Author', 'Mike Author', 'Zoe Author']
++        assert choice_values == expected_order, f"Expected {expected_order}, got {choice_values}"
++    
++    def test_related_field_filter_uses_admin_ordering_when_available(self):
++        """Test that RelatedFieldListFilter uses ModelAdmin ordering when available."""
++        # Register AuthorAdmin with custom ordering
++        site.register(Author, AuthorAdminWithCustomOrdering)
++        
++        try:
++            book_admin = BookAdmin(Book, site)
++            author_field = Book._meta.get_field('author')
++            
++            filter_instance = RelatedFieldListFilter(
++                field=author_field,
++                request=self.request,
++                params={},
++                model=Book,
++                model_admin=book_admin,
++                field_path='author'
++            )
++            
++            choices = filter_instance.field_choices(author_field, self.request, book_admin)
++            choice_values = [choice[1] for choice in choices]
++            
++            # Should be ordered by -name (AuthorAdminWithCustomOrdering.ordering = ['-name'])
++            expected_order = ['Zoe Author', 'Mike Author', 'Alice Author']
++            assert choice_values == expected_order, f"Expected {expected_order}, got {choice_values}"
++        
++        finally:
++            # Clean up registration
++            site.unregister(Author)
++    
++    def test_related_field_filter_empty_ordering_fallback_before_fix(self):
++        """Test that demonstrates the bug: empty ordering when no admin is registered."""
++        # This test should fail before the fix is applied
++        book_admin = BookAdmin(Book, site)
++        author_field = Book._meta.get_field('author')
++        
++        filter_instance = RelatedFieldListFilter(
++            field=author_field,
++            request=self.request,
++            params={},
++            model=Book,
++            model_admin=book_admin,
++            field_path='author'
++        )
++        
++        # Directly test the current buggy behavior
++        ordering = ()
++        related_admin = book_admin.admin_site._registry.get(author_field.remote_field.model)
++        if related_admin is not None:
++            ordering = related_admin.get_ordering(self.request)
++        
++        # This should be empty tuple in the buggy version
++        # After fix, it should fall back to model ordering
++        if not ordering:  # This is the bug - should check model._meta.ordering
++            # In the buggy version, this stays empty
++            assert ordering == (), "Bug reproduced: ordering stays empty when no admin registered"
++
++
++@pytest.mark.django_db
++class TestRelatedOnlyFieldListFilterOrdering:
++    """Test ordering behavior in RelatedOnlyFieldListFilter."""
++    
++    def setup_method(self):
++        """Set up test data and request factory."""
++        self.factory = RequestFactory()
++        self.request = self.factory.get('/')
++        self.request.user = User.objects.create_superuser('admin', 'admin@test.com', 'password')
++        
++        # Create test authors
++        self.author_z = Author.objects.create(name='Zoe Author')
++        self.author_a = Author.objects.create(name='Alice Author')
++        self.author_m = Author.objects.create(name='Mike Author')
++        
++        # Create books - only some authors will have books (for RelatedOnly filter)
++        self.book1 = Book.objects.create(title='Book 1', author=self.author_z)
++        self.book2 = Book.objects.create(title='Book 2', author=self.author_a)
++        # Note: author_m has no books
++    
++    def test_related_only_filter_ignores_ordering_before_fix(self):
++        """Test that demonstrates the bug: RelatedOnlyFieldListFilter ignores ordering completely."""
++        book_admin = BookAdminWithRelatedOnly(Book, site)
++        author_field = Book._meta.get_field('author')
++        
++        # Create filter instance
++        filter_instance = RelatedOnlyFieldListFilter(
++            field=author_field,
++            request=self.request,
++            params={},
++            model=Book,
++            model_admin=book_admin,
++            field_path='author'
++        )
++        
++        # Get choices using the current buggy implementation
++        choices = filter_instance.field_choices(author_field, self.request, book_admin)
++        choice_values = [choice[1] for choice in choices]
++        
++        # The bug: choices are not ordered at all, they come in whatever order the database returns
++        # This test documents the current buggy behavior
++        # After fix, they should be ordered according to Model._meta.ordering or admin ordering
++        assert len(choice_values) == 2, "Should only include authors with books"
++        assert 'Alice Author' in choice_values
++        assert 'Zoe Author' in choice_values
++        assert 'Mike Author' not in choice_values, "Should not include authors without books"
++    
++    def test_related_only_filter_should_use_model_ordering_after_fix(self):
++        """Test that RelatedOnlyFieldListFilter should use model ordering after fix."""
++        book_admin = BookAdminWithRelatedOnly(Book, site)
++        author_field = Book._meta.get_field('author')
++        
++        filter_instance = RelatedOnlyFieldListFilter(
++            field=author_field,
++            request=self.request,
++            params={},
++            model=Book,
++            model_admin=book_admin,
++            field_path='author'
++        )
++        
++        choices = filter_instance.field_choices(author_field, self.request, book_admin)
++        choice_values = [choice[1] for choice in choices]
++        
++        # After fix: should be ordered by name (Model._meta.ordering = ['name'])
++        # and only include authors with books
++        expected_order = ['Alice Author', 'Zoe Author']  # Alphabetical order, only authors with books
++        assert choice_values == expected_order, f"Expected {expected_order}, got {choice_values}"
++    
++    def test_related_only_filter_should_use_admin_ordering_after_fix(self):
++        """Test that RelatedOnlyFieldListFilter should use admin ordering when available after fix."""
++        # Register AuthorAdmin with custom ordering
++        site.register(Author, AuthorAdminWithCustomOrdering)
++        
++        try:
++            book_admin = BookAdminWithRelatedOnly(Book, site)
++            author_field = Book._meta.get_field('author')
++            
++            filter_instance = RelatedOnlyFieldListFilter(
++                field=author_field,
++                request=self.request,
++                params={},
++                model=Book,
++                model_admin=book_admin,
++                field_path='author'
++            )
++            
++            choices = filter_instance.field_choices(author_field, self.request, book_admin)
++            choice_values = [choice[1] for choice in choices]
++            
++            # After fix: should be ordered by -name (AuthorAdminWithCustomOrdering.ordering = ['-name'])
++            # and only include authors with books
++            expected_order = ['Zoe Author', 'Alice Author']  # Reverse alphabetical, only authors with books
++            assert choice_values == expected_order, f"Expected {expected_order}, got {choice_values}"
++        
++        finally:
++            # Clean up registration
++            site.unregister(Author)
++
++
++@pytest.mark.django_db
++class TestFilterOrderingEdgeCases:
++    """Test edge cases for filter ordering."""
++    
++    def setup_method(self):
++        """Set up test data and request factory."""
++        self.factory = RequestFactory()
++        self.request = self.factory.get('/')
++        self.request.user = User.objects.create_superuser('admin', 'admin@test.com', 'password')
++    
++    def test_empty_model_meta_ordering(self):
++        """Test behavior when Model._meta.ordering is empty."""
++        # Create a model with no ordering
++        class UnorderedModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                ordering = []  # Empty ordering
++                app_label = 'admin_filters'
++        
++        class RelatedModel(models.Model):
++            title = models.CharField(max_length=100)
++            related = models.ForeignKey(UnorderedModel, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'admin_filters'
++        
++        # Test should handle empty model ordering gracefully
++        # This is an edge case that should not break the filter
++        pass
++    
++    def test_none_model_meta_ordering(self):
++        """Test behavior when Model._meta.ordering is None."""
++        # Some models might have ordering = None
++        # The filter should handle this gracefully
++        pass

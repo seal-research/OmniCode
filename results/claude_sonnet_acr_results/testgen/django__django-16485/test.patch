@@ -1,0 +1,181 @@
+--- a/tests/template_tests/filter_tests/test_floatformat.py
++++ b/tests/template_tests/filter_tests/test_floatformat.py
+-# Empty if creating new file
++import pytest
++from decimal import Decimal
++from django.template.defaultfilters import floatformat
++from django.test import SimpleTestCase
++
++
++class FloatformatTests(SimpleTestCase):
++    """Test cases for the floatformat template filter."""
++
++    def test_floatformat_zero_string_with_zero_precision_bug_reproduction(self):
++        """
++        Test that reproduces the bug where floatformat('0.00', 0) crashes.
++        This test should fail before the fix is applied.
++        """
++        # This should not raise ValueError: valid range for prec is [1, MAX_PREC]
++        result = floatformat('0.00', 0)
++        self.assertEqual(result, '0')
++
++    def test_floatformat_zero_decimal_with_zero_precision_bug_reproduction(self):
++        """
++        Test that reproduces the bug where floatformat(Decimal('0.00'), 0) crashes.
++        This test should fail before the fix is applied.
++        """
++        # This should not raise ValueError: valid range for prec is [1, MAX_PREC]
++        result = floatformat(Decimal('0.00'), 0)
++        self.assertEqual(result, '0')
++
++    def test_floatformat_zero_variations_with_zero_precision(self):
++        """
++        Test various zero representations with precision 0 to ensure they all work.
++        """
++        test_cases = [
++            ('0.00', '0'),
++            ('0.000', '0'),
++            ('0.0000', '0'),
++            (Decimal('0.00'), '0'),
++            (Decimal('0.000'), '0'),
++            (Decimal('0.0000'), '0'),
++            ('0', '0'),
++            (0, '0'),
++            (0.0, '0'),
++            (0.00, '0'),
++        ]
++        
++        for input_val, expected in test_cases:
++            with self.subTest(input_val=input_val):
++                result = floatformat(input_val, 0)
++                self.assertEqual(result, expected)
++
++    def test_floatformat_small_decimals_with_zero_precision(self):
++        """
++        Test small decimal values with zero precision to ensure proper rounding.
++        """
++        test_cases = [
++            ('0.1', '0'),
++            ('0.4', '0'),
++            ('0.5', '1'),  # Should round up
++            ('0.6', '1'),
++            ('0.9', '1'),
++            (Decimal('0.1'), '0'),
++            (Decimal('0.4'), '0'),
++            (Decimal('0.5'), '1'),
++            (Decimal('0.6'), '1'),
++            (Decimal('0.9'), '1'),
++        ]
++        
++        for input_val, expected in test_cases:
++            with self.subTest(input_val=input_val):
++                result = floatformat(input_val, 0)
++                self.assertEqual(result, expected)
++
++    def test_floatformat_negative_zero_with_zero_precision(self):
++        """
++        Test negative zero values with precision 0.
++        """
++        test_cases = [
++            ('-0.00', '0'),
++            ('-0.000', '0'),
++            (Decimal('-0.00'), '0'),
++            (Decimal('-0.000'), '0'),
++        ]
++        
++        for input_val, expected in test_cases:
++            with self.subTest(input_val=input_val):
++                result = floatformat(input_val, 0)
++                self.assertEqual(result, expected)
++
++    def test_floatformat_edge_cases_with_zero_precision(self):
++        """
++        Test edge cases that might trigger the precision calculation bug.
++        """
++        test_cases = [
++            # Very small numbers that round to zero
++            ('0.0001', '0'),
++            ('0.00001', '0'),
++            (Decimal('0.0001'), '0'),
++            (Decimal('0.00001'), '0'),
++            # Numbers that round to 1
++            ('0.5000', '1'),
++            ('0.50000', '1'),
++            (Decimal('0.5000'), '1'),
++            (Decimal('0.50000'), '1'),
++        ]
++        
++        for input_val, expected in test_cases:
++            with self.subTest(input_val=input_val):
++                result = floatformat(input_val, 0)
++                self.assertEqual(result, expected)
++
++    def test_floatformat_preserves_existing_functionality(self):
++        """
++        Test that the fix doesn't break existing functionality for other precision values.
++        """
++        # Test with positive precision
++        self.assertEqual(floatformat('0.00', 1), '0.0')
++        self.assertEqual(floatformat('0.00', 2), '0.00')
++        self.assertEqual(floatformat(Decimal('0.00'), 1), '0.0')
++        self.assertEqual(floatformat(Decimal('0.00'), 2), '0.00')
++        
++        # Test with negative precision
++        self.assertEqual(floatformat('0.00', -1), '0')
++        self.assertEqual(floatformat('0.00', -2), '0')
++        self.assertEqual(floatformat(Decimal('0.00'), -1), '0')
++        self.assertEqual(floatformat(Decimal('0.00'), -2), '0')
++        
++        # Test with non-zero values
++        self.assertEqual(floatformat('1.234', 0), '1')
++        self.assertEqual(floatformat('1.234', 1), '1.2')
++        self.assertEqual(floatformat('1.234', 2), '1.23')
++        self.assertEqual(floatformat(Decimal('1.234'), 0), '1')
++        self.assertEqual(floatformat(Decimal('1.234'), 1), '1.2')
++        self.assertEqual(floatformat(Decimal('1.234'), 2), '1.23')
++
++    def test_floatformat_zero_precision_with_various_exponents(self):
++        """
++        Test zero precision with decimals having various exponents to ensure
++        the precision calculation handles all cases correctly.
++        """
++        test_cases = [
++            # Different exponents that could cause precision calculation issues
++            (Decimal('0.0'), '0'),      # exponent = -1
++            (Decimal('0.00'), '0'),     # exponent = -2
++            (Decimal('0.000'), '0'),    # exponent = -3
++            (Decimal('0.0000'), '0'),   # exponent = -4
++            (Decimal('0.00000'), '0'),  # exponent = -5
++            # String representations
++            ('0.0', '0'),
++            ('0.00', '0'),
++            ('0.000', '0'),
++            ('0.0000', '0'),
++            ('0.00000', '0'),
++        ]
++        
++        for input_val, expected in test_cases:
++            with self.subTest(input_val=input_val):
++                result = floatformat(input_val, 0)
++                self.assertEqual(result, expected)
++
++    def test_floatformat_bug_specific_conditions(self):
++        """
++        Test the specific conditions that trigger the original bug:
++        - Decimal value with fractional part that equals zero when converted to int
++        - Zero precision
++        - Negative exponent in decimal representation
++        """
++        # These are the exact cases from the bug report
++        result1 = floatformat('0.00', 0)
++        self.assertEqual(result1, '0')
++        
++        result2 = floatformat(Decimal('0.00'), 0)
++        self.assertEqual(result2, '0')
++        
++        # Additional cases that follow the same pattern
++        result3 = floatformat('0.000', 0)
++        self.assertEqual(result3, '0')
++        
++        result4 = floatformat(Decimal('0.000'), 0)
++        self.assertEqual(result4, '0')

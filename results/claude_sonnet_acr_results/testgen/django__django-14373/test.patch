@@ -1,0 +1,149 @@
+--- a/tests/utils_tests/test_dateformat.py
++++ b/tests/utils_tests/test_dateformat.py
+-# Empty if creating new file
++import pytest
++from datetime import date, datetime
++from django.utils.dateformat import DateFormat
++
++
++class TestDateFormatYMethod:
++    """Test suite for DateFormat.Y() method zero-padding behavior."""
++
++    def test_y_method_four_digit_year_normal(self):
++        """Test Y() method with normal 4-digit years (>= 1000)."""
++        # Test years that are already 4 digits
++        test_cases = [
++            (date(1999, 1, 1), "1999"),
++            (date(2021, 6, 15), "2021"),
++            (date(1000, 12, 31), "1000"),
++            (date(9999, 1, 1), "9999"),
++        ]
++        
++        for test_date, expected in test_cases:
++            df = DateFormat(test_date)
++            result = df.Y()
++            assert result == expected, f"Expected {expected}, got {result} for year {test_date.year}"
++            assert isinstance(result, str), f"Y() should return string, got {type(result)}"
++            assert len(str(result)) == 4, f"Y() should return 4-digit string, got {len(str(result))} digits"
++
++    def test_y_method_three_digit_year_bug_reproduction(self):
++        """Test Y() method with 3-digit years - this should fail before fix."""
++        # This test reproduces the bug where years < 1000 are not zero-padded
++        test_cases = [
++            (date(999, 1, 1), "0999"),
++            (date(500, 6, 15), "0500"),
++            (date(100, 12, 31), "0100"),
++        ]
++        
++        for test_date, expected in test_cases:
++            df = DateFormat(test_date)
++            result = df.Y()
++            # This assertion will fail before the fix is applied
++            assert result == expected, f"Expected {expected}, got {result} for year {test_date.year}"
++            assert isinstance(result, str), f"Y() should return string, got {type(result)}"
++            assert len(str(result)) == 4, f"Y() should return 4-digit string, got {len(str(result))} digits"
++
++    def test_y_method_two_digit_year_bug_reproduction(self):
++        """Test Y() method with 2-digit years - this should fail before fix."""
++        # This test reproduces the bug where years < 100 are not zero-padded
++        test_cases = [
++            (date(99, 1, 1), "0099"),
++            (date(50, 6, 15), "0050"),
++            (date(10, 12, 31), "0010"),
++        ]
++        
++        for test_date, expected in test_cases:
++            df = DateFormat(test_date)
++            result = df.Y()
++            # This assertion will fail before the fix is applied
++            assert result == expected, f"Expected {expected}, got {result} for year {test_date.year}"
++            assert isinstance(result, str), f"Y() should return string, got {type(result)}"
++            assert len(str(result)) == 4, f"Y() should return 4-digit string, got {len(str(result))} digits"
++
++    def test_y_method_single_digit_year_bug_reproduction(self):
++        """Test Y() method with single-digit years - this should fail before fix."""
++        # This test reproduces the bug where years < 10 are not zero-padded
++        test_cases = [
++            (date(9, 1, 1), "0009"),
++            (date(5, 6, 15), "0005"),
++            (date(1, 12, 31), "0001"),
++        ]
++        
++        for test_date, expected in test_cases:
++            df = DateFormat(test_date)
++            result = df.Y()
++            # This assertion will fail before the fix is applied
++            assert result == expected, f"Expected {expected}, got {result} for year {test_date.year}"
++            assert isinstance(result, str), f"Y() should return string, got {type(result)}"
++            assert len(str(result)) == 4, f"Y() should return 4-digit string, got {len(str(result))} digits"
++
++    def test_y_method_with_datetime_objects(self):
++        """Test Y() method works with datetime objects as well as date objects."""
++        test_cases = [
++            (datetime(999, 1, 1, 12, 30, 45), "0999"),
++            (datetime(99, 6, 15, 8, 15, 30), "0099"),
++            (datetime(9, 12, 31, 23, 59, 59), "0009"),
++            (datetime(2021, 3, 15, 14, 20, 10), "2021"),
++        ]
++        
++        for test_datetime, expected in test_cases:
++            df = DateFormat(test_datetime)
++            result = df.Y()
++            assert result == expected, f"Expected {expected}, got {result} for year {test_datetime.year}"
++            assert isinstance(result, str), f"Y() should return string, got {type(result)}"
++            assert len(str(result)) == 4, f"Y() should return 4-digit string, got {len(str(result))} digits"
++
++    def test_y_method_edge_cases(self):
++        """Test Y() method with edge case years."""
++        test_cases = [
++            # Year 0 (if supported by the date implementation)
++            # Note: Python's date doesn't support year 0, so we skip it
++            # Boundary cases
++            (date(1, 1, 1), "0001"),  # Minimum year
++            (date(999, 12, 31), "0999"),  # Last 3-digit year
++            (date(1000, 1, 1), "1000"),  # First 4-digit year
++        ]
++        
++        for test_date, expected in test_cases:
++            df = DateFormat(test_date)
++            result = df.Y()
++            assert result == expected, f"Expected {expected}, got {result} for year {test_date.year}"
++            assert isinstance(result, str), f"Y() should return string, got {type(result)}"
++            assert len(str(result)) == 4, f"Y() should return 4-digit string, got {len(str(result))} digits"
++
++    def test_y_method_consistency_with_docstring(self):
++        """Test that Y() method behavior matches its docstring documentation."""
++        # The docstring says "Year, 4 digits; e.g. '1999'"
++        # This implies it should always return exactly 4 digits
++        df = DateFormat(date(1999, 1, 1))
++        result = df.Y()
++        
++        # Verify the example from docstring works
++        assert result == "1999", f"Docstring example failed: expected '1999', got {result}"
++        
++        # Verify it's always 4 digits for various years
++        test_years = [1, 9, 99, 999, 1000, 1999, 2021, 9999]
++        for year in test_years:
++            df = DateFormat(date(year, 1, 1))
++            result = df.Y()
++            assert len(str(result)) == 4, f"Y() should always return 4 digits, got {len(str(result))} for year {year}"
++
++    def test_comparison_with_y_method_formatting(self):
++        """Test that Y() method uses similar formatting approach as y() method."""
++        # The y() method properly formats with zero-padding: '%02d' % (self.data.year % 100)
++        # The Y() method should similarly use zero-padding: '%04d' % self.data.year
++        
++        test_date = date(99, 1, 1)
++        df = DateFormat(test_date)
++        
++        # y() method should return "99" (last 2 digits with padding)
++        y_result = df.y()
++        assert y_result == "99", f"y() method should return '99', got {y_result}"
++        
++        # Y() method should return "0099" (full year with 4-digit padding)
++        Y_result = df.Y()
++        assert Y_result == "0099", f"Y() method should return '0099', got {Y_result}"
++        
++        # Both should return strings
++        assert isinstance(y_result, str), "y() should return string"
++        assert isinstance(Y_result, str), "Y() should return string"
