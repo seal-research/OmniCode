@@ -444,7 +444,8 @@ def main(
             fcntl.flock(f, fcntl.LOCK_UN)
 
         if g2:
-            shutil.copytree(str(output_dir_path/instance_id), f"/share/dutta/baselines/logs/{instance_id}", dirs_exist_ok=True)
+            user_name = os.getenv("USER")
+            shutil.copytree(str(output_dir_path/instance_id), f"/share/dutta/{user_name}/baselines/logs/{instance_id}", dirs_exist_ok=True)
             shutil.rmtree(str(output_dir_path/instance_id))
 
 if __name__ == '__main__':
