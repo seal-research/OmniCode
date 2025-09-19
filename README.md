@@ -136,7 +136,10 @@ Prerequisites:
 Example Command:
 
 ```bash
+# run without /scratch and apptainer
 python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids mockito__mockito_3173 --mswe_phase all --force_rebuild True --clean True --use_apptainer False --g2 False
+# run with /scratch and apptainer
+python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids mockito__mockito_3173 --mswe_phase all --force_rebuild True --clean True --use_apptainer True --g2 True
 ```
 
 ### Java Test Generation
@@ -248,7 +251,10 @@ cd ..
 ```
 
 ```bash
+# run without /scratch and apptainer
 python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+# run with /scratch and apptainer
+python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix] --g2 True --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 ```
 
 ### Running SWE-Agent for Java Instances
