@@ -8,6 +8,7 @@ Usage:
 What it does:
  - clones repo
  - checks out PR (fetches pull/<PR>/head)
+ - optionally applies a patch from sweagent_clang-tidy_results.json matching an instance_id
  - copies .clang-tidy if provided
  - runs cmake to produce compile_commands.json
  - runs run-clang-tidy (or clang-tidy per-file fallback)
@@ -169,6 +170,57 @@ def parse_clang_tidy_output(txt_path):
 
     return files, overview
 
+# ---------- SWE-agent patch helpers ----------
+def load_swe_results(swe_results_path):
+    p = Path(swe_results_path).expanduser()
+    if not p.exists():
+        return None
+    try:
+        with open(p, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, list):
+                return data
+            else:
+                print(f"[!] swe results file {p} does not contain a JSON list.", file=sys.stderr)
+                return None
+    except Exception as e:
+        print(f"[!] Failed to load swe results {p}: {e}", file=sys.stderr)
+        return None
+
+def apply_patch_to_repo(repo_dir, patch_text, work_base):
+    """
+    Attempt to apply a git-format patch (patch_text) into repo_dir.
+    Returns True on success, False on failure. On failure writes failing patch to work_base/failed_patch.diff
+    """
+    try:
+        # Try apply via stdin with index update
+        proc = subprocess.run(["git", "apply", "--whitespace=fix", "--index", "-"], input=patch_text, text=True, cwd=repo_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        if proc.returncode == 0:
+            print("[+] Patch applied with 'git apply --index'.", file=sys.stderr)
+            return True
+        else:
+            print(f"[!] git apply --index failed (rc={proc.returncode}). Output:\n{proc.stdout}", file=sys.stderr)
+            # fallback: write to tmp file and try git apply file
+            tmp_patch = Path(work_base) / "swe_patch.diff"
+            tmp_patch.write_text(patch_text, encoding="utf-8")
+            proc2 = subprocess.run(["git", "apply", "--whitespace=fix", str(tmp_patch)], cwd=repo_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            if proc2.returncode == 0:
+                print("[+] Patch applied with 'git apply <file>'.", file=sys.stderr)
+                return True
+            else:
+                print(f"[!] git apply <file> also failed (rc={proc2.returncode}). Output:\n{proc2.stdout}", file=sys.stderr)
+                # write failing patch for inspection
+                failed = Path(work_base) / "failed_patch.diff"
+                failed.write_text(patch_text, encoding="utf-8")
+                print(f"[!] Wrote failing patch to {failed}", file=sys.stderr)
+                return False
+    except Exception as e:
+        print(f"[!] Exception while applying patch: {e}", file=sys.stderr)
+        failed = Path(work_base) / "failed_patch.diff"
+        failed.write_text(patch_text, encoding="utf-8")
+        print(f"[!] Wrote failing patch to {failed}", file=sys.stderr)
+        return False
+
 # ---------- Main flow ----------
 def main():
     ap = argparse.ArgumentParser(description="Run clang-tidy style review on a PR and emit JSON summary.")
@@ -178,20 +230,56 @@ def main():
     ap.add_argument("--out", default="results.json", help="Output JSON file (summary)")
     ap.add_argument("--work-dir", default=None, help="Optional working dir (defaults to tempdir)")
     ap.add_argument("--jobs", type=int, default=None, help="Parallel jobs for clang-tidy (default: cpu count)")
+    ap.add_argument("--instance-id", required=False, help="Optional instance_id to pick a patch from swe results and apply after checkout")
+    ap.add_argument("--swe-results", required=False, default="sweagent_clang-tidy_results.json", help="Path to sweagent results JSON (defaults to sweagent_clang-tidy_results.json)")
     args = ap.parse_args()
 
-    work_base = Path(args.work_dir) if args.work_dir else Path(tempfile.mkdtemp(prefix="clang_tidy_review_"))
-    repo_dir = work_base / "repo"
-    build_dir = work_base / "build"
+    # --- FIX: make work_base absolute so build_dir passed to run-clang-tidy is absolute ---
+    if args.work_dir:
+        work_base = Path(args.work_dir).expanduser().resolve()
+        work_base.mkdir(parents=True, exist_ok=True)
+    else:
+        work_base = Path(tempfile.mkdtemp(prefix="clang_tidy_review_"))
+
+    repo_dir = (work_base / "repo").resolve()
+    build_dir = (work_base / "build").resolve()
 
     print(f"[+] working dir: {work_base}", file=sys.stderr)
     try:
         # clone
         print("[+] Cloning repo...", file=sys.stderr)
         run(["git", "clone", args.repo_url, str(repo_dir)])
+
         # checkout pr
         print(f"[+] Fetching and checking out PR {args.pr}...", file=sys.stderr)
         git_checkout_pr(str(repo_dir), args.pr)
+
+        # optional: apply patch from swe results if instance_id provided
+        if args.instance_id:
+            print(f"[+] instance-id provided: {args.instance_id} -> looking for matching patch in {args.swe_results}", file=sys.stderr)
+            swe_list = load_swe_results(args.swe_results)
+            if not swe_list:
+                print(f"[!] Unable to load swe results from {args.swe_results}; skipping patch application.", file=sys.stderr)
+            else:
+                match = None
+                for entry in swe_list:
+                    if entry.get("instance_id") == args.instance_id:
+                        match = entry
+                        break
+                if not match:
+                    print(f"[!] No entry with instance_id={args.instance_id} found in {args.swe_results}; skipping patch application.", file=sys.stderr)
+                else:
+                    patch_text = match.get("patch", "")
+                    if not patch_text:
+                        print(f"[!] Found matching entry but patch field is empty; skipping.", file=sys.stderr)
+                    else:
+                        print("[+] Attempting to apply patch from swe results...", file=sys.stderr)
+                        ok = apply_patch_to_repo(str(repo_dir), patch_text, work_base)
+                        if not ok:
+                            print("[!] Patch application failed; continuing (you can inspect failed_patch.diff in the workdir).", file=sys.stderr)
+                        else:
+                            # optional: stage files if git apply applied with --index. Commit? We leave it uncommitted so original repo state remains changeable.
+                            print("[+] Patch applied successfully.", file=sys.stderr)
 
         # copy .clang-tidy if provided
         if args.clang_tidy_config:

@@ -1,0 +1,31 @@
+(/home/dd732/myenv) dd732@unicorn-login-01:~/OmniCode$ python patch_maker.py --input cpp_style_errors.json --results-root . --output sweagent_clang-tidy_results.json
+Found 239 .patch files — scanning and matching...
+Updated JSON written to: sweagent_clang-tidy_results.json
+
+Statistics per (org, repo, pr):
+ORG                  REPO                           PR       FOUND  TOTAL_INST
+------------------------------------------------------------------------------
+catchorg             Catch2                         2849         63         69
+nlohmann             json                           4537         47         69
+simdjson             simdjson                       2178          8          9
+
+Warning: Some .patch files were not matched to any sweagent_input instance_id.
+  - ./baselines/sweagent/sweagent_review_fix_outputs/astropy__astropy-12907/astropy__astropy-12907.patch
+  - ./baselines/sweagent/sweagent_review_fix_outputs/astropy__astropy-13033/astropy__astropy-13033.patch
+  - ./baselines/sweagent/sweagent_review_fix_outputs/astropy__astropy-13579/astropy__astropy-13579.patch
+  - ./baselines/sweagent/logs/sweagent_outputs/google__guava_6586/google__guava_6586.patch
+  - ./baselines/sweagent/logs/sweagent_outputs/fasterxml__jackson-dataformat-xml_644/fasterxml__jackson-dataformat-xml_644.patch
+  - ./data/java_style_review/spring-projects/spring-boot/style_review/style-review-45267/repo/antora/patches/@vscode+gulp-vinyl-zip+2.5.0.patch
+  - ./spring-boot/antora/patches/@vscode+gulp-vinyl-zip+2.5.0.patch
+  - ./sweagent_pmd_google_gson_1787_results/google__gson_1787/google__gson_1787.patch
+  - ./sweagent_pmd_fasterxml_jackson-core_644_results/fasterxml__jackson-dataformat-xml_644/fasterxml__jackson-dataformat-xml_644.patch
+  - ./sweagent_pmd_fasterxml_jackson-dataformat-xml_644_results/fasterxml__jackson-dataformat-xml_644/fasterxml__jackson-dataformat-xml_644.patch
+  - ./sweagent_pmd_spring-projects_spring-boot_45267_results/spring-projects__spring-boot_45267/spring-projects__spring-boot_45267.patch
+  - ./SWE-agent/tests/test_data/trajectories/gpt4__swe-bench-dev-easy_first_only__default__t-0.00__p-0.95__c-3.00__install-1/patches/pydicom__pydicom-1458.patch
+  - ./sweagent_pmd_googlecontainertools_jib_4144_results/googlecontainertools__jib_4144/googlecontainertools__jib_4144.patch
+  - ./sweagent_checkstyle_apache_dubbo_10638_results/apache/dubbo:10638/apache/dubbo:10638.patch
+  - ./sweagent_pmd_fasterxml_jackson-databind_4641_results/fasterxml__jackson-databind_4641/fasterxml__jackson-databind_4641.patch
+  - ./sweagent_pmd_mockito_mockito_3424_results/mockito__mockito_3424/mockito__mockito_3424.patch
+
+Done.
+(/home/dd732/myenv) dd732@unicorn-login-01:~/OmniCode$ 

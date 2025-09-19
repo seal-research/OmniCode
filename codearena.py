@@ -685,6 +685,7 @@ def main():
             instance_id = args.instance_ids[0]
             org = instance_id.split("__")[0]
             repo = instance_id.split("__")[1].split("_")[0]
+<<<<<<< HEAD
             user_name = os.getenv("USER")
             shutil.copytree(f"/scratch/{user_name}/multiswebench_runs/BugFixing/workdir/{args.run_id}/{org}/{repo}/evals", f"/share/dutta/{user_name}/multiswebench_runs/BugFixing/workdir/{args.run_id}", dirs_exist_ok=True)
             shutil.copytree(f"/scratch/{user_name}/multiswebench_runs/BugFixing/logs/{args.run_id}", f"/share/dutta/{user_name}/multiswebench_runs/BugFixing/logs/{args.run_id}", dirs_exist_ok=True)
@@ -692,6 +693,14 @@ def main():
             shutil.rmtree(f"/scratch/{user_name}/multiswebench_runs/BugFixing/logs/{args.run_id}")
             shutil.rmtree(f"/scratch/{user_name}/multiswebench_runs/BugFixing/output/{args.run_id}")
             shutil.rmtree(f"/scratch/{user_name}/multiswebench_runs/BugFixing/workdir/{args.run_id}")
+=======
+            shutil.copytree(f"/scratch/multiswebench_runs/BugFixing/workdir/{args.run_id}/{org}/{repo}/evals", f"/share/dutta/multiswebench_runs/BugFixing/workdir/{args.run_id}", dirs_exist_ok=True)
+            shutil.copytree(f"/scratch/multiswebench_runs/BugFixing/logs/{args.run_id}", f"/share/dutta/multiswebench_runs/BugFixing/logs/{args.run_id}", dirs_exist_ok=True)
+            shutil.copytree(f"/scratch/multiswebench_runs/BugFixing/output/{args.run_id}", f"/share/dutta/multiswebench_runs/BugFixing/output/{args.run_id}", dirs_exist_ok=True)
+            shutil.rmtree(f"/scratch/multiswebench_runs/BugFixing/logs/{args.run_id}")
+            shutil.rmtree(f"/scratch/multiswebench_runs/BugFixing/output/{args.run_id}")
+            shutil.rmtree(f"/scratch/multiswebench_runs/BugFixing/workdir/{args.run_id}")
+>>>>>>> 8757f22 (CPP Style Review Evaluation)
 
     if "MSWETestGeneration" in active_flags:
         print("Executing Multi-SWE-Bench TestGeneration...")
