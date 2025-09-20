@@ -19,6 +19,7 @@ def register_all_models() -> None:
     common.register_model(gpt.Gpt4o_20240806())
     common.register_model(gpt.Gpt4o_20240513())
     common.register_model(gpt.Gpt4o_mini_20240718())
+    common.register_model(gpt.Gpt5_mini())
     common.register_model(gpt.Gpt4_Turbo20240409())
     common.register_model(gpt.Gpt4_0125Preview())
     common.register_model(gpt.Gpt4_1106Preview())
