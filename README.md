@@ -275,9 +275,16 @@ For pmd java style review use sweagent_pmd_results.json in the input_tasks
 ### Running SWE-Agent for Java Style Review
 
 Prerequisites:
+<<<<<<< HEAD
 - Dataset should be downloaded from 
 https://drive.google.com/file/d/1ZVg-rVXU9hPN0iO1qsxm-Ru7a5AUmwJU/view?usp=drive_link (PMD),
 https://drive.google.com/file/d/15yDXDq9S-mOOYoNT0na7MqiodvJ8Rf4g/view?usp=drive_link (Checkstyle)
+=======
+
+- Dataset should be downloaded from
+  https://drive.google.com/file/d/1ZVg-rVXU9hPN0iO1qsxm-Ru7a5AUmwJU/view?usp=drive_link (PMD)
+  https://drive.google.com/file/d/15yDXDq9S-mOOYoNT0na7MqiodvJ8Rf4g/view?usp=drive_link (Checkstyle)
+>>>>>>> 774c8ff (Fixed markers)
 - Base image should already built in your local docker (e.g. MSWEBugFixing)
 
 ```bash
