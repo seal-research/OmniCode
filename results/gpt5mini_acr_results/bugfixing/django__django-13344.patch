@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/deprecation.py b/django/utils/deprecation.py\nindex b2c681b33c..3c2796c518 100644\n--- a/django/utils/deprecation.py\n+++ b/django/utils/deprecation.py\n@@ -110,7 +110,9 @@ class MiddlewareMixin:\n     def __call__(self, request):\n         # Exit out to async mode, if needed\n         if asyncio.iscoroutinefunction(self.get_response):\n-            return self.__acall__(request)\n+            # Run the async path synchronously to ensure we return a concrete HttpResponse\n+            from asgiref.sync import async_to_sync\n+            return async_to_sync(self.__acall__)(request)\n         response = None\n         if hasattr(self, 'process_request'):\n             response = self.process_request(request)\n"
+}

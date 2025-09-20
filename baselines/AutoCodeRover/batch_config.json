@@ -1,7 +1,7 @@
 {
   "input_tasks": "../../data/codearena_instances_python.json",
-  "output_dir": "../../results/claude_sonnet_acr_results",
-  "model_name": "openrouter/anthropic/claude-sonnet-4",
+  "output_dir": "../../results/gpt5mini_acr_results",
+  "model_name": "openrouter/openai/gpt-5-mini",
   "acr_root": ".",
   "modes": ["bugfixing", "testgen", "stylereview", "codereview"],
   "intermediate_save_interval": 5,

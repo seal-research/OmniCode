@@ -1,0 +1,15 @@
+{
+  "start_time": 1758334756.8736017,
+  "total_tasks": 273,
+  "total_modes": 4,
+  "completed_tasks": 210,
+  "failed_tasks": 0,
+  "mode_progress": {
+    "bugfixing": {
+      "start_time": 1758334756.9082484,
+      "completed": 210,
+      "failed": 0,
+      "total": 273
+    }
+  }
+}
