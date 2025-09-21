@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/roles.py b/sphinx/roles.py\nindex 2d3042f8f..e2582fc9e 100644\n--- a/sphinx/roles.py\n+++ b/sphinx/roles.py\n@@ -457,7 +457,7 @@ def emph_literal_role(typ: str, rawtext: str, text: str, lineno: int, inliner: I\n \n \n class EmphasizedLiteral(SphinxRole):\n-    parens_re = re.compile(r'(\\\\\\\\|\\\\{|\\\\}|{|})')\n+    parens_re = re.compile(r'(\\\\\\\\|\\\\{|\\\\}|{|}|-|\\\\+|\\\\^)')\n \n     def run(self) -> Tuple[List[Node], List[system_message]]:\n         children = self.parse(self.text)\n"
+}

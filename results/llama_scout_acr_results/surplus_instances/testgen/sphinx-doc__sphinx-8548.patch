@@ -1,0 +1,6 @@
+{
+  "instance_id": "sphinx-doc__sphinx-8548",
+  "status": "success",
+  "patch_file": "../../results/acr_batch_results/testgen/sphinx-doc__sphinx-8548/test.patch",
+  "pred_file": "../../results/acr_batch_results/testgen/sphinx-doc__sphinx-8548/sphinx-doc__sphinx-8548.pred"
+}

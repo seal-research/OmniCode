@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py\nindex ab75aaf5a..4f34781f1 100644\n--- a/sphinx/ext/autodoc/__init__.py\n+++ b/sphinx/ext/autodoc/__init__.py\n@@ -1694,7 +1694,7 @@ class TypeVarDocumenter(DataDocumenter):\n         if self.object.__contravariant__:\n             attrs.append(\"contravariant=True\")\n \n-        content = StringList([_('alias of TypeVar(%s)') % \", \".join(attrs)], source='')\n+        content = StringList([_('alias of TypeVar(%s)') % \", \".join(map(str, attrs))], source='')\n         super().add_content(content)\n \n \n"
+}

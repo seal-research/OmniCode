@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/dates.py b/lib/matplotlib/dates.py\nindex 4d8ddf3ee5..fa864feb5a 100644\n--- a/lib/matplotlib/dates.py\n+++ b/lib/matplotlib/dates.py\n@@ -838,7 +838,7 @@ class ConciseDateFormatter(ticker.Formatter):\n                     if '.' in labels[nn]:\n                         labels[nn] = labels[nn][:-trailing_zeros].rstrip('.')\n \n-        if show_offset:\n+        if show_offset or (level == 0 and len(np.unique(tickdate[:, level])) == 1):\n             # set the offset string:\n             self.offset_string = tickdatetime[-1].strftime(offsetfmts[level])\n             if self._usetex:\n"
+}

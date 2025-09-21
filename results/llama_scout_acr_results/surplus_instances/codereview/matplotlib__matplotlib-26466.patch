@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/text.py b/lib/matplotlib/text.py\nindex d4922fc517..60d8926872 100644\n--- a/lib/matplotlib/text.py\n+++ b/lib/matplotlib/text.py\n@@ -1451,15 +1451,17 @@ class OffsetFrom:\n \n \n class _AnnotationBase:\n+    import numpy as np\n+\n     def __init__(self,\n                  xy,\n                  xycoords='data',\n                  annotation_clip=None):\n-\n-        self.xy = xy\n+ \n+        self.xy = np.array(xy)\n         self.xycoords = xycoords\n         self.set_annotation_clip(annotation_clip)\n-\n+ \n         self._draggable = None\n \n     def _get_xy(self, renderer, xy, coords):\n"
+}

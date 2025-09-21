@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/pylint/lint/base_options.py b/pylint/lint/base_options.py\nindex c793cc85a..b9d302e99 100644\n--- a/pylint/lint/base_options.py\n+++ b/pylint/lint/base_options.py\n@@ -538,8 +538,8 @@ def _make_run_options(self: Run) -> Options:\n         (\n             \"verbose\",\n             {\n-                \"action\": _DoNothingAction,\n-                \"kwargs\": {},\n+                \"action\": \"store_true\",\n+                \"default\": False,\n                 \"short\": \"v\",\n                 \"help\": \"In verbose mode, extra non-checker-related info \"\n                 \"will be displayed.\",\n"
+}

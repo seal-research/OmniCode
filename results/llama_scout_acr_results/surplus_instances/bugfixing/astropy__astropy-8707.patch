@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/astropy/io/fits/header.py b/astropy/io/fits/header.py\nindex ad07e6d52d..7a5c57c415 100644\n--- a/astropy/io/fits/header.py\n+++ b/astropy/io/fits/header.py\n@@ -334,8 +334,8 @@ class Header:\n \n         Parameters\n         ----------\n-        data : str\n-           String containing the entire header.\n+        data : str or bytes\n+            String or bytes containing the entire header.\n \n         sep : str, optional\n             The string separating cards from each other, such as a newline.  By\n"
+}

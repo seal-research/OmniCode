@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/lib/matplotlib/axes/_axes.py b/lib/matplotlib/axes/_axes.py\nindex 58d9591266..d9e6c0c610 100644\n--- a/lib/matplotlib/axes/_axes.py\n+++ b/lib/matplotlib/axes/_axes.py\n@@ -6456,6 +6456,9 @@ default: :rc:`scatter.edgecolors`\n         %(contour_doc)s\n         \"\"\"\n         kwargs['filled'] = False\n+        Z = args[-1]\n+        if isinstance(Z, np.ndarray) and Z.dtype == np.bool_ and 'levels' not in kwargs:\n+            kwargs['levels'] = [0.5]\n         contours = mcontour.QuadContourSet(self, *args, **kwargs)\n         self._request_autoscale_view()\n         return contours\n"
+}

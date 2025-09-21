@@ -1,0 +1,6 @@
+{
+  "instance_id": "astropy__astropy-8707",
+  "status": "success",
+  "patch_file": "../../results/acr_batch_results/testgen/astropy__astropy-8707/test.patch",
+  "pred_file": "../../results/acr_batch_results/testgen/astropy__astropy-8707/astropy__astropy-8707.pred"
+}

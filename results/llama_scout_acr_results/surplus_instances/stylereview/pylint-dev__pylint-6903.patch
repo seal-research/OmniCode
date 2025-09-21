@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/pylint/reporters/text.py b/pylint/reporters/text.py\nindex 29bd46798..2d55ab188 100644\n--- a/pylint/reporters/text.py\n+++ b/pylint/reporters/text.py\n@@ -197,7 +197,7 @@ class TextReporter(BaseReporter):\n \n     def handle_message(self, msg: Message) -> None:\n         \"\"\"Manage message of different type and in the context of path.\"\"\"\n-        if msg.module not in self._modules:\n+        if not msg.module or msg.module not in self._modules:\n             if msg.module:\n                 self.writeln(f\"************* Module {msg.module}\")\n                 self._modules.add(msg.module)\n"
+}
