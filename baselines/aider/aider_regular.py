@@ -24,7 +24,7 @@ def build_prompt(
     base = instance["problem_statement"].strip()
     repo = instance["repo"]
 
-    if mode.startswith("bugfixing"):
+    if mode.startswith("bugfixing") or mode.startswith("style"):
         return base
 
     if mode.startswith("testgen"):
@@ -249,7 +249,7 @@ if __name__ == "__main__":
     p.add_argument("-k", "--api_key", default=None)
     p.add_argument("--model_provider", required=True)
     p.add_argument("--mode", default="bugfixing",
-                   choices=["bugfixing", "testgen"])
+                   choices=["bugfixing", "testgen", "reviewfix"])
     p.add_argument("--instance_ids", default=None)
     args = p.parse_args()
 
