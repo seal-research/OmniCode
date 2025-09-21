@@ -17,7 +17,12 @@ export SWEBENCH_BUILD_DIR="/scratch/cbb89/logs/build_images"
 export SWEBENCH_CACHE_DIR="/scratch/cbb89/logs/cache"
 
 # Create symlink to fix hardcoded /scratch/logs path
-mkdir -p /scratch/cbb89/logs
+mkdir -p /scratch/cbb89/logs/build_images/def
+mkdir -p /scratch/cbb89/logs/build_images/base
+mkdir -p /scratch/cbb89/logs/build_images/env
+mkdir -p /scratch/cbb89/logs/build_images/instances
+mkdir -p /scratch/cbb89/logs/run_evaluation
+mkdir -p /scratch/cbb89/logs/run_validation
 ln -sf /scratch/cbb89/logs /scratch/logs 2>/dev/null || true
 
 # Change to the codearena directory
@@ -39,6 +44,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --gres=gpu:1 \
            --mem="${MEM}" \
            --time="${TIME_LIMIT}" \
+           --constraint=gpu \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
            --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --BugFixing \
@@ -71,6 +77,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --gres=gpu:1 \
            --mem="${MEM}" \
            --time="${TIME_LIMIT}" \
+           --constraint=gpu \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
            --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --CodeReview \
@@ -103,6 +110,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --gres=gpu:1 \
            --mem="${MEM}" \
            --time="${TIME_LIMIT}" \
+           --constraint=gpu \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
            --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --StyleReview \
@@ -135,6 +143,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --gres=gpu:1 \
            --mem="${MEM}" \
            --time="${TIME_LIMIT}" \
+           --constraint=gpu \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
            --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --TestGeneration \
