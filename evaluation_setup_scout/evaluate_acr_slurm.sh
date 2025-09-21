@@ -12,6 +12,8 @@ TIME_LIMIT="02:00:00"
 
 mkdir -p "${LOG_DIR}"
 
+# Change to the codearena directory
+cd /home/cbb89/codearena/codearena/OmniCode
 
 # BUGFIXING evaluation
 echo "Starting bugfixing evaluation..."
@@ -31,7 +33,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --time="${TIME_LIMIT}" \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(python codearena.py --Bugfixing \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --Bugfixing \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -41,7 +43,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
                     --use_apptainer True \
                     --instance_ids ${ID} \
                     --g2 True;)"
-done < "bugfixing_instance_ids.txt"
+done < "evaluation_setup_scout/bugfixing_instance_ids.txt"
 
 echo "Completed bugfixing evaluation submission"
 
@@ -63,7 +65,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --time="${TIME_LIMIT}" \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(python codearena.py --Codereview \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --Codereview \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -73,7 +75,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
                     --use_apptainer True \
                     --instance_ids ${ID} \
                     --g2 True;)"
-done < "codereview_instance_ids.txt"
+done < "evaluation_setup_scout/codereview_instance_ids.txt"
 
 echo "Completed codereview evaluation submission"
 
@@ -95,7 +97,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --time="${TIME_LIMIT}" \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(python codearena.py --Stylereview \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --Stylereview \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -105,7 +107,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
                     --use_apptainer True \
                     --instance_ids ${ID} \
                     --g2 True;)"
-done < "stylereview_instance_ids.txt"
+done < "evaluation_setup_scout/stylereview_instance_ids.txt"
 
 echo "Completed stylereview evaluation submission"
 
@@ -127,7 +129,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --time="${TIME_LIMIT}" \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(python codearena.py --Testgen \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --Testgen \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -137,6 +139,6 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
                     --use_apptainer True \
                     --instance_ids ${ID} \
                     --g2 True;)"
-done < "testgen_instance_ids.txt"
+done < "evaluation_setup_scout/testgen_instance_ids.txt"
 
 echo "Completed testgen evaluation submission"
