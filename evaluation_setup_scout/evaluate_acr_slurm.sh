@@ -33,7 +33,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --time="${TIME_LIMIT}" \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --BugFixing \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export SWEBENCH_BUILD_DIR=/scratch/cbb89/logs/build_images && export SWEBENCH_CACHE_DIR=/scratch/cbb89/logs/cache && python codearena.py --BugFixing \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -65,7 +65,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --time="${TIME_LIMIT}" \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --CodeReview \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export SWEBENCH_BUILD_DIR=/scratch/cbb89/logs/build_images && export SWEBENCH_CACHE_DIR=/scratch/cbb89/logs/cache && python codearena.py --CodeReview \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -97,7 +97,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --time="${TIME_LIMIT}" \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --StyleReview \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export SWEBENCH_BUILD_DIR=/scratch/cbb89/logs/build_images && export SWEBENCH_CACHE_DIR=/scratch/cbb89/logs/cache && python codearena.py --StyleReview \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -129,7 +129,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --time="${TIME_LIMIT}" \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --TestGeneration \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export SWEBENCH_BUILD_DIR=/scratch/cbb89/logs/build_images && export SWEBENCH_CACHE_DIR=/scratch/cbb89/logs/cache && python codearena.py --TestGeneration \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
