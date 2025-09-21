@@ -3,7 +3,7 @@
 Convert Pylint Results (from pr_pylint_review.py) to SWE Agent Input Format.
 
 - Input: results.json (single JSON object with "label", "files", "overview")
-- Groups violations into batches of ~10, keeping all violations from a file in the same batch
+- Groups violations either by file (default, --batch_size=0) or into batches of ~N violations
 - Outputs a JSON array of SWE-agent instances
 """
 
@@ -78,7 +78,7 @@ def create_sweagent_instance(
     instance_id = f"{org}__{repo}_{pr_number}_{instance_idx}"
     return {
         "repo": f"{org}/{repo}",
-        "pull_number": pr_number,
+        "pull_number": int(pr_number),
         "instance_id": instance_id,
         "issue_numbers": [],
         "base_commit": "",
@@ -99,7 +99,8 @@ def main():
     parser.add_argument("--instance-id", required=True, help="org__repo-pr-number (e.g. astropy__astropy-14508)")
     parser.add_argument("--results", default="results.json", help="Path to results.json from pr_pylint_review.py")
     parser.add_argument("--output", required=True, help="Path to save SWE Agent instances (JSON array)")
-    parser.add_argument("--batch_size", type=int, default=10, help="Approx number of violations per instance")
+    parser.add_argument("--batch_size", type=int, default=0,
+                        help="Approx number of violations per instance (0 = group by file)")
     args = parser.parse_args()
 
     results_path = Path(args.results)
@@ -127,36 +128,48 @@ def main():
 
     instance_idx = len(existing_instances) + 1
     instances = []
-    batch = []
-    batch_violation_count = 0
+
     org = args.instance_id.split('__')[0]
     repo = args.instance_id.split('__')[-1].split('-')[0]
     number = args.instance_id.split('-')[-1]
 
-    for fr in file_reports:
-        violations_count = len(fr.get("messages", []))
-        if not violations_count:
-            continue
+    if args.batch_size == 0:
+        # Group by file: one instance per file
+        for fr in file_reports:
+            if not fr.get("messages"):
+                continue
+            ps = generate_problem_statement_for_batch([fr], style_tool="pylint")
+            instances.append(create_sweagent_instance(org, repo, number, ps, instance_idx))
+            print(f"Created instance {instance_idx} for file {fr.get('file')}")
+            instance_idx += 1
+    else:
+        # Group into batches of ~N violations
+        batch = []
+        batch_violation_count = 0
+        for fr in file_reports:
+            violations_count = len(fr.get("messages", []))
+            if not violations_count:
+                continue
 
-        if batch and batch_violation_count + violations_count >= args.batch_size:
+            if batch and batch_violation_count + violations_count >= args.batch_size:
+                ps = generate_problem_statement_for_batch(batch, style_tool="pylint")
+                instances.append(
+                    create_sweagent_instance(org, repo, number, ps, instance_idx)
+                )
+                print(f"Created instance {instance_idx} with {batch_violation_count} violations ({len(batch)} file(s))")
+                instance_idx += 1
+                batch = []
+                batch_violation_count = 0
+
+            batch.append(fr)
+            batch_violation_count += violations_count
+
+        if batch:
             ps = generate_problem_statement_for_batch(batch, style_tool="pylint")
             instances.append(
                 create_sweagent_instance(org, repo, number, ps, instance_idx)
             )
             print(f"Created instance {instance_idx} with {batch_violation_count} violations ({len(batch)} file(s))")
-            instance_idx += 1
-            batch = []
-            batch_violation_count = 0
-
-        batch.append(fr)
-        batch_violation_count += violations_count
-
-    if batch:
-        ps = generate_problem_statement_for_batch(batch, style_tool="pylint")
-        instances.append(
-            create_sweagent_instance(org, repo, number, ps, instance_idx)
-        )
-        print(f"Created instance {instance_idx} with {batch_violation_count} violations ({len(batch)} file(s))")
 
     all_instances = existing_instances + instances
     with open(output_path, "w", encoding="utf-8") as f:
