@@ -1,0 +1,270 @@
+--- a/tests/model_fields/test_jsonfield.py
++++ b/tests/model_fields/test_jsonfield.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase, override_settings
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('model_fields')
++class JSONFieldHasKeyTests(TestCase):
++    """
++    Test suite for JSONField has_key, has_keys, and has_any_keys lookups
++    with numeric keys on different database backends.
++    """
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        # Create test model
++        class JSONModel(models.Model):
++            data = models.JSONField()
++            
++            class Meta:
++                app_label = 'model_fields'
++        
++        cls.JSONModel = JSONModel
++    
++    def setUp(self):
++        """Set up test data with various key types."""
++        # Test data with string keys
++        self.JSONModel.objects.create(data={'foo': 'bar', 'nested': {'key': 'value'}})
++        
++        # Test data with numeric string keys (the problematic case)
++        self.JSONModel.objects.create(data={'1111': 'numeric_string_key', '42': 'another_numeric'})
++        
++        # Test data with mixed keys
++        self.JSONModel.objects.create(data={'string_key': 'value', '999': 'mixed_numeric', 'another': 'test'})
++        
++        # Test data with nested numeric keys
++        self.JSONModel.objects.create(data={'outer': {'123': 'nested_numeric', 'inner': 'value'}})
++        
++        # Test data with array (for contrast with object keys)
++        self.JSONModel.objects.create(data={'array': ['item0', 'item1', 'item2']})
++        
++        # Test data for has_keys and has_any_keys
++        self.JSONModel.objects.create(data={'100': 'first', '200': 'second', '300': 'third'})
++        self.JSONModel.objects.create(data={'100': 'exists', 'text': 'also_exists'})
++
++    def test_has_key_with_string_keys(self):
++        """Test that has_key works correctly with regular string keys."""
++        count = self.JSONModel.objects.filter(data__has_key='foo').count()
++        self.assertEqual(count, 1, "Should find 1 entry with key 'foo'")
++        
++        count = self.JSONModel.objects.filter(data__has_key='nonexistent').count()
++        self.assertEqual(count, 0, "Should find 0 entries with nonexistent key")
++
++    def test_has_key_with_numeric_string_keys(self):
++        """
++        Test that has_key works correctly with numeric string keys.
++        This is the main bug being tested - numeric string keys should be
++        treated as object keys, not array indices.
++        """
++        # Test single numeric string key
++        count = self.JSONModel.objects.filter(data__has_key='1111').count()
++        self.assertEqual(count, 1, "Should find 1 entry with key '1111'")
++        
++        # Test another numeric string key
++        count = self.JSONModel.objects.filter(data__has_key='42').count()
++        self.assertEqual(count, 1, "Should find 1 entry with key '42'")
++        
++        # Test numeric key in mixed data
++        count = self.JSONModel.objects.filter(data__has_key='999').count()
++        self.assertEqual(count, 1, "Should find 1 entry with key '999'")
++
++    def test_has_key_with_integer_keys(self):
++        """Test that has_key works when passed integer values (should be converted to strings)."""
++        # Pass integer instead of string - should still work
++        count = self.JSONModel.objects.filter(data__has_key=1111).count()
++        self.assertEqual(count, 1, "Should find 1 entry with integer key 1111")
++        
++        count = self.JSONModel.objects.filter(data__has_key=42).count()
++        self.assertEqual(count, 1, "Should find 1 entry with integer key 42")
++
++    def test_has_key_nested_numeric_keys(self):
++        """Test has_key with nested numeric string keys."""
++        count = self.JSONModel.objects.filter(data__outer__has_key='123').count()
++        self.assertEqual(count, 1, "Should find 1 entry with nested key '123'")
++
++    def test_has_keys_with_numeric_string_keys(self):
++        """Test that has_keys works correctly with numeric string keys."""
++        # Test multiple numeric string keys - all must exist
++        count = self.JSONModel.objects.filter(data__has_keys=['100', '200']).count()
++        self.assertEqual(count, 1, "Should find 1 entry with both keys '100' and '200'")
++        
++        # Test with one missing key
++        count = self.JSONModel.objects.filter(data__has_keys=['100', '999']).count()
++        self.assertEqual(count, 0, "Should find 0 entries when one key is missing")
++        
++        # Test all three keys
++        count = self.JSONModel.objects.filter(data__has_keys=['100', '200', '300']).count()
++        self.assertEqual(count, 1, "Should find 1 entry with all three keys")
++
++    def test_has_keys_with_integer_keys(self):
++        """Test that has_keys works when passed integer values."""
++        count = self.JSONModel.objects.filter(data__has_keys=[100, 200]).count()
++        self.assertEqual(count, 1, "Should find 1 entry with integer keys 100 and 200")
++
++    def test_has_any_keys_with_numeric_string_keys(self):
++        """Test that has_any_keys works correctly with numeric string keys."""
++        # Test with multiple keys where at least one exists
++        count = self.JSONModel.objects.filter(data__has_any_keys=['100', '999']).count()
++        self.assertEqual(count, 2, "Should find 2 entries with at least one of the keys")
++        
++        # Test with keys that don't exist
++        count = self.JSONModel.objects.filter(data__has_any_keys=['777', '888']).count()
++        self.assertEqual(count, 0, "Should find 0 entries when none of the keys exist")
++        
++        # Test with mix of existing and non-existing keys
++        count = self.JSONModel.objects.filter(data__has_any_keys=['200', '777']).count()
++        self.assertEqual(count, 1, "Should find 1 entry when at least one key exists")
++
++    def test_has_any_keys_with_integer_keys(self):
++        """Test that has_any_keys works when passed integer values."""
++        count = self.JSONModel.objects.filter(data__has_any_keys=[100, 777]).count()
++        self.assertEqual(count, 2, "Should find 2 entries with integer keys")
++
++    def test_numeric_keys_vs_array_indices(self):
++        """
++        Test that numeric object keys are not confused with array indices.
++        This ensures the fix doesn't break array access.
++        """
++        # This should NOT match - we're looking for object key '0', not array index 0
++        count = self.JSONModel.objects.filter(data__array__has_key='0').count()
++        self.assertEqual(count, 0, "Object key '0' should not match array index 0")
++        
++        # Test actual array access (not has_key)
++        count = self.JSONModel.objects.filter(data__array__0='item0').count()
++        self.assertEqual(count, 1, "Array index access should still work")
++
++    def test_edge_cases_with_numeric_keys(self):
++        """Test edge cases with numeric keys."""
++        # Test with leading zeros
++        self.JSONModel.objects.create(data={'0123': 'leading_zero', '00': 'double_zero'})
++        
++        count = self.JSONModel.objects.filter(data__has_key='0123').count()
++        self.assertEqual(count, 1, "Should find key with leading zeros")
++        
++        count = self.JSONModel.objects.filter(data__has_key='00').count()
++        self.assertEqual(count, 1, "Should find key '00'")
++        
++        # Test with negative numbers as strings
++        self.JSONModel.objects.create(data={'-1': 'negative', '-999': 'large_negative'})
++        
++        count = self.JSONModel.objects.filter(data__has_key='-1').count()
++        self.assertEqual(count, 1, "Should find negative numeric string key")
++
++    def test_empty_and_special_numeric_keys(self):
++        """Test special cases of numeric-like keys."""
++        # Test with decimal numbers as strings
++        self.JSONModel.objects.create(data={'3.14': 'pi', '0.5': 'half'})
++        
++        count = self.JSONModel.objects.filter(data__has_key='3.14').count()
++        self.assertEqual(count, 1, "Should find decimal string key")
++        
++        # Test with scientific notation
++        self.JSONModel.objects.create(data={'1e5': 'scientific'})
++        
++        count = self.JSONModel.objects.filter(data__has_key='1e5').count()
++        self.assertEqual(count, 1, "Should find scientific notation string key")
++
++
++@pytest.mark.skipif(
++    not hasattr(models, 'JSONField'),
++    reason="JSONField not available in this Django version"
++)
++class TestJSONFieldNumericKeysRegression:
++    """
++    Pytest-style tests for the numeric keys regression.
++    These tests specifically target the bug described in the issue.
++    """
++    
++    @pytest.fixture
++    def json_model(self, db):
++        """Create a test model with JSONField."""
++        from django.db import models
++        
++        class TestModel(models.Model):
++            data = models.JSONField()
++            
++            class Meta:
++                app_label = 'test'
++        
++        # Create the table
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(TestModel)
++        
++        yield TestModel
++        
++        # Clean up
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(TestModel)
++
++    def test_original_bug_reproduction(self, json_model):
++        """
++        Reproduce the exact bug from the issue description.
++        This test should fail before the fix and pass after.
++        """
++        # Create test data exactly as in the issue
++        test1 = json_model(data={'foo': 'bar'})
++        test2 = json_model(data={'1111': 'bar'})
++        test1.save()
++        test2.save()
++        
++        # Test the lookups
++        c1 = json_model.objects.filter(data__has_key='foo').count()
++        c2 = json_model.objects.filter(data__has_key='1111').count()
++        
++        assert c1 == 1, "Should have found 1 entry with key 'foo'"
++        assert c2 == 1, "Should have found 1 entry with key '1111'"
++
++    def test_multiple_numeric_keys(self, json_model):
++        """Test has_keys with multiple numeric string keys."""
++        json_model.objects.create(data={'1': 'one', '2': 'two', '3': 'three'})
++        json_model.objects.create(data={'1': 'uno', '4': 'four'})
++        
++        # Test has_keys - all keys must exist
++        count = json_model.objects.filter(data__has_keys=['1', '2']).count()
++        assert count == 1, "Should find 1 entry with both keys '1' and '2'"
++        
++        # Test has_any_keys - at least one key must exist
++        count = json_model.objects.filter(data__has_any_keys=['1', '5']).count()
++        assert count == 2, "Should find 2 entries with at least key '1'"
++
++    @pytest.mark.parametrize("key,expected_count", [
++        ('123', 1),      # numeric string
++        (123, 1),        # integer (should be converted to string)
++        ('0', 1),        # zero as string
++        (0, 1),          # zero as integer
++        ('-1', 1),       # negative as string
++        (-1, 1),         # negative as integer
++    ])
++    def test_various_numeric_key_formats(self, json_model, key, expected_count):
++        """Test that various numeric key formats work correctly."""
++        json_model.objects.create(data={
++            '123': 'positive',
++            '0': 'zero', 
++            '-1': 'negative'
++        })
++        
++        count = json_model.objects.filter(data__has_key=key).count()
++        assert count == expected_count, f"Key {key} should find {expected_count} entries"
++
++    def test_database_backend_compatibility(self, json_model, settings):
++        """
++        Test that the fix works across different database backends.
++        This test focuses on the backends mentioned in the issue: SQLite, MySQL, Oracle.
++        """
++        # Create test data
++        json_model.objects.create(data={'999': 'test_value'})
++        
++        # Test the lookup
++        count = json_model.objects.filter(data__has_key='999').count()
++        assert count == 1, f"Numeric key lookup should work on {settings.DATABASES['default']['ENGINE']}"
++        
++        # Also test with integer
++        count = json_model.objects.filter(data__has_key=999).count()
++        assert count == 1, f"Integer key lookup should work on {settings.DATABASES['default']['ENGINE']}"

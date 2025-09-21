@@ -1,0 +1,233 @@
+--- a/tests/forms_tests/test_models.py
++++ b/tests/forms_tests/test_models.py
+-# This will be added to the existing test file
++import pytest
++from django import forms
++from django.db import models
++from django.test import TestCase
++from django.forms.models import construct_instance
++
++
++class TestModel(models.Model):
++    """Test model with a field that has a default value."""
++    name = models.CharField(max_length=100)
++    status = models.CharField(max_length=20, default='pending')
++    priority = models.IntegerField(default=1)
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class TestModelForm(forms.ModelForm):
++    """Basic ModelForm for TestModel."""
++    class Meta:
++        model = TestModel
++        fields = ['name', 'status', 'priority']
++
++
++class TestModelFormWithCleanedDataOverride(forms.ModelForm):
++    """ModelForm that modifies cleaned_data to override default values."""
++    class Meta:
++        model = TestModel
++        fields = ['name']  # Only include name field, status has default
++    
++    def clean(self):
++        cleaned_data = super().clean()
++        # Override the default status value in cleaned_data
++        cleaned_data['status'] = 'processed'
++        # Override the default priority value in cleaned_data
++        cleaned_data['priority'] = 5
++        return cleaned_data
++
++
++class TestModelFormWithFieldClean(forms.ModelForm):
++    """ModelForm that uses field-specific clean method to set default field."""
++    class Meta:
++        model = TestModel
++        fields = ['name']
++    
++    def clean_status(self):
++        # This should set the status even though it's not in the form
++        return 'custom_status'
++
++
++class CleanedDataOverrideDefaultsTest(TestCase):
++    """Test that cleaned_data can overwrite fields' default values."""
++    
++    def test_cleaned_data_overrides_default_value_bug_reproduction(self):
++        """
++        Test that reproduces the bug where cleaned_data cannot override
++        default values for fields not in the form data.
++        
++        This test should FAIL before the fix is applied.
++        """
++        # Create form with only 'name' field, 'status' has default 'pending'
++        form_data = {'name': 'Test Item'}
++        form = TestModelFormWithCleanedDataOverride(data=form_data)
++        
++        # Form should be valid
++        self.assertTrue(form.is_valid())
++        
++        # cleaned_data should contain our override
++        self.assertEqual(form.cleaned_data['status'], 'processed')
++        self.assertEqual(form.cleaned_data['priority'], 5)
++        
++        # Create instance using construct_instance
++        instance = TestModel()
++        constructed_instance = construct_instance(form, instance)
++        
++        # BUG: Before fix, this will fail because cleaned_data override is ignored
++        # The status will remain 'pending' (default) instead of 'processed'
++        self.assertEqual(constructed_instance.status, 'processed')
++        self.assertEqual(constructed_instance.priority, 5)
++    
++    def test_cleaned_data_overrides_default_after_fix(self):
++        """
++        Test that cleaned_data can successfully override default values
++        after the fix is applied.
++        
++        This test should PASS after the fix is applied.
++        """
++        form_data = {'name': 'Test Item'}
++        form = TestModelFormWithCleanedDataOverride(data=form_data)
++        
++        self.assertTrue(form.is_valid())
++        
++        # Verify cleaned_data contains our overrides
++        self.assertEqual(form.cleaned_data['name'], 'Test Item')
++        self.assertEqual(form.cleaned_data['status'], 'processed')
++        self.assertEqual(form.cleaned_data['priority'], 5)
++        
++        # Save the form and verify the overrides are applied
++        instance = form.save()
++        self.assertEqual(instance.name, 'Test Item')
++        self.assertEqual(instance.status, 'processed')
++        self.assertEqual(instance.priority, 5)
++    
++    def test_field_clean_method_overrides_default(self):
++        """
++        Test that field-specific clean methods can override default values
++        for fields not in the form.
++        """
++        form_data = {'name': 'Test Item'}
++        form = TestModelFormWithFieldClean(data=form_data)
++        
++        self.assertTrue(form.is_valid())
++        
++        # The clean_status method should have set the status
++        self.assertEqual(form.cleaned_data['status'], 'custom_status')
++        
++        # Save and verify the override is applied
++        instance = form.save()
++        self.assertEqual(instance.status, 'custom_status')
++    
++    def test_normal_form_behavior_preserved(self):
++        """
++        Test that normal form behavior is preserved - fields with defaults
++        that aren't in cleaned_data should still use their defaults.
++        """
++        form_data = {'name': 'Test Item', 'status': 'active'}
++        form = TestModelForm(data=form_data)
++        
++        self.assertTrue(form.is_valid())
++        
++        instance = form.save()
++        self.assertEqual(instance.name, 'Test Item')
++        self.assertEqual(instance.status, 'active')
++        self.assertEqual(instance.priority, 1)  # Should use default
++    
++    def test_construct_instance_with_cleaned_data_override(self):
++        """
++        Test construct_instance directly with cleaned_data containing
++        fields not in the original form data.
++        """
++        # Create a form with minimal data
++        form_data = {'name': 'Direct Test'}
++        form = TestModelForm(data=form_data)
++        
++        self.assertTrue(form.is_valid())
++        
++        # Manually add to cleaned_data (simulating what clean() method would do)
++        form.cleaned_data['status'] = 'manually_set'
++        form.cleaned_data['priority'] = 10
++        
++        # Use construct_instance directly
++        instance = TestModel()
++        constructed_instance = construct_instance(form, instance)
++        
++        # Verify the manually set values are applied
++        self.assertEqual(constructed_instance.name, 'Direct Test')
++        self.assertEqual(constructed_instance.status, 'manually_set')
++        self.assertEqual(constructed_instance.priority, 10)
++    
++    def test_edge_case_empty_form_with_cleaned_data_override(self):
++        """
++        Test edge case where form has no fields but cleaned_data is populated
++        in the clean() method.
++        """
++        class EmptyForm(forms.ModelForm):
++            class Meta:
++                model = TestModel
++                fields = []
++            
++            def clean(self):
++                cleaned_data = super().clean()
++                cleaned_data['name'] = 'Generated Name'
++                cleaned_data['status'] = 'auto_generated'
++                cleaned_data['priority'] = 99
++                return cleaned_data
++        
++        form = EmptyForm(data={})
++        self.assertTrue(form.is_valid())
++        
++        instance = form.save()
++        self.assertEqual(instance.name, 'Generated Name')
++        self.assertEqual(instance.status, 'auto_generated')
++        self.assertEqual(instance.priority, 99)
++    
++    def test_partial_override_preserves_other_defaults(self):
++        """
++        Test that overriding some default fields preserves others.
++        """
++        class PartialOverrideForm(forms.ModelForm):
++            class Meta:
++                model = TestModel
++                fields = ['name']
++            
++            def clean(self):
++                cleaned_data = super().clean()
++                # Only override status, leave priority as default
++                cleaned_data['status'] = 'partial_override'
++                return cleaned_data
++        
++        form_data = {'name': 'Partial Test'}
++        form = PartialOverrideForm(data=form_data)
++        
++        self.assertTrue(form.is_valid())
++        
++        instance = form.save()
++        self.assertEqual(instance.name, 'Partial Test')
++        self.assertEqual(instance.status, 'partial_override')
++        self.assertEqual(instance.priority, 1)  # Should remain default
++    
++    def test_widget_value_omitted_behavior_preserved(self):
++        """
++        Test that the widget's value_omitted_from_data behavior is preserved
++        for fields that are not in cleaned_data.
++        """
++        # Test with checkbox widget which has specific omitted behavior
++        class TestFormWithCheckbox(forms.ModelForm):
++            is_active = forms.BooleanField(required=False)
++            
++            class Meta:
++                model = TestModel
++                fields = ['name']
++        
++        # Checkbox not checked (omitted from data)
++        form_data = {'name': 'Checkbox Test'}
++        form = TestFormWithCheckbox(data=form_data)
++        
++        self.assertTrue(form.is_valid())
++        
++        # is_active should not be in cleaned_data since it was omitted
++        self.assertNotIn('is_active', form.cleaned_data)

@@ -1,0 +1,155 @@
+--- a/tests/test_http_headers.py
++++ b/tests/test_http_headers.py
+-# Empty if creating new file
++import pytest
++from scrapy.http import Response
++from scrapy.http.headers import Headers
++
++
++class TestHeadersMultipleValues:
++    """Test suite for Headers class handling of multiple values for the same key."""
++
++    def test_headers_getlist_with_multiple_values_from_tuples(self):
++        """Test that getlist returns all values when multiple tuples have the same key."""
++        # This test reproduces the bug described in the issue
++        headers = Headers([("a", "b"), ("a", "c")])
++        result = headers.getlist("a")
++        
++        # This should return both values, not just the last one
++        assert result == [b'b', b'c'], f"Expected [b'b', b'c'], got {result}"
++
++    def test_headers_getlist_with_multiple_values_from_response(self):
++        """Test that Response.headers.getlist works correctly with multiple values."""
++        # This is the exact case from the issue description
++        response = Response("https://example.com", headers=(("a", "b"), ("a", "c")))
++        result = response.headers.getlist("a")
++        
++        # This currently fails - returns [b'c'] instead of [b'b', b'c']
++        assert result == [b'b', b'c'], f"Expected [b'b', b'c'], got {result}"
++
++    def test_headers_appendlist_accumulates_values(self):
++        """Test that appendlist properly accumulates multiple values."""
++        headers = Headers()
++        headers.appendlist("test", "value1")
++        headers.appendlist("test", "value2")
++        
++        result = headers.getlist("test")
++        assert result == [b'value1', b'value2'], f"Expected [b'value1', b'value2'], got {result}"
++
++    def test_headers_appendlist_with_different_types(self):
++        """Test appendlist with different value types."""
++        headers = Headers()
++        headers.appendlist("test", "string_value")
++        headers.appendlist("test", b"bytes_value")
++        
++        result = headers.getlist("test")
++        assert result == [b'string_value', b'bytes_value'], f"Expected [b'string_value', b'bytes_value'], got {result}"
++
++    def test_headers_update_with_duplicate_keys(self):
++        """Test that update method properly handles duplicate keys in sequence."""
++        headers = Headers()
++        headers.update([("key1", "val1"), ("key2", "val2"), ("key1", "val3")])
++        
++        # key1 should have both values
++        result = headers.getlist("key1")
++        assert result == [b'val1', b'val3'], f"Expected [b'val1', b'val3'], got {result}"
++        
++        # key2 should have single value
++        result2 = headers.getlist("key2")
++        assert result2 == [b'val2'], f"Expected [b'val2'], got {result2}"
++
++    def test_headers_case_insensitive_multiple_values(self):
++        """Test that case-insensitive keys work with multiple values."""
++        headers = Headers([("Content-Type", "text/html"), ("content-type", "charset=utf-8")])
++        
++        # Both values should be accumulated under the normalized key
++        result = headers.getlist("Content-Type")
++        assert len(result) == 2, f"Expected 2 values, got {len(result)}: {result}"
++        assert b'text/html' in result and b'charset=utf-8' in result
++
++    def test_headers_getlist_nonexistent_key(self):
++        """Test getlist behavior with non-existent keys."""
++        headers = Headers([("a", "b")])
++        
++        # Non-existent key should return None by default
++        result = headers.getlist("nonexistent")
++        assert result is None, f"Expected None, got {result}"
++        
++        # Non-existent key with default should return the default
++        result_with_default = headers.getlist("nonexistent", [])
++        assert result_with_default == [], f"Expected [], got {result_with_default}"
++
++    def test_headers_setlist_overwrites_multiple_values(self):
++        """Test that setlist overwrites existing values."""
++        headers = Headers([("a", "b"), ("a", "c")])
++        headers.setlist("a", ["new1", "new2"])
++        
++        result = headers.getlist("a")
++        assert result == [b'new1', b'new2'], f"Expected [b'new1', b'new2'], got {result}"
++
++    def test_headers_single_value_access_with_multiple_values(self):
++        """Test that single value access returns first value when multiple exist."""
++        headers = Headers([("a", "first"), ("a", "second")])
++        
++        # Single value access should return the first value
++        result = headers["a"]
++        assert result == b'first', f"Expected b'first', got {result}"
++
++    def test_headers_dict_conversion_with_multiple_values(self):
++        """Test dict conversion behavior with multiple values."""
++        headers = Headers([("a", "first"), ("a", "second"), ("b", "single")])
++        
++        # Convert to dict - should only show first value for keys with multiple values
++        dict_result = dict(headers)
++        assert dict_result[b'a'] == b'first', f"Expected b'first', got {dict_result[b'a']}"
++        assert dict_result[b'b'] == b'single', f"Expected b'single', got {dict_result[b'b']}"
++
++    def test_headers_items_with_multiple_values(self):
++        """Test that items() yields all key-value pairs including duplicates."""
++        headers = Headers([("a", "first"), ("a", "second"), ("b", "single")])
++        
++        items_list = list(headers.items())
++        
++        # Should have 3 items total (2 for 'a', 1 for 'b')
++        assert len(items_list) == 3, f"Expected 3 items, got {len(items_list)}: {items_list}"
++        
++        # Check that both 'a' values are present
++        a_values = [value for key, value in items_list if key == b'a']
++        assert len(a_values) == 2, f"Expected 2 'a' values, got {len(a_values)}: {a_values}"
++        assert b'first' in a_values and b'second' in a_values
++
++    def test_response_headers_integration(self):
++        """Integration test with Response class to ensure headers work end-to-end."""
++        # Test with various header combinations
++        response = Response(
++            "https://example.com", 
++            headers=[
++                ("Set-Cookie", "session=abc123"),
++                ("Set-Cookie", "user=john"),
++                ("Content-Type", "text/html"),
++                ("content-length", "1234")
++            ]
++        )
++        
++        # Multiple Set-Cookie headers should be preserved
++        cookies = response.headers.getlist("Set-Cookie")
++        assert len(cookies) == 2, f"Expected 2 cookies, got {len(cookies)}: {cookies}"
++        assert b'session=abc123' in cookies and b'user=john' in cookies
++        
++        # Single headers should work normally
++        content_type = response.headers.getlist("Content-Type")
++        assert content_type == [b'text/html'], f"Expected [b'text/html'], got {content_type}"
++
++    def test_headers_empty_and_none_values(self):
++        """Test handling of empty and None values."""
++        headers = Headers()
++        
++        # Test with None value
++        headers.appendlist("test", None)
++        result = headers.getlist("test")
++        assert result == [], f"Expected [], got {result}"
++        
++        # Test with empty string
++        headers.appendlist("test2", "")
++        result2 = headers.getlist("test2")
++        assert result2 == [b''], f"Expected [b''], got {result2}"

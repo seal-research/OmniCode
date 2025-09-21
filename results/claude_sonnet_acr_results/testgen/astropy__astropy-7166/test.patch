@@ -1,0 +1,247 @@
+--- a/astropy/utils/tests/test_misc.py
++++ b/astropy/utils/tests/test_misc.py
+-def test_inherit_docstrings_property():
+-    """
+-    Test that the InheritDocstrings metaclass works correctly for properties
+-    """
+-
+-    class A(object):
+-        @property
+-        def wiggle(self):
+-            "Wiggle the thingamajig"
+-            pass
+-
+-    class B(A, metaclass=InheritDocstrings):
+-        @property
+-        def wiggle(self):
+-            pass
+-
+-    assert isinstance(B.wiggle, property)
+-    assert B.wiggle.__doc__ == "Wiggle the thingamajig"
++def test_inherit_docstrings_property():
++    """
++    Test that the InheritDocstrings metaclass works correctly for properties
++    """
++
++    class A(object):
++        @property
++        def wiggle(self):
++            "Wiggle the thingamajig"
++            pass
++
++    class B(A, metaclass=InheritDocstrings):
++        @property
++        def wiggle(self):
++            pass
++
++    assert isinstance(B.wiggle, property)
++    assert B.wiggle.__doc__ == "Wiggle the thingamajig"
++
++
++def test_inherit_docstrings_property_fails_before_fix():
++    """
++    Test that demonstrates the bug - properties don't inherit docstrings
++    This test should fail before the fix is applied
++    """
++    
++    class A(object):
++        @property
++        def wiggle(self):
++            "Wiggle the thingamajig"
++            pass
++
++    class B(A, metaclass=InheritDocstrings):
++        @property
++        def wiggle(self):
++            pass
++
++    # This assertion will fail before the fix because properties
++    # are not handled by the current implementation
++    assert isinstance(B.wiggle, property)
++    # This is the key assertion that fails - property docstring is not inherited
++    assert B.wiggle.__doc__ == "Wiggle the thingamajig"
++
++
++def test_inherit_docstrings_property_with_existing_docstring():
++    """
++    Test that properties with existing docstrings are preserved
++    """
++    
++    class A(object):
++        @property
++        def wiggle(self):
++            "Wiggle the thingamajig"
++            pass
++
++    class B(A, metaclass=InheritDocstrings):
++        @property
++        def wiggle(self):
++            "Custom wiggle implementation"
++            pass
++
++    assert isinstance(B.wiggle, property)
++    # Should preserve the existing docstring, not inherit from parent
++    assert B.wiggle.__doc__ == "Custom wiggle implementation"
++
++
++def test_inherit_docstrings_property_setter_getter():
++    """
++    Test that property inheritance works with getter/setter properties
++    """
++    
++    class A(object):
++        @property
++        def value(self):
++            "Get the value"
++            return self._value
++            
++        @value.setter
++        def value(self, val):
++            "Set the value"
++            self._value = val
++
++    class B(A, metaclass=InheritDocstrings):
++        @property
++        def value(self):
++            # No docstring - should inherit from parent
++            return self._value * 2
++            
++        @value.setter
++        def value(self, val):
++            # No docstring - should inherit from parent
++            self._value = val
++
++    assert isinstance(B.value, property)
++    assert B.value.__doc__ == "Get the value"
++
++
++def test_inherit_docstrings_mixed_functions_and_properties():
++    """
++    Test that both functions and properties work together in inheritance
++    """
++    
++    class A(object):
++        def method(self):
++            "A method that does something"
++            pass
++            
++        @property
++        def prop(self):
++            "A property that returns something"
++            return 42
++
++    class B(A, metaclass=InheritDocstrings):
++        def method(self):
++            # No docstring - should inherit
++            pass
++            
++        @property
++        def prop(self):
++            # No docstring - should inherit
++            return 84
++
++    # Test function inheritance still works
++    assert inspect.isfunction(B.method)
++    assert B.method.__doc__ == "A method that does something"
++    
++    # Test property inheritance works
++    assert isinstance(B.prop, property)
++    assert B.prop.__doc__ == "A property that returns something"
++
++
++def test_inherit_docstrings_property_multiple_inheritance():
++    """
++    Test property docstring inheritance with multiple inheritance
++    """
++    
++    class A(object):
++        @property
++        def wiggle(self):
++            "Wiggle from A"
++            pass
++
++    class C(object):
++        @property
++        def wiggle(self):
++            "Wiggle from C"
++            pass
++
++    class B(A, C, metaclass=InheritDocstrings):
++        @property
++        def wiggle(self):
++            # Should inherit from first base class (A)
++            pass
++
++    assert isinstance(B.wiggle, property)
++    assert B.wiggle.__doc__ == "Wiggle from A"
++
++
++def test_inherit_docstrings_property_private_members():
++    """
++    Test that private properties are not affected by inheritance
++    """
++    
++    class A(object):
++        @property
++        def _private_prop(self):
++            "Private property docstring"
++            pass
++            
++        @property
++        def __very_private_prop(self):
++            "Very private property docstring"
++            pass
++
++    class B(A, metaclass=InheritDocstrings):
++        @property
++        def _private_prop(self):
++            # Should inherit because it starts with single underscore
++            pass
++            
++        @property
++        def __very_private_prop(self):
++            # Should NOT inherit because it starts with double underscore
++            pass
++
++    # Private properties with single underscore should inherit
++    assert isinstance(B._private_prop, property)
++    assert B._private_prop.__doc__ == "Private property docstring"
++    
++    # Very private properties with double underscore should not inherit
++    assert isinstance(B.__very_private_prop, property)
++    assert B.__very_private_prop.__doc__ is None
++
++
++def test_inherit_docstrings_property_edge_cases():
++    """
++    Test edge cases for property docstring inheritance
++    """
++    
++    class A(object):
++        @property
++        def empty_docstring_prop(self):
++            ""
++            pass
++            
++        @property
++        def none_docstring_prop(self):
++            pass
++
++    class B(A, metaclass=InheritDocstrings):
++        @property
++        def empty_docstring_prop(self):
++            # Should inherit empty string
++            pass
++            
++        @property
++        def none_docstring_prop(self):
++            # Should inherit None (no docstring)
++            pass
++
++    assert isinstance(B.empty_docstring_prop, property)
++    # Empty string should be inherited
++    assert B.empty_docstring_prop.__doc__ == ""
++    
++    assert isinstance(B.none_docstring_prop, property)
++    # None docstring should remain None (no inheritance happens)
++    assert B.none_docstring_prop.__doc__ is None

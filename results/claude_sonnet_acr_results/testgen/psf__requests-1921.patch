@@ -1,0 +1,6 @@
+{
+  "instance_id": "psf__requests-1921",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/psf__requests-1921/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/psf__requests-1921/psf__requests-1921.pred"
+}

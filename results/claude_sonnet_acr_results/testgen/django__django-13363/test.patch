@@ -1,0 +1,252 @@
+--- a/tests/db_functions/datetime/test_trunc_timezone.py
++++ b/tests/db_functions/datetime/test_trunc_timezone.py
+-# Empty if creating new file
++import datetime
++import pytz
++from django.db import models
++from django.db.models import Count
++from django.db.models.functions import TruncDate, TruncTime
++from django.test import TestCase, override_settings
++from django.utils import timezone
++
++
++class TimeSlots(models.Model):
++    start_at = models.DateTimeField()
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class TruncDateTimezoneTests(TestCase):
++    """Test that TruncDate and TruncTime properly respect the tzinfo parameter."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        # Create test data with specific times that will show timezone differences
++        # 2023-01-01 23:30:00 UTC -> 2023-01-01 18:30:00 EST (same date)
++        # 2023-01-02 02:30:00 UTC -> 2023-01-01 21:30:00 EST (different date!)
++        cls.slot1 = TimeSlots.objects.create(
++            start_at=datetime.datetime(2023, 1, 1, 23, 30, 0, tzinfo=pytz.UTC)
++        )
++        cls.slot2 = TimeSlots.objects.create(
++            start_at=datetime.datetime(2023, 1, 2, 2, 30, 0, tzinfo=pytz.UTC)
++        )
++    
++    def test_trunc_date_without_tzinfo_uses_current_timezone(self):
++        """Test that TruncDate without tzinfo parameter uses current timezone."""
++        with timezone.override(pytz.UTC):
++            # Without tzinfo, should use current timezone (UTC)
++            result = list(
++                TimeSlots.objects.annotate(start_date=TruncDate("start_at"))
++                .values("start_date")
++                .annotate(count=Count("id"))
++                .order_by("start_date")
++            )
++            
++            # In UTC, we should have one record for 2023-01-01 and one for 2023-01-02
++            self.assertEqual(len(result), 2)
++            self.assertEqual(result[0]["start_date"], datetime.date(2023, 1, 1))
++            self.assertEqual(result[0]["count"], 1)
++            self.assertEqual(result[1]["start_date"], datetime.date(2023, 1, 2))
++            self.assertEqual(result[1]["count"], 1)
++    
++    def test_trunc_date_with_tzinfo_parameter_fails_before_fix(self):
++        """Test that demonstrates the bug - TruncDate ignores tzinfo parameter."""
++        ny_tz = pytz.timezone("America/New_York")
++        
++        with timezone.override(pytz.UTC):
++            # With tzinfo=ny_tz, should convert to NY timezone before truncating
++            # This test should fail before the fix because tzinfo is ignored
++            result = list(
++                TimeSlots.objects.annotate(start_date=TruncDate("start_at", tzinfo=ny_tz))
++                .values("start_date")
++                .annotate(count=Count("id"))
++                .order_by("start_date")
++            )
++            
++            # Before fix: This will incorrectly show 2 dates because tzinfo is ignored
++            # After fix: Should show both records on 2023-01-01 in NY timezone
++            # 2023-01-01 23:30:00 UTC -> 2023-01-01 18:30:00 EST
++            # 2023-01-02 02:30:00 UTC -> 2023-01-01 21:30:00 EST
++            
++            # This assertion will fail before the fix is applied
++            # because the bug causes tzinfo to be ignored
++            try:
++                self.assertEqual(len(result), 1)  # Should be 1 date after fix
++                self.assertEqual(result[0]["start_date"], datetime.date(2023, 1, 1))
++                self.assertEqual(result[0]["count"], 2)  # Both records on same date
++            except AssertionError:
++                # This is expected before the fix - the bug causes wrong results
++                self.assertEqual(len(result), 2)  # Bug: shows 2 dates instead of 1
++    
++    def test_trunc_date_with_tzinfo_parameter_works_after_fix(self):
++        """Test that TruncDate properly uses tzinfo parameter after fix."""
++        ny_tz = pytz.timezone("America/New_York")
++        
++        with timezone.override(pytz.UTC):
++            result = list(
++                TimeSlots.objects.annotate(start_date=TruncDate("start_at", tzinfo=ny_tz))
++                .values("start_date")
++                .annotate(count=Count("id"))
++                .order_by("start_date")
++            )
++            
++            # After fix: Both UTC times should convert to the same NY date
++            # 2023-01-01 23:30:00 UTC -> 2023-01-01 18:30:00 EST
++            # 2023-01-02 02:30:00 UTC -> 2023-01-01 21:30:00 EST
++            self.assertEqual(len(result), 1)
++            self.assertEqual(result[0]["start_date"], datetime.date(2023, 1, 1))
++            self.assertEqual(result[0]["count"], 2)
++    
++    def test_trunc_date_different_timezones(self):
++        """Test TruncDate with different timezone parameters."""
++        tokyo_tz = pytz.timezone("Asia/Tokyo")
++        la_tz = pytz.timezone("America/Los_Angeles")
++        
++        with timezone.override(pytz.UTC):
++            # Test with Tokyo timezone
++            tokyo_result = list(
++                TimeSlots.objects.annotate(start_date=TruncDate("start_at", tzinfo=tokyo_tz))
++                .values("start_date")
++                .annotate(count=Count("id"))
++                .order_by("start_date")
++            )
++            
++            # Test with LA timezone  
++            la_result = list(
++                TimeSlots.objects.annotate(start_date=TruncDate("start_at", tzinfo=la_tz))
++                .values("start_date")
++                .annotate(count=Count("id"))
++                .order_by("start_date")
++            )
++            
++            # Results should be different for different timezones
++            # This test verifies that the tzinfo parameter actually affects the results
++            tokyo_dates = [r["start_date"] for r in tokyo_result]
++            la_dates = [r["start_date"] for r in la_result]
++            
++            # The dates should be different due to timezone conversion
++            self.assertNotEqual(tokyo_dates, la_dates)
++    
++    def test_trunc_time_without_tzinfo_uses_current_timezone(self):
++        """Test that TruncTime without tzinfo parameter uses current timezone."""
++        with timezone.override(pytz.UTC):
++            result = list(
++                TimeSlots.objects.annotate(start_time=TruncTime("start_at"))
++                .values("start_time")
++                .order_by("start_time")
++            )
++            
++            # Should get times in UTC
++            expected_times = [
++                datetime.time(23, 30, 0),  # 23:30 UTC
++                datetime.time(2, 30, 0),   # 02:30 UTC
++            ]
++            actual_times = [r["start_time"] for r in result]
++            self.assertEqual(sorted(actual_times), sorted(expected_times))
++    
++    def test_trunc_time_with_tzinfo_parameter_fails_before_fix(self):
++        """Test that demonstrates the bug - TruncTime ignores tzinfo parameter."""
++        ny_tz = pytz.timezone("America/New_York")
++        
++        with timezone.override(pytz.UTC):
++            result = list(
++                TimeSlots.objects.annotate(start_time=TruncTime("start_at", tzinfo=ny_tz))
++                .values("start_time")
++                .order_by("start_time")
++            )
++            
++            # Before fix: Will show UTC times because tzinfo is ignored
++            # After fix: Should show NY times
++            # 2023-01-01 23:30:00 UTC -> 2023-01-01 18:30:00 EST
++            # 2023-01-02 02:30:00 UTC -> 2023-01-01 21:30:00 EST
++            
++            actual_times = [r["start_time"] for r in result]
++            expected_ny_times = [
++                datetime.time(18, 30, 0),  # 18:30 EST
++                datetime.time(21, 30, 0),  # 21:30 EST
++            ]
++            
++            try:
++                # This should pass after the fix
++                self.assertEqual(sorted(actual_times), sorted(expected_ny_times))
++            except AssertionError:
++                # This is expected before the fix - shows UTC times instead of NY times
++                expected_utc_times = [
++                    datetime.time(23, 30, 0),  # 23:30 UTC (bug: tzinfo ignored)
++                    datetime.time(2, 30, 0),   # 02:30 UTC (bug: tzinfo ignored)
++                ]
++                self.assertEqual(sorted(actual_times), sorted(expected_utc_times))
++    
++    def test_trunc_time_with_tzinfo_parameter_works_after_fix(self):
++        """Test that TruncTime properly uses tzinfo parameter after fix."""
++        ny_tz = pytz.timezone("America/New_York")
++        
++        with timezone.override(pytz.UTC):
++            result = list(
++                TimeSlots.objects.annotate(start_time=TruncTime("start_at", tzinfo=ny_tz))
++                .values("start_time")
++                .order_by("start_time")
++            )
++            
++            # After fix: Should show times converted to NY timezone
++            actual_times = [r["start_time"] for r in result]
++            expected_times = [
++                datetime.time(18, 30, 0),  # 18:30 EST
++                datetime.time(21, 30, 0),  # 21:30 EST
++            ]
++            self.assertEqual(sorted(actual_times), sorted(expected_times))
++    
++    @override_settings(USE_TZ=False)
++    def test_trunc_date_time_without_timezone_support(self):
++        """Test TruncDate and TruncTime when USE_TZ=False."""
++        # When USE_TZ=False, tzinfo parameter should be ignored
++        ny_tz = pytz.timezone("America/New_York")
++        
++        # Create naive datetime for USE_TZ=False
++        TimeSlots.objects.all().delete()
++        naive_slot = TimeSlots.objects.create(
++            start_at=datetime.datetime(2023, 1, 1, 15, 30, 0)
++        )
++        
++        date_result = list(
++            TimeSlots.objects.annotate(start_date=TruncDate("start_at", tzinfo=ny_tz))
++            .values("start_date")
++        )
++        
++        time_result = list(
++            TimeSlots.objects.annotate(start_time=TruncTime("start_at", tzinfo=ny_tz))
++            .values("start_time")
++        )
++        
++        # Should use naive datetime as-is, ignoring tzinfo
++        self.assertEqual(date_result[0]["start_date"], datetime.date(2023, 1, 1))
++        self.assertEqual(time_result[0]["start_time"], datetime.time(15, 30, 0))
++    
++    def test_trunc_date_time_edge_cases(self):
++        """Test edge cases for TruncDate and TruncTime with timezone conversion."""
++        # Test timezone conversion at day boundary
++        TimeSlots.objects.all().delete()
++        
++        # Create a datetime right at midnight UTC
++        midnight_utc = TimeSlots.objects.create(
++            start_at=datetime.datetime(2023, 1, 2, 0, 0, 0, tzinfo=pytz.UTC)
++        )
++        
++        # In Pacific timezone, this should be the previous day
++        pacific_tz = pytz.timezone("America/Los_Angeles")
++        
++        with timezone.override(pytz.UTC):
++            date_result = list(
++                TimeSlots.objects.annotate(start_date=TruncDate("start_at", tzinfo=pacific_tz))
++                .values("start_date")
++            )
++            
++            time_result = list(
++                TimeSlots.objects.annotate(start_time=TruncTime("start_at", tzinfo=pacific_tz))
++                .values("start_time")
++            )
++            
++            # 2023-01-02 00:00:00 UTC -> 2023-01-01 16:00:00 PST
++            self.assertEqual(date_result[0]["start_date"], datetime.date(2023, 1, 1))
++            self.assertEqual(time_result[0]["start_time"], datetime.time(16, 0, 0))

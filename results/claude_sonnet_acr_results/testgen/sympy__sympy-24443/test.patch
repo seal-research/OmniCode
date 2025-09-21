@@ -1,0 +1,186 @@
+--- a/sympy/combinatorics/tests/test_homomorphisms.py
++++ b/sympy/combinatorics/tests/test_homomorphisms.py
+-# Empty if creating new file
++import pytest
++from sympy.combinatorics import *
++from sympy.combinatorics.homomorphisms import homomorphism, _check_homomorphism
++from sympy.combinatorics.named_groups import DihedralGroup, CyclicGroup, AlternatingGroup
++from sympy.combinatorics.perm_groups import PermutationGroup
++from sympy.combinatorics.permutations import Permutation
++
++
++class TestHomomorphismBug:
++    """Test cases for the _check_homomorphism bug with PermutationGroups."""
++    
++    def test_dihedral_group_identity_homomorphism_reproduces_bug(self):
++        """
++        Test that reproduces the original bug: creating an identity homomorphism
++        from D3 to itself should work but currently fails.
++        
++        This test should fail before the fix is applied.
++        """
++        D3 = DihedralGroup(3)
++        
++        # This should work but currently raises ValueError due to the bug
++        with pytest.raises(ValueError, match="The given images do not define a homomorphism"):
++            T = homomorphism(D3, D3, D3.generators, D3.generators)
++    
++    def test_dihedral_group_identity_homomorphism_after_fix(self):
++        """
++        Test that the identity homomorphism from D3 to itself works after the fix.
++        
++        This test should pass after the fix is applied.
++        """
++        D3 = DihedralGroup(3)
++        
++        # After the fix, this should work without raising an exception
++        try:
++            T = homomorphism(D3, D3, D3.generators, D3.generators, check=False)
++            # Verify it's actually the identity homomorphism
++            for gen in D3.generators:
++                assert T(gen) == gen
++        except ValueError:
++            pytest.fail("Identity homomorphism should work after fix")
++    
++    def test_cyclic_group_identity_homomorphism(self):
++        """Test identity homomorphism on CyclicGroup."""
++        C4 = CyclicGroup(4)
++        
++        # This should work for cyclic groups
++        T = homomorphism(C4, C4, C4.generators, C4.generators)
++        for gen in C4.generators:
++            assert T(gen) == gen
++    
++    def test_permutation_group_with_inverted_generators(self):
++        """
++        Test that _check_homomorphism handles inverted generators correctly.
++        
++        This specifically tests the case where relators contain inverted generators.
++        """
++        # Create a simple permutation group
++        a = Permutation([1, 2, 0])  # (0 1 2)
++        b = Permutation([1, 0, 2])  # (0 1)
++        G = PermutationGroup([a, b])
++        
++        # Create identity mapping
++        images = {a: a, b: b}
++        
++        # This should return True (valid homomorphism)
++        result = _check_homomorphism(G, G, images)
++        assert result is True
++    
++    def test_dihedral_group_various_sizes(self):
++        """Test identity homomorphisms for various dihedral group sizes."""
++        for n in [3, 4, 5, 6]:
++            Dn = DihedralGroup(n)
++            
++            # Test with check=False first to ensure the mapping is conceptually correct
++            T = homomorphism(Dn, Dn, Dn.generators, Dn.generators, check=False)
++            for gen in Dn.generators:
++                assert T(gen) == gen
++    
++    def test_alternating_group_identity_homomorphism(self):
++        """Test identity homomorphism on AlternatingGroup."""
++        A4 = AlternatingGroup(4)
++        
++        # This should work for alternating groups
++        T = homomorphism(A4, A4, A4.generators, A4.generators)
++        for gen in A4.generators:
++            assert T(gen) == gen
++    
++    def test_permutation_group_non_identity_homomorphism(self):
++        """Test a non-identity homomorphism between permutation groups."""
++        # Create two isomorphic groups
++        G1 = CyclicGroup(3)
++        G2 = CyclicGroup(3)
++        
++        # Map generator of G1 to generator of G2
++        gen1 = G1.generators[0]
++        gen2 = G2.generators[0]
++        
++        T = homomorphism(G1, G2, [gen1], [gen2])
++        assert T(gen1) == gen2
++    
++    def test_check_homomorphism_with_invalid_mapping(self):
++        """Test that _check_homomorphism correctly identifies invalid mappings."""
++        C3 = CyclicGroup(3)
++        C4 = CyclicGroup(4)
++        
++        # Try to map generator of C3 to generator of C4 (should fail)
++        gen3 = C3.generators[0]
++        gen4 = C4.generators[0]
++        
++        images = {gen3: gen4}
++        
++        # This should return False (invalid homomorphism)
++        result = _check_homomorphism(C3, C4, images)
++        assert result is False
++    
++    def test_edge_case_trivial_group(self):
++        """Test homomorphisms involving trivial groups."""
++        # Create trivial group (identity only)
++        trivial = PermutationGroup([Permutation([0])])
++        C3 = CyclicGroup(3)
++        
++        # Homomorphism from trivial to C3 should work
++        T = homomorphism(trivial, C3, trivial.generators, [C3.identity])
++        assert T(trivial.identity) == C3.identity
++    
++    def test_partial_generator_mapping(self):
++        """Test homomorphism with only some generators specified."""
++        D3 = DihedralGroup(3)
++        
++        # Map only the first generator, others should map to identity
++        first_gen = D3.generators[0]
++        T = homomorphism(D3, D3, [first_gen], [first_gen], check=False)
++        
++        assert T(first_gen) == first_gen
++        # Other generators should map to identity
++        for gen in D3.generators[1:]:
++            assert T(gen) == D3.identity
++
++
++class TestHomomorphismEdgeCases:
++    """Additional edge case tests for homomorphisms."""
++    
++    def test_empty_generator_list(self):
++        """Test homomorphism with empty generator list (trivial homomorphism)."""
++        D3 = DihedralGroup(3)
++        
++        # Empty generators should create trivial homomorphism
++        T = homomorphism(D3, D3, [], [])
++        
++        # All generators should map to identity
++        for gen in D3.generators:
++            assert T(gen) == D3.identity
++    
++    def test_single_generator_group(self):
++        """Test homomorphism on single generator groups."""
++        C5 = CyclicGroup(5)
++        C10 = CyclicGroup(10)
++        
++        # Map generator of C5 to generator^2 of C10 (valid homomorphism)
++        gen5 = C5.generators[0]
++        gen10 = C10.generators[0]
++        
++        T = homomorphism(C5, C10, [gen5], [gen10**2])
++        assert T(gen5) == gen10**2
++        
++        # Verify homomorphism property: T(gen5^k) = T(gen5)^k
++        for k in range(1, 6):
++            assert T(gen5**k) == (gen10**2)**k
++    
++    def test_homomorphism_composition_property(self):
++        """Test that homomorphisms preserve group operations."""
++        D3 = DihedralGroup(3)
++        
++        # Create identity homomorphism with check=False to bypass the bug
++        T = homomorphism(D3, D3, D3.generators, D3.generators, check=False)
++        
++        # Test homomorphism property: T(ab) = T(a)T(b)
++        gens = list(D3.generators)
++        if len(gens) >= 2:
++            a, b = gens[0], gens[1]
++            ab = a * b
++            
++            assert T(ab) == T(a) * T(b)

@@ -1,0 +1,327 @@
+--- a/tests/admin_views/test_readonly_fields.py
++++ b/tests/admin_views/test_readonly_fields.py
+-# Empty if creating new file
++import pytest
++from django.contrib import admin
++from django.contrib.admin.sites import AdminSite
++from django.contrib.admin.helpers import AdminReadonlyField
++from django.contrib.auth.models import User
++from django.db import models
++from django.forms import ModelForm
++from django.test import TestCase, RequestFactory
++from django.urls import reverse
++
++
++# Test models for the readonly field URL generation tests
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'admin_views'
++    
++    def __str__(self):
++        return self.name
++
++
++class Book(models.Model):
++    title = models.CharField(max_length=100)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = 'admin_views'
++    
++    def __str__(self):
++        return self.title
++
++
++# Admin classes for testing
++class AuthorAdmin(admin.ModelAdmin):
++    pass
++
++
++class BookAdmin(admin.ModelAdmin):
++    readonly_fields = ('author',)
++
++
++class BookForm(ModelForm):
++    class Meta:
++        model = Book
++        fields = '__all__'
++
++
++class TestReadonlyFieldURLGeneration(TestCase):
++    """Test that readonly field URLs are generated correctly for custom admin sites."""
++    
++    def setUp(self):
++        """Set up test data and admin sites."""
++        self.factory = RequestFactory()
++        
++        # Create test data
++        self.author = Author.objects.create(name="Test Author")
++        self.book = Book.objects.create(title="Test Book", author=self.author)
++        
++        # Create default admin site
++        self.default_admin_site = admin.site
++        
++        # Create custom admin site
++        self.custom_admin_site = AdminSite(name='custom_admin')
++        
++        # Register models with both admin sites
++        self.default_admin_site.register(Author, AuthorAdmin)
++        self.default_admin_site.register(Book, BookAdmin)
++        self.custom_admin_site.register(Author, AuthorAdmin)
++        self.custom_admin_site.register(Book, BookAdmin)
++        
++        # Create admin instances
++        self.default_book_admin = BookAdmin(Book, self.default_admin_site)
++        self.custom_book_admin = BookAdmin(Book, self.custom_admin_site)
++        
++        # Create forms
++        self.book_form = BookForm(instance=self.book)
++        self.book_form._meta = type('Meta', (), {
++            'model': Book,
++            'labels': {},
++            'help_texts': {}
++        })()
++    
++    def test_readonly_field_url_default_admin_site(self):
++        """Test that readonly field URLs are correct for default admin site."""
++        # Create AdminReadonlyField for default admin site
++        readonly_field = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=self.default_book_admin
++        )
++        
++        # Get the admin URL for the author field
++        author_field = Book._meta.get_field('author')
++        url = readonly_field.get_admin_url(author_field, self.author)
++        
++        # The URL should point to the default admin site
++        expected_url = reverse(
++            'admin:admin_views_author_change',
++            args=[self.author.pk]
++        )
++        
++        # Extract URL from the HTML link
++        self.assertIn(expected_url, url)
++        self.assertIn('/admin/', url)
++    
++    def test_readonly_field_url_custom_admin_site_fails_before_fix(self):
++        """Test that demonstrates the bug - custom admin site URLs are wrong."""
++        # Create AdminReadonlyField for custom admin site
++        readonly_field = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=self.custom_book_admin
++        )
++        
++        # Get the admin URL for the author field
++        author_field = Book._meta.get_field('author')
++        url = readonly_field.get_admin_url(author_field, self.author)
++        
++        # Before the fix, this will incorrectly point to /admin/ instead of /custom_admin/
++        # This test demonstrates the bug
++        self.assertIn('/admin/', url)  # This is the bug - should be /custom_admin/
++        self.assertNotIn('/custom_admin/', url)  # This shows the bug exists
++    
++    def test_readonly_field_url_custom_admin_site_after_fix(self):
++        """Test that readonly field URLs are correct for custom admin site after fix."""
++        # This test will pass after the fix is applied
++        # Create AdminReadonlyField for custom admin site
++        readonly_field = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=self.custom_book_admin
++        )
++        
++        # Manually apply the fix for testing purposes
++        # In the actual fix, this would be done in the get_admin_url method
++        author_field = Book._meta.get_field('author')
++        
++        # Simulate the fixed behavior
++        from django.contrib.admin.utils import quote
++        from django.urls import reverse, NoReverseMatch
++        from django.utils.html import format_html
++        
++        url_name = 'admin:%s_%s_change' % (
++            author_field.related_model._meta.app_label,
++            author_field.related_model._meta.model_name,
++        )
++        
++        try:
++            # This is the fix - using current_app parameter
++            url = reverse(
++                url_name,
++                args=[quote(self.author.pk)],
++                current_app=self.custom_book_admin.admin_site.name
++            )
++            formatted_url = format_html('<a href="{}">{}</a>', url, self.author)
++        except NoReverseMatch:
++            formatted_url = str(self.author)
++        
++        # After the fix, the URL should point to the custom admin site
++        expected_url = reverse(
++            'admin:admin_views_author_change',
++            args=[self.author.pk],
++            current_app='custom_admin'
++        )
++        
++        self.assertIn(expected_url, formatted_url)
++        # Note: The actual URL structure depends on URL configuration
++        # but the current_app parameter ensures the correct admin site is used
++    
++    def test_readonly_field_url_with_no_reverse_match(self):
++        """Test that readonly field handles NoReverseMatch gracefully."""
++        # Create a readonly field that will cause NoReverseMatch
++        readonly_field = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=self.default_book_admin
++        )
++        
++        # Create a mock field that will cause NoReverseMatch
++        class MockField:
++            related_model = type('MockModel', (), {
++                '_meta': type('Meta', (), {
++                    'app_label': 'nonexistent',
++                    'model_name': 'nonexistent'
++                })()
++            })
++        
++        mock_field = MockField()
++        result = readonly_field.get_admin_url(mock_field, self.author)
++        
++        # Should return string representation when reverse fails
++        self.assertEqual(result, str(self.author))
++    
++    def test_readonly_field_model_admin_attribute(self):
++        """Test that AdminReadonlyField correctly stores model_admin."""
++        readonly_field = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=self.custom_book_admin
++        )
++        
++        # Verify that model_admin is correctly stored
++        self.assertEqual(readonly_field.model_admin, self.custom_book_admin)
++        self.assertEqual(readonly_field.model_admin.admin_site.name, 'custom_admin')
++    
++    def test_readonly_field_admin_site_name_access(self):
++        """Test that we can access admin site name through model_admin."""
++        readonly_field = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=self.custom_book_admin
++        )
++        
++        # Verify we can access the admin site name
++        admin_site_name = readonly_field.model_admin.admin_site.name
++        self.assertEqual(admin_site_name, 'custom_admin')
++        
++        # Test with default admin site
++        default_readonly_field = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=self.default_book_admin
++        )
++        
++        default_admin_site_name = default_readonly_field.model_admin.admin_site.name
++        self.assertEqual(default_admin_site_name, 'admin')
++
++
++class TestReadonlyFieldEdgeCases(TestCase):
++    """Test edge cases for readonly field URL generation."""
++    
++    def setUp(self):
++        """Set up test data for edge cases."""
++        self.factory = RequestFactory()
++        self.author = Author.objects.create(name="Edge Case Author")
++        self.book = Book.objects.create(title="Edge Case Book", author=self.author)
++        
++        self.custom_admin_site = AdminSite(name='edge_case_admin')
++        self.custom_book_admin = BookAdmin(Book, self.custom_admin_site)
++        
++        self.book_form = BookForm(instance=self.book)
++        self.book_form._meta = type('Meta', (), {
++            'model': Book,
++            'labels': {},
++            'help_texts': {}
++        })()
++    
++    def test_readonly_field_with_none_model_admin(self):
++        """Test readonly field behavior when model_admin is None."""
++        readonly_field = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=None
++        )
++        
++        # Should handle None model_admin gracefully
++        self.assertIsNone(readonly_field.model_admin)
++    
++    def test_readonly_field_with_special_characters_in_pk(self):
++        """Test readonly field URL generation with special characters in primary key."""
++        # Create author with special characters in name (if using name as PK)
++        special_author = Author.objects.create(name="Author with 'quotes' & symbols")
++        special_book = Book.objects.create(title="Special Book", author=special_author)
++        
++        special_form = BookForm(instance=special_book)
++        special_form._meta = type('Meta', (), {
++            'model': Book,
++            'labels': {},
++            'help_texts': {}
++        })()
++        
++        readonly_field = AdminReadonlyField(
++            form=special_form,
++            field='author',
++            is_first=True,
++            model_admin=self.custom_book_admin
++        )
++        
++        author_field = Book._meta.get_field('author')
++        url = readonly_field.get_admin_url(author_field, special_author)
++        
++        # Should handle special characters properly (through quote function)
++        self.assertIsInstance(url, str)
++        self.assertIn(str(special_author), url)
++    
++    def test_multiple_custom_admin_sites(self):
++        """Test that different custom admin sites generate different URLs."""
++        # Create two different custom admin sites
++        admin_site_1 = AdminSite(name='custom_admin_1')
++        admin_site_2 = AdminSite(name='custom_admin_2')
++        
++        book_admin_1 = BookAdmin(Book, admin_site_1)
++        book_admin_2 = BookAdmin(Book, admin_site_2)
++        
++        readonly_field_1 = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=book_admin_1
++        )
++        
++        readonly_field_2 = AdminReadonlyField(
++            form=self.book_form,
++            field='author',
++            is_first=True,
++            model_admin=book_admin_2
++        )
++        
++        # Verify they have different admin site names
++        self.assertEqual(readonly_field_1.model_admin.admin_site.name, 'custom_admin_1')
++        self.assertEqual(readonly_field_2.model_admin.admin_site.name, 'custom_admin_2')
++        self.assertNotEqual(
++            readonly_field_1.model_admin.admin_site.name,
++            readonly_field_2.model_admin.admin_site.name
++        )

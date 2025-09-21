@@ -1,0 +1,231 @@
+--- a/tests/test_util_inspect.py
++++ b/tests/test_util_inspect.py
++import pytest
++import inspect
++from sphinx.util.inspect import object_description, stringify_signature
++
++
++class TestObjectDescription:
++    """Test cases for object_description function handling of tuple defaults."""
++    
++    def test_object_description_tuple_simple(self):
++        """Test that object_description preserves parentheses for simple tuples."""
++        # This test should fail before the fix is applied
++        result = object_description((1, 2, 3))
++        assert result == "(1, 2, 3)", f"Expected '(1, 2, 3)', got '{result}'"
++    
++    def test_object_description_tuple_single_element(self):
++        """Test that object_description handles single-element tuples correctly."""
++        result = object_description((1,))
++        assert result == "(1,)", f"Expected '(1,)', got '{result}'"
++    
++    def test_object_description_tuple_empty(self):
++        """Test that object_description handles empty tuples correctly."""
++        result = object_description(())
++        assert result == "()", f"Expected '()', got '{result}'"
++    
++    def test_object_description_tuple_nested(self):
++        """Test that object_description handles nested tuples correctly."""
++        result = object_description((1, (2, 3), 4))
++        assert result == "(1, (2, 3), 4)", f"Expected '(1, (2, 3), 4)', got '{result}'"
++    
++    def test_object_description_tuple_mixed_types(self):
++        """Test that object_description handles tuples with mixed types."""
++        result = object_description((1, 'hello', 3.14))
++        assert result == "(1, 'hello', 3.14)", f"Expected \"(1, 'hello', 3.14)\", got '{result}'"
++    
++    def test_object_description_preserves_other_types(self):
++        """Test that object_description still works correctly for other types."""
++        # Test dict
++        result = object_description({'a': 1, 'b': 2})
++        assert result == "{'a': 1, 'b': 2}"
++        
++        # Test set
++        result = object_description({1, 2, 3})
++        assert result == "{1, 2, 3}"
++        
++        # Test frozenset
++        result = object_description(frozenset([1, 2, 3]))
++        assert result == "frozenset({1, 2, 3})"
++        
++        # Test string
++        result = object_description("hello")
++        assert result == "'hello'"
++        
++        # Test int
++        result = object_description(42)
++        assert result == "42"
++
++
++class TestStringifySignature:
++    """Test cases for stringify_signature function with tuple default values."""
++    
++    def test_stringify_signature_tuple_default_reproduces_bug(self):
++        """Test that reproduces the original bug with tuple defaults."""
++        def sample_function(lines, color=(1, 1, 1), width=5, label=None, name=None):
++            pass
++        
++        sig = inspect.signature(sample_function)
++        result = stringify_signature(sig)
++        
++        # This test should fail before the fix, showing the bug
++        # The bug would show: color=1, 1, 1 instead of color=(1, 1, 1)
++        assert "color=(1, 1, 1)" in result, f"Expected 'color=(1, 1, 1)' in signature, got: {result}"
++        assert "color=1, 1, 1" not in result, f"Bug detected: found 'color=1, 1, 1' in signature: {result}"
++    
++    def test_stringify_signature_multiple_tuple_defaults(self):
++        """Test stringify_signature with multiple tuple default parameters."""
++        def sample_function(pos=(0, 0), size=(100, 100), color=(255, 255, 255)):
++            pass
++        
++        sig = inspect.signature(sample_function)
++        result = stringify_signature(sig)
++        
++        assert "pos=(0, 0)" in result
++        assert "size=(100, 100)" in result
++        assert "color=(255, 255, 255)" in result
++    
++    def test_stringify_signature_mixed_defaults(self):
++        """Test stringify_signature with mixed default parameter types."""
++        def sample_function(name="test", coords=(1, 2), count=5, flags=None):
++            pass
++        
++        sig = inspect.signature(sample_function)
++        result = stringify_signature(sig)
++        
++        assert "name='test'" in result
++        assert "coords=(1, 2)" in result
++        assert "count=5" in result
++        assert "flags=None" in result
++    
++    def test_stringify_signature_nested_tuple_default(self):
++        """Test stringify_signature with nested tuple defaults."""
++        def sample_function(data=((1, 2), (3, 4))):
++            pass
++        
++        sig = inspect.signature(sig)
++        result = stringify_signature(sig)
++        
++        assert "data=((1, 2), (3, 4))" in result
++    
++    def test_stringify_signature_empty_tuple_default(self):
++        """Test stringify_signature with empty tuple default."""
++        def sample_function(items=()):
++            pass
++        
++        sig = inspect.signature(sample_function)
++        result = stringify_signature(sig)
++        
++        assert "items=()" in result
++    
++    def test_stringify_signature_single_element_tuple_default(self):
++        """Test stringify_signature with single-element tuple default."""
++        def sample_function(value=(42,)):
++            pass
++        
++        sig = inspect.signature(sample_function)
++        result = stringify_signature(sig)
++        
++        assert "value=(42,)" in result
++
++
++class TestRegressionCases:
++    """Regression test cases based on the original PyVista issue."""
++    
++    def test_add_lines_signature_format(self):
++        """Test the specific case mentioned in the bug report."""
++        def add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None):
++            """Add lines to the plot."""
++            pass
++        
++        sig = inspect.signature(add_lines)
++        result = stringify_signature(sig)
++        
++        # The expected format should be: add_lines(self, lines, color=(1, 1, 1), width=5, label=None, name=None)
++        # Not: add_lines(self, lines, color=1, 1, 1, width=5, label=None, name=None)
++        
++        assert "color=(1, 1, 1)" in result, f"Expected 'color=(1, 1, 1)' in signature, got: {result}"
++        assert "width=5" in result
++        assert "label=None" in result
++        assert "name=None" in result
++        
++        # Ensure the bug pattern is not present
++        assert "color=1, 1, 1," not in result, f"Bug pattern detected in: {result}"
++    
++    def test_various_tuple_patterns(self):
++        """Test various tuple patterns that might appear in real code."""
++        def test_func(
++            rgb=(255, 255, 255),
++            position=(0.0, 0.0, 0.0),
++            size=(1, 1),
++            matrix=((1, 0), (0, 1)),
++            empty=(),
++            single=(1,)
++        ):
++            pass
++        
++        sig = inspect.signature(test_func)
++        result = stringify_signature(sig)
++        
++        expected_patterns = [
++            "rgb=(255, 255, 255)",
++            "position=(0.0, 0.0, 0.0)",
++            "size=(1, 1)",
++            "matrix=((1, 0), (0, 1))",
++            "empty=()",
++            "single=(1,)"
++        ]
++        
++        for pattern in expected_patterns:
++            assert pattern in result, f"Expected '{pattern}' in signature, got: {result}"
++
++
++class TestEdgeCases:
++    """Test edge cases and boundary conditions."""
++    
++    def test_object_description_tuple_with_special_values(self):
++        """Test object_description with tuples containing special values."""
++        # Test with None
++        result = object_description((None, 1, None))
++        assert result == "(None, 1, None)"
++        
++        # Test with boolean values
++        result = object_description((True, False))
++        assert result == "(True, False)"
++        
++        # Test with float values
++        result = object_description((1.5, 2.7, 3.14))
++        assert result == "(1.5, 2.7, 3.14)"
++    
++    def test_object_description_tuple_with_complex_objects(self):
++        """Test object_description with tuples containing complex objects."""
++        # Test with strings containing special characters
++        result = object_description(("hello", "world's", 'test"quote'))
++        expected = """('hello', "world's", 'test"quote')"""
++        assert result == expected
++    
++    def test_stringify_signature_with_annotations(self):
++        """Test stringify_signature with type annotations and tuple defaults."""
++        def annotated_func(coords: tuple = (0, 0), name: str = "test") -> None:
++            pass
++        
++        sig = inspect.signature(annotated_func)
++        result = stringify_signature(sig, show_annotation=True)
++        
++        assert "coords: tuple = (0, 0)" in result
++        assert "name: str = 'test'" in result
++        assert "-> None" in result
++    
++    def test_stringify_signature_no_annotations(self):
++        """Test stringify_signature with annotations disabled."""
++        def annotated_func(coords: tuple = (0, 0), name: str = "test") -> None:
++            pass
++        
++        sig = inspect.signature(annotated_func)
++        result = stringify_signature(sig, show_annotation=False)
++        
++        assert "coords=(0, 0)" in result
++        assert "name='test'" in result
++        assert "-> None" not in result
++        assert ": tuple" not in result
++        assert ": str" not in result

@@ -1,0 +1,233 @@
+--- a/tests/staticfiles_tests/test_storage.py
++++ b/tests/staticfiles_tests/test_storage.py
+-# This will be added to the existing test file
++import os
++import tempfile
++from collections import OrderedDict
++from unittest import mock
++
++import pytest
++from django.contrib.staticfiles.storage import HashedFilesMixin, ManifestStaticFilesStorage
++from django.core.files.base import ContentFile
++from django.core.files.storage import FileSystemStorage
++from django.test import override_settings
++
++
++class TestHashedFilesMixin:
++    """Test suite for HashedFilesMixin post_process duplicate yielding bug."""
++
++    def setup_method(self):
++        """Set up test environment with temporary storage."""
++        self.temp_dir = tempfile.mkdtemp()
++        self.storage = TestableHashedFilesStorage(location=self.temp_dir)
++
++    def teardown_method(self):
++        """Clean up temporary files."""
++        import shutil
++        shutil.rmtree(self.temp_dir, ignore_errors=True)
++
++    def test_post_process_yields_each_file_only_once_simple_case(self):
++        """Test that post_process yields each file only once for simple files."""
++        # Create a simple CSS file that doesn't reference other files
++        css_content = "body { color: red; }"
++        self.storage.save('simple.css', ContentFile(css_content.encode()))
++        
++        paths = OrderedDict([
++            ('simple.css', (self.storage, 'simple.css'))
++        ])
++        
++        # Collect all yielded results
++        results = list(self.storage.post_process(paths))
++        
++        # Should yield exactly one result for the file
++        assert len(results) == 1
++        name, hashed_name, processed = results[0]
++        assert name == 'simple.css'
++        assert processed is True
++        assert hashed_name != 'simple.css'  # Should be hashed
++
++    def test_post_process_yields_each_file_only_once_with_references(self):
++        """Test that files with references to other files are yielded only once."""
++        # Create CSS files where one references another
++        base_css = "body { background: url('image.png'); }"
++        referenced_css = ".class { color: blue; }"
++        
++        self.storage.save('base.css', ContentFile(base_css.encode()))
++        self.storage.save('referenced.css', ContentFile(referenced_css.encode()))
++        
++        paths = OrderedDict([
++            ('base.css', (self.storage, 'base.css')),
++            ('referenced.css', (self.storage, 'referenced.css'))
++        ])
++        
++        # Collect all yielded results
++        results = list(self.storage.post_process(paths))
++        
++        # Should yield exactly two results, one for each file
++        assert len(results) == 2
++        
++        # Check that each original file appears exactly once
++        yielded_names = [result[0] for result in results]
++        assert yielded_names.count('base.css') == 1
++        assert yielded_names.count('referenced.css') == 1
++
++    def test_post_process_no_duplicate_yields_with_multiple_passes(self):
++        """Test that multiple processing passes don't cause duplicate yields."""
++        # Create CSS files that will require multiple passes due to cross-references
++        css1_content = "body { background: url('style2.css'); }"
++        css2_content = ".class { background: url('style1.css'); }"
++        
++        self.storage.save('style1.css', ContentFile(css1_content.encode()))
++        self.storage.save('style2.css', ContentFile(css2_content.encode()))
++        
++        paths = OrderedDict([
++            ('style1.css', (self.storage, 'style1.css')),
++            ('style2.css', (self.storage, 'style2.css'))
++        ])
++        
++        # Mock _post_process to track how many times it's called
++        original_post_process = self.storage._post_process
++        call_count = 0
++        
++        def counting_post_process(*args, **kwargs):
++            nonlocal call_count
++            call_count += 1
++            return original_post_process(*args, **kwargs)
++        
++        with mock.patch.object(self.storage, '_post_process', side_effect=counting_post_process):
++            results = list(self.storage.post_process(paths))
++        
++        # Should yield exactly two results despite multiple internal passes
++        assert len(results) == 2
++        
++        # Verify that _post_process was called multiple times (indicating multiple passes)
++        assert call_count > 2  # First pass + additional passes for adjustable files
++        
++        # Check that each file appears exactly once in results
++        yielded_names = [result[0] for result in results]
++        assert yielded_names.count('style1.css') == 1
++        assert yielded_names.count('style2.css') == 1
++
++    def test_post_process_yields_final_hashed_names(self):
++        """Test that post_process yields the final hashed names after all processing."""
++        # Create a CSS file that references another file
++        css_content = "body { background: url('image.png'); }"
++        self.storage.save('main.css', ContentFile(css_content.encode()))
++        
++        # Create the referenced file
++        img_content = b"fake image content"
++        self.storage.save('image.png', ContentFile(img_content))
++        
++        paths = OrderedDict([
++            ('main.css', (self.storage, 'main.css')),
++            ('image.png', (self.storage, 'image.png'))
++        ])
++        
++        results = list(self.storage.post_process(paths))
++        
++        # Should have results for both files
++        assert len(results) == 2
++        
++        # Find the CSS file result
++        css_result = next(r for r in results if r[0] == 'main.css')
++        name, hashed_name, processed = css_result
++        
++        # The CSS file should be processed and have a hashed name
++        assert processed is True
++        assert hashed_name != 'main.css'
++        assert hashed_name.startswith('main.')
++        assert hashed_name.endswith('.css')
++
++    def test_post_process_preserves_processing_statistics(self):
++        """Test that the number of yielded results matches actual processed files."""
++        # Create multiple files of different types
++        files_content = {
++            'style.css': "body { color: red; }",
++            'script.js': "console.log('hello');",
++            'image.png': b"fake image data",
++            'adjustable.css': "body { background: url('image.png'); }"
++        }
++        
++        paths = OrderedDict()
++        for filename, content in files_content.items():
++            if isinstance(content, str):
++                content = content.encode()
++            self.storage.save(filename, ContentFile(content))
++            paths[filename] = (self.storage, filename)
++        
++        results = list(self.storage.post_process(paths))
++        
++        # Should yield exactly as many results as input files
++        assert len(results) == len(files_content)
++        
++        # Each original file should appear exactly once
++        yielded_names = [result[0] for result in results]
++        for filename in files_content.keys():
++            assert yielded_names.count(filename) == 1
++
++    def test_post_process_with_manifest_storage_no_duplicates(self):
++        """Test that ManifestStaticFilesStorage doesn't yield duplicates."""
++        manifest_storage = TestableManifestStaticFilesStorage(location=self.temp_dir)
++        
++        # Create test files
++        css_content = "body { background: url('image.png'); }"
++        manifest_storage.save('test.css', ContentFile(css_content.encode()))
++        manifest_storage.save('image.png', ContentFile(b"fake image"))
++        
++        paths = OrderedDict([
++            ('test.css', (manifest_storage, 'test.css')),
++            ('image.png', (manifest_storage, 'image.png'))
++        ])
++        
++        results = list(manifest_storage.post_process(paths))
++        
++        # Should yield exactly two results
++        assert len(results) == 2
++        
++        # Each file should appear exactly once
++        yielded_names = [result[0] for result in results]
++        assert yielded_names.count('test.css') == 1
++        assert yielded_names.count('image.png') == 1
++
++    def test_post_process_error_handling_no_duplicate_yields(self):
++        """Test that error conditions don't cause duplicate yields."""
++        # Create a CSS file with an invalid reference
++        css_content = "body { background: url('nonexistent.png'); }"
++        self.storage.save('error.css', ContentFile(css_content.encode()))
++        
++        paths = OrderedDict([
++            ('error.css', (self.storage, 'error.css'))
++        ])
++        
++        # Process and collect results (some may be errors)
++        results = []
++        for result in self.storage.post_process(paths):
++            results.append(result)
++        
++        # Should not yield the same file multiple times even with errors
++        yielded_names = [result[0] for result in results if result[1] is not None]
++        if yielded_names:  # If any successful results
++            assert yielded_names.count('error.css') <= 1
++
++    def test_post_process_dry_run_behavior(self):
++        """Test that dry_run mode doesn't yield anything."""
++        css_content = "body { color: red; }"
++        self.storage.save('dry.css', ContentFile(css_content.encode()))
++        
++        paths = OrderedDict([
++            ('dry.css', (self.storage, 'dry.css'))
++        ])
++        
++        # Dry run should not yield anything
++        results = list(self.storage.post_process(paths, dry_run=True))
++        assert len(results) == 0
++
++
++class TestableHashedFilesStorage(HashedFilesMixin, FileSystemStorage):
++    """Test storage class that combines HashedFilesMixin with FileSystemStorage."""
++    pass
++
++
++class TestableManifestStaticFilesStorage(ManifestStaticFilesStorage):
++    """Test storage class for ManifestStaticFilesStorage."""
++    pass

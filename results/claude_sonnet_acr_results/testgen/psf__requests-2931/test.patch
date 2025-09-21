@@ -1,0 +1,189 @@
+--- a/tests/test_binary_payload.py
++++ b/tests/test_binary_payload.py
+-# Empty if creating new file
++# -*- coding: utf-8 -*-
++import pytest
++import requests
++from requests.models import RequestEncodingMixin
++from requests.utils import to_native_string
++
++
++class TestBinaryPayloadHandling:
++    """Test suite for binary payload handling in requests."""
++    
++    def test_binary_payload_put_request(self):
++        """Test that PUT requests with binary payload work correctly.
++        
++        This test reproduces the bug described in the issue where
++        requests.put() with UTF-8 encoded binary data fails.
++        """
++        # This should not raise an exception
++        binary_data = u"ööö".encode("utf-8")
++        
++        # Mock the actual HTTP request to avoid network dependency
++        import requests.sessions
++        original_send = requests.sessions.Session.send
++        
++        def mock_send(self, request, **kwargs):
++            # Verify the request was prepared correctly
++            assert request.body == binary_data
++            # Return a mock response
++            response = requests.Response()
++            response.status_code = 200
++            response._content = b'{"success": true}'
++            return response
++        
++        requests.sessions.Session.send = mock_send
++        
++        try:
++            response = requests.put("http://httpbin.org/put", data=binary_data)
++            assert response.status_code == 200
++        finally:
++            # Restore original method
++            requests.sessions.Session.send = original_send
++    
++    def test_binary_payload_post_request(self):
++        """Test that POST requests with binary payload work correctly."""
++        binary_data = u"ööö".encode("utf-8")
++        
++        import requests.sessions
++        original_send = requests.sessions.Session.send
++        
++        def mock_send(self, request, **kwargs):
++            assert request.body == binary_data
++            response = requests.Response()
++            response.status_code = 200
++            response._content = b'{"success": true}'
++            return response
++        
++        requests.sessions.Session.send = mock_send
++        
++        try:
++            response = requests.post("http://httpbin.org/post", data=binary_data)
++            assert response.status_code == 200
++        finally:
++            requests.sessions.Session.send = original_send
++    
++    def test_encode_params_with_binary_data(self):
++        """Test _encode_params method directly with binary data.
++        
++        This test verifies that the _encode_params method handles
++        binary data correctly without calling to_native_string on bytes.
++        """
++        binary_data = u"ööö".encode("utf-8")
++        
++        # Test the method directly
++        result = RequestEncodingMixin._encode_params(binary_data)
++        
++        # Binary data should be returned as-is
++        assert result == binary_data
++        assert isinstance(result, bytes)
++    
++    def test_encode_params_with_string_data(self):
++        """Test _encode_params method with string data to ensure existing functionality."""
++        string_data = u"ööö"
++        
++        result = RequestEncodingMixin._encode_params(string_data)
++        
++        # String data should be converted to native string
++        expected = to_native_string(string_data)
++        assert result == expected
++    
++    def test_encode_params_with_ascii_bytes(self):
++        """Test _encode_params method with ASCII bytes."""
++        ascii_bytes = b"hello"
++        
++        result = RequestEncodingMixin._encode_params(ascii_bytes)
++        
++        # ASCII bytes should be returned as-is
++        assert result == ascii_bytes
++        assert isinstance(result, bytes)
++    
++    def test_encode_params_with_dict_data(self):
++        """Test _encode_params method with dictionary data to ensure existing functionality."""
++        dict_data = {"key": "value", "unicode": u"ööö"}
++        
++        result = RequestEncodingMixin._encode_params(dict_data)
++        
++        # Dictionary should be URL encoded
++        assert isinstance(result, str)
++        assert "key=value" in result
++        assert "unicode=" in result
++    
++    def test_encode_params_with_file_like_object(self):
++        """Test _encode_params method with file-like object."""
++        from io import BytesIO
++        file_like = BytesIO(b"file content")
++        
++        result = RequestEncodingMixin._encode_params(file_like)
++        
++        # File-like objects should be returned as-is
++        assert result is file_like
++    
++    def test_encode_params_with_none(self):
++        """Test _encode_params method with None."""
++        result = RequestEncodingMixin._encode_params(None)
++        
++        # None should be returned as-is
++        assert result is None
++    
++    def test_to_native_string_fails_with_bytes(self):
++        """Test that to_native_string fails when called with bytes.
++        
++        This test demonstrates why the bug occurs - to_native_string
++        expects string input, not bytes.
++        """
++        binary_data = u"ööö".encode("utf-8")
++        
++        # This should raise an exception because to_native_string
++        # tries to decode bytes with ASCII encoding by default
++        with pytest.raises((UnicodeDecodeError, AttributeError)):
++            to_native_string(binary_data)
++    
++    def test_various_binary_encodings(self):
++        """Test that various binary encodings work correctly."""
++        test_cases = [
++            u"ööö".encode("utf-8"),
++            u"ööö".encode("latin-1"),
++            u"こんにちは".encode("utf-8"),
++            b"\x00\x01\x02\x03",  # Raw bytes
++        ]
++        
++        for binary_data in test_cases:
++            result = RequestEncodingMixin._encode_params(binary_data)
++            assert result == binary_data
++            assert isinstance(result, bytes)
++    
++    def test_mixed_string_and_binary_in_session(self):
++        """Test that both string and binary data work in the same session."""
++        import requests.sessions
++        original_send = requests.sessions.Session.send
++        
++        captured_bodies = []
++        
++        def mock_send(self, request, **kwargs):
++            captured_bodies.append(request.body)
++            response = requests.Response()
++            response.status_code = 200
++            response._content = b'{"success": true}'
++            return response
++        
++        requests.sessions.Session.send = mock_send
++        
++        try:
++            session = requests.Session()
++            
++            # Test with string data
++            session.post("http://example.com", data="string data")
++            
++            # Test with binary data
++            binary_data = u"ööö".encode("utf-8")
++            session.post("http://example.com", data=binary_data)
++            
++            # Verify both requests were handled correctly
++            assert len(captured_bodies) == 2
++            assert captured_bodies[0] == to_native_string("string data")
++            assert captured_bodies[1] == binary_data
++            
++        finally:
++            requests.sessions.Session.send = original_send

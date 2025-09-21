@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/lookups.py b/django/db/models/lookups.py\nindex 5089737034..fb61936a80 100644\n--- a/django/db/models/lookups.py\n+++ b/django/db/models/lookups.py\n@@ -401,7 +401,7 @@ class In(FieldGetDbPrepValueIterableMixin, BuiltinLookup):\n             placeholder = '(' + ', '.join(sqls) + ')'\n             return (placeholder, sqls_params)\n         else:\n-            if not getattr(self.rhs, 'has_select_fields', True):\n+            if not getattr(self.rhs, 'has_select_fields', False):\n                 self.rhs.clear_select_clause()\n                 self.rhs.add_fields(['pk'])\n             return super().process_rhs(compiler, connection)\n"
+}

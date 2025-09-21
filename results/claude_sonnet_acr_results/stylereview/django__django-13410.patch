@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/files/locks.py b/django/core/files/locks.py\nindex c46b00b905..a65204991a 100644\n--- a/django/core/files/locks.py\n+++ b/django/core/files/locks.py\n@@ -98,11 +98,11 @@ else:\n         LOCK_EX = LOCK_SH = LOCK_NB = 0\n \n         # Dummy functions that don't do anything.\n-        def lock(f, flags):\n+        def lock(_f, _flags):\n             # File is not locked\n             return False\n \n-        def unlock(f):\n+        def unlock(_f):\n             # File is unlocked\n             return True\n     else:\n"
+}

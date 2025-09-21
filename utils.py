@@ -16,7 +16,7 @@ from unidiff import PatchSet
 from git import Repo
 from swebench.harness.constants import MAP_REPO_VERSION_TO_SPECS
 
-PY_LANGUAGE = Language(tspython.language())
+PY_LANGUAGE = tspython.language()
 
 from swebench.harness.constants import (
     NON_TEST_EXTS,

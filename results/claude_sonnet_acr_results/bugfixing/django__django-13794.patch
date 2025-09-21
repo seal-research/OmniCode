@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/template/defaultfilters.py b/django/template/defaultfilters.py\nindex 1c844580c6..6339a82ee4 100644\n--- a/django/template/defaultfilters.py\n+++ b/django/template/defaultfilters.py\n@@ -678,7 +678,7 @@ def add(value, arg):\n         return int(value) + int(arg)\n     except (ValueError, TypeError):\n         try:\n-            return value + arg\n+            return force_str(value) + force_str(arg)\n         except Exception:\n             return ''\n \n"
+}

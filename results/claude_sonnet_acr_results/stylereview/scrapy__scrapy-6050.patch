@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/downloadermiddlewares/retry.py b/scrapy/downloadermiddlewares/retry.py\nindex 205bb48b1..7139e6516 100644\n--- a/scrapy/downloadermiddlewares/retry.py\n+++ b/scrapy/downloadermiddlewares/retry.py\n@@ -139,7 +139,7 @@ class RetryMiddleware(metaclass=BackwardsCompatibilityMetaclass):\n \n         if not hasattr(\n             self, \"EXCEPTIONS_TO_RETRY\"\n-        ):  # If EXCEPTIONS_TO_RETRY is not \"overriden\"\n+        ):  # If EXCEPTIONS_TO_RETRY is not \"overridden\"\n             self.exceptions_to_retry = tuple(\n                 load_object(x) if isinstance(x, str) else x\n                 for x in settings.getlist(\"RETRY_EXCEPTIONS\")\n"
+}

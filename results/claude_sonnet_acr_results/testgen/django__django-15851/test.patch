@@ -1,0 +1,204 @@
+--- a/tests/backends/postgresql/test_client.py
++++ b/tests/backends/postgresql/test_client.py
+-# Empty if creating new file
++import pytest
++import signal
++from unittest.mock import patch, MagicMock
++
++from django.db.backends.postgresql.client import DatabaseClient
++from django.test import TestCase
++
++
++class PostgreSQLClientTests(TestCase):
++    """Test PostgreSQL database client functionality."""
++
++    def setUp(self):
++        """Set up test database settings."""
++        self.settings_dict = {
++            'NAME': 'test_db',
++            'USER': 'test_user',
++            'PASSWORD': 'test_password',
++            'HOST': 'localhost',
++            'PORT': '5432',
++            'OPTIONS': {}
++        }
++
++    def test_dbshell_parameters_before_dbname_basic(self):
++        """Test that additional parameters are placed before database name."""
++        # This test should fail before the fix is applied
++        parameters = ['-c', 'SELECT 1;']
++        args, env = DatabaseClient.settings_to_cmd_args_env(self.settings_dict, parameters)
++        
++        # Find the positions of the database name and the -c parameter
++        dbname_index = args.index('test_db')
++        c_param_index = args.index('-c')
++        
++        # The -c parameter should come before the database name
++        assert c_param_index < dbname_index, f"Parameters should come before database name. Got args: {args}"
++
++    def test_dbshell_parameters_before_dbname_multiple_params(self):
++        """Test that multiple additional parameters are placed before database name."""
++        parameters = ['-c', 'SELECT * FROM users;', '--echo-queries']
++        args, env = DatabaseClient.settings_to_cmd_args_env(self.settings_dict, parameters)
++        
++        # Find the position of the database name
++        dbname_index = args.index('test_db')
++        
++        # All parameters should come before the database name
++        for param in parameters:
++            param_index = args.index(param)
++            assert param_index < dbname_index, f"Parameter '{param}' should come before database name. Got args: {args}"
++
++    def test_dbshell_parameters_before_dbname_with_connection_options(self):
++        """Test parameter ordering with various connection options."""
++        parameters = ['-c', 'SHOW server_version;']
++        args, env = DatabaseClient.settings_to_cmd_args_env(self.settings_dict, parameters)
++        
++        # Expected order: psql, connection options (-U, -h, -p), additional parameters, database name
++        expected_start = ['psql', '-U', 'test_user', '-h', 'localhost', '-p', '5432']
++        expected_end = ['-c', 'SHOW server_version;', 'test_db']
++        
++        # Check that args starts with connection options
++        assert args[:len(expected_start)] == expected_start
++        
++        # Check that args ends with parameters followed by database name
++        assert args[-len(expected_end):] == expected_end
++
++    def test_dbshell_no_parameters_still_works(self):
++        """Test that the fix doesn't break the case with no additional parameters."""
++        parameters = []
++        args, env = DatabaseClient.settings_to_cmd_args_env(self.settings_dict, parameters)
++        
++        # Should end with just the database name
++        assert args[-1] == 'test_db'
++        
++        # Should contain expected connection options
++        assert 'psql' in args
++        assert '-U' in args and 'test_user' in args
++        assert '-h' in args and 'localhost' in args
++        assert '-p' in args and '5432' in args
++
++    def test_dbshell_empty_dbname_with_parameters(self):
++        """Test parameter ordering when database name is empty (uses default 'postgres')."""
++        settings_dict = self.settings_dict.copy()
++        settings_dict['NAME'] = ''
++        parameters = ['-c', 'SELECT current_database();']
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, parameters)
++        
++        # Should use default 'postgres' database
++        dbname_index = args.index('postgres')
++        c_param_index = args.index('-c')
++        
++        # Parameters should still come before database name
++        assert c_param_index < dbname_index, f"Parameters should come before default database name. Got args: {args}"
++
++    def test_dbshell_service_connection_with_parameters(self):
++        """Test parameter ordering when using service connection."""
++        settings_dict = {
++            'NAME': '',
++            'OPTIONS': {'service': 'my_service'}
++        }
++        parameters = ['-c', 'SELECT version();']
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, parameters)
++        
++        # With service, no database name should be added, but parameters should still be included
++        assert '-c' in args
++        assert 'SELECT version();' in args
++        assert 'PGSERVICE' in env
++        assert env['PGSERVICE'] == 'my_service'
++
++    def test_dbshell_complex_sql_command(self):
++        """Test with complex SQL command that would be ignored if placed after database name."""
++        # This simulates the exact issue described in the bug report
++        parameters = ['-c', 'SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\';']
++        args, env = DatabaseClient.settings_to_cmd_args_env(self.settings_dict, parameters)
++        
++        # Find positions
++        dbname_index = args.index('test_db')
++        c_param_index = args.index('-c')
++        sql_index = args.index('SELECT table_name FROM information_schema.tables WHERE table_schema = \'public\';')
++        
++        # Both -c and the SQL command should come before database name
++        assert c_param_index < dbname_index, f"'-c' should come before database name. Got args: {args}"
++        assert sql_index < dbname_index, f"SQL command should come before database name. Got args: {args}"
++        assert c_param_index < sql_index, f"'-c' should come before SQL command. Got args: {args}"
++
++    def test_dbshell_args_order_demonstration_bug(self):
++        """
++        Test that demonstrates the bug - this test should fail before the fix.
++        
++        This test explicitly checks the current (buggy) behavior where parameters
++        come after the database name, which causes psql to ignore them.
++        """
++        parameters = ['-c', 'SELECT 1;']
++        args, env = DatabaseClient.settings_to_cmd_args_env(self.settings_dict, parameters)
++        
++        # This assertion will fail after the fix is applied, demonstrating the bug was fixed
++        # Before fix: args would be [..., 'test_db', '-c', 'SELECT 1;']
++        # After fix: args would be [..., '-c', 'SELECT 1;', 'test_db']
++        
++        # Find the last occurrence of database name and first occurrence of -c
++        dbname_index = len(args) - 1 - args[::-1].index('test_db')  # last occurrence
++        try:
++            c_param_index = args.index('-c')
++            # This should pass after the fix (parameters before database name)
++            assert c_param_index < dbname_index, (
++                f"BUG: Parameters come after database name, psql will ignore them. "
++                f"Args: {args}, -c at index {c_param_index}, db at index {dbname_index}"
++            )
++        except ValueError:
++            pytest.fail("'-c' parameter not found in args")
++
++    @patch('subprocess.run')
++    def test_runshell_integration_with_parameters(self, mock_subprocess):
++        """Test that runshell method properly integrates with the fixed parameter ordering."""
++        client = DatabaseClient(connection=MagicMock())
++        client.connection.settings_dict = self.settings_dict
++        
++        parameters = ['-c', 'SELECT NOW();']
++        
++        # Mock the subprocess call to capture the arguments
++        mock_subprocess.return_value = MagicMock()
++        
++        with patch.object(signal, 'signal'):
++            client.runshell(parameters)
++        
++        # Verify subprocess.run was called
++        assert mock_subprocess.called
++        
++        # Get the arguments passed to subprocess.run
++        call_args = mock_subprocess.call_args[0][0]  # First positional argument (args list)
++        
++        # Verify parameter ordering in the actual subprocess call
++        dbname_index = call_args.index('test_db')
++        c_param_index = call_args.index('-c')
++        
++        assert c_param_index < dbname_index, (
++            f"Integration test failed: parameters should come before database name in subprocess call. "
++            f"Args: {call_args}"
++        )
++
++    def test_environment_variables_preserved(self):
++        """Test that environment variables are still properly set with the fix."""
++        settings_dict = self.settings_dict.copy()
++        settings_dict['OPTIONS'] = {
++            'sslmode': 'require',
++            'sslrootcert': '/path/to/cert',
++            'passfile': '/path/to/passfile'
++        }
++        
++        parameters = ['-c', 'SELECT 1;']
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, parameters)
++        
++        # Check environment variables are set correctly
++        assert env['PGPASSWORD'] == 'test_password'
++        assert env['PGSSLMODE'] == 'require'
++        assert env['PGSSLROOTCERT'] == '/path/to/cert'
++        assert env['PGPASSFILE'] == '/path/to/passfile'
++        
++        # Check parameter ordering is still correct
++        dbname_index = args.index('test_db')
++        c_param_index = args.index('-c')
++        assert c_param_index < dbname_index

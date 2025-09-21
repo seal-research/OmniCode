@@ -1,0 +1,191 @@
+--- a/astropy/io/ascii/tests/test_html_formats.py
++++ b/astropy/io/ascii/tests/test_html_formats.py
+-# Empty if creating new file
++import pytest
++from io import StringIO
++import numpy as np
++from astropy.table import Table
++from astropy.io import ascii
++
++
++class TestHTMLFormats:
++    """Test that HTML table output respects the formats parameter."""
++    
++    def test_html_formats_basic(self):
++        """Test that formats parameter works for basic HTML output."""
++        # Create test table with float values that need formatting
++        t = Table([(1.23875234858e-24, 3.2348748432e-15), (2, 4)], names=('a', 'b'))
++        
++        # Write HTML table with "a" column formatted to show 2 decimal places
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={"a": lambda x: f"{x:.2e}"})
++            html_output = sp.getvalue()
++        
++        # Check that the formatted values appear in the HTML output
++        assert "1.24e-24" in html_output
++        assert "3.23e-15" in html_output
++        # Check that unformatted values don't appear
++        assert "1.23875234858e-24" not in html_output
++        assert "3.2348748432e-15" not in html_output
++        # Check that column b is unaffected
++        assert "<td>2</td>" in html_output
++        assert "<td>4</td>" in html_output
++    
++    def test_html_formats_multiple_columns(self):
++        """Test formats parameter with multiple columns."""
++        t = Table([
++            [1.23456789, 2.34567890],
++            [123.456789, 234.567890],
++            ['foo', 'bar']
++        ], names=('a', 'b', 'c'))
++        
++        # Format both numeric columns differently
++        formats = {
++            'a': lambda x: f"{x:.2f}",
++            'b': lambda x: f"{x:.1f}"
++        }
++        
++        with StringIO() as sp:
++            t.write(sp, format="html", formats=formats)
++            html_output = sp.getvalue()
++        
++        # Check formatted values
++        assert "1.23" in html_output  # column a formatted to 2 decimal places
++        assert "2.35" in html_output  # column a formatted to 2 decimal places
++        assert "123.5" in html_output  # column b formatted to 1 decimal place
++        assert "234.6" in html_output  # column b formatted to 1 decimal place
++        # Check that string column is unaffected
++        assert "<td>foo</td>" in html_output
++        assert "<td>bar</td>" in html_output
++    
++    def test_html_formats_string_format(self):
++        """Test formats parameter with string format specifiers."""
++        t = Table([[1.23456789, 2.34567890]], names=['values'])
++        
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={"values": "%.3f"})
++            html_output = sp.getvalue()
++        
++        # Check that string format is applied
++        assert "1.235" in html_output
++        assert "2.346" in html_output
++    
++    def test_html_formats_integer_column(self):
++        """Test formats parameter with integer formatting."""
++        t = Table([[1234, 5678]], names=['numbers'])
++        
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={"numbers": lambda x: f"{x:,}"})
++            html_output = sp.getvalue()
++        
++        # Check that comma formatting is applied
++        assert "1,234" in html_output
++        assert "5,678" in html_output
++    
++    def test_html_formats_no_formats_parameter(self):
++        """Test that HTML output works normally without formats parameter."""
++        t = Table([(1.23875234858e-24, 3.2348748432e-15), (2, 4)], names=('a', 'b'))
++        
++        with StringIO() as sp:
++            t.write(sp, format="html")
++            html_output = sp.getvalue()
++        
++        # Check that original values appear (no formatting applied)
++        assert "1.23875234858e-24" in html_output
++        assert "3.2348748432e-15" in html_output
++        assert "<td>2</td>" in html_output
++        assert "<td>4</td>" in html_output
++    
++    def test_html_formats_partial_column_formatting(self):
++        """Test that only specified columns are formatted."""
++        t = Table([
++            [1.23456789, 2.34567890],
++            [9.87654321, 8.76543210]
++        ], names=('a', 'b'))
++        
++        # Only format column 'a'
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={"a": lambda x: f"{x:.1f}"})
++            html_output = sp.getvalue()
++        
++        # Check that only column 'a' is formatted
++        assert "1.2" in html_output  # column a formatted
++        assert "2.3" in html_output  # column a formatted
++        # Column b should remain unformatted
++        assert "9.87654321" in html_output
++        assert "8.76543210" in html_output
++    
++    def test_html_formats_with_masked_values(self):
++        """Test formats parameter with masked table values."""
++        t = Table([[1.23456789, np.ma.masked], [3.45678901, 4.56789012]], 
++                  names=('a', 'b'), masked=True)
++        
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={"a": lambda x: f"{x:.2f}", "b": lambda x: f"{x:.1f}"})
++            html_output = sp.getvalue()
++        
++        # Check formatted values
++        assert "1.23" in html_output
++        assert "3.5" in html_output
++        assert "4.6" in html_output
++        # Masked value should appear as empty or masked indicator
++        assert "--" in html_output or "" in html_output
++    
++    def test_html_formats_comparison_with_other_formats(self):
++        """Test that HTML formats work consistently with other ASCII formats."""
++        t = Table([(1.23875234858e-24, 3.2348748432e-15), (2, 4)], names=('a', 'b'))
++        format_func = lambda x: f"{x:.2e}"
++        
++        # Test CSV output (known to work)
++        with StringIO() as sp:
++            t.write(sp, format="csv", formats={"a": format_func})
++            csv_output = sp.getvalue()
++        
++        # Test HTML output (should work the same way)
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={"a": format_func})
++            html_output = sp.getvalue()
++        
++        # Both should contain the same formatted values
++        assert "1.24e-24" in csv_output
++        assert "3.23e-15" in csv_output
++        assert "1.24e-24" in html_output
++        assert "3.23e-15" in html_output
++    
++    def test_html_formats_with_multidimensional_columns(self):
++        """Test formats parameter with 2D columns (HTML supports 2D)."""
++        # Create table with 2D column
++        data_2d = np.array([[1.23456, 2.34567], [3.45678, 4.56789]])
++        t = Table([data_2d], names=['matrix'])
++        
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={"matrix": lambda x: f"{x:.2f}"})
++            html_output = sp.getvalue()
++        
++        # Check that 2D values are formatted
++        assert "1.23" in html_output
++        assert "2.35" in html_output
++        assert "3.46" in html_output
++        assert "4.57" in html_output
++    
++    def test_html_formats_edge_cases(self):
++        """Test edge cases for HTML formats parameter."""
++        t = Table([[1.0, 2.0, 3.0]], names=['values'])
++        
++        # Test with empty formats dict
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={})
++            html_output = sp.getvalue()
++        assert "1.0" in html_output
++        
++        # Test with non-existent column in formats
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={"nonexistent": lambda x: f"{x:.2f}"})
++            html_output = sp.getvalue()
++        assert "1.0" in html_output  # Should work normally
++        
++        # Test with None format function (should be ignored)
++        with StringIO() as sp:
++            t.write(sp, format="html", formats={"values": None})
++            html_output = sp.getvalue()
++        assert "1.0" in html_output

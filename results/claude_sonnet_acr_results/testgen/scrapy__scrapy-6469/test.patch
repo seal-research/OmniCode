@@ -1,0 +1,238 @@
+--- a/tests/test_contracts.py
++++ b/tests/test_contracts.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import Mock
++from scrapy.contracts import Contract
++from scrapy.http import Request, Response
++from scrapy.utils.test import get_crawler
++
++
++class TestContract:
++    """Test cases for Spider Contract functionality."""
++
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.crawler = get_crawler()
++        
++    def test_adjust_request_args_with_cb_kwargs_only(self):
++        """Test that adjust_request_args handles cb_kwargs correctly (existing functionality)."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract with cb_kwargs
++        contract = Contract(mock_method, cb_kwargs={'key1': 'value1', 'key2': 'value2'})
++        
++        # Test request args adjustment
++        args = {'url': 'http://example.com'}
++        adjusted_args = contract.adjust_request_args(args)
++        
++        # Should include cb_kwargs
++        assert 'cb_kwargs' in adjusted_args
++        assert adjusted_args['cb_kwargs'] == {'key1': 'value1', 'key2': 'value2'}
++        assert adjusted_args['url'] == 'http://example.com'
++
++    def test_adjust_request_args_with_meta_only_fails_before_fix(self):
++        """Test that adjust_request_args fails to handle meta before the fix is applied."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract with meta (this should fail before fix)
++        contract = Contract(mock_method, meta={'cookiejar': 1, 'custom_data': 'test'})
++        
++        # Test request args adjustment
++        args = {'url': 'http://example.com'}
++        adjusted_args = contract.adjust_request_args(args)
++        
++        # Before fix: meta should NOT be in adjusted_args
++        assert 'meta' not in adjusted_args
++        assert adjusted_args['url'] == 'http://example.com'
++
++    def test_adjust_request_args_with_meta_after_fix(self):
++        """Test that adjust_request_args handles meta correctly after the fix."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract with meta
++        contract = Contract(mock_method, meta={'cookiejar': 1, 'custom_data': 'test'})
++        
++        # Test request args adjustment
++        args = {'url': 'http://example.com'}
++        adjusted_args = contract.adjust_request_args(args)
++        
++        # After fix: should include meta
++        assert 'meta' in adjusted_args
++        assert adjusted_args['meta'] == {'cookiejar': 1, 'custom_data': 'test'}
++        assert adjusted_args['url'] == 'http://example.com'
++
++    def test_adjust_request_args_with_both_cb_kwargs_and_meta(self):
++        """Test that adjust_request_args handles both cb_kwargs and meta correctly."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract with both cb_kwargs and meta
++        contract = Contract(
++            mock_method, 
++            cb_kwargs={'callback_arg': 'value'}, 
++            meta={'cookiejar': 1, 'depth': 2}
++        )
++        
++        # Test request args adjustment
++        args = {'url': 'http://example.com'}
++        adjusted_args = contract.adjust_request_args(args)
++        
++        # Should include both cb_kwargs and meta
++        assert 'cb_kwargs' in adjusted_args
++        assert 'meta' in adjusted_args
++        assert adjusted_args['cb_kwargs'] == {'callback_arg': 'value'}
++        assert adjusted_args['meta'] == {'cookiejar': 1, 'depth': 2}
++        assert adjusted_args['url'] == 'http://example.com'
++
++    def test_adjust_request_args_meta_merges_with_existing_meta(self):
++        """Test that meta from contract merges with existing meta in request args."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract with meta
++        contract = Contract(mock_method, meta={'cookiejar': 1, 'new_key': 'new_value'})
++        
++        # Test request args with existing meta
++        args = {
++            'url': 'http://example.com',
++            'meta': {'existing_key': 'existing_value', 'cookiejar': 0}  # cookiejar should be overridden
++        }
++        adjusted_args = contract.adjust_request_args(args)
++        
++        # Meta should be merged, with contract meta taking precedence
++        expected_meta = {
++            'existing_key': 'existing_value',
++            'cookiejar': 1,  # overridden by contract
++            'new_key': 'new_value'
++        }
++        assert adjusted_args['meta'] == expected_meta
++        assert adjusted_args['url'] == 'http://example.com'
++
++    def test_adjust_request_args_cb_kwargs_merges_with_existing_cb_kwargs(self):
++        """Test that cb_kwargs from contract merges with existing cb_kwargs in request args."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract with cb_kwargs
++        contract = Contract(mock_method, cb_kwargs={'contract_arg': 'contract_value', 'shared_arg': 'from_contract'})
++        
++        # Test request args with existing cb_kwargs
++        args = {
++            'url': 'http://example.com',
++            'cb_kwargs': {'existing_arg': 'existing_value', 'shared_arg': 'from_request'}
++        }
++        adjusted_args = contract.adjust_request_args(args)
++        
++        # cb_kwargs should be merged, with contract cb_kwargs taking precedence
++        expected_cb_kwargs = {
++            'existing_arg': 'existing_value',
++            'contract_arg': 'contract_value',
++            'shared_arg': 'from_contract'  # overridden by contract
++        }
++        assert adjusted_args['cb_kwargs'] == expected_cb_kwargs
++        assert adjusted_args['url'] == 'http://example.com'
++
++    def test_adjust_request_args_empty_meta_and_cb_kwargs(self):
++        """Test that empty meta and cb_kwargs are handled correctly."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract with empty meta and cb_kwargs
++        contract = Contract(mock_method, meta={}, cb_kwargs={})
++        
++        # Test request args adjustment
++        args = {'url': 'http://example.com'}
++        adjusted_args = contract.adjust_request_args(args)
++        
++        # Empty dicts should still be added
++        assert 'meta' in adjusted_args
++        assert 'cb_kwargs' in adjusted_args
++        assert adjusted_args['meta'] == {}
++        assert adjusted_args['cb_kwargs'] == {}
++        assert adjusted_args['url'] == 'http://example.com'
++
++    def test_adjust_request_args_no_meta_or_cb_kwargs_in_contract(self):
++        """Test that adjust_request_args works when contract has no meta or cb_kwargs."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract without meta or cb_kwargs
++        contract = Contract(mock_method)
++        
++        # Test request args adjustment
++        args = {'url': 'http://example.com'}
++        adjusted_args = contract.adjust_request_args(args)
++        
++        # Should not add meta or cb_kwargs if not present in contract
++        assert 'meta' not in adjusted_args
++        assert 'cb_kwargs' not in adjusted_args
++        assert adjusted_args['url'] == 'http://example.com'
++
++    def test_contract_integration_with_request_creation(self):
++        """Test integration of contract meta with actual Request creation."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract with meta that would be used in real spider scenarios
++        contract = Contract(
++            mock_method, 
++            meta={'cookiejar': 1, 'download_timeout': 30, 'custom_data': 'test_value'},
++            cb_kwargs={'parse_arg': 'parse_value'}
++        )
++        
++        # Simulate request creation with contract args
++        base_args = {'url': 'http://example.com', 'callback': mock_method}
++        adjusted_args = contract.adjust_request_args(base_args)
++        
++        # Create actual request with adjusted args
++        request = Request(**adjusted_args)
++        
++        # Verify meta is properly set in the request
++        assert request.meta['cookiejar'] == 1
++        assert request.meta['download_timeout'] == 30
++        assert request.meta['custom_data'] == 'test_value'
++        assert request.cb_kwargs['parse_arg'] == 'parse_value'
++        assert request.url == 'http://example.com'
++
++    def test_contract_meta_with_complex_data_types(self):
++        """Test that contract meta handles complex data types correctly."""
++        # Create a mock method for the contract
++        mock_method = Mock()
++        mock_method.__name__ = 'test_method'
++        
++        # Create contract with complex meta data
++        complex_meta = {
++            'cookiejar': 1,
++            'headers': {'User-Agent': 'test-agent', 'Accept': 'text/html'},
++            'proxy': 'http://proxy.example.com:8080',
++            'download_delay': 2.5,
++            'retry_times': 3,
++            'custom_list': ['item1', 'item2'],
++            'custom_dict': {'nested_key': 'nested_value'}
++        }
++        
++        contract = Contract(mock_method, meta=complex_meta)
++        
++        # Test request args adjustment
++        args = {'url': 'http://example.com'}
++        adjusted_args = contract.adjust_request_args(args)
++        
++        # All complex data should be preserved
++        assert adjusted_args['meta'] == complex_meta
++        assert isinstance(adjusted_args['meta']['headers'], dict)
++        assert isinstance(adjusted_args['meta']['custom_list'], list)
++        assert isinstance(adjusted_args['meta']['custom_dict'], dict)
++        assert adjusted_args['meta']['download_delay'] == 2.5

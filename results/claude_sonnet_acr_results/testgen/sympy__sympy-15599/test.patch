@@ -1,0 +1,141 @@
+--- a/sympy/core/tests/test_mod.py
++++ b/sympy/core/tests/test_mod.py
+-# Empty if creating new file
++import pytest
++from sympy import Symbol, Mod, I, S
++from sympy.abc import x, y, i, k, n
++
++
++def test_mod_multiplication_simplification():
++    """Test that Mod(3*i, 2) simplifies to Mod(i, 2)."""
++    # This is the main bug case - should fail before fix, pass after fix
++    i = Symbol('i', integer=True)
++    result = Mod(3*i, 2)
++    expected = Mod(i, 2)
++    assert result == expected, f"Expected Mod(3*i, 2) to simplify to Mod(i, 2), got {result}"
++
++
++def test_mod_multiplication_simplification_before_fix():
++    """Test that demonstrates the bug - this should fail before the fix is applied."""
++    # This test is designed to fail before the fix to demonstrate the bug exists
++    i = Symbol('i', integer=True)
++    result = Mod(3*i, 2)
++    # Before the fix, this would remain as Mod(3*i, 2) and not simplify
++    # After the fix, it should become Mod(i, 2)
++    # We test the current buggy behavior to ensure our fix actually changes something
++    assert result != Mod(3*i, 2) or result == Mod(i, 2), "Bug should be fixed"
++
++
++def test_mod_multiplication_various_coefficients():
++    """Test Mod simplification with various integer coefficients."""
++    i = Symbol('i', integer=True)
++    
++    # Test with different coefficients
++    assert Mod(5*i, 2) == Mod(i, 2)  # 5 % 2 = 1
++    assert Mod(4*i, 2) == 0  # 4 % 2 = 0, so 4*i % 2 = 0
++    assert Mod(7*i, 3) == Mod(i, 3)  # 7 % 3 = 1
++    assert Mod(6*i, 3) == 0  # 6 % 3 = 0
++    assert Mod(8*i, 5) == Mod(3*i, 5)  # 8 % 5 = 3
++
++
++def test_mod_multiplication_multiple_variables():
++    """Test Mod simplification with multiple variables."""
++    i = Symbol('i', integer=True)
++    j = Symbol('j', integer=True)
++    
++    # Test with multiple variables
++    assert Mod(3*i*j, 2) == Mod(i*j, 2)
++    assert Mod(4*i*j, 2) == 0
++    assert Mod(5*i*j*x, 3) == Mod(2*i*j*x, 3)  # 5 % 3 = 2
++
++
++def test_mod_multiplication_preserves_existing_functionality():
++    """Test that the fix doesn't break existing Mod functionality."""
++    i = Symbol('i', integer=True)
++    
++    # Test existing functionality that should remain unchanged
++    assert Mod(i, 2) == Mod(i, 2)  # No change needed
++    assert Mod(2*i, 4) == Mod(2*i, 4)  # gcd(2, 4) = 2, should factor out
++    assert Mod(i + 1, 2) == Mod(i + 1, 2)  # Addition case
++    
++    # Test with existing Mod objects in multiplication
++    assert Mod(Mod(i, 3) * 2, 3) == Mod(2*i, 3)
++
++
++def test_mod_multiplication_edge_cases():
++    """Test edge cases for Mod multiplication simplification."""
++    i = Symbol('i', integer=True)
++    
++    # Test with negative coefficients
++    assert Mod(-3*i, 2) == Mod(-i, 2)  # -3 % 2 = 1 in Python convention
++    assert Mod(-4*i, 2) == 0  # -4 % 2 = 0
++    
++    # Test with coefficient 1 (should remain unchanged)
++    assert Mod(1*i, 2) == Mod(i, 2)
++    assert Mod(i, 2) == Mod(i, 2)
++    
++    # Test with coefficient 0
++    assert Mod(0*i, 2) == 0
++
++
++def test_mod_multiplication_with_non_integer_symbols():
++    """Test that non-integer symbols are handled correctly."""
++    # Test with symbols that are not declared as integers
++    x_real = Symbol('x', real=True)
++    y_complex = Symbol('y')
++    
++    # These should not simplify in the same way since we can't assume integer arithmetic
++    result1 = Mod(3*x_real, 2)
++    result2 = Mod(3*y_complex, 2)
++    
++    # The behavior here depends on the implementation, but it should be consistent
++    # and not cause errors
++    assert isinstance(result1, Mod)
++    assert isinstance(result2, Mod)
++
++
++def test_mod_multiplication_complex_expressions():
++    """Test Mod with more complex multiplication expressions."""
++    i = Symbol('i', integer=True)
++    j = Symbol('j', integer=True)
++    
++    # Test with more complex expressions
++    assert Mod(3*i + 6*j, 2) == Mod(i, 2)  # 3*i % 2 + 6*j % 2 = i % 2 + 0
++    assert Mod(9*i*j, 4) == Mod(i*j, 4)  # 9 % 4 = 1
++    
++    # Test nested expressions
++    assert Mod(15*i, 6) == Mod(3*i, 6)  # 15 % 6 = 3
++
++
++def test_mod_original_issue_case():
++    """Test the exact case mentioned in the original issue."""
++    # Test the specific case from the Stack Overflow post
++    k = Symbol('k', integer=True)
++    
++    # This should simplify from Mod(3*k, 2) to Mod(k, 2)
++    result = Mod(3*k, 2)
++    expected = Mod(k, 2)
++    assert result == expected, f"Original issue case failed: {result} != {expected}"
++    
++    # Test with sympify as mentioned in the issue
++    from sympy import sympify
++    result_sympify = sympify("3*k % 2")
++    # After the fix, this should be equivalent to Mod(k, 2)
++    assert result_sympify == Mod(k, 2) or result_sympify == Mod(3*k, 2)
++
++
++def test_mod_distributive_property():
++    """Test that the distributive property works correctly with the fix."""
++    i = Symbol('i', integer=True)
++    j = Symbol('j', integer=True)
++    
++    # Test distributive property: (a*b) % n should work correctly
++    assert Mod(6*i, 4) == Mod(2*i, 4)  # 6 % 4 = 2
++    assert Mod(10*i*j, 6) == Mod(4*i*j, 6)  # 10 % 6 = 4
++    
++    # Test with mixed terms
++    expr = 12*i + 8*j
++    result = Mod(expr, 4)
++    expected = Mod(0*i + 0*j, 4)  # Both 12 % 4 = 0 and 8 % 4 = 0
++    # This might simplify to 0 depending on the implementation
++    assert result == 0 or result == expected

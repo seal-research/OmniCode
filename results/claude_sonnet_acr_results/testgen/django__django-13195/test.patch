@@ -1,0 +1,217 @@
+--- a/tests/responses/test_delete_cookie_samesite.py
++++ b/tests/responses/test_delete_cookie_samesite.py
+-# Empty if creating new file
++import pytest
++from django.http import HttpResponse
++from django.test import TestCase
++
++
++class DeleteCookieSameSiteTests(TestCase):
++    """
++    Test that HttpResponse.delete_cookie() preserves cookie attributes
++    like samesite, secure, and httponly when specified.
++    """
++
++    def test_delete_cookie_without_attributes_maintains_backward_compatibility(self):
++        """
++        Test that delete_cookie() without new parameters works exactly as before.
++        This test should pass both before and after the fix.
++        """
++        response = HttpResponse()
++        response.delete_cookie('test_cookie', path='/test', domain='example.com')
++        
++        # Check that the cookie is set for deletion with expected defaults
++        cookie = response.cookies['test_cookie']
++        self.assertEqual(cookie.value, '')
++        self.assertEqual(cookie['max-age'], 0)
++        self.assertEqual(cookie['expires'], 'Thu, 01 Jan 1970 00:00:00 GMT')
++        self.assertEqual(cookie['path'], '/test')
++        self.assertEqual(cookie['domain'], 'example.com')
++        # Should not have secure flag for regular cookies
++        self.assertNotIn('secure', cookie)
++        # Should not have samesite or httponly attributes when not specified
++        self.assertNotIn('samesite', cookie)
++        self.assertNotIn('httponly', cookie)
++
++    def test_delete_cookie_secure_prefix_auto_detection(self):
++        """
++        Test that cookies with __Secure- or __Host- prefixes automatically get secure flag.
++        This test should pass both before and after the fix.
++        """
++        response = HttpResponse()
++        
++        # Test __Secure- prefix
++        response.delete_cookie('__Secure-test_cookie')
++        secure_cookie = response.cookies['__Secure-test_cookie']
++        self.assertIn('secure', secure_cookie)
++        self.assertTrue(secure_cookie['secure'])
++        
++        # Test __Host- prefix
++        response.delete_cookie('__Host-test_cookie')
++        host_cookie = response.cookies['__Host-test_cookie']
++        self.assertIn('secure', host_cookie)
++        self.assertTrue(host_cookie['secure'])
++
++    def test_delete_cookie_with_samesite_lax_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: delete_cookie doesn't preserve samesite.
++        This test should FAIL before the fix is applied.
++        """
++        response = HttpResponse()
++        
++        # This should work after the fix but will fail before
++        try:
++            response.delete_cookie('messages', samesite='Lax')
++            cookie = response.cookies['messages']
++            # This assertion will fail before the fix because samesite parameter doesn't exist
++            self.assertIn('samesite', cookie)
++            self.assertEqual(cookie['samesite'], 'Lax')
++        except TypeError:
++            # Before the fix, this will raise TypeError: delete_cookie() got an unexpected keyword argument 'samesite'
++            self.fail("delete_cookie() should accept samesite parameter")
++
++    def test_delete_cookie_with_samesite_strict(self):
++        """
++        Test that delete_cookie preserves samesite=Strict.
++        This test should pass after the fix.
++        """
++        response = HttpResponse()
++        response.delete_cookie('test_cookie', samesite='Strict')
++        
++        cookie = response.cookies['test_cookie']
++        self.assertIn('samesite', cookie)
++        self.assertEqual(cookie['samesite'], 'Strict')
++
++    def test_delete_cookie_with_samesite_none(self):
++        """
++        Test that delete_cookie preserves samesite=None.
++        This test should pass after the fix.
++        """
++        response = HttpResponse()
++        response.delete_cookie('test_cookie', samesite='None')
++        
++        cookie = response.cookies['test_cookie']
++        self.assertIn('samesite', cookie)
++        self.assertEqual(cookie['samesite'], 'None')
++
++    def test_delete_cookie_with_httponly_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: delete_cookie doesn't preserve httponly.
++        This test should FAIL before the fix is applied.
++        """
++        response = HttpResponse()
++        
++        try:
++            response.delete_cookie('session_cookie', httponly=True)
++            cookie = response.cookies['session_cookie']
++            # This assertion will fail before the fix because httponly parameter doesn't exist
++            self.assertIn('httponly', cookie)
++            self.assertTrue(cookie['httponly'])
++        except TypeError:
++            # Before the fix, this will raise TypeError: delete_cookie() got an unexpected keyword argument 'httponly'
++            self.fail("delete_cookie() should accept httponly parameter")
++
++    def test_delete_cookie_with_secure_explicit(self):
++        """
++        Test that explicit secure parameter overrides auto-detection.
++        This test should pass after the fix.
++        """
++        response = HttpResponse()
++        
++        # Explicit secure=True should work even for non-prefixed cookies
++        response.delete_cookie('regular_cookie', secure=True)
++        cookie = response.cookies['regular_cookie']
++        self.assertIn('secure', cookie)
++        self.assertTrue(cookie['secure'])
++        
++        # Explicit secure=False should override auto-detection for prefixed cookies
++        response.delete_cookie('__Secure-test', secure=False)
++        secure_cookie = response.cookies['__Secure-test']
++        self.assertNotIn('secure', secure_cookie)
++
++    def test_delete_cookie_with_all_attributes(self):
++        """
++        Test that delete_cookie works with all security attributes specified.
++        This test should pass after the fix.
++        """
++        response = HttpResponse()
++        response.delete_cookie(
++            'full_cookie',
++            path='/app',
++            domain='example.com',
++            secure=True,
++            httponly=True,
++            samesite='Lax'
++        )
++        
++        cookie = response.cookies['full_cookie']
++        self.assertEqual(cookie.value, '')
++        self.assertEqual(cookie['max-age'], 0)
++        self.assertEqual(cookie['expires'], 'Thu, 01 Jan 1970 00:00:00 GMT')
++        self.assertEqual(cookie['path'], '/app')
++        self.assertEqual(cookie['domain'], 'example.com')
++        self.assertIn('secure', cookie)
++        self.assertTrue(cookie['secure'])
++        self.assertIn('httponly', cookie)
++        self.assertTrue(cookie['httponly'])
++        self.assertIn('samesite', cookie)
++        self.assertEqual(cookie['samesite'], 'Lax')
++
++    def test_delete_cookie_messages_framework_scenario(self):
++        """
++        Test the specific scenario described in the issue with messages framework.
++        This reproduces the exact problem reported.
++        """
++        response = HttpResponse()
++        
++        # First, simulate setting a message cookie with samesite
++        response.set_cookie(
++            'messages',
++            'encoded_message_data',
++            secure=False,
++            httponly=True,
++            samesite='Lax'
++        )
++        
++        # Verify the cookie was set with samesite
++        cookie = response.cookies['messages']
++        self.assertEqual(cookie['samesite'], 'Lax')
++        
++        # Now simulate deleting the cookie (this is where the bug occurs)
++        # Before the fix, this won't preserve samesite, causing browser warnings
++        try:
++            response.delete_cookie('messages', samesite='Lax')
++            deleted_cookie = response.cookies['messages']
++            self.assertIn('samesite', deleted_cookie)
++            self.assertEqual(deleted_cookie['samesite'], 'Lax')
++        except TypeError:
++            self.fail("delete_cookie() should accept samesite parameter to match original cookie")
++
++    def test_delete_cookie_none_values_ignored(self):
++        """
++        Test that None values for security attributes are ignored (not set).
++        This ensures backward compatibility.
++        """
++        response = HttpResponse()
++        response.delete_cookie(
++            'test_cookie',
++            secure=None,
++            httponly=None,
++            samesite=None
++        )
++        
++        cookie = response.cookies['test_cookie']
++        # None values should not set the attributes
++        self.assertNotIn('secure', cookie)
++        self.assertNotIn('httponly', cookie)
++        self.assertNotIn('samesite', cookie)
++
++    def test_delete_cookie_invalid_samesite_value(self):
++        """
++        Test that invalid samesite values raise appropriate errors.
++        """
++        response = HttpResponse()
++        
++        # This should raise ValueError for invalid samesite value
++        with self.assertRaises(ValueError):
++            response.delete_cookie('test_cookie', samesite='invalid')

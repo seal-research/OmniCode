@@ -1,0 +1,254 @@
+--- a/sympy/printing/tests/test_str_printer_settings.py
++++ b/sympy/printing/tests/test_str_printer_settings.py
+-# Empty if creating new file
++import pytest
++from sympy import symbols, S, Eq, Limit, sstr
++from sympy.printing.str import StrPrinter
++
++
++class TestStrPrinterSettings:
++    """Test that StrPrinter settings are properly respected by all subexpressions."""
++    
++    def setup_method(self):
++        """Set up test symbols."""
++        self.x, self.y = symbols('x y')
++    
++    def test_sympy_integers_basic_rational(self):
++        """Test that sympy_integers works for basic rational expressions."""
++        # This should work correctly (baseline test)
++        result = sstr(self.x + S(1)/2, sympy_integers=True)
++        assert result == 'x + S(1)/2'
++        
++        # Without sympy_integers, should be regular fraction
++        result = sstr(self.x + S(1)/2, sympy_integers=False)
++        assert result == 'x + 1/2'
++    
++    def test_sympy_integers_eq_fails_before_fix(self):
++        """Test that demonstrates the bug: Eq doesn't respect sympy_integers setting."""
++        # This test should FAIL before the fix is applied
++        result = sstr(Eq(self.x, S(1)/2), sympy_integers=True)
++        # Before fix: 'Eq(x, 1/2)' - settings ignored
++        # After fix: 'Eq(x, S(1)/2)' - settings respected
++        assert result == 'Eq(x, S(1)/2)', f"Expected 'Eq(x, S(1)/2)' but got '{result}'"
++    
++    def test_sympy_integers_eq_without_setting(self):
++        """Test that Eq works normally without sympy_integers setting."""
++        result = sstr(Eq(self.x, S(1)/2), sympy_integers=False)
++        assert result == 'Eq(x, 1/2)'
++        
++        # Default behavior (no setting specified)
++        result = sstr(Eq(self.x, S(1)/2))
++        assert result == 'Eq(x, 1/2)'
++    
++    def test_sympy_integers_limit_fails_before_fix(self):
++        """Test that demonstrates the bug: Limit doesn't respect sympy_integers setting."""
++        # This test should FAIL before the fix is applied
++        result = sstr(Limit(self.x, self.x, S(1)/2), sympy_integers=True)
++        # Before fix: 'Limit(x, x, 1/2)' - settings ignored
++        # After fix: 'Limit(x, x, S(1)/2)' - settings respected
++        assert result == 'Limit(x, x, S(1)/2)', f"Expected 'Limit(x, x, S(1)/2)' but got '{result}'"
++    
++    def test_sympy_integers_limit_without_setting(self):
++        """Test that Limit works normally without sympy_integers setting."""
++        result = sstr(Limit(self.x, self.x, S(1)/2), sympy_integers=False)
++        assert result == 'Limit(x, x, 1/2)'
++        
++        # Default behavior (no setting specified)
++        result = sstr(Limit(self.x, self.x, S(1)/2))
++        assert result == 'Limit(x, x, 1/2)'
++    
++    def test_sympy_integers_limit_with_direction(self):
++        """Test that Limit with direction respects sympy_integers setting."""
++        result = sstr(Limit(self.x, self.x, S(1)/2, dir='-'), sympy_integers=True)
++        assert result == "Limit(x, x, S(1)/2, dir='-')"
++        
++        result = sstr(Limit(self.x, self.x, S(1)/2, dir='-'), sympy_integers=False)
++        assert result == "Limit(x, x, 1/2, dir='-')"
++    
++    def test_sympy_integers_nested_expressions(self):
++        """Test sympy_integers with more complex nested expressions."""
++        # Test Eq with more complex expressions
++        expr = Eq(self.x + S(1)/3, self.y * S(2)/5)
++        result = sstr(expr, sympy_integers=True)
++        assert result == 'Eq(x + S(1)/3, y*S(2)/5)'
++        
++        result = sstr(expr, sympy_integers=False)
++        assert result == 'Eq(x + 1/3, y*2/5)'
++    
++    def test_sympy_integers_multiple_rationals_in_eq(self):
++        """Test Eq with multiple rational numbers."""
++        expr = Eq(S(1)/2 + S(3)/4, S(5)/6)
++        result = sstr(expr, sympy_integers=True)
++        assert result == 'Eq(S(1)/2 + S(3)/4, S(5)/6)'
++        
++        result = sstr(expr, sympy_integers=False)
++        assert result == 'Eq(1/2 + 3/4, 5/6)'
++    
++    def test_sympy_integers_inequality_relations(self):
++        """Test that other relational operators also respect sympy_integers."""
++        from sympy import Ne, Lt, Le, Gt, Ge
++        
++        # Test Ne (not equal)
++        result = sstr(Ne(self.x, S(1)/2), sympy_integers=True)
++        assert result == 'Ne(x, S(1)/2)'
++        
++        # Test other inequality operators that use the general relational format
++        result = sstr(self.x < S(1)/2, sympy_integers=True)
++        assert 'S(1)/2' in result or '1/2' in result  # May use different format
++    
++    def test_direct_printer_usage(self):
++        """Test using StrPrinter directly with settings."""
++        printer = StrPrinter({'sympy_integers': True})
++        
++        # Test Eq
++        result = printer.doprint(Eq(self.x, S(1)/2))
++        assert result == 'Eq(x, S(1)/2)'
++        
++        # Test Limit
++        result = printer.doprint(Limit(self.x, self.x, S(1)/2))
++        assert result == 'Limit(x, x, S(1)/2)'
++        
++        # Test with sympy_integers=False
++        printer = StrPrinter({'sympy_integers': False})
++        result = printer.doprint(Eq(self.x, S(1)/2))
++        assert result == 'Eq(x, 1/2)'
++    
++    def test_edge_cases(self):
++        """Test edge cases and boundary conditions."""
++        # Test with integer (should not be affected)
++        result = sstr(Eq(self.x, 1), sympy_integers=True)
++        assert result == 'Eq(x, 1)'
++        
++        # Test with zero
++        result = sstr(Eq(self.x, S(0)), sympy_integers=True)
++        assert result == 'Eq(x, 0)'
++        
++        # Test with negative rational
++        result = sstr(Eq(self.x, S(-1)/2), sympy_integers=True)
++        assert result == 'Eq(x, S(-1)/2)'
++        
++        result = sstr(Eq(self.x, S(-1)/2), sympy_integers=False)
++        assert result == 'Eq(x, -1/2)'
++    
++    def test_limit_edge_cases(self):
++        """Test Limit with various edge cases."""
++        from sympy import oo, zoo
++        
++        # Test limit to infinity
++        result = sstr(Limit(S(1)/2, self.x, oo), sympy_integers=True)
++        assert result == 'Limit(S(1)/2, x, oo)'
++        
++        # Test limit of rational expression
++        result = sstr(Limit(S(1)/2, self.x, S(3)/4), sympy_integers=True)
++        assert result == 'Limit(S(1)/2, x, S(3)/4)'
+
+--- a/sympy/printing/tests/test_python_printer_settings.py
++++ b/sympy/printing/tests/test_python_printer_settings.py
+-# Empty if creating new file
++import pytest
++from sympy import symbols, S, Eq, python
++from sympy.printing.python import PythonPrinter
++
++
++class TestPythonPrinterSettings:
++    """Test that PythonPrinter properly handles symbol extraction for code generation."""
++    
++    def setup_method(self):
++        """Set up test symbols."""
++        self.x, self.y = symbols('x y')
++    
++    def test_python_eq_symbol_extraction_fails_before_fix(self):
++        """Test that demonstrates the bug: python() doesn't extract symbols from Eq properly."""
++        # This test should FAIL before the fix is applied
++        result = python(Eq(self.x, self.y))
++        
++        # Expected: symbols should be extracted and declared
++        expected_lines = [
++            "x = Symbol('x')",
++            "y = Symbol('y')", 
++            "e = Eq(x, y)"
++        ]
++        
++        # Check that all expected lines are present
++        for line in expected_lines:
++            assert line in result, f"Expected '{line}' in result but got: {result}"
++        
++        # Should not be just 'e = Eq(x, y)' without symbol declarations
++        assert result != 'e = Eq(x, y)', "Symbols should be declared before use"
++    
++    def test_python_simple_expression_works(self):
++        """Test that python() works correctly for simple expressions (baseline)."""
++        result = python(self.x + self.y)
++        
++        # Should include symbol declarations
++        assert "x = Symbol('x')" in result
++        assert "y = Symbol('y')" in result
++        assert "e = x + y" in result
++    
++    def test_python_eq_with_rationals(self):
++        """Test python() with Eq containing rational numbers."""
++        result = python(Eq(self.x, S(1)/2))
++        
++        # Should include symbol declaration
++        assert "x = Symbol('x')" in result
++        # Should include the equation
++        assert "e = Eq(x, S(1)/2)" in result or "e = Eq(x, 1/2)" in result
++    
++    def test_python_multiple_symbols_in_eq(self):
++        """Test python() with Eq containing multiple symbols."""
++        z = symbols('z')
++        result = python(Eq(self.x + self.y, z))
++        
++        # All symbols should be declared
++        assert "x = Symbol('x')" in result
++        assert "y = Symbol('y')" in result  
++        assert "z = Symbol('z')" in result
++        assert "e = Eq(x + y, z)" in result
++    
++    def test_python_nested_expressions(self):
++        """Test python() with more complex nested expressions in Eq."""
++        from sympy import sin, cos
++        
++        result = python(Eq(sin(self.x), cos(self.y)))
++        
++        # Symbols should be declared
++        assert "x = Symbol('x')" in result
++        assert "y = Symbol('y')" in result
++        # Functions should be handled
++        assert "e = Eq(sin(x), cos(y))" in result
++    
++    def test_direct_python_printer_usage(self):
++        """Test using PythonPrinter directly."""
++        printer = PythonPrinter()
++        
++        # Test that symbols are tracked during printing
++        result = printer.doprint(Eq(self.x, self.y))
++        
++        # The printer should have tracked the symbols
++        assert 'x' in printer.symbols
++        assert 'y' in printer.symbols
++    
++    def test_python_with_functions(self):
++        """Test python() with function symbols in Eq."""
++        from sympy import Function
++        f = Function('f')
++        
++        result = python(Eq(f(self.x), self.y))
++        
++        # Should declare both symbols and functions
++        assert "x = Symbol('x')" in result
++        assert "y = Symbol('y')" in result
++        assert "f = Function('f')" in result
++        assert "e = Eq(f(x), y)" in result
++    
++    def test_python_reserved_keywords(self):
++        """Test python() handles reserved Python keywords properly."""
++        # Create symbols with names that are Python keywords
++        lambda_sym = symbols('lambda')
++        class_sym = symbols('class')
++        
++        result = python(Eq(lambda_sym, class_sym))
++        
++        # Should escape reserved keywords
++        assert "lambda_ = Symbol('lambda')" in result or "lambda = Symbol('lambda')" in result
++        assert "class_ = Symbol('class')" in result or "class = Symbol('class')" in result

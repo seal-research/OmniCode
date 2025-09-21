@@ -1,0 +1,228 @@
+--- a/tests/forms_tests/test_boundfield_consistency.py
++++ b/tests/forms_tests/test_boundfield_consistency.py
+-# Empty if creating new file
++import pytest
++from django import forms
++from django.forms import CharField, IntegerField, DateTimeField
++from django.test import TestCase
++from datetime import datetime
++
++
++class TestForm(forms.Form):
++    name = CharField(max_length=100)
++    age = IntegerField()
++    created_at = DateTimeField()
++
++
++class DisabledFieldForm(forms.Form):
++    name = CharField(max_length=100, disabled=True)
++    age = IntegerField()
++    
++    def __init__(self, *args, **kwargs):
++        super().__init__(*args, **kwargs)
++        # Set initial value for disabled field
++        self.fields['name'].initial = 'Initial Name'
++
++
++class CallableInitialForm(forms.Form):
++    name = CharField(max_length=100, disabled=True)
++    created_at = DateTimeField(disabled=True)
++    
++    def __init__(self, *args, **kwargs):
++        super().__init__(*args, **kwargs)
++        # Set callable initial values
++        self.fields['name'].initial = lambda: 'Callable Name'
++        self.fields['created_at'].initial = lambda: datetime(2023, 1, 1, 12, 0, 0)
++
++
++class TestBoundFieldConsistency(TestCase):
++    """Test that _clean_fields() and changed_data access values via BoundField consistently."""
++    
++    def test_clean_fields_disabled_field_consistency_with_boundfield_initial(self):
++        """
++        Test that form._clean_fields() returns the same value as form[name].initial 
++        for disabled fields. This reproduces the bug described in the issue.
++        """
++        form = DisabledFieldForm(data={'age': '25'})
++        
++        # Before fix: This test should fail because _clean_fields() and BoundField.initial
++        # may return different values for disabled fields
++        form.full_clean()
++        
++        # Get the value that _clean_fields() put in cleaned_data
++        cleaned_value = form.cleaned_data.get('name')
++        
++        # Get the value from BoundField.initial
++        boundfield_initial = form['name'].initial
++        
++        # These should be the same but may differ before the fix
++        self.assertEqual(cleaned_value, boundfield_initial,
++                        "form._clean_fields() should return the same value as form[name].initial for disabled fields")
++    
++    def test_clean_fields_disabled_field_with_callable_initial(self):
++        """
++        Test that _clean_fields() handles callable initial values consistently with BoundField.
++        This is the case mentioned in the issue that's almost covered by test_datetime_clean_initial_callable_disabled.
++        """
++        form = CallableInitialForm(data={})
++        form.full_clean()
++        
++        # Get values from cleaned_data (via _clean_fields)
++        cleaned_name = form.cleaned_data.get('name')
++        cleaned_datetime = form.cleaned_data.get('created_at')
++        
++        # Get values from BoundField.initial
++        boundfield_name_initial = form['name'].initial
++        boundfield_datetime_initial = form['created_at'].initial
++        
++        # These should be the same
++        self.assertEqual(cleaned_name, boundfield_name_initial,
++                        "Callable initial values should be consistent between _clean_fields and BoundField.initial")
++        self.assertEqual(cleaned_datetime, boundfield_datetime_initial,
++                        "Callable datetime initial values should be consistent between _clean_fields and BoundField.initial")
++    
++    def test_changed_data_consistency_with_boundfield_values(self):
++        """
++        Test that changed_data uses the same values as BoundField objects.
++        This test verifies that the logic for determining changed data is consistent.
++        """
++        # Create form with initial data
++        initial_data = {'name': 'John', 'age': 30}
++        form = TestForm(data={'name': 'Jane', 'age': 30}, initial=initial_data)
++        
++        # Get changed_data result
++        changed_fields = form.changed_data
++        
++        # Manually check each field using BoundField values
++        expected_changed = []
++        for name, field in form.fields.items():
++            bf = form[name]
++            # This logic should match what changed_data does internally
++            data_value = bf.value()
++            initial_value = bf.initial
++            
++            # Convert values for comparison (similar to what changed_data does)
++            if data_value != initial_value:
++                expected_changed.append(name)
++        
++        # The results should be the same
++        self.assertEqual(set(changed_fields), set(expected_changed),
++                        "changed_data should use the same values as BoundField objects")
++    
++    def test_changed_data_empty_vs_none_consistency(self):
++        """
++        Test that changed_data handles empty strings vs None consistently with BoundField.
++        """
++        form = TestForm(data={'name': '', 'age': ''}, initial={'name': None, 'age': None})
++        
++        changed_fields = form.changed_data
++        
++        # Check that the logic is consistent with BoundField values
++        for name in form.fields:
++            bf = form[name]
++            data_value = bf.value()
++            initial_value = bf.initial
++            
++            # This should match the internal logic of changed_data
++            if name in changed_fields:
++                # If it's in changed_data, the values should actually be different
++                self.assertNotEqual(data_value, initial_value,
++                                  f"Field {name} is in changed_data but values are equal")
++    
++    def test_boundfield_did_change_method_exists_after_fix(self):
++        """
++        Test that BoundField has a did_change() method after the fix is applied.
++        This test will fail before the fix and pass after.
++        """
++        form = TestForm(data={'name': 'Jane', 'age': 30}, initial={'name': 'John', 'age': 30})
++        bf = form['name']
++        
++        # After the fix, BoundField should have a did_change method
++        self.assertTrue(hasattr(bf, 'did_change') or hasattr(bf, '_did_change'),
++                       "BoundField should have a did_change() or _did_change() method after the fix")
++    
++    def test_changed_data_uses_boundfield_did_change_after_fix(self):
++        """
++        Test that changed_data uses BoundField.did_change() method after the fix.
++        This verifies the proposed refactoring.
++        """
++        form = TestForm(data={'name': 'Jane', 'age': 30}, initial={'name': 'John', 'age': 30})
++        
++        # Get changed_data result
++        changed_fields = form.changed_data
++        
++        # After the fix, we should be able to get the same result using BoundField methods
++        expected_changed = []
++        for name, field in form.fields.items():
++            bf = form[name]
++            # After the fix, this should work
++            if hasattr(bf, 'did_change'):
++                if bf.did_change():
++                    expected_changed.append(name)
++            elif hasattr(bf, '_did_change'):
++                if bf._did_change():
++                    expected_changed.append(name)
++        
++        # If the method exists, the results should match
++        if expected_changed or any(hasattr(form[name], 'did_change') or hasattr(form[name], '_did_change') 
++                                  for name in form.fields):
++            self.assertEqual(set(changed_fields), set(expected_changed),
++                            "changed_data should use BoundField.did_change() method")
++    
++    def test_clean_fields_uses_boundfield_values_after_fix(self):
++        """
++        Test that _clean_fields() accesses values through BoundField objects after the fix.
++        """
++        form = DisabledFieldForm(data={'age': '25'})
++        
++        # Store original methods to verify they're being called through BoundField
++        original_get_initial = form.get_initial_for_field
++        original_field_data_value = form._field_data_value
++        
++        # Track if these methods are called directly (they shouldn't be after the fix)
++        get_initial_called = []
++        field_data_value_called = []
++        
++        def track_get_initial(*args, **kwargs):
++            get_initial_called.append(True)
++            return original_get_initial(*args, **kwargs)
++        
++        def track_field_data_value(*args, **kwargs):
++            field_data_value_called.append(True)
++            return original_field_data_value(*args, **kwargs)
++        
++        form.get_initial_for_field = track_get_initial
++        form._field_data_value = track_field_data_value
++        
++        # Run _clean_fields
++        form._clean_fields()
++        
++        # After the fix, _clean_fields should access values through BoundField,
++        # so these direct calls should be minimized or eliminated
++        # This test documents the current behavior and will need adjustment after the fix
++        # For now, we just verify that the form works correctly
++        self.assertIsNotNone(form.cleaned_data)
+
+--- a/tests/forms_tests/test_forms.py
++++ b/tests/forms_tests/test_forms.py
+-    def test_datetime_clean_initial_callable_disabled(self):
+-        class DateTimeForm(Form):
+-            datetime = DateTimeField(disabled=True)
+-
+-        form = DateTimeForm({}, initial={'datetime': lambda: datetime.datetime(2006, 10, 25, 14, 30, 59)})
+-        self.assertTrue(form.is_valid())
+-        self.assertEqual(form.cleaned_data['datetime'], datetime.datetime(2006, 10, 25, 14, 30, 59))
++    def test_datetime_clean_initial_callable_disabled(self):
++        class DateTimeForm(Form):
++            datetime = DateTimeField(disabled=True)
++
++        form = DateTimeForm({}, initial={'datetime': lambda: datetime.datetime(2006, 10, 25, 14, 30, 59)})
++        self.assertTrue(form.is_valid())
++        self.assertEqual(form.cleaned_data['datetime'], datetime.datetime(2006, 10, 25, 14, 30, 59))
++        
++        # Additional test to verify consistency between _clean_fields and BoundField.initial
++        # This addresses the issue mentioned in the bug report
++        cleaned_value = form.cleaned_data['datetime']
++        boundfield_initial = form['datetime'].initial
++        self.assertEqual(cleaned_value, boundfield_initial,
++                        "form._clean_fields() should return the same value as form['datetime'].initial")

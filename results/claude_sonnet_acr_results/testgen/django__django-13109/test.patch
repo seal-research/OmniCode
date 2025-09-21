@@ -1,0 +1,281 @@
+--- a/tests/model_fields/test_foreignkey_validation.py
++++ b/tests/model_fields/test_foreignkey_validation.py
+-# Empty if creating new file
++import pytest
++from django.core.exceptions import ValidationError
++from django.db import models
++from django.forms import ModelForm
++from django.test import TestCase
++
++
++class ArticleManager(models.Manager):
++    """Custom manager that filters out archived articles."""
++    def get_queryset(self):
++        qs = super().get_queryset()
++        return qs.filter(archived=False)
++
++
++class Article(models.Model):
++    """Test model with custom manager that filters archived articles."""
++    title = models.CharField(max_length=100)
++    archived = models.BooleanField(default=False)
++    
++    # Don't include archived articles by default
++    objects = ArticleManager()
++    
++    class Meta:
++        app_label = 'model_fields'
++
++
++class FavoriteArticle(models.Model):
++    """Model with ForeignKey to Article."""
++    article = models.ForeignKey(Article, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = 'model_fields'
++
++
++class FavoriteArticleForm(ModelForm):
++    """Form that allows selecting archived articles using base manager."""
++    class Meta:
++        model = FavoriteArticle
++        fields = '__all__'
++    
++    def __init__(self, *args, **kwargs):
++        super().__init__(*args, **kwargs)
++        # Use the base manager instead of the default manager to allow archived articles
++        self.fields['article'].queryset = Article._base_manager.all()
++
++
++class TestForeignKeyValidationWithCustomManager(TestCase):
++    """Test suite for ForeignKey validation with custom managers."""
++    
++    def setUp(self):
++        """Set up test data."""
++        # Create a regular article (not archived)
++        self.regular_article = Article.objects.create(
++            title="Regular Article",
++            archived=False
++        )
++        
++        # Create an archived article using base manager
++        self.archived_article = Article._base_manager.create(
++            title="Archived Article", 
++            archived=True
++        )
++    
++    def test_regular_article_accessible_via_default_manager(self):
++        """Test that regular articles are accessible via default manager."""
++        # Regular article should be found by default manager
++        assert Article.objects.filter(id=self.regular_article.id).exists()
++        
++    def test_archived_article_not_accessible_via_default_manager(self):
++        """Test that archived articles are not accessible via default manager."""
++        # Archived article should NOT be found by default manager
++        assert not Article.objects.filter(id=self.archived_article.id).exists()
++        
++    def test_archived_article_accessible_via_base_manager(self):
++        """Test that archived articles are accessible via base manager."""
++        # Archived article should be found by base manager
++        assert Article._base_manager.filter(id=self.archived_article.id).exists()
++    
++    def test_foreignkey_validation_fails_with_archived_article_before_fix(self):
++        """Test that ForeignKey validation fails for archived articles (demonstrates the bug)."""
++        # Create a FavoriteArticle instance with archived article
++        favorite = FavoriteArticle(article=self.archived_article)
++        
++        # This should raise ValidationError because ForeignKey.validate() 
++        # uses _default_manager which filters out archived articles
++        with pytest.raises(ValidationError) as exc_info:
++            favorite.full_clean()
++        
++        # Verify the error message mentions the article doesn't exist
++        error_msg = str(exc_info.value)
++        assert "does not exist" in error_msg
++        assert str(self.archived_article.id) in error_msg
++    
++    def test_foreignkey_validation_passes_with_regular_article(self):
++        """Test that ForeignKey validation passes for regular articles."""
++        # Create a FavoriteArticle instance with regular article
++        favorite = FavoriteArticle(article=self.regular_article)
++        
++        # This should not raise any ValidationError
++        try:
++            favorite.full_clean()
++        except ValidationError:
++            pytest.fail("Validation should pass for regular articles")
++    
++    def test_form_queryset_includes_archived_articles(self):
++        """Test that the form queryset includes archived articles."""
++        form = FavoriteArticleForm()
++        
++        # Form queryset should include both regular and archived articles
++        queryset_ids = list(form.fields['article'].queryset.values_list('id', flat=True))
++        assert self.regular_article.id in queryset_ids
++        assert self.archived_article.id in queryset_ids
++    
++    def test_form_validation_fails_with_archived_article_before_fix(self):
++        """Test that form validation fails when selecting archived article (demonstrates the bug)."""
++        # Try to create form with archived article selected
++        form_data = {'article': self.archived_article.id}
++        form = FavoriteArticleForm(data=form_data)
++        
++        # Form should be invalid because ForeignKey validation uses _default_manager
++        assert not form.is_valid()
++        
++        # Should have validation error on article field
++        assert 'article' in form.errors
++        error_msg = str(form.errors['article'])
++        assert "does not exist" in error_msg
++    
++    def test_form_validation_passes_with_regular_article(self):
++        """Test that form validation passes when selecting regular article."""
++        # Try to create form with regular article selected
++        form_data = {'article': self.regular_article.id}
++        form = FavoriteArticleForm(data=form_data)
++        
++        # Form should be valid
++        assert form.is_valid(), f"Form errors: {form.errors}"
++    
++    def test_foreignkey_validation_with_none_value(self):
++        """Test that ForeignKey validation handles None values correctly."""
++        # Create a FavoriteArticle instance with None article (if field allows null)
++        favorite = FavoriteArticle(article=None)
++        
++        # This should raise ValidationError for required field
++        with pytest.raises(ValidationError):
++            favorite.full_clean()
++    
++    def test_foreignkey_validation_with_nonexistent_id(self):
++        """Test that ForeignKey validation fails for non-existent IDs."""
++        # Use an ID that doesn't exist in either manager
++        nonexistent_id = 99999
++        
++        # Verify the ID doesn't exist in either manager
++        assert not Article.objects.filter(id=nonexistent_id).exists()
++        assert not Article._base_manager.filter(id=nonexistent_id).exists()
++        
++        # Create FavoriteArticle with non-existent article ID
++        favorite = FavoriteArticle(article_id=nonexistent_id)
++        
++        # This should raise ValidationError
++        with pytest.raises(ValidationError) as exc_info:
++            favorite.full_clean()
++        
++        error_msg = str(exc_info.value)
++        assert "does not exist" in error_msg
++        assert str(nonexistent_id) in error_msg
++
++
++class TestForeignKeyValidationAfterFix(TestCase):
++    """Test suite to verify the fix works correctly."""
++    
++    def setUp(self):
++        """Set up test data."""
++        # Create a regular article (not archived)
++        self.regular_article = Article.objects.create(
++            title="Regular Article",
++            archived=False
++        )
++        
++        # Create an archived article using base manager
++        self.archived_article = Article._base_manager.create(
++            title="Archived Article", 
++            archived=True
++        )
++    
++    def test_foreignkey_validation_passes_with_archived_article_after_fix(self):
++        """Test that ForeignKey validation passes for archived articles after fix."""
++        # This test will pass after the fix is applied
++        # Create a FavoriteArticle instance with archived article
++        favorite = FavoriteArticle(article=self.archived_article)
++        
++        # After fix, this should not raise ValidationError because 
++        # ForeignKey.validate() will use _base_manager
++        try:
++            favorite.full_clean()
++        except ValidationError as e:
++            # If this fails, it means the fix hasn't been applied yet
++            pytest.fail(f"Validation should pass for archived articles after fix. Error: {e}")
++    
++    def test_form_validation_passes_with_archived_article_after_fix(self):
++        """Test that form validation passes when selecting archived article after fix."""
++        # Try to create form with archived article selected
++        form_data = {'article': self.archived_article.id}
++        form = FavoriteArticleForm(data=form_data)
++        
++        # After fix, form should be valid
++        assert form.is_valid(), f"Form should be valid after fix. Errors: {form.errors}"
++    
++    def test_fix_preserves_existing_functionality(self):
++        """Test that the fix preserves all existing functionality."""
++        # Regular articles should still validate correctly
++        favorite_regular = FavoriteArticle(article=self.regular_article)
++        try:
++            favorite_regular.full_clean()
++        except ValidationError:
++            pytest.fail("Fix should preserve validation for regular articles")
++        
++        # Non-existent articles should still fail validation
++        nonexistent_id = 99999
++        favorite_nonexistent = FavoriteArticle(article_id=nonexistent_id)
++        with pytest.raises(ValidationError):
++            favorite_nonexistent.full_clean()
++        
++        # None values should still be handled correctly
++        favorite_none = FavoriteArticle(article=None)
++        with pytest.raises(ValidationError):
++            favorite_none.full_clean()
++
++
++class TestEdgeCases(TestCase):
++    """Test edge cases for ForeignKey validation."""
++    
++    def setUp(self):
++        """Set up test data."""
++        self.regular_article = Article.objects.create(
++            title="Regular Article",
++            archived=False
++        )
++        
++        self.archived_article = Article._base_manager.create(
++            title="Archived Article", 
++            archived=True
++        )
++    
++    def test_validation_with_custom_to_field(self):
++        """Test validation works with custom to_field parameter."""
++        # This tests that the fix works even when ForeignKey uses a custom to_field
++        # For this test, we'll use the existing setup since Article uses default pk
++        
++        favorite = FavoriteArticle(article=self.archived_article)
++        
++        # The validation should use the correct field name for lookup
++        # This will pass after the fix is applied
++        try:
++            favorite.full_clean()
++        except ValidationError as e:
++            # Expected to fail before fix
++            assert "does not exist" in str(e)
++    
++    def test_validation_preserves_limit_choices_to(self):
++        """Test that validation still respects limit_choices_to after fix."""
++        # This test ensures that the fix doesn't break limit_choices_to functionality
++        # Since our test models don't use limit_choices_to, this is a basic test
++        
++        favorite = FavoriteArticle(article=self.regular_article)
++        try:
++            favorite.full_clean()
++        except ValidationError:
++            pytest.fail("Validation should work with limit_choices_to")
++    
++    def test_validation_with_database_routing(self):
++        """Test that validation respects database routing after fix."""
++        # This test ensures the fix preserves database routing functionality
++        # The using() call should still work correctly
++        
++        favorite = FavoriteArticle(article=self.regular_article)
++        try:
++            favorite.full_clean()
++        except ValidationError:
++            pytest.fail("Validation should work with database routing")

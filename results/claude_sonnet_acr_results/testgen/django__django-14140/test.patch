@@ -1,0 +1,178 @@
+--- a/tests/queries/test_q_deconstruct_bug.py
++++ b/tests/queries/test_q_deconstruct_bug.py
+-# Empty if creating new file
++import pytest
++from django.contrib.auth import get_user_model
++from django.db import models
++from django.db.models import Q, Exists
++from django.test import TestCase
++
++
++class QDeconstructBugTests(TestCase):
++    """
++    Test cases for the Q.deconstruct() bug when handling non-subscriptable children.
++    
++    The bug occurs when Q objects contain single children that are not subscriptable
++    (like Exists objects), causing a TypeError when deconstruct() tries to access
++    child[0] and child[1].
++    """
++
++    def test_q_deconstruct_with_exists_object_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: Q(Exists(...)).deconstruct() crashes.
++        
++        This test should fail before the fix is applied, showing the TypeError
++        when trying to access child[0] and child[1] on an Exists object.
++        """
++        User = get_user_model()
++        exists_query = Exists(User.objects.filter(username='jim'))
++        q = Q(exists_query)
++        
++        # This should raise TypeError before the fix
++        with self.assertRaises(TypeError) as cm:
++            q.deconstruct()
++        
++        self.assertIn("'Exists' object is not subscriptable", str(cm.exception))
++
++    def test_q_deconstruct_with_exists_object_after_fix(self):
++        """
++        Test that Q(Exists(...)).deconstruct() works correctly after the fix.
++        
++        After the fix, this should return the Exists object in args, not kwargs.
++        """
++        User = get_user_model()
++        exists_query = Exists(User.objects.filter(username='jim'))
++        q = Q(exists_query)
++        
++        # After fix, this should work and return Exists in args
++        path, args, kwargs = q.deconstruct()
++        
++        self.assertEqual(path, 'django.db.models.Q')
++        self.assertEqual(len(args), 1)
++        self.assertIsInstance(args[0], Exists)
++        self.assertEqual(kwargs, {})
++
++    def test_q_deconstruct_with_single_field_lookup_still_works(self):
++        """
++        Test that normal single field lookups still work as before.
++        
++        Q(x=1) should still deconstruct to kwargs, not args.
++        """
++        q = Q(x=1)
++        path, args, kwargs = q.deconstruct()
++        
++        self.assertEqual(path, 'django.db.models.Q')
++        self.assertEqual(args, ())
++        self.assertEqual(kwargs, {'x': 1})
++
++    def test_q_deconstruct_with_multiple_field_lookups_still_works(self):
++        """
++        Test that multiple field lookups still work as before.
++        
++        Q(x=1, y=2) should deconstruct to args as tuples.
++        """
++        q = Q(x=1, y=2)
++        path, args, kwargs = q.deconstruct()
++        
++        self.assertEqual(path, 'django.db.models.Q')
++        self.assertEqual(set(args), {('x', 1), ('y', 2)})
++        self.assertEqual(kwargs, {})
++
++    def test_q_deconstruct_with_nested_q_objects_still_works(self):
++        """
++        Test that nested Q objects still work as before.
++        """
++        inner_q = Q(name='test')
++        q = Q(inner_q, pk=1)
++        path, args, kwargs = q.deconstruct()
++        
++        self.assertEqual(path, 'django.db.models.Q')
++        self.assertIn(inner_q, args)
++        self.assertIn(('pk', 1), args)
++        self.assertEqual(kwargs, {})
++
++    def test_q_reconstruct_with_exists_object(self):
++        """
++        Test that Q objects with Exists can be reconstructed correctly.
++        
++        This ensures the deconstruct/reconstruct cycle works properly.
++        """
++        User = get_user_model()
++        exists_query = Exists(User.objects.filter(username='jim'))
++        original_q = Q(exists_query)
++        
++        # Deconstruct and reconstruct
++        path, args, kwargs = original_q.deconstruct()
++        reconstructed_q = Q(*args, **kwargs)
++        
++        # The reconstructed Q should be equal to the original
++        self.assertEqual(original_q, reconstructed_q)
++
++    def test_q_deconstruct_with_negated_exists_object(self):
++        """
++        Test that negated Q objects with Exists work correctly.
++        """
++        User = get_user_model()
++        exists_query = Exists(User.objects.filter(username='jim'))
++        q = Q(exists_query, _negated=True)
++        
++        path, args, kwargs = q.deconstruct()
++        
++        self.assertEqual(path, 'django.db.models.Q')
++        self.assertEqual(len(args), 1)
++        self.assertIsInstance(args[0], Exists)
++        self.assertEqual(kwargs, {'_negated': True})
++
++    def test_q_deconstruct_with_custom_connector_and_exists(self):
++        """
++        Test that Q objects with custom connectors and Exists work correctly.
++        """
++        User = get_user_model()
++        exists_query = Exists(User.objects.filter(username='jim'))
++        q = Q(exists_query, _connector=Q.OR)
++        
++        path, args, kwargs = q.deconstruct()
++        
++        self.assertEqual(path, 'django.db.models.Q')
++        self.assertEqual(len(args), 1)
++        self.assertIsInstance(args[0], Exists)
++        self.assertEqual(kwargs, {'_connector': Q.OR})
++
++    def test_q_deconstruct_edge_case_empty_q(self):
++        """
++        Test that empty Q objects deconstruct correctly.
++        """
++        q = Q()
++        path, args, kwargs = q.deconstruct()
++        
++        self.assertEqual(path, 'django.db.models.Q')
++        self.assertEqual(args, ())
++        self.assertEqual(kwargs, {})
++
++    def test_q_deconstruct_with_non_tuple_single_child(self):
++        """
++        Test various non-tuple single children to ensure they're handled correctly.
++        
++        This tests the general case where any non-subscriptable object should
++        be placed in args, not treated as kwargs.
++        """
++        # Create a mock non-subscriptable object
++        class NonSubscriptable:
++            def __init__(self, value):
++                self.value = value
++            
++            def __eq__(self, other):
++                return isinstance(other, NonSubscriptable) and self.value == other.value
++        
++        non_sub_obj = NonSubscriptable("test")
++        
++        # Manually create Q with non-subscriptable child
++        q = Q()
++        q.children = [non_sub_obj]
++        
++        path, args, kwargs = q.deconstruct()
++        
++        self.assertEqual(path, 'django.db.models.Q')
++        self.assertEqual(len(args), 1)
++        self.assertEqual(args[0], non_sub_obj)
++        self.assertEqual(kwargs, {})

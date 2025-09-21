@@ -1,0 +1,207 @@
+--- a/tests/staticfiles_tests/test_storage.py
++++ b/tests/staticfiles_tests/test_storage.py
+-# Empty if creating new file
++import pytest
++import tempfile
++import os
++from django.test import TestCase, override_settings
++from django.contrib.staticfiles.storage import ManifestStaticFilesStorage
++from django.core.management import call_command
++from django.core.files.storage import default_storage
++from django.conf import settings
++
++
++class ZeroPassManifestStaticFilesStorage(ManifestStaticFilesStorage):
++    """Custom storage class with max_post_process_passes set to 0."""
++    max_post_process_passes = 0
++
++
++class TestManifestStaticFilesStorageZeroPasses(TestCase):
++    """Test ManifestStaticFilesStorage with max_post_process_passes = 0."""
++    
++    def setUp(self):
++        """Set up test environment with temporary directories."""
++        self.temp_static_root = tempfile.mkdtemp()
++        self.temp_static_dir = tempfile.mkdtemp()
++        
++        # Create a simple CSS file for testing
++        css_content = """
++        body {
++            background: url('image.png');
++        }
++        """
++        css_file_path = os.path.join(self.temp_static_dir, 'test.css')
++        with open(css_file_path, 'w') as f:
++            f.write(css_content)
++            
++        # Create a simple image file for testing
++        img_file_path = os.path.join(self.temp_static_dir, 'image.png')
++        with open(img_file_path, 'wb') as f:
++            f.write(b'\x89PNG\r\n\x1a\n')  # Minimal PNG header
++    
++    def tearDown(self):
++        """Clean up temporary directories."""
++        import shutil
++        shutil.rmtree(self.temp_static_root, ignore_errors=True)
++        shutil.rmtree(self.temp_static_dir, ignore_errors=True)
++    
++    @override_settings(
++        STATICFILES_STORAGE='tests.staticfiles_tests.test_storage.ZeroPassManifestStaticFilesStorage',
++        STATIC_ROOT=None,  # Will be set in test
++        STATICFILES_DIRS=[]  # Will be set in test
++    )
++    def test_zero_max_post_process_passes_no_crash(self):
++        """Test that setting max_post_process_passes to 0 doesn't crash."""
++        with self.settings(
++            STATIC_ROOT=self.temp_static_root,
++            STATICFILES_DIRS=[self.temp_static_dir]
++        ):
++            storage = ZeroPassManifestStaticFilesStorage()
++            
++            # This should not raise UnboundLocalError
++            try:
++                # Simulate what collectstatic does
++                paths = {
++                    'test.css': (storage, 'test.css'),
++                    'image.png': (storage, 'image.png'),
++                }
++                
++                # Call post_process directly to test the bug
++                results = list(storage.post_process(paths, dry_run=False))
++                
++                # Should complete without error
++                self.assertIsInstance(results, list)
++                
++            except UnboundLocalError as e:
++                if "substitutions" in str(e):
++                    self.fail("UnboundLocalError for 'substitutions' variable should not occur")
++                else:
++                    raise
++    
++    @override_settings(
++        STATICFILES_STORAGE='tests.staticfiles_tests.test_storage.ZeroPassManifestStaticFilesStorage',
++        STATIC_ROOT=None,  # Will be set in test
++        STATICFILES_DIRS=[]  # Will be set in test
++    )
++    def test_zero_passes_with_collectstatic_command(self):
++        """Test that collectstatic command works with max_post_process_passes = 0."""
++        with self.settings(
++            STATIC_ROOT=self.temp_static_root,
++            STATICFILES_DIRS=[self.temp_static_dir]
++        ):
++            # This should not raise UnboundLocalError during collectstatic
++            try:
++                call_command('collectstatic', verbosity=0, interactive=False)
++                
++                # Verify files were collected
++                self.assertTrue(os.path.exists(os.path.join(self.temp_static_root, 'test.css')))
++                self.assertTrue(os.path.exists(os.path.join(self.temp_static_root, 'image.png')))
++                
++            except UnboundLocalError as e:
++                if "substitutions" in str(e):
++                    self.fail("collectstatic should not fail with UnboundLocalError for 'substitutions'")
++                else:
++                    raise
++    
++    def test_zero_passes_post_process_behavior(self):
++        """Test the specific behavior of post_process with zero passes."""
++        storage = ZeroPassManifestStaticFilesStorage()
++        
++        # Create minimal test data
++        paths = {
++            'test.css': (storage, 'test.css'),
++        }
++        
++        # Mock the _post_process method to avoid file system operations
++        original_post_process = storage._post_process
++        
++        def mock_post_process(paths, adjustable_paths, hashed_files):
++            for path in paths:
++                yield path, path, True, False
++        
++        storage._post_process = mock_post_process
++        
++        try:
++            results = list(storage.post_process(paths, dry_run=False))
++            
++            # Should return results without crashing
++            self.assertIsInstance(results, list)
++            self.assertGreater(len(results), 0)
++            
++        except UnboundLocalError as e:
++            if "substitutions" in str(e):
++                self.fail("post_process should handle zero passes without UnboundLocalError")
++            else:
++                raise
++        finally:
++            storage._post_process = original_post_process
++    
++    def test_normal_passes_still_work(self):
++        """Test that normal max_post_process_passes values still work correctly."""
++        # Test with default value (should be > 0)
++        storage = ManifestStaticFilesStorage()
++        self.assertGreater(storage.max_post_process_passes, 0)
++        
++        # Create minimal test data
++        paths = {
++            'test.css': (storage, 'test.css'),
++        }
++        
++        # Mock the _post_process method
++        def mock_post_process(paths, adjustable_paths, hashed_files):
++            for path in paths:
++                yield path, path, True, False
++        
++        storage._post_process = mock_post_process
++        
++        # Should work without issues
++        results = list(storage.post_process(paths, dry_run=False))
++        self.assertIsInstance(results, list)
++
++
++class TestManifestStaticFilesStorageEdgeCases(TestCase):
++    """Test edge cases for ManifestStaticFilesStorage."""
++    
++    def test_negative_max_post_process_passes(self):
++        """Test behavior with negative max_post_process_passes."""
++        class NegativePassStorage(ManifestStaticFilesStorage):
++            max_post_process_passes = -1
++        
++        storage = NegativePassStorage()
++        paths = {'test.css': (storage, 'test.css')}
++        
++        # Mock _post_process to avoid file operations
++        def mock_post_process(paths, adjustable_paths, hashed_files):
++            for path in paths:
++                yield path, path, True, False
++        
++        storage._post_process = mock_post_process
++        
++        # Should handle negative values gracefully (loop won't execute)
++        try:
++            results = list(storage.post_process(paths, dry_run=False))
++            self.assertIsInstance(results, list)
++        except UnboundLocalError as e:
++            if "substitutions" in str(e):
++                self.fail("Negative max_post_process_passes should not cause UnboundLocalError")
++            else:
++                raise
++    
++    def test_one_pass_works_correctly(self):
++        """Test that max_post_process_passes = 1 works correctly."""
++        class OnePassStorage(ManifestStaticFilesStorage):
++            max_post_process_passes = 1
++        
++        storage = OnePassStorage()
++        paths = {'test.css': (storage, 'test.css')}
++        
++        # Mock _post_process
++        def mock_post_process(paths, adjustable_paths, hashed_files):
++            for path in paths:
++                yield path, path, True, False
++        
++        storage._post_process = mock_post_process
++        
++        # Should work correctly with one pass
++        results = list(storage.post_process(paths, dry_run=False))
++        self.assertIsInstance(results, list)

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/timesince.py b/django/utils/timesince.py\nindex 701c49bab9..f052116849 100644\n--- a/django/utils/timesince.py\n+++ b/django/utils/timesince.py\n@@ -97,6 +97,8 @@ def timesince(d, now=None, reversed=False, time_strings=None, depth=2):\n             d.hour,\n             d.minute,\n             d.second,\n+            d.microsecond,\n+            d.tzinfo,\n         )\n     else:\n         pivot = d\n"
+}

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/extensions/feedexport.py b/scrapy/extensions/feedexport.py\nindex cd26b5778..5f0546c83 100644\n--- a/scrapy/extensions/feedexport.py\n+++ b/scrapy/extensions/feedexport.py\n@@ -85,7 +85,7 @@ class ItemFilter:\n class IFeedStorage(Interface):\n     \"\"\"Interface that all Feed Storages must implement\"\"\"\n \n-    def __init__(uri, *, feed_options=None):\n+    def __init__(self, uri, *, feed_options=None):\n         \"\"\"Initialize the storage with the parameters given in the URI and the\n         feed-specific options (see :setting:`FEEDS`)\"\"\"\n \n"
+}

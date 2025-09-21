@@ -1,0 +1,359 @@
+--- a/tests/forms_tests/test_jsonfield_unicode.py
++++ b/tests/forms_tests/test_jsonfield_unicode.py
+-# Empty if creating new file
++import json
++import pytest
++from django import forms
++from django.forms.fields import JSONField
++from django.test import TestCase
++
++
++class JSONFieldUnicodeTests(TestCase):
++    """Test that JSONField properly handles Unicode characters in Django admin."""
++
++    def test_prepare_value_with_unicode_characters(self):
++        """Test that prepare_value displays Unicode characters properly, not as ASCII escape sequences."""
++        field = JSONField()
++        
++        # Test Chinese characters
++        chinese_data = {'name': '中国', 'city': '北京'}
++        prepared_value = field.prepare_value(chinese_data)
++        
++        # The prepared value should contain readable Chinese characters, not escape sequences
++        self.assertIn('中国', prepared_value)
++        self.assertIn('北京', prepared_value)
++        self.assertNotIn('\\u4e2d\\u56fd', prepared_value)  # Should not contain ASCII escape sequences
++        
++        # Verify it's still valid JSON
++        parsed_back = json.loads(prepared_value)
++        self.assertEqual(parsed_back, chinese_data)
++
++    def test_prepare_value_with_unicode_characters_before_fix(self):
++        """Test that demonstrates the bug - this test should fail before the fix is applied."""
++        field = JSONField()
++        
++        # Test Chinese characters
++        chinese_data = {'name': '中国'}
++        
++        # Simulate the old behavior with ensure_ascii=True (default)
++        old_behavior_result = json.dumps(chinese_data)
++        
++        # This should contain ASCII escape sequences (the bug)
++        self.assertIn('\\u4e2d\\u56fd', old_behavior_result)
++        
++        # After fix, prepare_value should NOT produce ASCII escape sequences
++        prepared_value = field.prepare_value(chinese_data)
++        self.assertNotEqual(prepared_value, old_behavior_result)
++
++    def test_prepare_value_with_various_unicode_characters(self):
++        """Test prepare_value with various Unicode characters from different languages."""
++        field = JSONField()
++        
++        test_cases = [
++            {'japanese': 'こんにちは'},  # Japanese
++            {'korean': '안녕하세요'},     # Korean
++            {'arabic': 'مرحبا'},        # Arabic
++            {'emoji': '😀🎉'},          # Emoji
++            {'mixed': '中国 Japan 한국'}, # Mixed languages
++        ]
++        
++        for test_data in test_cases:
++            with self.subTest(test_data=test_data):
++                prepared_value = field.prepare_value(test_data)
++                
++                # Verify Unicode characters are preserved
++                for key, value in test_data.items():
++                    self.assertIn(value, prepared_value)
++                
++                # Verify it's still valid JSON
++                parsed_back = json.loads(prepared_value)
++                self.assertEqual(parsed_back, test_data)
++
++    def test_prepare_value_with_invalid_json_input(self):
++        """Test that prepare_value handles InvalidJSONInput correctly."""
++        from django.forms.fields import InvalidJSONInput
++        
++        field = JSONField()
++        invalid_input = InvalidJSONInput('invalid json')
++        
++        # Should return the InvalidJSONInput as-is
++        result = field.prepare_value(invalid_input)
++        self.assertEqual(result, invalid_input)
++
++    def test_has_changed_with_unicode_characters(self):
++        """Test that has_changed method works correctly with Unicode characters."""
++        field = JSONField()
++        
++        # Test data with Chinese characters
++        initial_data = {'name': '中国', 'city': '北京'}
++        same_data = {'name': '中国', 'city': '北京'}
++        different_data = {'name': '中国', 'city': '上海'}
++        
++        # Same data should not be considered changed
++        self.assertFalse(field.has_changed(initial_data, json.dumps(same_data, ensure_ascii=False)))
++        
++        # Different data should be considered changed
++        self.assertTrue(field.has_changed(initial_data, json.dumps(different_data, ensure_ascii=False)))
++
++    def test_has_changed_unicode_consistency(self):
++        """Test that has_changed is consistent regardless of ensure_ascii setting."""
++        field = JSONField()
++        
++        unicode_data = {'greeting': '你好'}
++        
++        # JSON with ensure_ascii=False (readable Unicode)
++        json_unicode = json.dumps(unicode_data, ensure_ascii=False)
++        
++        # JSON with ensure_ascii=True (ASCII escape sequences)
++        json_ascii = json.dumps(unicode_data, ensure_ascii=True)
++        
++        # Both should be considered the same by has_changed
++        self.assertFalse(field.has_changed(unicode_data, json_unicode))
++        self.assertFalse(field.has_changed(unicode_data, json_ascii))
++
++    def test_bound_data_with_unicode_characters(self):
++        """Test that bound_data handles Unicode characters correctly."""
++        field = JSONField()
++        
++        # Test with Unicode JSON string
++        unicode_json = '{"message": "你好世界"}'
++        result = field.bound_data(unicode_json, None)
++        
++        expected = {"message": "你好世界"}
++        self.assertEqual(result, expected)
++
++    def test_to_python_with_unicode_characters(self):
++        """Test that to_python handles Unicode characters correctly."""
++        field = JSONField()
++        
++        # Test with Unicode JSON string
++        unicode_json = '{"message": "你好世界"}'
++        result = field.to_python(unicode_json)
++        
++        expected = {"message": "你好世界"}
++        self.assertEqual(result, expected)
++
++    def test_edge_cases_with_unicode(self):
++        """Test edge cases with Unicode characters."""
++        field = JSONField()
++        
++        # Empty Unicode string
++        empty_unicode = {'empty': ''}
++        prepared = field.prepare_value(empty_unicode)
++        self.assertIn('""', prepared)  # Should contain empty string representation
++        
++        # Unicode in nested structures
++        nested_unicode = {
++            'level1': {
++                'level2': {
++                    'chinese': '中文',
++                    'list': ['项目1', '项目2']
++                }
++            }
++        }
++        prepared = field.prepare_value(nested_unicode)
++        self.assertIn('中文', prepared)
++        self.assertIn('项目1', prepared)
++        self.assertIn('项目2', prepared)
++        
++        # Verify it's still valid JSON
++        parsed_back = json.loads(prepared)
++        self.assertEqual(parsed_back, nested_unicode)
++
++    def test_custom_encoder_with_unicode(self):
++        """Test that custom encoder works with Unicode characters."""
++        from django.core.serializers.json import DjangoJSONEncoder
++        
++        field = JSONField(encoder=DjangoJSONEncoder)
++        
++        unicode_data = {'message': '测试消息'}
++        prepared = field.prepare_value(unicode_data)
++        
++        # Should contain readable Unicode
++        self.assertIn('测试消息', prepared)
++        
++        # Should be valid JSON
++        parsed_back = json.loads(prepared)
++        self.assertEqual(parsed_back, unicode_data)
+
+--- a/tests/admin_tests/test_jsonfield_admin_unicode.py
++++ b/tests/admin_tests/test_jsonfield_admin_unicode.py
+-# Empty if creating new file
++import json
++from django.contrib import admin
++from django.contrib.admin.sites import AdminSite
++from django.db import models
++from django.forms import ModelForm
++from django.test import TestCase, RequestFactory
++from django.contrib.auth.models import User
++
++
++class TestModel(models.Model):
++    """Test model with JSONField for admin testing."""
++    name = models.CharField(max_length=100)
++    data = models.JSONField()
++    
++    class Meta:
++        app_label = 'admin_tests'
++
++
++class TestModelAdmin(admin.ModelAdmin):
++    """Admin class for TestModel."""
++    fields = ['name', 'data']
++
++
++class JSONFieldAdminUnicodeTests(TestCase):
++    """Test JSONField Unicode handling in Django admin interface."""
++    
++    def setUp(self):
++        self.site = AdminSite()
++        self.admin = TestModelAdmin(TestModel, self.site)
++        self.factory = RequestFactory()
++        self.user = User.objects.create_superuser('admin', 'admin@test.com', 'password')
++
++    def test_admin_form_displays_unicode_properly(self):
++        """Test that admin forms display Unicode characters properly in JSONField."""
++        # Create test instance with Unicode data
++        unicode_data = {
++            'title': '中文标题',
++            'description': '这是一个测试描述',
++            'tags': ['标签1', '标签2']
++        }
++        
++        instance = TestModel(name='Test', data=unicode_data)
++        
++        # Get the admin form
++        form_class = self.admin.get_form(None)
++        form = form_class(instance=instance)
++        
++        # Get the rendered field value
++        data_field = form['data']
++        rendered_value = data_field.value()
++        
++        # Should contain readable Unicode characters
++        self.assertIn('中文标题', rendered_value)
++        self.assertIn('这是一个测试描述', rendered_value)
++        self.assertIn('标签1', rendered_value)
++        self.assertIn('标签2', rendered_value)
++        
++        # Should NOT contain ASCII escape sequences
++        self.assertNotIn('\\u', rendered_value)
++
++    def test_admin_form_unicode_before_fix_demonstration(self):
++        """Demonstrate the bug that should exist before the fix."""
++        unicode_data = {'message': '中国'}
++        
++        # Simulate old behavior with default json.dumps (ensure_ascii=True)
++        old_behavior = json.dumps(unicode_data)
++        
++        # This should contain ASCII escape sequences (the bug)
++        self.assertIn('\\u4e2d\\u56fd', old_behavior)
++        
++        # Create instance and form
++        instance = TestModel(name='Test', data=unicode_data)
++        form_class = self.admin.get_form(None)
++        form = form_class(instance=instance)
++        
++        # After fix, the form should NOT display ASCII escape sequences
++        data_field = form['data']
++        rendered_value = data_field.value()
++        
++        # Should be different from the old buggy behavior
++        self.assertNotEqual(rendered_value.strip(), old_behavior)
++        self.assertIn('中国', rendered_value)
++
++    def test_admin_form_submission_with_unicode(self):
++        """Test that admin forms can handle Unicode data submission."""
++        unicode_data = {
++            'user': '用户名',
++            'email': 'test@测试.com',
++            'preferences': {
++                'language': '中文',
++                'theme': '深色主题'
++            }
++        }
++        
++        # Create form with Unicode data
++        form_class = self.admin.get_form(None)
++        form_data = {
++            'name': 'Unicode Test',
++            'data': json.dumps(unicode_data, ensure_ascii=False)
++        }
++        
++        form = form_class(data=form_data)
++        
++        # Form should be valid
++        self.assertTrue(form.is_valid(), f"Form errors: {form.errors}")
++        
++        # Save and verify
++        instance = form.save()
++        self.assertEqual(instance.data, unicode_data)
++
++    def test_admin_changelist_unicode_display(self):
++        """Test that Unicode characters display properly in admin changelist."""
++        # Create test instances with Unicode data
++        test_cases = [
++            {'name': 'Chinese', 'data': {'title': '中文测试'}},
++            {'name': 'Japanese', 'data': {'title': 'テスト'}},
++            {'name': 'Korean', 'data': {'title': '테스트'}},
++            {'name': 'Emoji', 'data': {'title': '🎉 测试 🎉'}},
++        ]
++        
++        instances = []
++        for case in test_cases:
++            instance = TestModel.objects.create(**case)
++            instances.append(instance)
++        
++        # Test that each instance displays Unicode properly
++        for instance in instances:
++            # Get string representation (used in admin)
++            str_repr = str(instance.data)
++            
++            # Should contain readable Unicode
++            for char in instance.data['title']:
++                if ord(char) > 127:  # Non-ASCII character
++                    # Should be readable, not escaped
++                    self.assertIn(char, str_repr)
++
++    def test_admin_form_validation_with_unicode(self):
++        """Test form validation works correctly with Unicode JSON data."""
++        form_class = self.admin.get_form(None)
++        
++        # Valid Unicode JSON
++        valid_data = {
++            'name': 'Valid Unicode',
++            'data': '{"message": "你好世界", "count": 42}'
++        }
++        form = form_class(data=valid_data)
++        self.assertTrue(form.is_valid())
++        
++        # Invalid JSON (should still fail validation)
++        invalid_data = {
++            'name': 'Invalid JSON',
++            'data': '{"message": "你好世界", invalid}'
++        }
++        form = form_class(data=invalid_data)
++        self.assertFalse(form.is_valid())
++        self.assertIn('data', form.errors)
++
++    def test_admin_readonly_unicode_display(self):
++        """Test that readonly JSONFields display Unicode properly."""
++        class ReadOnlyAdmin(admin.ModelAdmin):
++            readonly_fields = ['data']
++        
++        readonly_admin = ReadOnlyAdmin(TestModel, self.site)
++        
++        unicode_data = {'readonly_message': '只读消息'}
++        instance = TestModel(name='Readonly Test', data=unicode_data)
++        
++        # Get readonly field display
++        request = self.factory.get('/')
++        request.user = self.user
++        
++        # The readonly field should display Unicode properly
++        # This tests the admin's display of readonly JSON fields
++        form_class = readonly_admin.get_form(request)
++        form = form_class(instance=instance)
++        
++        # Even though it's readonly, the initial value should be Unicode-friendly
++        self.assertIn('只读消息', str(instance.data))

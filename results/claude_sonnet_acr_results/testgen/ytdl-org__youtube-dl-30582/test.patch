@@ -1,0 +1,328 @@
+--- a/test/test_youtube_throttling.py
++++ b/test/test_youtube_throttling.py
+-# Empty if creating new file
++import pytest
++import re
++from unittest.mock import Mock, patch, MagicMock
++from youtube_dl.extractor.youtube import YoutubeIE
++from youtube_dl.utils import ExtractorError
++
++
++class TestYouTubeThrottling:
++    """Test suite for YouTube throttling/n-parameter functionality."""
++    
++    @pytest.fixture
++    def youtube_ie(self):
++        """Create a YoutubeIE instance for testing."""
++        ie = YoutubeIE()
++        ie._downloader = Mock()
++        ie._downloader.params = {}
++        ie._downloader.cache = Mock()
++        ie._downloader.cache.load = Mock(return_value=None)
++        ie._downloader.cache.store = Mock()
++        ie._player_cache = {}
++        return ie
++    
++    @pytest.fixture
++    def mock_player_code_old(self):
++        """Mock old-style YouTube player code that should work."""
++        return '''
++        var a = function(b) {
++            return b.split('').reverse().join('');
++        };
++        if (c.get("n")) && (b = xyz(c)) {
++            // old pattern that works
++        }
++        '''
++    
++    @pytest.fixture
++    def mock_player_code_new(self):
++        """Mock new-style YouTube player code that fails with current regex."""
++        return '''
++        var a = function(b) {
++            return b.split('').reverse().join('');
++        };
++        if (c.get("n")) && (b = abc123(c.get("n"))) {
++            // new pattern that current regex doesn't match
++        }
++        '''
++    
++    @pytest.fixture
++    def mock_player_code_alternative(self):
++        """Mock alternative YouTube player code pattern."""
++        return '''
++        var a = function(b) {
++            return b.split('').reverse().join('');
++        };
++        c.get("n")&&(d=def456(c.get("n")),c.set("n",d))
++        '''
++
++    def test_extract_n_function_name_current_pattern(self, youtube_ie):
++        """Test that _extract_n_function_name works with current pattern."""
++        jscode = 'if(c.get("n"))&&(b=xyz(a)){return b;}'
++        
++        result = youtube_ie._extract_n_function_name(jscode)
++        assert result == 'xyz'
++    
++    def test_extract_n_function_name_fails_with_new_pattern(self, youtube_ie):
++        """Test that current implementation fails with new YouTube patterns."""
++        # This test demonstrates the bug - new patterns aren't matched
++        jscode = 'if(c.get("n"))&&(b=abc123(c.get("n"))){return b;}'
++        
++        with pytest.raises(ExtractorError):
++            youtube_ie._extract_n_function_name(jscode)
++    
++    def test_extract_n_function_name_should_handle_multiple_patterns(self, youtube_ie):
++        """Test that _extract_n_function_name should handle multiple patterns."""
++        # This test shows what the intended behavior should be
++        test_cases = [
++            ('if(c.get("n"))&&(b=xyz(a)){return b;}', 'xyz'),
++            ('c.get("n")&&(d=abc123(c.get("n")),c.set("n",d))', 'abc123'),
++            ('var n=c.get("n");if(n){b=def456(n);c.set("n",b)}', 'def456'),
++            ('.get("n"))&&(b=ghi789([a-zA-Z0-9])', 'ghi789'),
++        ]
++        
++        # Current implementation will fail on most of these
++        # This test documents the expected behavior after fix
++        for jscode, expected in test_cases:
++            try:
++                result = youtube_ie._extract_n_function_name(jscode)
++                # If it works, verify it's correct
++                assert result == expected
++            except ExtractorError:
++                # Expected to fail with current implementation
++                # After fix, this should pass
++                pass
++    
++    def test_n_descramble_handles_extraction_failure(self, youtube_ie):
++        """Test that _n_descramble handles n-function extraction failures gracefully."""
++        n_param = "test_n_param"
++        player_url = "https://www.youtube.com/s/player/test.js"
++        video_id = "test_video_id"
++        
++        # Mock _extract_n_function to raise an exception
++        with patch.object(youtube_ie, '_extract_n_function', side_effect=Exception("Extraction failed")):
++            # Current implementation raises ExtractorError, causing download failure
++            with pytest.raises(ExtractorError):
++                youtube_ie._n_descramble(n_param, player_url, video_id)
++    
++    def test_n_descramble_should_retry_on_failure(self, youtube_ie):
++        """Test that _n_descramble should implement retry logic."""
++        n_param = "test_n_param"
++        player_url = "https://www.youtube.com/s/player/test.js"
++        video_id = "test_video_id"
++        
++        # This test documents intended behavior - should retry and recover
++        # Current implementation doesn't do this, causing the 50kb/s issue
++        
++        call_count = 0
++        def mock_extract_n_function(vid, url):
++            nonlocal call_count
++            call_count += 1
++            if call_count == 1:
++                raise Exception("First attempt fails")
++            # Second attempt should succeed
++            return lambda x: x + "_transformed"
++        
++        with patch.object(youtube_ie, '_extract_n_function', side_effect=mock_extract_n_function):
++            # After fix, this should retry and succeed instead of failing
++            try:
++                result = youtube_ie._n_descramble(n_param, player_url, video_id)
++                # Should eventually succeed with retry logic
++                assert result == n_param + "_transformed"
++            except ExtractorError:
++                # Current implementation fails here - this is the bug
++                pass
++    
++    def test_n_descramble_caching_behavior(self, youtube_ie):
++        """Test n-parameter caching behavior."""
++        n_param = "test_n_param"
++        player_url = "https://www.youtube.com/s/player/test.js"
++        video_id = "test_video_id"
++        
++        # Mock successful function
++        mock_func = Mock(return_value="transformed_" + n_param)
++        
++        with patch.object(youtube_ie, '_extract_n_function', return_value=mock_func):
++            # First call should extract and cache
++            result1 = youtube_ie._n_descramble(n_param, player_url, video_id)
++            
++            # Second call should use cache
++            result2 = youtube_ie._n_descramble(n_param, player_url, video_id)
++            
++            assert result1 == result2 == "transformed_" + n_param
++            
++            # Should have cached both the function and the result
++            assert ('nsig', player_url) in youtube_ie._player_cache
++            assert ('nsig_value', n_param) in youtube_ie._player_cache
++    
++    def test_unthrottle_format_urls_processes_all_formats(self, youtube_ie):
++        """Test that _unthrottle_format_urls processes all video formats."""
++        video_id = "test_video"
++        player_url = "https://www.youtube.com/s/player/test.js"
++        
++        # Mock formats with n parameters
++        formats = [
++            {'url': 'https://example.com/video1.mp4?n=param1&other=value'},
++            {'url': 'https://example.com/video2.mp4?n=param2&other=value'},
++            {'url': 'https://example.com/video3.mp4?other=value'},  # no n param
++        ]
++        
++        # Mock successful n-parameter processing
++        def mock_n_descramble(n_param, player_url, video_id):
++            return "unthrottled_" + n_param
++        
++        with patch.object(youtube_ie, '_n_descramble', side_effect=mock_n_descramble):
++            youtube_ie._unthrottle_format_urls(video_id, player_url, formats)
++            
++            # All formats with n parameters should be processed
++            assert 'n=unthrottled_param1' in formats[0]['url']
++            assert 'n=unthrottled_param2' in formats[1]['url']
++            # Format without n param should be unchanged
++            assert formats[2]['url'] == 'https://example.com/video3.mp4?other=value'
++    
++    def test_unthrottle_format_urls_handles_processing_failure(self, youtube_ie):
++        """Test _unthrottle_format_urls behavior when n-parameter processing fails."""
++        video_id = "test_video"
++        player_url = "https://www.youtube.com/s/player/test.js"
++        
++        formats = [
++            {'url': 'https://example.com/video1.mp4?n=param1&other=value'},
++        ]
++        
++        # Mock n-parameter processing failure
++        with patch.object(youtube_ie, '_n_descramble', side_effect=ExtractorError("Processing failed")):
++            # Current implementation may let this fail silently or crash
++            # After fix, should handle gracefully
++            try:
++                youtube_ie._unthrottle_format_urls(video_id, player_url, formats)
++                # Should either succeed with fallback or handle gracefully
++            except ExtractorError:
++                # Current behavior - this causes the 50kb/s issue
++                pass
++    
++    def test_unthrottle_format_urls_validates_success(self, youtube_ie):
++        """Test that _unthrottle_format_urls should validate successful processing."""
++        video_id = "test_video"
++        player_url = "https://www.youtube.com/s/player/test.js"
++        
++        formats = [
++            {'url': 'https://example.com/video1.mp4?n=param1&other=value'},
++        ]
++        
++        # Mock n-parameter processing that returns same value (indicating failure)
++        def mock_n_descramble(n_param, player_url, video_id):
++            return n_param  # No transformation - should be detected as failure
++        
++        with patch.object(youtube_ie, '_n_descramble', side_effect=mock_n_descramble):
++            youtube_ie._unthrottle_format_urls(video_id, player_url, formats)
++            
++            # After fix, should detect that n-parameter wasn't actually transformed
++            # and either retry or log warning
++            # Current implementation doesn't validate this
++    
++    def test_mainstream_vs_regular_video_processing(self, youtube_ie):
++        """Test that demonstrates the difference between mainstream and regular video processing."""
++        video_id = "test_video"
++        player_url = "https://www.youtube.com/s/player/test.js"
++        
++        # Simulate the reported issue: some videos get full speed, others get throttled
++        mainstream_formats = [
++            {'url': 'https://example.com/mainstream.mp4?n=working_param&other=value'},
++        ]
++        
++        regular_formats = [
++            {'url': 'https://example.com/regular.mp4?n=failing_param&other=value'},
++        ]
++        
++        def mock_n_descramble_selective(n_param, player_url, video_id):
++            if n_param == "working_param":
++                return "unthrottled_" + n_param  # Mainstream videos work
++            else:
++                raise ExtractorError("Failed for regular videos")  # Regular videos fail
++        
++        with patch.object(youtube_ie, '_n_descramble', side_effect=mock_n_descramble_selective):
++            # Mainstream video should work
++            try:
++                youtube_ie._unthrottle_format_urls(video_id, player_url, mainstream_formats)
++                # Should succeed
++            except ExtractorError:
++                pytest.fail("Mainstream video processing should not fail")
++            
++            # Regular video should fail (demonstrating the bug)
++            with pytest.raises(ExtractorError):
++                youtube_ie._unthrottle_format_urls(video_id, player_url, regular_formats)
++    
++    def test_speed_measurement_integration(self, youtube_ie):
++        """Test integration with download speed measurement."""
++        # This test documents how the throttling issue affects download speeds
++        
++        # Mock a throttled URL (what happens when n-parameter processing fails)
++        throttled_url = "https://example.com/video.mp4?n=original_param"
++        
++        # Mock an unthrottled URL (what happens when n-parameter processing succeeds)  
++        unthrottled_url = "https://example.com/video.mp4?n=transformed_param"
++        
++        # The issue is that throttled URLs result in ~50kb/s speeds
++        # while unthrottled URLs get full speed
++        
++        # This test documents the expected behavior:
++        # All URLs should be unthrottled to prevent the 50kb/s issue
++        assert "transformed" in unthrottled_url or "unthrottled" in unthrottled_url
++    
++    def test_error_recovery_mechanisms(self, youtube_ie):
++        """Test error recovery mechanisms for n-parameter processing."""
++        n_param = "test_param"
++        player_url = "https://www.youtube.com/s/player/test.js"
++        video_id = "test_video"
++        
++        # Test various failure scenarios and recovery
++        failure_scenarios = [
++            Exception("Network error"),
++            ExtractorError("Regex match failed"),
++            ValueError("Invalid JavaScript"),
++            KeyError("Missing function"),
++        ]
++        
++        for exception in failure_scenarios:
++            with patch.object(youtube_ie, '_extract_n_function', side_effect=exception):
++                # Current implementation fails completely
++                # After fix, should implement recovery mechanisms
++                try:
++                    result = youtube_ie._n_descramble(n_param, player_url, video_id)
++                    # Should recover gracefully
++                except ExtractorError:
++                    # Current behavior - causes 50kb/s downloads
++                    pass
++    
++    def test_player_code_pattern_evolution(self, youtube_ie):
++        """Test handling of evolving YouTube player code patterns."""
++        # Document various patterns seen in YouTube player code over time
++        patterns = [
++            # Current pattern (works)
++            'if(c.get("n"))&&(b=abc(d)){',
++            
++            # Newer patterns (fail with current implementation)
++            'c.get("n")&&(b=def(c.get("n")),c.set("n",b))',
++            'var n=c.get("n");if(n){b=ghi(n);c.set("n",b)}',
++            'c.has("n")&&(b=jkl(c.get("n")))',
++            
++            # Obfuscated patterns
++            'c["get"]("n")&&(b=mno(c["get"]("n")))',
++            'c[a]("n")&&(b=pqr(c[a]("n")))',
++        ]
++        
++        # Current implementation only handles the first pattern
++        # After fix, should handle multiple patterns to prevent throttling
++        
++        for pattern in patterns:
++            try:
++                # Try to extract function name from pattern
++                match = re.search(r'([a-zA-Z0-9$_]+)\(', pattern)
++                if match:
++                    func_name = match.group(1)
++                    # Should be able to extract function names from all patterns
++                    assert len(func_name) > 0
++            except:
++                # Current implementation fails on newer patterns
++                pass

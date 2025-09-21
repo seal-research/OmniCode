@@ -1,0 +1,149 @@
+--- a/sklearn/utils/tests/test_show_versions.py
++++ b/sklearn/utils/tests/test_show_versions.py
+-# Empty if creating new file
++import pytest
++import sys
++from unittest.mock import patch, MagicMock
++from sklearn.utils._show_versions import _get_deps_info, show_versions
++
++
++def test_get_deps_info_includes_joblib():
++    """Test that _get_deps_info includes joblib in the dependencies list."""
++    deps_info = _get_deps_info()
++    
++    # joblib should be included in the dependencies
++    assert 'joblib' in deps_info
++    
++    # The result should be either a version string or None (if not installed)
++    joblib_version = deps_info['joblib']
++    assert joblib_version is None or isinstance(joblib_version, str)
++
++
++def test_get_deps_info_joblib_when_installed():
++    """Test that _get_deps_info correctly reports joblib version when installed."""
++    # Mock joblib module with a version
++    mock_joblib = MagicMock()
++    mock_joblib.__version__ = "1.0.0"
++    
++    with patch.dict('sys.modules', {'joblib': mock_joblib}):
++        deps_info = _get_deps_info()
++        assert deps_info['joblib'] == "1.0.0"
++
++
++def test_get_deps_info_joblib_when_not_installed():
++    """Test that _get_deps_info handles missing joblib gracefully."""
++    # Remove joblib from sys.modules if it exists and mock import failure
++    original_modules = sys.modules.copy()
++    
++    # Remove joblib from sys.modules
++    if 'joblib' in sys.modules:
++        del sys.modules['joblib']
++    
++    # Mock importlib.import_module to raise ImportError for joblib
++    def mock_import_module(name):
++        if name == 'joblib':
++            raise ImportError("No module named 'joblib'")
++        return original_modules.get(name)
++    
++    with patch('importlib.import_module', side_effect=mock_import_module):
++        deps_info = _get_deps_info()
++        assert deps_info['joblib'] is None
++    
++    # Restore original sys.modules
++    sys.modules.clear()
++    sys.modules.update(original_modules)
++
++
++def test_get_deps_info_preserves_existing_dependencies():
++    """Test that adding joblib doesn't break existing dependency checking."""
++    deps_info = _get_deps_info()
++    
++    # Check that all expected dependencies are still present
++    expected_deps = [
++        "pip", "setuptools", "sklearn", "numpy", "scipy", 
++        "Cython", "pandas", "matplotlib", "joblib"
++    ]
++    
++    for dep in expected_deps:
++        assert dep in deps_info
++        # Each dependency should have either a version string or None
++        assert deps_info[dep] is None or isinstance(deps_info[dep], str)
++
++
++def test_show_versions_includes_joblib_output(capsys):
++    """Test that show_versions() includes joblib in its output."""
++    # Call show_versions and capture output
++    show_versions()
++    captured = capsys.readouterr()
++    
++    # Check that joblib appears in the output
++    assert 'joblib' in captured.out
++    
++    # Check that the output has the expected structure
++    assert 'Python deps:' in captured.out
++    assert 'System:' in captured.out
++    assert 'BLAS:' in captured.out
++
++
++def test_show_versions_joblib_formatting(capsys):
++    """Test that joblib version is properly formatted in show_versions output."""
++    # Mock joblib with a known version
++    mock_joblib = MagicMock()
++    mock_joblib.__version__ = "1.2.3"
++    
++    with patch.dict('sys.modules', {'joblib': mock_joblib}):
++        show_versions()
++        captured = capsys.readouterr()
++        
++        # Check that joblib version is properly formatted
++        assert 'joblib:      1.2.3' in captured.out or 'joblib: 1.2.3' in captured.out
++
++
++def test_show_versions_joblib_none_formatting(capsys):
++    """Test that missing joblib is properly formatted in show_versions output."""
++    # Remove joblib and mock import failure
++    original_modules = sys.modules.copy()
++    
++    if 'joblib' in sys.modules:
++        del sys.modules['joblib']
++    
++    def mock_import_module(name):
++        if name == 'joblib':
++            raise ImportError("No module named 'joblib'")
++        return original_modules.get(name)
++    
++    with patch('importlib.import_module', side_effect=mock_import_module):
++        show_versions()
++        captured = capsys.readouterr()
++        
++        # Check that joblib None is properly formatted
++        assert 'joblib:      None' in captured.out or 'joblib: None' in captured.out
++    
++    # Restore original sys.modules
++    sys.modules.clear()
++    sys.modules.update(original_modules)
++
++
++def test_joblib_position_in_deps_list():
++    """Test that joblib is positioned appropriately in the dependencies list."""
++    from sklearn.utils._show_versions import _get_deps_info
++    import inspect
++    
++    # Get the source code of _get_deps_info to check deps list order
++    source = inspect.getsource(_get_deps_info)
++    
++    # Extract the deps list from the source (this is a bit hacky but works for testing)
++    deps_info = _get_deps_info()
++    deps_keys = list(deps_info.keys())
++    
++    # joblib should be in the list
++    assert 'joblib' in deps_keys
++    
++    # joblib should come after core dependencies but before optional ones
++    joblib_idx = deps_keys.index('joblib')
++    
++    # Core dependencies that should come before joblib
++    core_deps = ['sklearn', 'numpy', 'scipy']
++    for dep in core_deps:
++        if dep in deps_keys:
++            assert deps_keys.index(dep) < joblib_idx, f"{dep} should come before joblib"

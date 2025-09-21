@@ -1,0 +1,230 @@
+--- a/tests/utils_tests/test_autoreload.py
++++ b/tests/utils_tests/test_autoreload.py
+-import os
+-import sys
+-import tempfile
+-from pathlib import Path
+-from unittest import mock
+-
+-from django.test import SimpleTestCase
+-from django.utils.autoreload import get_child_arguments
+-
+-
+-class GetChildArgumentsTests(SimpleTestCase):
+-    def test_exe_fallback(self):
+-        with tempfile.TemporaryDirectory() as tmpdir:
+-            exe_path = Path(tmpdir) / 'test.exe'
+-            exe_path.touch()
+-            with mock.patch('sys.argv', [str(exe_path.with_suffix('')), 'runserver']):
+-                self.assertEqual(
+-                    get_child_arguments(),
+-                    [exe_path, 'runserver']
+-                )
+-
+-    def test_entrypoint_fallback(self):
+-        with tempfile.TemporaryDirectory() as tmpdir:
+-            script_path = Path(tmpdir) / 'test-script.py'
+-            script_path.touch()
+-            with mock.patch('sys.argv', [str(script_path.with_name('test')), 'runserver']):
+-                self.assertEqual(
+-                    get_child_arguments(),
+-                    [sys.executable, script_path, 'runserver']
+-                )
+-
+-    def test_raises_runtimeerror_if_script_does_not_exist(self):
+-        with tempfile.TemporaryDirectory() as tmpdir:
+-            nonexistent_file = Path(tmpdir) / 'does_not_exist.py'
+-            with mock.patch('sys.argv', [str(nonexistent_file), 'runserver']):
+-                with self.assertRaises(RuntimeError):
+-                    get_child_arguments()
+-
+-    def test_warnoptions_passed(self):
+-        with mock.patch('sys.warnoptions', ['error', 'ignore::DeprecationWarning']):
+-            with mock.patch('sys.argv', [__file__, 'runserver']):
+-                args = get_child_arguments()
+-                self.assertEqual(args[1:3], ['-Werror', '-Wignore::DeprecationWarning'])
++import os
++import sys
++import tempfile
++from pathlib import Path
++from unittest import mock
++
++from django.test import SimpleTestCase
++from django.utils.autoreload import get_child_arguments
++
++
++class GetChildArgumentsTests(SimpleTestCase):
++    def test_exe_fallback(self):
++        with tempfile.TemporaryDirectory() as tmpdir:
++            exe_path = Path(tmpdir) / 'test.exe'
++            exe_path.touch()
++            with mock.patch('sys.argv', [str(exe_path.with_suffix('')), 'runserver']):
++                self.assertEqual(
++                    get_child_arguments(),
++                    [exe_path, 'runserver']
++                )
++
++    def test_entrypoint_fallback(self):
++        with tempfile.TemporaryDirectory() as tmpdir:
++            script_path = Path(tmpdir) / 'test-script.py'
++            script_path.touch()
++            with mock.patch('sys.argv', [str(script_path.with_name('test')), 'runserver']):
++                self.assertEqual(
++                    get_child_arguments(),
++                    [sys.executable, script_path, 'runserver']
++                )
++
++    def test_raises_runtimeerror_if_script_does_not_exist(self):
++        with tempfile.TemporaryDirectory() as tmpdir:
++            nonexistent_file = Path(tmpdir) / 'does_not_exist.py'
++            with mock.patch('sys.argv', [str(nonexistent_file), 'runserver']):
++                with self.assertRaises(RuntimeError):
++                    get_child_arguments()
++
++    def test_warnoptions_passed(self):
++        with mock.patch('sys.warnoptions', ['error', 'ignore::DeprecationWarning']):
++            with mock.patch('sys.argv', [__file__, 'runserver']):
++                args = get_child_arguments()
++                self.assertEqual(args[1:3], ['-Werror', '-Wignore::DeprecationWarning'])
++
++    def test_module_with_package_main_py(self):
++        """Test that -m foo.bar works correctly when bar is a package with __main__.py"""
++        # Mock __main__ module with spec for package with __main__.py
++        mock_spec = mock.Mock()
++        mock_spec.name = 'foo.bar'
++        mock_spec.parent = 'foo'
++        
++        mock_main = mock.Mock()
++        mock_main.__spec__ = mock_spec
++        
++        with mock.patch('sys.argv', ['-c', 'runserver']):
++            with mock.patch('django.utils.autoreload.__main__', mock_main):
++                args = get_child_arguments()
++                # Should use the full module name, not just parent
++                self.assertIn('-m', args)
++                module_index = args.index('-m') + 1
++                self.assertEqual(args[module_index], 'foo.bar')
++                self.assertIn('runserver', args)
++
++    def test_module_with_dotted_module_name(self):
++        """Test that -m foo.bar.baz works correctly when baz.py is a regular module"""
++        # Mock __main__ module with spec for regular module foo.bar.baz
++        mock_spec = mock.Mock()
++        mock_spec.name = 'foo.bar.baz'
++        mock_spec.parent = 'foo.bar'
++        
++        mock_main = mock.Mock()
++        mock_main.__spec__ = mock_spec
++        
++        with mock.patch('sys.argv', ['-c', 'runserver']):
++            with mock.patch('django.utils.autoreload.__main__', mock_main):
++                args = get_child_arguments()
++                # Should use the full module name foo.bar.baz, not just parent foo.bar
++                self.assertIn('-m', args)
++                module_index = args.index('-m') + 1
++                self.assertEqual(args[module_index], 'foo.bar.baz')
++                self.assertIn('runserver', args)
++
++    def test_module_with_deeply_nested_dotted_name(self):
++        """Test that -m a.b.c.d.module works correctly"""
++        # Mock __main__ module with spec for deeply nested module
++        mock_spec = mock.Mock()
++        mock_spec.name = 'a.b.c.d.module'
++        mock_spec.parent = 'a.b.c.d'
++        
++        mock_main = mock.Mock()
++        mock_main.__spec__ = mock_spec
++        
++        with mock.patch('sys.argv', ['-c', 'runserver', '--verbosity', '2']):
++            with mock.patch('django.utils.autoreload.__main__', mock_main):
++                args = get_child_arguments()
++                # Should use the full module name
++                self.assertIn('-m', args)
++                module_index = args.index('-m') + 1
++                self.assertEqual(args[module_index], 'a.b.c.d.module')
++                # Should preserve all original arguments
++                self.assertIn('runserver', args)
++                self.assertIn('--verbosity', args)
++                self.assertIn('2', args)
++
++    def test_module_without_spec_name_falls_back_to_script(self):
++        """Test that modules without spec.name fall back to script execution"""
++        # Mock __main__ module with spec but no name
++        mock_spec = mock.Mock()
++        mock_spec.name = None
++        mock_spec.parent = None
++        
++        mock_main = mock.Mock()
++        mock_main.__spec__ = mock_spec
++        
++        with mock.patch('sys.argv', [__file__, 'runserver']):
++            with mock.patch('django.utils.autoreload.__main__', mock_main):
++                args = get_child_arguments()
++                # Should fall back to script execution, not use -m
++                self.assertNotIn('-m', args)
++                self.assertIn(__file__, args)
++                self.assertIn('runserver', args)
++
++    def test_module_without_spec_falls_back_to_script(self):
++        """Test that modules without __spec__ fall back to script execution"""
++        mock_main = mock.Mock()
++        mock_main.__spec__ = None
++        
++        with mock.patch('sys.argv', [__file__, 'runserver']):
++            with mock.patch('django.utils.autoreload.__main__', mock_main):
++                args = get_child_arguments()
++                # Should fall back to script execution, not use -m
++                self.assertNotIn('-m', args)
++                self.assertIn(__file__, args)
++                self.assertIn('runserver', args)
++
++    def test_module_with_empty_spec_name_falls_back_to_script(self):
++        """Test that modules with empty spec.name fall back to script execution"""
++        mock_spec = mock.Mock()
++        mock_spec.name = ''
++        mock_spec.parent = 'foo'
++        
++        mock_main = mock.Mock()
++        mock_main.__spec__ = mock_spec
++        
++        with mock.patch('sys.argv', [__file__, 'runserver']):
++            with mock.patch('django.utils.autoreload.__main__', mock_main):
++                args = get_child_arguments()
++                # Should fall back to script execution since name is empty
++                self.assertNotIn('-m', args)
++                self.assertIn(__file__, args)
++                self.assertIn('runserver', args)
++
++    def test_bug_reproduction_dotted_module_uses_parent_incorrectly(self):
++        """
++        This test reproduces the original bug where dotted module names
++        like foo.bar.baz would incorrectly use parent (foo.bar) instead
++        of the full name (foo.bar.baz).
++        
++        This test should FAIL before the fix is applied and PASS after.
++        """
++        # Mock __main__ module with spec for regular module foo.bar.baz
++        mock_spec = mock.Mock()
++        mock_spec.name = 'foo.bar.baz'
++        mock_spec.parent = 'foo.bar'
++        
++        mock_main = mock.Mock()
++        mock_main.__spec__ = mock_spec
++        
++        with mock.patch('sys.argv', ['-c', 'runserver']):
++            with mock.patch('django.utils.autoreload.__main__', mock_main):
++                args = get_child_arguments()
++                
++                # The bug: this would incorrectly use 'foo.bar' instead of 'foo.bar.baz'
++                self.assertIn('-m', args)
++                module_index = args.index('-m') + 1
++                
++                # This assertion will fail with the buggy code that uses __spec__.parent
++                # and pass with the fixed code that uses __spec__.name
++                self.assertEqual(args[module_index], 'foo.bar.baz', 
++                    "Expected full module name 'foo.bar.baz', but got the parent package name. "
++                    "This indicates the bug where __spec__.parent is used instead of __spec__.name")
++                
++                # Verify the bug doesn't happen - should NOT be the parent
++                self.assertNotEqual(args[module_index], 'foo.bar',
++                    "Module name should not be the parent package 'foo.bar'")

@@ -1,0 +1,209 @@
+--- a/tests/forms_tests/test_formsets.py
++++ b/tests/forms_tests/test_formsets.py
+-# This will be added to the existing test file
++import pytest
++from django import forms
++from django.forms.formsets import BaseFormSet
++from django.test import TestCase
++
++
++class FormsetAddFieldsNoneIndexTests(TestCase):
++    """Test cases for the add_fields() method when index is None."""
++    
++    def setUp(self):
++        """Set up test form and formset classes."""
++        class TestForm(forms.Form):
++            name = forms.CharField(max_length=100)
++        
++        self.TestForm = TestForm
++    
++    def test_add_fields_with_none_index_can_delete_true_can_delete_extra_false_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: add_fields() fails when index=None,
++        can_delete=True, and can_delete_extra=False.
++        This test should fail before the fix is applied.
++        """
++        TestFormSet = forms.formset_factory(
++            form=self.TestForm,
++            can_delete=True,
++            can_delete_extra=False,
++        )
++        
++        formset = TestFormSet()
++        form = self.TestForm()
++        
++        # This should raise TypeError before the fix
++        with self.assertRaises(TypeError) as cm:
++            formset.add_fields(form, None)
++        
++        self.assertIn("'<' not supported between instances of 'NoneType' and 'int'", str(cm.exception))
++    
++    def test_empty_form_with_can_delete_true_can_delete_extra_false_fails_before_fix(self):
++        """
++        Test that demonstrates the bug through empty_form property.
++        This test should fail before the fix is applied.
++        """
++        TestFormSet = forms.formset_factory(
++            form=self.TestForm,
++            can_delete=True,
++            can_delete_extra=False,
++        )
++        
++        formset = TestFormSet()
++        
++        # This should raise TypeError before the fix
++        with self.assertRaises(TypeError) as cm:
++            _ = formset.empty_form
++        
++        self.assertIn("'<' not supported between instances of 'NoneType' and 'int'", str(cm.exception))
++    
++    def test_add_fields_with_none_index_can_delete_true_can_delete_extra_false_works_after_fix(self):
++        """
++        Test that add_fields() works correctly when index=None,
++        can_delete=True, and can_delete_extra=False after the fix.
++        This test should pass after the fix is applied.
++        """
++        TestFormSet = forms.formset_factory(
++            form=self.TestForm,
++            can_delete=True,
++            can_delete_extra=False,
++        )
++        
++        formset = TestFormSet()
++        form = self.TestForm()
++        
++        # This should not raise an exception after the fix
++        formset.add_fields(form, None)
++        
++        # The deletion field should NOT be added when index=None and can_delete_extra=False
++        # because index=None means it's not an initial form
++        self.assertNotIn('DELETE', form.fields)
++    
++    def test_empty_form_with_can_delete_true_can_delete_extra_false_works_after_fix(self):
++        """
++        Test that empty_form property works correctly when can_delete=True
++        and can_delete_extra=False after the fix.
++        This test should pass after the fix is applied.
++        """
++        TestFormSet = forms.formset_factory(
++            form=self.TestForm,
++            can_delete=True,
++            can_delete_extra=False,
++        )
++        
++        formset = TestFormSet()
++        
++        # This should not raise an exception after the fix
++        empty_form = formset.empty_form
++        
++        # The deletion field should NOT be added to empty_form when can_delete_extra=False
++        self.assertNotIn('DELETE', empty_form.fields)
++        
++        # But the form should still be valid and have the expected fields
++        self.assertIn('name', empty_form.fields)
++    
++    def test_add_fields_with_none_index_can_delete_true_can_delete_extra_true(self):
++        """
++        Test that add_fields() works correctly when index=None,
++        can_delete=True, and can_delete_extra=True.
++        This should work both before and after the fix.
++        """
++        TestFormSet = forms.formset_factory(
++            form=self.TestForm,
++            can_delete=True,
++            can_delete_extra=True,
++        )
++        
++        formset = TestFormSet()
++        form = self.TestForm()
++        
++        # This should work fine
++        formset.add_fields(form, None)
++        
++        # The deletion field SHOULD be added when can_delete_extra=True
++        self.assertIn('DELETE', form.fields)
++    
++    def test_add_fields_with_none_index_can_delete_false(self):
++        """
++        Test that add_fields() works correctly when index=None and can_delete=False.
++        This should work both before and after the fix.
++        """
++        TestFormSet = forms.formset_factory(
++            form=self.TestForm,
++            can_delete=False,
++            can_delete_extra=False,
++        )
++        
++        formset = TestFormSet()
++        form = self.TestForm()
++        
++        # This should work fine
++        formset.add_fields(form, None)
++        
++        # The deletion field should NOT be added when can_delete=False
++        self.assertNotIn('DELETE', form.fields)
++    
++    def test_add_fields_with_valid_index_preserves_existing_behavior(self):
++        """
++        Test that add_fields() with a valid integer index still works as expected.
++        This ensures the fix doesn't break existing functionality.
++        """
++        TestFormSet = forms.formset_factory(
++            form=self.TestForm,
++            can_delete=True,
++            can_delete_extra=False,
++        )
++        
++        formset = TestFormSet()
++        form = self.TestForm()
++        
++        # Test with index=0 (should be < initial_form_count)
++        formset.add_fields(form, 0)
++        
++        # The deletion field SHOULD be added for initial forms
++        self.assertIn('DELETE', form.fields)
++    
++    def test_add_fields_with_high_index_preserves_existing_behavior(self):
++        """
++        Test that add_fields() with a high index (>= initial_form_count) works correctly.
++        This ensures the fix doesn't break existing functionality.
++        """
++        TestFormSet = forms.formset_factory(
++            form=self.TestForm,
++            can_delete=True,
++            can_delete_extra=False,
++        )
++        
++        formset = TestFormSet()
++        form = self.TestForm()
++        
++        # Test with index=10 (should be >= initial_form_count)
++        formset.add_fields(form, 10)
++        
++        # The deletion field should NOT be added for extra forms when can_delete_extra=False
++        self.assertNotIn('DELETE', form.fields)
++    
++    def test_ordering_field_with_none_index_still_works(self):
++        """
++        Test that the ordering field logic with index=None still works correctly.
++        This ensures our fix doesn't affect the ordering field behavior.
++        """
++        TestFormSet = forms.formset_factory(
++            form=self.TestForm,
++            can_order=True,
++            can_delete=True,
++            can_delete_extra=False,
++        )
++        
++        formset = TestFormSet()
++        form = self.TestForm()
++        
++        # This should work fine after the fix
++        formset.add_fields(form, None)
++        
++        # The ordering field should be added (without initial value for None index)
++        self.assertIn('ORDER', form.fields)
++        self.assertIsNone(form.fields['ORDER'].initial)
++        
++        # The deletion field should NOT be added when index=None and can_delete_extra=False
++        self.assertNotIn('DELETE', form.fields)

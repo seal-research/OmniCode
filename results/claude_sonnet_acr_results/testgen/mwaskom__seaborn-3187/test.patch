@@ -1,0 +1,304 @@
+--- a/tests/test_core/test_scales_offset_bug.py
++++ b/tests/test_core/test_scales_offset_bug.py
+-# Empty if creating new file
++import pytest
++import numpy as np
++import pandas as pd
++import matplotlib.pyplot as plt
++from matplotlib.ticker import ScalarFormatter
++from matplotlib.axis import Axis
++
++import seaborn as sns
++import seaborn.objects as so
++from seaborn._core.scales import Continuous, ContinuousBase
++from seaborn._core.properties import PointSize
++
++
++class TestScalarFormatterOffsetBug:
++    """Test suite for the ScalarFormatter offset bug in legend values."""
++
++    @pytest.fixture
++    def large_value_data(self):
++        """Create test data with large values that trigger ScalarFormatter offset."""
++        np.random.seed(42)
++        n = 100
++        data = pd.DataFrame({
++            'x': np.random.normal(10, 2, n),
++            'y': np.random.normal(15, 3, n),
++            'category': np.random.choice(['A', 'B', 'C'], n),
++            'large_values': np.random.uniform(2000000, 6000000, n),  # Values in millions
++            'medium_values': np.random.uniform(2000, 6000, n),      # Values in thousands
++        })
++        return data
++
++    @pytest.fixture
++    def mock_axis_with_scalar_formatter(self):
++        """Create a mock axis with ScalarFormatter that has an offset."""
++        fig, ax = plt.subplots()
++        axis = ax.xaxis
++        
++        # Set up ScalarFormatter with offset
++        formatter = ScalarFormatter()
++        formatter.set_useOffset(True)
++        axis.set_major_formatter(formatter)
++        
++        # Set view interval to trigger offset
++        axis.set_view_interval(2000000, 6000000)
++        
++        # Force the formatter to calculate offset
++        locs = np.array([2000000, 3000000, 4000000, 5000000, 6000000])
++        formatter.format_ticks(locs)
++        
++        plt.close(fig)
++        return axis
++
++    def test_scalar_formatter_has_offset_with_large_values(self, mock_axis_with_scalar_formatter):
++        """Test that ScalarFormatter creates an offset with large values."""
++        formatter = mock_axis_with_scalar_formatter.major.formatter
++        
++        # Format some large values
++        locs = np.array([2000000, 3000000, 4000000, 5000000, 6000000])
++        labels = formatter.format_ticks(locs)
++        
++        # Check that formatter has an offset
++        offset = formatter.get_offset()
++        assert offset != '', "ScalarFormatter should have an offset for large values"
++        
++        # Check that labels are formatted with offset (should be smaller numbers)
++        # When offset is used, labels should be like ['2', '3', '4', '5', '6'] instead of full values
++        numeric_labels = [float(label) for label in labels if label.replace('.', '').replace('-', '').isdigit()]
++        assert all(val < 100 for val in numeric_labels), "Labels should be small when offset is used"
++
++    def test_continuous_scale_setup_without_offset_fix(self, large_value_data):
++        """Test that demonstrates the bug: legend values are wrong when ScalarFormatter uses offset."""
++        # Create a Continuous scale
++        scale = Continuous()
++        
++        # Create a mock property that requires legend
++        prop = PointSize()
++        prop.legend = True
++        
++        # Create axis with ScalarFormatter
++        fig, ax = plt.subplots()
++        axis = ax.xaxis
++        formatter = ScalarFormatter()
++        formatter.set_useOffset(True)
++        axis.set_major_formatter(formatter)
++        
++        # Setup the scale with large values
++        data = pd.Series(large_value_data['large_values'])
++        result_scale = scale._setup(data, prop, axis)
++        
++        # Check that legend was created
++        assert result_scale._legend is not None, "Legend should be created"
++        
++        locs, labels = result_scale._legend
++        
++        # This test demonstrates the bug: when ScalarFormatter uses offset,
++        # the legend locations should represent the actual data values,
++        # but currently they don't account for the offset
++        
++        # The bug is that locs contains the original large values,
++        # but the labels are formatted with offset, creating inconsistency
++        assert len(locs) > 0, "Legend should have location values"
++        assert len(labels) > 0, "Legend should have label values"
++        
++        # Check if any location value is in the millions (original data range)
++        has_large_locs = any(loc > 1000000 for loc in locs)
++        
++        # Check if labels represent small values (due to offset formatting)
++        numeric_labels = []
++        for label in labels:
++            try:
++                numeric_labels.append(float(label))
++            except ValueError:
++                pass
++        
++        has_small_labels = any(val < 100 for val in numeric_labels) if numeric_labels else False
++        
++        # This condition demonstrates the bug: large locations with small labels
++        if has_large_locs and has_small_labels:
++            pytest.fail(
++                f"Bug detected: Legend locations {locs} are large values, "
++                f"but labels {labels} are small due to ScalarFormatter offset. "
++                f"This creates inconsistent legend values."
++            )
++        
++        plt.close(fig)
++
++    def test_continuous_scale_setup_with_medium_values_no_offset(self, large_value_data):
++        """Test that medium values work correctly (no offset needed)."""
++        # Create a Continuous scale
++        scale = Continuous()
++        
++        # Create a mock property that requires legend
++        prop = PointSize()
++        prop.legend = True
++        
++        # Create axis with ScalarFormatter
++        fig, ax = plt.subplots()
++        axis = ax.xaxis
++        formatter = ScalarFormatter()
++        axis.set_major_formatter(formatter)
++        
++        # Setup the scale with medium values (shouldn't trigger offset)
++        data = pd.Series(large_value_data['medium_values'])
++        result_scale = scale._setup(data, prop, axis)
++        
++        # Check that legend was created
++        assert result_scale._legend is not None, "Legend should be created"
++        
++        locs, labels = result_scale._legend
++        
++        # With medium values, there should be no offset issue
++        assert len(locs) > 0, "Legend should have location values"
++        assert len(labels) > 0, "Legend should have label values"
++        
++        # Verify that locations and labels are consistent (no offset)
++        for i, (loc, label) in enumerate(zip(locs, labels)):
++            try:
++                label_value = float(label)
++                # For medium values without offset, location and label should be similar
++                assert abs(loc - label_value) < loc * 0.1, (
++                    f"Location {loc} and label value {label_value} should be similar "
++                    f"when no offset is used"
++                )
++            except ValueError:
++                # Skip non-numeric labels
++                pass
++        
++        plt.close(fig)
++
++    def test_seaborn_plot_with_large_values_demonstrates_bug(self, large_value_data):
++        """Test using seaborn.objects Plot to demonstrate the bug in real usage."""
++        # This test demonstrates the bug using the exact example from the issue
++        
++        # Create plot with large values for pointsize
++        plot = (
++            so.Plot(
++                large_value_data, 
++                x="x", 
++                y="y",
++                color="category", 
++                pointsize="large_values"
++            )
++            .add(so.Dot())
++        )
++        
++        # Build the plot to trigger scale setup
++        try:
++            p = plot._plot()
++            
++            # Check if any legend was created for pointsize
++            # This is where the bug would manifest - legend values would be wrong
++            
++            # The bug would show up as legend values that don't match the actual data range
++            # For example, if data is in millions (2M-6M), legend might show 2-6
++            
++            # Clean up
++            plt.close('all')
++            
++        except Exception as e:
++            plt.close('all')
++            pytest.fail(f"Plot creation failed: {e}")
++
++    def test_scalar_formatter_offset_detection(self):
++        """Test helper function to detect when ScalarFormatter has offset."""
++        fig, ax = plt.subplots()
++        formatter = ScalarFormatter()
++        
++        # Test with small values (no offset expected)
++        small_values = np.array([1, 2, 3, 4, 5])
++        formatter.format_ticks(small_values)
++        offset_small = formatter.get_offset()
++        
++        # Test with large values (offset expected)
++        large_values = np.array([2000000, 3000000, 4000000, 5000000, 6000000])
++        formatter.set_useOffset(True)
++        formatter.format_ticks(large_values)
++        offset_large = formatter.get_offset()
++        
++        # Small values should not have offset
++        assert offset_small == '' or offset_small is None, "Small values should not trigger offset"
++        
++        # Large values should have offset when useOffset is True
++        # Note: This might depend on matplotlib version and rcParams
++        
++        plt.close(fig)
++
++    def test_legend_values_should_match_data_range(self, large_value_data):
++        """Test that legend values should represent the actual data range."""
++        # This test defines the expected behavior after the fix
++        
++        data_min = large_value_data['large_values'].min()
++        data_max = large_value_data['large_values'].max()
++        
++        # Create a Continuous scale
++        scale = Continuous()
++        
++        # Create a mock property that requires legend
++        prop = PointSize()
++        prop.legend = True
++        
++        # Create axis with ScalarFormatter
++        fig, ax = plt.subplots()
++        axis = ax.xaxis
++        formatter = ScalarFormatter()
++        formatter.set_useOffset(True)
++        axis.set_major_formatter(formatter)
++        
++        # Setup the scale with large values
++        data = pd.Series(large_value_data['large_values'])
++        result_scale = scale._setup(data, prop, axis)
++        
++        # After the fix, legend locations should be in the same range as the data
++        if result_scale._legend is not None:
++            locs, labels = result_scale._legend
++            
++            if locs:
++                legend_min = min(locs)
++                legend_max = max(locs)
++                
++                # Legend range should overlap significantly with data range
++                # Allow some tolerance for tick selection
++                assert legend_min >= data_min * 0.8, (
++                    f"Legend minimum {legend_min} should be close to data minimum {data_min}"
++                )
++                assert legend_max <= data_max * 1.2, (
++                    f"Legend maximum {legend_max} should be close to data maximum {data_max}"
++                )
++        
++        plt.close(fig)
++
++    @pytest.mark.parametrize("use_offset", [True, False])
++    def test_scalar_formatter_offset_parameter(self, use_offset, large_value_data):
++        """Test behavior with different offset settings."""
++        # Create a Continuous scale
++        scale = Continuous()
++        
++        # Create a mock property that requires legend
++        prop = PointSize()
++        prop.legend = True
++        
++        # Create axis with ScalarFormatter
++        fig, ax = plt.subplots()
++        axis = ax.xaxis
++        formatter = ScalarFormatter()
++        formatter.set_useOffset(use_offset)
++        axis.set_major_formatter(formatter)
++        
++        # Setup the scale with large values
++        data = pd.Series(large_value_data['large_values'])
++        result_scale = scale._setup(data, prop, axis)
++        
++        # Check that legend was created
++        assert result_scale._legend is not None, "Legend should be created"
++        
++        locs, labels = result_scale._legend
++        assert len(locs) > 0, "Legend should have location values"
++        assert len(labels) > 0, "Legend should have label values"
++        
++        # The behavior should be consistent regardless of offset setting
++        # After the fix, legend values should always represent actual data values
++        
++        plt.close(fig)

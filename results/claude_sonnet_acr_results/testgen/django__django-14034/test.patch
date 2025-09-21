@@ -1,0 +1,188 @@
+--- a/tests/forms_tests/test_fields.py
++++ b/tests/forms_tests/test_fields.py
+-# This will be added to the existing test file
++import pytest
++from django.core.exceptions import ValidationError
++from django.forms import (
++    Form,
++    CharField,
++    MultiValueField,
++    MultiWidget,
++)
++
++
++class TestMultiValueField(MultiValueField):
++    """Test MultiValueField with mixed required/optional sub-fields."""
++    widget = MultiWidget
++    
++    def __init__(self, require_all_fields=False, required=False):
++        fields = [
++            CharField(required=False),
++            CharField(required=True),
++        ]
++        widget = self.widget(widgets=[
++            f.widget for f in fields
++        ], attrs={})
++        super().__init__(
++            fields=fields,
++            widget=widget,
++            require_all_fields=require_all_fields,
++            required=required,
++        )
++    
++    def compress(self, value):
++        return value if value else []
++
++
++class TestForm(Form):
++    """Test form with MultiValueField."""
++    mf = TestMultiValueField()
++
++
++class TestMultiValueFieldRequiredSubfields:
++    """Test suite for MultiValueField required sub-field validation bug."""
++    
++    def test_multivalue_field_with_empty_required_subfield_should_fail(self):
++        """
++        Test that MultiValueField validation fails when a required sub-field is empty,
++        even when require_all_fields=False.
++        
++        This test reproduces the bug described in the issue.
++        """
++        form = TestForm({
++            'mf_0': '',  # optional field - empty
++            'mf_1': '',  # required field - empty (should cause validation to fail)
++        })
++        
++        # This should fail because the second sub-field is required
++        assert not form.is_valid()
++        assert 'mf' in form.errors
++        
++    def test_multivalue_field_with_partial_data_should_fail(self):
++        """
++        Test that MultiValueField validation fails when only optional field has data
++        but required field is empty.
++        """
++        form = TestForm({
++            'mf_0': 'some_value',  # optional field - has value
++            'mf_1': '',            # required field - empty (should cause validation to fail)
++        })
++        
++        # This should fail because the second sub-field is required
++        assert not form.is_valid()
++        assert 'mf' in form.errors
++        
++    def test_multivalue_field_with_required_subfield_filled_should_pass(self):
++        """
++        Test that MultiValueField validation passes when required sub-field has value.
++        """
++        form = TestForm({
++            'mf_0': '',           # optional field - empty (OK)
++            'mf_1': 'required_value',  # required field - has value
++        })
++        
++        # This should pass because the required sub-field has a value
++        assert form.is_valid()
++        
++    def test_multivalue_field_with_all_fields_filled_should_pass(self):
++        """
++        Test that MultiValueField validation passes when all sub-fields have values.
++        """
++        form = TestForm({
++            'mf_0': 'optional_value',  # optional field - has value
++            'mf_1': 'required_value',  # required field - has value
++        })
++        
++        # This should pass because all fields have values
++        assert form.is_valid()
++        
++    def test_multivalue_field_error_message_type(self):
++        """
++        Test that the correct error message type is used for required sub-fields.
++        The error should be 'required' not 'incomplete'.
++        """
++        form = TestForm({
++            'mf_0': '',
++            'mf_1': '',
++        })
++        
++        assert not form.is_valid()
++        
++        # Get the actual error messages
++        field_errors = form.errors['mf']
++        
++        # The error should mention that the field is required, not incomplete
++        error_message = str(field_errors[0])
++        assert 'required' in error_message.lower()
++        
++    def test_multivalue_field_direct_validation(self):
++        """
++        Test MultiValueField validation directly (not through a form).
++        """
++        field = TestMultiValueField()
++        
++        # Test with empty required sub-field - should raise ValidationError
++        with pytest.raises(ValidationError):
++            field.clean(['', ''])  # second field is required but empty
++            
++        # Test with filled required sub-field - should not raise
++        try:
++            result = field.clean(['', 'required_value'])
++            # Should not raise an exception
++        except ValidationError:
++            pytest.fail("ValidationError should not be raised when required field has value")
++            
++    def test_multivalue_field_require_all_fields_true_behavior(self):
++        """
++        Test that require_all_fields=True behavior is preserved.
++        When require_all_fields=True, the MultiValueField itself handles validation.
++        """
++        class RequireAllForm(Form):
++            mf = TestMultiValueField(require_all_fields=True, required=True)
++            
++        # With require_all_fields=True and required=True, empty values should fail
++        form = RequireAllForm({
++            'mf_0': '',
++            'mf_1': '',
++        })
++        assert not form.is_valid()
++        
++        # With require_all_fields=True, partial data should also fail
++        form = RequireAllForm({
++            'mf_0': 'value',
++            'mf_1': '',
++        })
++        assert not form.is_valid()
++        
++    def test_multivalue_field_not_required_with_empty_values(self):
++        """
++        Test that when MultiValueField itself is not required and all sub-fields are empty,
++        validation should pass if no sub-fields are individually required.
++        """
++        class OptionalSubfieldsForm(Form):
++            class OptionalMultiValueField(MultiValueField):
++                def __init__(self):
++                    fields = [
++                        CharField(required=False),
++                        CharField(required=False),  # Both fields optional
++                    ]
++                    widget = MultiWidget(widgets=[f.widget for f in fields])
++                    super().__init__(
++                        fields=fields,
++                        widget=widget,
++                        require_all_fields=False,
++                        required=False,
++                    )
++                
++                def compress(self, value):
++                    return value if value else []
++                    
++            mf = OptionalMultiValueField()
++            
++        form = OptionalSubfieldsForm({
++            'mf_0': '',
++            'mf_1': '',
++        })
++        
++        # Should pass because no sub-fields are required
++        assert form.is_valid()

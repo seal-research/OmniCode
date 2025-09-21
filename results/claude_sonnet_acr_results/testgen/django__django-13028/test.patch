@@ -1,0 +1,234 @@
+--- a/tests/queries/test_filterable_bug.py
++++ b/tests/queries/test_filterable_bug.py
+-# Empty if creating new file
++import pytest
++from django.db import models, NotSupportedError
++from django.test import TestCase
++from django.db.models.expressions import Value
++from django.db.models.sql.query import Query
++
++
++class ProductMetaDataType(models.Model):
++    """Test model with a field named 'filterable' to reproduce the bug."""
++    label = models.CharField(max_length=255, unique=True, blank=False, null=False)
++    filterable = models.BooleanField(default=False, verbose_name="filterable")
++    
++    class Meta:
++        app_label = "test_app"
++        
++    def __str__(self):
++        return self.label
++
++
++class ProductMetaData(models.Model):
++    """Test model that references ProductMetaDataType."""
++    id = models.BigAutoField(primary_key=True)
++    value = models.TextField(null=False, blank=False)
++    metadata_type = models.ForeignKey(
++        ProductMetaDataType, null=False, blank=False, on_delete=models.CASCADE
++    )
++    
++    class Meta:
++        app_label = "test_app"
++
++
++class NonFilterableExpression(Value):
++    """Test expression with filterable=False to verify the fix preserves existing functionality."""
++    filterable = False
++
++
++class FilterableExpressionTest(TestCase):
++    """Test suite for the filterable attribute bug fix."""
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        # Create test data
++        cls.metadata_type = ProductMetaDataType.objects.create(
++            label="test_type", 
++            filterable=False  # This should NOT cause issues in filtering
++        )
++        cls.product_metadata = ProductMetaData.objects.create(
++            value="test_value",
++            metadata_type=cls.metadata_type
++        )
++    
++    def test_filter_with_model_instance_having_filterable_field_false(self):
++        """
++        Test that filtering with a model instance that has filterable=False works.
++        This reproduces the original bug where NotSupportedError was raised.
++        """
++        # This should NOT raise NotSupportedError
++        queryset = ProductMetaData.objects.filter(metadata_type=self.metadata_type)
++        self.assertEqual(queryset.count(), 1)
++        self.assertEqual(queryset.first().value, "test_value")
++    
++    def test_filter_with_model_instance_having_filterable_field_true(self):
++        """
++        Test that filtering with a model instance that has filterable=True works.
++        """
++        metadata_type_true = ProductMetaDataType.objects.create(
++            label="test_type_true", 
++            filterable=True
++        )
++        product_metadata_true = ProductMetaData.objects.create(
++            value="test_value_true",
++            metadata_type=metadata_type_true
++        )
++        
++        # This should work without issues
++        queryset = ProductMetaData.objects.filter(metadata_type=metadata_type_true)
++        self.assertEqual(queryset.count(), 1)
++        self.assertEqual(queryset.first().value, "test_value_true")
++    
++    def test_filter_with_multiple_conditions_including_filterable_model(self):
++        """
++        Test filtering with multiple conditions where one involves a model with filterable field.
++        """
++        # This should work without issues
++        queryset = ProductMetaData.objects.filter(
++            value="test_value", 
++            metadata_type=self.metadata_type
++        )
++        self.assertEqual(queryset.count(), 1)
++    
++    def test_non_filterable_expression_still_raises_error(self):
++        """
++        Test that Django expressions with filterable=False still raise NotSupportedError.
++        This ensures the fix preserves the existing functionality for expressions.
++        """
++        from django.db.models.sql.query import Query
++        from django.db.models import Model
++        
++        query = Query(ProductMetaData)
++        non_filterable_expr = NonFilterableExpression("test")
++        
++        # This should still raise NotSupportedError for expressions
++        with self.assertRaises(NotSupportedError) as cm:
++            query.check_filterable(non_filterable_expr)
++        
++        self.assertIn("is disallowed in the filter clause", str(cm.exception))
++    
++    def test_filterable_expression_works(self):
++        """
++        Test that Django expressions with filterable=True (default) work normally.
++        """
++        from django.db.models.sql.query import Query
++        
++        query = Query(ProductMetaData)
++        filterable_expr = Value("test")  # Default filterable=True
++        
++        # This should not raise any exception
++        try:
++            query.check_filterable(filterable_expr)
++        except NotSupportedError:
++            self.fail("check_filterable raised NotSupportedError unexpectedly")
++    
++    def test_model_instance_without_filterable_field_works(self):
++        """
++        Test that model instances without a filterable field work normally.
++        """
++        # Create a simple model without filterable field
++        class SimpleModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = "test_app"
++        
++        simple_instance = SimpleModel(name="test")
++        
++        from django.db.models.sql.query import Query
++        query = Query(SimpleModel)
++        
++        # This should not raise any exception
++        try:
++            query.check_filterable(simple_instance)
++        except NotSupportedError:
++            self.fail("check_filterable raised NotSupportedError unexpectedly")
++    
++    def test_edge_case_filterable_field_with_none_value(self):
++        """
++        Test edge case where filterable field has None value.
++        """
++        # Create instance with filterable=None (should be treated as falsy)
++        metadata_type_none = ProductMetaDataType.objects.create(
++            label="test_type_none", 
++            filterable=None
++        )
++        
++        # This should work without issues
++        queryset = ProductMetaData.objects.filter(metadata_type=metadata_type_none)
++        self.assertEqual(queryset.count(), 0)  # No matching records expected
++    
++    def test_complex_query_with_filterable_model_instances(self):
++        """
++        Test complex queries involving multiple model instances with filterable fields.
++        """
++        # Create additional test data
++        metadata_type2 = ProductMetaDataType.objects.create(
++            label="test_type2", 
++            filterable=True
++        )
++        product_metadata2 = ProductMetaData.objects.create(
++            value="test_value2",
++            metadata_type=metadata_type2
++        )
++        
++        # Test OR query with both instances
++        from django.db.models import Q
++        queryset = ProductMetaData.objects.filter(
++            Q(metadata_type=self.metadata_type) | Q(metadata_type=metadata_type2)
++        )
++        self.assertEqual(queryset.count(), 2)
++    
++    def test_check_filterable_with_expression_having_get_source_expressions(self):
++        """
++        Test that check_filterable properly handles expressions with get_source_expressions.
++        """
++        from django.db.models.expressions import Case, When
++        from django.db.models.sql.query import Query
++        
++        query = Query(ProductMetaData)
++        
++        # Create a complex expression
++        case_expr = Case(
++            When(value="test", then=Value("result")),
++            default=Value("default")
++        )
++        
++        # This should not raise any exception
++        try:
++            query.check_filterable(case_expr)
++        except NotSupportedError:
++            self.fail("check_filterable raised NotSupportedError unexpectedly")
++
++
++class FilterableBugReproductionTest(TestCase):
++    """
++    Test that specifically reproduces the original bug scenario.
++    This test should fail before the fix and pass after the fix.
++    """
++    
++    def setUp(self):
++        self.brand_metadata = ProductMetaDataType.objects.create(
++            label="Brand", 
++            filterable=False  # This is the key - filterable=False
++        )
++    
++    def test_original_bug_scenario(self):
++        """
++        Reproduce the exact scenario from the bug report.
++        Before fix: This should raise NotSupportedError
++        After fix: This should work normally
++        """
++        # This is the exact line that was failing in the bug report
++        try:
++            queryset = ProductMetaData.objects.filter(
++                value="Dark Vador", 
++                metadata_type=self.brand_metadata
++            )
++            # If we get here, the bug is fixed
++            self.assertEqual(queryset.count(), 0)  # No matching records expected
++        except NotSupportedError as e:
++            # If we get this exception, the bug still exists
++            self.fail(f"Bug still exists: {e}")

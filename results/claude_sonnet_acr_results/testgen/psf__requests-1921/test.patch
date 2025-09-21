@@ -1,0 +1,233 @@
+--- a/tests/test_session_headers.py
++++ b/tests/test_session_headers.py
+-# Empty if creating new file
++import pytest
++import requests
++from requests.sessions import Session
++from requests.structures import CaseInsensitiveDict
++from requests.sessions import merge_setting
++
++
++class TestSessionHeaderRemoval:
++    """Test suite for session header removal functionality."""
++    
++    def test_session_header_set_to_none_should_be_removed(self):
++        """Test that setting a session header to None removes it from requests."""
++        session = Session()
++        
++        # Set a header to None - this should prevent it from being sent
++        session.headers['Accept-Encoding'] = None
++        
++        # Create a mock request to test header merging
++        request_headers = {}
++        merged_headers = merge_setting(request_headers, session.headers, dict_class=CaseInsensitiveDict)
++        
++        # The header should not be present in the merged result
++        assert 'Accept-Encoding' not in merged_headers
++        assert 'accept-encoding' not in merged_headers  # Case insensitive check
++    
++    def test_session_header_none_with_request_override(self):
++        """Test that request headers can override session headers set to None."""
++        session = Session()
++        
++        # Set session header to None
++        session.headers['Accept-Encoding'] = None
++        
++        # Override with request header
++        request_headers = {'Accept-Encoding': 'gzip, deflate'}
++        merged_headers = merge_setting(request_headers, session.headers, dict_class=CaseInsensitiveDict)
++        
++        # The request header should be present
++        assert merged_headers['Accept-Encoding'] == 'gzip, deflate'
++    
++    def test_request_header_none_overrides_session_header(self):
++        """Test that request headers set to None override session headers."""
++        session = Session()
++        
++        # Set session header to a value
++        session.headers['Accept-Encoding'] = 'gzip, deflate'
++        
++        # Override with None in request
++        request_headers = {'Accept-Encoding': None}
++        merged_headers = merge_setting(request_headers, session.headers, dict_class=CaseInsensitiveDict)
++        
++        # The header should not be present (existing behavior)
++        assert 'Accept-Encoding' not in merged_headers
++    
++    def test_multiple_session_headers_with_none_values(self):
++        """Test that multiple session headers set to None are all removed."""
++        session = Session()
++        
++        # Set multiple headers, some to None
++        session.headers['Accept-Encoding'] = None
++        session.headers['User-Agent'] = 'test-agent'
++        session.headers['Accept-Language'] = None
++        session.headers['Content-Type'] = 'application/json'
++        
++        request_headers = {}
++        merged_headers = merge_setting(request_headers, session.headers, dict_class=CaseInsensitiveDict)
++        
++        # Only non-None headers should be present
++        assert 'Accept-Encoding' not in merged_headers
++        assert 'Accept-Language' not in merged_headers
++        assert merged_headers['User-Agent'] == 'test-agent'
++        assert merged_headers['Content-Type'] == 'application/json'
++    
++    def test_session_header_none_preserves_other_functionality(self):
++        """Test that setting headers to None doesn't break other merge_setting functionality."""
++        # Test with non-dictionary settings (should return request_setting)
++        result = merge_setting('request_value', 'session_value')
++        assert result == 'request_value'
++        
++        # Test with None session_setting
++        result = merge_setting({'key': 'value'}, None)
++        assert result == {'key': 'value'}
++        
++        # Test with None request_setting
++        result = merge_setting(None, {'key': 'value'})
++        assert result == {'key': 'value'}
++    
++    def test_case_insensitive_header_none_removal(self):
++        """Test that None header removal works with case-insensitive headers."""
++        session = Session()
++        
++        # Set header with different case to None
++        session.headers['accept-encoding'] = None
++        session.headers['CONTENT-TYPE'] = None
++        session.headers['User-Agent'] = 'test'
++        
++        request_headers = {}
++        merged_headers = merge_setting(request_headers, session.headers, dict_class=CaseInsensitiveDict)
++        
++        # None headers should be removed regardless of case
++        assert 'accept-encoding' not in merged_headers
++        assert 'Accept-Encoding' not in merged_headers
++        assert 'CONTENT-TYPE' not in merged_headers
++        assert 'content-type' not in merged_headers
++        assert 'User-Agent' in merged_headers
++    
++    def test_session_header_none_with_mixed_request_headers(self):
++        """Test complex scenario with mixed None and non-None headers."""
++        session = Session()
++        
++        # Session headers: some None, some with values
++        session.headers['Accept-Encoding'] = None
++        session.headers['User-Agent'] = 'session-agent'
++        session.headers['Accept-Language'] = 'en-US'
++        session.headers['Authorization'] = None
++        
++        # Request headers: override some, add new ones
++        request_headers = {
++            'User-Agent': 'request-agent',  # Override session
++            'Content-Type': 'application/json',  # New header
++            'Accept-Charset': None,  # Request-level None
++        }
++        
++        merged_headers = merge_setting(request_headers, session.headers, dict_class=CaseInsensitiveDict)
++        
++        # Verify expected behavior
++        assert 'Accept-Encoding' not in merged_headers  # Session None removed
++        assert 'Authorization' not in merged_headers    # Session None removed
++        assert 'Accept-Charset' not in merged_headers   # Request None removed
++        assert merged_headers['User-Agent'] == 'request-agent'  # Request overrides session
++        assert merged_headers['Accept-Language'] == 'en-US'     # Session value preserved
++        assert merged_headers['Content-Type'] == 'application/json'  # Request value added
++
++
++class TestSessionHeaderRemovalIntegration:
++    """Integration tests for session header removal with actual Session objects."""
++    
++    def test_session_prepare_request_removes_none_headers(self):
++        """Test that Session.prepare_request properly handles None headers."""
++        session = Session()
++        
++        # Set some headers to None
++        session.headers['Accept-Encoding'] = None
++        session.headers['User-Agent'] = 'test-agent'
++        
++        # Create a request
++        from requests.models import Request
++        req = Request('GET', 'http://example.com')
++        
++        # Prepare the request
++        prepared = session.prepare_request(req)
++        
++        # Check that None headers are not present
++        assert 'Accept-Encoding' not in prepared.headers
++        assert prepared.headers['User-Agent'] == 'test-agent'
++    
++    def test_session_request_with_none_headers_integration(self):
++        """Test that None headers work correctly in the full request flow."""
++        session = Session()
++        
++        # Set a default header to None
++        session.headers['Accept-Encoding'] = None
++        session.headers['User-Agent'] = 'test-session'
++        
++        # Mock the actual request sending to avoid network calls
++        original_send = session.send
++        captured_request = None
++        
++        def mock_send(request, **kwargs):
++            nonlocal captured_request
++            captured_request = request
++            # Return a mock response
++            from requests.models import Response
++            response = Response()
++            response.status_code = 200
++            response._content = b'{"test": "response"}'
++            return response
++        
++        session.send = mock_send
++        
++        try:
++            # Make a request
++            session.get('http://example.com')
++            
++            # Verify the prepared request doesn't have the None header
++            assert captured_request is not None
++            assert 'Accept-Encoding' not in captured_request.headers
++            assert captured_request.headers['User-Agent'] == 'test-session'
++        finally:
++            session.send = original_send
++
++
++class TestMergeSettingEdgeCases:
++    """Test edge cases for the merge_setting function."""
++    
++    def test_merge_setting_with_empty_dicts(self):
++        """Test merge_setting with empty dictionaries."""
++        result = merge_setting({}, {})
++        assert result == {}
++        
++        result = merge_setting({'key': None}, {})
++        assert result == {}
++        
++        result = merge_setting({}, {'key': None})
++        assert result == {}
++    
++    def test_merge_setting_preserves_non_none_values(self):
++        """Test that merge_setting preserves all non-None values correctly."""
++        session_setting = {
++            'header1': 'value1',
++            'header2': None,
++            'header3': 'value3',
++        }
++        request_setting = {
++            'header1': 'override1',
++            'header4': 'value4',
++            'header5': None,
++        }
++        
++        result = merge_setting(request_setting, session_setting, dict_class=CaseInsensitiveDict)
++        
++        expected = {
++            'header1': 'override1',  # Request overrides session
++            'header3': 'value3',     # Session value preserved
++            'header4': 'value4',     # Request value added
++            # header2 and header5 should be absent (None values removed)
++        }
++        
++        assert dict(result) == expected
++        assert 'header2' not in result
++        assert 'header5' not in result

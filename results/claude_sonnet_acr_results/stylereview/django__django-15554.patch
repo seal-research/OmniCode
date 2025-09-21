@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/sql/query.py b/django/db/models/sql/query.py\nindex 54f3258eac..52d514910b 100644\n--- a/django/db/models/sql/query.py\n+++ b/django/db/models/sql/query.py\n@@ -218,6 +218,7 @@ class Query(BaseExpression):\n     explain_info = None\n \n     def __init__(self, model, alias_cols=True):\n+        super().__init__()\n         self.model = model\n         self.alias_refcount = {}\n         # alias_map is the most important data structure regarding joins.\n@@ -245,7 +246,7 @@ class Query(BaseExpression):\n \n         self._filtered_relations = {}\n \n-    @property\n+    @cached_property\n     def output_field(self):\n         if len(self.select) == 1:\n             select = self.select[0]\n"
+}

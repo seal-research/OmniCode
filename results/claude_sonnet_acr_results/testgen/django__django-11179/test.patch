@@ -1,0 +1,241 @@
+--- a/tests/delete_regress/test_pk_clearing.py
++++ b/tests/delete_regress/test_pk_clearing.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++
++
++class SimpleModel(models.Model):
++    """A simple model with no dependencies for testing PK clearing on delete."""
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'delete_regress'
++
++
++class ModelWithDependencies(models.Model):
++    """A model with dependencies to test normal deletion path."""
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'delete_regress'
++
++
++class DependentModel(models.Model):
++    """A model that depends on ModelWithDependencies."""
++    parent = models.ForeignKey(ModelWithDependencies, on_delete=models.CASCADE)
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'delete_regress'
++
++
++class PKClearingTestCase(TransactionTestCase):
++    """Test that primary keys are cleared after deletion for all deletion paths."""
++    
++    def setUp(self):
++        """Set up test data."""
++        # Create tables for our test models
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(SimpleModel)
++            schema_editor.create_model(ModelWithDependencies)
++            schema_editor.create_model(DependentModel)
++    
++    def tearDown(self):
++        """Clean up test data."""
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(DependentModel)
++            schema_editor.delete_model(ModelWithDependencies)
++            schema_editor.delete_model(SimpleModel)
++    
++    def test_simple_model_pk_cleared_after_delete(self):
++        """Test that PK is cleared for simple model with no dependencies (fast path)."""
++        # Create a simple model instance
++        instance = SimpleModel.objects.create(name="test")
++        original_pk = instance.pk
++        
++        # Verify the instance has a PK before deletion
++        self.assertIsNotNone(instance.pk)
++        self.assertEqual(instance.pk, original_pk)
++        
++        # Delete the instance
++        deleted_count, deleted_models = instance.delete()
++        
++        # Verify deletion was successful
++        self.assertEqual(deleted_count, 1)
++        self.assertEqual(deleted_models, {'delete_regress.SimpleModel': 1})
++        
++        # BUG: This test should pass but currently fails because PK is not cleared in fast path
++        # The PK should be set to None after deletion
++        self.assertIsNone(instance.pk, 
++                         "Primary key should be None after deletion for models with no dependencies")
++    
++    def test_model_with_dependencies_pk_cleared_after_delete(self):
++        """Test that PK is cleared for model with dependencies (normal path)."""
++        # Create a model with dependencies
++        parent = ModelWithDependencies.objects.create(name="parent")
++        dependent = DependentModel.objects.create(parent=parent, name="child")
++        
++        original_parent_pk = parent.pk
++        original_dependent_pk = dependent.pk
++        
++        # Verify instances have PKs before deletion
++        self.assertIsNotNone(parent.pk)
++        self.assertIsNotNone(dependent.pk)
++        
++        # Delete the parent (should cascade to dependent)
++        deleted_count, deleted_models = parent.delete()
++        
++        # Verify deletion was successful
++        self.assertEqual(deleted_count, 2)  # Parent + dependent
++        self.assertIn('delete_regress.ModelWithDependencies', deleted_models)
++        self.assertIn('delete_regress.DependentModel', deleted_models)
++        
++        # This should pass - normal deletion path clears PKs correctly
++        self.assertIsNone(parent.pk, 
++                         "Primary key should be None after deletion for models with dependencies")
++    
++    def test_multiple_simple_models_pk_cleared_after_delete(self):
++        """Test PK clearing when deleting multiple instances of simple models."""
++        # Create multiple simple model instances
++        instance1 = SimpleModel.objects.create(name="test1")
++        instance2 = SimpleModel.objects.create(name="test2")
++        
++        original_pk1 = instance1.pk
++        original_pk2 = instance2.pk
++        
++        # Verify instances have PKs before deletion
++        self.assertIsNotNone(instance1.pk)
++        self.assertIsNotNone(instance2.pk)
++        
++        # Delete first instance
++        deleted_count1, _ = instance1.delete()
++        self.assertEqual(deleted_count1, 1)
++        
++        # Delete second instance
++        deleted_count2, _ = instance2.delete()
++        self.assertEqual(deleted_count2, 1)
++        
++        # Both PKs should be cleared
++        self.assertIsNone(instance1.pk, 
++                         "First instance PK should be None after deletion")
++        self.assertIsNone(instance2.pk, 
++                         "Second instance PK should be None after deletion")
++    
++    def test_pk_clearing_with_custom_pk_field(self):
++        """Test PK clearing works with custom primary key fields."""
++        
++        class CustomPKModel(models.Model):
++            custom_id = models.AutoField(primary_key=True)
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'delete_regress'
++        
++        # Create table for custom PK model
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(CustomPKModel)
++        
++        try:
++            # Create instance with custom PK
++            instance = CustomPKModel.objects.create(name="custom_pk_test")
++            original_pk = instance.custom_id
++            
++            # Verify the instance has a custom PK before deletion
++            self.assertIsNotNone(instance.custom_id)
++            self.assertEqual(instance.pk, original_pk)  # pk property should work
++            
++            # Delete the instance
++            deleted_count, _ = instance.delete()
++            self.assertEqual(deleted_count, 1)
++            
++            # Custom PK should be cleared
++            self.assertIsNone(instance.custom_id, 
++                             "Custom primary key should be None after deletion")
++            self.assertIsNone(instance.pk, 
++                             "pk property should be None after deletion")
++        
++        finally:
++            # Clean up custom PK model table
++            with connection.schema_editor() as schema_editor:
++                schema_editor.delete_model(CustomPKModel)
++    
++    def test_pk_clearing_preserves_other_fields(self):
++        """Test that PK clearing doesn't affect other model fields."""
++        # Create a simple model instance
++        instance = SimpleModel.objects.create(name="preserve_test")
++        original_name = instance.name
++        original_pk = instance.pk
++        
++        # Delete the instance
++        deleted_count, _ = instance.delete()
++        self.assertEqual(deleted_count, 1)
++        
++        # PK should be cleared but other fields should remain
++        self.assertIsNone(instance.pk, "Primary key should be None after deletion")
++        self.assertEqual(instance.name, original_name, 
++                        "Other fields should be preserved after deletion")
++    
++    def test_deleted_instance_cannot_be_deleted_again(self):
++        """Test that attempting to delete an already deleted instance raises an error."""
++        # Create a simple model instance
++        instance = SimpleModel.objects.create(name="delete_twice_test")
++        
++        # Delete the instance once
++        deleted_count, _ = instance.delete()
++        self.assertEqual(deleted_count, 1)
++        self.assertIsNone(instance.pk)
++        
++        # Attempting to delete again should raise an assertion error
++        with self.assertRaises(AssertionError) as cm:
++            instance.delete()
++        
++        self.assertIn("can't be deleted because its", str(cm.exception))
++        self.assertIn("attribute is set to None", str(cm.exception))
++
++
++class PKClearingEdgeCasesTestCase(TransactionTestCase):
++    """Test edge cases for PK clearing behavior."""
++    
++    def setUp(self):
++        """Set up test data."""
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(SimpleModel)
++    
++    def tearDown(self):
++        """Clean up test data."""
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(SimpleModel)
++    
++    def test_pk_clearing_with_keep_parents_true(self):
++        """Test PK clearing behavior when keep_parents=True."""
++        instance = SimpleModel.objects.create(name="keep_parents_test")
++        original_pk = instance.pk
++        
++        # Delete with keep_parents=True (should still clear PK for simple model)
++        deleted_count, _ = instance.delete(keep_parents=True)
++        self.assertEqual(deleted_count, 1)
++        
++        # PK should still be cleared even with keep_parents=True
++        self.assertIsNone(instance.pk, 
++                         "Primary key should be None after deletion even with keep_parents=True")
++    
++    def test_pk_clearing_with_specific_using_database(self):
++        """Test PK clearing when specifying a database connection."""
++        instance = SimpleModel.objects.create(name="using_db_test")
++        original_pk = instance.pk
++        
++        # Delete specifying the default database
++        deleted_count, _ = instance.delete(using='default')
++        self.assertEqual(deleted_count, 1)
++        
++        # PK should be cleared regardless of using parameter
++        self.assertIsNone(instance.pk, 
++                         "Primary key should be None after deletion when using specific database")

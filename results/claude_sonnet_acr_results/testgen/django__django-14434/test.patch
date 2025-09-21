@@ -1,0 +1,218 @@
+--- a/tests/schema/test_ddl_references_bug.py
++++ b/tests/schema/test_ddl_references_bug.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.backends.ddl_references import Table, Columns, TableColumns
++from django.db.backends.base.schema import BaseDatabaseSchemaEditor
++from django.test import TestCase
++from django.test.utils import isolate_apps
++from unittest.mock import Mock
++
++
++class TestDDLReferencesBug(TestCase):
++    """Test suite for the DDL references bug where Table instance is passed to Columns instead of string."""
++    
++    def setUp(self):
++        """Set up test fixtures."""
++        self.connection = Mock()
++        self.connection.features.supports_deferrable_unique_constraints = True
++        self.connection.features.supports_partial_indexes = True
++        self.connection.features.supports_covering_indexes = True
++        self.connection.features.supports_expression_indexes = True
++        
++        self.schema_editor = BaseDatabaseSchemaEditor(self.connection)
++        self.schema_editor.quote_name = lambda name: f'"{name}"'
++        self.schema_editor.sql_create_unique = 'ALTER TABLE {table} ADD CONSTRAINT {name} UNIQUE ({columns})'
++        self.schema_editor._create_index_name = lambda table, columns, suffix: f'{table}_{columns[0]}{suffix}'
++    
++    @isolate_apps('tests')
++    def test_create_unique_sql_references_column_bug_reproduction(self):
++        """
++        Test that reproduces the bug where references_column always returns False.
++        
++        This test demonstrates the issue where a Table instance is passed to Columns
++        constructor instead of a string, causing references_column to always return False.
++        """
++        # Create a simple test model
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            email = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'tests'
++        
++        # Create the unique constraint SQL
++        result = self.schema_editor._create_unique_sql(
++            model=TestModel,
++            columns=['name', 'email'],
++            name='test_unique_constraint'
++        )
++        
++        # The bug: references_column should return True when checking for the correct table and column
++        # but it returns False because Table instance is passed instead of string
++        
++        # Test that the columns object was created
++        self.assertIsNotNone(result)
++        self.assertIsNotNone(result.columns)
++        
++        # This should return True but returns False due to the bug
++        # The table name should match
++        table_name = TestModel._meta.db_table
++        
++        # Before fix: this will fail because Table instance is passed to Columns
++        # After fix: this should pass
++        references_result = result.columns.references_column(table_name, 'name')
++        
++        # This assertion will fail before the fix is applied, demonstrating the bug
++        self.assertTrue(references_result, 
++                       "references_column should return True when checking for correct table and column")
++    
++    def test_table_columns_references_column_with_string_table(self):
++        """
++        Test that TableColumns.references_column works correctly when table is a string.
++        
++        This test verifies the expected behavior when the table parameter is correctly
++        passed as a string to the Columns constructor.
++        """
++        # Create TableColumns with string table name (correct behavior)
++        table_name = "test_table"
++        columns = ['col1', 'col2']
++        
++        table_columns = TableColumns(table_name, columns)
++        
++        # This should work correctly
++        self.assertTrue(table_columns.references_column("test_table", "col1"))
++        self.assertTrue(table_columns.references_column("test_table", "col2"))
++        self.assertFalse(table_columns.references_column("test_table", "col3"))
++        self.assertFalse(table_columns.references_column("other_table", "col1"))
++    
++    def test_table_columns_references_column_with_table_instance(self):
++        """
++        Test that demonstrates the bug when Table instance is passed to TableColumns.
++        
++        This test shows what happens when a Table instance is incorrectly passed
++        to TableColumns constructor instead of a string.
++        """
++        # Create a Table instance
++        table_instance = Table("test_table", lambda x: f'"{x}"')
++        columns = ['col1', 'col2']
++        
++        # This simulates the buggy behavior where Table instance is passed
++        table_columns = TableColumns(table_instance, columns)
++        
++        # This will fail because table_instance != "test_table" (object vs string comparison)
++        self.assertFalse(table_columns.references_column("test_table", "col1"),
++                        "This demonstrates the bug: Table instance != string comparison fails")
++    
++    def test_columns_class_with_string_table(self):
++        """
++        Test that Columns class works correctly when table is passed as string.
++        
++        This test verifies the expected behavior of the Columns class when
++        the table parameter is correctly passed as a string.
++        """
++        table_name = "test_table"
++        columns = ['col1', 'col2']
++        quote_name = lambda x: f'"{x}"'
++        
++        columns_obj = Columns(table_name, columns, quote_name)
++        
++        # These should work correctly
++        self.assertTrue(columns_obj.references_column("test_table", "col1"))
++        self.assertTrue(columns_obj.references_column("test_table", "col2"))
++        self.assertFalse(columns_obj.references_column("test_table", "col3"))
++        self.assertFalse(columns_obj.references_column("other_table", "col1"))
++    
++    def test_columns_class_with_table_instance_bug(self):
++        """
++        Test that demonstrates the bug in Columns class when Table instance is passed.
++        
++        This test shows the problematic behavior when a Table instance is passed
++        to the Columns constructor instead of a string table name.
++        """
++        table_instance = Table("test_table", lambda x: f'"{x}"')
++        columns = ['col1', 'col2']
++        quote_name = lambda x: f'"{x}"'
++        
++        # This simulates the current buggy behavior
++        columns_obj = Columns(table_instance, columns, quote_name)
++        
++        # This will fail due to the bug
++        self.assertFalse(columns_obj.references_column("test_table", "col1"),
++                        "This demonstrates the bug in Columns class")
++    
++    @isolate_apps('tests')
++    def test_index_columns_method_bug(self):
++        """
++        Test that demonstrates the bug in _index_columns method.
++        
++        This test specifically targets the _index_columns method where the bug occurs.
++        """
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'tests'
++        
++        # Create a Table instance (this is what _create_unique_sql creates)
++        table = Table(TestModel._meta.db_table, self.schema_editor.quote_name)
++        columns = ['name']
++        
++        # Call _index_columns method (this is where the bug occurs)
++        result = self.schema_editor._index_columns(table, columns, (), None)
++        
++        # The bug: Table instance is passed to Columns instead of table.table string
++        # This should return True but returns False due to the bug
++        references_result = result.references_column(TestModel._meta.db_table, 'name')
++        
++        # This assertion will fail before the fix, demonstrating the bug
++        self.assertTrue(references_result,
++                       "_index_columns should create Columns that correctly reference the table")
++    
++    def test_fixed_index_columns_behavior(self):
++        """
++        Test that verifies the correct behavior after the fix is applied.
++        
++        This test shows how _index_columns should behave when the fix is applied.
++        """
++        class MockModel:
++            class _meta:
++                db_table = "test_table"
++        
++        # Simulate the fixed behavior by passing table.table instead of table
++        table = Table("test_table", lambda x: f'"{x}"')
++        columns = ['name']
++        
++        # This is how it should work after the fix
++        fixed_result = Columns(table.table, columns, lambda x: f'"{x}"')
++        
++        # This should return True with the fix
++        self.assertTrue(fixed_result.references_column("test_table", "name"),
++                       "Fixed version should correctly reference the table and column")
++    
++    def test_edge_cases_for_references_column(self):
++        """
++        Test edge cases for the references_column method.
++        
++        This test covers various edge cases to ensure the fix doesn't break
++        other functionality.
++        """
++        table_name = "test_table"
++        columns = ['col1', 'col2']
++        quote_name = lambda x: f'"{x}"'
++        
++        columns_obj = Columns(table_name, columns, quote_name)
++        
++        # Test with None values
++        self.assertFalse(columns_obj.references_column(None, "col1"))
++        self.assertFalse(columns_obj.references_column("test_table", None))
++        self.assertFalse(columns_obj.references_column(None, None))
++        
++        # Test with empty strings
++        self.assertFalse(columns_obj.references_column("", "col1"))
++        self.assertFalse(columns_obj.references_column("test_table", ""))
++        
++        # Test case sensitivity
++        self.assertFalse(columns_obj.references_column("TEST_TABLE", "col1"))
++        self.assertFalse(columns_obj.references_column("test_table", "COL1"))

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/migrations/executor.py b/django/db/migrations/executor.py\nindex 57042a8690..5bf57b22d6 100644\n--- a/django/db/migrations/executor.py\n+++ b/django/db/migrations/executor.py\n@@ -254,6 +254,8 @@ class MigrationExecutor:\n         if migration.replaces:\n             for app_label, name in migration.replaces:\n                 self.recorder.record_unapplied(app_label, name)\n+            # Also record the squashed migration itself as unapplied\n+            self.recorder.record_unapplied(migration.app_label, migration.name)\n         else:\n             self.recorder.record_unapplied(migration.app_label, migration.name)\n         # Report progress\n"
+}

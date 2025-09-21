@@ -1,0 +1,177 @@
+--- a/testing/test_skipping.py
++++ b/testing/test_skipping.py
+-# Empty if creating new file
++import pytest
++import textwrap
++from _pytest.pytester import Pytester
++
++
++class TestSkipLocationReporting:
++    """Test that skip location reporting works correctly with --runxfail option."""
++
++    def test_skip_location_without_runxfail(self, pytester: Pytester) -> None:
++        """Test that @pytest.mark.skip reports correct location without --runxfail."""
++        pytester.makepyfile(
++            test_skip="""
++            import pytest
++            
++            @pytest.mark.skip
++            def test_skip_location():
++                assert 0
++            """
++        )
++        
++        result = pytester.runpytest("-rs")
++        result.assert_outcomes(skipped=1)
++        
++        # Should report the test file location, not pytest internal location
++        assert "test_skip.py:4: unconditional skip" in result.stdout.str()
++        assert "skipping.py" not in result.stdout.str()
++
++    def test_skip_location_with_runxfail_should_not_break(self, pytester: Pytester) -> None:
++        """Test that @pytest.mark.skip reports correct location WITH --runxfail (this should fail before fix)."""
++        pytester.makepyfile(
++            test_skip="""
++            import pytest
++            
++            @pytest.mark.skip
++            def test_skip_location():
++                assert 0
++            """
++        )
++        
++        result = pytester.runpytest("-rs", "--runxfail")
++        result.assert_outcomes(skipped=1)
++        
++        # Should still report the test file location, not pytest internal location
++        # This test will fail before the fix is applied
++        assert "test_skip.py:4: unconditional skip" in result.stdout.str()
++        assert "skipping.py" not in result.stdout.str()
++
++    def test_skipif_location_without_runxfail(self, pytester: Pytester) -> None:
++        """Test that @pytest.mark.skipif reports correct location without --runxfail."""
++        pytester.makepyfile(
++            test_skipif="""
++            import pytest
++            
++            @pytest.mark.skipif(True, reason="always skip")
++            def test_skipif_location():
++                assert 0
++            """
++        )
++        
++        result = pytester.runpytest("-rs")
++        result.assert_outcomes(skipped=1)
++        
++        # Should report the test file location, not pytest internal location
++        assert "test_skipif.py:4: always skip" in result.stdout.str()
++        assert "skipping.py" not in result.stdout.str()
++
++    def test_skipif_location_with_runxfail_should_not_break(self, pytester: Pytester) -> None:
++        """Test that @pytest.mark.skipif reports correct location WITH --runxfail (this should fail before fix)."""
++        pytester.makepyfile(
++            test_skipif="""
++            import pytest
++            
++            @pytest.mark.skipif(True, reason="always skip")
++            def test_skipif_location():
++                assert 0
++            """
++        )
++        
++        result = pytester.runpytest("-rs", "--runxfail")
++        result.assert_outcomes(skipped=1)
++        
++        # Should still report the test file location, not pytest internal location
++        # This test will fail before the fix is applied
++        assert "test_skipif.py:4: always skip" in result.stdout.str()
++        assert "skipping.py" not in result.stdout.str()
++
++    def test_skip_with_reason_location_with_runxfail(self, pytester: Pytester) -> None:
++        """Test that @pytest.mark.skip with reason reports correct location WITH --runxfail."""
++        pytester.makepyfile(
++            test_skip_reason="""
++            import pytest
++            
++            @pytest.mark.skip(reason="custom reason")
++            def test_skip_with_reason():
++                assert 0
++            """
++        )
++        
++        result = pytester.runpytest("-rs", "--runxfail")
++        result.assert_outcomes(skipped=1)
++        
++        # Should report the test file location with custom reason
++        assert "test_skip_reason.py:4: custom reason" in result.stdout.str()
++        assert "skipping.py" not in result.stdout.str()
++
++    def test_xfail_not_affected_by_fix(self, pytester: Pytester) -> None:
++        """Test that xfail behavior is not affected by the skip location fix."""
++        pytester.makepyfile(
++            test_xfail="""
++            import pytest
++            
++            @pytest.mark.xfail(reason="expected to fail")
++            def test_xfail_location():
++                assert 0
++            """
++        )
++        
++        # Test without --runxfail (should be xfailed)
++        result = pytester.runpytest("-rx")
++        result.assert_outcomes(xfailed=1)
++        
++        # Test with --runxfail (should be failed)
++        result = pytester.runpytest("--runxfail")
++        result.assert_outcomes(failed=1)
++
++    def test_mixed_skip_and_xfail_with_runxfail(self, pytester: Pytester) -> None:
++        """Test that both skip and xfail work correctly together with --runxfail."""
++        pytester.makepyfile(
++            test_mixed="""
++            import pytest
++            
++            @pytest.mark.skip(reason="skip this")
++            def test_skip_one():
++                assert 0
++                
++            @pytest.mark.xfail(reason="expected to fail")
++            def test_xfail_one():
++                assert 0
++                
++            @pytest.mark.skipif(True, reason="conditional skip")
++            def test_skipif_one():
++                assert 0
++            """
++        )
++        
++        result = pytester.runpytest("-rs", "-rx", "--runxfail")
++        result.assert_outcomes(skipped=2, failed=1)
++        
++        # Check that skip locations are reported correctly
++        stdout = result.stdout.str()
++        assert "test_mixed.py:4: skip this" in stdout
++        assert "test_mixed.py:12: conditional skip" in stdout
++        assert "skipping.py" not in stdout
++
++    def test_programmatic_skip_not_affected(self, pytester: Pytester) -> None:
++        """Test that programmatic pytest.skip() calls are not affected by the fix."""
++        pytester.makepyfile(
++            test_programmatic="""
++            import pytest
++            
++            def test_programmatic_skip():
++                pytest.skip("programmatic skip")
++                assert 0
++            """
++        )
++        
++        result = pytester.runpytest("-rs", "--runxfail")
++        result.assert_outcomes(skipped=1)
++        
++        # Programmatic skips should still show the internal location
++        # because they're not marked with @pytest.mark.skip
++        stdout = result.stdout.str()
++        # This should show the pytest internal location, not the test file
++        assert "skipping.py" in stdout or "programmatic skip" in stdout

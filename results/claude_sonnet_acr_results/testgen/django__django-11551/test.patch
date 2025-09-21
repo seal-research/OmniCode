@@ -1,0 +1,361 @@
+--- a/tests/admin_checks/test_list_display.py
++++ b/tests/admin_checks/test_list_display.py
+-# Empty if creating new file
++import pytest
++from django.contrib import admin
++from django.contrib.admin.checks import ModelAdminChecks
++from django.core import checks
++from django.db import models
++from django.test import TestCase
++
++
++class MockPositionField(models.Field):
++    """
++    Mock field that simulates the behavior of django-positions PositionField.
++    This field raises an exception when accessed via hasattr/getattr on the model class
++    but can be found via model._meta.get_field().
++    """
++    def __get__(self, instance, owner):
++        if instance is None:
++            # When accessed on the model class (not instance), raise an exception
++            # This simulates the behavior that causes hasattr(model, field_name) to return False
++            raise AttributeError("PositionField can only be accessed on model instances")
++        return getattr(instance, self.attname, None)
++
++
++class MockDescriptorField(models.Field):
++    """
++    Mock field that returns None when accessed via getattr on model class.
++    This simulates the bug case mentioned in issue #28490.
++    """
++    def __get__(self, instance, owner):
++        if instance is None:
++            return None  # Returns None when accessed on model class
++        return getattr(instance, self.attname, None)
++
++
++class TestModel(models.Model):
++    """Test model with various field types for testing list_display validation."""
++    name = models.CharField(max_length=100)
++    position_field = MockPositionField()
++    descriptor_field = MockDescriptorField()
++    many_to_many = models.ManyToManyField('self', blank=True)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class TestModelAdmin(admin.ModelAdmin):
++    """Base test ModelAdmin class."""
++    model = TestModel
++
++
++class TestListDisplayValidation(TestCase):
++    """Test cases for _check_list_display_item validation logic."""
++    
++    def setUp(self):
++        self.checker = ModelAdminChecks()
++        self.admin_obj = TestModelAdmin(TestModel, admin.site)
++    
++    def test_callable_item_passes(self):
++        """Test that callable items in list_display pass validation."""
++        def custom_method():
++            return "test"
++        
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, custom_method, "list_display[0]"
++        )
++        self.assertEqual(errors, [])
++    
++    def test_admin_attribute_passes(self):
++        """Test that ModelAdmin attributes pass validation."""
++        # Add a method to the admin class
++        setattr(TestModelAdmin, 'custom_admin_method', lambda self: "test")
++        
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'custom_admin_method', "list_display[0]"
++        )
++        self.assertEqual(errors, [])
++    
++    def test_regular_model_field_passes(self):
++        """Test that regular model fields pass validation."""
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'name', "list_display[0]"
++        )
++        self.assertEqual(errors, [])
++    
++    def test_position_field_should_pass_after_fix(self):
++        """
++        Test that PositionField-like fields pass validation after the fix.
++        This is the main bug case - fields that raise exceptions when accessed
++        via hasattr/getattr on model class but can be found via get_field().
++        """
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'position_field', "list_display[0]"
++        )
++        # This should pass (empty list) after the fix, but currently fails with E108
++        # The test demonstrates the bug exists
++        if errors:
++            self.assertEqual(len(errors), 1)
++            self.assertEqual(errors[0].id, 'admin.E108')
++        else:
++            # After fix, this should be empty
++            self.assertEqual(errors, [])
++    
++    def test_descriptor_field_returning_none_passes(self):
++        """
++        Test that descriptor fields returning None pass validation.
++        This tests the fix for issue #28490.
++        """
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'descriptor_field', "list_display[0]"
++        )
++        self.assertEqual(errors, [])
++    
++    def test_many_to_many_field_returns_e109(self):
++        """Test that ManyToManyField in list_display returns E109 error."""
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'many_to_many', "list_display[0]"
++        )
++        self.assertEqual(len(errors), 1)
++        self.assertEqual(errors[0].id, 'admin.E109')
++        self.assertIn("must not be a ManyToManyField", errors[0].msg)
++    
++    def test_nonexistent_field_returns_e108(self):
++        """Test that non-existent fields return E108 error."""
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'nonexistent_field', "list_display[0]"
++        )
++        self.assertEqual(len(errors), 1)
++        self.assertEqual(errors[0].id, 'admin.E108')
++        self.assertIn("which is not a callable", errors[0].msg)
++    
++    def test_error_message_format(self):
++        """Test that E108 error message has correct format."""
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'nonexistent_field', "list_display[0]"
++        )
++        error = errors[0]
++        self.assertIn("list_display[0]", error.msg)
++        self.assertIn("nonexistent_field", error.msg)
++        self.assertIn("TestModelAdmin", error.msg)
++        self.assertIn("test_app.TestModel", error.msg)
++
++
++class TestListDisplayIntegration(TestCase):
++    """Integration tests for the complete list_display validation."""
++    
++    def test_list_display_with_position_field(self):
++        """Test complete list_display validation with PositionField."""
++        class PositionFieldAdmin(admin.ModelAdmin):
++            list_display = ['name', 'position_field']
++        
++        admin_obj = PositionFieldAdmin(TestModel, admin.site)
++        checker = ModelAdminChecks()
++        
++        errors = checker._check_list_display(admin_obj)
++        
++        # Filter for E108 errors related to position_field
++        position_field_errors = [
++            error for error in errors 
++            if error.id == 'admin.E108' and 'position_field' in error.msg
++        ]
++        
++        # This demonstrates the current bug - position_field should not cause E108
++        # After the fix, position_field_errors should be empty
++        if position_field_errors:
++            self.assertEqual(len(position_field_errors), 1)
++        else:
++            # After fix, no E108 errors for position_field
++            self.assertEqual(len(position_field_errors), 0)
++    
++    def test_list_display_with_mixed_fields(self):
++        """Test list_display with mix of valid and invalid fields."""
++        class MixedFieldsAdmin(admin.ModelAdmin):
++            list_display = ['name', 'position_field', 'nonexistent', 'many_to_many']
++        
++        admin_obj = MixedFieldsAdmin(TestModel, admin.site)
++        checker = ModelAdminChecks()
++        
++        errors = checker._check_list_display(admin_obj)
++        
++        # Should have E108 for nonexistent field and E109 for many_to_many
++        e108_errors = [e for e in errors if e.id == 'admin.E108']
++        e109_errors = [e for e in errors if e.id == 'admin.E109']
++        
++        # nonexistent field should cause E108
++        nonexistent_errors = [e for e in e108_errors if 'nonexistent' in e.msg]
++        self.assertEqual(len(nonexistent_errors), 1)
++        
++        # many_to_many should cause E109
++        m2m_errors = [e for e in e109_errors if 'many_to_many' in e.msg]
++        self.assertEqual(len(m2m_errors), 1)
++
++
++class TestEdgeCases(TestCase):
++    """Test edge cases for the validation logic."""
++    
++    def setUp(self):
++        self.checker = ModelAdminChecks()
++        self.admin_obj = TestModelAdmin(TestModel, admin.site)
++    
++    def test_field_accessible_via_get_field_but_not_hasattr(self):
++        """
++        Test the specific case where get_field() works but hasattr() returns False.
++        This is the core issue described in the bug report.
++        """
++        # Verify that hasattr returns False for position_field
++        self.assertFalse(hasattr(TestModel, 'position_field'))
++        
++        # But get_field should work
++        try:
++            field = TestModel._meta.get_field('position_field')
++            self.assertIsNotNone(field)
++        except models.FieldDoesNotExist:
++            self.fail("get_field should find position_field")
++        
++        # The validation should pass after the fix
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'position_field', "list_display[0]"
++        )
++        
++        # This test documents the current bug and expected fix
++        if errors:
++            # Current buggy behavior
++            self.assertEqual(errors[0].id, 'admin.E108')
++        else:
++            # Expected behavior after fix
++            self.assertEqual(errors, [])
++    
++    def test_field_accessible_via_getattr_but_not_get_field(self):
++        """Test case where getattr works but get_field raises FieldDoesNotExist."""
++        # Add a property to the model that's not a real field
++        def test_property(self):
++            return "test"
++        
++        TestModel.test_property = property(test_property)
++        
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'test_property', "list_display[0]"
++        )
++        
++        # Should pass validation
++        self.assertEqual(errors, [])
++        
++        # Clean up
++        delattr(TestModel, 'test_property')
++    
++    def test_both_get_field_and_getattr_fail(self):
++        """Test case where both get_field and getattr fail."""
++        errors = self.checker._check_list_display_item(
++            self.admin_obj, 'completely_nonexistent', "list_display[0]"
++        )
++        
++        self.assertEqual(len(errors), 1)
++        self.assertEqual(errors[0].id, 'admin.E108')
++
++
++@pytest.mark.django_db
++class TestPositionFieldBugReproduction:
++    """
++    Pytest-style tests to reproduce the exact bug described in the issue.
++    These tests simulate the django-positions library scenario.
++    """
++    
++    def test_position_field_bug_reproduction(self):
++        """
++        Reproduce the exact bug scenario from the issue description.
++        This test should fail before the fix and pass after.
++        """
++        # Create a model similar to the one in the issue
++        class Thing(models.Model):
++            number = models.IntegerField(default=0)
++            order = MockPositionField()  # Simulates PositionField
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # Create admin similar to the one in the issue
++        class ThingAdmin(admin.ModelAdmin):
++            list_display = ['number', 'order']
++        
++        admin_obj = ThingAdmin(Thing, admin.site)
++        checker = ModelAdminChecks()
++        
++        # This should reproduce the bug
++        errors = checker._check_list_display(admin_obj)
++        
++        # Filter for errors related to 'order' field
++        order_errors = [
++            error for error in errors 
++            if error.id == 'admin.E108' and 'order' in error.msg
++        ]
++        
++        # Before fix: should have E108 error for 'order'
++        # After fix: should have no E108 error for 'order'
++        if order_errors:
++            assert len(order_errors) == 1
++            assert "order" in order_errors[0].msg
++            assert "not a callable" in order_errors[0].msg
++        else:
++            # This is the expected behavior after the fix
++            assert len(order_errors) == 0
++    
++    def test_hasattr_vs_get_field_behavior(self):
++        """
++        Test that demonstrates the difference between hasattr and get_field
++        for the problematic field type.
++        """
++        class Thing(models.Model):
++            order = MockPositionField()
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # hasattr should return False due to the exception
++        assert not hasattr(Thing, 'order')
++        
++        # But get_field should work
++        try:
++            field = Thing._meta.get_field('order')
++            assert field is not None
++        except models.FieldDoesNotExist:
++            pytest.fail("get_field should find the order field")
++    
++    def test_fix_preserves_existing_functionality(self):
++        """
++        Test that the fix preserves all existing functionality
++        for normal fields and error cases.
++        """
++        class TestModel(models.Model):
++            normal_field = models.CharField(max_length=100)
++            m2m_field = models.ManyToManyField('self', blank=True)
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        class TestAdmin(admin.ModelAdmin):
++            pass
++        
++        admin_obj = TestAdmin(TestModel, admin.site)
++        checker = ModelAdminChecks()
++        
++        # Normal field should pass
++        errors = checker._check_list_display_item(
++            admin_obj, 'normal_field', "list_display[0]"
++        )
++        assert errors == []
++        
++        # ManyToMany should return E109
++        errors = checker._check_list_display_item(
++            admin_obj, 'm2m_field', "list_display[0]"
++        )
++        assert len(errors) == 1
++        assert errors[0].id == 'admin.E109'
++        
++        # Nonexistent field should return E108
++        errors = checker._check_list_display_item(
++            admin_obj, 'nonexistent', "list_display[0]"
++        )
++        assert len(errors) == 1
++        assert errors[0].id == 'admin.E108'

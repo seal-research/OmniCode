@@ -1,0 +1,229 @@
+--- a/tests/migrations/test_writer.py
++++ b/tests/migrations/test_writer.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.migrations.writer import MigrationWriter
++from django.db.migrations.operations.models import CreateModel
++from django.db.migrations import Migration
++from django.test import TestCase
++
++
++class TestMigrationWriterImports(TestCase):
++    """Test that MigrationWriter generates correct imports for models.Model in bases."""
++    
++    def test_models_model_in_bases_generates_import(self):
++        """
++        Test that when models.Model appears in bases tuple, the migration
++        includes 'from django.db import models' import.
++        
++        This reproduces the bug where models.Model in bases causes
++        NameError: name 'models' is not defined.
++        """
++        # Create a custom field class for testing
++        class MyField(models.TextField):
++            pass
++        
++        # Create a custom mixin class
++        class MyMixin:
++            pass
++        
++        # Create the migration operation that would cause the bug
++        operation = CreateModel(
++            name='MyModel',
++            fields=[
++                ('name', MyField(primary_key=True)),
++            ],
++            options={
++                'abstract': False,
++            },
++            bases=(MyMixin, models.Model),  # This should trigger the import
++        )
++        
++        # Create a migration with this operation
++        migration = Migration('0001_initial', 'testapp')
++        migration.operations = [operation]
++        
++        # Generate the migration string
++        writer = MigrationWriter(migration)
++        migration_string = writer.as_string()
++        
++        # The migration should include the models import
++        self.assertIn('from django.db import migrations, models', migration_string)
++        
++        # The migration should be valid Python (no NameError when executed)
++        # We test this by checking that models.Model appears in bases
++        self.assertIn('bases=(', migration_string)
++        self.assertIn('models.Model', migration_string)
++        
++        # Verify the migration can be compiled without NameError
++        try:
++            compile(migration_string, '<string>', 'exec')
++        except NameError as e:
++            if "name 'models' is not defined" in str(e):
++                self.fail("Migration contains models.Model but missing models import")
++            else:
++                raise
++    
++    def test_models_model_only_in_bases_generates_import(self):
++        """
++        Test that models.Model in bases generates import even when
++        no fields use models classes.
++        """
++        # Create operation with models.Model in bases but no model fields
++        operation = CreateModel(
++            name='SimpleModel',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            bases=(models.Model,),  # Only models.Model in bases
++        )
++        
++        migration = Migration('0001_initial', 'testapp')
++        migration.operations = [operation]
++        
++        writer = MigrationWriter(migration)
++        migration_string = writer.as_string()
++        
++        # Should include models import due to models.Model in bases
++        self.assertIn('from django.db import migrations, models', migration_string)
++        self.assertIn('models.Model', migration_string)
++    
++    def test_multiple_bases_with_models_model(self):
++        """
++        Test that models.Model in bases with other classes generates correct import.
++        """
++        class CustomMixin:
++            pass
++        
++        class AnotherMixin:
++            pass
++        
++        operation = CreateModel(
++            name='MultiBaseModel',
++            fields=[
++                ('name', models.CharField(max_length=100)),
++            ],
++            bases=(CustomMixin, AnotherMixin, models.Model),
++        )
++        
++        migration = Migration('0001_initial', 'testapp')
++        migration.operations = [operation]
++        
++        writer = MigrationWriter(migration)
++        migration_string = writer.as_string()
++        
++        # Should include models import
++        self.assertIn('from django.db import migrations, models', migration_string)
++        self.assertIn('models.Model', migration_string)
++        
++        # Verify compilation works
++        compile(migration_string, '<string>', 'exec')
++    
++    def test_no_models_model_in_bases_no_extra_import(self):
++        """
++        Test that when models.Model is not in bases, we don't get
++        unnecessary models import (unless needed for fields).
++        """
++        class CustomBase:
++            pass
++        
++        operation = CreateModel(
++            name='CustomBaseModel',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            bases=(CustomBase,),  # No models.Model
++        )
++        
++        migration = Migration('0001_initial', 'testapp')
++        migration.operations = [operation]
++        
++        writer = MigrationWriter(migration)
++        migration_string = writer.as_string()
++        
++        # Should still include models import due to AutoField
++        self.assertIn('from django.db import migrations, models', migration_string)
++        # But models.Model should not appear in bases
++        self.assertNotIn('models.Model', migration_string.split('bases=')[1].split(')')[0])
++    
++    def test_migration_executes_without_error(self):
++        """
++        Test that the generated migration can actually be executed
++        without NameError.
++        """
++        class TestMixin:
++            pass
++        
++        operation = CreateModel(
++            name='ExecutableModel',
++            fields=[
++                ('name', models.CharField(max_length=50, primary_key=True)),
++            ],
++            bases=(TestMixin, models.Model),
++        )
++        
++        migration = Migration('0001_initial', 'testapp')
++        migration.operations = [operation]
++        
++        writer = MigrationWriter(migration)
++        migration_string = writer.as_string()
++        
++        # Create a namespace for execution
++        namespace = {}
++        
++        # The migration should execute without NameError
++        try:
++            exec(migration_string, namespace)
++        except NameError as e:
++            if "name 'models' is not defined" in str(e):
++                self.fail(f"Migration execution failed with NameError: {e}")
++            else:
++                raise
++        
++        # Verify the Migration class was created
++        self.assertIn('Migration', namespace)
++        migration_class = namespace['Migration']
++        self.assertTrue(hasattr(migration_class, 'operations'))
++        self.assertEqual(len(migration_class.operations), 1)
++
++
++class TestTypeSerializerModelsModel(TestCase):
++    """Test the TypeSerializer specifically for models.Model serialization."""
++    
++    def test_models_model_serialization_includes_import(self):
++        """
++        Test that TypeSerializer.serialize() returns correct import
++        for models.Model.
++        """
++        from django.db.migrations.serializer import TypeSerializer
++        
++        serializer = TypeSerializer(models.Model)
++        string_repr, imports = serializer.serialize()
++        
++        # Should return "models.Model" as string representation
++        self.assertEqual(string_repr, "models.Model")
++        
++        # Should include the models import
++        self.assertIn("from django.db import models", imports)
++    
++    def test_other_types_unchanged(self):
++        """
++        Test that other type serializations are not affected by the fix.
++        """
++        from django.db.migrations.serializer import TypeSerializer
++        
++        # Test type(None)
++        serializer = TypeSerializer(type(None))
++        string_repr, imports = serializer.serialize()
++        self.assertEqual(string_repr, "type(None)")
++        self.assertEqual(imports, set())
++        
++        # Test a regular class
++        class TestClass:
++            pass
++        
++        serializer = TypeSerializer(TestClass)
++        string_repr, imports = serializer.serialize()
++        expected_import = f"import {TestClass.__module__}"
++        self.assertIn(expected_import, imports)

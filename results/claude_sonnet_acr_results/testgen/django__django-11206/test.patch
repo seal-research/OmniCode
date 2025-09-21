@@ -1,0 +1,135 @@
+--- a/tests/utils_tests/test_numberformat.py
++++ b/tests/utils_tests/test_numberformat.py
+-# Empty if creating new file
++import pytest
++from decimal import Decimal
++from django.utils.numberformat import format as nformat
++
++
++class TestNumberFormatExponentialNotation:
++    """Test cases for the exponential notation bug in utils.numberformat.format"""
++
++    def test_small_decimal_with_decimal_pos_should_not_use_exponential_notation(self):
++        """
++        Test that extremely small decimals with decimal_pos specified
++        should return formatted zeros instead of exponential notation.
++        This is the main bug described in the issue.
++        """
++        # Test case from the issue - this should fail before the fix
++        result = nformat(Decimal('1e-200'), '.', decimal_pos=2)
++        assert result == '0.00', f"Expected '0.00', got '{result}'"
++
++    def test_small_decimal_boundary_cases(self):
++        """Test boundary cases around the 200-digit cutoff"""
++        # Test Decimal('1e-199') - should work correctly (from issue description)
++        result = nformat(Decimal('1e-199'), '.', decimal_pos=2)
++        assert result == '0.00', f"Expected '0.00', got '{result}'"
++        
++        # Test Decimal('1e-201') - should also return formatted zero
++        result = nformat(Decimal('1e-201'), '.', decimal_pos=2)
++        assert result == '0.00', f"Expected '0.00', got '{result}'"
++
++    def test_small_decimal_different_decimal_positions(self):
++        """Test small decimals with different decimal_pos values"""
++        test_cases = [
++            (Decimal('1e-200'), 0, '0'),
++            (Decimal('1e-200'), 1, '0.0'),
++            (Decimal('1e-200'), 3, '0.000'),
++            (Decimal('1e-200'), 5, '0.00000'),
++            (Decimal('1e-300'), 2, '0.00'),
++            (Decimal('1e-500'), 4, '0.0000'),
++        ]
++        
++        for decimal_value, decimal_pos, expected in test_cases:
++            result = nformat(decimal_value, '.', decimal_pos=decimal_pos)
++            assert result == expected, f"For {decimal_value} with decimal_pos={decimal_pos}, expected '{expected}', got '{result}'"
++
++    def test_negative_small_decimals(self):
++        """Test that negative small decimals are handled correctly"""
++        result = nformat(Decimal('-1e-200'), '.', decimal_pos=2)
++        assert result == '0.00', f"Expected '0.00', got '{result}'"
++        
++        result = nformat(Decimal('-1e-300'), '.', decimal_pos=3)
++        assert result == '0.000', f"Expected '0.000', got '{result}'"
++
++    def test_small_decimal_without_decimal_pos_preserves_exponential(self):
++        """
++        Test that when decimal_pos is not specified, exponential notation
++        is preserved for backward compatibility
++        """
++        # Without decimal_pos, should still use exponential notation
++        result = nformat(Decimal('1e-200'), '.')
++        # This should contain 'e' indicating exponential notation
++        assert 'e' in result.lower(), f"Expected exponential notation, got '{result}'"
++
++    def test_normal_decimals_unchanged(self):
++        """Test that normal decimal formatting is not affected by the fix"""
++        test_cases = [
++            (Decimal('123.456'), '.', 2, '123.46'),
++            (Decimal('0.123'), '.', 2, '0.12'),
++            (Decimal('1.0'), '.', 2, '1.00'),
++            (Decimal('0.001'), '.', 3, '0.001'),
++            (Decimal('0.0001'), '.', 4, '0.0001'),
++        ]
++        
++        for decimal_value, decimal_sep, decimal_pos, expected in test_cases:
++            result = nformat(decimal_value, decimal_sep, decimal_pos=decimal_pos)
++            assert result == expected, f"For {decimal_value} with decimal_pos={decimal_pos}, expected '{expected}', got '{result}'"
++
++    def test_large_numbers_still_use_exponential_when_appropriate(self):
++        """Test that large numbers still use exponential notation when needed"""
++        # Create a number that would trigger the 200-digit cutoff
++        large_decimal = Decimal('1' + '0' * 200)
++        result = nformat(large_decimal, '.')
++        # Should use exponential notation
++        assert 'e' in result.lower(), f"Expected exponential notation for large number, got '{result}'"
++
++    def test_edge_case_very_small_but_representable(self):
++        """Test numbers that are very small but still representable with given decimal_pos"""
++        # A number that's small but should be representable with enough decimal places
++        small_but_representable = Decimal('1e-5')
++        result = nformat(small_but_representable, '.', decimal_pos=6)
++        assert result == '0.000010', f"Expected '0.000010', got '{result}'"
++
++    def test_different_decimal_separators(self):
++        """Test that the fix works with different decimal separators"""
++        result = nformat(Decimal('1e-200'), ',', decimal_pos=2)
++        assert result == '0,00', f"Expected '0,00', got '{result}'"
++
++    def test_with_grouping_and_thousand_separator(self):
++        """Test that small decimals work correctly with grouping options"""
++        result = nformat(Decimal('1e-200'), '.', decimal_pos=2, grouping=3, thousand_sep=',')
++        assert result == '0.00', f"Expected '0.00', got '{result}'"
++
++    def test_zero_decimal_positions(self):
++        """Test small decimals with zero decimal positions"""
++        result = nformat(Decimal('1e-200'), '.', decimal_pos=0)
++        assert result == '0', f"Expected '0', got '{result}'"
++
++    def test_scientific_notation_coefficient_formatting(self):
++        """
++        Test that when exponential notation is still used (no decimal_pos),
++        the coefficient is properly formatted
++        """
++        # Test a case where exponential notation should still be used
++        result = nformat(Decimal('1.23456e-250'), '.')
++        # Should contain 'e' and the coefficient should be formatted
++        assert 'e' in result.lower(), f"Expected exponential notation, got '{result}'"
++        # The coefficient part should be properly formatted
++        parts = result.lower().split('e')
++        assert len(parts) == 2, f"Expected coefficient and exponent parts, got '{result}'"
++
++    def test_issue_reproduction(self):
++        """
++        Direct reproduction of the issue described in the bug report.
++        This test should fail before the fix and pass after.
++        """
++        # Exact examples from the issue
++        result1 = nformat(Decimal('1e-199'), '.', decimal_pos=2)
++        assert result1 == '0.00', f"1e-199 should format as '0.00', got '{result1}'"
++        
++        # This is the failing case from the issue
++        result2 = nformat(Decimal('1e-200'), '.', decimal_pos=2)
++        assert result2 == '0.00', f"1e-200 should format as '0.00', got '{result2}'"
++        # Before fix, this would return '1.00e-200'
++        assert 'e' not in result2.lower(), f"Result should not contain exponential notation, got '{result2}'"

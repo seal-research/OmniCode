@@ -1,0 +1,357 @@
+--- a/tests/serializers/test_natural_keys_multidb.py
++++ b/tests/serializers/test_natural_keys_multidb.py
+-# Empty if creating new file
++import pytest
++from django.core import serializers
++from django.core.management import call_command
++from django.db import connections
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++from django.apps import apps
++from django.db import models
++import tempfile
++import json
++import os
++
++
++# Test models for natural keys with foreign keys
++class AuthorManager(models.Manager):
++    def get_by_natural_key(self, name):
++        return self.get(name=name)
++
++
++class Author(models.Model):
++    name = models.CharField(max_length=255, unique=True)
++    objects = AuthorManager()
++
++    def natural_key(self):
++        return (self.name,)
++
++    def __str__(self):
++        return f"{self.id} {self.name}"
++
++    class Meta:
++        app_label = 'serializers'
++
++
++class BookManager(models.Manager):
++    def get_by_natural_key(self, title, author_name):
++        return self.get(title=title, author__name=author_name)
++
++
++class Book(models.Model):
++    title = models.CharField(max_length=255)
++    author = models.ForeignKey(Author, models.CASCADE, related_name="books")
++    objects = BookManager()
++
++    def natural_key(self):
++        return (self.title,) + self.author.natural_key()
++
++    natural_key.dependencies = ["serializers.Author"]
++
++    class Meta:
++        unique_together = [["title", "author"]]
++        app_label = 'serializers'
++
++    def __str__(self):
++        return f"{self.id}: '{self.title}' by {self.author}"
++
++
++@override_settings(
++    DATABASES={
++        'default': {
++            'ENGINE': 'django.db.backends.sqlite3',
++            'NAME': ':memory:',
++        },
++        'other': {
++            'ENGINE': 'django.db.backends.sqlite3',
++            'NAME': ':memory:',
++        }
++    }
++)
++class NaturalKeysMultiDbTestCase(TransactionTestCase):
++    """Test natural keys with foreign keys across multiple databases."""
++    
++    available_apps = ['serializers']
++    
++    def setUp(self):
++        # Create tables in both databases
++        for db_alias in ['default', 'other']:
++            with connections[db_alias].schema_editor() as schema_editor:
++                schema_editor.create_model(Author)
++                schema_editor.create_model(Book)
++    
++    def tearDown(self):
++        # Clean up tables
++        for db_alias in ['default', 'other']:
++            with connections[db_alias].schema_editor() as schema_editor:
++                schema_editor.delete_model(Book)
++                schema_editor.delete_model(Author)
++
++    def test_loaddata_natural_keys_default_database_works(self):
++        """Test that loaddata with natural keys works on default database."""
++        # Create test data in default database
++        author = Author.objects.using('default').create(name="JR Tolkien")
++        book = Book.objects.using('default').create(title="The Ring", author=author)
++        
++        # Serialize the data
++        data = serializers.serialize(
++            "json", 
++            [author, book], 
++            use_natural_foreign_keys=True, 
++            use_natural_primary_keys=True
++        )
++        
++        # Clear the database
++        Book.objects.using('default').all().delete()
++        Author.objects.using('default').all().delete()
++        
++        # Create temporary file with the data
++        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
++            f.write(data)
++            temp_file = f.name
++        
++        try:
++            # Load data back into default database - should work
++            call_command('loaddata', temp_file, database='default', verbosity=0)
++            
++            # Verify data was loaded
++            self.assertEqual(Author.objects.using('default').count(), 1)
++            self.assertEqual(Book.objects.using('default').count(), 1)
++            
++            loaded_author = Author.objects.using('default').get(name="JR Tolkien")
++            loaded_book = Book.objects.using('default').get(title="The Ring")
++            self.assertEqual(loaded_book.author, loaded_author)
++        finally:
++            os.unlink(temp_file)
++
++    def test_loaddata_natural_keys_non_default_database_fails_before_fix(self):
++        """Test that demonstrates the bug: loaddata fails on non-default database with natural keys."""
++        # Create test data in default database first
++        author = Author.objects.using('default').create(name="JR Tolkien")
++        book = Book.objects.using('default').create(title="The Ring", author=author)
++        
++        # Serialize the data
++        data = serializers.serialize(
++            "json", 
++            [author, book], 
++            use_natural_foreign_keys=True, 
++            use_natural_primary_keys=True
++        )
++        
++        # Create temporary file with the data
++        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
++            f.write(data)
++            temp_file = f.name
++        
++        try:
++            # This should fail before the fix is applied
++            # The error occurs because when building the Book instance for natural key lookup,
++            # it tries to access self.author.natural_key() but the author lookup uses the default
++            # database instead of the 'other' database
++            with self.assertRaises(Author.DoesNotExist):
++                call_command('loaddata', temp_file, database='other', verbosity=0)
++            
++            # Verify no data was loaded in the other database
++            self.assertEqual(Author.objects.using('other').count(), 0)
++            self.assertEqual(Book.objects.using('other').count(), 0)
++        finally:
++            os.unlink(temp_file)
++
++    def test_loaddata_natural_keys_non_default_database_works_after_fix(self):
++        """Test that loaddata works on non-default database after the fix."""
++        # Create test data in default database
++        author = Author.objects.using('default').create(name="JR Tolkien")
++        book = Book.objects.using('default').create(title="The Ring", author=author)
++        
++        # Serialize the data
++        data = serializers.serialize(
++            "json", 
++            [author, book], 
++            use_natural_foreign_keys=True, 
++            use_natural_primary_keys=True
++        )
++        
++        # Create temporary file with the data
++        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
++            f.write(data)
++            temp_file = f.name
++        
++        try:
++            # After the fix, this should work
++            call_command('loaddata', temp_file, database='other', verbosity=0)
++            
++            # Verify data was loaded in the other database
++            self.assertEqual(Author.objects.using('other').count(), 1)
++            self.assertEqual(Book.objects.using('other').count(), 1)
++            
++            loaded_author = Author.objects.using('other').get(name="JR Tolkien")
++            loaded_book = Book.objects.using('other').get(title="The Ring")
++            self.assertEqual(loaded_book.author, loaded_author)
++            
++            # Verify data is not in default database (we didn't load it there)
++            self.assertEqual(Author.objects.using('default').count(), 1)  # Original data
++            self.assertEqual(Book.objects.using('default').count(), 1)    # Original data
++        finally:
++            os.unlink(temp_file)
++
++    def test_loaddata_natural_keys_empty_non_default_database(self):
++        """Test loaddata on completely empty non-default database."""
++        # Create test data in default database
++        author = Author.objects.using('default').create(name="JR Tolkien")
++        book = Book.objects.using('default').create(title="The Ring", author=author)
++        
++        # Serialize the data
++        data = serializers.serialize(
++            "json", 
++            [author, book], 
++            use_natural_foreign_keys=True, 
++            use_natural_primary_keys=True
++        )
++        
++        # Ensure other database is completely empty
++        Author.objects.using('other').all().delete()
++        Book.objects.using('other').all().delete()
++        
++        # Create temporary file with the data
++        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
++            f.write(data)
++            temp_file = f.name
++        
++        try:
++            # This should work after the fix
++            call_command('loaddata', temp_file, database='other', verbosity=0)
++            
++            # Verify data was loaded
++            self.assertEqual(Author.objects.using('other').count(), 1)
++            self.assertEqual(Book.objects.using('other').count(), 1)
++            
++            loaded_author = Author.objects.using('other').get(name="JR Tolkien")
++            loaded_book = Book.objects.using('other').get(title="The Ring")
++            self.assertEqual(loaded_book.author, loaded_author)
++        finally:
++            os.unlink(temp_file)
++
++    def test_natural_key_lookup_uses_correct_database(self):
++        """Test that natural key lookups use the correct database during deserialization."""
++        # Create author in 'other' database only
++        author_other = Author.objects.using('other').create(name="JR Tolkien")
++        
++        # Create different author in default database
++        author_default = Author.objects.using('default').create(name="Different Author")
++        
++        # Serialize data that references the author in 'other' database
++        data = serializers.serialize(
++            "json", 
++            [author_other], 
++            use_natural_foreign_keys=True, 
++            use_natural_primary_keys=True
++        )
++        
++        # Parse the JSON to create a book entry manually
++        parsed_data = json.loads(data)
++        book_data = {
++            "model": "serializers.book",
++            "fields": {
++                "title": "The Ring",
++                "author": ["JR Tolkien"]
++            }
++        }
++        parsed_data.append(book_data)
++        
++        # Create temporary file with the modified data
++        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
++            json.dump(parsed_data, f)
++            temp_file = f.name
++        
++        try:
++            # Load into 'other' database - should work and find the correct author
++            call_command('loaddata', temp_file, database='other', verbosity=0)
++            
++            # Verify the book was created with the correct author from 'other' database
++            loaded_book = Book.objects.using('other').get(title="The Ring")
++            self.assertEqual(loaded_book.author.name, "JR Tolkien")
++            self.assertEqual(loaded_book.author.pk, author_other.pk)
++            
++            # Verify no book was created in default database
++            self.assertEqual(Book.objects.using('default').count(), 0)
++        finally:
++            os.unlink(temp_file)
++
++    def test_multiple_related_objects_natural_keys(self):
++        """Test natural keys with multiple levels of foreign key relationships."""
++        # Create test data
++        author1 = Author.objects.using('other').create(name="Author One")
++        author2 = Author.objects.using('other').create(name="Author Two")
++        book1 = Book.objects.using('other').create(title="Book One", author=author1)
++        book2 = Book.objects.using('other').create(title="Book Two", author=author2)
++        
++        # Serialize all data
++        data = serializers.serialize(
++            "json", 
++            [author1, author2, book1, book2], 
++            use_natural_foreign_keys=True, 
++            use_natural_primary_keys=True
++        )
++        
++        # Clear the database
++        Book.objects.using('other').all().delete()
++        Author.objects.using('other').all().delete()
++        
++        # Create temporary file with the data
++        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
++            f.write(data)
++            temp_file = f.name
++        
++        try:
++            # Load data back - should work after fix
++            call_command('loaddata', temp_file, database='other', verbosity=0)
++            
++            # Verify all data was loaded correctly
++            self.assertEqual(Author.objects.using('other').count(), 2)
++            self.assertEqual(Book.objects.using('other').count(), 2)
++            
++            loaded_book1 = Book.objects.using('other').get(title="Book One")
++            loaded_book2 = Book.objects.using('other').get(title="Book Two")
++            
++            self.assertEqual(loaded_book1.author.name, "Author One")
++            self.assertEqual(loaded_book2.author.name, "Author Two")
++        finally:
++            os.unlink(temp_file)
++
++    def test_deserializer_direct_usage(self):
++        """Test the deserializer directly to isolate the bug."""
++        # Create author in 'other' database
++        author = Author.objects.using('other').create(name="Test Author")
++        
++        # Create serialized data for a book
++        data = [
++            {
++                "model": "serializers.author",
++                "fields": {"name": "Test Author"}
++            },
++            {
++                "model": "serializers.book", 
++                "fields": {
++                    "title": "Test Book",
++                    "author": ["Test Author"]
++                }
++            }
++        ]
++        
++        # Test deserializing to 'other' database
++        objects = list(serializers.deserialize("python", data, using='other'))
++        
++        # Should not raise an exception after fix
++        self.assertEqual(len(objects), 2)
++        
++        # Save the objects
++        for obj in objects:
++            obj.save()
++        
++        # Verify they were saved to the correct database
++        self.assertEqual(Author.objects.using('other').count(), 1)  # Original + deserialized
++        self.assertEqual(Book.objects.using('other').count(), 1)
++        
++        loaded_book = Book.objects.using('other').get(title="Test Book")
++        self.assertEqual(loaded_book.author.name, "Test Author")

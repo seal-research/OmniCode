@@ -1,0 +1,190 @@
+--- a/tests/forms_tests/test_boundfield.py
++++ b/tests/forms_tests/test_boundfield.py
+-# Empty if creating new file
++import pytest
++from django import forms
++from django.forms.boundfield import BoundWidget
++from django.forms.widgets import CheckboxSelectMultiple, RadioSelect
++from django.test import SimpleTestCase
++
++
++class BoundWidgetIdForLabelTest(SimpleTestCase):
++    """Test BoundWidget.id_for_label respects id set by ChoiceWidget.options"""
++
++    def test_bound_widget_id_for_label_uses_attrs_id(self):
++        """
++        Test that BoundWidget.id_for_label returns the id from self.data['attrs']['id']
++        when it exists, instead of generating its own id format.
++        """
++        # Create a form with CheckboxSelectMultiple widget
++        class TestForm(forms.Form):
++            choices = forms.MultipleChoiceField(
++                choices=[('option1', 'Option 1'), ('option2', 'Option 2')],
++                widget=CheckboxSelectMultiple()
++            )
++
++        form = TestForm()
++        bound_field = form['choices']
++        
++        # Get the first subwidget
++        subwidgets = bound_field.subwidgets
++        first_subwidget = subwidgets[0]
++        
++        # The subwidget should use the id from attrs, not generate its own
++        expected_id = first_subwidget.data['attrs']['id']
++        actual_id = first_subwidget.id_for_label
++        
++        self.assertEqual(actual_id, expected_id)
++        # Verify it's not using the old format
++        old_format_id = 'id_%s_%s' % (first_subwidget.data['name'], first_subwidget.data['index'])
++        self.assertNotEqual(actual_id, old_format_id)
++
++    def test_bound_widget_id_for_label_with_custom_auto_id(self):
++        """
++        Test that BoundWidget.id_for_label respects custom auto_id format
++        when rendering CheckboxSelectMultiple subwidgets.
++        """
++        # Create a form with custom auto_id format
++        class TestForm(forms.Form):
++            choices = forms.MultipleChoiceField(
++                choices=[('option1', 'Option 1'), ('option2', 'Option 2')],
++                widget=CheckboxSelectMultiple()
++            )
++
++        form = TestForm(auto_id='custom_%s')
++        bound_field = form['choices']
++        
++        # Get subwidgets
++        subwidgets = bound_field.subwidgets
++        first_subwidget = subwidgets[0]
++        
++        # The id_for_label should use the properly formatted id from attrs
++        actual_id = first_subwidget.id_for_label
++        expected_id = first_subwidget.data['attrs']['id']
++        
++        self.assertEqual(actual_id, expected_id)
++        # Verify the custom auto_id format is respected in the attrs id
++        self.assertTrue(actual_id.startswith('custom_'))
++
++    def test_bound_widget_id_for_label_with_radioselect(self):
++        """
++        Test that BoundWidget.id_for_label works correctly with RadioSelect widget.
++        """
++        class TestForm(forms.Form):
++            choice = forms.ChoiceField(
++                choices=[('option1', 'Option 1'), ('option2', 'Option 2')],
++                widget=RadioSelect()
++            )
++
++        form = TestForm(auto_id='radio_%s')
++        bound_field = form['choice']
++        
++        # Get subwidgets
++        subwidgets = bound_field.subwidgets
++        first_subwidget = subwidgets[0]
++        
++        # The id_for_label should use the id from attrs
++        actual_id = first_subwidget.id_for_label
++        expected_id = first_subwidget.data['attrs']['id']
++        
++        self.assertEqual(actual_id, expected_id)
++        self.assertTrue(actual_id.startswith('radio_'))
++
++    def test_bound_widget_id_for_label_fallback_when_no_attrs_id(self):
++        """
++        Test that BoundWidget.id_for_label falls back to old behavior
++        when self.data['attrs']['id'] is not available.
++        """
++        # Create a mock BoundWidget with data that doesn't have attrs.id
++        mock_data = {
++            'name': 'test_field',
++            'index': '0',
++            'attrs': {}  # No 'id' key
++        }
++        
++        bound_widget = BoundWidget(None, mock_data, None)
++        
++        # Should fall back to old format when no id in attrs
++        expected_id = 'id_%s_%s' % (mock_data['name'], mock_data['index'])
++        actual_id = bound_widget.id_for_label
++        
++        self.assertEqual(actual_id, expected_id)
++
++    def test_bound_widget_id_for_label_with_explicit_widget_id(self):
++        """
++        Test that BoundWidget.id_for_label respects explicitly set widget id.
++        """
++        class TestForm(forms.Form):
++            choices = forms.MultipleChoiceField(
++                choices=[('option1', 'Option 1'), ('option2', 'Option 2')],
++                widget=CheckboxSelectMultiple(attrs={'id': 'explicit_id'})
++            )
++
++        form = TestForm()
++        bound_field = form['choices']
++        
++        # Get subwidgets
++        subwidgets = bound_field.subwidgets
++        first_subwidget = subwidgets[0]
++        
++        # The id_for_label should use the id from attrs (which includes the explicit id)
++        actual_id = first_subwidget.id_for_label
++        expected_id = first_subwidget.data['attrs']['id']
++        
++        self.assertEqual(actual_id, expected_id)
++        # Should contain the explicit id as base
++        self.assertTrue('explicit_id' in actual_id)
++
++    def test_bound_widget_reproduces_bug_before_fix(self):
++        """
++        Test that demonstrates the bug: BoundWidget.id_for_label ignores
++        the id set by ChoiceWidget.options and generates its own.
++        
++        This test should fail before the fix is applied.
++        """
++        class TestForm(forms.Form):
++            choices = forms.MultipleChoiceField(
++                choices=[('option1', 'Option 1')],
++                widget=CheckboxSelectMultiple()
++            )
++
++        form = TestForm(auto_id='custom_format_%s')
++        bound_field = form['choices']
++        subwidget = bound_field.subwidgets[0]
++        
++        # Before fix: id_for_label generates its own id instead of using attrs['id']
++        attrs_id = subwidget.data['attrs']['id']
++        id_for_label_result = subwidget.id_for_label
++        
++        # This assertion should fail before the fix - they should be equal but aren't
++        # After fix, this should pass
++        self.assertEqual(id_for_label_result, attrs_id,
++                        "BoundWidget.id_for_label should use the id from attrs, not generate its own")
++        
++        # Verify that the attrs id respects the custom auto_id format
++        self.assertTrue(attrs_id.startswith('custom_format_'),
++                       "The attrs id should respect the custom auto_id format")
++
++    def test_bound_widget_multiple_subwidgets_have_unique_ids(self):
++        """
++        Test that multiple subwidgets have unique ids when using attrs['id'].
++        """
++        class TestForm(forms.Form):
++            choices = forms.MultipleChoiceField(
++                choices=[('option1', 'Option 1'), ('option2', 'Option 2'), ('option3', 'Option 3')],
++                widget=CheckboxSelectMultiple()
++            )
++
++        form = TestForm()
++        bound_field = form['choices']
++        subwidgets = bound_field.subwidgets
++        
++        # Collect all ids
++        ids = [widget.id_for_label for widget in subwidgets]
++        
++        # All ids should be unique
++        self.assertEqual(len(ids), len(set(ids)), "All subwidget ids should be unique")
++        
++        # Each id should match its corresponding attrs id
++        for widget in subwidgets:
++            self.assertEqual(widget.id_for_label, widget.data['attrs']['id'])

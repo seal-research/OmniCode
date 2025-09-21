@@ -1,0 +1,201 @@
+--- a/sympy/utilities/tests/test_iterables.py
++++ b/sympy/utilities/tests/test_iterables.py
+-def test_partitions():
+-    ans = [
+-        [{4: 1}],
+-        [{1: 1, 3: 1}, {2: 2}],
+-        [{1: 2, 2: 1}, {1: 1, 3: 1}, {2: 2}],
+-        [{1: 3, 1: 1}, {1: 1, 2: 1, 1: 1}, {1: 2, 2: 1}, {1: 1, 3: 1}, {2: 2}, {4: 1}]
+-    ]
+-    for i in range(4, 5):
+-        ans[i - 4] = [p.copy() for p in partitions(i)]
+-        assert len(ans[i - 4]) == nT(i)
+-    assert [p.copy() for p in partitions(6, k=2)] == [
+-        {2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]
+-    assert [p.copy() for p in partitions(6, k=3)] == [
+-        {3: 2}, {1: 1, 2: 1, 3: 1}, {1: 3, 3: 1}, {2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]
+-
+-    assert [(M, p.copy()) for M, p in partitions(6, k=2, size=True)] == [
+-        (3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]
+-    assert [(M, p.copy()) for M, p in partitions(6, k=3, size=True)] == [
+-        (2, {3: 2}), (3, {1: 1, 2: 1, 3: 1}), (4, {1: 3, 3: 1}), (3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]
++def test_partitions():
++    ans = [
++        [{4: 1}],
++        [{1: 1, 3: 1}, {2: 2}],
++        [{1: 2, 2: 1}, {1: 1, 3: 1}, {2: 2}],
++        [{1: 3, 1: 1}, {1: 1, 2: 1, 1: 1}, {1: 2, 2: 1}, {1: 1, 3: 1}, {2: 2}, {4: 1}]
++    ]
++    for i in range(4, 5):
++        ans[i - 4] = [p.copy() for p in partitions(i)]
++        assert len(ans[i - 4]) == nT(i)
++    assert [p.copy() for p in partitions(6, k=2)] == [
++        {2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]
++    assert [p.copy() for p in partitions(6, k=3)] == [
++        {3: 2}, {1: 1, 2: 1, 3: 1}, {1: 3, 3: 1}, {2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]
++
++    assert [(M, p.copy()) for M, p in partitions(6, k=2, size=True)] == [
++        (3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]
++    assert [(M, p.copy()) for M, p in partitions(6, k=3, size=True)] == [
++        (2, {3: 2}), (3, {1: 1, 2: 1, 3: 1}), (4, {1: 3, 3: 1}), (3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]
++
++
++def test_partitions_dictionary_reuse_bug():
++    """Test that partitions() returns independent dictionary objects.
++    
++    This test reproduces the bug where partitions() reuses the same dictionary
++    object, causing list(partitions()) to return incorrect results.
++    """
++    # Test the bug case: list(partitions()) should work correctly
++    # Before the fix, this would return all dictionaries with the same (final) content
++    result = list(partitions(4))
++    expected = [{4: 1}, {1: 1, 3: 1}, {2: 2}, {1: 2, 2: 1}, {1: 4}]
++    assert result == expected
++    
++    # Verify that each dictionary is independent
++    for i, partition in enumerate(result):
++        for j, other_partition in enumerate(result):
++            if i != j:
++                # Each partition should be a different object
++                assert partition is not other_partition
++                # Modifying one should not affect others
++                original_partition = partition.copy()
++                partition[999] = 1  # Add a dummy key
++                assert other_partition == [p for k, p in enumerate(expected) if k == j][0]
++                # Restore original state
++                del partition[999]
++                assert partition == original_partition
++
++
++def test_partitions_with_parameters_no_copy_needed():
++    """Test that partitions() with various parameters returns independent dictionaries."""
++    # Test with k parameter
++    result_k = list(partitions(6, k=2))
++    expected_k = [{2: 3}, {1: 2, 2: 2}, {1: 4, 2: 1}, {1: 6}]
++    assert result_k == expected_k
++    
++    # Verify independence
++    for i, partition in enumerate(result_k):
++        for j, other_partition in enumerate(result_k):
++            if i != j:
++                assert partition is not other_partition
++    
++    # Test with m parameter
++    result_m = list(partitions(6, m=2))
++    expected_m = [{6: 1}, {1: 1, 5: 1}, {2: 1, 4: 1}, {3: 2}]
++    assert result_m == expected_m
++    
++    # Verify independence
++    for i, partition in enumerate(result_m):
++        for j, other_partition in enumerate(result_m):
++            if i != j:
++                assert partition is not other_partition
++
++
++def test_partitions_size_parameter_no_copy_needed():
++    """Test that partitions() with size=True returns independent dictionaries."""
++    result = list(partitions(6, k=2, size=True))
++    expected = [(3, {2: 3}), (4, {1: 2, 2: 2}), (5, {1: 4, 2: 1}), (6, {1: 6})]
++    assert result == expected
++    
++    # Verify that the dictionaries in tuples are independent
++    partitions_only = [p for _, p in result]
++    for i, partition in enumerate(partitions_only):
++        for j, other_partition in enumerate(partitions_only):
++            if i != j:
++                assert partition is not other_partition
++
++
++def test_partitions_edge_cases_no_copy_needed():
++    """Test edge cases to ensure dictionary independence is maintained."""
++    # Test n=1
++    result_1 = list(partitions(1))
++    expected_1 = [{1: 1}]
++    assert result_1 == expected_1
++    
++    # Test n=2
++    result_2 = list(partitions(2))
++    expected_2 = [{2: 1}, {1: 2}]
++    assert result_2 == expected_2
++    
++    # Verify independence for n=2
++    assert result_2[0] is not result_2[1]
++    
++    # Test n=3
++    result_3 = list(partitions(3))
++    expected_3 = [{3: 1}, {1: 1, 2: 1}, {1: 3}]
++    assert result_3 == expected_3
++    
++    # Verify independence for n=3
++    for i, partition in enumerate(result_3):
++        for j, other_partition in enumerate(result_3):
++            if i != j:
++                assert partition is not other_partition
++
++
++def test_partitions_mutation_independence():
++    """Test that modifying one partition doesn't affect others."""
++    partitions_list = list(partitions(5))
++    
++    # Store original values
++    original_partitions = [p.copy() for p in partitions_list]
++    
++    # Modify the first partition
++    if partitions_list:
++        first_partition = partitions_list[0]
++        first_partition[999] = 999  # Add a dummy key-value pair
++        
++        # Check that other partitions are unaffected
++        for i, partition in enumerate(partitions_list[1:], 1):
++            assert partition == original_partitions[i]
++            assert 999 not in partition
++        
++        # Restore first partition
++        del first_partition[999]
++        assert first_partition == original_partitions[0]
++
++
++def test_partitions_generator_behavior():
++    """Test that the generator yields independent objects each time."""
++    gen = partitions(4)
++    
++    # Collect first few partitions
++    first = next(gen)
++    second = next(gen)
++    third = next(gen)
++    
++    # They should be different objects
++    assert first is not second
++    assert second is not third
++    assert first is not third
++    
++    # They should have different content
++    assert first != second
++    assert second != third
++    
++    # Modifying one shouldn't affect others
++    original_first = first.copy()
++    first[999] = 1
++    assert second != first
++    assert third != first
++    
++    # Restore and verify
++    del first[999]
++    assert first == original_first
++
++
++def test_partitions_backward_compatibility():
++    """Test that the fix doesn't break existing code patterns."""
++    # The old pattern with .copy() should still work
++    old_style_result = [p.copy() for p in partitions(4)]
++    new_style_result = list(partitions(4))
++    
++    # Results should be identical
++    assert old_style_result == new_style_result
++    
++    # Both should have independent objects
++    for partition_list in [old_style_result, new_style_result]:
++        for i, partition in enumerate(partition_list):
++            for j, other_partition in enumerate(partition_list):
++                if i != j:
++                    assert partition is not other_partition

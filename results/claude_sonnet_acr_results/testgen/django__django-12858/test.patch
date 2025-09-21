@@ -1,0 +1,261 @@
+--- a/tests/model_validation/test_ordering_validation.py
++++ b/tests/model_validation/test_ordering_validation.py
+-# Empty if creating new file
++import pytest
++from django.core.checks import Error
++from django.db import models
++from django.test import TestCase
++
++
++class Product(models.Model):
++    name = models.CharField(max_length=100)
++    parent = models.ForeignKey('self', models.CASCADE, null=True, blank=True)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class Supply(models.Model):
++    product = models.ForeignKey(Product, on_delete=models.CASCADE)
++    quantity = models.IntegerField()
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class Stock(models.Model):
++    supply = models.ForeignKey(Supply, on_delete=models.CASCADE)
++    location = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class StockWithValidOrdering(models.Model):
++    """Model with valid ordering that includes lookups"""
++    supply = models.ForeignKey(Supply, on_delete=models.CASCADE)
++    location = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'test_app'
++        ordering = ['supply__product__parent__isnull', 'location']
++
++
++class StockWithInvalidOrdering(models.Model):
++    """Model with invalid ordering that should fail validation"""
++    supply = models.ForeignKey(Supply, on_delete=models.CASCADE)
++    location = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'test_app'
++        ordering = ['supply__product__nonexistent_field']
++
++
++class StockWithMixedOrdering(models.Model):
++    """Model with mixed valid and invalid ordering"""
++    supply = models.ForeignKey(Supply, on_delete=models.CASCADE)
++    location = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'test_app'
++        ordering = ['supply__product__parent__isnull', 'supply__product__invalid_field']
++
++
++class OrderingValidationTest(TestCase):
++    """Test suite for ordering validation with lookups"""
++    
++    def test_ordering_with_isnull_lookup_should_pass_validation(self):
++        """Test that ordering with __isnull lookup passes validation"""
++        # This should not raise any validation errors
++        errors = StockWithValidOrdering.check()
++        
++        # Filter for only models.E015 errors related to ordering
++        ordering_errors = [
++            error for error in errors 
++            if error.id == 'models.E015' and 'ordering' in error.msg
++        ]
++        
++        self.assertEqual(len(ordering_errors), 0, 
++                        "Ordering with __isnull lookup should not produce validation errors")
++    
++    def test_ordering_with_invalid_field_should_fail_validation(self):
++        """Test that ordering with truly invalid fields still fails validation"""
++        errors = StockWithInvalidOrdering.check()
++        
++        # Should have at least one models.E015 error for the invalid field
++        ordering_errors = [
++            error for error in errors 
++            if error.id == 'models.E015' and 'nonexistent_field' in error.msg
++        ]
++        
++        self.assertGreater(len(ordering_errors), 0,
++                          "Ordering with invalid field should produce validation errors")
++    
++    def test_ordering_with_mixed_valid_invalid_fields(self):
++        """Test that validation correctly identifies only the invalid parts"""
++        errors = StockWithMixedOrdering.check()
++        
++        # Should have error for invalid_field but not for parent__isnull
++        ordering_errors = [
++            error for error in errors 
++            if error.id == 'models.E015' and 'ordering' in error.msg
++        ]
++        
++        # Should have exactly one error for the invalid field
++        invalid_field_errors = [
++            error for error in ordering_errors
++            if 'invalid_field' in error.msg
++        ]
++        
++        # Should not have errors for the valid isnull lookup
++        isnull_errors = [
++            error for error in ordering_errors
++            if 'isnull' in error.msg
++        ]
++        
++        self.assertGreater(len(invalid_field_errors), 0,
++                          "Should have error for invalid field")
++        self.assertEqual(len(isnull_errors), 0,
++                        "Should not have error for valid __isnull lookup")
++    
++    def test_ordering_with_other_valid_lookups(self):
++        """Test that other valid lookups also pass validation"""
++        
++        class StockWithOtherLookups(models.Model):
++            supply = models.ForeignKey(Supply, on_delete=models.CASCADE)
++            location = models.CharField(max_length=100)
++            created_at = models.DateTimeField(auto_now_add=True)
++            
++            class Meta:
++                app_label = 'test_app'
++                ordering = [
++                    'supply__product__name__icontains',
++                    'supply__product__parent__isnull',
++                    'created_at__year'
++                ]
++        
++        errors = StockWithOtherLookups.check()
++        
++        # Filter for only models.E015 errors related to ordering
++        ordering_errors = [
++            error for error in errors 
++            if error.id == 'models.E015' and 'ordering' in error.msg
++        ]
++        
++        self.assertEqual(len(ordering_errors), 0,
++                        "Ordering with valid lookups should not produce validation errors")
++    
++    def test_ordering_with_transforms_still_works(self):
++        """Test that transforms in ordering still work correctly"""
++        
++        class StockWithTransforms(models.Model):
++            supply = models.ForeignKey(Supply, on_delete=models.CASCADE)
++            location = models.CharField(max_length=100)
++            created_at = models.DateTimeField(auto_now_add=True)
++            
++            class Meta:
++                app_label = 'test_app'
++                ordering = [
++                    'created_at__year',  # This is a transform
++                    'supply__product__name__upper'  # This is also a transform
++                ]
++        
++        errors = StockWithTransforms.check()
++        
++        # Filter for only models.E015 errors related to ordering
++        ordering_errors = [
++            error for error in errors 
++            if error.id == 'models.E015' and 'ordering' in error.msg
++        ]
++        
++        self.assertEqual(len(ordering_errors), 0,
++                        "Ordering with transforms should not produce validation errors")
++    
++    def test_ordering_validation_preserves_existing_functionality(self):
++        """Test that the fix doesn't break existing validation for regular fields"""
++        
++        class StockWithRegularFields(models.Model):
++            supply = models.ForeignKey(Supply, on_delete=models.CASCADE)
++            location = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++                ordering = [
++                    'supply__product__name',  # Valid field path
++                    'location',  # Valid direct field
++                    'supply__quantity'  # Valid related field
++                ]
++        
++        errors = StockWithRegularFields.check()
++        
++        # Filter for only models.E015 errors related to ordering
++        ordering_errors = [
++            error for error in errors 
++            if error.id == 'models.E015' and 'ordering' in error.msg
++        ]
++        
++        self.assertEqual(len(ordering_errors), 0,
++                        "Ordering with regular valid fields should not produce validation errors")
++    
++    def test_ordering_with_pk_alias_still_works(self):
++        """Test that pk alias in ordering still works"""
++        
++        class StockWithPkOrdering(models.Model):
++            supply = models.ForeignKey(Supply, on_delete=models.CASCADE)
++            location = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++                ordering = ['pk', 'supply__pk']
++        
++        errors = StockWithPkOrdering.check()
++        
++        # Filter for only models.E015 errors related to ordering
++        ordering_errors = [
++            error for error in errors 
++            if error.id == 'models.E015' and 'ordering' in error.msg
++        ]
++        
++        self.assertEqual(len(ordering_errors), 0,
++                        "Ordering with pk alias should not produce validation errors")
++
++
++class OrderingFunctionalTest(TestCase):
++    """Test that the ordering actually works in practice"""
++    
++    @classmethod
++    def setUpTestData(cls):
++        """Set up test data"""
++        # Create products with and without parents
++        cls.parent_product = Product.objects.create(name="Parent Product")
++        cls.child_product = Product.objects.create(name="Child Product", parent=cls.parent_product)
++        cls.orphan_product = Product.objects.create(name="Orphan Product", parent=None)
++        
++        # Create supplies
++        cls.supply1 = Supply.objects.create(product=cls.parent_product, quantity=10)
++        cls.supply2 = Supply.objects.create(product=cls.child_product, quantity=20)
++        cls.supply3 = Supply.objects.create(product=cls.orphan_product, quantity=30)
++        
++        # Create stocks
++        cls.stock1 = Stock.objects.create(supply=cls.supply1, location="A")
++        cls.stock2 = Stock.objects.create(supply=cls.supply2, location="B")
++        cls.stock3 = Stock.objects.create(supply=cls.supply3, location="C")
++    
++    def test_ordering_by_isnull_lookup_works_functionally(self):
++        """Test that ordering by __isnull actually works in queries"""
++        # Test ascending order (nulls first)
++        stocks_asc = list(Stock.objects.order_by('supply__product__parent__isnull').values_list('pk', flat=True))
++        
++        # Test descending order (nulls last)
++        stocks_desc = list(Stock.objects.order_by('-supply__product__parent__isnull').values_list('pk', flat=True))
++        
++        # Both queries should execute without errors
++        self.assertIsInstance(stocks_asc, list)
++        self.assertIsInstance(stocks_desc, list)
++        self.assertGreater(len(stocks_asc), 0)
++        self.assertGreater(len(stocks_desc), 0)
++        
++        # The orders should be different (unless all values are the same)
++        # This verifies that the ordering is actually being applied
++        if len(set(stocks_asc)) > 1:  # Only test if there are different values
++            self.assertNotEqual(stocks_asc, stocks_desc)

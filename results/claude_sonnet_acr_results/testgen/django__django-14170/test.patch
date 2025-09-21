@@ -1,0 +1,249 @@
+--- a/tests/db_functions/datetime/test_extract.py
++++ b/tests/db_functions/datetime/test_extract.py
+-# Empty if creating new file
++import pytest
++from datetime import date, datetime
++from django.db import models
++from django.db.models import Q
++from django.db.models.functions import ExtractIsoYear, ExtractYear
++from django.test import TestCase, override_settings
++from django.utils import timezone
++
++from ..models import DTModel
++
++
++class ExtractIsoYearTests(TestCase):
++    @classmethod
++    def setUpTestData(cls):
++        # Create test data with dates that have different ISO years vs calendar years
++        # ISO year 2019 includes some dates from calendar year 2020
++        # ISO year 2020 includes some dates from calendar year 2019
++        cls.dates = [
++            # Calendar year 2019, ISO year 2019
++            date(2019, 6, 15),
++            date(2019, 12, 29),  # Sunday - still ISO year 2019
++            
++            # Calendar year 2019, but ISO year 2020 (week starts on Monday)
++            date(2019, 12, 30),  # Monday - ISO year 2020
++            date(2019, 12, 31),  # Tuesday - ISO year 2020
++            
++            # Calendar year 2020, ISO year 2020
++            date(2020, 1, 1),    # Wednesday - ISO year 2020
++            date(2020, 1, 5),    # Sunday - ISO year 2020
++            date(2020, 6, 15),
++            date(2020, 12, 27),  # Sunday - still ISO year 2020
++            
++            # Calendar year 2020, but ISO year 2021
++            date(2020, 12, 28),  # Monday - ISO year 2021
++            date(2020, 12, 31),  # Thursday - ISO year 2021
++            
++            # Calendar year 2021, ISO year 2021
++            date(2021, 1, 1),    # Friday - ISO year 2021
++            date(2021, 1, 3),    # Sunday - ISO year 2021
++            date(2021, 6, 15),
++        ]
++        
++        for i, test_date in enumerate(cls.dates):
++            DTModel.objects.create(
++                name=f'test_{i}',
++                start_date=test_date,
++                start_datetime=datetime.combine(test_date, datetime.min.time().replace(tzinfo=timezone.utc))
++            )
++
++    def test_extract_iso_year_annotation_works_correctly(self):
++        """Test that ExtractIsoYear works correctly when used as an annotation."""
++        # This should work correctly (as mentioned in the issue)
++        qs = DTModel.objects.annotate(extracted=ExtractIsoYear('start_date')).only('id')
++        
++        # Verify the SQL uses EXTRACT operation
++        sql_str = str(qs.query)
++        self.assertIn('EXTRACT', sql_str.upper())
++        self.assertIn('ISOYEAR', sql_str.upper())
++        self.assertNotIn('BETWEEN', sql_str.upper())
++        
++        # Verify the results are correct
++        results = list(qs.values('name', 'extracted'))
++        
++        # Check specific cases where ISO year differs from calendar year
++        iso_2020_results = [r for r in results if r['extracted'] == 2020]
++        iso_2020_names = {r['name'] for r in iso_2020_results}
++        
++        # These should be in ISO year 2020
++        expected_iso_2020 = {'test_2', 'test_3', 'test_4', 'test_5', 'test_6', 'test_7'}
++        self.assertEqual(iso_2020_names, expected_iso_2020)
++
++    def test_iso_year_lookup_filter_fails_before_fix(self):
++        """Test that demonstrates the bug: __iso_year lookup uses incorrect BETWEEN optimization."""
++        # This test should fail before the fix is applied
++        qs = DTModel.objects.filter(start_date__iso_year=2020).only('id')
++        
++        # The bug: this incorrectly uses BETWEEN instead of EXTRACT
++        sql_str = str(qs.query)
++        
++        # Before fix: this will incorrectly show BETWEEN
++        # After fix: this should show EXTRACT
++        if 'BETWEEN' in sql_str.upper():
++            # This indicates the bug is present
++            pytest.fail("Bug present: __iso_year lookup incorrectly uses BETWEEN optimization")
++        
++        # Verify correct results
++        results = list(qs.values('name'))
++        result_names = {r['name'] for r in results}
++        
++        # Should include dates from both 2019 and 2020 calendar years
++        # that belong to ISO year 2020
++        expected_names = {'test_2', 'test_3', 'test_4', 'test_5', 'test_6', 'test_7'}
++        self.assertEqual(result_names, expected_names)
++
++    def test_iso_year_lookup_vs_calendar_year_lookup_difference(self):
++        """Test that ISO year and calendar year lookups return different results."""
++        # Get records for calendar year 2020
++        calendar_2020 = set(DTModel.objects.filter(start_date__year=2020).values_list('name', flat=True))
++        
++        # Get records for ISO year 2020
++        iso_2020 = set(DTModel.objects.filter(start_date__iso_year=2020).values_list('name', flat=True))
++        
++        # These should be different due to the boundary differences
++        self.assertNotEqual(calendar_2020, iso_2020)
++        
++        # Calendar year 2020 should include test_4 through test_9
++        expected_calendar_2020 = {'test_4', 'test_5', 'test_6', 'test_7', 'test_8', 'test_9'}
++        self.assertEqual(calendar_2020, expected_calendar_2020)
++        
++        # ISO year 2020 should include test_2, test_3 (from 2019) and test_4 through test_7 (from 2020)
++        expected_iso_2020 = {'test_2', 'test_3', 'test_4', 'test_5', 'test_6', 'test_7'}
++        self.assertEqual(iso_2020, expected_iso_2020)
++
++    def test_explicit_annotation_filter_uses_extract_not_between(self):
++        """Test that filtering on an explicit ExtractIsoYear annotation uses EXTRACT, not BETWEEN."""
++        # This demonstrates another aspect of the bug mentioned in the issue
++        qs = DTModel.objects.annotate(extracted=ExtractIsoYear('start_date')).only('id')
++        filtered_qs = qs.filter(extracted=2020)
++        
++        sql_str = str(filtered_qs.query)
++        
++        # Should use EXTRACT, not BETWEEN
++        self.assertIn('EXTRACT', sql_str.upper())
++        self.assertIn('ISOYEAR', sql_str.upper())
++        
++        # The bug would cause this to use BETWEEN even with explicit annotation
++        if 'BETWEEN' in sql_str.upper() and 'EXTRACT' in sql_str.upper():
++            # Check if BETWEEN is used for the filter condition (the bug)
++            # vs just being present in the annotation part
++            lines = sql_str.upper().split('\n')
++            where_clause = next((line for line in lines if 'WHERE' in line), '')
++            if 'BETWEEN' in where_clause:
++                pytest.fail("Bug present: explicit annotation filter incorrectly uses BETWEEN")
++
++    def test_iso_year_lookup_with_datetime_field(self):
++        """Test that __iso_year lookup works correctly with DateTimeField."""
++        qs = DTModel.objects.filter(start_datetime__iso_year=2020).only('id')
++        
++        sql_str = str(qs.query)
++        
++        # Should use EXTRACT, not BETWEEN
++        if 'BETWEEN' in sql_str.upper():
++            pytest.fail("Bug present: __iso_year lookup on DateTimeField incorrectly uses BETWEEN")
++        
++        results = list(qs.values('name'))
++        result_names = {r['name'] for r in results}
++        
++        # Should match the date field results
++        expected_names = {'test_2', 'test_3', 'test_4', 'test_5', 'test_6', 'test_7'}
++        self.assertEqual(result_names, expected_names)
++
++    def test_iso_year_lookup_comparison_operators(self):
++        """Test that ISO year lookup works with comparison operators (gt, gte, lt, lte)."""
++        # Test greater than
++        qs_gt = DTModel.objects.filter(start_date__iso_year__gt=2019)
++        sql_gt = str(qs_gt.query)
++        
++        if 'BETWEEN' in sql_gt.upper():
++            pytest.fail("Bug present: __iso_year__gt lookup incorrectly uses BETWEEN")
++        
++        # Test greater than or equal
++        qs_gte = DTModel.objects.filter(start_date__iso_year__gte=2020)
++        sql_gte = str(qs_gte.query)
++        
++        if 'BETWEEN' in sql_gte.upper():
++            pytest.fail("Bug present: __iso_year__gte lookup incorrectly uses BETWEEN")
++        
++        # Test less than
++        qs_lt = DTModel.objects.filter(start_date__iso_year__lt=2021)
++        sql_lt = str(qs_lt.query)
++        
++        if 'BETWEEN' in sql_lt.upper():
++            pytest.fail("Bug present: __iso_year__lt lookup incorrectly uses BETWEEN")
++        
++        # Test less than or equal
++        qs_lte = DTModel.objects.filter(start_date__iso_year__lte=2020)
++        sql_lte = str(qs_lte.query)
++        
++        if 'BETWEEN' in sql_lte.upper():
++            pytest.fail("Bug present: __iso_year__lte lookup incorrectly uses BETWEEN")
++
++    def test_regular_year_lookup_still_uses_between_optimization(self):
++        """Test that regular __year lookup still uses BETWEEN optimization after fix."""
++        qs = DTModel.objects.filter(start_date__year=2020).only('id')
++        
++        sql_str = str(qs.query)
++        
++        # Regular year lookup should still use BETWEEN optimization
++        self.assertIn('BETWEEN', sql_str.upper())
++        self.assertNotIn('EXTRACT', sql_str.upper())
++
++    def test_iso_year_edge_cases(self):
++        """Test ISO year lookup with edge cases around year boundaries."""
++        # Test the specific dates mentioned in the issue that cause problems
++        
++        # December 30, 2019 is Monday of ISO week 1 of 2020
++        dec_30_2019 = DTModel.objects.filter(start_date=date(2019, 12, 30))
++        if dec_30_2019.exists():
++            iso_year_result = DTModel.objects.filter(
++                start_date=date(2019, 12, 30),
++                start_date__iso_year=2020
++            ).exists()
++            self.assertTrue(iso_year_result, "December 30, 2019 should be in ISO year 2020")
++            
++            calendar_year_result = DTModel.objects.filter(
++                start_date=date(2019, 12, 30),
++                start_date__year=2020
++            ).exists()
++            self.assertFalse(calendar_year_result, "December 30, 2019 should not be in calendar year 2020")
++
++    def test_complex_query_with_iso_year_and_other_conditions(self):
++        """Test that ISO year lookup works correctly in complex queries."""
++        # Combine ISO year lookup with other conditions
++        qs = DTModel.objects.filter(
++            Q(start_date__iso_year=2020) & Q(name__startswith='test_')
++        ).only('id')
++        
++        sql_str = str(qs.query)
++        
++        # Should not use BETWEEN for the ISO year part
++        if 'BETWEEN' in sql_str.upper():
++            # Check if BETWEEN is used in the ISO year condition
++            pytest.fail("Bug present: complex query with __iso_year incorrectly uses BETWEEN")
++        
++        results = list(qs.values('name'))
++        result_names = {r['name'] for r in results}
++        
++        expected_names = {'test_2', 'test_3', 'test_4', 'test_5', 'test_6', 'test_7'}
++        self.assertEqual(result_names, expected_names)
+
+--- a/tests/db_functions/models.py
++++ b/tests/db_functions/models.py
+-# Empty if creating new file
++from django.db import models
++
++
++class DTModel(models.Model):
++    name = models.CharField(max_length=100)
++    start_date = models.DateField(null=True, blank=True)
++    start_datetime = models.DateTimeField(null=True, blank=True)
++    end_date = models.DateField(null=True, blank=True)
++    end_datetime = models.DateTimeField(null=True, blank=True)
++    duration = models.DurationField(null=True, blank=True)
++
++    class Meta:
++        app_label = 'db_functions'

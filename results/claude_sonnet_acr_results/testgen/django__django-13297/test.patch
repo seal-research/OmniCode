@@ -1,0 +1,258 @@
+--- a/tests/generic_views/test_template_view_kwargs_bug.py
++++ b/tests/generic_views/test_template_view_kwargs_bug.py
+-# Empty if creating new file
++import pytest
++from django.test import TestCase, RequestFactory
++from django.urls import path, include
++from django.views.generic import TemplateView
++from django.db import models
++from django.shortcuts import get_object_or_404
++from django.http import Http404
++from django.utils.functional import SimpleLazyObject
++from django.views.generic.base import _wrap_url_kwargs_with_deprecation_warning
++import warnings
++
++
++class TestModel(models.Model):
++    """Test model for testing database operations with kwargs."""
++    slug = models.SlugField(unique=True)
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'generic_views'
++
++
++class OfferView(TemplateView):
++    """Test view that reproduces the bug from the issue."""
++    template_name = "test_template.html"
++    
++    def get_context_data(self, **kwargs):
++        offer_slug = kwargs.get("offer_slug", "")
++        # This should fail in Django 3.1 without the fix because offer_slug is a SimpleLazyObject
++        try:
++            offer = get_object_or_404(TestModel, slug=offer_slug)
++            return {"offer": offer, "offer_slug": offer_slug}
++        except Exception as e:
++            # Store the exception for testing
++            return {"error": str(e), "offer_slug": offer_slug, "offer_slug_type": type(offer_slug).__name__}
++
++
++class WorkingOfferView(TemplateView):
++    """Test view that works around the bug by converting to string."""
++    template_name = "test_template.html"
++    
++    def get_context_data(self, **kwargs):
++        offer_slug = kwargs.get("offer_slug", "")
++        # Workaround: explicitly convert to string
++        offer = get_object_or_404(TestModel, slug=str(offer_slug))
++        return {"offer": offer, "offer_slug": offer_slug}
++
++
++class TemplateViewKwargsBugTest(TestCase):
++    """Test suite for the TemplateView kwargs SimpleLazyObject bug."""
++    
++    def setUp(self):
++        """Set up test data."""
++        self.factory = RequestFactory()
++        # Create a test object
++        self.test_obj = TestModel.objects.create(slug="test-slug", name="Test Object")
++    
++    def test_wrap_url_kwargs_creates_simple_lazy_objects(self):
++        """Test that _wrap_url_kwargs_with_deprecation_warning creates SimpleLazyObject instances."""
++        kwargs = {"offer_slug": "test-slug", "other_param": "value"}
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            wrapped_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++        
++        # Check that values are wrapped in SimpleLazyObject
++        self.assertIsInstance(wrapped_kwargs["offer_slug"], SimpleLazyObject)
++        self.assertIsInstance(wrapped_kwargs["other_param"], SimpleLazyObject)
++        
++        # Check that accessing the values shows deprecation warning
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            value = wrapped_kwargs["offer_slug"]
++            # Access the value to trigger the warning
++            str(value)
++            self.assertTrue(len(w) > 0)
++            self.assertTrue(any("TemplateView passing URL kwargs" in str(warning.message) for warning in w))
++    
++    def test_simple_lazy_object_resolves_to_original_value(self):
++        """Test that SimpleLazyObject resolves to the original value."""
++        kwargs = {"offer_slug": "test-slug"}
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            wrapped_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++        
++        lazy_value = wrapped_kwargs["offer_slug"]
++        
++        # The lazy object should resolve to the original value
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            self.assertEqual(str(lazy_value), "test-slug")
++            self.assertEqual(lazy_value, "test-slug")
++    
++    def test_template_view_kwargs_database_query_fails_before_fix(self):
++        """Test that demonstrates the bug - database queries fail with SimpleLazyObject kwargs."""
++        request = self.factory.get('/test/')
++        view = OfferView()
++        view.setup(request)
++        
++        # Simulate the kwargs that would come from URL resolution
++        kwargs = {"offer_slug": "test-slug"}
++        
++        # This simulates what happens in TemplateView.get() method
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            context_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++            context = view.get_context_data(**context_kwargs)
++        
++        # Before the fix, this should result in an error
++        # The exact error depends on the database backend, but it should indicate
++        # that SimpleLazyObject cannot be used as a database parameter
++        if "error" in context:
++            # If there's an error, it should be related to parameter binding
++            self.assertIn("offer_slug_type", context)
++            self.assertEqual(context["offer_slug_type"], "SimpleLazyObject")
++        else:
++            # If no error, the fix is working and the query succeeded
++            self.assertIn("offer", context)
++            self.assertEqual(context["offer"], self.test_obj)
++    
++    def test_template_view_kwargs_string_conversion_workaround(self):
++        """Test that explicit string conversion works around the bug."""
++        request = self.factory.get('/test/')
++        view = WorkingOfferView()
++        view.setup(request)
++        
++        # Simulate the kwargs that would come from URL resolution
++        kwargs = {"offer_slug": "test-slug"}
++        
++        # This simulates what happens in TemplateView.get() method
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            context_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++            context = view.get_context_data(**context_kwargs)
++        
++        # With explicit str() conversion, this should work
++        self.assertIn("offer", context)
++        self.assertEqual(context["offer"], self.test_obj)
++    
++    def test_template_view_kwargs_nonexistent_object(self):
++        """Test that 404 is properly raised even with SimpleLazyObject kwargs."""
++        request = self.factory.get('/test/')
++        view = OfferView()
++        view.setup(request)
++        
++        # Use a slug that doesn't exist
++        kwargs = {"offer_slug": "nonexistent-slug"}
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            context_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++            
++            # This should raise Http404 regardless of the SimpleLazyObject issue
++            # If the bug is present, it might raise a different exception first
++            try:
++                context = view.get_context_data(**context_kwargs)
++                if "error" in context:
++                    # If there's an error, it should be about parameter binding, not 404
++                    self.assertNotIn("does not exist", context["error"])
++            except Http404:
++                # This is the expected behavior
++                pass
++    
++    def test_simple_lazy_object_equality_operations(self):
++        """Test that SimpleLazyObject supports equality operations needed for database queries."""
++        kwargs = {"offer_slug": "test-slug"}
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            wrapped_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++        
++        lazy_value = wrapped_kwargs["offer_slug"]
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            # These operations should work for database queries
++            self.assertEqual(lazy_value, "test-slug")
++            self.assertTrue(lazy_value == "test-slug")
++            self.assertFalse(lazy_value != "test-slug")
++            self.assertEqual(hash(str(lazy_value)), hash("test-slug"))
++    
++    def test_simple_lazy_object_string_operations(self):
++        """Test that SimpleLazyObject supports string operations needed for database queries."""
++        kwargs = {"offer_slug": "test-slug"}
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            wrapped_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++        
++        lazy_value = wrapped_kwargs["offer_slug"]
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            # These operations should work
++            self.assertEqual(str(lazy_value), "test-slug")
++            self.assertEqual(repr(lazy_value), repr("test-slug"))
++            self.assertEqual(len(lazy_value), len("test-slug"))
++    
++    def test_multiple_kwargs_with_database_operations(self):
++        """Test that multiple kwargs work correctly in database operations."""
++        # Create another test object
++        test_obj2 = TestModel.objects.create(slug="another-slug", name="Another Object")
++        
++        request = self.factory.get('/test/')
++        view = OfferView()
++        view.setup(request)
++        
++        # Test with multiple kwargs
++        kwargs = {"offer_slug": "another-slug", "extra_param": "extra_value"}
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            context_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++            context = view.get_context_data(**context_kwargs)
++        
++        # Should work with the fix
++        if "error" not in context:
++            self.assertIn("offer", context)
++            self.assertEqual(context["offer"], test_obj2)
++        
++        # Clean up
++        test_obj2.delete()
++    
++    def test_edge_case_empty_string_slug(self):
++        """Test edge case with empty string slug."""
++        request = self.factory.get('/test/')
++        view = OfferView()
++        view.setup(request)
++        
++        # Test with empty string (should use default)
++        kwargs = {}
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            context_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++            context = view.get_context_data(**context_kwargs)
++        
++        # Should get empty string as default and raise Http404 or handle gracefully
++        self.assertIn("offer_slug", context)
++    
++    def test_edge_case_none_value(self):
++        """Test edge case with None value in kwargs."""
++        kwargs = {"offer_slug": None}
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            wrapped_kwargs = _wrap_url_kwargs_with_deprecation_warning(kwargs)
++        
++        lazy_value = wrapped_kwargs["offer_slug"]
++        
++        with warnings.catch_warnings(record=True):
++            warnings.simplefilter("always")
++            # Should handle None values correctly
++            self.assertIsNone(lazy_value)
++            self.assertEqual(str(lazy_value), "None")

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/forms/models.py b/django/forms/models.py\nindex d157c291ef..5edbbd376f 100644\n--- a/django/forms/models.py\n+++ b/django/forms/models.py\n@@ -83,7 +83,7 @@ def model_to_dict(instance, fields=None, exclude=None):\n     for f in chain(opts.concrete_fields, opts.private_fields, opts.many_to_many):\n         if not getattr(f, 'editable', False):\n             continue\n-        if fields and f.name not in fields:\n+        if fields is not None and f.name not in fields:\n             continue\n         if exclude and f.name in exclude:\n             continue\n"
+}

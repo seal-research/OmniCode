@@ -1,0 +1,179 @@
+--- a/tests/filtered_relation/test_exclude_bug.py
++++ b/tests/filtered_relation/test_exclude_bug.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import Q, FilteredRelation
++from django.test import TestCase
++from django.core.exceptions import FieldError
++
++
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'filtered_relation'
++
++
++class Book(models.Model):
++    title = models.CharField(max_length=100)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')
++    
++    class Meta:
++        app_label = 'filtered_relation'
++
++
++class FilteredRelationExcludeTests(TestCase):
++    """Test cases for using exclude() with annotated FilteredRelation."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        cls.author1 = Author.objects.create(name='Alice')
++        cls.author2 = Author.objects.create(name='Bob')
++        cls.author3 = Author.objects.create(name='Charlie')
++        
++        cls.book1 = Book.objects.create(title='Poem by Alice', author=cls.author1)
++        cls.book2 = Book.objects.create(title='Story by Alice', author=cls.author1)
++        cls.book3 = Book.objects.create(title='Novel by Bob', author=cls.author2)
++        # author3 has no books
++    
++    def test_exclude_with_annotated_filtered_relation_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: using exclude() on annotated FilteredRelation
++        raises FieldError before the fix is applied.
++        
++        This test should fail before the fix and pass after the fix.
++        """
++        with self.assertRaises(FieldError) as cm:
++            list(Author.objects.annotate(
++                book_alice=FilteredRelation('books', condition=Q(books__title__iexact='poem by alice')),
++            ).exclude(book_alice__isnull=False))
++        
++        self.assertIn("Cannot resolve keyword 'book_alice' into field", str(cm.exception))
++    
++    def test_exclude_with_annotated_filtered_relation_works_after_fix(self):
++        """
++        Test that exclude() works correctly with annotated FilteredRelation after fix.
++        
++        This test should pass after the fix is applied.
++        """
++        # This should return authors who don't have a book matching the condition
++        # i.e., authors who don't have a book titled 'Poem by Alice'
++        result = Author.objects.annotate(
++            book_alice=FilteredRelation('books', condition=Q(books__title__iexact='poem by alice')),
++        ).exclude(book_alice__isnull=False)
++        
++        # Should return author2 (Bob) and author3 (Charlie) but not author1 (Alice)
++        expected_authors = [self.author2, self.author3]
++        self.assertCountEqual(result, expected_authors)
++    
++    def test_exclude_with_annotated_filtered_relation_complex_condition(self):
++        """
++        Test exclude() with more complex FilteredRelation conditions.
++        """
++        # Test with a more complex condition
++        result = Author.objects.annotate(
++            alice_books=FilteredRelation('books', condition=Q(books__title__icontains='alice')),
++        ).exclude(alice_books__isnull=False)
++        
++        # Should return authors who don't have books containing 'alice' in title
++        # Only Bob and Charlie should be returned
++        expected_authors = [self.author2, self.author3]
++        self.assertCountEqual(result, expected_authors)
++    
++    def test_exclude_with_multiple_annotated_filtered_relations(self):
++        """
++        Test exclude() with multiple annotated FilteredRelations.
++        """
++        result = Author.objects.annotate(
++            poem_books=FilteredRelation('books', condition=Q(books__title__icontains='poem')),
++            story_books=FilteredRelation('books', condition=Q(books__title__icontains='story')),
++        ).exclude(poem_books__isnull=False, story_books__isnull=False)
++        
++        # Should return authors who don't have both poem and story books
++        # Alice has both, so Bob and Charlie should be returned
++        expected_authors = [self.author2, self.author3]
++        self.assertCountEqual(result, expected_authors)
++    
++    def test_exclude_with_annotated_filtered_relation_and_regular_filter(self):
++        """
++        Test exclude() with annotated FilteredRelation combined with regular filters.
++        """
++        result = Author.objects.annotate(
++            alice_books=FilteredRelation('books', condition=Q(books__title__icontains='alice')),
++        ).filter(name__startswith='A').exclude(alice_books__isnull=False)
++        
++        # Should return authors whose name starts with 'A' but don't have books with 'alice'
++        # Alice has books with 'alice', so no results expected
++        self.assertEqual(list(result), [])
++    
++    def test_filter_vs_exclude_consistency(self):
++        """
++        Test that filter() and exclude() with annotated FilteredRelation are consistent.
++        """
++        # Get authors who have books with 'alice' using filter
++        filter_result = Author.objects.annotate(
++            alice_books=FilteredRelation('books', condition=Q(books__title__icontains='alice')),
++        ).filter(alice_books__isnull=False)
++        
++        # Get authors who don't have books with 'alice' using exclude
++        exclude_result = Author.objects.annotate(
++            alice_books=FilteredRelation('books', condition=Q(books__title__icontains='alice')),
++        ).exclude(alice_books__isnull=False)
++        
++        # The union of both results should equal all authors
++        all_authors = set(Author.objects.all())
++        combined_results = set(filter_result) | set(exclude_result)
++        self.assertEqual(all_authors, combined_results)
++        
++        # The intersection should be empty
++        intersection = set(filter_result) & set(exclude_result)
++        self.assertEqual(intersection, set())
++    
++    def test_exclude_with_annotated_filtered_relation_lookup_chains(self):
++        """
++        Test exclude() with annotated FilteredRelation using lookup chains.
++        """
++        result = Author.objects.annotate(
++            alice_books=FilteredRelation('books', condition=Q(books__title__icontains='alice')),
++        ).exclude(alice_books__title__icontains='poem')
++        
++        # Should return authors who don't have books containing 'alice' that also contain 'poem'
++        # Alice has such a book, so Bob and Charlie should be returned
++        expected_authors = [self.author2, self.author3]
++        self.assertCountEqual(result, expected_authors)
++    
++    def test_exclude_with_annotated_filtered_relation_negated_q(self):
++        """
++        Test exclude() with annotated FilteredRelation using negated Q objects.
++        """
++        # This is equivalent to using exclude() but tests the ~Q syntax
++        result = Author.objects.annotate(
++            alice_books=FilteredRelation('books', condition=Q(books__title__icontains='alice')),
++        ).filter(~Q(alice_books__isnull=False))
++        
++        # Should return authors who don't have books with 'alice'
++        expected_authors = [self.author2, self.author3]
++        self.assertCountEqual(result, expected_authors)
++    
++    def test_exclude_with_annotated_filtered_relation_edge_cases(self):
++        """
++        Test exclude() with annotated FilteredRelation edge cases.
++        """
++        # Test with condition that matches no books
++        result = Author.objects.annotate(
++            nonexistent_books=FilteredRelation('books', condition=Q(books__title='Nonexistent Book')),
++        ).exclude(nonexistent_books__isnull=False)
++        
++        # Should return all authors since no one has the nonexistent book
++        expected_authors = [self.author1, self.author2, self.author3]
++        self.assertCountEqual(result, expected_authors)
++        
++        # Test with condition that matches all books
++        result = Author.objects.annotate(
++            all_books=FilteredRelation('books', condition=Q(books__title__isnull=False)),
++        ).exclude(all_books__isnull=False)
++        
++        # Should return only authors with no books (author3)
++        expected_authors = [self.author3]
++        self.assertCountEqual(result, expected_authors)

@@ -1,0 +1,149 @@
+--- a/sympy/polys/tests/test_rings.py
++++ b/sympy/polys/tests/test_rings.py
+-# This file already exists, we need to add tests to it
++import pytest
++from sympy import ring, ZZ, symbols
++from sympy.polys.rings import PolyElement
++
++
++def test_polyelement_as_expr_with_symbols():
++    """Test that PolyElement.as_expr() correctly accepts and uses provided symbols."""
++    # Create a polynomial ring with symbols x, y, z
++    R, x, y, z = ring("x,y,z", ZZ)
++    f = 3*x**2*y - x*y*z + 7*z**3 + 1
++    
++    # Create different symbols to use in as_expr
++    U, V, W = symbols("u,v,w")
++    
++    # Test that as_expr uses the provided symbols instead of ignoring them
++    expr_with_new_symbols = f.as_expr(U, V, W)
++    
++    # The expression should use U, V, W instead of x, y, z
++    expected = 3*U**2*V - U*V*W + 7*W**3 + 1
++    assert expr_with_new_symbols == expected
++    
++    # Verify that the symbols in the expression are indeed U, V, W
++    expr_symbols = expr_with_new_symbols.free_symbols
++    assert U in expr_symbols
++    assert V in expr_symbols  
++    assert W in expr_symbols
++    assert x not in expr_symbols
++    assert y not in expr_symbols
++    assert z not in expr_symbols
++
++
++def test_polyelement_as_expr_without_symbols():
++    """Test that PolyElement.as_expr() uses ring symbols when no symbols provided."""
++    R, x, y, z = ring("x,y,z", ZZ)
++    f = 3*x**2*y - x*y*z + 7*z**3 + 1
++    
++    # Test default behavior (no symbols provided)
++    expr_default = f.as_expr()
++    expected_default = 3*x**2*y - x*y*z + 7*z**3 + 1
++    assert expr_default == expected_default
++    
++    # Verify that the symbols in the expression are the ring symbols
++    expr_symbols = expr_default.free_symbols
++    assert x in expr_symbols
++    assert y in expr_symbols
++    assert z in expr_symbols
++
++
++def test_polyelement_as_expr_wrong_number_of_symbols():
++    """Test that PolyElement.as_expr() raises error for wrong number of symbols."""
++    R, x, y, z = ring("x,y,z", ZZ)
++    f = 3*x**2*y - x*y*z + 7*z**3 + 1
++    
++    # Test with too few symbols
++    U, V = symbols("u,v")
++    with pytest.raises(ValueError, match="not enough symbols, expected 3 got 2"):
++        f.as_expr(U, V)
++    
++    # Test with too many symbols  
++    U, V, W, X = symbols("u,v,w,x")
++    with pytest.raises(ValueError, match="not enough symbols, expected 3 got 4"):
++        f.as_expr(U, V, W, X)
++
++
++def test_polyelement_as_expr_single_variable():
++    """Test as_expr with single variable polynomial."""
++    R, x = ring("x", ZZ)
++    f = x**3 + 2*x + 1
++    
++    # Test with provided symbol
++    t = symbols("t")
++    expr_with_t = f.as_expr(t)
++    expected = t**3 + 2*t + 1
++    assert expr_with_t == expected
++    
++    # Test without provided symbol
++    expr_default = f.as_expr()
++    expected_default = x**3 + 2*x + 1
++    assert expr_default == expected_default
++
++
++def test_polyelement_as_expr_constant_polynomial():
++    """Test as_expr with constant polynomial."""
++    R, x, y = ring("x,y", ZZ)
++    f = R(5)  # constant polynomial
++    
++    # Test with provided symbols
++    u, v = symbols("u,v")
++    expr_with_symbols = f.as_expr(u, v)
++    assert expr_with_symbols == 5
++    
++    # Test without provided symbols
++    expr_default = f.as_expr()
++    assert expr_default == 5
++
++
++def test_polyelement_as_expr_zero_polynomial():
++    """Test as_expr with zero polynomial."""
++    R, x, y = ring("x,y", ZZ)
++    f = R.zero
++    
++    # Test with provided symbols
++    u, v = symbols("u,v")
++    expr_with_symbols = f.as_expr(u, v)
++    assert expr_with_symbols == 0
++    
++    # Test without provided symbols
++    expr_default = f.as_expr()
++    assert expr_default == 0
++
++
++def test_polyelement_as_expr_preserves_coefficients():
++    """Test that as_expr preserves coefficients correctly."""
++    R, x, y = ring("x,y", ZZ)
++    f = -5*x**2*y + 3*x - 7*y + 2
++    
++    # Test with different symbols
++    a, b = symbols("a,b")
++    expr_with_ab = f.as_expr(a, b)
++    expected = -5*a**2*b + 3*a - 7*b + 2
++    assert expr_with_ab == expected
++    
++    # Verify coefficients are preserved
++    assert expr_with_ab.coeff(a**2*b) == -5
++    assert expr_with_ab.coeff(a, 1) == 3
++    assert expr_with_ab.coeff(b, 1) == -7
++    assert expr_with_ab.as_coefficients_dict()[1] == 2
++
++
++def test_polyelement_as_expr_complex_polynomial():
++    """Test as_expr with more complex polynomial structure."""
++    R, x, y, z = ring("x,y,z", ZZ)
++    f = x**3*y**2*z + 2*x**2*y*z**2 - x*y**3 + 5*z**4 - 3
++    
++    # Test with provided symbols
++    p, q, r = symbols("p,q,r")
++    expr_with_pqr = f.as_expr(p, q, r)
++    expected = p**3*q**2*r + 2*p**2*q*r**2 - p*q**3 + 5*r**4 - 3
++    assert expr_with_pqr == expected
++    
++    # Verify structure is preserved
++    assert expr_with_pqr.coeff(p**3*q**2*r) == 1
++    assert expr_with_pqr.coeff(p**2*q*r**2) == 2
++    assert expr_with_pqr.coeff(p*q**3) == -1
++    assert expr_with_pqr.coeff(r**4) == 5
++    assert expr_with_pqr.as_coefficients_dict()[1] == -3

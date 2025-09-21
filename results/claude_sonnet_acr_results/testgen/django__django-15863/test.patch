@@ -1,0 +1,184 @@
+--- a/tests/template_tests/filter_tests/test_floatformat.py
++++ b/tests/template_tests/filter_tests/test_floatformat.py
+-# Empty if creating new file
++import pytest
++from decimal import Decimal
++from django.template import Context, Template
++from django.template.defaultfilters import floatformat
++from django.test import SimpleTestCase
++
++
++class FloatformatDecimalTests(SimpleTestCase):
++    """Test floatformat filter with Decimal inputs to ensure precision is preserved."""
++
++    def test_floatformat_decimal_high_precision_reproduces_bug(self):
++        """
++        Test that demonstrates the bug where floatformat drops precision 
++        with Decimal numbers. This test should fail before the fix.
++        """
++        # This is the exact example from the issue
++        decimal_value = Decimal('42.12345678901234567890')
++        result = floatformat(decimal_value, 20)
++        
++        # Before fix: this will be '42.12345678901234400000' (precision lost)
++        # After fix: this should be '42.12345678901234567890' (precision preserved)
++        expected = '42.12345678901234567890'
++        self.assertEqual(result, expected, 
++                        "floatformat should preserve full Decimal precision")
++
++    def test_floatformat_decimal_template_filter_reproduces_bug(self):
++        """
++        Test the bug using template syntax as shown in the issue.
++        This test should fail before the fix.
++        """
++        template = Template('{{ value|floatformat:20 }}')
++        context = Context({'value': Decimal('42.12345678901234567890')})
++        result = template.render(context)
++        
++        # Before fix: this will be '42.12345678901234400000' (precision lost)
++        # After fix: this should be '42.12345678901234567890' (precision preserved)
++        expected = '42.12345678901234567890'
++        self.assertEqual(result, expected,
++                        "Template floatformat should preserve full Decimal precision")
++
++    def test_floatformat_decimal_various_precisions(self):
++        """Test floatformat with Decimal inputs at various precision levels."""
++        decimal_value = Decimal('123.456789012345678901234567890')
++        
++        # Test different precision arguments
++        test_cases = [
++            (5, '123.45679'),
++            (10, '123.4567890123'),
++            (15, '123.456789012345679'),
++            (25, '123.4567890123456789012345679'),
++        ]
++        
++        for precision, expected in test_cases:
++            with self.subTest(precision=precision):
++                result = floatformat(decimal_value, precision)
++                self.assertEqual(result, expected,
++                               f"Decimal precision {precision} should be preserved")
++
++    def test_floatformat_decimal_negative_precision(self):
++        """Test floatformat with Decimal inputs using negative precision."""
++        # Negative precision means "only show decimals if needed"
++        test_cases = [
++            (Decimal('123.000'), -3, '123'),
++            (Decimal('123.100'), -3, '123.1'),
++            (Decimal('123.456'), -3, '123.456'),
++            (Decimal('123.456789'), -3, '123.457'),  # Rounded to 3 places
++        ]
++        
++        for decimal_value, precision, expected in test_cases:
++            with self.subTest(value=decimal_value, precision=precision):
++                result = floatformat(decimal_value, precision)
++                self.assertEqual(result, expected)
++
++    def test_floatformat_decimal_zero_precision(self):
++        """Test floatformat with Decimal inputs using zero precision."""
++        test_cases = [
++            (Decimal('123.456'), 0, '123'),
++            (Decimal('123.789'), 0, '124'),  # Rounded
++            (Decimal('123.000'), 0, '123'),
++        ]
++        
++        for decimal_value, precision, expected in test_cases:
++            with self.subTest(value=decimal_value, precision=precision):
++                result = floatformat(decimal_value, precision)
++                self.assertEqual(result, expected)
++
++    def test_floatformat_decimal_edge_cases(self):
++        """Test floatformat with Decimal edge cases."""
++        test_cases = [
++            # Very small decimals
++            (Decimal('0.000000000000000001'), 20, '0.00000000000000000100'),
++            # Very large decimals
++            (Decimal('999999999999999999.123456789'), 10, '999999999999999999.1234567890'),
++            # Zero
++            (Decimal('0'), 5, '0.00000'),
++            (Decimal('0.0'), 5, '0.00000'),
++            # Negative decimals
++            (Decimal('-123.456789'), 6, '-123.456789'),
++        ]
++        
++        for decimal_value, precision, expected in test_cases:
++            with self.subTest(value=decimal_value, precision=precision):
++                result = floatformat(decimal_value, precision)
++                self.assertEqual(result, expected)
++
++    def test_floatformat_decimal_vs_float_precision_difference(self):
++        """
++        Test that demonstrates the precision difference between Decimal and float inputs.
++        This shows why the bug matters.
++        """
++        # Same numeric value as Decimal and float
++        decimal_value = Decimal('0.1234567890123456789')
++        float_value = 0.1234567890123456789  # This will lose precision due to float limitations
++        
++        decimal_result = floatformat(decimal_value, 20)
++        float_result = floatformat(float_value, 20)
++        
++        # Decimal should preserve more precision than float
++        # The exact values depend on the fix, but they should be different
++        self.assertNotEqual(decimal_result, float_result,
++                           "Decimal should preserve more precision than float")
++
++    def test_floatformat_backward_compatibility_non_decimal(self):
++        """Test that the fix doesn't break existing functionality for non-Decimal inputs."""
++        # Test with various non-Decimal types to ensure backward compatibility
++        test_cases = [
++            # Integers
++            (42, 2, '42.00'),
++            (0, 3, '0.000'),
++            
++            # Floats
++            (42.123, 2, '42.12'),
++            (42.789, 2, '42.79'),
++            
++            # String representations
++            ('42.123', 2, '42.12'),
++            ('0.456', 3, '0.456'),
++            
++            # Edge cases
++            (float('inf'), 2, 'inf'),
++            (float('-inf'), 2, '-inf'),
++        ]
++        
++        for value, precision, expected in test_cases:
++            with self.subTest(value=value, precision=precision, type=type(value).__name__):
++                result = floatformat(value, precision)
++                self.assertEqual(result, expected)
++
++    def test_floatformat_decimal_with_grouping_and_localization(self):
++        """Test that Decimal precision is preserved with grouping and localization options."""
++        decimal_value = Decimal('1234567.89012345678901234567890')
++        
++        # Test with grouping suffix 'g'
++        result_g = floatformat(decimal_value, '10g')
++        # Should preserve precision and add grouping
++        self.assertIn('1,234,567.8901234568', result_g)
++        
++        # Test with unlocalized suffix 'u'  
++        result_u = floatformat(decimal_value, '10u')
++        # Should preserve precision without localization
++        self.assertEqual(result_u, '1234567.8901234568')
++        
++        # Test with both suffixes 'gu'
++        result_gu = floatformat(decimal_value, '10gu')
++        self.assertIn('1,234,567.8901234568', result_gu)
++
++    def test_floatformat_decimal_invalid_inputs(self):
++        """Test floatformat behavior with invalid Decimal-related inputs."""
++        # Test with invalid Decimal strings - should return empty string
++        result = floatformat('not_a_number', 2)
++        self.assertEqual(result, '')
++        
++        # Test with None
++        result = floatformat(None, 2)
++        self.assertEqual(result, '')
++        
++        # Test with invalid precision argument
++        decimal_value = Decimal('123.456')
++        result = floatformat(decimal_value, 'invalid')
++        # Should return the repr of the input when precision is invalid
++        self.assertIn('123.456', result)

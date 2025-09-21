@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/servers/basehttp.py b/django/core/servers/basehttp.py\nindex 14dab517c9..6e5614f232 100644\n--- a/django/core/servers/basehttp.py\n+++ b/django/core/servers/basehttp.py\n@@ -115,6 +115,11 @@ class ServerHandler(simple_server.ServerHandler):\n \n     def close(self):\n         self.get_stdin()._read_limited()\n+        # Close obsolete database connections that may have been opened\n+        # during request handling so worker threads don't keep connections\n+        # (and related locks) alive after the request finishes.\n+        from django.db import close_old_connections\n+        close_old_connections()\n         super().close()\n \n \n"
+}

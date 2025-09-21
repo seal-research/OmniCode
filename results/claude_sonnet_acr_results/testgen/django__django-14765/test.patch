@@ -1,0 +1,123 @@
+--- a/tests/migrations/test_state.py
++++ b/tests/migrations/test_state.py
+-# Empty if creating new file
++import pytest
++from django.db.migrations.state import ProjectState
++
++
++class TestProjectStateRealAppsAsSet:
++    """Test suite for ProjectState.__init__() real_apps parameter handling."""
++
++    def test_project_state_init_with_none_real_apps(self):
++        """Test that ProjectState.__init__() works correctly when real_apps is None."""
++        state = ProjectState(models=None, real_apps=None)
++        assert state.real_apps == set()
++        assert isinstance(state.real_apps, set)
++
++    def test_project_state_init_with_set_real_apps(self):
++        """Test that ProjectState.__init__() works correctly when real_apps is a set."""
++        real_apps_set = {'app1', 'app2', 'app3'}
++        state = ProjectState(models=None, real_apps=real_apps_set)
++        assert state.real_apps == real_apps_set
++        assert isinstance(state.real_apps, set)
++        # Ensure it's the same object reference (not a copy)
++        assert state.real_apps is real_apps_set
++
++    def test_project_state_init_with_empty_set_real_apps(self):
++        """Test that ProjectState.__init__() works correctly when real_apps is an empty set."""
++        real_apps_set = set()
++        state = ProjectState(models=None, real_apps=real_apps_set)
++        assert state.real_apps == set()
++        assert isinstance(state.real_apps, set)
++        assert state.real_apps is real_apps_set
++
++    def test_project_state_init_fails_with_list_real_apps(self):
++        """Test that ProjectState.__init__() fails when real_apps is a list (before fix)."""
++        # This test should fail before the fix is applied
++        real_apps_list = ['app1', 'app2', 'app3']
++        
++        # Before the fix, this would work because it converts list to set
++        # After the fix, this should raise an AssertionError
++        with pytest.raises(AssertionError):
++            ProjectState(models=None, real_apps=real_apps_list)
++
++    def test_project_state_init_fails_with_tuple_real_apps(self):
++        """Test that ProjectState.__init__() fails when real_apps is a tuple (before fix)."""
++        # This test should fail before the fix is applied
++        real_apps_tuple = ('app1', 'app2', 'app3')
++        
++        # Before the fix, this would work because it converts tuple to set
++        # After the fix, this should raise an AssertionError
++        with pytest.raises(AssertionError):
++            ProjectState(models=None, real_apps=real_apps_tuple)
++
++    def test_project_state_init_fails_with_string_real_apps(self):
++        """Test that ProjectState.__init__() fails when real_apps is a string (before fix)."""
++        # This test should fail before the fix is applied
++        real_apps_string = 'app1'
++        
++        # Before the fix, this would work because it converts string to set
++        # After the fix, this should raise an AssertionError
++        with pytest.raises(AssertionError):
++            ProjectState(models=None, real_apps=real_apps_string)
++
++    def test_project_state_clone_preserves_real_apps_set(self):
++        """Test that ProjectState.clone() preserves real_apps as a set."""
++        original_real_apps = {'app1', 'app2'}
++        original_state = ProjectState(models={}, real_apps=original_real_apps)
++        
++        cloned_state = original_state.clone()
++        
++        assert cloned_state.real_apps == original_real_apps
++        assert isinstance(cloned_state.real_apps, set)
++        # Should be the same set (not a copy in this case)
++        assert cloned_state.real_apps is original_real_apps
++
++    def test_project_state_clone_with_none_real_apps(self):
++        """Test that ProjectState.clone() works when original has None real_apps."""
++        original_state = ProjectState(models={}, real_apps=None)
++        
++        cloned_state = original_state.clone()
++        
++        assert cloned_state.real_apps == set()
++        assert isinstance(cloned_state.real_apps, set)
++
++    def test_project_state_models_parameter_still_works(self):
++        """Test that the models parameter still works correctly with the real_apps changes."""
++        models_dict = {'app1.Model1': 'model_state_1'}
++        real_apps_set = {'app1', 'app2'}
++        
++        state = ProjectState(models=models_dict, real_apps=real_apps_set)
++        
++        assert state.models == models_dict
++        assert state.real_apps == real_apps_set
++        assert isinstance(state.real_apps, set)
++
++    def test_project_state_default_parameters(self):
++        """Test that ProjectState works with default parameters."""
++        state = ProjectState()
++        
++        assert state.models == {}
++        assert state.real_apps == set()
++        assert isinstance(state.real_apps, set)
++
++    def test_project_state_backward_compatibility_behavior_before_fix(self):
++        """
++        Test that demonstrates the old behavior before the fix.
++        This test should pass before the fix and fail after the fix.
++        """
++        # Before the fix, ProjectState would accept non-set iterables and convert them
++        real_apps_list = ['app1', 'app2']
++        
++        # This should work before the fix (converts list to set)
++        # but fail after the fix (asserts it's already a set)
++        try:
++            state = ProjectState(models=None, real_apps=real_apps_list)
++            # If we get here, the old behavior is still in place
++            assert state.real_apps == {'app1', 'app2'}
++            assert isinstance(state.real_apps, set)
++            # This indicates the fix hasn't been applied yet
++            pytest.fail("Expected AssertionError but got successful conversion - fix not applied")
++        except AssertionError:
++            # This is expected after the fix is applied
++            pass

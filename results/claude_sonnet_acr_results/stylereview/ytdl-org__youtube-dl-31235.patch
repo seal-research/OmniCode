@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/youtube_dl/extractor/neteasemusic.py b/youtube_dl/extractor/neteasemusic.py\nindex 978a05841..72d125a94 100644\n--- a/youtube_dl/extractor/neteasemusic.py\n+++ b/youtube_dl/extractor/neteasemusic.py\n@@ -72,6 +72,15 @@ class NetEaseMusicBaseIE(InfoExtractor):\n         req.add_header('Referer', self._API_BASE)\n         return self._download_json(req, video_id, note)\n \n+    def _get_automatic_captions(self, video_id, webpage):\n+        return {}\n+\n+    def _get_subtitles(self, video_id, webpage):\n+        return {}\n+\n+    def _mark_watched(self, video_id):\n+        return None\n+\n \n class NetEaseMusicIE(NetEaseMusicBaseIE):\n     IE_NAME = 'netease:song'\n"
+}

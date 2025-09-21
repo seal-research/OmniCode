@@ -1,0 +1,328 @@
+--- a/tests/migrations/test_schema_editor_m2m_through.py
++++ b/tests/migrations/test_schema_editor_m2m_through.py
+-# Empty if creating new file
++import pytest
++from django.apps import apps
++from django.db import models, connection
++from django.db.backends.base.schema import BaseDatabaseSchemaEditor
++from django.db.migrations.state import ProjectState
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import isolate_apps
++
++
++class TestManyToManyThroughCrossAppBug(TransactionTestCase):
++    """
++    Test for the bug where defining a ManyToManyField with a 'through' model
++    in another app causes AttributeError during migration.
++    
++    The bug occurs when field.remote_field.through is still a string reference
++    instead of a resolved model class during schema creation.
++    """
++    
++    def setUp(self):
++        self.schema_editor = connection.schema_editor()
++    
++    def tearDown(self):
++        # Clean up any created tables
++        with connection.schema_editor() as schema_editor:
++            try:
++                # Try to drop tables if they exist
++                schema_editor.execute("DROP TABLE IF EXISTS test_fontes")
++                schema_editor.execute("DROP TABLE IF EXISTS test_variaveis") 
++                schema_editor.execute("DROP TABLE IF EXISTS test_fontes_variaveis")
++            except:
++                pass
++    
++    @isolate_apps('fonte', 'variavel', 'fonte_variavel')
++    def test_m2m_through_string_reference_bug_reproduction(self):
++        """
++        Test that reproduces the bug where accessing ._meta on a string
++        reference to through model causes AttributeError.
++        
++        This test should fail before the fix is applied.
++        """
++        # Create test models that mirror the issue description
++        class VariavelModel(models.Model):
++            nome = models.TextField(unique=True)
++            descricao = models.TextField()
++            
++            class Meta:
++                app_label = 'variavel'
++                db_table = 'test_variaveis'
++        
++        class FonteVariavelModel(models.Model):
++            variavel = models.ForeignKey('variavel.VariavelModel', on_delete=models.CASCADE)
++            fonte = models.ForeignKey('fonte.FonteModel', on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'fonte_variavel'
++                db_table = 'test_fontes_variaveis'
++        
++        class FonteModel(models.Model):
++            nome = models.TextField(unique=True)
++            descricao = models.TextField()
++            data_inicial = models.DateField()
++            data_final = models.DateField(blank=True, null=True)
++            # This is the problematic field - through model in different app
++            variaveis = models.ManyToManyField(
++                "variavel.VariavelModel", 
++                through="fonte_variavel.FonteVariavelModel"
++            )
++            
++            class Meta:
++                app_label = 'fonte'
++                db_table = 'test_fontes'
++        
++        # Simulate the migration state where through is still a string
++        # This mimics what happens during actual migrations
++        fonte_field = FonteModel._meta.get_field('variaveis')
++        
++        # Force the through to be a string reference (as it would be during migration)
++        fonte_field.remote_field.through = "fonte_variavel.FonteVariavelModel"
++        
++        # This should raise AttributeError: 'str' object has no attribute '_meta'
++        # before the fix is applied
++        with pytest.raises(AttributeError, match="'str' object has no attribute '_meta'"):
++            with connection.schema_editor() as schema_editor:
++                schema_editor.create_model(FonteModel)
++    
++    @isolate_apps('fonte', 'variavel', 'fonte_variavel')
++    def test_m2m_through_string_reference_fixed(self):
++        """
++        Test that verifies the fix works correctly.
++        
++        This test should pass after the fix is applied.
++        """
++        # Create test models
++        class VariavelModel(models.Model):
++            nome = models.TextField(unique=True)
++            descricao = models.TextField()
++            
++            class Meta:
++                app_label = 'variavel'
++                db_table = 'test_variaveis'
++        
++        class FonteVariavelModel(models.Model):
++            variavel = models.ForeignKey('variavel.VariavelModel', on_delete=models.CASCADE)
++            fonte = models.ForeignKey('fonte.FonteModel', on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'fonte_variavel'
++                db_table = 'test_fontes_variaveis'
++        
++        class FonteModel(models.Model):
++            nome = models.TextField(unique=True)
++            descricao = models.TextField()
++            data_inicial = models.DateField()
++            data_final = models.DateField(blank=True, null=True)
++            variaveis = models.ManyToManyField(
++                "variavel.VariavelModel", 
++                through="fonte_variavel.FonteVariavelModel"
++            )
++            
++            class Meta:
++                app_label = 'fonte'
++                db_table = 'test_fontes'
++        
++        # Register models in apps registry so they can be resolved
++        apps.register_model('variavel', VariavelModel)
++        apps.register_model('fonte_variavel', FonteVariavelModel)
++        apps.register_model('fonte', FonteModel)
++        
++        try:
++            fonte_field = FonteModel._meta.get_field('variaveis')
++            
++            # Force the through to be a string reference
++            fonte_field.remote_field.through = "fonte_variavel.FonteVariavelModel"
++            
++            # This should work after the fix is applied
++            with connection.schema_editor() as schema_editor:
++                # Create the referenced models first
++                schema_editor.create_model(VariavelModel)
++                schema_editor.create_model(FonteVariavelModel)
++                # This should not raise an error after the fix
++                schema_editor.create_model(FonteModel)
++                
++        finally:
++            # Clean up registered models
++            try:
++                apps.unregister_model('variavel', 'VariavelModel')
++                apps.unregister_model('fonte_variavel', 'FonteVariavelModel') 
++                apps.unregister_model('fonte', 'FonteModel')
++            except:
++                pass
++    
++    @isolate_apps('fonte', 'variavel', 'fonte_variavel')
++    def test_m2m_through_delete_model_string_reference_bug(self):
++        """
++        Test that the same bug exists in delete_model method.
++        
++        This test should fail before the fix is applied.
++        """
++        class VariavelModel(models.Model):
++            nome = models.TextField(unique=True)
++            
++            class Meta:
++                app_label = 'variavel'
++                db_table = 'test_variaveis'
++        
++        class FonteVariavelModel(models.Model):
++            variavel = models.ForeignKey('variavel.VariavelModel', on_delete=models.CASCADE)
++            fonte = models.ForeignKey('fonte.FonteModel', on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'fonte_variavel'
++                db_table = 'test_fontes_variaveis'
++        
++        class FonteModel(models.Model):
++            nome = models.TextField(unique=True)
++            variaveis = models.ManyToManyField(
++                "variavel.VariavelModel", 
++                through="fonte_variavel.FonteVariavelModel"
++            )
++            
++            class Meta:
++                app_label = 'fonte'
++                db_table = 'test_fontes'
++        
++        fonte_field = FonteModel._meta.get_field('variaveis')
++        fonte_field.remote_field.through = "fonte_variavel.FonteVariavelModel"
++        
++        # This should raise AttributeError in delete_model as well
++        with pytest.raises(AttributeError, match="'str' object has no attribute '_meta'"):
++            with connection.schema_editor() as schema_editor:
++                schema_editor.delete_model(FonteModel)
++    
++    @isolate_apps('fonte', 'variavel', 'fonte_variavel')
++    def test_m2m_through_delete_model_fixed(self):
++        """
++        Test that delete_model works correctly after the fix.
++        
++        This test should pass after the fix is applied.
++        """
++        class VariavelModel(models.Model):
++            nome = models.TextField(unique=True)
++            
++            class Meta:
++                app_label = 'variavel'
++                db_table = 'test_variaveis'
++        
++        class FonteVariavelModel(models.Model):
++            variavel = models.ForeignKey('variavel.VariavelModel', on_delete=models.CASCADE)
++            fonte = models.ForeignKey('fonte.FonteModel', on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'fonte_variavel'
++                db_table = 'test_fontes_variaveis'
++        
++        class FonteModel(models.Model):
++            nome = models.TextField(unique=True)
++            variaveis = models.ManyToManyField(
++                "variavel.VariavelModel", 
++                through="fonte_variavel.FonteVariavelModel"
++            )
++            
++            class Meta:
++                app_label = 'fonte'
++                db_table = 'test_fontes'
++        
++        # Register models
++        apps.register_model('variavel', VariavelModel)
++        apps.register_model('fonte_variavel', FonteVariavelModel)
++        apps.register_model('fonte', FonteModel)
++        
++        try:
++            fonte_field = FonteModel._meta.get_field('variaveis')
++            fonte_field.remote_field.through = "fonte_variavel.FonteVariavelModel"
++            
++            # Create tables first
++            with connection.schema_editor() as schema_editor:
++                schema_editor.create_model(VariavelModel)
++                schema_editor.create_model(FonteVariavelModel)
++                schema_editor.create_model(FonteModel)
++            
++            # This should work after the fix
++            with connection.schema_editor() as schema_editor:
++                schema_editor.delete_model(FonteModel)
++                
++        finally:
++            try:
++                apps.unregister_model('variavel', 'VariavelModel')
++                apps.unregister_model('fonte_variavel', 'FonteVariavelModel')
++                apps.unregister_model('fonte', 'FonteModel')
++            except:
++                pass
++    
++    def test_m2m_through_already_resolved_model_works(self):
++        """
++        Test that the existing functionality still works when through
++        is already a resolved model class (not a string).
++        
++        This test should pass both before and after the fix.
++        """
++        with isolate_apps('testapp'):
++            class ThroughModel(models.Model):
++                from_model = models.ForeignKey('TestModel', on_delete=models.CASCADE)
++                to_model = models.ForeignKey('RelatedModel', on_delete=models.CASCADE)
++                
++                class Meta:
++                    app_label = 'testapp'
++                    db_table = 'test_through'
++            
++            class RelatedModel(models.Model):
++                name = models.CharField(max_length=100)
++                
++                class Meta:
++                    app_label = 'testapp'
++                    db_table = 'test_related'
++            
++            class TestModel(models.Model):
++                name = models.CharField(max_length=100)
++                related = models.ManyToManyField(RelatedModel, through=ThroughModel)
++                
++                class Meta:
++                    app_label = 'testapp'
++                    db_table = 'test_model'
++            
++            # When through is already a model class, it should work fine
++            with connection.schema_editor() as schema_editor:
++                schema_editor.create_model(RelatedModel)
++                schema_editor.create_model(ThroughModel)
++                schema_editor.create_model(TestModel)
++                
++                # Clean up
++                schema_editor.delete_model(TestModel)
++                schema_editor.delete_model(ThroughModel)
++                schema_editor.delete_model(RelatedModel)
++    
++    def test_edge_case_invalid_through_string_format(self):
++        """
++        Test edge case where through string doesn't follow app_label.ModelName format.
++        
++        This should handle gracefully and not cause unexpected errors.
++        """
++        with isolate_apps('testapp'):
++            class TestModel(models.Model):
++                name = models.CharField(max_length=100)
++                
++                class Meta:
++                    app_label = 'testapp'
++                    db_table = 'test_model_edge'
++            
++            # Create a field with invalid through string format
++            field = models.ManyToManyField('self', through='invalid_format')
++            field.contribute_to_class(TestModel, 'test_field')
++            
++            # Force through to be an invalid string
++            test_field = TestModel._meta.get_field('test_field')
++            test_field.remote_field.through = "invalid_format"
++            
++            # This should handle the error gracefully
++            with connection.schema_editor() as schema_editor:
++                # Should either work or raise a more meaningful error
++                # (not AttributeError about _meta)
++                try:
++                    schema_editor.create_model(TestModel)
++                except Exception as e:
++                    # Should not be the original AttributeError about _meta
++                    assert "'str' object has no attribute '_meta'" not in str(e)

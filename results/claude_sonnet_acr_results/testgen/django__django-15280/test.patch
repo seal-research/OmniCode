@@ -1,0 +1,304 @@
+--- a/tests/prefetch_related/test_deferred_fields_bug.py
++++ b/tests/prefetch_related/test_deferred_fields_bug.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase
++from django.db.models import Prefetch
++from django.test.utils import override_settings
++
++
++class User(models.Model):
++    email = models.EmailField()
++    kind = models.CharField(
++        max_length=10, choices=[("ADMIN", "Admin"), ("REGULAR", "Regular")]
++    )
++    
++    class Meta:
++        app_label = 'prefetch_related'
++
++
++class Profile(models.Model):
++    full_name = models.CharField(max_length=255)
++    user = models.OneToOneField(User, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = 'prefetch_related'
++
++
++class Company(models.Model):
++    name = models.CharField(max_length=255)
++    
++    class Meta:
++        app_label = 'prefetch_related'
++
++
++class Employee(models.Model):
++    name = models.CharField(max_length=255)
++    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='employees')
++    
++    class Meta:
++        app_label = 'prefetch_related'
++
++
++@override_settings(USE_TZ=False)
++class DeferredFieldsPrefetchTestCase(TestCase):
++    """
++    Test case for the bug where deferred fields are incorrect when following 
++    prefetches back to the "parent" object.
++    
++    The issue occurs when using nested Prefetch objects with .only() - the inner
++    queryset correctly selects only the specified fields, but the resulting instances
++    incorrectly inherit deferred field information from the outer queryset.
++    """
++    
++    def setUp(self):
++        """Set up test data."""
++        self.user = User.objects.create(
++            email="test@example.com",
++            kind="ADMIN",
++        )
++        self.profile = Profile.objects.create(
++            user=self.user, 
++            full_name="Test Tester"
++        )
++        
++        self.company = Company.objects.create(name="Test Company")
++        self.employee = Employee.objects.create(
++            name="John Doe",
++            company=self.company
++        )
++
++    def test_onetoone_prefetch_deferred_fields_bug_reproduction(self):
++        """
++        Test that reproduces the original bug with OneToOneField.
++        
++        This test should FAIL before the fix is applied, demonstrating the bug
++        where accessing user.profile.user.kind triggers an unnecessary database query
++        even though 'kind' was explicitly selected in the inner queryset.
++        """
++        queryset = User.objects.only("email").prefetch_related(
++            Prefetch(
++                "profile",
++                queryset=Profile.objects.prefetch_related(
++                    Prefetch("user", queryset=User.objects.only("kind"))
++                ),
++            )
++        )
++        
++        # First, execute the main queryset - should be 3 queries
++        with self.assertNumQueries(3):
++            user = queryset.first()
++        
++        # Verify the deferred fields are incorrectly set
++        # This demonstrates the bug - kind should NOT be in deferred fields
++        # since it was explicitly selected in the inner queryset
++        deferred_fields = user.profile.user.get_deferred_fields()
++        self.assertIn('kind', deferred_fields, 
++                     "Bug reproduction: 'kind' should not be deferred but is marked as deferred")
++        
++        # This should NOT trigger additional queries since 'kind' was prefetched
++        # But due to the bug, it will trigger 1 additional query
++        with self.assertNumQueries(1):  # This demonstrates the bug - should be 0
++            kind_value = user.profile.user.kind
++            
++        self.assertEqual(kind_value, "ADMIN")
++
++    def test_onetoone_prefetch_deferred_fields_expected_behavior(self):
++        """
++        Test the expected behavior after the fix is applied.
++        
++        This test should PASS after the fix, showing that deferred fields
++        are correctly handled when following prefetches back to parent objects.
++        """
++        queryset = User.objects.only("email").prefetch_related(
++            Prefetch(
++                "profile",
++                queryset=Profile.objects.prefetch_related(
++                    Prefetch("user", queryset=User.objects.only("kind"))
++                ),
++            )
++        )
++        
++        # Execute the main queryset - should be 3 queries
++        with self.assertNumQueries(3):
++            user = queryset.first()
++        
++        # After the fix, accessing the prefetched field should not trigger additional queries
++        with self.assertNumQueries(0):
++            kind_value = user.profile.user.kind
++            
++        self.assertEqual(kind_value, "ADMIN")
++        
++        # Verify that the correct fields are marked as deferred
++        # The inner user should only have 'kind' loaded, so 'email' should be deferred
++        inner_user_deferred = user.profile.user.get_deferred_fields()
++        self.assertNotIn('kind', inner_user_deferred, 
++                        "'kind' should not be deferred as it was explicitly selected")
++        self.assertIn('email', inner_user_deferred,
++                     "'email' should be deferred as it was not selected in inner queryset")
++
++    def test_foreignkey_prefetch_deferred_fields_bug_reproduction(self):
++        """
++        Test that reproduces the bug with ForeignKey relationships.
++        
++        Similar to the OneToOne case, but using ForeignKey to show the bug
++        also affects this type of relationship.
++        """
++        queryset = Company.objects.only("name").prefetch_related(
++            Prefetch(
++                "employees",
++                queryset=Employee.objects.prefetch_related(
++                    Prefetch("company", queryset=Company.objects.only("name"))
++                ),
++            )
++        )
++        
++        # Execute the main queryset
++        with self.assertNumQueries(3):
++            company = queryset.first()
++        
++        # Access the prefetched field - this should not trigger additional queries
++        # but due to the bug, it will
++        with self.assertNumQueries(1):  # This demonstrates the bug - should be 0
++            employee = company.employees.all()[0]
++            company_name = employee.company.name
++            
++        self.assertEqual(company_name, "Test Company")
++
++    def test_foreignkey_prefetch_deferred_fields_expected_behavior(self):
++        """
++        Test the expected behavior for ForeignKey after the fix.
++        """
++        queryset = Company.objects.only("name").prefetch_related(
++            Prefetch(
++                "employees",
++                queryset=Employee.objects.prefetch_related(
++                    Prefetch("company", queryset=Company.objects.only("name"))
++                ),
++            )
++        )
++        
++        # Execute the main queryset
++        with self.assertNumQueries(3):
++            company = queryset.first()
++        
++        # After the fix, this should not trigger additional queries
++        with self.assertNumQueries(0):
++            employee = company.employees.all()[0]
++            company_name = employee.company.name
++            
++        self.assertEqual(company_name, "Test Company")
++
++    def test_multiple_nested_prefetch_levels(self):
++        """
++        Test more complex nested prefetch scenarios to ensure the fix works
++        for deeper nesting levels.
++        """
++        # Create additional test data for deeper nesting
++        user2 = User.objects.create(email="user2@example.com", kind="REGULAR")
++        profile2 = Profile.objects.create(user=user2, full_name="User Two")
++        
++        queryset = User.objects.only("email").prefetch_related(
++            Prefetch(
++                "profile",
++                queryset=Profile.objects.only("full_name").prefetch_related(
++                    Prefetch("user", queryset=User.objects.only("kind"))
++                ),
++            )
++        )
++        
++        # Execute the main queryset
++        with self.assertNumQueries(3):
++            users = list(queryset.all())
++        
++        # After the fix, accessing nested prefetched fields should not trigger queries
++        with self.assertNumQueries(0):
++            for user in users:
++                profile_name = user.profile.full_name
++                user_kind = user.profile.user.kind
++                
++                # Verify we can access the data
++                self.assertIsNotNone(profile_name)
++                self.assertIn(user_kind, ["ADMIN", "REGULAR"])
++
++    def test_deferred_fields_state_preservation(self):
++        """
++        Test that the deferred fields state is correctly preserved for each
++        instance based on its originating queryset.
++        """
++        queryset = User.objects.only("email").prefetch_related(
++            Prefetch(
++                "profile",
++                queryset=Profile.objects.prefetch_related(
++                    Prefetch("user", queryset=User.objects.only("kind"))
++                ),
++            )
++        )
++        
++        with self.assertNumQueries(3):
++            user = queryset.first()
++        
++        # The outer user should have 'kind' deferred but 'email' loaded
++        outer_user_deferred = user.get_deferred_fields()
++        self.assertNotIn('email', outer_user_deferred, 
++                        "Outer user should have 'email' loaded")
++        self.assertIn('kind', outer_user_deferred,
++                     "Outer user should have 'kind' deferred")
++        
++        # The inner user (accessed via profile.user) should have 'email' deferred but 'kind' loaded
++        inner_user_deferred = user.profile.user.get_deferred_fields()
++        self.assertNotIn('kind', inner_user_deferred,
++                        "Inner user should have 'kind' loaded")
++        self.assertIn('email', inner_user_deferred,
++                     "Inner user should have 'email' deferred")
++
++    def test_edge_case_empty_only_queryset(self):
++        """
++        Test edge case where the inner queryset uses only() with no fields.
++        """
++        queryset = User.objects.only("email").prefetch_related(
++            Prefetch(
++                "profile",
++                queryset=Profile.objects.prefetch_related(
++                    Prefetch("user", queryset=User.objects.only())
++                ),
++            )
++        )
++        
++        with self.assertNumQueries(3):
++            user = queryset.first()
++        
++        # When only() is called with no arguments, only the primary key should be loaded
++        inner_user_deferred = user.profile.user.get_deferred_fields()
++        self.assertIn('email', inner_user_deferred)
++        self.assertIn('kind', inner_user_deferred)
++
++    def test_multiple_fields_in_only(self):
++        """
++        Test that the fix works when multiple fields are specified in only().
++        """
++        queryset = User.objects.only("id").prefetch_related(
++            Prefetch(
++                "profile",
++                queryset=Profile.objects.prefetch_related(
++                    Prefetch("user", queryset=User.objects.only("email", "kind"))
++                ),
++            )
++        )
++        
++        with self.assertNumQueries(3):
++            user = queryset.first()
++        
++        # After the fix, accessing both prefetched fields should not trigger queries
++        with self.assertNumQueries(0):
++            email = user.profile.user.email
++            kind = user.profile.user.kind
++            
++        self.assertEqual(email, "test@example.com")
++        self.assertEqual(kind, "ADMIN")
++        
++        # Verify deferred fields state
++        inner_user_deferred = user.profile.user.get_deferred_fields()
++        self.assertNotIn('email', inner_user_deferred)
++        self.assertNotIn('kind', inner_user_deferred)

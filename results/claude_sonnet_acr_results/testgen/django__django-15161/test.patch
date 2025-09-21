@@ -1,0 +1,230 @@
+--- a/tests/migrations/test_expression_deconstruct.py
++++ b/tests/migrations/test_expression_deconstruct.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import Case, Exists, F, Func, OuterRef, Subquery, Value, When, Window
++from django.db.models.expressions import Expression
++from django.test import TestCase
++
++
++class ExpressionDeconstructTestCase(TestCase):
++    """Test that expression classes use simplified paths for deconstruct."""
++
++    def test_f_expression_deconstruct_path(self):
++        """Test that F() deconstructs to django.db.models.F (already fixed)."""
++        f_expr = F('field_name')
++        path, args, kwargs = f_expr.deconstruct()
++        self.assertEqual(path, 'django.db.models.F')
++        self.assertEqual(args, ('field_name',))
++        self.assertEqual(kwargs, {})
++
++    def test_case_expression_deconstruct_path_before_fix(self):
++        """Test that Case() currently deconstructs to full path (should fail before fix)."""
++        case_expr = Case(
++            When(condition=models.Q(status='active'), then=Value('Active')),
++            default=Value('Inactive')
++        )
++        path, args, kwargs = case_expr.deconstruct()
++        # This test should fail before the fix is applied
++        # Currently it would be 'django.db.models.expressions.Case'
++        # After fix it should be 'django.db.models.Case'
++        self.assertNotEqual(path, 'django.db.models.expressions.Case')
++        self.assertEqual(path, 'django.db.models.Case')
++
++    def test_value_expression_deconstruct_path_before_fix(self):
++        """Test that Value() currently deconstructs to full path (should fail before fix)."""
++        value_expr = Value('test_value')
++        path, args, kwargs = value_expr.deconstruct()
++        # This test should fail before the fix is applied
++        self.assertNotEqual(path, 'django.db.models.expressions.Value')
++        self.assertEqual(path, 'django.db.models.Value')
++
++    def test_when_expression_deconstruct_path_before_fix(self):
++        """Test that When() currently deconstructs to full path (should fail before fix)."""
++        when_expr = When(condition=models.Q(status='active'), then=Value('Active'))
++        path, args, kwargs = when_expr.deconstruct()
++        # This test should fail before the fix is applied
++        self.assertNotEqual(path, 'django.db.models.expressions.When')
++        self.assertEqual(path, 'django.db.models.When')
++
++    def test_subquery_expression_deconstruct_path_before_fix(self):
++        """Test that Subquery() currently deconstructs to full path (should fail before fix)."""
++        from django.db.models import QuerySet
++        # Create a mock queryset for testing
++        subquery_expr = Subquery(QuerySet().none())
++        path, args, kwargs = subquery_expr.deconstruct()
++        # This test should fail before the fix is applied
++        self.assertNotEqual(path, 'django.db.models.expressions.Subquery')
++        self.assertEqual(path, 'django.db.models.Subquery')
++
++    def test_exists_expression_deconstruct_path_before_fix(self):
++        """Test that Exists() currently deconstructs to full path (should fail before fix)."""
++        from django.db.models import QuerySet
++        exists_expr = Exists(QuerySet().none())
++        path, args, kwargs = exists_expr.deconstruct()
++        # This test should fail before the fix is applied
++        self.assertNotEqual(path, 'django.db.models.expressions.Exists')
++        self.assertEqual(path, 'django.db.models.Exists')
++
++    def test_outerref_expression_deconstruct_path_before_fix(self):
++        """Test that OuterRef() currently deconstructs to full path (should fail before fix)."""
++        outerref_expr = OuterRef('field_name')
++        path, args, kwargs = outerref_expr.deconstruct()
++        # This test should fail before the fix is applied
++        self.assertNotEqual(path, 'django.db.models.expressions.OuterRef')
++        self.assertEqual(path, 'django.db.models.OuterRef')
++
++    def test_window_expression_deconstruct_path_before_fix(self):
++        """Test that Window() currently deconstructs to full path (should fail before fix)."""
++        from django.db.models import Count
++        window_expr = Window(Count('id'))
++        path, args, kwargs = window_expr.deconstruct()
++        # This test should fail before the fix is applied
++        self.assertNotEqual(path, 'django.db.models.expressions.Window')
++        self.assertEqual(path, 'django.db.models.Window')
++
++    def test_func_expression_deconstruct_path_before_fix(self):
++        """Test that Func() currently deconstructs to full path (should fail before fix)."""
++        func_expr = Func('field_name', function='UPPER')
++        path, args, kwargs = func_expr.deconstruct()
++        # This test should fail before the fix is applied
++        self.assertNotEqual(path, 'django.db.models.expressions.Func')
++        self.assertEqual(path, 'django.db.models.Func')
++
++    def test_case_expression_deconstruct_path_after_fix(self):
++        """Test that Case() deconstructs to simplified path after fix."""
++        case_expr = Case(
++            When(condition=models.Q(status='active'), then=Value('Active')),
++            default=Value('Inactive')
++        )
++        path, args, kwargs = case_expr.deconstruct()
++        self.assertEqual(path, 'django.db.models.Case')
++
++    def test_value_expression_deconstruct_path_after_fix(self):
++        """Test that Value() deconstructs to simplified path after fix."""
++        value_expr = Value('test_value')
++        path, args, kwargs = value_expr.deconstruct()
++        self.assertEqual(path, 'django.db.models.Value')
++
++    def test_when_expression_deconstruct_path_after_fix(self):
++        """Test that When() deconstructs to simplified path after fix."""
++        when_expr = When(condition=models.Q(status='active'), then=Value('Active'))
++        path, args, kwargs = when_expr.deconstruct()
++        self.assertEqual(path, 'django.db.models.When')
++
++    def test_subquery_expression_deconstruct_path_after_fix(self):
++        """Test that Subquery() deconstructs to simplified path after fix."""
++        from django.db.models import QuerySet
++        subquery_expr = Subquery(QuerySet().none())
++        path, args, kwargs = subquery_expr.deconstruct()
++        self.assertEqual(path, 'django.db.models.Subquery')
++
++    def test_exists_expression_deconstruct_path_after_fix(self):
++        """Test that Exists() deconstructs to simplified path after fix."""
++        from django.db.models import QuerySet
++        exists_expr = Exists(QuerySet().none())
++        path, args, kwargs = exists_expr.deconstruct()
++        self.assertEqual(path, 'django.db.models.Exists')
++
++    def test_outerref_expression_deconstruct_path_after_fix(self):
++        """Test that OuterRef() deconstructs to simplified path after fix."""
++        outerref_expr = OuterRef('field_name')
++        path, args, kwargs = outerref_expr.deconstruct()
++        self.assertEqual(path, 'django.db.models.OuterRef')
++
++    def test_window_expression_deconstruct_path_after_fix(self):
++        """Test that Window() deconstructs to simplified path after fix."""
++        from django.db.models import Count
++        window_expr = Window(Count('id'))
++        path, args, kwargs = window_expr.deconstruct()
++        self.assertEqual(path, 'django.db.models.Window')
++
++    def test_func_expression_deconstruct_path_after_fix(self):
++        """Test that Func() deconstructs to simplified path after fix."""
++        func_expr = Func('field_name', function='UPPER')
++        path, args, kwargs = func_expr.deconstruct()
++        self.assertEqual(path, 'django.db.models.Func')
++
++    def test_expression_classes_available_in_models_module(self):
++        """Test that all expression classes are available from django.db.models."""
++        # Verify that all the classes we're testing can be imported from django.db.models
++        self.assertTrue(hasattr(models, 'Case'))
++        self.assertTrue(hasattr(models, 'Value'))
++        self.assertTrue(hasattr(models, 'When'))
++        self.assertTrue(hasattr(models, 'Subquery'))
++        self.assertTrue(hasattr(models, 'Exists'))
++        self.assertTrue(hasattr(models, 'OuterRef'))
++        self.assertTrue(hasattr(models, 'Window'))
++        self.assertTrue(hasattr(models, 'Func'))
++        self.assertTrue(hasattr(models, 'F'))
++
++    def test_deconstruct_preserves_functionality(self):
++        """Test that deconstruct still preserves all necessary information."""
++        # Test with a complex Case expression
++        case_expr = Case(
++            When(condition=models.Q(status='active'), then=Value('Active')),
++            When(condition=models.Q(status='inactive'), then=Value('Inactive')),
++            default=Value('Unknown'),
++            output_field=models.CharField()
++        )
++        
++        path, args, kwargs = case_expr.deconstruct()
++        
++        # Reconstruct the expression using the deconstructed data
++        reconstructed = models.Case(*args, **kwargs)
++        
++        # Verify the reconstructed expression has the same properties
++        self.assertEqual(len(case_expr.cases), len(reconstructed.cases))
++        self.assertEqual(case_expr.default.value, reconstructed.default.value)
++
++    def test_migration_generation_uses_simplified_paths(self):
++        """Test that migration generation would use the simplified paths."""
++        # This is more of an integration test to ensure the deconstruct paths
++        # would be used correctly in migration generation
++        expressions = [
++            F('field'),
++            Case(When(condition=models.Q(status='active'), then=Value('Active'))),
++            Value('test'),
++            When(condition=models.Q(status='active'), then=Value('Active')),
++            OuterRef('field'),
++        ]
++        
++        for expr in expressions:
++            path, args, kwargs = expr.deconstruct()
++            # All paths should start with 'django.db.models.' not 'django.db.models.expressions.'
++            self.assertTrue(path.startswith('django.db.models.'))
++            self.assertFalse(path.startswith('django.db.models.expressions.'))
++
++    def test_edge_cases_with_complex_expressions(self):
++        """Test deconstruct with complex nested expressions."""
++        # Test nested Case with multiple When clauses
++        complex_case = Case(
++            When(
++                condition=models.Q(status='active') & models.Q(priority='high'),
++                then=Value('High Priority Active')
++            ),
++            When(
++                condition=models.Q(status='active'),
++                then=Value('Active')
++            ),
++            default=Case(
++                When(condition=models.Q(status='pending'), then=Value('Pending')),
++                default=Value('Unknown')
++            )
++        )
++        
++        path, args, kwargs = complex_case.deconstruct()
++        self.assertEqual(path, 'django.db.models.Case')
++        
++        # Test Value with different types
++        value_expressions = [
++            Value(42),
++            Value('string'),
++            Value(True),
++            Value(None),
++        ]
++        
++        for value_expr in value_expressions:
++            path, args, kwargs = value_expr.deconstruct()
++            self.assertEqual(path, 'django.db.models.Value')

@@ -1,0 +1,243 @@
+--- a/tests/backends/postgresql/test_client.py
++++ b/tests/backends/postgresql/test_client.py
+-# Empty if creating new file
++import os
++import signal
++import subprocess
++from unittest import mock
++
++import pytest
++
++from django.db.backends.postgresql.client import DatabaseClient
++from django.test import TestCase
++
++
++class PostgreSQLClientTests(TestCase):
++    """Test PostgreSQL database client functionality."""
++
++    def test_settings_to_cmd_args_env_returns_none_when_no_env_vars_needed(self):
++        """
++        Test that settings_to_cmd_args_env returns None for env when no 
++        PostgreSQL-specific environment variables are needed.
++        
++        This is the main bug fix test - before the fix, this would return
++        an empty dict {} instead of None, preventing os.environ from being used.
++        """
++        settings_dict = {
++            'NAME': 'testdb',
++            'USER': 'testuser',
++            'HOST': 'localhost',
++            'PORT': '5432',
++        }
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, [])
++        
++        # The key assertion: env should be None when no env vars are needed
++        self.assertIsNone(env)
++        
++        # Verify args are still correct
++        expected_args = ['psql', '-U', 'testuser', '-h', 'localhost', '-p', '5432', 'testdb']
++        self.assertEqual(args, expected_args)
++
++    def test_settings_to_cmd_args_env_returns_dict_when_env_vars_needed(self):
++        """
++        Test that settings_to_cmd_args_env returns a dict for env when 
++        PostgreSQL-specific environment variables are needed.
++        """
++        settings_dict = {
++            'NAME': 'testdb',
++            'USER': 'testuser',
++            'PASSWORD': 'testpass',
++            'HOST': 'localhost',
++            'PORT': '5432',
++            'OPTIONS': {
++                'sslmode': 'require',
++                'passfile': '/path/to/passfile',
++            }
++        }
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, [])
++        
++        # Should return a dict with environment variables
++        self.assertIsInstance(env, dict)
++        self.assertEqual(env['PGPASSWORD'], 'testpass')
++        self.assertEqual(env['PGSSLMODE'], 'require')
++        self.assertEqual(env['PGPASSFILE'], '/path/to/passfile')
++
++    def test_settings_to_cmd_args_env_with_only_password(self):
++        """Test that env dict is returned when only password is provided."""
++        settings_dict = {
++            'NAME': 'testdb',
++            'PASSWORD': 'secret',
++        }
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, [])
++        
++        self.assertIsInstance(env, dict)
++        self.assertEqual(env, {'PGPASSWORD': 'secret'})
++
++    def test_settings_to_cmd_args_env_with_service_only(self):
++        """Test that env dict is returned when only service is provided."""
++        settings_dict = {
++            'OPTIONS': {
++                'service': 'myservice',
++            }
++        }
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, [])
++        
++        self.assertIsInstance(env, dict)
++        self.assertEqual(env, {'PGSERVICE': 'myservice'})
++
++    def test_settings_to_cmd_args_env_minimal_config(self):
++        """Test with minimal configuration - should return None for env."""
++        settings_dict = {}
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, [])
++        
++        # With no database name and no service, defaults to 'postgres'
++        self.assertEqual(args, ['psql', 'postgres'])
++        self.assertIsNone(env)
++
++    def test_settings_to_cmd_args_env_all_ssl_options(self):
++        """Test that all SSL-related environment variables are set correctly."""
++        settings_dict = {
++            'NAME': 'testdb',
++            'OPTIONS': {
++                'sslmode': 'require',
++                'sslrootcert': '/path/to/root.crt',
++                'sslcert': '/path/to/client.crt',
++                'sslkey': '/path/to/client.key',
++            }
++        }
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, [])
++        
++        self.assertIsInstance(env, dict)
++        expected_env = {
++            'PGSSLMODE': 'require',
++            'PGSSLROOTCERT': '/path/to/root.crt',
++            'PGSSLCERT': '/path/to/client.crt',
++            'PGSSLKEY': '/path/to/client.key',
++        }
++        self.assertEqual(env, expected_env)
++
++    @mock.patch('subprocess.run')
++    def test_runshell_uses_os_environ_when_no_custom_env(self, mock_subprocess_run):
++        """
++        Test that runshell properly uses os.environ when no custom 
++        environment variables are needed.
++        
++        This test verifies the integration between the base class runshell
++        method and the PostgreSQL client's settings_to_cmd_args_env method.
++        """
++        # Mock the connection and settings
++        mock_connection = mock.Mock()
++        mock_connection.settings_dict = {
++            'NAME': 'testdb',
++            'USER': 'testuser',
++        }
++        
++        client = DatabaseClient(mock_connection)
++        
++        # Mock os.environ to verify it's being used
++        test_environ = {'PATH': '/usr/bin', 'HOME': '/home/user'}
++        with mock.patch.dict(os.environ, test_environ, clear=True):
++            client.runshell([])
++        
++        # Verify subprocess.run was called with os.environ (None means use os.environ)
++        mock_subprocess_run.assert_called_once()
++        call_args = mock_subprocess_run.call_args
++        self.assertIsNone(call_args[1]['env'])
++
++    @mock.patch('subprocess.run')
++    def test_runshell_merges_custom_env_with_os_environ(self, mock_subprocess_run):
++        """
++        Test that runshell properly merges custom environment variables 
++        with os.environ when custom variables are needed.
++        """
++        # Mock the connection and settings with password (requires custom env)
++        mock_connection = mock.Mock()
++        mock_connection.settings_dict = {
++            'NAME': 'testdb',
++            'PASSWORD': 'secret',
++        }
++        
++        client = DatabaseClient(mock_connection)
++        
++        # Mock os.environ
++        test_environ = {'PATH': '/usr/bin', 'HOME': '/home/user'}
++        with mock.patch.dict(os.environ, test_environ, clear=True):
++            client.runshell([])
++        
++        # Verify subprocess.run was called with merged environment
++        mock_subprocess_run.assert_called_once()
++        call_args = mock_subprocess_run.call_args
++        expected_env = {
++            'PATH': '/usr/bin',
++            'HOME': '/home/user', 
++            'PGPASSWORD': 'secret'
++        }
++        self.assertEqual(call_args[1]['env'], expected_env)
++
++    @mock.patch('subprocess.run')
++    @mock.patch('signal.signal')
++    @mock.patch('signal.getsignal')
++    def test_runshell_signal_handling(self, mock_getsignal, mock_signal, mock_subprocess_run):
++        """Test that runshell properly handles SIGINT signal management."""
++        mock_connection = mock.Mock()
++        mock_connection.settings_dict = {'NAME': 'testdb'}
++        
++        # Mock the original signal handler
++        original_handler = mock.Mock()
++        mock_getsignal.return_value = original_handler
++        
++        client = DatabaseClient(mock_connection)
++        client.runshell([])
++        
++        # Verify signal handling
++        mock_getsignal.assert_called_once_with(signal.SIGINT)
++        
++        # Should set SIGINT to SIG_IGN, then restore original
++        signal_calls = mock_signal.call_args_list
++        self.assertEqual(len(signal_calls), 2)
++        self.assertEqual(signal_calls[0], mock.call(signal.SIGINT, signal.SIG_IGN))
++        self.assertEqual(signal_calls[1], mock.call(signal.SIGINT, original_handler))
++
++    def test_edge_case_empty_options_dict(self):
++        """Test behavior with empty OPTIONS dict."""
++        settings_dict = {
++            'NAME': 'testdb',
++            'OPTIONS': {},
++        }
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, [])
++        
++        self.assertEqual(args, ['psql', 'testdb'])
++        self.assertIsNone(env)
++
++    def test_edge_case_none_values_in_settings(self):
++        """Test behavior when settings contain None values."""
++        settings_dict = {
++            'NAME': 'testdb',
++            'USER': None,
++            'PASSWORD': None,
++            'HOST': None,
++            'PORT': None,
++        }
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, [])
++        
++        # None values should be ignored
++        self.assertEqual(args, ['psql', 'testdb'])
++        self.assertIsNone(env)
++
++    def test_parameters_are_appended_to_args(self):
++        """Test that additional parameters are properly appended to args."""
++        settings_dict = {'NAME': 'testdb'}
++        parameters = ['--help', '--version']
++        
++        args, env = DatabaseClient.settings_to_cmd_args_env(settings_dict, parameters)
++        
++        self.assertEqual(args, ['psql', 'testdb', '--help', '--version'])
++        self.assertIsNone(env)

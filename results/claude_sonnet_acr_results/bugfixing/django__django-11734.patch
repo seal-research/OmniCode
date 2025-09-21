@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/expressions.py b/django/db/models/expressions.py\nindex 2b59dd301a..577bc3f6ed 100644\n--- a/django/db/models/expressions.py\n+++ b/django/db/models/expressions.py\n@@ -567,6 +567,10 @@ class OuterRef(F):\n                            summarize=False, for_save=False, simple_col=False):\n         if isinstance(self.name, self.__class__):\n             return self.name\n+        # Don't resolve OuterRef if we're in a subquery context where it should\n+        # remain as OuterRef to be resolved later in the proper outer context\n+        if query is not None and hasattr(query, 'subquery') and query.subquery:\n+            return self\n         return ResolvedOuterRef(self.name)\n \n \n"
+}

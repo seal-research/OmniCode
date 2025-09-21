@@ -1,0 +1,267 @@
+--- a/tests/model_fields/test_field_equality.py
++++ b/tests/model_fields/test_field_equality.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase
++
++
++class TestAbstractModelFieldEquality(TestCase):
++    """
++    Test that fields from abstract models are not considered equal
++    across different concrete models, even when they have the same
++    creation_counter due to inheritance.
++    """
++
++    def test_abstract_model_field_equality_bug_reproduction(self):
++        """
++        Test that reproduces the bug where fields from different models
++        inherited from the same abstract model are considered equal.
++        This test should fail before the fix is applied.
++        """
++        # Define abstract model with a field
++        class AbstractModel(models.Model):
++            class Meta:
++                abstract = True
++            myfield = models.IntegerField()
++
++        # Define two concrete models inheriting from the abstract model
++        class ConcreteModelB(AbstractModel):
++            pass
++
++        class ConcreteModelC(AbstractModel):
++            pass
++
++        # Get the fields from both models
++        field_b = ConcreteModelB._meta.get_field('myfield')
++        field_c = ConcreteModelC._meta.get_field('myfield')
++
++        # These fields should NOT be equal (this is the bug)
++        # Before the fix, this assertion will fail because the fields
++        # are considered equal due to same creation_counter
++        self.assertNotEqual(field_b, field_c, 
++                           "Fields from different models should not be equal")
++
++        # Test that they have the same creation_counter (confirming the root cause)
++        self.assertEqual(field_b.creation_counter, field_c.creation_counter,
++                        "Fields should have same creation_counter due to inheritance")
++
++        # Test that they belong to different models
++        self.assertNotEqual(field_b.model, field_c.model,
++                           "Fields should belong to different models")
++
++    def test_abstract_model_field_set_deduplication_bug(self):
++        """
++        Test that fields from different models are not deduplicated
++        when placed in a set. This is the practical manifestation of the bug.
++        """
++        # Define abstract model with a field
++        class AbstractModel(models.Model):
++            class Meta:
++                abstract = True
++            myfield = models.IntegerField()
++
++        # Define two concrete models inheriting from the abstract model
++        class ConcreteModelB(AbstractModel):
++            pass
++
++        class ConcreteModelC(AbstractModel):
++            pass
++
++        # Get the fields from both models
++        field_b = ConcreteModelB._meta.get_field('myfield')
++        field_c = ConcreteModelC._meta.get_field('myfield')
++
++        # Create a set with both fields
++        field_set = {field_b, field_c}
++
++        # The set should contain 2 elements, not 1 (this is the bug)
++        # Before the fix, this assertion will fail because one field
++        # gets deduplicated away
++        self.assertEqual(len(field_set), 2,
++                        "Set should contain both fields from different models")
++
++    def test_same_model_field_equality_preserved(self):
++        """
++        Test that fields from the same model are still considered equal
++        when they should be (preserving existing functionality).
++        """
++        class TestModel(models.Model):
++            myfield = models.IntegerField()
++
++        # Get the same field twice
++        field1 = TestModel._meta.get_field('myfield')
++        field2 = TestModel._meta.get_field('myfield')
++
++        # These should be equal (same field from same model)
++        self.assertEqual(field1, field2,
++                        "Same field from same model should be equal")
++
++        # They should have the same hash
++        self.assertEqual(hash(field1), hash(field2),
++                        "Same field from same model should have same hash")
++
++    def test_field_ordering_consistency(self):
++        """
++        Test that field ordering is consistent and deterministic,
++        especially for fields with the same creation_counter.
++        """
++        # Define abstract model with a field
++        class AbstractModel(models.Model):
++            class Meta:
++                abstract = True
++            myfield = models.IntegerField()
++
++        # Define two concrete models inheriting from the abstract model
++        class ConcreteModelB(AbstractModel):
++            pass
++
++        class ConcreteModelC(AbstractModel):
++            pass
++
++        # Get the fields from both models
++        field_b = ConcreteModelB._meta.get_field('myfield')
++        field_c = ConcreteModelC._meta.get_field('myfield')
++
++        # Test that ordering is consistent
++        # The exact order doesn't matter, but it should be deterministic
++        if field_b < field_c:
++            self.assertFalse(field_c < field_b, "Ordering should be consistent")
++        else:
++            self.assertFalse(field_b < field_c, "Ordering should be consistent")
++
++        # Test that fields are not equal in ordering
++        self.assertFalse(field_b < field_c and field_c < field_b,
++                        "Fields should have deterministic ordering")
++
++    def test_field_hash_consistency_with_equality(self):
++        """
++        Test that hash consistency is maintained with equality.
++        If two fields are equal, they must have the same hash.
++        If two fields are not equal, they should preferably have different hashes.
++        """
++        # Define abstract model with a field
++        class AbstractModel(models.Model):
++            class Meta:
++                abstract = True
++            myfield = models.IntegerField()
++
++        # Define two concrete models inheriting from the abstract model
++        class ConcreteModelB(AbstractModel):
++            pass
++
++        class ConcreteModelC(AbstractModel):
++            pass
++
++        # Get the fields from both models
++        field_b = ConcreteModelB._meta.get_field('myfield')
++        field_c = ConcreteModelC._meta.get_field('myfield')
++
++        # Since fields are not equal, they should have different hashes
++        # (this is not strictly required by Python, but is good practice)
++        self.assertNotEqual(hash(field_b), hash(field_c),
++                           "Unequal fields should preferably have different hashes")
++
++    def test_multiple_fields_from_abstract_model(self):
++        """
++        Test behavior with multiple fields inherited from abstract model.
++        """
++        # Define abstract model with multiple fields
++        class AbstractModel(models.Model):
++            class Meta:
++                abstract = True
++            field1 = models.IntegerField()
++            field2 = models.CharField(max_length=100)
++
++        # Define two concrete models inheriting from the abstract model
++        class ConcreteModelB(AbstractModel):
++            pass
++
++        class ConcreteModelC(AbstractModel):
++            pass
++
++        # Get all fields from both models
++        fields_b = [ConcreteModelB._meta.get_field('field1'),
++                   ConcreteModelB._meta.get_field('field2')]
++        fields_c = [ConcreteModelC._meta.get_field('field1'),
++                   ConcreteModelC._meta.get_field('field2')]
++
++        # Create a set with all fields
++        all_fields = set(fields_b + fields_c)
++
++        # Should have 4 distinct fields
++        self.assertEqual(len(all_fields), 4,
++                        "Should have 4 distinct fields from 2 models")
++
++    def test_field_equality_with_different_creation_counters(self):
++        """
++        Test that fields with different creation_counters are not equal,
++        preserving existing behavior.
++        """
++        class TestModel(models.Model):
++            field1 = models.IntegerField()
++            field2 = models.CharField(max_length=100)
++
++        field1 = TestModel._meta.get_field('field1')
++        field2 = TestModel._meta.get_field('field2')
++
++        # These should not be equal (different fields)
++        self.assertNotEqual(field1, field2,
++                           "Different fields should not be equal")
++
++        # They should have different creation_counters
++        self.assertNotEqual(field1.creation_counter, field2.creation_counter,
++                           "Different fields should have different creation_counters")
++
++    def test_field_comparison_with_non_field_objects(self):
++        """
++        Test that field comparison with non-Field objects returns NotImplemented.
++        """
++        class TestModel(models.Model):
++            myfield = models.IntegerField()
++
++        field = TestModel._meta.get_field('myfield')
++
++        # Comparison with non-Field objects should return NotImplemented
++        # which Python will handle appropriately
++        self.assertNotEqual(field, "not a field")
++        self.assertNotEqual(field, 42)
++        self.assertNotEqual(field, None)
++
++    def test_abstract_model_inheritance_chain(self):
++        """
++        Test field equality with a more complex inheritance chain.
++        """
++        # Define abstract base model
++        class AbstractBase(models.Model):
++            class Meta:
++                abstract = True
++            base_field = models.IntegerField()
++
++        # Define another abstract model inheriting from base
++        class AbstractMiddle(AbstractBase):
++            class Meta:
++                abstract = True
++            middle_field = models.CharField(max_length=50)
++
++        # Define concrete models inheriting from middle
++        class ConcreteA(AbstractMiddle):
++            pass
++
++        class ConcreteB(AbstractMiddle):
++            pass
++
++        # Get fields from both concrete models
++        base_field_a = ConcreteA._meta.get_field('base_field')
++        base_field_b = ConcreteB._meta.get_field('base_field')
++        middle_field_a = ConcreteA._meta.get_field('middle_field')
++        middle_field_b = ConcreteB._meta.get_field('middle_field')
++
++        # Fields from different models should not be equal
++        self.assertNotEqual(base_field_a, base_field_b)
++        self.assertNotEqual(middle_field_a, middle_field_b)
++
++        # Create set to test deduplication
++        all_fields = {base_field_a, base_field_b, middle_field_a, middle_field_b}
++        self.assertEqual(len(all_fields), 4,
++                        "Should have 4 distinct fields from inheritance chain")

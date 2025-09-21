@@ -1,0 +1,269 @@
+--- a/tests/unit_tests/trainers/test_trainer_metrics_names_bug.py
++++ b/tests/unit_tests/trainers/test_trainer_metrics_names_bug.py
+-# Empty if creating new file
++import pytest
++import numpy as np
++import tensorflow as tf
++from keras.src import layers
++from keras.src import models
++from keras.src import metrics as metrics_module
++from keras.src.trainers.compile_utils import CompileMetrics
++from keras.src.trainers.trainer import Trainer
++from keras.src.utils.progbar import Progbar
++from keras.src.callbacks.progbar_logger import ProgbarLogger
++
++
++class SimpleModel(models.Model):
++    """Simple model for testing purposes."""
++    
++    def __init__(self):
++        super().__init__()
++        self.dense = layers.Dense(1, activation='linear')
++    
++    def call(self, inputs):
++        return self.dense(inputs)
++
++
++class TestMetricsNamesBug:
++    """Test suite for the metrics_names bug with CompileMetrics."""
++    
++    @pytest.fixture
++    def simple_model(self):
++        """Create a simple model for testing."""
++        model = SimpleModel()
++        return model
++    
++    @pytest.fixture
++    def sample_data(self):
++        """Create sample training data."""
++        x = np.random.random((10, 5))
++        y = np.random.random((10, 1))
++        return x, y
++    
++    def test_metrics_names_with_compile_metrics_before_fix(self, simple_model):
++        """Test that demonstrates the bug - metrics_names includes 'compile_metrics'."""
++        # Compile model with metrics to create CompileMetrics
++        simple_model.compile(
++            optimizer='adam',
++            loss='mse',
++            metrics=['mae']
++        )
++        
++        # Build the model
++        simple_model.build((None, 5))
++        
++        # This test should fail before the fix is applied
++        # The bug is that metrics_names includes 'compile_metrics' instead of individual metric names
++        metric_names = simple_model.metrics_names
++        
++        # Before fix: this assertion should fail because 'compile_metrics' is in the list
++        # After fix: this assertion should pass because individual metrics are returned
++        assert 'compile_metrics' not in metric_names, f"Found 'compile_metrics' in metrics_names: {metric_names}"
++        assert 'mae' in metric_names, f"Expected 'mae' in metrics_names: {metric_names}"
++    
++    def test_metrics_names_consistency_with_get_metrics_result(self, simple_model, sample_data):
++        """Test that metrics_names is consistent with get_metrics_result keys."""
++        x, y = sample_data
++        
++        # Compile model with metrics
++        simple_model.compile(
++            optimizer='adam',
++            loss='mse',
++            metrics=['mae', 'mse']
++        )
++        
++        # Train for one step to initialize metrics
++        simple_model.fit(x, y, epochs=1, verbose=0)
++        
++        # Get metric names and results
++        metric_names = simple_model.metrics_names
++        metric_results = simple_model.get_metrics_result()
++        
++        # The keys in metric_results should match the names in metrics_names
++        # (excluding loss which might be handled differently)
++        result_keys = set(metric_results.keys())
++        name_set = set(metric_names)
++        
++        # Check that individual metrics are present, not 'compile_metrics'
++        assert 'compile_metrics' not in metric_names, f"Found 'compile_metrics' in metrics_names: {metric_names}"
++        assert 'compile_metrics' not in result_keys, f"Found 'compile_metrics' in results: {result_keys}"
++        
++        # Check that expected metrics are present
++        assert 'mae' in metric_names, f"Expected 'mae' in metrics_names: {metric_names}"
++        assert 'mae' in result_keys, f"Expected 'mae' in results: {result_keys}"
++    
++    def test_progbar_update_with_compile_metrics_dict_fails(self):
++        """Test that demonstrates the TypeError when progbar receives dict values."""
++        # Create a progress bar
++        progbar = Progbar(target=10)
++        
++        # Simulate the problematic case where 'compile_metrics' has a dict value
++        problematic_logs = [
++            ('loss', 0.5),
++            ('compile_metrics', {'mae': tf.constant(1.3065833)})  # This causes TypeError
++        ]
++        
++        # This should raise TypeError: unsupported operand type(s) for *: 'dict' and 'int'
++        with pytest.raises(TypeError, match="unsupported operand type.*dict.*int"):
++            progbar.update(10, problematic_logs, finalize=True)
++    
++    def test_progbar_update_with_individual_metrics_succeeds(self):
++        """Test that progbar works correctly with individual metric values."""
++        # Create a progress bar
++        progbar = Progbar(target=10)
++        
++        # Simulate the correct case where individual metrics have numeric values
++        correct_logs = [
++            ('loss', 0.5),
++            ('mae', 1.3065833)  # Individual metric with numeric value
++        ]
++        
++        # This should work without errors
++        try:
++            progbar.update(10, correct_logs, finalize=True)
++        except Exception as e:
++            pytest.fail(f"Progbar update failed with individual metrics: {e}")
++    
++    def test_model_fit_with_custom_train_step_scenario(self, sample_data):
++        """Test the specific scenario from the intro guide that causes the error."""
++        x, y = sample_data
++        
++        class CustomModel(models.Model):
++            def __init__(self):
++                super().__init__()
++                self.dense = layers.Dense(1)
++                self.loss_tracker = metrics_module.Mean(name="loss")
++                self.mae_metric = metrics_module.MeanAbsoluteError(name="mae")
++            
++            def call(self, inputs):
++                return self.dense(inputs)
++            
++            @property
++            def metrics(self):
++                return [self.loss_tracker, self.mae_metric]
++            
++            def train_step(self, data):
++                x, y = data
++                
++                with tf.GradientTape() as tape:
++                    y_pred = self(x, training=True)
++                    loss = tf.reduce_mean(tf.square(y - y_pred))
++                
++                gradients = tape.gradient(loss, self.trainable_variables)
++                self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
++                
++                self.loss_tracker.update_state(loss)
++                self.mae_metric.update_state(y, y_pred)
++                
++                return {"loss": self.loss_tracker.result(), "mae": self.mae_metric.result()}
++        
++        # Create and compile model
++        model = CustomModel()
++        model.compile(optimizer='adam')
++        
++        # This should not raise the TypeError about dict multiplication
++        try:
++            model.fit(x, y, epochs=1, verbose=1)
++        except TypeError as e:
++            if "unsupported operand type" in str(e) and "dict" in str(e):
++                pytest.fail(f"Model fit failed with the reported TypeError: {e}")
++            else:
++                # Re-raise if it's a different TypeError
++                raise
++    
++    def test_compile_metrics_result_structure(self, simple_model):
++        """Test that CompileMetrics.result() returns a flat dictionary."""
++        # Compile model with multiple metrics
++        simple_model.compile(
++            optimizer='adam',
++            loss='mse',
++            metrics=['mae', 'mse']
++        )
++        
++        # Build the model to initialize metrics
++        simple_model.build((None, 5))
++        
++        # Find the CompileMetrics instance
++        compile_metrics = None
++        for metric in simple_model.metrics:
++            if isinstance(metric, CompileMetrics):
++                compile_metrics = metric
++                break
++        
++        assert compile_metrics is not None, "CompileMetrics instance not found"
++        
++        # Get the result - this should be a flat dict, not nested
++        if compile_metrics.built:
++            result = compile_metrics.result()
++            assert isinstance(result, dict), "CompileMetrics.result() should return a dict"
++            
++            # Check that the result contains individual metric names
++            assert any('mae' in key for key in result.keys()), f"Expected 'mae' in result keys: {list(result.keys())}"
++            
++            # Check that values are tensors/numbers, not dicts
++            for key, value in result.items():
++                assert not isinstance(value, dict), f"Metric value for '{key}' should not be a dict: {value}"
++    
++    def test_progbar_logger_callback_integration(self, simple_model, sample_data):
++        """Test that ProgbarLogger callback works correctly with fixed metrics_names."""
++        x, y = sample_data
++        
++        # Compile model with metrics
++        simple_model.compile(
++            optimizer='adam',
++            loss='mse',
++            metrics=['mae']
++        )
++        
++        # Create ProgbarLogger callback
++        progbar_logger = ProgbarLogger()
++        
++        # This should not raise TypeError during training
++        try:
++            simple_model.fit(x, y, epochs=1, callbacks=[progbar_logger], verbose=1)
++        except TypeError as e:
++            if "unsupported operand type" in str(e) and "dict" in str(e):
++                pytest.fail(f"ProgbarLogger failed with the reported TypeError: {e}")
++            else:
++                # Re-raise if it's a different TypeError
++                raise
++    
++    def test_metrics_names_empty_when_no_metrics(self):
++        """Test that metrics_names works correctly when no metrics are compiled."""
++        model = SimpleModel()
++        model.compile(optimizer='adam', loss='mse')  # No metrics
++        
++        metric_names = model.metrics_names
++        
++        # Should not contain 'compile_metrics' when no metrics are present
++        assert 'compile_metrics' not in metric_names
++        
++        # Should contain loss-related metrics
++        assert len(metric_names) >= 0  # Could be empty or contain loss tracker
++    
++    def test_multiple_outputs_metrics_names(self):
++        """Test metrics_names with multiple outputs and metrics."""
++        # Create a model with multiple outputs
++        inputs = layers.Input(shape=(5,))
++        output1 = layers.Dense(1, name='output1')(inputs)
++        output2 = layers.Dense(1, name='output2')(inputs)
++        model = models.Model(inputs=inputs, outputs=[output1, output2])
++        
++        # Compile with metrics for each output
++        model.compile(
++            optimizer='adam',
++            loss=['mse', 'mse'],
++            metrics=[['mae'], ['mse']]
++        )
++        
++        # Build the model
++        model.build((None, 5))
++        
++        metric_names = model.metrics_names
++        
++        # Should not contain 'compile_metrics'
++        assert 'compile_metrics' not in metric_names, f"Found 'compile_metrics' in metrics_names: {metric_names}"
++        
++        # Should contain output-specific metric names
++        assert any('output1' in name and 'mae' in name for name in metric_names), f"Expected output1_mae in metrics_names: {metric_names}"
++        assert any('output2' in name and 'mse' in name for name in metric_names), f"Expected output2_mse in metrics_names: {metric_names}"

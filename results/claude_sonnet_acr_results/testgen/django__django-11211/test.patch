@@ -1,0 +1,246 @@
+--- a/tests/contenttypes_tests/test_generic_foreign_key_uuid.py
++++ b/tests/contenttypes_tests/test_generic_foreign_key_uuid.py
+-# Empty if creating new file
++import uuid
++import pytest
++from django.contrib.contenttypes.fields import GenericForeignKey
++from django.contrib.contenttypes.models import ContentType
++from django.db import models
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('contenttypes_tests')
++class GenericForeignKeyUUIDTests(TestCase):
++    """
++    Test suite for GenericForeignKey with UUID primary keys.
++    
++    This tests the bug where prefetch_related doesn't work when using
++    GenericForeignKey for models that use UUID fields as primary keys.
++    """
++    
++    def setUp(self):
++        """Set up test models and data."""
++        # Create test models with UUID primary key
++        class UUIDModel(models.Model):
++            id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'contenttypes_tests'
++        
++        # Create model with GenericForeignKey pointing to UUID model
++        class GFKModel(models.Model):
++            content_type = models.ForeignKey(
++                ContentType,
++                on_delete=models.CASCADE,
++                db_index=True
++            )
++            object_id = models.CharField(max_length=255, db_index=True)
++            content_object = GenericForeignKey('content_type', 'object_id')
++            description = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'contenttypes_tests'
++        
++        # Also create a regular model with integer PK for comparison
++        class RegularModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'contenttypes_tests'
++        
++        self.UUIDModel = UUIDModel
++        self.GFKModel = GFKModel
++        self.RegularModel = RegularModel
++        
++        # Create the tables
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(UUIDModel)
++            schema_editor.create_model(GFKModel)
++            schema_editor.create_model(RegularModel)
++    
++    def tearDown(self):
++        """Clean up test tables."""
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(self.GFKModel)
++            schema_editor.delete_model(self.UUIDModel)
++            schema_editor.delete_model(self.RegularModel)
++    
++    def test_prefetch_related_with_uuid_pk_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: prefetch_related returns None
++        for GenericForeignKey when the target model uses UUID primary key.
++        
++        This test should fail before the fix is applied.
++        """
++        # Create UUID model instance
++        uuid_obj = self.UUIDModel.objects.create(name="Test UUID Object")
++        
++        # Create GFK model instance pointing to UUID model
++        gfk_obj = self.GFKModel.objects.create(
++            content_object=uuid_obj,
++            description="Points to UUID object"
++        )
++        
++        # Test prefetch_related - this should work but currently fails
++        queryset = self.GFKModel.objects.filter(id=gfk_obj.id).prefetch_related('content_object')
++        retrieved_obj = queryset.first()
++        
++        # This assertion will fail before the fix due to the bug
++        # The content_object will be None instead of the expected UUID object
++        self.assertIsNotNone(retrieved_obj.content_object, 
++                           "prefetch_related should retrieve the related UUID object, not None")
++        self.assertEqual(retrieved_obj.content_object.id, uuid_obj.id)
++        self.assertEqual(retrieved_obj.content_object.name, "Test UUID Object")
++    
++    def test_prefetch_related_with_regular_pk_works(self):
++        """
++        Test that prefetch_related works correctly with regular integer primary keys.
++        This serves as a control test to show the issue is specific to UUID PKs.
++        """
++        # Create regular model instance
++        regular_obj = self.RegularModel.objects.create(name="Test Regular Object")
++        
++        # Create GFK model instance pointing to regular model
++        gfk_obj = self.GFKModel.objects.create(
++            content_object=regular_obj,
++            description="Points to regular object"
++        )
++        
++        # Test prefetch_related - this should work fine
++        queryset = self.GFKModel.objects.filter(id=gfk_obj.id).prefetch_related('content_object')
++        retrieved_obj = queryset.first()
++        
++        # This should work correctly
++        self.assertIsNotNone(retrieved_obj.content_object)
++        self.assertEqual(retrieved_obj.content_object.id, regular_obj.id)
++        self.assertEqual(retrieved_obj.content_object.name, "Test Regular Object")
++    
++    def test_direct_access_uuid_gfk_works(self):
++        """
++        Test that direct access to GenericForeignKey works with UUID PKs.
++        This shows the issue is specifically with prefetch_related, not GFK itself.
++        """
++        # Create UUID model instance
++        uuid_obj = self.UUIDModel.objects.create(name="Test UUID Object")
++        
++        # Create GFK model instance pointing to UUID model
++        gfk_obj = self.GFKModel.objects.create(
++            content_object=uuid_obj,
++            description="Points to UUID object"
++        )
++        
++        # Direct access should work fine
++        retrieved_obj = self.GFKModel.objects.get(id=gfk_obj.id)
++        self.assertIsNotNone(retrieved_obj.content_object)
++        self.assertEqual(retrieved_obj.content_object.id, uuid_obj.id)
++        self.assertEqual(retrieved_obj.content_object.name, "Test UUID Object")
++    
++    def test_multiple_uuid_objects_prefetch(self):
++        """
++        Test prefetch_related with multiple UUID objects to ensure
++        the fix works correctly for bulk operations.
++        """
++        # Create multiple UUID model instances
++        uuid_obj1 = self.UUIDModel.objects.create(name="UUID Object 1")
++        uuid_obj2 = self.UUIDModel.objects.create(name="UUID Object 2")
++        uuid_obj3 = self.UUIDModel.objects.create(name="UUID Object 3")
++        
++        # Create GFK model instances pointing to UUID models
++        gfk_obj1 = self.GFKModel.objects.create(
++            content_object=uuid_obj1,
++            description="Points to UUID object 1"
++        )
++        gfk_obj2 = self.GFKModel.objects.create(
++            content_object=uuid_obj2,
++            description="Points to UUID object 2"
++        )
++        gfk_obj3 = self.GFKModel.objects.create(
++            content_object=uuid_obj3,
++            description="Points to UUID object 3"
++        )
++        
++        # Test prefetch_related with multiple objects
++        queryset = self.GFKModel.objects.all().prefetch_related('content_object')
++        retrieved_objects = list(queryset)
++        
++        # All objects should have their content_object properly loaded
++        self.assertEqual(len(retrieved_objects), 3)
++        
++        for obj in retrieved_objects:
++            self.assertIsNotNone(obj.content_object, 
++                               f"Object {obj.id} should have content_object loaded")
++            self.assertIsInstance(obj.content_object, self.UUIDModel)
++            self.assertIn(obj.content_object.name, 
++                         ["UUID Object 1", "UUID Object 2", "UUID Object 3"])
++    
++    def test_mixed_content_types_with_uuid(self):
++        """
++        Test prefetch_related when GFK points to both UUID and regular PK models.
++        """
++        # Create both types of objects
++        uuid_obj = self.UUIDModel.objects.create(name="UUID Object")
++        regular_obj = self.RegularModel.objects.create(name="Regular Object")
++        
++        # Create GFK objects pointing to both
++        gfk_uuid = self.GFKModel.objects.create(
++            content_object=uuid_obj,
++            description="Points to UUID"
++        )
++        gfk_regular = self.GFKModel.objects.create(
++            content_object=regular_obj,
++            description="Points to regular"
++        )
++        
++        # Test prefetch_related with mixed content types
++        queryset = self.GFKModel.objects.all().prefetch_related('content_object')
++        retrieved_objects = list(queryset)
++        
++        self.assertEqual(len(retrieved_objects), 2)
++        
++        # Both should have their content_object properly loaded
++        for obj in retrieved_objects:
++            self.assertIsNotNone(obj.content_object)
++            if obj.description == "Points to UUID":
++                self.assertIsInstance(obj.content_object, self.UUIDModel)
++                self.assertEqual(obj.content_object.name, "UUID Object")
++            else:
++                self.assertIsInstance(obj.content_object, self.RegularModel)
++                self.assertEqual(obj.content_object.name, "Regular Object")
++    
++    def test_uuid_string_representation_consistency(self):
++        """
++        Test that UUID values are handled consistently in the prefetch mechanism.
++        This test specifically targets the type mismatch issue in get_prefetch_queryset.
++        """
++        # Create UUID model instance
++        uuid_obj = self.UUIDModel.objects.create(name="Test UUID")
++        
++        # Create GFK model instance
++        gfk_obj = self.GFKModel.objects.create(
++            content_object=uuid_obj,
++            description="Test"
++        )
++        
++        # Get the stored object_id value (should be string representation of UUID)
++        stored_object_id = gfk_obj.object_id
++        
++        # Verify it's a string representation of the UUID
++        self.assertEqual(stored_object_id, str(uuid_obj.id))
++        self.assertIsInstance(stored_object_id, str)
++        
++        # Test that prefetch_related can match this correctly
++        queryset = self.GFKModel.objects.filter(id=gfk_obj.id).prefetch_related('content_object')
++        retrieved_obj = queryset.first()
++        
++        # The key test: ensure the UUID object is properly retrieved
++        self.assertIsNotNone(retrieved_obj.content_object)
++        self.assertEqual(retrieved_obj.content_object.id, uuid_obj.id)
++        
++        # Verify the types are handled correctly
++        self.assertIsInstance(retrieved_obj.content_object.id, uuid.UUID)
++
++
++# Import connection here to avoid issues with app loading
++from django.db import connection

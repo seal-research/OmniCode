@@ -1,0 +1,156 @@
+--- a/tests/test_responsetypes.py
++++ b/tests/test_responsetypes.py
+-# Empty if creating new file
++import pytest
++from scrapy.responsetypes import ResponseTypes
++from scrapy.http import Response, HtmlResponse, TextResponse
++from scrapy.utils.test import get_testdata
++
++
++class TestResponseTypesNonUTF8ContentType:
++    """Test ResponseTypes handling of non-UTF-8 encoded Content-Type headers."""
++    
++    def setup_method(self):
++        self.response_types = ResponseTypes()
++    
++    def test_from_content_type_with_utf8_content_type(self):
++        """Test that UTF-8 encoded Content-Type headers work correctly (baseline test)."""
++        content_type = b'text/html; charset=utf-8'
++        result = self.response_types.from_content_type(content_type)
++        assert result == HtmlResponse
++    
++    def test_from_content_type_with_latin1_content_type(self):
++        """Test that Latin-1 encoded Content-Type headers work correctly."""
++        # Create a Content-Type header with Latin-1 encoded characters
++        content_type = b'text/html; charset=iso-8859-1'
++        result = self.response_types.from_content_type(content_type)
++        assert result == HtmlResponse
++    
++    def test_from_content_type_with_windows1251_content_type(self):
++        """Test that Windows-1251 encoded Content-Type headers work correctly.
++        
++        This reproduces the bug described in the issue where cp1251/windows-1251
++        encoded headers cause UnicodeDecodeError.
++        """
++        # Create a Content-Type header that contains windows-1251 encoded bytes
++        # This simulates the problematic header from the issue
++        content_type = b'text/html; charset="windows-1251"'
++        # Add some non-UTF-8 bytes that would cause the original bug
++        content_type_with_non_utf8 = content_type + b'\xcf\xf0\xe0\xe2\xee'  # windows-1251 encoded text
++        
++        # This should not raise UnicodeDecodeError
++        result = self.response_types.from_content_type(content_type_with_non_utf8)
++        assert result == HtmlResponse
++    
++    def test_from_content_type_with_cp1251_bytes_in_header(self):
++        """Test Content-Type header with cp1251 bytes that caused the original bug."""
++        # Simulate the exact scenario from the bug report
++        # The byte 0xcf at position 33 that caused the UnicodeDecodeError
++        content_type = b'text/html; charset="windows-1251"\xcf'
++        
++        # This should not raise UnicodeDecodeError after the fix
++        result = self.response_types.from_content_type(content_type)
++        assert result == HtmlResponse
++    
++    def test_from_content_type_with_various_non_utf8_bytes(self):
++        """Test Content-Type headers with various non-UTF-8 byte sequences."""
++        test_cases = [
++            b'text/html\x80\x81\x82',  # High-bit bytes
++            b'application/json\xff\xfe',  # More high-bit bytes
++            b'text/plain\xa0\xa1\xa2',  # Latin-1 supplement range
++            b'text/xml\xc0\xc1\xc2',   # Invalid UTF-8 sequences
++        ]
++        
++        for content_type in test_cases:
++            # Should not raise UnicodeDecodeError
++            result = self.response_types.from_content_type(content_type)
++            # Should return appropriate response class based on mimetype
++            assert issubclass(result, Response)
++    
++    def test_from_headers_with_non_utf8_content_type(self):
++        """Test from_headers method with non-UTF-8 Content-Type header."""
++        headers = {
++            b'Content-Type': b'text/html; charset="windows-1251"\xcf\xf0'
++        }
++        
++        # This should not raise UnicodeDecodeError
++        result = self.response_types.from_headers(headers)
++        assert result == HtmlResponse
++    
++    def test_from_args_with_non_utf8_content_type_headers(self):
++        """Test from_args method with headers containing non-UTF-8 Content-Type."""
++        headers = {
++            b'Content-Type': b'application/json\x80\x81\x82'
++        }
++        
++        # This should not raise UnicodeDecodeError
++        result = self.response_types.from_args(headers=headers)
++        assert result == TextResponse
++    
++    def test_mimetype_extraction_with_non_utf8_content_type(self):
++        """Test that mimetype is correctly extracted even with non-UTF-8 bytes."""
++        # Content-Type with valid mimetype but non-UTF-8 bytes after
++        content_type = b'application/xml; charset=windows-1251\xcf\xf0\xe0'
++        
++        result = self.response_types.from_content_type(content_type)
++        # Should correctly identify as XML response despite non-UTF-8 bytes
++        from scrapy.http import XmlResponse
++        assert result == XmlResponse
++    
++    def test_content_type_with_encoding_parameter_non_utf8(self):
++        """Test Content-Type with encoding parameter containing non-UTF-8 bytes."""
++        content_type = b'text/html; charset=windows-1251; boundary=\xcf\xf0'
++        
++        # Should not raise UnicodeDecodeError and should return HtmlResponse
++        result = self.response_types.from_content_type(content_type)
++        assert result == HtmlResponse
++    
++    def test_empty_content_type_still_works(self):
++        """Test that empty or None content type still works (regression test)."""
++        result = self.response_types.from_content_type(b'')
++        assert result == Response
++        
++        result = self.response_types.from_content_type(None)
++        assert result == Response
++
++
++class TestResponseTypesNonUTF8Integration:
++    """Integration tests simulating the full response processing pipeline."""
++    
++    def setup_method(self):
++        self.response_types = ResponseTypes()
++    
++    def test_full_pipeline_with_problematic_headers(self):
++        """Test the full pipeline that was failing in the original bug report."""
++        # Simulate headers that would come from the problematic URL
++        headers = {
++            b'Content-Type': b'text/html; charset="windows-1251"',
++            b'Content-Transfer-Encoding': b'quoted-printable',
++        }
++        
++        # Add some non-UTF-8 bytes to simulate the real-world scenario
++        headers[b'Content-Type'] += b'\xcf\xf0\xe0\xe2\xee'
++        
++        # This should work without raising UnicodeDecodeError
++        result = self.response_types.from_args(
++            headers=headers,
++            url='http://pravo.gov.ru/proxy/ips/?savertf=&link_id=0&nd=128284801',
++            body=b'<html><body>Test</body></html>'
++        )
++        
++        assert result == HtmlResponse
++    
++    def test_bug_reproduction_scenario(self):
++        """Reproduce the exact scenario from the bug report."""
++        # This test should fail before the fix and pass after the fix
++        content_type = b'text/html; charset="windows-1251"'
++        # Add the problematic byte that caused the original error
++        content_type_with_problem_byte = content_type + b'\xcf'
++        
++        # Before fix: this would raise UnicodeDecodeError: 'utf-8' codec can't decode byte 0xcf
++        # After fix: this should work correctly
++        try:
++            result = self.response_types.from_content_type(content_type_with_problem_byte)
++            assert result == HtmlResponse
++        except UnicodeDecodeError as e:
++            pytest.fail(f"UnicodeDecodeError should not be raised after fix: {e}")

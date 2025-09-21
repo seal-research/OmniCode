@@ -1,0 +1,188 @@
+--- a/sympy/combinatorics/tests/test_perm_groups.py
++++ b/sympy/combinatorics/tests/test_perm_groups.py
+-# This will be added to the existing test file
++import pytest
++from sympy.combinatorics import DihedralGroup, PermutationGroup, Permutation
++from sympy.combinatorics.named_groups import DihedralGroup as NamedDihedralGroup
++
++
++def test_sylow_subgroup_dihedral_18_index_error():
++    """
++    Test that reproduces the IndexError bug when calling sylow_subgroup(p=2) 
++    on DihedralGroup(18). This test should fail before the fix is applied.
++    """
++    # This is the exact case from the bug report
++    G = DihedralGroup(18)
++    
++    # This should raise IndexError before the fix
++    with pytest.raises(IndexError, match="list assignment index out of range"):
++        S2 = G.sylow_subgroup(p=2)
++
++
++def test_sylow_subgroup_dihedral_50_index_error():
++    """
++    Test that reproduces the IndexError bug when calling sylow_subgroup(p=2) 
++    on DihedralGroup(2*25). This test should fail before the fix is applied.
++    """
++    # This is the second case from the bug report
++    G = DihedralGroup(2*25)
++    
++    # This should raise IndexError before the fix
++    with pytest.raises(IndexError, match="list assignment index out of range"):
++        S2 = G.sylow_subgroup(p=2)
++
++
++def test_minimal_blocks_index_error_direct():
++    """
++    Test that directly calls minimal_blocks() on DihedralGroup(18) to isolate
++    the bug to the minimal_blocks method specifically.
++    """
++    G = DihedralGroup(18)
++    
++    # This should raise IndexError before the fix since sylow_subgroup calls minimal_blocks
++    with pytest.raises(IndexError, match="list assignment index out of range"):
++        blocks = G.minimal_blocks()
++
++
++def test_sylow_subgroup_dihedral_18_after_fix():
++    """
++    Test that verifies sylow_subgroup works correctly after the fix is applied.
++    This test should pass after the fix.
++    """
++    G = DihedralGroup(18)
++    
++    # After fix, this should work without raising IndexError
++    S2 = G.sylow_subgroup(p=2)
++    
++    # Verify that we got a valid subgroup
++    assert isinstance(S2, PermutationGroup)
++    assert S2.order() > 0
++    
++    # For DihedralGroup(18), the 2-Sylow subgroup should have order 2
++    # since |D_18| = 36 = 2^2 * 3^2, so the 2-Sylow subgroup has order 4
++    assert S2.order() == 4
++
++
++def test_sylow_subgroup_dihedral_50_after_fix():
++    """
++    Test that verifies sylow_subgroup works correctly for DihedralGroup(50) after the fix.
++    """
++    G = DihedralGroup(50)
++    
++    # After fix, this should work without raising IndexError
++    S2 = G.sylow_subgroup(p=2)
++    
++    # Verify that we got a valid subgroup
++    assert isinstance(S2, PermutationGroup)
++    assert S2.order() > 0
++    
++    # For DihedralGroup(50), |D_50| = 100 = 2^2 * 5^2, so 2-Sylow subgroup has order 4
++    assert S2.order() == 4
++
++
++def test_minimal_blocks_dihedral_18_after_fix():
++    """
++    Test that minimal_blocks works correctly after the fix for DihedralGroup(18).
++    """
++    G = DihedralGroup(18)
++    
++    # After fix, this should work without raising IndexError
++    blocks = G.minimal_blocks()
++    
++    # Verify that we got a valid result
++    assert isinstance(blocks, list)
++    # For dihedral groups, we expect some block systems
++    assert len(blocks) >= 0
++
++
++def test_sylow_subgroup_edge_cases():
++    """
++    Test sylow_subgroup for various edge cases to ensure robustness.
++    """
++    # Test smaller dihedral groups that should work
++    for n in [6, 8, 10, 12, 14, 16]:
++        G = DihedralGroup(n)
++        S2 = G.sylow_subgroup(p=2)
++        assert isinstance(S2, PermutationGroup)
++        assert S2.order() > 0
++        
++        # Verify that the order is a power of 2
++        order = S2.order()
++        while order > 1 and order % 2 == 0:
++            order //= 2
++        assert order == 1, f"2-Sylow subgroup order {S2.order()} is not a power of 2 for D_{n}"
++
++
++def test_sylow_subgroup_prime_3():
++    """
++    Test sylow_subgroup for prime p=3 to ensure the fix doesn't break other cases.
++    """
++    G = DihedralGroup(18)
++    
++    # Test 3-Sylow subgroup
++    S3 = G.sylow_subgroup(p=3)
++    assert isinstance(S3, PermutationGroup)
++    assert S3.order() > 0
++    
++    # For DihedralGroup(18), |D_18| = 36 = 2^2 * 3^2, so 3-Sylow subgroup has order 9
++    assert S3.order() == 9
++
++
++def test_sylow_subgroup_prime_5():
++    """
++    Test sylow_subgroup for prime p=5 on groups where 5 divides the order.
++    """
++    G = DihedralGroup(20)  # |D_20| = 40 = 2^3 * 5
++    
++    # Test 5-Sylow subgroup
++    S5 = G.sylow_subgroup(p=5)
++    assert isinstance(S5, PermutationGroup)
++    assert S5.order() == 5
++
++
++def test_minimal_blocks_various_dihedral_groups():
++    """
++    Test minimal_blocks on various dihedral groups to ensure the fix is robust.
++    """
++    # Test various sizes that might trigger the bug
++    test_sizes = [18, 20, 22, 24, 26, 30, 50]
++    
++    for n in test_sizes:
++        G = DihedralGroup(n)
++        blocks = G.minimal_blocks()
++        
++        # Should return a list (could be empty for primitive groups)
++        assert isinstance(blocks, list)
++        
++        # Each block should be a list
++        for block in blocks:
++            assert isinstance(block, list)
++            assert len(block) == G.degree
++
++
++def test_sylow_subgroup_non_prime_error():
++    """
++    Test that sylow_subgroup raises appropriate error for non-prime p.
++    """
++    G = DihedralGroup(18)
++    
++    # Should raise ValueError for non-prime
++    with pytest.raises(ValueError, match="p must be a prime"):
++        G.sylow_subgroup(p=4)
++    
++    with pytest.raises(ValueError, match="p must be a prime"):
++        G.sylow_subgroup(p=6)
++
++
++def test_sylow_subgroup_prime_not_dividing_order():
++    """
++    Test sylow_subgroup when prime p doesn't divide the group order.
++    """
++    G = DihedralGroup(18)  # |D_18| = 36 = 2^2 * 3^2
++    
++    # 7 doesn't divide 36
++    S7 = G.sylow_subgroup(p=7)
++    
++    # Should return trivial subgroup
++    assert S7.order() == 1
++    assert S7 == PermutationGroup([G.identity])

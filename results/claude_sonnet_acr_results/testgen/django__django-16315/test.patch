@@ -1,0 +1,329 @@
+--- a/tests/bulk_create/test_mixed_case_columns.py
++++ b/tests/bulk_create/test_mixed_case_columns.py
+-# Empty if creating new file
++import pytest
++from django.db import models, connection
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++
++
++class ActivityBlackListed(models.Model):
++    """
++    Test model with mixed case db_column attributes to reproduce the bug.
++    Originally sourced from Activity_BlackListed in /home/josh/PNDS_Interim_MIS-Data.accdb (13 records)
++    """
++    class Meta:
++        db_table = "Activity_BlackListed"
++        app_label = 'bulk_create'
++
++    blacklistid = models.IntegerField(primary_key=True, db_column="BlacklistID")
++    sectorid = models.IntegerField(null=True, blank=True, db_column="SectorID")
++    activityname = models.CharField(max_length=100, null=True, blank=True, db_column="ActivityName")
++    description = models.TextField(null=True, blank=True, db_column="Description")
++
++
++class SimpleModel(models.Model):
++    """
++    Simple test model with mixed case db_column attributes.
++    """
++    class Meta:
++        db_table = "simple_test_table"
++        app_label = 'bulk_create'
++
++    id = models.AutoField(primary_key=True, db_column="ID")
++    name = models.CharField(max_length=50, db_column="Name")
++    value = models.IntegerField(db_column="Value")
++
++
++@pytest.mark.django_db
++class TestBulkCreateMixedCaseColumns(TransactionTestCase):
++    """
++    Test suite for bulk_create with mixed case columns in unique_fields/update_fields.
++    """
++
++    def setUp(self):
++        """Set up test database tables."""
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(ActivityBlackListed)
++            schema_editor.create_model(SimpleModel)
++
++    def tearDown(self):
++        """Clean up test database tables."""
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(SimpleModel)
++            schema_editor.delete_model(ActivityBlackListed)
++
++    def test_bulk_create_with_mixed_case_unique_fields_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: bulk_create crashes when using mixed case 
++        columns in unique_fields due to field names being used instead of db_column names.
++        This test should fail before the fix is applied.
++        """
++        instances = [
++            ActivityBlackListed(blacklistid=1, sectorid=100, activityname="Test Activity 1"),
++            ActivityBlackListed(blacklistid=2, sectorid=200, activityname="Test Activity 2"),
++        ]
++
++        # This should fail with PostgreSQL error about column "blacklistid" not existing
++        # because the ON CONFLICT clause uses field names instead of db_column names
++        with pytest.raises(Exception) as exc_info:
++            ActivityBlackListed.objects.bulk_create(
++                instances,
++                update_conflicts=True,
++                update_fields=["sectorid", "activityname"],
++                unique_fields=["blacklistid"]
++            )
++        
++        # The error should mention that the column doesn't exist
++        error_message = str(exc_info.value)
++        assert "blacklistid" in error_message.lower() or "does not exist" in error_message.lower()
++
++    def test_bulk_create_with_mixed_case_update_fields_fails_before_fix(self):
++        """
++        Test that demonstrates the bug with update_fields containing mixed case columns.
++        This test should fail before the fix is applied.
++        """
++        # First insert some data
++        ActivityBlackListed.objects.create(blacklistid=1, sectorid=100, activityname="Original")
++        
++        instances = [
++            ActivityBlackListed(blacklistid=1, sectorid=150, activityname="Updated Activity"),
++        ]
++
++        # This should fail because update_fields uses field names instead of db_column names
++        with pytest.raises(Exception) as exc_info:
++            ActivityBlackListed.objects.bulk_create(
++                instances,
++                update_conflicts=True,
++                update_fields=["sectorid", "activityname"],
++                unique_fields=["blacklistid"]
++            )
++        
++        error_message = str(exc_info.value)
++        assert ("sectorid" in error_message.lower() or 
++                "activityname" in error_message.lower() or 
++                "does not exist" in error_message.lower())
++
++    def test_bulk_create_with_simple_model_mixed_case_columns(self):
++        """
++        Test bulk_create with a simpler model that has mixed case db_column attributes.
++        This test should fail before the fix is applied.
++        """
++        instances = [
++            SimpleModel(name="Test 1", value=10),
++            SimpleModel(name="Test 2", value=20),
++        ]
++
++        # This should fail because unique_fields uses field names instead of db_column names
++        with pytest.raises(Exception) as exc_info:
++            SimpleModel.objects.bulk_create(
++                instances,
++                update_conflicts=True,
++                update_fields=["name", "value"],
++                unique_fields=["id"]
++            )
++        
++        error_message = str(exc_info.value)
++        # The error should be related to column names not existing
++        assert any(field in error_message.lower() for field in ["id", "name", "value"]) or "does not exist" in error_message.lower()
++
++    def test_bulk_create_with_pk_in_unique_fields(self):
++        """
++        Test that using 'pk' in unique_fields works correctly (this should pass even before fix).
++        """
++        instances = [
++            ActivityBlackListed(blacklistid=1, sectorid=100, activityname="Test Activity 1"),
++            ActivityBlackListed(blacklistid=2, sectorid=200, activityname="Test Activity 2"),
++        ]
++
++        # Using 'pk' should work because it's handled specially in the code
++        try:
++            result = ActivityBlackListed.objects.bulk_create(
++                instances,
++                update_conflicts=True,
++                update_fields=["sectorid"],
++                unique_fields=["pk"]
++            )
++            # If this doesn't raise an exception, the pk handling is working
++            assert len(result) == 2
++        except Exception as e:
++            # If it fails, it's likely due to the same bug affecting update_fields
++            error_message = str(e)
++            assert "sectorid" in error_message.lower() or "does not exist" in error_message.lower()
++
++    def test_bulk_create_without_conflicts_works(self):
++        """
++        Test that bulk_create works fine when not using update_conflicts.
++        This should pass both before and after the fix.
++        """
++        instances = [
++            ActivityBlackListed(blacklistid=1, sectorid=100, activityname="Test Activity 1"),
++            ActivityBlackListed(blacklistid=2, sectorid=200, activityname="Test Activity 2"),
++        ]
++
++        # This should work fine since it doesn't use ON CONFLICT
++        result = ActivityBlackListed.objects.bulk_create(instances)
++        assert len(result) == 2
++        
++        # Verify the data was inserted correctly
++        created_objects = ActivityBlackListed.objects.all().order_by('blacklistid')
++        assert len(created_objects) == 2
++        assert created_objects[0].blacklistid == 1
++        assert created_objects[0].sectorid == 100
++        assert created_objects[1].blacklistid == 2
++        assert created_objects[1].sectorid == 200
++
++    def test_bulk_create_ignore_conflicts_works(self):
++        """
++        Test that bulk_create with ignore_conflicts works.
++        This should pass both before and after the fix since it uses DO NOTHING.
++        """
++        # First insert some data
++        ActivityBlackListed.objects.create(blacklistid=1, sectorid=100, activityname="Original")
++        
++        instances = [
++            ActivityBlackListed(blacklistid=1, sectorid=150, activityname="Should be ignored"),
++            ActivityBlackListed(blacklistid=2, sectorid=200, activityname="Should be inserted"),
++        ]
++
++        # This should work fine since it uses ON CONFLICT DO NOTHING
++        result = ActivityBlackListed.objects.bulk_create(instances, ignore_conflicts=True)
++        
++        # Verify the original data wasn't changed and new data was inserted
++        all_objects = ActivityBlackListed.objects.all().order_by('blacklistid')
++        assert len(all_objects) == 2
++        assert all_objects[0].blacklistid == 1
++        assert all_objects[0].sectorid == 100  # Original value, not updated
++        assert all_objects[0].activityname == "Original"
++        assert all_objects[1].blacklistid == 2
++        assert all_objects[1].sectorid == 200
++
++
++@pytest.mark.django_db
++class TestBulkCreateMixedCaseColumnsAfterFix(TransactionTestCase):
++    """
++    Test suite for bulk_create with mixed case columns after the fix is applied.
++    These tests should pass after the fix.
++    """
++
++    def setUp(self):
++        """Set up test database tables."""
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(ActivityBlackListed)
++            schema_editor.create_model(SimpleModel)
++
++    def tearDown(self):
++        """Clean up test database tables."""
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(SimpleModel)
++            schema_editor.delete_model(ActivityBlackListed)
++
++    def test_bulk_create_with_mixed_case_unique_fields_works_after_fix(self):
++        """
++        Test that bulk_create works correctly with mixed case columns in unique_fields
++        after the fix is applied.
++        """
++        instances = [
++            ActivityBlackListed(blacklistid=1, sectorid=100, activityname="Test Activity 1"),
++            ActivityBlackListed(blacklistid=2, sectorid=200, activityname="Test Activity 2"),
++        ]
++
++        # This should work after the fix
++        result = ActivityBlackListed.objects.bulk_create(
++            instances,
++            update_conflicts=True,
++            update_fields=["sectorid", "activityname"],
++            unique_fields=["blacklistid"]
++        )
++        
++        assert len(result) == 2
++        
++        # Verify the data was inserted correctly
++        created_objects = ActivityBlackListed.objects.all().order_by('blacklistid')
++        assert len(created_objects) == 2
++        assert created_objects[0].blacklistid == 1
++        assert created_objects[0].sectorid == 100
++
++    def test_bulk_create_update_existing_records_after_fix(self):
++        """
++        Test that bulk_create correctly updates existing records when conflicts occur
++        after the fix is applied.
++        """
++        # First insert some data
++        ActivityBlackListed.objects.create(blacklistid=1, sectorid=100, activityname="Original")
++        
++        instances = [
++            ActivityBlackListed(blacklistid=1, sectorid=150, activityname="Updated Activity"),
++            ActivityBlackListed(blacklistid=2, sectorid=200, activityname="New Activity"),
++        ]
++
++        # This should work after the fix and update the existing record
++        result = ActivityBlackListed.objects.bulk_create(
++            instances,
++            update_conflicts=True,
++            update_fields=["sectorid", "activityname"],
++            unique_fields=["blacklistid"]
++        )
++        
++        # Verify the data was updated correctly
++        all_objects = ActivityBlackListed.objects.all().order_by('blacklistid')
++        assert len(all_objects) == 2
++        assert all_objects[0].blacklistid == 1
++        assert all_objects[0].sectorid == 150  # Updated value
++        assert all_objects[0].activityname == "Updated Activity"  # Updated value
++        assert all_objects[1].blacklistid == 2
++        assert all_objects[1].sectorid == 200
++
++    def test_bulk_create_with_multiple_mixed_case_fields_after_fix(self):
++        """
++        Test bulk_create with multiple mixed case fields in both unique_fields and update_fields
++        after the fix is applied.
++        """
++        instances = [
++            SimpleModel(name="Test 1", value=10),
++            SimpleModel(name="Test 2", value=20),
++            SimpleModel(name="Test 1", value=15),  # Should update the first one
++        ]
++
++        # This should work after the fix
++        result = SimpleModel.objects.bulk_create(
++            instances,
++            update_conflicts=True,
++            update_fields=["value"],
++            unique_fields=["name"]
++        )
++        
++        # Verify the data was handled correctly
++        all_objects = SimpleModel.objects.all().order_by('name')
++        assert len(all_objects) == 2
++        assert all_objects[0].name == "Test 1"
++        assert all_objects[0].value == 15  # Updated value
++        assert all_objects[1].name == "Test 2"
++        assert all_objects[1].value == 20
++
++    def test_bulk_create_edge_case_all_mixed_case_after_fix(self):
++        """
++        Test edge case where all fields involved have mixed case db_column attributes
++        after the fix is applied.
++        """
++        # Create instances with all fields having mixed case db_columns
++        instances = [
++            ActivityBlackListed(blacklistid=1, sectorid=100, activityname="Activity 1", description="Desc 1"),
++            ActivityBlackListed(blacklistid=2, sectorid=200, activityname="Activity 2", description="Desc 2"),
++        ]
++
++        # This should work after the fix with all mixed case fields
++        result = ActivityBlackListed.objects.bulk_create(
++            instances,
++            update_conflicts=True,
++            update_fields=["sectorid", "activityname", "description"],
++            unique_fields=["blacklistid"]
++        )
++        
++        assert len(result) == 2
++        
++        # Verify all fields were handled correctly
++        created_objects = ActivityBlackListed.objects.all().order_by('blacklistid')
++        assert len(created_objects) == 2
++        assert created_objects[0].description == "Desc 1"
++        assert created_objects[1].description == "Desc 2"

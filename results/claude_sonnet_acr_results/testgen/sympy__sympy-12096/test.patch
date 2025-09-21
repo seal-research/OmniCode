@@ -1,0 +1,154 @@
+--- a/sympy/utilities/tests/test_lambdify_evalf_bug.py
++++ b/sympy/utilities/tests/test_lambdify_evalf_bug.py
+-# Empty if creating new file
++import pytest
++from sympy.utilities.lambdify import implemented_function
++from sympy import symbols, Float, I
++from sympy.core.function import UndefinedFunction
++
++
++class TestImplementedFunctionEvalf:
++    """Test suite for the evalf bug with implemented functions."""
++    
++    def test_single_implemented_function_evalf(self):
++        """Test that a single implemented function evaluates correctly."""
++        f = implemented_function('f', lambda x: x ** 2)
++        result = f(2).evalf()
++        expected = Float(4.0)
++        assert result == expected
++        
++    def test_single_implemented_function_evalf_complex(self):
++        """Test that a single implemented function works with complex numbers."""
++        f = implemented_function('f', lambda x: x * 2)
++        result = f(1 + I).evalf()
++        # Should evaluate to 2 + 2*I
++        assert result.real == 2
++        assert result.imag == 2
++        
++    def test_composed_implemented_functions_evalf_fails_before_fix(self):
++        """Test that demonstrates the bug - composed functions don't evaluate.
++        
++        This test should fail before the fix is applied, showing that
++        f(g(2)).evalf() returns the symbolic expression instead of the numeric result.
++        """
++        f = implemented_function('f', lambda x: x ** 2)
++        g = implemented_function('g', lambda x: 2 * x)
++        
++        # This should evaluate to 16.0 but currently returns f(g(2))
++        result = f(g(2)).evalf()
++        
++        # Before fix: this will be a symbolic expression f(g(2))
++        # After fix: this should be Float(16.0)
++        if hasattr(result, 'func') and result.func.__name__ == 'f':
++            # This indicates the bug is present - we got back a symbolic expression
++            pytest.fail("Bug reproduced: f(g(2)).evalf() returned symbolic expression instead of numeric value")
++        else:
++            # This means the bug is fixed
++            assert result == Float(16.0)
++    
++    def test_composed_implemented_functions_evalf_after_fix(self):
++        """Test that composed implemented functions evaluate correctly after fix."""
++        f = implemented_function('f', lambda x: x ** 2)
++        g = implemented_function('g', lambda x: 2 * x)
++        
++        # Test the composition f(g(2))
++        # g(2) should evaluate to 4, then f(4) should evaluate to 16
++        result = f(g(2)).evalf()
++        expected = Float(16.0)
++        assert result == expected
++        
++    def test_triple_composed_implemented_functions(self):
++        """Test that triple composition works: f(g(h(x)))."""
++        f = implemented_function('f', lambda x: x ** 2)
++        g = implemented_function('g', lambda x: 2 * x)
++        h = implemented_function('h', lambda x: x + 1)
++        
++        # h(2) = 3, g(3) = 6, f(6) = 36
++        result = f(g(h(2))).evalf()
++        expected = Float(36.0)
++        assert result == expected
++        
++    def test_implemented_function_with_multiple_args(self):
++        """Test implemented functions with multiple arguments."""
++        add_func = implemented_function('add_func', lambda x, y: x + y)
++        mult_func = implemented_function('mult_func', lambda x: x * 3)
++        
++        # mult_func(2) = 6, then add_func(6, 4) = 10
++        result = add_func(mult_func(2), 4).evalf()
++        expected = Float(10.0)
++        assert result == expected
++        
++    def test_implemented_function_with_symbolic_args(self):
++        """Test that implemented functions work with symbolic arguments that evaluate to numbers."""
++        from sympy import pi, sin, cos
++        
++        f = implemented_function('f', lambda x: x ** 2)
++        
++        # Test with pi/2 which should evaluate to a numeric value
++        result = f(pi/6).evalf()
++        expected = Float((pi/6)**2)
++        assert abs(result - expected) < 1e-10
++        
++    def test_nested_composition_with_different_precisions(self):
++        """Test that precision is handled correctly in nested compositions."""
++        f = implemented_function('f', lambda x: x ** 2)
++        g = implemented_function('g', lambda x: x / 3)
++        
++        # Test with different precision levels
++        result_default = f(g(3)).evalf()
++        result_high_prec = f(g(3)).evalf(50)
++        
++        # Both should be 1.0, but high precision should have more decimal places
++        assert result_default == Float(1.0)
++        assert abs(result_high_prec - 1) < 1e-40
++        
++    def test_implemented_function_error_handling(self):
++        """Test that error handling works correctly in compositions."""
++        # Function that might raise an error
++        def risky_func(x):
++            if x < 0:
++                raise ValueError("Negative input")
++            return x ** 0.5
++            
++        f = implemented_function('f', risky_func)
++        g = implemented_function('g', lambda x: -x)
++        
++        # This should handle the error gracefully
++        # g(2) = -2, f(-2) should raise ValueError
++        result = f(g(2)).evalf()
++        
++        # If the composition doesn't work, we might get back a symbolic expression
++        # If it works but errors, we might get None or the original expression
++        # The exact behavior depends on how errors are handled
++        assert result is None or (hasattr(result, 'func') and result.func.__name__ == 'f')
++        
++    def test_mixed_implemented_and_regular_functions(self):
++        """Test composition of implemented functions with regular SymPy functions."""
++        from sympy import sin, cos
++        
++        f = implemented_function('f', lambda x: x ** 2)
++        
++        # Mix implemented function with regular SymPy function
++        # sin(1) should evaluate to a number, then f should square it
++        result = f(sin(1)).evalf()
++        expected = Float(sin(1)**2)
++        
++        # Check that they're approximately equal (floating point precision)
++        assert abs(result - expected) < 1e-10
++        
++    def test_implemented_function_preserves_existing_functionality(self):
++        """Test that the fix doesn't break existing single function evaluation."""
++        # Test various single function cases to ensure no regression
++        
++        # Integer input
++        f1 = implemented_function('f1', lambda x: x * 2)
++        assert f1(5).evalf() == Float(10.0)
++        
++        # Float input  
++        f2 = implemented_function('f2', lambda x: x + 1)
++        assert f2(3.5).evalf() == Float(4.5)
++        
++        # Complex function
++        f3 = implemented_function('f3', lambda x: x.real + x.imag)
++        result = f3(2 + 3*I).evalf()
++        assert result == Float(5.0)

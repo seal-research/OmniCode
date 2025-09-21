@@ -1,0 +1,6 @@
+{
+  "instance_id": "scrapy__scrapy-6050",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/scrapy__scrapy-6050/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/scrapy__scrapy-6050/scrapy__scrapy-6050.pred"
+}

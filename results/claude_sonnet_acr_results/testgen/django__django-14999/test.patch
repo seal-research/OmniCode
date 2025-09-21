@@ -1,0 +1,309 @@
+--- a/tests/migrations/test_operations.py
++++ b/tests/migrations/test_operations.py
+-# This will be added to the existing test file
++import pytest
++from django.db import connection, models
++from django.db.migrations.operations import RenameModel
++from django.db.migrations.state import ProjectState
++from django.test import TestCase, override_settings
++from django.test.utils import isolate_apps
++
++
++class RenameModelWithDbTableTests(TestCase):
++    """
++    Test that RenameModel operations with custom db_table are no-ops.
++    """
++
++    def setUp(self):
++        self.schema_editor = connection.schema_editor()
++
++    def test_rename_model_with_same_db_table_is_noop(self):
++        """
++        Test that renaming a model with a custom db_table that doesn't change
++        should not perform any database operations.
++        """
++        # Create initial state with a model that has custom db_table
++        project_state = ProjectState()
++        project_state.add_model(
++            models.Model(
++                'TestModel',
++                tuple(),
++                {
++                    '__module__': 'test_app.models',
++                    'Meta': type('Meta', (), {'db_table': 'custom_table_name'}),
++                }
++            )
++        )
++
++        # Create target state with renamed model but same db_table
++        new_state = project_state.clone()
++        new_state.rename_model('test_app', 'TestModel', 'RenamedTestModel')
++
++        # Get the models from both states
++        old_model = project_state.apps.get_model('test_app', 'TestModel')
++        new_model = new_state.apps.get_model('test_app', 'RenamedTestModel')
++
++        # Verify both models have the same db_table
++        self.assertEqual(old_model._meta.db_table, 'custom_table_name')
++        self.assertEqual(new_model._meta.db_table, 'custom_table_name')
++        self.assertEqual(old_model._meta.db_table, new_model._meta.db_table)
++
++        # Mock the schema_editor to track calls
++        with self.schema_editor as editor:
++            original_alter_db_table = editor.alter_db_table
++            alter_db_table_calls = []
++
++            def mock_alter_db_table(*args, **kwargs):
++                alter_db_table_calls.append((args, kwargs))
++                return original_alter_db_table(*args, **kwargs)
++
++            editor.alter_db_table = mock_alter_db_table
++
++            # Execute the RenameModel operation
++            operation = RenameModel('TestModel', 'RenamedTestModel')
++            operation.database_forwards('test_app', editor, project_state, new_state)
++
++            # With the fix, no alter_db_table calls should be made
++            # This test will fail before the fix is applied
++            self.assertEqual(len(alter_db_table_calls), 0, 
++                           "RenameModel with same db_table should not call alter_db_table")
++
++    def test_rename_model_with_different_db_table_performs_operations(self):
++        """
++        Test that renaming a model where the db_table actually changes
++        still performs the necessary database operations.
++        """
++        # Create initial state with default db_table (app_label_model_name)
++        project_state = ProjectState()
++        project_state.add_model(
++            models.Model(
++                'TestModel',
++                tuple(),
++                {
++                    '__module__': 'test_app.models',
++                    'Meta': type('Meta', (), {}),  # No custom db_table
++                }
++            )
++        )
++
++        # Create target state with renamed model (different db_table)
++        new_state = project_state.clone()
++        new_state.rename_model('test_app', 'TestModel', 'RenamedTestModel')
++
++        # Get the models from both states
++        old_model = project_state.apps.get_model('test_app', 'TestModel')
++        new_model = new_state.apps.get_model('test_app', 'RenamedTestModel')
++
++        # Verify the models have different db_table values
++        self.assertEqual(old_model._meta.db_table, 'test_app_testmodel')
++        self.assertEqual(new_model._meta.db_table, 'test_app_renamedtestmodel')
++        self.assertNotEqual(old_model._meta.db_table, new_model._meta.db_table)
++
++        # Mock the schema_editor to track calls
++        with self.schema_editor as editor:
++            original_alter_db_table = editor.alter_db_table
++            alter_db_table_calls = []
++
++            def mock_alter_db_table(*args, **kwargs):
++                alter_db_table_calls.append((args, kwargs))
++                return original_alter_db_table(*args, **kwargs)
++
++            editor.alter_db_table = mock_alter_db_table
++
++            # Execute the RenameModel operation
++            operation = RenameModel('TestModel', 'RenamedTestModel')
++            operation.database_forwards('test_app', editor, project_state, new_state)
++
++            # Should perform database operations when db_table changes
++            self.assertGreater(len(alter_db_table_calls), 0,
++                             "RenameModel with different db_table should call alter_db_table")
++
++    def test_rename_model_with_custom_db_table_and_foreign_keys(self):
++        """
++        Test that RenameModel with custom db_table doesn't affect foreign key constraints
++        when the table name doesn't change.
++        """
++        # Create initial state with two models, one referencing the other
++        project_state = ProjectState()
++        
++        # Referenced model with custom db_table
++        project_state.add_model(
++            models.Model(
++                'ReferencedModel',
++                tuple(),
++                {
++                    '__module__': 'test_app.models',
++                    'Meta': type('Meta', (), {'db_table': 'custom_referenced_table'}),
++                }
++            )
++        )
++        
++        # Referencing model
++        project_state.add_model(
++            models.Model(
++                'ReferencingModel',
++                (
++                    ('referenced', models.ForeignKey('ReferencedModel', on_delete=models.CASCADE)),
++                ),
++                {
++                    '__module__': 'test_app.models',
++                    'Meta': type('Meta', (), {}),
++                }
++            )
++        )
++
++        # Create target state with renamed referenced model but same db_table
++        new_state = project_state.clone()
++        new_state.rename_model('test_app', 'ReferencedModel', 'RenamedReferencedModel')
++
++        # Get the models from both states
++        old_model = project_state.apps.get_model('test_app', 'ReferencedModel')
++        new_model = new_state.apps.get_model('test_app', 'RenamedReferencedModel')
++
++        # Verify both models have the same db_table
++        self.assertEqual(old_model._meta.db_table, 'custom_referenced_table')
++        self.assertEqual(new_model._meta.db_table, 'custom_referenced_table')
++
++        # Mock the schema_editor to track foreign key operations
++        with self.schema_editor as editor:
++            original_alter_field = editor.alter_field
++            alter_field_calls = []
++
++            def mock_alter_field(*args, **kwargs):
++                alter_field_calls.append((args, kwargs))
++                return original_alter_field(*args, **kwargs)
++
++            editor.alter_field = mock_alter_field
++
++            # Execute the RenameModel operation
++            operation = RenameModel('ReferencedModel', 'RenamedReferencedModel')
++            operation.database_forwards('test_app', editor, project_state, new_state)
++
++            # With the fix, no alter_field calls should be made for foreign keys
++            # since the referenced table name doesn't change
++            self.assertEqual(len(alter_field_calls), 0,
++                           "RenameModel with same db_table should not alter foreign key fields")
++
++    def test_rename_model_with_custom_db_table_and_m2m_fields(self):
++        """
++        Test that RenameModel with custom db_table doesn't affect M2M tables
++        when the model table name doesn't change.
++        """
++        # Create initial state with model having M2M field and custom db_table
++        project_state = ProjectState()
++        
++        # Target model for M2M
++        project_state.add_model(
++            models.Model(
++                'TargetModel',
++                tuple(),
++                {
++                    '__module__': 'test_app.models',
++                    'Meta': type('Meta', (), {}),
++                }
++            )
++        )
++        
++        # Model with M2M field and custom db_table
++        project_state.add_model(
++            models.Model(
++                'ModelWithM2M',
++                (
++                    ('targets', models.ManyToManyField('TargetModel')),
++                ),
++                {
++                    '__module__': 'test_app.models',
++                    'Meta': type('Meta', (), {'db_table': 'custom_m2m_table'}),
++                }
++            )
++        )
++
++        # Create target state with renamed model but same db_table
++        new_state = project_state.clone()
++        new_state.rename_model('test_app', 'ModelWithM2M', 'RenamedModelWithM2M')
++
++        # Get the models from both states
++        old_model = project_state.apps.get_model('test_app', 'ModelWithM2M')
++        new_model = new_state.apps.get_model('test_app', 'RenamedModelWithM2M')
++
++        # Verify both models have the same db_table
++        self.assertEqual(old_model._meta.db_table, 'custom_m2m_table')
++        self.assertEqual(new_model._meta.db_table, 'custom_m2m_table')
++
++        # Mock the schema_editor to track M2M table operations
++        with self.schema_editor as editor:
++            original_alter_db_table = editor.alter_db_table
++            original_alter_field = editor.alter_field
++            alter_db_table_calls = []
++            alter_field_calls = []
++
++            def mock_alter_db_table(*args, **kwargs):
++                alter_db_table_calls.append((args, kwargs))
++                return original_alter_db_table(*args, **kwargs)
++
++            def mock_alter_field(*args, **kwargs):
++                alter_field_calls.append((args, kwargs))
++                return original_alter_field(*args, **kwargs)
++
++            editor.alter_db_table = mock_alter_db_table
++            editor.alter_field = mock_alter_field
++
++            # Execute the RenameModel operation
++            operation = RenameModel('ModelWithM2M', 'RenamedModelWithM2M')
++            operation.database_forwards('test_app', editor, project_state, new_state)
++
++            # With the fix, no M2M table operations should be performed
++            # since the main table name doesn't change
++            self.assertEqual(len(alter_db_table_calls), 0,
++                           "RenameModel with same db_table should not alter M2M tables")
++            self.assertEqual(len(alter_field_calls), 0,
++                           "RenameModel with same db_table should not alter M2M fields")
++
++    @isolate_apps('test_app')
++    def test_rename_model_noop_integration(self):
++        """
++        Integration test to verify the complete behavior of RenameModel
++        with custom db_table in a realistic scenario.
++        """
++        # Define a model with custom db_table
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'test_app'
++                db_table = 'my_custom_table'
++
++        # Create the table
++        with connection.schema_editor() as editor:
++            editor.create_model(TestModel)
++
++        try:
++            # Verify table exists with custom name
++            table_names = connection.introspection.table_names()
++            self.assertIn('my_custom_table', table_names)
++            self.assertNotIn('test_app_testmodel', table_names)
++
++            # Create states for the operation
++            project_state = ProjectState()
++            project_state.add_model(TestModel)
++
++            new_state = project_state.clone()
++            new_state.rename_model('test_app', 'TestModel', 'RenamedTestModel')
++
++            # Execute the rename operation
++            operation = RenameModel('TestModel', 'RenamedTestModel')
++            with connection.schema_editor() as editor:
++                operation.database_forwards('test_app', editor, project_state, new_state)
++
++            # Verify the table still exists with the same name
++            table_names_after = connection.introspection.table_names()
++            self.assertIn('my_custom_table', table_names_after)
++            self.assertNotIn('test_app_renamedtestmodel', table_names_after)
++            
++            # Table names should be identical before and after
++            self.assertEqual(set(table_names), set(table_names_after))
++
++        finally:
++            # Clean up
++            with connection.schema_editor() as editor:
++                editor.delete_model(TestModel)

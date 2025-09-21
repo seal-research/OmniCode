@@ -1,0 +1,286 @@
+--- a/tests/test_directive_toctree_builtin_docs.py
++++ b/tests/test_directive_toctree_builtin_docs.py
+-# Empty if creating new file
++import pytest
++from docutils import nodes
++from docutils.parsers.rst import directives
++
++from sphinx import addnodes
++from sphinx.directives.other import TocTree
++from sphinx.environment.adapters.toctree import TocTree as TocTreeAdapter
++from sphinx.testing.util import SphinxTestApp
++from sphinx.util.docutils import docutils_namespace
++
++
++@pytest.fixture
++def app():
++    """Create a Sphinx application for testing."""
++    with SphinxTestApp(buildername='html', srcdir=None) as app:
++        yield app
++
++
++@pytest.fixture
++def toctree_directive(app):
++    """Create a TocTree directive instance for testing."""
++    directive = TocTree(
++        name='toctree',
++        arguments=[],
++        options={},
++        content=[],
++        lineno=1,
++        content_offset=0,
++        block_text='',
++        state=None,
++        state_machine=None
++    )
++    directive.env = app.env
++    return directive
++
++
++class TestTocTreeBuiltinDocs:
++    """Test toctree handling of built-in documents like genindex, modindex, search."""
++
++    def test_toctree_with_genindex_should_not_warn(self, app, status, warning):
++        """Test that including genindex in toctree doesn't generate warnings."""
++        # Create a simple document with toctree containing genindex
++        app.env.temp_data['docname'] = 'index'
++        
++        # Add the document content
++        content = """
++Test Document
++=============
++
++.. toctree::
++   :maxdepth: 1
++   
++   genindex
++"""
++        
++        # Write the content to a file and build
++        (app.srcdir / 'index.rst').write_text(content)
++        app.build()
++        
++        # Check that no warnings about genindex were generated
++        warning_text = warning.getvalue()
++        assert "toctree contains reference to nonexisting document 'genindex'" not in warning_text
++
++    def test_toctree_with_modindex_should_not_warn(self, app, status, warning):
++        """Test that including modindex in toctree doesn't generate warnings."""
++        app.env.temp_data['docname'] = 'index'
++        
++        content = """
++Test Document
++=============
++
++.. toctree::
++   :maxdepth: 1
++   
++   modindex
++"""
++        
++        (app.srcdir / 'index.rst').write_text(content)
++        app.build()
++        
++        warning_text = warning.getvalue()
++        assert "toctree contains reference to nonexisting document 'modindex'" not in warning_text
++
++    def test_toctree_with_search_should_not_warn(self, app, status, warning):
++        """Test that including search in toctree doesn't generate warnings."""
++        app.env.temp_data['docname'] = 'index'
++        
++        content = """
++Test Document
++=============
++
++.. toctree::
++   :maxdepth: 1
++   
++   search
++"""
++        
++        (app.srcdir / 'index.rst').write_text(content)
++        app.build()
++        
++        warning_text = warning.getvalue()
++        assert "toctree contains reference to nonexisting document 'search'" not in warning_text
++
++    def test_toctree_with_all_builtin_docs_should_not_warn(self, app, status, warning):
++        """Test that including all built-in docs in toctree doesn't generate warnings."""
++        app.env.temp_data['docname'] = 'index'
++        
++        content = """
++Test Document
++=============
++
++.. toctree::
++   :maxdepth: 1
++   :caption: Indices and tables
++   
++   genindex
++   modindex
++   search
++"""
++        
++        (app.srcdir / 'index.rst').write_text(content)
++        app.build()
++        
++        warning_text = warning.getvalue()
++        assert "toctree contains reference to nonexisting document 'genindex'" not in warning_text
++        assert "toctree contains reference to nonexisting document 'modindex'" not in warning_text
++        assert "toctree contains reference to nonexisting document 'search'" not in warning_text
++
++    def test_toctree_with_mixed_docs_should_warn_only_for_missing(self, app, status, warning):
++        """Test that toctree warns only for truly missing docs, not built-in ones."""
++        app.env.temp_data['docname'] = 'index'
++        
++        content = """
++Test Document
++=============
++
++.. toctree::
++   :maxdepth: 1
++   
++   genindex
++   nonexistent_doc
++   modindex
++   another_missing_doc
++   search
++"""
++        
++        (app.srcdir / 'index.rst').write_text(content)
++        app.build()
++        
++        warning_text = warning.getvalue()
++        
++        # Should NOT warn about built-in docs
++        assert "toctree contains reference to nonexisting document 'genindex'" not in warning_text
++        assert "toctree contains reference to nonexisting document 'modindex'" not in warning_text
++        assert "toctree contains reference to nonexisting document 'search'" not in warning_text
++        
++        # Should warn about truly missing docs
++        assert "toctree contains reference to nonexisting document" in warning_text
++        assert "nonexistent_doc" in warning_text or "another_missing_doc" in warning_text
++
++    def test_toctree_builtin_docs_with_subdirectory(self, app, status, warning):
++        """Test that built-in docs work even when referenced from subdirectories."""
++        app.env.temp_data['docname'] = 'subdir/page'
++        
++        # Create subdirectory
++        (app.srcdir / 'subdir').mkdir(exist_ok=True)
++        
++        content = """
++Subdirectory Page
++=================
++
++.. toctree::
++   :maxdepth: 1
++   
++   ../genindex
++   ../modindex
++   ../search
++"""
++        
++        (app.srcdir / 'subdir' / 'page.rst').write_text(content)
++        
++        # Also need an index file
++        index_content = """
++Main Document
++=============
++
++.. toctree::
++   :maxdepth: 1
++   
++   subdir/page
++"""
++        (app.srcdir / 'index.rst').write_text(index_content)
++        
++        app.build()
++        
++        warning_text = warning.getvalue()
++        assert "toctree contains reference to nonexisting document" not in warning_text or \
++               ("genindex" not in warning_text and "modindex" not in warning_text and "search" not in warning_text)
++
++    def test_toctree_resolve_builtin_docs(self, app):
++        """Test that TocTree.resolve handles built-in docs correctly."""
++        # Create a toctree node with built-in docs
++        toctree_node = addnodes.toctree()
++        toctree_node['entries'] = [
++            (None, 'genindex'),
++            (None, 'modindex'), 
++            (None, 'search')
++        ]
++        toctree_node['includefiles'] = ['genindex', 'modindex', 'search']
++        
++        # Create TocTree adapter
++        adapter = TocTreeAdapter(app.env)
++        
++        # This should not raise exceptions or generate warnings
++        # The resolve method should handle built-in docs gracefully
++        try:
++            result = adapter.resolve('index', app.builder, toctree_node)
++            # If no exception is raised, the test passes
++            # The exact result structure may vary, but no errors should occur
++        except KeyError as e:
++            # If KeyError is raised for built-in docs, that's the bug we're testing
++            if str(e) in ("'genindex'", "'modindex'", "'search'"):
++                pytest.fail(f"TocTree.resolve should handle built-in document {e} without KeyError")
++            else:
++                # Re-raise if it's a different KeyError
++                raise
++
++    def test_toctree_parse_content_builtin_docs(self, app):
++        """Test that TocTree.parse_content handles built-in docs correctly."""
++        # Create a mock toctree directive
++        directive = TocTree(
++            name='toctree',
++            arguments=[],
++            options={},
++            content=['genindex', 'modindex', 'search'],
++            lineno=1,
++            content_offset=0,
++            block_text='',
++            state=None,
++            state_machine=None
++        )
++        directive.env = app.env
++        
++        # Create a toctree node
++        toctree_node = addnodes.toctree()
++        toctree_node['entries'] = []
++        toctree_node['includefiles'] = []
++        
++        # Parse the content - this should not generate warnings for built-in docs
++        with pytest.warns(None) as warning_list:
++            directive.parse_content(toctree_node)
++        
++        # Filter warnings to only those about nonexisting documents
++        nonexisting_warnings = [
++            w for w in warning_list 
++            if hasattr(w.message, 'args') and 
++            'nonexisting document' in str(w.message.args[0]) and
++            any(doc in str(w.message.args) for doc in ['genindex', 'modindex', 'search'])
++        ]
++        
++        # Should not have warnings about built-in docs
++        assert len(nonexisting_warnings) == 0, f"Found warnings about built-in docs: {nonexisting_warnings}"
++
++    def test_regular_missing_docs_still_warn(self, app, status, warning):
++        """Test that regular missing documents still generate warnings (regression test)."""
++        app.env.temp_data['docname'] = 'index'
++        
++        content = """
++Test Document
++=============
++
++.. toctree::
++   :maxdepth: 1
++   
++   definitely_missing_document
++"""
++        
++        (app.srcdir / 'index.rst').write_text(content)
++        app.build()
++        
++        warning_text = warning.getvalue()
++        assert "toctree contains reference to nonexisting document" in warning_text
++        assert "definitely_missing_document" in warning_text

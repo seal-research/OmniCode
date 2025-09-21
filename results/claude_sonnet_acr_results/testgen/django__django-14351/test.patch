@@ -1,0 +1,316 @@
+--- a/tests/queries/test_q_object_or_bug.py
++++ b/tests/queries/test_q_object_or_bug.py
++import pytest
++from django.db import models
++from django.db.models import Q, Count
++from django.test import TestCase
++from django.db.utils import ProgrammingError
++
++
++class PropertyGroup(models.Model):
++    """Test model representing a property group."""
++    name = models.CharField(max_length=100)
++    created = models.DateTimeField(auto_now_add=True)
++    updated = models.DateTimeField(auto_now=True)
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class ManagementAgent(models.Model):
++    """Test model representing a management agent."""
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class ManagementAgentPropertyGroup(models.Model):
++    """Test model representing the many-to-many relationship."""
++    management_agent = models.ForeignKey(ManagementAgent, on_delete=models.CASCADE)
++    property_group = models.ForeignKey(PropertyGroup, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class TicketRating(models.Model):
++    """Test model representing a ticket rating."""
++    agent = models.ForeignKey(ManagementAgent, on_delete=models.CASCADE, related_name='ticket_ratings')
++    date = models.DateField()
++    average = models.FloatField()
++    data_points = models.IntegerField()
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class QObjectOrBugTestCase(TestCase):
++    """Test case for Q object __or__ bug with subquery column selection."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        """Set up test data."""
++        # Create property groups
++        cls.property_group1 = PropertyGroup.objects.create(name="Group 1")
++        cls.property_group2 = PropertyGroup.objects.create(name="Group 2")
++        cls.property_group3 = PropertyGroup.objects.create(name="Group 3")
++        
++        # Create management agents
++        cls.agent1 = ManagementAgent.objects.create(name="Agent 1")
++        cls.agent2 = ManagementAgent.objects.create(name="Agent 2")
++        cls.agent3 = ManagementAgent.objects.create(name="Agent 3")
++        
++        # Create relationships
++        ManagementAgentPropertyGroup.objects.create(
++            management_agent=cls.agent1, 
++            property_group=cls.property_group1
++        )
++        ManagementAgentPropertyGroup.objects.create(
++            management_agent=cls.agent1, 
++            property_group=cls.property_group2
++        )
++        ManagementAgentPropertyGroup.objects.create(
++            management_agent=cls.agent2, 
++            property_group=cls.property_group2
++        )
++        # agent3 has no property groups
++        
++        # Create ticket ratings
++        cls.rating1 = TicketRating.objects.create(
++            agent=cls.agent1, 
++            date='2023-01-01', 
++            average=4.5, 
++            data_points=10
++        )
++        cls.rating2 = TicketRating.objects.create(
++            agent=cls.agent2, 
++            date='2023-01-02', 
++            average=3.8, 
++            data_points=8
++        )
++        cls.rating3 = TicketRating.objects.create(
++            agent=cls.agent3, 
++            date='2023-01-03', 
++            average=4.2, 
++            data_points=5
++        )
++
++    def test_q_object_or_with_in_lookup_using_queryset_should_fail_before_fix(self):
++        """
++        Test that demonstrates the bug: Q object __or__ with __in lookup using QuerySet
++        causes 'subquery must return only one column' error.
++        
++        This test should FAIL before the fix is applied.
++        """
++        # Get property groups for agent1
++        property_groups = PropertyGroup.objects.filter(
++            managementagentpropertygroup__management_agent=self.agent1
++        )
++        
++        # Create the problematic query that should fail before fix
++        queryset = TicketRating.objects.annotate(
++            agent_property_groups_count=Count("agent__managementagentpropertygroup")
++        )
++        
++        # This should raise ProgrammingError: subquery must return only one column
++        with self.assertRaises(ProgrammingError) as cm:
++            list(queryset.filter(
++                Q(agent__managementagentpropertygroup__property_group__in=property_groups)
++                | Q(agent_property_groups_count=0)
++            ).distinct())
++        
++        self.assertIn("subquery must return only one column", str(cm.exception))
++
++    def test_q_object_or_with_id_in_lookup_works(self):
++        """
++        Test that the workaround using id__in with values_list works correctly.
++        This should always work (both before and after the fix).
++        """
++        # Get property groups for agent1
++        property_groups = PropertyGroup.objects.filter(
++            managementagentpropertygroup__management_agent=self.agent1
++        )
++        
++        # Create the working query using the workaround
++        queryset = TicketRating.objects.annotate(
++            agent_property_groups_count=Count("agent__managementagentpropertygroup")
++        )
++        
++        # This should work - using id__in with values_list
++        result = list(queryset.filter(
++            Q(agent__managementagentpropertygroup__property_group__id__in=property_groups.values_list("id", flat=True))
++            | Q(agent_property_groups_count=0)
++        ).distinct())
++        
++        # Should return ratings for agent1 (has property groups) and agent3 (has no property groups)
++        self.assertEqual(len(result), 2)
++        agent_ids = {rating.agent.id for rating in result}
++        self.assertEqual(agent_ids, {self.agent1.id, self.agent3.id})
++
++    def test_q_object_or_with_in_lookup_using_queryset_should_work_after_fix(self):
++        """
++        Test that after the fix, Q object __or__ with __in lookup using QuerySet works correctly.
++        
++        This test should PASS after the fix is applied.
++        """
++        # Get property groups for agent1
++        property_groups = PropertyGroup.objects.filter(
++            managementagentpropertygroup__management_agent=self.agent1
++        )
++        
++        # Create the query that should work after fix
++        queryset = TicketRating.objects.annotate(
++            agent_property_groups_count=Count("agent__managementagentpropertygroup")
++        )
++        
++        # This should work after the fix - using __in with QuerySet directly
++        result = list(queryset.filter(
++            Q(agent__managementagentpropertygroup__property_group__in=property_groups)
++            | Q(agent_property_groups_count=0)
++        ).distinct())
++        
++        # Should return ratings for agent1 (has property groups) and agent3 (has no property groups)
++        self.assertEqual(len(result), 2)
++        agent_ids = {rating.agent.id for rating in result}
++        self.assertEqual(agent_ids, {self.agent1.id, self.agent3.id})
++
++    def test_q_object_or_with_in_lookup_simple_case(self):
++        """
++        Test a simpler case of Q object __or__ with __in lookup to ensure basic functionality.
++        """
++        # Simple case without annotations
++        property_groups = PropertyGroup.objects.filter(name__in=["Group 1", "Group 2"])
++        
++        # This should work for simple cases
++        result = list(TicketRating.objects.filter(
++            Q(agent__managementagentpropertygroup__property_group__in=property_groups)
++            | Q(agent__name="Agent 3")
++        ).distinct())
++        
++        # Should return ratings for agents that have the specified property groups or agent3
++        self.assertEqual(len(result), 3)  # All three ratings should match
++
++    def test_q_object_or_with_in_lookup_edge_cases(self):
++        """
++        Test edge cases for Q object __or__ with __in lookup.
++        """
++        # Test with empty QuerySet
++        empty_property_groups = PropertyGroup.objects.none()
++        
++        queryset = TicketRating.objects.annotate(
++            agent_property_groups_count=Count("agent__managementagentpropertygroup")
++        )
++        
++        # Should work with empty QuerySet
++        result = list(queryset.filter(
++            Q(agent__managementagentpropertygroup__property_group__in=empty_property_groups)
++            | Q(agent_property_groups_count=0)
++        ).distinct())
++        
++        # Should only return agent3 (has no property groups)
++        self.assertEqual(len(result), 1)
++        self.assertEqual(result[0].agent.id, self.agent3.id)
++
++    def test_q_object_and_with_in_lookup_still_works(self):
++        """
++        Test that Q object __and__ with __in lookup still works correctly.
++        This ensures we don't break existing AND functionality.
++        """
++        property_groups = PropertyGroup.objects.filter(name="Group 1")
++        
++        queryset = TicketRating.objects.annotate(
++            agent_property_groups_count=Count("agent__managementagentpropertygroup")
++        )
++        
++        # Test AND operation
++        result = list(queryset.filter(
++            Q(agent__managementagentpropertygroup__property_group__in=property_groups)
++            & Q(agent_property_groups_count__gt=0)
++        ).distinct())
++        
++        # Should return only agent1's rating (has Group 1 and has property groups)
++        self.assertEqual(len(result), 1)
++        self.assertEqual(result[0].agent.id, self.agent1.id)
++
++    def test_regular_in_lookup_without_q_object_still_works(self):
++        """
++        Test that regular __in lookups without Q objects still work correctly.
++        This ensures we don't break existing non-Q functionality.
++        """
++        property_groups = PropertyGroup.objects.filter(name__in=["Group 1", "Group 2"])
++        
++        # Regular filter without Q object
++        result = list(TicketRating.objects.filter(
++            agent__managementagentpropertygroup__property_group__in=property_groups
++        ).distinct())
++        
++        # Should return ratings for agents that have the specified property groups
++        self.assertEqual(len(result), 2)  # agent1 and agent2
++        agent_ids = {rating.agent.id for rating in result}
++        self.assertEqual(agent_ids, {self.agent1.id, self.agent2.id})
++
++    def test_q_object_or_with_multiple_in_lookups(self):
++        """
++        Test Q object __or__ with multiple __in lookups to ensure complex cases work.
++        """
++        property_groups1 = PropertyGroup.objects.filter(name="Group 1")
++        property_groups2 = PropertyGroup.objects.filter(name="Group 2")
++        
++        # Multiple __in lookups with OR
++        result = list(TicketRating.objects.filter(
++            Q(agent__managementagentpropertygroup__property_group__in=property_groups1)
++            | Q(agent__managementagentpropertygroup__property_group__in=property_groups2)
++        ).distinct())
++        
++        # Should return ratings for agents that have either group
++        self.assertEqual(len(result), 2)  # agent1 and agent2
++        agent_ids = {rating.agent.id for rating in result}
++        self.assertEqual(agent_ids, {self.agent1.id, self.agent2.id})
++
++    def test_nested_q_objects_with_in_lookup(self):
++        """
++        Test nested Q objects with __in lookup to ensure complex nesting works.
++        """
++        property_groups = PropertyGroup.objects.filter(name__in=["Group 1", "Group 2"])
++        
++        queryset = TicketRating.objects.annotate(
++            agent_property_groups_count=Count("agent__managementagentpropertygroup")
++        )
++        
++        # Nested Q objects
++        result = list(queryset.filter(
++            Q(
++                Q(agent__managementagentpropertygroup__property_group__in=property_groups)
++                | Q(agent__name="Agent 3")
++            )
++            & Q(average__gte=3.0)
++        ).distinct())
++        
++        # Should return all three ratings (all have average >= 3.0)
++        self.assertEqual(len(result), 3)
++
++    def test_q_object_or_with_in_lookup_preserves_queryset_with_select_fields(self):
++        """
++        Test that QuerySets with explicit select fields are preserved correctly.
++        This ensures we don't break existing functionality for QuerySets with values().
++        """
++        # QuerySet with explicit select fields (using values)
++        property_groups = PropertyGroup.objects.filter(
++            managementagentpropertygroup__management_agent=self.agent1
++        ).values('id', 'name')
++        
++        queryset = TicketRating.objects.annotate(
++            agent_property_groups_count=Count("agent__managementagentpropertygroup")
++        )
++        
++        # This should work because the QuerySet has explicit select fields
++        result = list(queryset.filter(
++            Q(agent__managementagentpropertygroup__property_group__in=property_groups)
++            | Q(agent_property_groups_count=0)
++        ).distinct())
++        
++        # Should return ratings for agent1 (has property groups) and agent3 (has no property groups)
++        self.assertEqual(len(result), 2)
++        agent_ids = {rating.agent.id for rating in result}
++        self.assertEqual(agent_ids, {self.agent1.id, self.agent3.id})

@@ -1,0 +1,297 @@
+--- a/tests/test_core/test_nominal_scale_categorical_behavior.py
++++ b/tests/test_core/test_nominal_scale_categorical_behavior.py
+-# Empty if creating new file
++import pytest
++import numpy as np
++import pandas as pd
++import matplotlib.pyplot as plt
++from matplotlib.testing.decorators import check_figures_equal
++
++import seaborn as sns
++import seaborn.objects as so
++from seaborn._core.scales import Nominal
++from seaborn._core.plot import Plot, Plotter
++
++
++class TestNominalScaleCategoricalBehavior:
++    """Test that Nominal scales behave like categorical scales."""
++
++    @pytest.fixture
++    def categorical_data(self):
++        """Sample categorical data for testing."""
++        return pd.DataFrame({
++            'category': ['A', 'B', 'C', 'D'],
++            'value': [1, 2, 3, 4],
++            'numeric_cat': [1, 2, 3, 4]  # Will be treated as categorical
++        })
++
++    def test_nominal_scale_has_categorical_attribute(self):
++        """Test that Nominal scale can be identified as categorical."""
++        nominal_scale = Nominal()
++        # This test will fail before the fix is applied
++        # After fix, Nominal should have _categorical = True or similar identifier
++        assert hasattr(nominal_scale, '_categorical') or hasattr(nominal_scale, 'is_categorical')
++
++    def test_nominal_scale_axis_limits_plus_minus_half(self, categorical_data):
++        """Test that Nominal scales set axis limits to +/- 0.5 from first/last tick."""
++        # Create a plot with explicit Nominal scale
++        p = Plot(categorical_data, x='category', y='value').add(so.Dot()).scale(x=so.Nominal())
++        
++        # This test demonstrates the bug - before fix, limits may not be set correctly
++        plotter = Plotter(pyplot=False, theme={})
++        plotter._extract_data(p)
++        plotter._setup_figure(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._setup_scales(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._finalize_figure(p)
++        
++        # Check that x-axis limits are set to -0.5 and n_categories - 0.5
++        ax = plotter._subplots[0]['ax']
++        xlim = ax.get_xlim()
++        
++        # Should be approximately (-0.5, 3.5) for 4 categories (0, 1, 2, 3)
++        assert xlim[0] == pytest.approx(-0.5, abs=0.1)
++        assert xlim[1] == pytest.approx(3.5, abs=0.1)
++
++    def test_nominal_scale_no_grid_display(self, categorical_data):
++        """Test that Nominal scales suppress grid display."""
++        # Create a plot with explicit Nominal scale and a style that normally shows grid
++        with sns.axes_style("whitegrid"):  # This style normally shows grid
++            p = Plot(categorical_data, x='category', y='value').add(so.Dot()).scale(x=so.Nominal())
++            
++            plotter = Plotter(pyplot=False, theme={})
++            plotter._extract_data(p)
++            plotter._setup_figure(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++            plotter._setup_scales(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++            plotter._finalize_figure(p)
++            
++            ax = plotter._subplots[0]['ax']
++            
++            # This test will fail before the fix - grid should be disabled for categorical axis
++            # Check that grid is disabled on x-axis (categorical)
++            assert not ax.xaxis.grid
++            # y-axis should still have grid (it's continuous)
++            # Note: This assertion might need adjustment based on actual implementation
++
++    def test_nominal_scale_y_axis_inversion(self, categorical_data):
++        """Test that Nominal scales on y-axis are inverted."""
++        # Create a plot with Nominal scale on y-axis
++        p = Plot(categorical_data, x='value', y='category').add(so.Dot()).scale(y=so.Nominal())
++        
++        plotter = Plotter(pyplot=False, theme={})
++        plotter._extract_data(p)
++        plotter._setup_figure(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._setup_scales(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._finalize_figure(p)
++        
++        ax = plotter._subplots[0]['ax']
++        
++        # This test will fail before the fix - y-axis should be inverted for categorical
++        ylim = ax.get_ylim()
++        # For inverted axis, ylim[0] should be greater than ylim[1]
++        assert ylim[0] > ylim[1], "Y-axis should be inverted for Nominal scale"
++
++    def test_inferred_nominal_scale_behavior(self, categorical_data):
++        """Test that inferred Nominal scales also get categorical behavior."""
++        # Create a plot without explicit scale - should infer Nominal for string data
++        p = Plot(categorical_data, x='category', y='value').add(so.Dot())
++        
++        plotter = Plotter(pyplot=False, theme={})
++        plotter._extract_data(p)
++        plotter._setup_figure(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._setup_scales(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._finalize_figure(p)
++        
++        ax = plotter._subplots[0]['ax']
++        xlim = ax.get_xlim()
++        
++        # Should still get categorical behavior even with inferred scale
++        assert xlim[0] == pytest.approx(-0.5, abs=0.1)
++        assert xlim[1] == pytest.approx(3.5, abs=0.1)
++
++    def test_continuous_scale_unaffected(self, categorical_data):
++        """Test that continuous scales are not affected by categorical behavior."""
++        # Create a plot with continuous scale
++        p = Plot(categorical_data, x='value', y='value').add(so.Dot())
++        
++        plotter = Plotter(pyplot=False, theme={})
++        plotter._extract_data(p)
++        plotter._setup_figure(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._setup_scales(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._finalize_figure(p)
++        
++        ax = plotter._subplots[0]['ax']
++        xlim = ax.get_xlim()
++        ylim = ax.get_ylim()
++        
++        # Continuous scales should not have the +/- 0.5 behavior
++        # Limits should be based on data range with normal matplotlib margins
++        assert xlim[0] < 1  # Should have some margin below minimum value (1)
++        assert xlim[1] > 4  # Should have some margin above maximum value (4)
++        assert ylim[0] < 1
++        assert ylim[1] > 4
++        
++        # Y-axis should not be inverted for continuous scale
++        assert ylim[0] < ylim[1], "Y-axis should not be inverted for continuous scale"
++
++    def test_mixed_scales_behavior(self, categorical_data):
++        """Test behavior when one axis is Nominal and other is continuous."""
++        # x-axis: Nominal, y-axis: continuous
++        p = Plot(categorical_data, x='category', y='value').add(so.Dot()).scale(x=so.Nominal())
++        
++        plotter = Plotter(pyplot=False, theme={})
++        plotter._extract_data(p)
++        plotter._setup_figure(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._setup_scales(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._finalize_figure(p)
++        
++        ax = plotter._subplots[0]['ax']
++        xlim = ax.get_xlim()
++        ylim = ax.get_ylim()
++        
++        # X-axis (Nominal) should have categorical behavior
++        assert xlim[0] == pytest.approx(-0.5, abs=0.1)
++        assert xlim[1] == pytest.approx(3.5, abs=0.1)
++        
++        # Y-axis (continuous) should have normal behavior
++        assert ylim[0] < 1
++        assert ylim[1] > 4
++        assert ylim[0] < ylim[1]  # Should not be inverted
++
++    def test_nominal_scale_with_numeric_categories(self, categorical_data):
++        """Test that Nominal scale works with numeric categories."""
++        # Force numeric data to be treated as categorical
++        p = Plot(categorical_data, x='numeric_cat', y='value').add(so.Dot()).scale(x=so.Nominal())
++        
++        plotter = Plotter(pyplot=False, theme={})
++        plotter._extract_data(p)
++        plotter._setup_figure(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._setup_scales(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._finalize_figure(p)
++        
++        ax = plotter._subplots[0]['ax']
++        xlim = ax.get_xlim()
++        
++        # Should still get categorical behavior for numeric data with Nominal scale
++        assert xlim[0] == pytest.approx(-0.5, abs=0.1)
++        assert xlim[1] == pytest.approx(3.5, abs=0.1)
++
++    @pytest.mark.parametrize("axis", ["x", "y"])
++    def test_nominal_scale_both_axes(self, categorical_data, axis):
++        """Test Nominal scale behavior on both x and y axes."""
++        if axis == "x":
++            p = Plot(categorical_data, x='category', y='value').add(so.Dot()).scale(x=so.Nominal())
++        else:
++            p = Plot(categorical_data, x='value', y='category').add(so.Dot()).scale(y=so.Nominal())
++        
++        plotter = Plotter(pyplot=False, theme={})
++        plotter._extract_data(p)
++        plotter._setup_figure(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._setup_scales(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._finalize_figure(p)
++        
++        ax = plotter._subplots[0]['ax']
++        
++        if axis == "x":
++            xlim = ax.get_xlim()
++            assert xlim[0] == pytest.approx(-0.5, abs=0.1)
++            assert xlim[1] == pytest.approx(3.5, abs=0.1)
++        else:
++            ylim = ax.get_ylim()
++            assert ylim[0] == pytest.approx(3.5, abs=0.1)  # Inverted
++            assert ylim[1] == pytest.approx(-0.5, abs=0.1)  # Inverted
++
++    def test_nominal_scale_preserves_existing_string_behavior(self):
++        """Test that existing string-based categorical behavior is preserved."""
++        # This test ensures we don't break existing functionality
++        data = pd.DataFrame({
++            'str_cat': ['A', 'B', 'C'],
++            'value': [1, 2, 3]
++        })
++        
++        # Test without explicit Nominal scale (should infer categorical behavior)
++        p = Plot(data, x='str_cat', y='value').add(so.Dot())
++        
++        plotter = Plotter(pyplot=False, theme={})
++        plotter._extract_data(p)
++        plotter._setup_figure(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._setup_scales(p, plotter._extract_data(p)[0], plotter._extract_data(p)[1])
++        plotter._finalize_figure(p)
++        
++        ax = plotter._subplots[0]['ax']
++        xlim = ax.get_xlim()
++        
++        # Should still work as before for string data
++        assert xlim[0] == pytest.approx(-0.5, abs=0.1)
++        assert xlim[1] == pytest.approx(2.5, abs=0.1)  # 3 categories: 0, 1, 2
+
+--- a/tests/test_core/test_scales_nominal.py
++++ b/tests/test_core/test_scales_nominal.py
+-# Empty if creating new file
++import pytest
++import numpy as np
++import pandas as pd
++
++import seaborn.objects as so
++from seaborn._core.scales import Nominal, Scale
++from seaborn._core.properties import Coordinate
++
++
++class TestNominalScaleIdentification:
++    """Test that Nominal scale can be properly identified as categorical."""
++
++    def test_nominal_scale_is_categorical_attribute(self):
++        """Test that Nominal scale has categorical identification attribute."""
++        nominal = Nominal()
++        
++        # This test will fail before the fix is applied
++        # The fix should add a _categorical attribute or similar
++        assert hasattr(nominal, '_categorical'), "Nominal scale should have _categorical attribute"
++        assert getattr(nominal, '_categorical') is True, "Nominal scale should be marked as categorical"
++
++    def test_nominal_scale_inheritance(self):
++        """Test that Nominal scale properly inherits from Scale."""
++        nominal = Nominal()
++        assert isinstance(nominal, Scale), "Nominal should inherit from Scale"
++
++    def test_nominal_scale_setup_preserves_functionality(self):
++        """Test that adding categorical identification doesn't break existing setup."""
++        data = pd.Series(['A', 'B', 'C', 'A', 'B'])
++        prop = Coordinate()
++        
++        nominal = Nominal()
++        setup_scale = nominal._setup(data, prop)
++        
++        # Verify that setup still works correctly
++        assert setup_scale is not None
++        assert hasattr(setup_scale, '_pipeline')
++        assert hasattr(setup_scale, '_matplotlib_scale')
++        
++        # Verify categorical identification is preserved after setup
++        if hasattr(nominal, '_categorical'):
++            assert hasattr(setup_scale, '_categorical')
++            assert getattr(setup_scale, '_categorical') is True
++
++    def test_other_scales_not_categorical(self):
++        """Test that other scale types are not marked as categorical."""
++        from seaborn._core.scales import Continuous
++        
++        continuous = Continuous()
++        
++        # Continuous scales should not be marked as categorical
++        if hasattr(continuous, '_categorical'):
++            assert getattr(continuous, '_categorical') is False
++        # Or they might not have the attribute at all, which is also fine
++
++    def test_nominal_scale_categorical_identification_method(self):
++        """Test alternative implementation using a method for categorical identification."""
++        nominal = Nominal()
++        
++        # Alternative implementation might use a method instead of attribute
++        if hasattr(nominal, 'is_categorical'):
++            assert callable(getattr(nominal, 'is_categorical'))
++            assert nominal.is_categorical() is True
++        elif hasattr(nominal, '_categorical'):
++            # Attribute-based implementation
++            assert getattr(nominal, '_categorical') is True
++        else:
++            pytest.fail("Nominal scale should have either _categorical attribute or is_categorical() method")

@@ -1,0 +1,216 @@
+--- a/tests/db_functions/test_value_optimization.py
++++ b/tests/db_functions/test_value_optimization.py
+-# Empty if creating new file
++import pytest
++from django.core.validators import MaxLengthValidator
++from django.db import models
++from django.db.models import Value
++from django.db.models.fields import CharField, BinaryField
++from django.test import TestCase
++
++
++class ValueOptimizationTests(TestCase):
++    """
++    Test suite for the CharField optimization in Value._resolve_output_field().
++    
++    This tests the fix for the issue where CharField.__init__ unconditionally
++    creates a MaxLengthValidator even when max_length is None, causing
++    performance issues and potential errors.
++    """
++
++    def test_value_resolve_output_field_creates_charfield_without_max_length_validator_when_none(self):
++        """
++        Test that Value._resolve_output_field() creates a CharField without
++        MaxLengthValidator when max_length is None.
++        
++        This test demonstrates the bug fix - before the fix, a MaxLengthValidator
++        would be created with None as the limit value, causing issues.
++        """
++        value = Value('test')
++        output_field = value._resolve_output_field()
++        
++        # The output field should be a CharField
++        self.assertIsInstance(output_field, CharField)
++        
++        # The CharField should not have any MaxLengthValidator when max_length is None
++        max_length_validators = [
++            validator for validator in output_field.validators
++            if isinstance(validator, MaxLengthValidator)
++        ]
++        self.assertEqual(len(max_length_validators), 0)
++        
++        # max_length should be None
++        self.assertIsNone(output_field.max_length)
++
++    def test_charfield_with_explicit_max_length_still_has_validator(self):
++        """
++        Test that CharField with explicit max_length still gets MaxLengthValidator.
++        
++        This ensures the fix doesn't break existing functionality for normal
++        CharField usage with max_length specified.
++        """
++        field = CharField(max_length=100)
++        
++        # Should have exactly one MaxLengthValidator
++        max_length_validators = [
++            validator for validator in field.validators
++            if isinstance(validator, MaxLengthValidator)
++        ]
++        self.assertEqual(len(max_length_validators), 1)
++        self.assertEqual(max_length_validators[0].limit_value, 100)
++
++    def test_charfield_without_max_length_has_no_validator(self):
++        """
++        Test that CharField without max_length has no MaxLengthValidator.
++        
++        This is the core test for the bug fix - CharField() with no max_length
++        should not create a MaxLengthValidator.
++        """
++        field = CharField()
++        
++        # Should have no MaxLengthValidator
++        max_length_validators = [
++            validator for validator in field.validators
++            if isinstance(validator, MaxLengthValidator)
++        ]
++        self.assertEqual(len(max_length_validators), 0)
++
++    def test_charfield_with_none_max_length_has_no_validator(self):
++        """
++        Test that CharField with explicit max_length=None has no MaxLengthValidator.
++        """
++        field = CharField(max_length=None)
++        
++        # Should have no MaxLengthValidator
++        max_length_validators = [
++            validator for validator in field.validators
++            if isinstance(validator, MaxLengthValidator)
++        ]
++        self.assertEqual(len(max_length_validators), 0)
++
++    def test_binaryfield_behavior_unchanged(self):
++        """
++        Test that BinaryField behavior remains unchanged as a reference.
++        
++        BinaryField already implements the conditional validator pattern
++        that CharField should follow.
++        """
++        # BinaryField without max_length
++        field1 = BinaryField()
++        max_length_validators1 = [
++            validator for validator in field1.validators
++            if isinstance(validator, MaxLengthValidator)
++        ]
++        self.assertEqual(len(max_length_validators1), 0)
++        
++        # BinaryField with max_length
++        field2 = BinaryField(max_length=100)
++        max_length_validators2 = [
++            validator for validator in field2.validators
++            if isinstance(validator, MaxLengthValidator)
++        ]
++        self.assertEqual(len(max_length_validators2), 1)
++        self.assertEqual(max_length_validators2[0].limit_value, 100)
++
++    def test_value_resolve_output_field_performance_improvement(self):
++        """
++        Test that demonstrates the performance improvement by avoiding
++        unnecessary validator creation.
++        
++        This test verifies that no MaxLengthValidator is created when
++        Value._resolve_output_field() is called, which was the source
++        of the performance issue.
++        """
++        import time
++        
++        # Create multiple Value instances and resolve their output fields
++        values = [Value(f'test_{i}') for i in range(100)]
++        
++        start_time = time.time()
++        output_fields = [value._resolve_output_field() for value in values]
++        end_time = time.time()
++        
++        # Verify all fields are CharField instances without MaxLengthValidator
++        for field in output_fields:
++            self.assertIsInstance(field, CharField)
++            max_length_validators = [
++                validator for validator in field.validators
++                if isinstance(validator, MaxLengthValidator)
++            ]
++            self.assertEqual(len(max_length_validators), 0)
++        
++        # The test should complete quickly (this is more of a smoke test)
++        # The actual performance improvement would be measured with profiling tools
++        self.assertLess(end_time - start_time, 1.0)  # Should complete in under 1 second
++
++    def test_charfield_validator_error_before_fix_simulation(self):
++        """
++        Test that simulates the error that would occur before the fix.
++        
++        This test demonstrates what would happen if MaxLengthValidator
++        was created with None as the limit value.
++        """
++        # Create a MaxLengthValidator with None (simulating the bug)
++        validator = MaxLengthValidator(None)
++        
++        # This should raise TypeError when trying to validate
++        with self.assertRaises(TypeError):
++            validator('test')
++
++    def test_value_different_types_still_work(self):
++        """
++        Test that Value._resolve_output_field() works correctly for different types.
++        
++        This ensures the fix doesn't break other type resolutions.
++        """
++        # String value
++        string_value = Value('test')
++        string_field = string_value._resolve_output_field()
++        self.assertIsInstance(string_field, CharField)
++        
++        # Boolean value
++        bool_value = Value(True)
++        bool_field = bool_value._resolve_output_field()
++        self.assertIsInstance(bool_field, models.BooleanField)
++        
++        # Integer value
++        int_value = Value(42)
++        int_field = int_value._resolve_output_field()
++        self.assertIsInstance(int_field, models.IntegerField)
++        
++        # Float value
++        float_value = Value(3.14)
++        float_field = float_value._resolve_output_field()
++        self.assertIsInstance(float_field, models.FloatField)
++
++    def test_charfield_clean_method_works_without_max_length(self):
++        """
++        Test that CharField.clean() method works properly when no MaxLengthValidator is present.
++        
++        This ensures that removing the validator doesn't break field validation.
++        """
++        field = CharField()
++        
++        # clean() should work without issues
++        try:
++            cleaned_value = field.clean('test', model_instance=None)
++            self.assertEqual(cleaned_value, 'test')
++        except Exception as e:
++            self.fail(f"CharField.clean() raised an exception: {e}")
++
++    def test_charfield_with_max_length_validation_still_works(self):
++        """
++        Test that CharField with max_length still performs validation correctly.
++        
++        This ensures the fix doesn't break existing validation functionality.
++        """
++        field = CharField(max_length=5)
++        
++        # Valid value should pass
++        cleaned_value = field.clean('test', model_instance=None)
++        self.assertEqual(cleaned_value, 'test')
++        
++        # Invalid value should raise ValidationError
++        from django.core.exceptions import ValidationError
++        with self.assertRaises(ValidationError):
++            field.clean('toolong', model_instance=None)

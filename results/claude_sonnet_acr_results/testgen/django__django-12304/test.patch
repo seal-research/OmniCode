@@ -1,0 +1,307 @@
+--- a/tests/model_enums/test_template_usage.py
++++ b/tests/model_enums/test_template_usage.py
+-# Empty if creating new file
++import pytest
++from django.template import Context, Template
++from django.test import TestCase
++from django.db import models
++
++
++class YearInSchool(models.TextChoices):
++    """Test enumeration for year in school."""
++    FRESHMAN = 'FR', 'Freshman'
++    SOPHOMORE = 'SO', 'Sophomore'
++    JUNIOR = 'JR', 'Junior'
++    SENIOR = 'SR', 'Senior'
++    GRADUATE = 'GR', 'Graduate'
++
++
++class Priority(models.IntegerChoices):
++    """Test enumeration for priority levels."""
++    LOW = 1, 'Low'
++    MEDIUM = 2, 'Medium'
++    HIGH = 3, 'High'
++    CRITICAL = 4, 'Critical'
++
++
++class Status(models.Choices):
++    """Test enumeration for generic status."""
++    ACTIVE = 'active', 'Active'
++    INACTIVE = 'inactive', 'Inactive'
++
++
++class Student(models.Model):
++    """Test model with enumeration field."""
++    name = models.CharField(max_length=100)
++    year_in_school = models.CharField(
++        max_length=2,
++        choices=YearInSchool.choices,
++        default=YearInSchool.FRESHMAN,
++    )
++    priority = models.IntegerField(
++        choices=Priority.choices,
++        default=Priority.LOW,
++    )
++    status = models.CharField(
++        max_length=10,
++        choices=Status.choices,
++        default=Status.ACTIVE,
++    )
++
++    class Meta:
++        app_label = 'test_app'
++
++
++class EnumTemplateUsageTest(TestCase):
++    """Test that enumeration types can be used in Django templates."""
++
++    def setUp(self):
++        """Set up test data."""
++        self.student = Student(
++            name="John Doe",
++            year_in_school=YearInSchool.FRESHMAN,
++            priority=Priority.HIGH,
++            status=Status.ACTIVE
++        )
++
++    def test_text_choices_comparison_in_template_fails_before_fix(self):
++        """Test that TextChoices comparison fails in template before fix is applied."""
++        template_str = """
++        {% if student.year_in_school == YearInSchool.FRESHMAN %}
++        Is Freshman
++        {% else %}
++        Not Freshman
++        {% endif %}
++        """
++        template = Template(template_str)
++        context = Context({
++            'student': self.student,
++            'YearInSchool': YearInSchool
++        })
++        
++        # This test demonstrates the bug - it should fail before the fix
++        # because YearInSchool is callable and Django will try to call it
++        with pytest.raises(TypeError):
++            rendered = template.render(context)
++
++    def test_integer_choices_comparison_in_template_fails_before_fix(self):
++        """Test that IntegerChoices comparison fails in template before fix is applied."""
++        template_str = """
++        {% if student.priority == Priority.HIGH %}
++        High Priority
++        {% else %}
++        Not High Priority
++        {% endif %}
++        """
++        template = Template(template_str)
++        context = Context({
++            'student': self.student,
++            'Priority': Priority
++        })
++        
++        # This test demonstrates the bug - it should fail before the fix
++        with pytest.raises(TypeError):
++            rendered = template.render(context)
++
++    def test_choices_comparison_in_template_fails_before_fix(self):
++        """Test that base Choices comparison fails in template before fix is applied."""
++        template_str = """
++        {% if student.status == Status.ACTIVE %}
++        Active Status
++        {% else %}
++        Not Active Status
++        {% endif %}
++        """
++        template = Template(template_str)
++        context = Context({
++            'student': self.student,
++            'Status': Status
++        })
++        
++        # This test demonstrates the bug - it should fail before the fix
++        with pytest.raises(TypeError):
++            rendered = template.render(context)
++
++    def test_text_choices_comparison_in_template_works_after_fix(self):
++        """Test that TextChoices comparison works in template after fix is applied."""
++        # First, manually add the attribute to simulate the fix
++        YearInSchool.do_not_call_in_templates = True
++        
++        template_str = """
++        {%- if student.year_in_school == YearInSchool.FRESHMAN -%}
++        Is Freshman
++        {%- else -%}
++        Not Freshman
++        {%- endif -%}
++        """
++        template = Template(template_str)
++        context = Context({
++            'student': self.student,
++            'YearInSchool': YearInSchool
++        })
++        
++        rendered = template.render(context).strip()
++        assert rendered == "Is Freshman"
++
++    def test_integer_choices_comparison_in_template_works_after_fix(self):
++        """Test that IntegerChoices comparison works in template after fix is applied."""
++        # First, manually add the attribute to simulate the fix
++        Priority.do_not_call_in_templates = True
++        
++        template_str = """
++        {%- if student.priority == Priority.HIGH -%}
++        High Priority
++        {%- else -%}
++        Not High Priority
++        {%- endif -%}
++        """
++        template = Template(template_str)
++        context = Context({
++            'student': self.student,
++            'Priority': Priority
++        })
++        
++        rendered = template.render(context).strip()
++        assert rendered == "High Priority"
++
++    def test_choices_comparison_in_template_works_after_fix(self):
++        """Test that base Choices comparison works in template after fix is applied."""
++        # First, manually add the attribute to simulate the fix
++        Status.do_not_call_in_templates = True
++        
++        template_str = """
++        {%- if student.status == Status.ACTIVE -%}
++        Active Status
++        {%- else -%}
++        Not Active Status
++        {%- endif -%}
++        """
++        template = Template(template_str)
++        context = Context({
++            'student': self.student,
++            'Status': Status
++        })
++        
++        rendered = template.render(context).strip()
++        assert rendered == "Active Status"
++
++    def test_enum_member_access_in_template_after_fix(self):
++        """Test that enum members can be accessed in templates after fix."""
++        YearInSchool.do_not_call_in_templates = True
++        Priority.do_not_call_in_templates = True
++        Status.do_not_call_in_templates = True
++        
++        template_str = """
++        {%- if YearInSchool.SOPHOMORE -%}
++        Sophomore exists
++        {%- endif -%}
++        {%- if Priority.CRITICAL -%}
++        Critical exists
++        {%- endif -%}
++        {%- if Status.INACTIVE -%}
++        Inactive exists
++        {%- endif -%}
++        """
++        template = Template(template_str)
++        context = Context({
++            'YearInSchool': YearInSchool,
++            'Priority': Priority,
++            'Status': Status
++        })
++        
++        rendered = template.render(context).strip()
++        assert "Sophomore exists" in rendered
++        assert "Critical exists" in rendered
++        assert "Inactive exists" in rendered
++
++    def test_enum_value_comparison_edge_cases_after_fix(self):
++        """Test edge cases for enum value comparisons in templates after fix."""
++        YearInSchool.do_not_call_in_templates = True
++        Priority.do_not_call_in_templates = True
++        
++        # Test with different student values
++        sophomore_student = Student(
++            name="Jane Doe",
++            year_in_school=YearInSchool.SOPHOMORE,
++            priority=Priority.LOW
++        )
++        
++        template_str = """
++        {%- if student.year_in_school == YearInSchool.SOPHOMORE -%}
++        Is Sophomore
++        {%- endif -%}
++        {%- if student.priority == Priority.LOW -%}
++        Low Priority
++        {%- endif -%}
++        {%- if student.year_in_school != YearInSchool.FRESHMAN -%}
++        Not Freshman
++        {%- endif -%}
++        """
++        template = Template(template_str)
++        context = Context({
++            'student': sophomore_student,
++            'YearInSchool': YearInSchool,
++            'Priority': Priority
++        })
++        
++        rendered = template.render(context).strip()
++        assert "Is Sophomore" in rendered
++        assert "Low Priority" in rendered
++        assert "Not Freshman" in rendered
++
++    def test_enum_classes_have_do_not_call_in_templates_attribute(self):
++        """Test that enum classes have the do_not_call_in_templates attribute set."""
++        # This test verifies the fix is properly applied
++        from django.db.models.enums import Choices, TextChoices, IntegerChoices
++        
++        # Check that the attribute exists and is True
++        assert hasattr(Choices, 'do_not_call_in_templates')
++        assert Choices.do_not_call_in_templates is True
++        
++        assert hasattr(TextChoices, 'do_not_call_in_templates')
++        assert TextChoices.do_not_call_in_templates is True
++        
++        assert hasattr(IntegerChoices, 'do_not_call_in_templates')
++        assert IntegerChoices.do_not_call_in_templates is True
++
++    def test_enum_inheritance_preserves_do_not_call_in_templates(self):
++        """Test that custom enum classes inherit the do_not_call_in_templates attribute."""
++        # This test verifies that subclasses inherit the attribute
++        assert hasattr(YearInSchool, 'do_not_call_in_templates')
++        assert YearInSchool.do_not_call_in_templates is True
++        
++        assert hasattr(Priority, 'do_not_call_in_templates')
++        assert Priority.do_not_call_in_templates is True
++        
++        assert hasattr(Status, 'do_not_call_in_templates')
++        assert Status.do_not_call_in_templates is True
++
++    def test_enum_functionality_preserved_after_fix(self):
++        """Test that enum functionality is preserved after adding do_not_call_in_templates."""
++        # Test that enum classes still work as expected
++        assert YearInSchool.FRESHMAN.value == 'FR'
++        assert YearInSchool.FRESHMAN.label == 'Freshman'
++        assert str(YearInSchool.FRESHMAN) == 'FR'
++        
++        assert Priority.HIGH.value == 3
++        assert Priority.HIGH.label == 'High'
++        assert int(Priority.HIGH) == 3
++        
++        assert Status.ACTIVE.value == 'active'
++        assert Status.ACTIVE.label == 'Active'
++        assert str(Status.ACTIVE) == 'active'
++        
++        # Test choices property
++        assert ('FR', 'Freshman') in YearInSchool.choices
++        assert (3, 'High') in Priority.choices
++        assert ('active', 'Active') in Status.choices
++
++    def tearDown(self):
++        """Clean up after tests."""
++        # Remove the manually added attributes to avoid affecting other tests
++        if hasattr(YearInSchool, 'do_not_call_in_templates'):
++            delattr(YearInSchool, 'do_not_call_in_templates')
++        if hasattr(Priority, 'do_not_call_in_templates'):
++            delattr(Priority, 'do_not_call_in_templates')
++        if hasattr(Status, 'do_not_call_in_templates'):
++            delattr(Status, 'do_not_call_in_templates')

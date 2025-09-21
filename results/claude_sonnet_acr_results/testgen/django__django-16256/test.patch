@@ -1,0 +1,336 @@
+--- a/tests/test_related_managers_async.py
++++ b/tests/test_related_managers_async.py
+-# Empty if creating new file
++import pytest
++from asgiref.sync import sync_to_async
++from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
++from django.contrib.contenttypes.models import ContentType
++from django.db import models
++from django.test import TestCase, TransactionTestCase
++
++
++# Test models for related managers
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'test_related_managers_async'
++
++
++class Book(models.Model):
++    title = models.CharField(max_length=100)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE, related_name='books')
++    
++    class Meta:
++        app_label = 'test_related_managers_async'
++
++
++class Category(models.Model):
++    name = models.CharField(max_length=100)
++    books = models.ManyToManyField(Book, related_name='categories')
++    
++    class Meta:
++        app_label = 'test_related_managers_async'
++
++
++class Tag(models.Model):
++    name = models.CharField(max_length=100)
++    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
++    object_id = models.PositiveIntegerField()
++    content_object = GenericForeignKey('content_type', 'object_id')
++    
++    class Meta:
++        app_label = 'test_related_managers_async'
++
++
++class TaggedItem(models.Model):
++    name = models.CharField(max_length=100)
++    tags = GenericRelation(Tag)
++    
++    class Meta:
++        app_label = 'test_related_managers_async'
++
++
++@pytest.mark.django_db
++class TestRelatedManagersAsync:
++    """Test async methods on related managers work correctly."""
++    
++    @pytest.fixture
++    def author(self):
++        return Author.objects.create(name="Test Author")
++    
++    @pytest.fixture
++    def book(self, author):
++        return Book.objects.create(title="Test Book", author=author)
++    
++    @pytest.fixture
++    def category(self):
++        return Category.objects.create(name="Test Category")
++    
++    @pytest.fixture
++    def tagged_item(self):
++        return TaggedItem.objects.create(name="Test Item")
++
++    @pytest.mark.asyncio
++    async def test_reverse_foreign_key_acreate_calls_manager_create(self, author):
++        """Test that acreate on reverse FK manager calls the manager's create method."""
++        # This should call the related manager's create method, not QuerySet's
++        book = await author.books.acreate(title="Async Book")
++        
++        # Verify the book was created with the correct foreign key
++        assert book.title == "Async Book"
++        assert book.author == author
++        assert book.author_id == author.id
++        
++        # Verify it was actually saved to the database
++        saved_book = await sync_to_async(Book.objects.get)(id=book.id)
++        assert saved_book.title == "Async Book"
++        assert saved_book.author == author
++
++    @pytest.mark.asyncio
++    async def test_reverse_foreign_key_aget_or_create_calls_manager_method(self, author):
++        """Test that aget_or_create on reverse FK manager calls the manager's method."""
++        # Create a book first
++        existing_book = await author.books.acreate(title="Existing Book")
++        
++        # Test get_or_create with existing object
++        book, created = await author.books.aget_or_create(title="Existing Book")
++        assert not created
++        assert book.id == existing_book.id
++        assert book.author == author
++        
++        # Test get_or_create with new object
++        new_book, created = await author.books.aget_or_create(title="New Book")
++        assert created
++        assert new_book.title == "New Book"
++        assert new_book.author == author
++        assert new_book.author_id == author.id
++
++    @pytest.mark.asyncio
++    async def test_reverse_foreign_key_aupdate_or_create_calls_manager_method(self, author):
++        """Test that aupdate_or_create on reverse FK manager calls the manager's method."""
++        # Test update_or_create with new object
++        book, created = await author.books.aupdate_or_create(
++            title="Test Book",
++            defaults={'title': 'Updated Book'}
++        )
++        assert created
++        assert book.title == "Test Book"  # defaults not used when creating
++        assert book.author == author
++        assert book.author_id == author.id
++        
++        # Test update_or_create with existing object
++        updated_book, created = await author.books.aupdate_or_create(
++            title="Test Book",
++            defaults={'title': 'Updated Book'}
++        )
++        assert not created
++        assert updated_book.id == book.id
++        assert updated_book.title == "Updated Book"  # defaults used when updating
++        assert updated_book.author == author
++
++    @pytest.mark.asyncio
++    async def test_many_to_many_acreate_calls_manager_create(self, category):
++        """Test that acreate on M2M manager calls the manager's create method."""
++        # This should call the related manager's create method, not QuerySet's
++        book = await category.books.acreate(title="M2M Book", author_id=1)
++        
++        # Verify the book was created
++        assert book.title == "M2M Book"
++        
++        # Verify the M2M relationship was established
++        books_in_category = await sync_to_async(list)(category.books.all())
++        assert book in books_in_category
++
++    @pytest.mark.asyncio
++    async def test_many_to_many_aget_or_create_calls_manager_method(self, category, author):
++        """Test that aget_or_create on M2M manager calls the manager's method."""
++        # Create a book first and add to category
++        existing_book = await sync_to_async(Book.objects.create)(title="Existing M2M Book", author=author)
++        await sync_to_async(category.books.add)(existing_book)
++        
++        # Test get_or_create with existing object
++        book, created = await category.books.aget_or_create(title="Existing M2M Book", author=author)
++        assert not created
++        assert book.id == existing_book.id
++        
++        # Verify the M2M relationship exists
++        books_in_category = await sync_to_async(list)(category.books.all())
++        assert book in books_in_category
++        
++        # Test get_or_create with new object
++        new_book, created = await category.books.aget_or_create(title="New M2M Book", author=author)
++        assert created
++        assert new_book.title == "New M2M Book"
++        
++        # Verify the M2M relationship was established
++        books_in_category = await sync_to_async(list)(category.books.all())
++        assert new_book in books_in_category
++
++    @pytest.mark.asyncio
++    async def test_many_to_many_aupdate_or_create_calls_manager_method(self, category, author):
++        """Test that aupdate_or_create on M2M manager calls the manager's method."""
++        # Test update_or_create with new object
++        book, created = await category.books.aupdate_or_create(
++            title="M2M Test Book",
++            author=author,
++            defaults={'title': 'M2M Updated Book'}
++        )
++        assert created
++        assert book.title == "M2M Test Book"  # defaults not used when creating
++        
++        # Verify the M2M relationship was established
++        books_in_category = await sync_to_async(list)(category.books.all())
++        assert book in books_in_category
++        
++        # Test update_or_create with existing object
++        updated_book, created = await category.books.aupdate_or_create(
++            title="M2M Test Book",
++            author=author,
++            defaults={'title': 'M2M Updated Book'}
++        )
++        assert not created
++        assert updated_book.id == book.id
++        assert updated_book.title == "M2M Updated Book"  # defaults used when updating
++
++    @pytest.mark.asyncio
++    async def test_generic_foreign_key_acreate_calls_manager_create(self, tagged_item):
++        """Test that acreate on generic FK manager calls the manager's create method."""
++        # This should call the related manager's create method, not QuerySet's
++        tag = await tagged_item.tags.acreate(name="Async Tag")
++        
++        # Verify the tag was created with correct generic FK fields
++        assert tag.name == "Async Tag"
++        assert tag.content_object == tagged_item
++        assert tag.object_id == tagged_item.id
++        assert tag.content_type == ContentType.objects.get_for_model(TaggedItem)
++
++    @pytest.mark.asyncio
++    async def test_generic_foreign_key_aget_or_create_calls_manager_method(self, tagged_item):
++        """Test that aget_or_create on generic FK manager calls the manager's method."""
++        # Create a tag first
++        existing_tag = await tagged_item.tags.acreate(name="Existing Tag")
++        
++        # Test get_or_create with existing object
++        tag, created = await tagged_item.tags.aget_or_create(name="Existing Tag")
++        assert not created
++        assert tag.id == existing_tag.id
++        assert tag.content_object == tagged_item
++        
++        # Test get_or_create with new object
++        new_tag, created = await tagged_item.tags.aget_or_create(name="New Tag")
++        assert created
++        assert new_tag.name == "New Tag"
++        assert new_tag.content_object == tagged_item
++        assert new_tag.object_id == tagged_item.id
++
++    @pytest.mark.asyncio
++    async def test_generic_foreign_key_aupdate_or_create_calls_manager_method(self, tagged_item):
++        """Test that aupdate_or_create on generic FK manager calls the manager's method."""
++        # Test update_or_create with new object
++        tag, created = await tagged_item.tags.aupdate_or_create(
++            name="Generic Test Tag",
++            defaults={'name': 'Generic Updated Tag'}
++        )
++        assert created
++        assert tag.name == "Generic Test Tag"  # defaults not used when creating
++        assert tag.content_object == tagged_item
++        assert tag.object_id == tagged_item.id
++        
++        # Test update_or_create with existing object
++        updated_tag, created = await tagged_item.tags.aupdate_or_create(
++            name="Generic Test Tag",
++            defaults={'name': 'Generic Updated Tag'}
++        )
++        assert not created
++        assert updated_tag.id == tag.id
++        assert updated_tag.name == "Generic Updated Tag"  # defaults used when updating
++        assert updated_tag.content_object == tagged_item
++
++    @pytest.mark.asyncio
++    async def test_async_methods_preserve_database_routing(self, author):
++        """Test that async methods on related managers preserve database routing."""
++        # This test ensures that the database routing logic in related managers
++        # is preserved when using async methods
++        book = await author.books.acreate(title="DB Routing Test")
++        
++        # The book should be created with the correct database routing
++        # (in this case, default database, but the routing logic should be called)
++        assert book.title == "DB Routing Test"
++        assert book.author == author
++
++    @pytest.mark.asyncio
++    async def test_async_methods_with_through_defaults(self, category, author):
++        """Test that async methods work with through_defaults for M2M relationships."""
++        # Create a book and test through_defaults functionality
++        book, created = await category.books.aget_or_create(
++            title="Through Defaults Book",
++            author=author,
++            through_defaults={}  # Empty through_defaults should work
++        )
++        assert created
++        assert book.title == "Through Defaults Book"
++        
++        # Verify the M2M relationship was established
++        books_in_category = await sync_to_async(list)(category.books.all())
++        assert book in books_in_category
++
++
++@pytest.mark.django_db
++class TestAsyncMethodsBugReproduction:
++    """Test cases that reproduce the original bug before the fix."""
++    
++    @pytest.fixture
++    def author(self):
++        return Author.objects.create(name="Bug Test Author")
++
++    @pytest.mark.asyncio
++    async def test_acreate_without_fix_would_fail_foreign_key_assignment(self, author):
++        """
++        This test demonstrates the bug: without the fix, acreate would call
++        QuerySet.create() instead of the related manager's create(), which
++        would not set the foreign key properly.
++        """
++        # With the fix, this should work correctly
++        book = await author.books.acreate(title="Bug Test Book")
++        
++        # The foreign key should be set correctly
++        assert book.author == author
++        assert book.author_id == author.id
++        
++        # Verify it was saved to the database with the correct FK
++        saved_book = await sync_to_async(Book.objects.get)(id=book.id)
++        assert saved_book.author_id == author.id
++
++    @pytest.mark.asyncio
++    async def test_aget_or_create_without_fix_would_fail_foreign_key_assignment(self, author):
++        """
++        This test demonstrates the bug: without the fix, aget_or_create would call
++        QuerySet.get_or_create() instead of the related manager's get_or_create(),
++        which would not set the foreign key properly.
++        """
++        # With the fix, this should work correctly
++        book, created = await author.books.aget_or_create(title="Bug Test Book 2")
++        
++        assert created
++        # The foreign key should be set correctly
++        assert book.author == author
++        assert book.author_id == author.id
++
++    @pytest.mark.asyncio
++    async def test_aupdate_or_create_without_fix_would_fail_foreign_key_assignment(self, author):
++        """
++        This test demonstrates the bug: without the fix, aupdate_or_create would call
++        QuerySet.update_or_create() instead of the related manager's update_or_create(),
++        which would not set the foreign key properly.
++        """
++        # With the fix, this should work correctly
++        book, created = await author.books.aupdate_or_create(
++            title="Bug Test Book 3",
++            defaults={'title': 'Updated Bug Test Book 3'}
++        )
++        
++        assert created
++        # The foreign key should be set correctly
++        assert book.author == author
++        assert book.author_id == author.id

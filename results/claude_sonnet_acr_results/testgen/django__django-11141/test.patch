@@ -1,0 +1,263 @@
+--- a/tests/migrations/test_loader.py
++++ b/tests/migrations/test_loader.py
+-# Empty if creating new file
++import os
++import tempfile
++import shutil
++import sys
++from unittest import mock
++import pytest
++from django.test import TestCase, override_settings
++from django.apps import apps
++from django.db.migrations.loader import MigrationLoader
++from django.db import connection
++from django.conf import settings
++from django.apps.config import AppConfig
++
++
++class NamespacePackageMigrationTests(TestCase):
++    """
++    Test that migration loader works with namespace packages (directories without __init__.py).
++    This tests the fix for the issue where migrations directories without __init__.py files
++    were not recognized due to the __file__ attribute check.
++    """
++
++    def setUp(self):
++        """Set up temporary directories for testing namespace packages."""
++        self.temp_dir = tempfile.mkdtemp()
++        self.addCleanup(shutil.rmtree, self.temp_dir)
++        
++        # Create a temporary app directory structure
++        self.app_dir = os.path.join(self.temp_dir, 'test_namespace_app')
++        os.makedirs(self.app_dir)
++        
++        # Create migrations directory WITHOUT __init__.py (namespace package)
++        self.migrations_dir = os.path.join(self.app_dir, 'migrations')
++        os.makedirs(self.migrations_dir)
++        
++        # Create a sample migration file
++        migration_content = '''
++from django.db import migrations
++
++class Migration(migrations.Migration):
++    initial = True
++    dependencies = []
++    operations = []
++'''
++        with open(os.path.join(self.migrations_dir, '0001_initial.py'), 'w') as f:
++            f.write(migration_content)
++        
++        # Add temp directory to Python path
++        sys.path.insert(0, self.temp_dir)
++        self.addCleanup(lambda: sys.path.remove(self.temp_dir))
++
++    def test_namespace_package_migrations_are_loaded(self):
++        """
++        Test that migrations in namespace packages (without __init__.py) are properly loaded.
++        This should pass after the fix is applied.
++        """
++        # Mock an app config for our test app
++        with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++            mock_app_config = mock.Mock(spec=AppConfig)
++            mock_app_config.label = 'test_namespace_app'
++            mock_app_config.name = 'test_namespace_app'
++            mock_get_configs.return_value = [mock_app_config]
++            
++            # Mock the migrations_module method to return our namespace package
++            with mock.patch.object(MigrationLoader, 'migrations_module') as mock_migrations_module:
++                mock_migrations_module.return_value = ('test_namespace_app.migrations', True)
++                
++                loader = MigrationLoader(connection, load=False)
++                loader.load_disk()
++                
++                # The app should be in migrated_apps, not unmigrated_apps
++                self.assertIn('test_namespace_app', loader.migrated_apps)
++                self.assertNotIn('test_namespace_app', loader.unmigrated_apps)
++
++    def test_namespace_package_migrations_before_fix(self):
++        """
++        Test that demonstrates the bug before the fix is applied.
++        This test should fail before the fix and pass after.
++        """
++        # Create a mock module that simulates a namespace package (no __file__ attribute)
++        mock_module = mock.Mock()
++        del mock_module.__file__  # Namespace packages don't have __file__
++        mock_module.__path__ = [self.migrations_dir]  # But they do have __path__
++        
++        # Mock the import_module to return our namespace package mock
++        with mock.patch('django.db.migrations.loader.import_module') as mock_import:
++            mock_import.return_value = mock_module
++            
++            # Mock pkgutil.iter_modules to return our migration file
++            with mock.patch('django.db.migrations.loader.pkgutil.iter_modules') as mock_iter:
++                mock_iter.return_value = [('', '0001_initial', False)]
++                
++                # Mock the migration module import
++                mock_migration_module = mock.Mock()
++                mock_migration_module.Migration = mock.Mock()
++                
++                with mock.patch('django.db.migrations.loader.import_module') as mock_import_migration:
++                    def side_effect(module_name):
++                        if module_name.endswith('.migrations'):
++                            return mock_module
++                        elif module_name.endswith('.0001_initial'):
++                            return mock_migration_module
++                        return mock.Mock()
++                    
++                    mock_import_migration.side_effect = side_effect
++                    
++                    # Mock an app config
++                    with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                        mock_app_config = mock.Mock(spec=AppConfig)
++                        mock_app_config.label = 'test_namespace_app'
++                        mock_get_configs.return_value = [mock_app_config]
++                        
++                        with mock.patch.object(MigrationLoader, 'migrations_module') as mock_migrations_module:
++                            mock_migrations_module.return_value = ('test_namespace_app.migrations', True)
++                            
++                            loader = MigrationLoader(connection, load=False)
++                            loader.load_disk()
++                            
++                            # After the fix, namespace packages should be recognized as migrated
++                            self.assertIn('test_namespace_app', loader.migrated_apps)
++                            self.assertNotIn('test_namespace_app', loader.unmigrated_apps)
++
++    def test_regular_package_migrations_still_work(self):
++        """
++        Test that regular packages with __init__.py still work after the fix.
++        This ensures backward compatibility.
++        """
++        # Create migrations directory WITH __init__.py (regular package)
++        regular_migrations_dir = os.path.join(self.temp_dir, 'regular_app', 'migrations')
++        os.makedirs(regular_migrations_dir)
++        
++        # Create __init__.py
++        with open(os.path.join(regular_migrations_dir, '__init__.py'), 'w') as f:
++            f.write('')
++        
++        # Create a sample migration file
++        migration_content = '''
++from django.db import migrations
++
++class Migration(migrations.Migration):
++    initial = True
++    dependencies = []
++    operations = []
++'''
++        with open(os.path.join(regular_migrations_dir, '0001_initial.py'), 'w') as f:
++            f.write(migration_content)
++        
++        # Create a mock module that simulates a regular package (has __file__ attribute)
++        mock_module = mock.Mock()
++        mock_module.__file__ = os.path.join(regular_migrations_dir, '__init__.py')
++        mock_module.__path__ = [regular_migrations_dir]
++        
++        with mock.patch('django.db.migrations.loader.import_module') as mock_import:
++            mock_import.return_value = mock_module
++            
++            with mock.patch('django.db.migrations.loader.pkgutil.iter_modules') as mock_iter:
++                mock_iter.return_value = [('', '0001_initial', False)]
++                
++                mock_migration_module = mock.Mock()
++                mock_migration_module.Migration = mock.Mock()
++                
++                with mock.patch('django.db.migrations.loader.import_module') as mock_import_migration:
++                    def side_effect(module_name):
++                        if module_name.endswith('.migrations'):
++                            return mock_module
++                        elif module_name.endswith('.0001_initial'):
++                            return mock_migration_module
++                        return mock.Mock()
++                    
++                    mock_import_migration.side_effect = side_effect
++                    
++                    with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                        mock_app_config = mock.Mock(spec=AppConfig)
++                        mock_app_config.label = 'regular_app'
++                        mock_get_configs.return_value = [mock_app_config]
++                        
++                        with mock.patch.object(MigrationLoader, 'migrations_module') as mock_migrations_module:
++                            mock_migrations_module.return_value = ('regular_app.migrations', True)
++                            
++                            loader = MigrationLoader(connection, load=False)
++                            loader.load_disk()
++                            
++                            # Regular packages should still work
++                            self.assertIn('regular_app', loader.migrated_apps)
++                            self.assertNotIn('regular_app', loader.unmigrated_apps)
++
++    def test_module_without_path_attribute_is_unmigrated(self):
++        """
++        Test that modules without __path__ attribute are still treated as unmigrated.
++        This ensures the __path__ check is still working correctly.
++        """
++        # Create a mock module that is not a package (no __path__ attribute)
++        mock_module = mock.Mock()
++        mock_module.__file__ = '/some/file.py'  # Has __file__ but no __path__
++        del mock_module.__path__  # Not a package
++        
++        with mock.patch('django.db.migrations.loader.import_module') as mock_import:
++            mock_import.return_value = mock_module
++            
++            with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                mock_app_config = mock.Mock(spec=AppConfig)
++                mock_app_config.label = 'not_package_app'
++                mock_get_configs.return_value = [mock_app_config]
++                
++                with mock.patch.object(MigrationLoader, 'migrations_module') as mock_migrations_module:
++                    mock_migrations_module.return_value = ('not_package_app.migrations', True)
++                    
++                    loader = MigrationLoader(connection, load=False)
++                    loader.load_disk()
++                    
++                    # Modules that are not packages should be unmigrated
++                    self.assertNotIn('not_package_app', loader.migrated_apps)
++                    self.assertIn('not_package_app', loader.unmigrated_apps)
++
++    def test_pkgutil_iter_modules_is_used_for_discovery(self):
++        """
++        Test that pkgutil.iter_modules is actually used for migration discovery,
++        confirming that the migration system works with namespace packages.
++        """
++        mock_module = mock.Mock()
++        del mock_module.__file__  # Namespace package
++        mock_module.__path__ = [self.migrations_dir]
++        
++        with mock.patch('django.db.migrations.loader.import_module') as mock_import:
++            mock_import.return_value = mock_module
++            
++            with mock.patch('django.db.migrations.loader.pkgutil.iter_modules') as mock_iter:
++                # Mock iter_modules to return some migration files
++                mock_iter.return_value = [
++                    ('', '0001_initial', False),
++                    ('', '0002_add_field', False),
++                ]
++                
++                mock_migration_module = mock.Mock()
++                mock_migration_module.Migration = mock.Mock()
++                
++                with mock.patch('django.db.migrations.loader.import_module') as mock_import_migration:
++                    def side_effect(module_name):
++                        if module_name.endswith('.migrations'):
++                            return mock_module
++                        else:
++                            return mock_migration_module
++                    
++                    mock_import_migration.side_effect = side_effect
++                    
++                    with mock.patch('django.apps.apps.get_app_configs') as mock_get_configs:
++                        mock_app_config = mock.Mock(spec=AppConfig)
++                        mock_app_config.label = 'test_app'
++                        mock_get_configs.return_value = [mock_app_config]
++                        
++                        with mock.patch.object(MigrationLoader, 'migrations_module') as mock_migrations_module:
++                            mock_migrations_module.return_value = ('test_app.migrations', True)
++                            
++                            loader = MigrationLoader(connection, load=False)
++                            loader.load_disk()
++                            
++                            # Verify that pkgutil.iter_modules was called with the module's __path__
++                            mock_iter.assert_called_once_with(mock_module.__path__)
++                            
++                            # The app should be migrated
++                            self.assertIn('test_app', loader.migrated_apps)

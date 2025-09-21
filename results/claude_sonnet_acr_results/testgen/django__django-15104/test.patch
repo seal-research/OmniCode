@@ -1,0 +1,229 @@
+--- a/tests/migrations/test_autodetector.py
++++ b/tests/migrations/test_autodetector.py
+-# This file already exists, we'll add our tests to it
++import pytest
++from django.db import models
++from django.db.migrations.autodetector import MigrationAutodetector
++from django.db.migrations.state import ModelState, ProjectState
++from django.test import TestCase
++
++
++class CustomFKFieldWithoutTo(models.ForeignKey):
++    """
++    Custom ForeignKey field that hardcodes its 'to' argument and removes it
++    from deconstructed kwargs. This reproduces the issue where the autodetector
++    fails with KeyError when trying to delete the 'to' key that doesn't exist.
++    """
++    def __init__(self, *args, **kwargs):
++        kwargs['to'] = 'testapp.HardcodedModel'
++        super().__init__(*args, **kwargs)
++
++    def deconstruct(self):
++        name, path, args, kwargs = super().deconstruct()
++        # Remove 'to' from kwargs - this causes the KeyError in the autodetector
++        del kwargs["to"]
++        return name, path, args, kwargs
++
++
++class CustomFKFieldWithTo(models.ForeignKey):
++    """
++    Custom ForeignKey field that keeps the 'to' argument in deconstructed kwargs.
++    This represents the normal case that should continue to work.
++    """
++    def __init__(self, *args, **kwargs):
++        kwargs['to'] = 'testapp.HardcodedModel'
++        super().__init__(*args, **kwargs)
++
++    def deconstruct(self):
++        # Keep 'to' in kwargs - this is the normal case
++        return super().deconstruct()
++
++
++class AutodetectorCustomFKTests(TestCase):
++    """
++    Test cases for the migration autodetector with custom ForeignKey fields
++    that may or may not include the 'to' parameter in their deconstructed kwargs.
++    """
++
++    def test_custom_fk_field_without_to_parameter_fails_before_fix(self):
++        """
++        Test that reproduces the KeyError bug when a custom ForeignKey field
++        removes the 'to' parameter from its deconstructed kwargs.
++        
++        This test should fail before the fix is applied and pass after.
++        """
++        before = ProjectState()
++        before.add_model(ModelState('testapp', 'HardcodedModel', []))
++        
++        after = ProjectState()
++        after.add_model(ModelState('testapp', 'HardcodedModel', []))
++        after.add_model(ModelState('testapp', 'TestModel', [
++            ('custom', CustomFKFieldWithoutTo(on_delete=models.CASCADE))
++        ]))
++        
++        # This should not raise a KeyError after the fix
++        autodetector = MigrationAutodetector(before, after)
++        changes = autodetector._detect_changes()
++        
++        # Verify that the migration was detected correctly
++        self.assertEqual(len(changes['testapp']), 1)
++        self.assertEqual(changes['testapp'][0].__class__.__name__, 'CreateModel')
++
++    def test_custom_fk_field_with_to_parameter_continues_to_work(self):
++        """
++        Test that custom ForeignKey fields that keep the 'to' parameter
++        in their deconstructed kwargs continue to work as expected.
++        
++        This ensures the fix doesn't break existing functionality.
++        """
++        before = ProjectState()
++        before.add_model(ModelState('testapp', 'HardcodedModel', []))
++        
++        after = ProjectState()
++        after.add_model(ModelState('testapp', 'HardcodedModel', []))
++        after.add_model(ModelState('testapp', 'TestModel', [
++            ('custom', CustomFKFieldWithTo(on_delete=models.CASCADE))
++        ]))
++        
++        # This should work both before and after the fix
++        autodetector = MigrationAutodetector(before, after)
++        changes = autodetector._detect_changes()
++        
++        # Verify that the migration was detected correctly
++        self.assertEqual(len(changes['testapp']), 1)
++        self.assertEqual(changes['testapp'][0].__class__.__name__, 'CreateModel')
++
++    def test_only_relation_agnostic_fields_with_missing_to_key(self):
++        """
++        Test the only_relation_agnostic_fields method directly with a field
++        that doesn't have a 'to' key in its deconstructed kwargs.
++        """
++        autodetector = MigrationAutodetector(ProjectState(), ProjectState())
++        
++        # Create a field that will have 'to' removed from its kwargs
++        field = CustomFKFieldWithoutTo(on_delete=models.CASCADE)
++        fields = {'custom_field': field}
++        
++        # This should not raise a KeyError after the fix
++        result = autodetector.only_relation_agnostic_fields(fields)
++        
++        # Verify that we get a result (the exact content is less important
++        # than not getting a KeyError)
++        self.assertEqual(len(result), 1)
++        self.assertIsInstance(result[0], tuple)
++
++    def test_only_relation_agnostic_fields_with_existing_to_key(self):
++        """
++        Test the only_relation_agnostic_fields method with a field that
++        has a 'to' key in its deconstructed kwargs (normal case).
++        """
++        autodetector = MigrationAutodetector(ProjectState(), ProjectState())
++        
++        # Create a normal ForeignKey field
++        field = models.ForeignKey('testapp.SomeModel', on_delete=models.CASCADE)
++        fields = {'normal_field': field}
++        
++        # This should work both before and after the fix
++        result = autodetector.only_relation_agnostic_fields(fields)
++        
++        # Verify that we get a result and the 'to' key was removed
++        self.assertEqual(len(result), 1)
++        self.assertIsInstance(result[0], tuple)
++        # The 'to' key should have been removed from kwargs (index 2)
++        kwargs = result[0][2]
++        self.assertNotIn('to', kwargs)
++
++    def test_model_rename_detection_with_custom_fk_field(self):
++        """
++        Test that model rename detection works correctly when models contain
++        custom ForeignKey fields that remove the 'to' parameter.
++        
++        This tests the specific scenario mentioned in the bug report where
++        generate_renamed_models calls only_relation_agnostic_fields.
++        """
++        # Create initial state with a model
++        before = ProjectState()
++        before.add_model(ModelState('testapp', 'OldModel', [
++            ('custom', CustomFKFieldWithoutTo(on_delete=models.CASCADE))
++        ]))
++        before.add_model(ModelState('testapp', 'HardcodedModel', []))
++        
++        # Create new state with renamed model
++        after = ProjectState()
++        after.add_model(ModelState('testapp', 'NewModel', [
++            ('custom', CustomFKFieldWithoutTo(on_delete=models.CASCADE))
++        ]))
++        after.add_model(ModelState('testapp', 'HardcodedModel', []))
++        
++        # Mock the questioner to always answer "yes" to rename questions
++        class MockQuestioner:
++            def ask_rename_model(self, old_model, new_model):
++                return True
++        
++        autodetector = MigrationAutodetector(before, after, MockQuestioner())
++        
++        # This should not raise a KeyError after the fix
++        changes = autodetector._detect_changes()
++        
++        # Verify that a rename operation was detected
++        self.assertIn('testapp', changes)
++        self.assertTrue(len(changes['testapp']) > 0)
++
++    def test_edge_case_multiple_custom_fk_fields(self):
++        """
++        Test edge case with multiple custom ForeignKey fields, some with
++        and some without the 'to' parameter in their kwargs.
++        """
++        before = ProjectState()
++        before.add_model(ModelState('testapp', 'HardcodedModel', []))
++        before.add_model(ModelState('testapp', 'OtherModel', []))
++        
++        after = ProjectState()
++        after.add_model(ModelState('testapp', 'HardcodedModel', []))
++        after.add_model(ModelState('testapp', 'OtherModel', []))
++        after.add_model(ModelState('testapp', 'TestModel', [
++            ('custom_without_to', CustomFKFieldWithoutTo(on_delete=models.CASCADE)),
++            ('custom_with_to', CustomFKFieldWithTo(on_delete=models.CASCADE)),
++            ('normal_fk', models.ForeignKey('testapp.OtherModel', on_delete=models.CASCADE))
++        ]))
++        
++        autodetector = MigrationAutodetector(before, after)
++        
++        # This should not raise a KeyError after the fix
++        changes = autodetector._detect_changes()
++        
++        # Verify that the migration was detected correctly
++        self.assertEqual(len(changes['testapp']), 1)
++        self.assertEqual(changes['testapp'][0].__class__.__name__, 'CreateModel')
++
++    def test_empty_fields_dict(self):
++        """
++        Test edge case with empty fields dictionary.
++        """
++        autodetector = MigrationAutodetector(ProjectState(), ProjectState())
++        
++        # This should work without issues
++        result = autodetector.only_relation_agnostic_fields({})
++        
++        self.assertEqual(result, [])
++
++    def test_non_relation_fields_unaffected(self):
++        """
++        Test that non-relation fields are not affected by the fix.
++        """
++        autodetector = MigrationAutodetector(ProjectState(), ProjectState())
++        
++        fields = {
++            'char_field': models.CharField(max_length=100),
++            'int_field': models.IntegerField(),
++            'bool_field': models.BooleanField(default=False)
++        }
++        
++        result = autodetector.only_relation_agnostic_fields(fields)
++        
++        # Should have 3 field definitions
++        self.assertEqual(len(result), 3)
++        
++        # All should be tuples (field deconstructions)
++        for field_def in result:
++            self.assertIsInstance(field_def, tuple)

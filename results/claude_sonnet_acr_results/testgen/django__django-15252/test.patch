@@ -1,0 +1,258 @@
+--- a/tests/migrations/test_recorder.py
++++ b/tests/migrations/test_recorder.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import Mock, patch
++from django.db import DatabaseError, connections
++from django.db.migrations.recorder import MigrationRecorder
++from django.test import TestCase, override_settings
++
++
++class TestRouter:
++    """Test router that only allows migrations on 'default' database."""
++    
++    def allow_migrate(self, db, app_label, model_name=None, **hints):
++        if db == 'default':
++            return True
++        return False
++
++
++class RestrictiveRouter:
++    """Test router that doesn't allow migrations on any database."""
++    
++    def allow_migrate(self, db, app_label, model_name=None, **hints):
++        return False
++
++
++class MigrationRecorderRouterTests(TestCase):
++    """Test that MigrationRecorder respects database router allow_migrate rules."""
++    
++    def setUp(self):
++        self.connection = connections['default']
++        self.recorder = MigrationRecorder(self.connection)
++    
++    @override_settings(DATABASE_ROUTERS=['tests.migrations.test_recorder.TestRouter'])
++    def test_ensure_schema_respects_router_allow_migrate_default_db(self):
++        """Test that ensure_schema works on default database when router allows it."""
++        # Mock has_table to return False so ensure_schema tries to create table
++        with patch.object(self.recorder, 'has_table', return_value=False):
++            with patch.object(self.recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                # This should work since router allows migrations on 'default'
++                self.recorder.ensure_schema()
++                
++                # Verify that create_model was called
++                mock_schema_editor.create_model.assert_called_once_with(self.recorder.Migration)
++    
++    @override_settings(DATABASE_ROUTERS=['tests.migrations.test_recorder.TestRouter'])
++    def test_ensure_schema_respects_router_allow_migrate_non_default_db(self):
++        """Test that ensure_schema doesn't create table when router disallows it."""
++        # Create a mock connection for non-default database
++        mock_connection = Mock()
++        mock_connection.alias = 'other_db'
++        recorder = MigrationRecorder(mock_connection)
++        
++        # Mock has_table to return False so ensure_schema would try to create table
++        with patch.object(recorder, 'has_table', return_value=False):
++            with patch.object(recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                # This should not create the table since router disallows migrations on 'other_db'
++                recorder.ensure_schema()
++                
++                # Verify that create_model was NOT called
++                mock_schema_editor.create_model.assert_not_called()
++    
++    @override_settings(DATABASE_ROUTERS=['tests.migrations.test_recorder.RestrictiveRouter'])
++    def test_ensure_schema_respects_router_disallow_all(self):
++        """Test that ensure_schema doesn't create table when router disallows all migrations."""
++        # Mock has_table to return False so ensure_schema would try to create table
++        with patch.object(self.recorder, 'has_table', return_value=False):
++            with patch.object(self.recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                # This should not create the table since router disallows all migrations
++                self.recorder.ensure_schema()
++                
++                # Verify that create_model was NOT called
++                mock_schema_editor.create_model.assert_not_called()
++    
++    def test_ensure_schema_skips_when_table_exists(self):
++        """Test that ensure_schema skips creation when table already exists."""
++        # Mock has_table to return True
++        with patch.object(self.recorder, 'has_table', return_value=True):
++            with patch.object(self.recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                # This should not try to create the table since it already exists
++                self.recorder.ensure_schema()
++                
++                # Verify that create_model was NOT called
++                mock_schema_editor.create_model.assert_not_called()
++    
++    @override_settings(DATABASE_ROUTERS=['tests.migrations.test_recorder.TestRouter'])
++    def test_record_applied_respects_router_allow_migrate(self):
++        """Test that record_applied respects router rules through ensure_schema."""
++        # Mock has_table to return False so ensure_schema is called
++        with patch.object(self.recorder, 'has_table', return_value=False):
++            with patch.object(self.recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                with patch.object(self.recorder.migration_qs, 'create') as mock_create:
++                    # This should work on default database
++                    self.recorder.record_applied('test_app', 'test_migration')
++                    
++                    # Verify that create_model was called (table creation allowed)
++                    mock_schema_editor.create_model.assert_called_once_with(self.recorder.Migration)
++                    # Verify that migration record was created
++                    mock_create.assert_called_once_with(app='test_app', name='test_migration')
++    
++    @override_settings(DATABASE_ROUTERS=['tests.migrations.test_recorder.TestRouter'])
++    def test_record_applied_blocked_on_non_default_db(self):
++        """Test that record_applied is blocked on non-default database."""
++        # Create a mock connection for non-default database
++        mock_connection = Mock()
++        mock_connection.alias = 'other_db'
++        recorder = MigrationRecorder(mock_connection)
++        
++        # Mock has_table to return False so ensure_schema is called
++        with patch.object(recorder, 'has_table', return_value=False):
++            with patch.object(recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                with patch.object(recorder, 'migration_qs') as mock_qs:
++                    # This should not create the table on non-default database
++                    recorder.record_applied('test_app', 'test_migration')
++                    
++                    # Verify that create_model was NOT called (table creation blocked)
++                    mock_schema_editor.create_model.assert_not_called()
++                    # Migration record creation should still be attempted
++                    # (this would fail in practice, but we're testing the ensure_schema part)
++                    mock_qs.create.assert_called_once_with(app='test_app', name='test_migration')
++    
++    @override_settings(DATABASE_ROUTERS=['tests.migrations.test_recorder.TestRouter'])
++    def test_record_unapplied_respects_router_allow_migrate(self):
++        """Test that record_unapplied respects router rules through ensure_schema."""
++        # Mock has_table to return False so ensure_schema is called
++        with patch.object(self.recorder, 'has_table', return_value=False):
++            with patch.object(self.recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                with patch.object(self.recorder.migration_qs, 'filter') as mock_filter:
++                    mock_queryset = Mock()
++                    mock_filter.return_value = mock_queryset
++                    
++                    # This should work on default database
++                    self.recorder.record_unapplied('test_app', 'test_migration')
++                    
++                    # Verify that create_model was called (table creation allowed)
++                    mock_schema_editor.create_model.assert_called_once_with(self.recorder.Migration)
++                    # Verify that migration record was deleted
++                    mock_filter.assert_called_once_with(app='test_app', name='test_migration')
++                    mock_queryset.delete.assert_called_once()
++    
++    def test_ensure_schema_handles_database_error(self):
++        """Test that ensure_schema properly handles DatabaseError during table creation."""
++        # Mock has_table to return False so ensure_schema tries to create table
++        with patch.object(self.recorder, 'has_table', return_value=False):
++            with patch.object(self.recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                # Make create_model raise DatabaseError
++                mock_schema_editor.create_model.side_effect = DatabaseError("Test error")
++                
++                # This should raise MigrationSchemaMissing
++                from django.db.migrations.exceptions import MigrationSchemaMissing
++                with pytest.raises(MigrationSchemaMissing):
++                    self.recorder.ensure_schema()
++    
++    @override_settings(DATABASE_ROUTERS=[])
++    def test_ensure_schema_works_without_router(self):
++        """Test that ensure_schema works normally when no router is configured."""
++        # Mock has_table to return False so ensure_schema tries to create table
++        with patch.object(self.recorder, 'has_table', return_value=False):
++            with patch.object(self.recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                # This should work when no router is configured
++                self.recorder.ensure_schema()
++                
++                # Verify that create_model was called
++                mock_schema_editor.create_model.assert_called_once_with(self.recorder.Migration)
++
++
++class MigrationRecorderBugReproductionTests(TestCase):
++    """Tests that reproduce the original bug before the fix is applied."""
++    
++    def setUp(self):
++        self.connection = connections['default']
++        self.recorder = MigrationRecorder(self.connection)
++    
++    @override_settings(DATABASE_ROUTERS=['tests.migrations.test_recorder.TestRouter'])
++    def test_bug_ensure_schema_ignores_router_before_fix(self):
++        """
++        Test that demonstrates the bug: ensure_schema creates table even when 
++        router disallows migrations on non-default database.
++        
++        This test should FAIL before the fix is applied, demonstrating the bug.
++        """
++        # Create a mock connection for non-default database
++        mock_connection = Mock()
++        mock_connection.alias = 'other_db'
++        recorder = MigrationRecorder(mock_connection)
++        
++        # Mock has_table to return False so ensure_schema tries to create table
++        with patch.object(recorder, 'has_table', return_value=False):
++            with patch.object(recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                # Before the fix, this would create the table even though router disallows it
++                recorder.ensure_schema()
++                
++                # This assertion should FAIL before the fix (demonstrating the bug)
++                # After the fix, this should PASS
++                mock_schema_editor.create_model.assert_not_called()
++    
++    @override_settings(DATABASE_ROUTERS=['tests.migrations.test_recorder.RestrictiveRouter'])
++    def test_bug_record_applied_ignores_router_before_fix(self):
++        """
++        Test that demonstrates the bug: record_applied creates migration table
++        even when router disallows all migrations.
++        
++        This test should FAIL before the fix is applied.
++        """
++        # Mock has_table to return False so ensure_schema is called
++        with patch.object(self.recorder, 'has_table', return_value=False):
++            with patch.object(self.recorder.connection, 'schema_editor') as mock_editor:
++                mock_schema_editor = Mock()
++                mock_schema_editor.return_value.__enter__ = Mock(return_value=mock_schema_editor)
++                mock_editor.return_value.__exit__ = Mock(return_value=None)
++                
++                with patch.object(self.recorder.migration_qs, 'create'):
++                    # Before the fix, this would create the table even though router disallows it
++                    self.recorder.record_applied('test_app', 'test_migration')
++                    
++                    # This assertion should FAIL before the fix (demonstrating the bug)
++                    # After the fix, this should PASS
++                    mock_schema_editor.create_model.assert_not_called()

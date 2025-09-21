@@ -1,0 +1,412 @@
+--- a/tests/test_root_model_response.py
++++ b/tests/test_root_model_response.py
+-# Empty if creating new file
++import pytest
++from typing import List
++from fastapi import FastAPI
++from fastapi.testclient import TestClient
++from pydantic import BaseModel
++
++
++class RootTestClass(BaseModel):
++    """Test model with __root__ field containing a list of strings."""
++    __root__: List[str]
++
++
++class RootTestClassInt(BaseModel):
++    """Test model with __root__ field containing an integer."""
++    __root__: int
++
++
++class RootTestClassDict(BaseModel):
++    """Test model with __root__ field containing a dictionary."""
++    __root__: dict
++
++
++class NestedRootModel(BaseModel):
++    """Test model with __root__ field containing another root model."""
++    __root__: RootTestClass
++
++
++class RegularModel(BaseModel):
++    """Regular model for comparison."""
++    name: str
++    value: int
++
++
++def test_root_model_json_serialization():
++    """Test that root models serialize correctly with .json() method."""
++    # Test list root model
++    response = RootTestClass(__root__=['a', 'b', 'c'])
++    assert response.json() == '["a", "b", "c"]'
++    
++    # Test int root model
++    int_response = RootTestClassInt(__root__=42)
++    assert int_response.json() == '42'
++    
++    # Test dict root model
++    dict_response = RootTestClassDict(__root__={'key': 'value'})
++    assert dict_response.json() == '{"key": "value"}'
++
++
++def test_root_model_dict_method_shows_bug():
++    """Test that demonstrates the bug - .dict() method returns __root__ wrapper."""
++    response = RootTestClass(__root__=['a', 'b', 'c'])
++    # This shows the bug - dict() returns the __root__ wrapper
++    assert response.dict() == {'__root__': ['a', 'b', 'c']}
++
++
++def test_root_model_response_in_fastapi():
++    """Test that FastAPI correctly handles root models in responses."""
++    app = FastAPI()
++
++    @app.get("/list", response_model=RootTestClass)
++    async def get_list():
++        return RootTestClass(__root__=['a', 'b', 'c'])
++
++    @app.get("/int", response_model=RootTestClassInt)
++    async def get_int():
++        return RootTestClassInt(__root__=42)
++
++    @app.get("/dict", response_model=RootTestClassDict)
++    async def get_dict():
++        return RootTestClassDict(__root__={'key': 'value'})
++
++    @app.get("/nested", response_model=NestedRootModel)
++    async def get_nested():
++        inner = RootTestClass(__root__=['x', 'y', 'z'])
++        return NestedRootModel(__root__=inner)
++
++    @app.get("/regular", response_model=RegularModel)
++    async def get_regular():
++        return RegularModel(name="test", value=123)
++
++    client = TestClient(app)
++
++    # Test list root model response
++    response = client.get("/list")
++    assert response.status_code == 200
++    assert response.json() == ['a', 'b', 'c']  # Should be array, not {"__root__": [...]}
++
++    # Test int root model response
++    response = client.get("/int")
++    assert response.status_code == 200
++    assert response.json() == 42  # Should be number, not {"__root__": 42}
++
++    # Test dict root model response
++    response = client.get("/dict")
++    assert response.status_code == 200
++    assert response.json() == {'key': 'value'}  # Should be object, not {"__root__": {...}}
++
++    # Test nested root model response
++    response = client.get("/nested")
++    assert response.status_code == 200
++    assert response.json() == ['x', 'y', 'z']  # Should be array, not nested __root__
++
++    # Test regular model still works
++    response = client.get("/regular")
++    assert response.status_code == 200
++    assert response.json() == {'name': 'test', 'value': 123}
++
++
++def test_root_model_response_without_response_model():
++    """Test that root models work correctly even without explicit response_model."""
++    app = FastAPI()
++
++    @app.get("/list-no-model")
++    async def get_list_no_model():
++        return RootTestClass(__root__=['a', 'b', 'c'])
++
++    @app.get("/int-no-model")
++    async def get_int_no_model():
++        return RootTestClassInt(__root__=42)
++
++    client = TestClient(app)
++
++    # Test list root model response without response_model
++    response = client.get("/list-no-model")
++    assert response.status_code == 200
++    assert response.json() == ['a', 'b', 'c']
++
++    # Test int root model response without response_model
++    response = client.get("/int-no-model")
++    assert response.status_code == 200
++    assert response.json() == 42
++
++
++def test_root_model_in_list_response():
++    """Test that root models work correctly when returned in lists."""
++    app = FastAPI()
++
++    @app.get("/list-of-root-models")
++    async def get_list_of_root_models():
++        return [
++            RootTestClass(__root__=['a', 'b']),
++            RootTestClass(__root__=['c', 'd']),
++        ]
++
++    client = TestClient(app)
++
++    response = client.get("/list-of-root-models")
++    assert response.status_code == 200
++    assert response.json() == [['a', 'b'], ['c', 'd']]
++
++
++def test_root_model_mixed_with_regular_models():
++    """Test that root models work correctly when mixed with regular models."""
++    app = FastAPI()
++
++    @app.get("/mixed")
++    async def get_mixed():
++        return {
++            'regular': RegularModel(name="test", value=123),
++            'root_list': RootTestClass(__root__=['a', 'b']),
++            'root_int': RootTestClassInt(__root__=42),
++        }
++
++    client = TestClient(app)
++
++    response = client.get("/mixed")
++    assert response.status_code == 200
++    expected = {
++        'regular': {'name': 'test', 'value': 123},
++        'root_list': ['a', 'b'],
++        'root_int': 42,
++    }
++    assert response.json() == expected
++
++
++def test_root_model_edge_cases():
++    """Test edge cases for root models."""
++    app = FastAPI()
++
++    class EmptyListRootModel(BaseModel):
++        __root__: List[str]
++
++    class NoneRootModel(BaseModel):
++        __root__: str = None
++
++    @app.get("/empty-list")
++    async def get_empty_list():
++        return EmptyListRootModel(__root__=[])
++
++    @app.get("/none-value")
++    async def get_none_value():
++        return NoneRootModel(__root__=None)
++
++    client = TestClient(app)
++
++    # Test empty list
++    response = client.get("/empty-list")
++    assert response.status_code == 200
++    assert response.json() == []
++
++    # Test None value
++    response = client.get("/none-value")
++    assert response.status_code == 200
++    assert response.json() is None
++
++
++def test_failing_case_before_fix():
++    """
++    This test demonstrates the bug that should fail before the fix is applied.
++    It shows that FastAPI currently returns {"__root__": value} instead of just value.
++    """
++    app = FastAPI()
++
++    @app.get("/bug-demo")
++    async def bug_demo():
++        response = RootTestClass(__root__=['a', 'b', 'c'])
++        # This print shows that pydantic itself handles it correctly
++        print(f"Pydantic json(): {response.json()}")  # Should be ["a", "b", "c"]
++        print(f"Pydantic dict(): {response.dict()}")  # Shows {"__root__": ["a", "b", "c"]}
++        return response
++
++    client = TestClient(app)
++    response = client.get("/bug-demo")
++    
++    # This assertion will fail before the fix, demonstrating the bug
++    # The response will be {"__root__": ["a", "b", "c"]} instead of ["a", "b", "c"]
++    assert response.json() == ['a', 'b', 'c'], f"Expected ['a', 'b', 'c'], got {response.json()}"
+
+--- a/tests/test_encoders_root_model.py
++++ b/tests/test_encoders_root_model.py
+-# Empty if creating new file
++import pytest
++from typing import List, Dict, Any
++from pydantic import BaseModel
++from fastapi.encoders import jsonable_encoder
++
++
++class RootListModel(BaseModel):
++    """Test model with __root__ field containing a list."""
++    __root__: List[str]
++
++
++class RootIntModel(BaseModel):
++    """Test model with __root__ field containing an integer."""
++    __root__: int
++
++
++class RootDictModel(BaseModel):
++    """Test model with __root__ field containing a dictionary."""
++    __root__: Dict[str, Any]
++
++
++class NestedRootModel(BaseModel):
++    """Test model with __root__ field containing another root model."""
++    __root__: RootListModel
++
++
++class RegularModel(BaseModel):
++    """Regular model for comparison."""
++    name: str
++    value: int
++
++
++class MixedFieldsModel(BaseModel):
++    """Model with both __root__ and other fields (should not be treated as root model)."""
++    __root__: str
++    other_field: int
++
++
++def test_jsonable_encoder_with_root_models():
++    """Test that jsonable_encoder correctly handles root models."""
++    
++    # Test list root model
++    list_model = RootListModel(__root__=['a', 'b', 'c'])
++    encoded = jsonable_encoder(list_model)
++    assert encoded == ['a', 'b', 'c']
++    
++    # Test int root model
++    int_model = RootIntModel(__root__=42)
++    encoded = jsonable_encoder(int_model)
++    assert encoded == 42
++    
++    # Test dict root model
++    dict_model = RootDictModel(__root__={'key': 'value', 'num': 123})
++    encoded = jsonable_encoder(dict_model)
++    assert encoded == {'key': 'value', 'num': 123}
++
++
++def test_jsonable_encoder_with_nested_root_models():
++    """Test that jsonable_encoder correctly handles nested root models."""
++    inner_model = RootListModel(__root__=['x', 'y', 'z'])
++    nested_model = NestedRootModel(__root__=inner_model)
++    
++    encoded = jsonable_encoder(nested_model)
++    assert encoded == ['x', 'y', 'z']
++
++
++def test_jsonable_encoder_with_regular_models():
++    """Test that jsonable_encoder still works correctly with regular models."""
++    regular_model = RegularModel(name="test", value=123)
++    encoded = jsonable_encoder(regular_model)
++    assert encoded == {'name': 'test', 'value': 123}
++
++
++def test_jsonable_encoder_with_mixed_fields_model():
++    """Test that models with __root__ and other fields are not treated as root models."""
++    # This model has both __root__ and other fields, so it should not be treated as a root model
++    mixed_model = MixedFieldsModel(__root__="root_value", other_field=456)
++    encoded = jsonable_encoder(mixed_model)
++    # Should return the full dict, not just the __root__ value
++    assert encoded == {'__root__': 'root_value', 'other_field': 456}
++
++
++def test_jsonable_encoder_with_root_models_in_containers():
++    """Test that jsonable_encoder handles root models inside lists and dicts."""
++    
++    # Test list of root models
++    models_list = [
++        RootListModel(__root__=['a', 'b']),
++        RootIntModel(__root__=42),
++        RootDictModel(__root__={'key': 'value'})
++    ]
++    encoded = jsonable_encoder(models_list)
++    assert encoded == [['a', 'b'], 42, {'key': 'value'}]
++    
++    # Test dict containing root models
++    models_dict = {
++        'list_model': RootListModel(__root__=['x', 'y']),
++        'int_model': RootIntModel(__root__=99),
++        'regular_model': RegularModel(name="test", value=123)
++    }
++    encoded = jsonable_encoder(models_dict)
++    assert encoded == {
++        'list_model': ['x', 'y'],
++        'int_model': 99,
++        'regular_model': {'name': 'test', 'value': 123}
++    }
++
++
++def test_jsonable_encoder_preserves_options():
++    """Test that jsonable_encoder preserves encoding options when handling root models."""
++    
++    class RootModelWithDefaults(BaseModel):
++        __root__: Dict[str, Any] = {'default': 'value'}
++    
++    model = RootModelWithDefaults()
++    
++    # Test with exclude_defaults=True
++    encoded = jsonable_encoder(model, exclude_defaults=True)
++    # Should still return the root value, respecting the exclude_defaults option
++    assert encoded == {}  # Empty because default value is excluded
++    
++    # Test with exclude_defaults=False
++    encoded = jsonable_encoder(model, exclude_defaults=False)
++    assert encoded == {'default': 'value'}
++
++
++def test_jsonable_encoder_bug_demonstration():
++    """
++    This test demonstrates the bug in jsonable_encoder before the fix.
++    It shows that currently jsonable_encoder returns {"__root__": value} instead of value.
++    """
++    model = RootListModel(__root__=['a', 'b', 'c'])
++    
++    # Show that pydantic's own methods work correctly
++    assert model.json() == '["a", "b", "c"]'  # Pydantic handles it correctly
++    assert model.dict() == {'__root__': ['a', 'b', 'c']}  # dict() shows the wrapper
++    
++    # This will fail before the fix - jsonable_encoder currently uses dict()
++    encoded = jsonable_encoder(model)
++    assert encoded == ['a', 'b', 'c'], f"Expected ['a', 'b', 'c'], got {encoded}"
++
++
++def test_jsonable_encoder_edge_cases():
++    """Test edge cases for jsonable_encoder with root models."""
++    
++    # Test with None value
++    class RootNoneModel(BaseModel):
++        __root__: str = None
++    
++    none_model = RootNoneModel(__root__=None)
++    encoded = jsonable_encoder(none_model)
++    assert encoded is None
++    
++    # Test with empty list
++    empty_list_model = RootListModel(__root__=[])
++    encoded = jsonable_encoder(empty_list_model)
++    assert encoded == []
++    
++    # Test with empty dict
++    empty_dict_model = RootDictModel(__root__={})
++    encoded = jsonable_encoder(empty_dict_model)
++    assert encoded == {}
++
++
++def test_jsonable_encoder_custom_encoders():
++    """Test that custom encoders work with root models."""
++    from datetime import datetime
++    
++    class RootDateModel(BaseModel):
++        __root__: datetime
++    
++    test_date = datetime(2023, 1, 1, 12, 0, 0)
++    date_model = RootDateModel(__root__=test_date)
++    
++    # Test with custom encoder
++    custom_encoder = {datetime: lambda dt: dt.isoformat()}
++    encoded = jsonable_encoder(date_model, custom_encoder=custom_encoder)
++    assert encoded == "2023-01-01T12:00:00"

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/pycode/ast.py b/sphinx/pycode/ast.py\nindex 9bafff11c..472885798 100644\n--- a/sphinx/pycode/ast.py\n+++ b/sphinx/pycode/ast.py\n@@ -189,7 +189,7 @@ class _UnparseVisitor(ast.NodeVisitor):\n         def visit_Bytes(self, node: ast.Bytes) -> str:\n             return repr(node.s)\n \n-        def visit_Ellipsis(self, node: ast.Ellipsis) -> str:\n+        def visit_Ellipsis(self, _node: ast.Ellipsis) -> str:\n             return \"...\"\n \n         def visit_NameConstant(self, node: ast.NameConstant) -> str:\n"
+}

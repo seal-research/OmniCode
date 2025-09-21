@@ -1,0 +1,182 @@
+--- a/tests/mail/test_unicode_dns.py
++++ b/tests/mail/test_unicode_dns.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import patch
++from django.core.mail import EmailMessage
++from django.core.mail.utils import CachedDnsName
++from django.test import TestCase
++
++
++class UnicodeHostnameEmailTests(TestCase):
++    """Test email handling with non-ASCII hostnames."""
++
++    def test_unicode_hostname_with_non_unicode_encoding_fails_before_fix(self):
++        """
++        Test that demonstrates the bug: non-ASCII hostname crashes 
++        when email encoding is non-unicode (iso-8859-1).
++        This test should fail before the fix is applied.
++        """
++        with patch("django.core.mail.utils.socket.getfqdn", return_value="正宗"):
++            # Clear any cached DNS name to force re-evaluation
++            dns_name = CachedDnsName()
++            if hasattr(dns_name, '_fqdn'):
++                delattr(dns_name, '_fqdn')
++            
++            with patch("django.core.mail.message.DNS_NAME", dns_name):
++                email = EmailMessage('subject', 'body', 'from@example.com', ['to@example.com'])
++                email.encoding = 'iso-8859-1'
++                
++                # This should raise UnicodeEncodeError before the fix
++                with pytest.raises(UnicodeEncodeError):
++                    email.message()
++
++    def test_unicode_hostname_with_unicode_encoding_works(self):
++        """
++        Test that unicode hostname works fine with unicode encoding (utf-8).
++        This should work both before and after the fix.
++        """
++        with patch("django.core.mail.utils.socket.getfqdn", return_value="正宗"):
++            # Clear any cached DNS name to force re-evaluation
++            dns_name = CachedDnsName()
++            if hasattr(dns_name, '_fqdn'):
++                delattr(dns_name, '_fqdn')
++            
++            with patch("django.core.mail.message.DNS_NAME", dns_name):
++                email = EmailMessage('subject', 'body', 'from@example.com', ['to@example.com'])
++                email.encoding = 'utf-8'
++                
++                # This should work fine
++                message = email.message()
++                self.assertIn('Message-ID', message)
++
++    def test_unicode_hostname_converts_to_punycode_after_fix(self):
++        """
++        Test that after the fix, unicode hostname is converted to punycode
++        and works with non-unicode encoding.
++        This test should pass after the fix is applied.
++        """
++        with patch("django.core.mail.utils.socket.getfqdn", return_value="正宗"):
++            # Clear any cached DNS name to force re-evaluation
++            dns_name = CachedDnsName()
++            if hasattr(dns_name, '_fqdn'):
++                delattr(dns_name, '_fqdn')
++            
++            with patch("django.core.mail.message.DNS_NAME", dns_name):
++                email = EmailMessage('subject', 'body', 'from@example.com', ['to@example.com'])
++                email.encoding = 'iso-8859-1'
++                
++                # After fix, this should work and contain punycode
++                message = email.message()
++                message_id = message['Message-ID']
++                
++                # The Message-ID should contain the punycode version of the hostname
++                # "正宗" should become "xn--p8s937b"
++                self.assertIn('xn--p8s937b', message_id)
++
++    def test_ascii_hostname_unchanged(self):
++        """
++        Test that ASCII hostnames work unchanged both before and after the fix.
++        """
++        with patch("django.core.mail.utils.socket.getfqdn", return_value="example.com"):
++            # Clear any cached DNS name to force re-evaluation
++            dns_name = CachedDnsName()
++            if hasattr(dns_name, '_fqdn'):
++                delattr(dns_name, '_fqdn')
++            
++            with patch("django.core.mail.message.DNS_NAME", dns_name):
++                email = EmailMessage('subject', 'body', 'from@example.com', ['to@example.com'])
++                email.encoding = 'iso-8859-1'
++                
++                message = email.message()
++                message_id = message['Message-ID']
++                
++                # ASCII hostname should remain unchanged
++                self.assertIn('example.com', message_id)
++
++    def test_various_unicode_hostnames_convert_to_punycode(self):
++        """
++        Test various unicode hostnames to ensure they all convert properly.
++        """
++        test_cases = [
++            ("漢字", "xn--p8s937b"),  # Chinese characters
++            ("тест", "xn--e1afmkfd"),  # Cyrillic characters
++            ("münchen", "xn--mnchen-3ya"),  # German umlaut
++            ("café", "xn--caf-dma"),  # French accent
++        ]
++        
++        for unicode_hostname, expected_punycode in test_cases:
++            with self.subTest(hostname=unicode_hostname):
++                with patch("django.core.mail.utils.socket.getfqdn", return_value=unicode_hostname):
++                    # Clear any cached DNS name to force re-evaluation
++                    dns_name = CachedDnsName()
++                    if hasattr(dns_name, '_fqdn'):
++                        delattr(dns_name, '_fqdn')
++                    
++                    with patch("django.core.mail.message.DNS_NAME", dns_name):
++                        email = EmailMessage('subject', 'body', 'from@example.com', ['to@example.com'])
++                        email.encoding = 'iso-8859-1'
++                        
++                        message = email.message()
++                        message_id = message['Message-ID']
++                        
++                        # Should contain the punycode version
++                        self.assertIn(expected_punycode, message_id)
++
++    def test_cached_dns_name_caching_behavior(self):
++        """
++        Test that the CachedDnsName still caches properly after the fix.
++        """
++        with patch("django.core.mail.utils.socket.getfqdn", return_value="正宗") as mock_getfqdn:
++            dns_name = CachedDnsName()
++            
++            # Clear any existing cache
++            if hasattr(dns_name, '_fqdn'):
++                delattr(dns_name, '_fqdn')
++            
++            # First call should invoke socket.getfqdn
++            result1 = dns_name.get_fqdn()
++            self.assertEqual(mock_getfqdn.call_count, 1)
++            
++            # Second call should use cached value
++            result2 = dns_name.get_fqdn()
++            self.assertEqual(mock_getfqdn.call_count, 1)  # Should still be 1
++            
++            # Results should be the same
++            self.assertEqual(result1, result2)
++
++    def test_edge_case_empty_hostname(self):
++        """
++        Test edge case where hostname is empty or None.
++        """
++        with patch("django.core.mail.utils.socket.getfqdn", return_value=""):
++            dns_name = CachedDnsName()
++            if hasattr(dns_name, '_fqdn'):
++                delattr(dns_name, '_fqdn')
++            
++            with patch("django.core.mail.message.DNS_NAME", dns_name):
++                email = EmailMessage('subject', 'body', 'from@example.com', ['to@example.com'])
++                email.encoding = 'iso-8859-1'
++                
++                # Should not crash even with empty hostname
++                message = email.message()
++                self.assertIn('Message-ID', message)
++
++    def test_mixed_ascii_unicode_hostname(self):
++        """
++        Test hostname that contains both ASCII and Unicode characters.
++        """
++        with patch("django.core.mail.utils.socket.getfqdn", return_value="test-正宗.example.com"):
++            dns_name = CachedDnsName()
++            if hasattr(dns_name, '_fqdn'):
++                delattr(dns_name, '_fqdn')
++            
++            with patch("django.core.mail.message.DNS_NAME", dns_name):
++                email = EmailMessage('subject', 'body', 'from@example.com', ['to@example.com'])
++                email.encoding = 'iso-8859-1'
++                
++                message = email.message()
++                message_id = message['Message-ID']
++                
++                # Should contain punycode for the Unicode part
++                self.assertIn('xn--', message_id)

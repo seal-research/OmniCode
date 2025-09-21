@@ -1,0 +1,210 @@
+--- a/tests/model_fields/test_filefield.py
++++ b/tests/model_fields/test_filefield.py
+-# Empty if creating new file
++import pytest
++from django.core.files.storage import default_storage, Storage
++from django.db import models
++from django.test import TestCase
++
++
++class CustomStorage(Storage):
++    """A simple custom storage for testing."""
++    
++    def __init__(self, name="custom"):
++        self.name = name
++    
++    def _open(self, name, mode='rb'):
++        pass
++    
++    def _save(self, name, content):
++        return name
++    
++    def delete(self, name):
++        pass
++    
++    def exists(self, name):
++        return False
++    
++    def url(self, name):
++        return f"http://example.com/{name}"
++
++
++def get_custom_storage():
++    """Callable that returns a custom storage instance."""
++    return CustomStorage("callable_storage")
++
++
++def get_another_storage():
++    """Another callable that returns a different storage instance."""
++    return CustomStorage("another_storage")
++
++
++class FileFieldDeconstructionTests(TestCase):
++    """Test FileField deconstruction with callable storage."""
++    
++    def test_filefield_with_callable_storage_deconstruct_preserves_callable(self):
++        """
++        Test that FileField with callable storage returns the original callable
++        in deconstruct(), not the evaluated storage instance.
++        """
++        # Create a FileField with callable storage
++        field = models.FileField(storage=get_custom_storage)
++        
++        # Deconstruct the field
++        name, path, args, kwargs = field.deconstruct()
++        
++        # The storage in kwargs should be the original callable, not the evaluated instance
++        self.assertEqual(kwargs['storage'], get_custom_storage)
++        self.assertIsNot(kwargs['storage'], field.storage)
++        
++        # Verify that the field's storage is actually the evaluated instance
++        self.assertIsInstance(field.storage, CustomStorage)
++        self.assertEqual(field.storage.name, "callable_storage")
++    
++    def test_filefield_with_non_callable_storage_deconstruct_unchanged(self):
++        """
++        Test that FileField with non-callable storage works as before.
++        """
++        custom_storage = CustomStorage("non_callable")
++        field = models.FileField(storage=custom_storage)
++        
++        # Deconstruct the field
++        name, path, args, kwargs = field.deconstruct()
++        
++        # The storage in kwargs should be the same instance
++        self.assertEqual(kwargs['storage'], custom_storage)
++        self.assertIs(kwargs['storage'], field.storage)
++    
++    def test_filefield_with_default_storage_deconstruct_omits_storage(self):
++        """
++        Test that FileField with default storage omits storage from kwargs.
++        """
++        field = models.FileField()
++        
++        # Deconstruct the field
++        name, path, args, kwargs = field.deconstruct()
++        
++        # Storage should not be in kwargs when using default storage
++        self.assertNotIn('storage', kwargs)
++        self.assertIs(field.storage, default_storage)
++    
++    def test_filefield_callable_storage_runtime_flexibility(self):
++        """
++        Test that callable storage allows runtime flexibility by changing
++        the callable's behavior.
++        """
++        # Create a field with callable storage
++        field = models.FileField(storage=get_custom_storage)
++        original_storage = field.storage
++        
++        # Deconstruct and reconstruct the field
++        name, path, args, kwargs = field.deconstruct()
++        reconstructed_field = models.FileField(*args, **kwargs)
++        
++        # The reconstructed field should have a new storage instance
++        # (because the callable is called again)
++        self.assertIsNot(reconstructed_field.storage, original_storage)
++        self.assertIsInstance(reconstructed_field.storage, CustomStorage)
++        self.assertEqual(reconstructed_field.storage.name, "callable_storage")
++    
++    def test_filefield_deconstruct_preserves_upload_to_callable(self):
++        """
++        Test that upload_to callable is preserved in deconstruct (existing behavior).
++        This test ensures we don't break the existing upload_to functionality.
++        """
++        def custom_upload_to(instance, filename):
++            return f"custom/{filename}"
++        
++        field = models.FileField(upload_to=custom_upload_to, storage=get_custom_storage)
++        
++        # Deconstruct the field
++        name, path, args, kwargs = field.deconstruct()
++        
++        # Both upload_to and storage should preserve their callables
++        self.assertEqual(kwargs['upload_to'], custom_upload_to)
++        self.assertEqual(kwargs['storage'], get_custom_storage)
++    
++    def test_imagefield_with_callable_storage_deconstruct_preserves_callable(self):
++        """
++        Test that ImageField (which inherits from FileField) also preserves
++        callable storage in deconstruct().
++        """
++        field = models.ImageField(storage=get_custom_storage)
++        
++        # Deconstruct the field
++        name, path, args, kwargs = field.deconstruct()
++        
++        # The storage in kwargs should be the original callable
++        self.assertEqual(kwargs['storage'], get_custom_storage)
++        self.assertIsNot(kwargs['storage'], field.storage)
++    
++    def test_filefield_callable_storage_different_callables(self):
++        """
++        Test that different callable storage functions are preserved correctly.
++        """
++        field1 = models.FileField(storage=get_custom_storage)
++        field2 = models.FileField(storage=get_another_storage)
++        
++        # Deconstruct both fields
++        _, _, _, kwargs1 = field1.deconstruct()
++        _, _, _, kwargs2 = field2.deconstruct()
++        
++        # Each should preserve its own callable
++        self.assertEqual(kwargs1['storage'], get_custom_storage)
++        self.assertEqual(kwargs2['storage'], get_another_storage)
++        self.assertNotEqual(kwargs1['storage'], kwargs2['storage'])
++    
++    def test_filefield_callable_storage_migration_serialization(self):
++        """
++        Test that callable storage can be properly serialized for migrations.
++        This test simulates what happens during makemigrations.
++        """
++        field = models.FileField(storage=get_custom_storage)
++        
++        # Deconstruct the field (this is what makemigrations does)
++        name, path, args, kwargs = field.deconstruct()
++        
++        # The deconstructed storage should be serializable as a reference
++        # to the callable function, not as an instance
++        storage_value = kwargs['storage']
++        
++        # Should be the callable function
++        self.assertTrue(callable(storage_value))
++        self.assertEqual(storage_value.__name__, 'get_custom_storage')
++        
++        # Should not be a storage instance
++        self.assertNotIsInstance(storage_value, Storage)
++
++
++class FileFieldCallableStorageBugReproductionTest(TestCase):
++    """
++    Test that reproduces the bug described in the issue.
++    This test should fail before the fix is applied.
++    """
++    
++    def test_bug_callable_storage_evaluated_in_deconstruct(self):
++        """
++        This test demonstrates the bug: callable storage is evaluated
++        and the storage instance is returned instead of the callable.
++        
++        This test should FAIL before the fix is applied, showing that
++        the bug exists.
++        """
++        # Create a FileField with callable storage
++        field = models.FileField(storage=get_custom_storage)
++        
++        # Deconstruct the field
++        name, path, args, kwargs = field.deconstruct()
++        
++        # BUG: Currently, kwargs['storage'] contains the evaluated storage instance
++        # instead of the original callable. This test will fail until the bug is fixed.
++        
++        # This assertion should pass after the fix
++        self.assertEqual(kwargs['storage'], get_custom_storage, 
++                        "FileField deconstruct should return the original callable storage, "
++                        "not the evaluated storage instance")
++        
++        # This assertion demonstrates the current buggy behavior
++        # (it will pass before the fix, fail after the fix)
++        with self.assertRaises(AssertionError):
++            self.assertIsInstance(kwargs['storage'], CustomStorage)

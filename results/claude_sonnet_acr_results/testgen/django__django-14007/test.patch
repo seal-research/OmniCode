@@ -1,0 +1,229 @@
+--- a/tests/model_fields/test_from_db_value_converters.py
++++ b/tests/model_fields/test_from_db_value_converters.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import isolate_apps
++
++
++class MyIntWrapper:
++    """A simple wrapper class for testing from_db_value conversion."""
++    def __init__(self, value):
++        self.value = int(value) if value is not None else None
++    
++    def __eq__(self, other):
++        if isinstance(other, MyIntWrapper):
++            return self.value == other.value
++        return self.value == other
++    
++    def __repr__(self):
++        return f"<MyIntWrapper: {self.value}>"
++    
++    def __int__(self):
++        return self.value
++
++
++class MyAutoField(models.BigAutoField):
++    """Custom auto field that wraps values in MyIntWrapper."""
++    
++    def from_db_value(self, value, expression, connection):
++        if value is None:
++            return None
++        return MyIntWrapper(value)
++    
++    def get_prep_value(self, value):
++        if value is None:
++            return None
++        return int(value)
++
++
++class MyBigIntegerField(models.BigIntegerField):
++    """Custom big integer field that wraps values in MyIntWrapper."""
++    
++    def from_db_value(self, value, expression, connection):
++        if value is None:
++            return None
++        return MyIntWrapper(value)
++    
++    def get_prep_value(self, value):
++        if value is None:
++            return None
++        return int(value)
++
++
++@isolate_apps('model_fields')
++class FromDbValueConverterTests(TransactionTestCase):
++    """Test that from_db_value converters are called for returning fields on insert."""
++    
++    def setUp(self):
++        # Create test models dynamically to avoid migration issues
++        class AutoModel(models.Model):
++            id = MyAutoField(primary_key=True)
++            
++            class Meta:
++                app_label = 'model_fields'
++        
++        class ModelWithCustomField(models.Model):
++            id = models.AutoField(primary_key=True)
++            custom_field = MyBigIntegerField(null=True)
++            
++            class Meta:
++                app_label = 'model_fields'
++        
++        self.AutoModel = AutoModel
++        self.ModelWithCustomField = ModelWithCustomField
++        
++        # Create tables
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(AutoModel)
++            schema_editor.create_model(ModelWithCustomField)
++    
++    def tearDown(self):
++        # Drop tables
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(self.ModelWithCustomField)
++            schema_editor.delete_model(self.AutoModel)
++    
++    def test_from_db_value_called_on_regular_query(self):
++        """Test that from_db_value is called for regular queries (baseline behavior)."""
++        # Create an instance using raw SQL to avoid the bug we're testing
++        from django.db import connection
++        with connection.cursor() as cursor:
++            cursor.execute(f"INSERT INTO {self.AutoModel._meta.db_table} DEFAULT VALUES")
++        
++        # Query the instance - this should work correctly
++        am = self.AutoModel.objects.first()
++        self.assertIsInstance(am.id, MyIntWrapper)
++        self.assertEqual(am.id.value, 1)
++    
++    def test_from_db_value_not_called_on_create_before_fix(self):
++        """Test that demonstrates the bug: from_db_value not called on create."""
++        # This test should fail before the fix is applied
++        am = self.AutoModel.objects.create()
++        
++        # Before fix: am.id would be a plain int (2)
++        # After fix: am.id should be MyIntWrapper(2)
++        if hasattr(am.id, 'value'):
++            # Fix is applied
++            self.assertIsInstance(am.id, MyIntWrapper)
++            self.assertEqual(am.id.value, 2)
++        else:
++            # Bug exists - this assertion will fail after fix
++            self.assertIsInstance(am.id, int)
++            self.assertEqual(am.id, 2)
++    
++    def test_from_db_value_called_on_create_after_fix(self):
++        """Test that from_db_value is called on create after fix."""
++        am = self.AutoModel.objects.create()
++        
++        # After fix: should be wrapped
++        self.assertIsInstance(am.id, MyIntWrapper)
++        self.assertIsInstance(am.id.value, int)
++    
++    def test_from_db_value_not_called_on_bulk_create_before_fix(self):
++        """Test that demonstrates the bug: from_db_value not called on bulk_create."""
++        from django.db import connection
++        
++        # Only test if database supports returning rows from bulk insert
++        if not connection.features.can_return_rows_from_bulk_insert:
++            self.skipTest("Database doesn't support returning rows from bulk insert")
++        
++        ams = [self.AutoModel()]
++        created_ams = self.AutoModel.objects.bulk_create(ams)
++        
++        # Before fix: ams[0].id would be a plain int
++        # After fix: ams[0].id should be MyIntWrapper
++        if hasattr(ams[0].id, 'value'):
++            # Fix is applied
++            self.assertIsInstance(ams[0].id, MyIntWrapper)
++        else:
++            # Bug exists - this assertion will fail after fix
++            self.assertIsInstance(ams[0].id, int)
++    
++    def test_from_db_value_called_on_bulk_create_after_fix(self):
++        """Test that from_db_value is called on bulk_create after fix."""
++        from django.db import connection
++        
++        # Only test if database supports returning rows from bulk insert
++        if not connection.features.can_return_rows_from_bulk_insert:
++            self.skipTest("Database doesn't support returning rows from bulk insert")
++        
++        ams = [self.AutoModel()]
++        created_ams = self.AutoModel.objects.bulk_create(ams)
++        
++        # After fix: should be wrapped
++        self.assertIsInstance(ams[0].id, MyIntWrapper)
++        self.assertIsInstance(ams[0].id.value, int)
++    
++    def test_from_db_value_called_on_save_with_returning_fields(self):
++        """Test that from_db_value is called when saving with returning fields."""
++        # Create instance with custom field that has a default value
++        instance = self.ModelWithCustomField(custom_field=MyIntWrapper(42))
++        instance.save()
++        
++        # The custom_field should be wrapped after save
++        self.assertIsInstance(instance.custom_field, MyIntWrapper)
++        self.assertEqual(instance.custom_field.value, 42)
++    
++    def test_multiple_instances_bulk_create(self):
++        """Test bulk_create with multiple instances."""
++        from django.db import connection
++        
++        if not connection.features.can_return_rows_from_bulk_insert:
++            self.skipTest("Database doesn't support returning rows from bulk insert")
++        
++        ams = [self.AutoModel(), self.AutoModel(), self.AutoModel()]
++        created_ams = self.AutoModel.objects.bulk_create(ams)
++        
++        # All instances should have wrapped IDs
++        for am in ams:
++            self.assertIsInstance(am.id, MyIntWrapper)
++            self.assertIsInstance(am.id.value, int)
++            self.assertGreater(am.id.value, 0)
++    
++    def test_bulk_create_with_existing_pk(self):
++        """Test bulk_create with instances that already have primary keys."""
++        from django.db import connection
++        
++        if not connection.features.can_return_rows_from_bulk_insert:
++            self.skipTest("Database doesn't support returning rows from bulk insert")
++        
++        # Create instances with explicit PKs
++        am1 = self.AutoModel(id=MyIntWrapper(100))
++        am2 = self.AutoModel(id=MyIntWrapper(101))
++        
++        created_ams = self.AutoModel.objects.bulk_create([am1, am2])
++        
++        # PKs should remain wrapped
++        self.assertIsInstance(am1.id, MyIntWrapper)
++        self.assertEqual(am1.id.value, 100)
++        self.assertIsInstance(am2.id, MyIntWrapper)
++        self.assertEqual(am2.id.value, 101)
++    
++    def test_from_db_value_with_none_value(self):
++        """Test that from_db_value handles None values correctly."""
++        # Test with a nullable custom field
++        instance = self.ModelWithCustomField(custom_field=None)
++        instance.save()
++        
++        # Should remain None, not wrapped
++        self.assertIsNone(instance.custom_field)
++    
++    def test_consistency_between_create_and_query(self):
++        """Test that create() and query return the same type of values."""
++        # Create using create()
++        am1 = self.AutoModel.objects.create()
++        
++        # Query the same instance
++        am2 = self.AutoModel.objects.get(pk=am1.pk)
++        
++        # Both should have the same type
++        self.assertEqual(type(am1.id), type(am2.id))
++        self.assertIsInstance(am1.id, MyIntWrapper)
++        self.assertIsInstance(am2.id, MyIntWrapper)
++        self.assertEqual(am1.id.value, am2.id.value)
++
++
++# Import connection here to avoid issues with test isolation
++from django.db import connection

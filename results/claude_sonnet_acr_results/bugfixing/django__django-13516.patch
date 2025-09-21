@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/core/management/base.py b/django/core/management/base.py\nindex e6cbf8c64f..14c0355dd8 100644\n--- a/django/core/management/base.py\n+++ b/django/core/management/base.py\n@@ -150,6 +150,10 @@ class OutputWrapper(TextIOBase):\n         style_func = style_func or self.style_func\n         self._out.write(style_func(msg))\n \n+    def flush(self):\n+        if hasattr(self._out, 'flush'):\n+            self._out.flush()\n+\n \n class BaseCommand:\n     \"\"\"\n"
+}

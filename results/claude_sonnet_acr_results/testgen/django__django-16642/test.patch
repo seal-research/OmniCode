@@ -1,0 +1,231 @@
+--- a/tests/responses/test_fileresponse.py
++++ b/tests/responses/test_fileresponse.py
++import io
++import mimetypes
++import os
++import tempfile
++from unittest import mock
++
++import pytest
++
++from django.http import FileResponse
++
++
++class TestFileResponseMimeTypes:
++    """Test FileResponse MIME type detection for various file extensions."""
++
++    def test_fileresponse_br_extension_before_fix(self):
++        """
++        Test that demonstrates the bug: .br files incorrectly get text/html content type.
++        This test should fail before the fix is applied.
++        """
++        # Create a temporary file with .br extension
++        with tempfile.NamedTemporaryFile(suffix='.html.br', delete=False) as tmp_file:
++            tmp_file.write(b'<html><body>Test content</body></html>')
++            tmp_file.flush()
++            
++            try:
++                # Open the file and create FileResponse
++                with open(tmp_file.name, 'rb') as f:
++                    response = FileResponse(f)
++                    
++                # Before fix: this will be 'text/html' (incorrect)
++                # After fix: this should be 'application/x-br' (correct)
++                assert response.headers['Content-Type'] != 'text/html', (
++                    "FileResponse should not return text/html for .br files"
++                )
++            finally:
++                os.unlink(tmp_file.name)
++
++    def test_fileresponse_z_extension_before_fix(self):
++        """
++        Test that demonstrates the bug: .Z files incorrectly get text/html content type.
++        This test should fail before the fix is applied.
++        """
++        # Create a temporary file with .Z extension
++        with tempfile.NamedTemporaryFile(suffix='.html.Z', delete=False) as tmp_file:
++            tmp_file.write(b'<html><body>Test content</body></html>')
++            tmp_file.flush()
++            
++            try:
++                # Open the file and create FileResponse
++                with open(tmp_file.name, 'rb') as f:
++                    response = FileResponse(f)
++                    
++                # Before fix: this will be 'text/html' (incorrect)
++                # After fix: this should be 'application/x-compress' (correct)
++                assert response.headers['Content-Type'] != 'text/html', (
++                    "FileResponse should not return text/html for .Z files"
++                )
++            finally:
++                os.unlink(tmp_file.name)
++
++    def test_fileresponse_br_extension_after_fix(self):
++        """
++        Test that .br files get the correct content type after the fix.
++        This test should pass after the fix is applied.
++        """
++        # Mock mimetypes.guess_type to return what it actually returns for .br files
++        with mock.patch('mimetypes.guess_type') as mock_guess_type:
++            mock_guess_type.return_value = ('text/html', 'br')
++            
++            # Create a file-like object
++            file_content = b'<html><body>Test content</body></html>'
++            file_obj = io.BytesIO(file_content)
++            file_obj.name = 'test.html.br'
++            
++            response = FileResponse(file_obj)
++            
++            # After fix: should be 'application/x-br'
++            assert response.headers['Content-Type'] == 'application/x-br'
++
++    def test_fileresponse_z_extension_after_fix(self):
++        """
++        Test that .Z files get the correct content type after the fix.
++        This test should pass after the fix is applied.
++        """
++        # Mock mimetypes.guess_type to return what it actually returns for .Z files
++        with mock.patch('mimetypes.guess_type') as mock_guess_type:
++            mock_guess_type.return_value = ('text/html', 'compress')
++            
++            # Create a file-like object
++            file_content = b'<html><body>Test content</body></html>'
++            file_obj = io.BytesIO(file_content)
++            file_obj.name = 'test.html.Z'
++            
++            response = FileResponse(file_obj)
++            
++            # After fix: should be 'application/x-compress'
++            assert response.headers['Content-Type'] == 'application/x-compress'
++
++    def test_fileresponse_existing_compression_types_still_work(self):
++        """
++        Test that existing compression types (gzip, bzip2, xz) still work correctly.
++        This ensures the fix doesn't break existing functionality.
++        """
++        test_cases = [
++            ('text/html', 'gzip', 'application/gzip'),
++            ('text/html', 'bzip2', 'application/x-bzip'),
++            ('text/html', 'xz', 'application/x-xz'),
++        ]
++        
++        for content_type, encoding, expected_content_type in test_cases:
++            with mock.patch('mimetypes.guess_type') as mock_guess_type:
++                mock_guess_type.return_value = (content_type, encoding)
++                
++                file_obj = io.BytesIO(b'test content')
++                file_obj.name = f'test.html.{encoding}'
++                
++                response = FileResponse(file_obj)
++                
++                assert response.headers['Content-Type'] == expected_content_type
++
++    def test_fileresponse_no_encoding_preserves_content_type(self):
++        """
++        Test that files without compression encoding preserve their original content type.
++        """
++        with mock.patch('mimetypes.guess_type') as mock_guess_type:
++            mock_guess_type.return_value = ('text/html', None)
++            
++            file_obj = io.BytesIO(b'<html><body>Test</body></html>')
++            file_obj.name = 'test.html'
++            
++            response = FileResponse(file_obj)
++            
++            assert response.headers['Content-Type'] == 'text/html'
++
++    def test_fileresponse_unknown_encoding_preserves_content_type(self):
++        """
++        Test that files with unknown encoding preserve their original content type.
++        """
++        with mock.patch('mimetypes.guess_type') as mock_guess_type:
++            mock_guess_type.return_value = ('text/html', 'unknown_encoding')
++            
++            file_obj = io.BytesIO(b'<html><body>Test</body></html>')
++            file_obj.name = 'test.html.unknown'
++            
++            response = FileResponse(file_obj)
++            
++            assert response.headers['Content-Type'] == 'text/html'
++
++    def test_fileresponse_explicit_content_type_not_overridden(self):
++        """
++        Test that explicitly set content types are not overridden by the encoding logic.
++        """
++        file_obj = io.BytesIO(b'test content')
++        file_obj.name = 'test.html.br'
++        
++        # Explicitly set content type
++        response = FileResponse(file_obj, content_type='application/custom')
++        
++        # Should preserve the explicitly set content type
++        assert response.headers['Content-Type'] == 'application/custom'
++
++    def test_fileresponse_real_file_extensions(self):
++        """
++        Test with real file extensions to ensure mimetypes.guess_type behavior is correct.
++        """
++        # Test cases with real file extensions and their expected behavior
++        test_cases = [
++            ('test.txt.br', 'application/x-br'),
++            ('test.js.br', 'application/x-br'),
++            ('test.css.br', 'application/x-br'),
++            ('test.html.Z', 'application/x-compress'),
++            ('test.txt.Z', 'application/x-compress'),
++            ('test.js.Z', 'application/x-compress'),
++        ]
++        
++        for filename, expected_content_type in test_cases:
++            file_obj = io.BytesIO(b'test content')
++            file_obj.name = filename
++            
++            response = FileResponse(file_obj)
++            
++            # This test will pass after the fix is applied
++            assert response.headers['Content-Type'] == expected_content_type, (
++                f"Expected {expected_content_type} for {filename}, "
++                f"got {response.headers['Content-Type']}"
++            )
++
++    def test_fileresponse_edge_cases(self):
++        """
++        Test edge cases for the MIME type detection.
++        """
++        # Test file without extension
++        file_obj = io.BytesIO(b'test content')
++        file_obj.name = 'test'
++        response = FileResponse(file_obj)
++        assert response.headers['Content-Type'] == 'application/octet-stream'
++        
++        # Test file with only compression extension
++        file_obj = io.BytesIO(b'test content')
++        file_obj.name = 'test.br'
++        response = FileResponse(file_obj)
++        # Should get the content type for .br files after fix
++        assert response.headers['Content-Type'] == 'application/x-br'
++        
++        # Test file with only compression extension (.Z)
++        file_obj = io.BytesIO(b'test content')
++        file_obj.name = 'test.Z'
++        response = FileResponse(file_obj)
++        # Should get the content type for .Z files after fix
++        assert response.headers['Content-Type'] == 'application/x-compress'
++
++    def test_fileresponse_filename_parameter_override(self):
++        """
++        Test that the filename parameter in FileResponse constructor affects MIME type detection.
++        """
++        # File object without a name
++        file_obj = io.BytesIO(b'test content')
++        
++        # Use filename parameter to specify a .br file
++        response = FileResponse(file_obj, filename='custom.html.br')
++        
++        # Should detect MIME type based on the filename parameter
++        assert response.headers['Content-Type'] == 'application/x-br'
++        
++        # Use filename parameter to specify a .Z file
++        response = FileResponse(file_obj, filename='custom.html.Z')
++        
++        # Should detect MIME type based on the filename parameter
++        assert response.headers['Content-Type'] == 'application/x-compress'

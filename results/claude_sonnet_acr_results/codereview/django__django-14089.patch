@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/datastructures.py b/django/utils/datastructures.py\nindex 871b016715..721b0ee951 100644\n--- a/django/utils/datastructures.py\n+++ b/django/utils/datastructures.py\n@@ -34,6 +34,9 @@ class OrderedSet:\n     def __len__(self):\n         return len(self.dict)\n \n+    def __reversed__(self):\n+        return reversed(self.dict)\n+\n \n class MultiValueDictKeyError(KeyError):\n     pass\n"
+}

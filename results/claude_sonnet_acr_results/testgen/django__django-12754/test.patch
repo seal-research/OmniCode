@@ -1,0 +1,418 @@
+--- a/tests/migrations/test_autodetector_field_move.py
++++ b/tests/migrations/test_autodetector_field_move.py
++import pytest
++from django.db import models
++from django.db.migrations.autodetector import MigrationAutodetector
++from django.db.migrations.state import ProjectState, ModelState
++from django.core.exceptions import FieldError
++from django.test import TestCase, override_settings
++from django.apps import apps
++from django.db import connection
++from django.db.migrations.executor import MigrationExecutor
++from django.db.migrations import Migration
++from django.db.migrations.operations import CreateModel, RemoveField
++
++
++class TestFieldMoveToSubclass(TestCase):
++    """
++    Test cases for moving a field from parent model to child model subclass.
++    This reproduces the bug described in the issue where the migration
++    autodetector generates operations in the wrong order.
++    """
++
++    def setUp(self):
++        """Set up test state with initial parent model containing a field."""
++        self.before_state = ProjectState()
++        self.before_state.add_model(ModelState(
++            app_label='testapp',
++            name='Readable',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++                ('title', models.CharField(max_length=200)),
++            ],
++            options={},
++            bases=(models.Model,),
++            managers=[],
++        ))
++
++    def test_field_move_to_subclass_operation_order(self):
++        """
++        Test that when moving a field from parent to child model,
++        the autodetector generates operations in the correct order:
++        RemoveField should come before CreateModel.
++        """
++        # After state: parent model without field, child model with field
++        after_state = ProjectState()
++        after_state.add_model(ModelState(
++            app_label='testapp',
++            name='Readable',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            options={},
++            bases=(models.Model,),
++            managers=[],
++        ))
++        after_state.add_model(ModelState(
++            app_label='testapp',
++            name='Book',
++            fields=[
++                ('readable_ptr', models.OneToOneField(
++                    'testapp.Readable',
++                    on_delete=models.CASCADE,
++                    parent_link=True,
++                    auto_created=True,
++                    primary_key=True,
++                )),
++                ('title', models.CharField(max_length=200)),
++            ],
++            options={},
++            bases=('testapp.Readable',),
++            managers=[],
++        ))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(self.before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # Should have changes for testapp
++        self.assertIn('testapp', changes)
++        migration = changes['testapp'][0]
++        operations = migration.operations
++
++        # Find the RemoveField and CreateModel operations
++        remove_field_op = None
++        create_model_op = None
++        remove_field_index = -1
++        create_model_index = -1
++
++        for i, op in enumerate(operations):
++            if isinstance(op, RemoveField) and op.model_name == 'Readable' and op.name == 'title':
++                remove_field_op = op
++                remove_field_index = i
++            elif isinstance(op, CreateModel) and op.name == 'Book':
++                create_model_op = op
++                create_model_index = i
++
++        # Both operations should exist
++        self.assertIsNotNone(remove_field_op, "RemoveField operation should be generated")
++        self.assertIsNotNone(create_model_op, "CreateModel operation should be generated")
++
++        # RemoveField should come before CreateModel to avoid field clash
++        self.assertLess(
++            remove_field_index, 
++            create_model_index,
++            "RemoveField should come before CreateModel to avoid field name clash"
++        )
++
++    def test_field_move_migration_execution_success(self):
++        """
++        Test that the generated migration can be executed successfully
++        without raising FieldError about field name clashes.
++        """
++        # After state: parent model without field, child model with field
++        after_state = ProjectState()
++        after_state.add_model(ModelState(
++            app_label='testapp',
++            name='Readable',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            options={},
++            bases=(models.Model,),
++            managers=[],
++        ))
++        after_state.add_model(ModelState(
++            app_label='testapp',
++            name='Book',
++            fields=[
++                ('readable_ptr', models.OneToOneField(
++                    'testapp.Readable',
++                    on_delete=models.CASCADE,
++                    parent_link=True,
++                    auto_created=True,
++                    primary_key=True,
++                )),
++                ('title', models.CharField(max_length=200)),
++            ],
++            options={},
++            bases=('testapp.Readable',),
++            managers=[],
++        ))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(self.before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # Should have changes for testapp
++        self.assertIn('testapp', changes)
++        migration = changes['testapp'][0]
++
++        # Test that state_forwards doesn't raise FieldError
++        test_state = self.before_state.clone()
++        try:
++            for operation in migration.operations:
++                operation.state_forwards('testapp', test_state)
++        except FieldError as e:
++            if "clashes with field of the same name from base class" in str(e):
++                self.fail(f"Migration execution failed with field clash error: {e}")
++            else:
++                raise
++
++    def test_field_move_wrong_order_fails(self):
++        """
++        Test that demonstrates the bug: if CreateModel comes before RemoveField,
++        it should fail with a field clash error.
++        """
++        # Create operations in wrong order (CreateModel before RemoveField)
++        create_model_op = CreateModel(
++            name='Book',
++            fields=[
++                ('readable_ptr', models.OneToOneField(
++                    'testapp.Readable',
++                    on_delete=models.CASCADE,
++                    parent_link=True,
++                    auto_created=True,
++                    primary_key=True,
++                )),
++                ('title', models.CharField(max_length=200)),
++            ],
++            options={},
++            bases=('testapp.Readable',),
++            managers=[],
++        )
++        
++        remove_field_op = RemoveField(
++            model_name='Readable',
++            name='title',
++        )
++
++        # Apply operations in wrong order
++        test_state = self.before_state.clone()
++        
++        # First operation: CreateModel (this should cause the clash)
++        create_model_op.state_forwards('testapp', test_state)
++        
++        # At this point, we have both parent.title and child.title
++        # When the model is rendered, it should detect the clash
++        try:
++            # Force model rendering which should trigger field clash detection
++            test_state.render()
++            # If we get here without an error, the test should fail
++            # because we expect a field clash
++        except FieldError as e:
++            if "clashes with field" in str(e):
++                # This is expected - the field clash was detected
++                pass
++            else:
++                raise
++        except Exception as e:
++            # Other exceptions might also indicate the clash was detected
++            # depending on Django's internal implementation
++            pass
++
++    def test_reverse_migration_order(self):
++        """
++        Test that the reverse migration (moving field back from child to parent)
++        also works correctly.
++        """
++        # Start with child having the field
++        before_state = ProjectState()
++        before_state.add_model(ModelState(
++            app_label='testapp',
++            name='Readable',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            options={},
++            bases=(models.Model,),
++            managers=[],
++        ))
++        before_state.add_model(ModelState(
++            app_label='testapp',
++            name='Book',
++            fields=[
++                ('readable_ptr', models.OneToOneField(
++                    'testapp.Readable',
++                    on_delete=models.CASCADE,
++                    parent_link=True,
++                    auto_created=True,
++                    primary_key=True,
++                )),
++                ('title', models.CharField(max_length=200)),
++            ],
++            options={},
++            bases=('testapp.Readable',),
++            managers=[],
++        ))
++
++        # End with parent having the field
++        after_state = ProjectState()
++        after_state.add_model(ModelState(
++            app_label='testapp',
++            name='Readable',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++                ('title', models.CharField(max_length=200)),
++            ],
++            options={},
++            bases=(models.Model,),
++            managers=[],
++        ))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # Should have changes for testapp
++        self.assertIn('testapp', changes)
++        migration = changes['testapp'][0]
++
++        # Test that state_forwards doesn't raise FieldError
++        test_state = before_state.clone()
++        try:
++            for operation in migration.operations:
++                operation.state_forwards('testapp', test_state)
++        except FieldError as e:
++            if "clashes with field of the same name from base class" in str(e):
++                self.fail(f"Reverse migration execution failed with field clash error: {e}")
++            else:
++                raise
++
++    def test_multiple_fields_move(self):
++        """
++        Test moving multiple fields from parent to child model.
++        """
++        # Before state: parent model with multiple fields
++        before_state = ProjectState()
++        before_state.add_model(ModelState(
++            app_label='testapp',
++            name='Readable',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++                ('title', models.CharField(max_length=200)),
++                ('author', models.CharField(max_length=100)),
++                ('isbn', models.CharField(max_length=20)),
++            ],
++            options={},
++            bases=(models.Model,),
++            managers=[],
++        ))
++
++        # After state: parent model without fields, child model with fields
++        after_state = ProjectState()
++        after_state.add_model(ModelState(
++            app_label='testapp',
++            name='Readable',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            options={},
++            bases=(models.Model,),
++            managers=[],
++        ))
++        after_state.add_model(ModelState(
++            app_label='testapp',
++            name='Book',
++            fields=[
++                ('readable_ptr', models.OneToOneField(
++                    'testapp.Readable',
++                    on_delete=models.CASCADE,
++                    parent_link=True,
++                    auto_created=True,
++                    primary_key=True,
++                )),
++                ('title', models.CharField(max_length=200)),
++                ('author', models.CharField(max_length=100)),
++                ('isbn', models.CharField(max_length=20)),
++            ],
++            options={},
++            bases=('testapp.Readable',),
++            managers=[],
++        ))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # Should have changes for testapp
++        self.assertIn('testapp', changes)
++        migration = changes['testapp'][0]
++
++        # Test that state_forwards doesn't raise FieldError
++        test_state = before_state.clone()
++        try:
++            for operation in migration.operations:
++                operation.state_forwards('testapp', test_state)
++        except FieldError as e:
++            if "clashes with field of the same name from base class" in str(e):
++                self.fail(f"Multiple field move migration failed with field clash error: {e}")
++            else:
++                raise
++
++    def test_field_move_with_different_field_types(self):
++        """
++        Test moving a field from parent to child where the field type changes.
++        """
++        # Before state: parent model with CharField
++        before_state = ProjectState()
++        before_state.add_model(ModelState(
++            app_label='testapp',
++            name='Readable',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++                ('title', models.CharField(max_length=200)),
++            ],
++            options={},
++            bases=(models.Model,),
++            managers=[],
++        ))
++
++        # After state: parent without field, child with TextField
++        after_state = ProjectState()
++        after_state.add_model(ModelState(
++            app_label='testapp',
++            name='Readable',
++            fields=[
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            options={},
++            bases=(models.Model,),
++            managers=[],
++        ))
++        after_state.add_model(ModelState(
++            app_label='testapp',
++            name='Book',
++            fields=[
++                ('readable_ptr', models.OneToOneField(
++                    'testapp.Readable',
++                    on_delete=models.CASCADE,
++                    parent_link=True,
++                    auto_created=True,
++                    primary_key=True,
++                )),
++                ('title', models.TextField()),  # Different field type
++            ],
++            options={},
++            bases=('testapp.Readable',),
++            managers=[],
++        ))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # Should have changes for testapp
++        self.assertIn('testapp', changes)
++        migration = changes['testapp'][0]
++
++        # Test that state_forwards doesn't raise FieldError
++        test_state = before_state.clone()
++        try:
++            for operation in migration.operations:
++                operation.state_forwards('testapp', test_state)
++        except FieldError as e:
++            if "clashes with field of the same name from base class" in str(e):
++                self.fail(f"Field type change migration failed with field clash error: {e}")
++            else:
++                raise

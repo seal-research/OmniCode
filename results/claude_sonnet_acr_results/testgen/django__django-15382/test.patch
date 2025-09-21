@@ -1,0 +1,316 @@
+--- a/tests/queries/test_exists_empty_subquery.py
++++ b/tests/queries/test_exists_empty_subquery.py
+-# Empty if creating new file
++import pytest
++from django.core.exceptions import EmptyResultSet
++from django.db import models
++from django.test import TestCase
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('queries')
++class ExistsEmptySubqueryTests(TestCase):
++    """
++    Test cases for filtering with Exists subqueries that contain empty querysets.
++    
++    This addresses the bug where using ~models.Exists(Model.objects.none()) 
++    combined with other filters removes the entire WHERE block.
++    """
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        # Create a test model for our queries
++        class TestModel(models.Model):
++            name = models.CharField(max_length=100)
++            value = models.IntegerField(default=0)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        cls.TestModel = TestModel
++        
++        # Create the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.create_model(cls.TestModel)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Drop the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.delete_model(cls.TestModel)
++        super().tearDownClass()
++    
++    @classmethod
++    def _get_connection(cls):
++        from django.db import connection
++        return connection
++    
++    def setUp(self):
++        # Create test data
++        self.TestModel.objects.create(name='test1', value=1)
++        self.TestModel.objects.create(name='test2', value=2)
++        self.TestModel.objects.create(name='other', value=3)
++    
++    def tearDown(self):
++        self.TestModel.objects.all().delete()
++    
++    def test_exists_empty_subquery_with_negation_preserves_other_filters(self):
++        """
++        Test that ~Exists(Model.objects.none()) combined with other filters
++        preserves the other filters in the WHERE clause.
++        
++        This is the main bug reproduction test - before the fix, this would
++        result in an empty WHERE clause.
++        """
++        # This should find records with name='test1' since the negated empty EXISTS
++        # should evaluate to True (NOT EXISTS of empty set is True)
++        qs = self.TestModel.objects.filter(
++            ~models.Exists(self.TestModel.objects.none()),
++            name='test1'
++        )
++        
++        # The queryset should not be empty and should contain the name filter
++        self.assertEqual(qs.count(), 1)
++        self.assertEqual(qs.first().name, 'test1')
++        
++        # Verify the SQL contains the name filter
++        sql_str = str(qs.query)
++        self.assertIn('name', sql_str.lower())
++    
++    def test_exists_empty_subquery_without_negation_preserves_other_filters(self):
++        """
++        Test that Exists(Model.objects.none()) combined with other filters
++        preserves the other filters, even though the result will be empty.
++        """
++        # This should find no records since EXISTS of empty set is False
++        qs = self.TestModel.objects.filter(
++            models.Exists(self.TestModel.objects.none()),
++            name='test1'
++        )
++        
++        # The queryset should be empty but should still contain the name filter
++        self.assertEqual(qs.count(), 0)
++        
++        # Verify the SQL contains the name filter
++        sql_str = str(qs.query)
++        self.assertIn('name', sql_str.lower())
++    
++    def test_multiple_filters_with_negated_empty_exists(self):
++        """
++        Test multiple filters combined with negated empty EXISTS subquery.
++        """
++        qs = self.TestModel.objects.filter(
++            ~models.Exists(self.TestModel.objects.none()),
++            name__startswith='test',
++            value__gt=1
++        )
++        
++        # Should find test2 (name starts with 'test' and value > 1)
++        self.assertEqual(qs.count(), 1)
++        self.assertEqual(qs.first().name, 'test2')
++        
++        # Verify SQL contains all filters
++        sql_str = str(qs.query)
++        self.assertIn('name', sql_str.lower())
++        self.assertIn('value', sql_str.lower())
++    
++    def test_empty_exists_subquery_evaluation(self):
++        """
++        Test that empty EXISTS subqueries evaluate correctly in isolation.
++        """
++        # EXISTS of empty set should be False
++        exists_empty = models.Exists(self.TestModel.objects.none())
++        qs_exists = self.TestModel.objects.filter(exists_empty)
++        self.assertEqual(qs_exists.count(), 0)
++        
++        # NOT EXISTS of empty set should be True
++        not_exists_empty = ~models.Exists(self.TestModel.objects.none())
++        qs_not_exists = self.TestModel.objects.filter(not_exists_empty)
++        self.assertEqual(qs_not_exists.count(), 3)  # All records
++    
++    def test_chained_filters_with_empty_exists(self):
++        """
++        Test chaining filters with empty EXISTS subqueries.
++        """
++        qs = (self.TestModel.objects
++              .filter(name__startswith='test')
++              .filter(~models.Exists(self.TestModel.objects.none()))
++              .filter(value__lte=2))
++        
++        # Should find test1 and test2
++        self.assertEqual(qs.count(), 2)
++        names = set(obj.name for obj in qs)
++        self.assertEqual(names, {'test1', 'test2'})
++    
++    def test_exclude_with_empty_exists(self):
++        """
++        Test using exclude() with empty EXISTS subqueries.
++        """
++        # exclude() with EXISTS of empty set should exclude nothing
++        qs_exclude_exists = self.TestModel.objects.exclude(
++            models.Exists(self.TestModel.objects.none())
++        )
++        self.assertEqual(qs_exclude_exists.count(), 3)  # All records
++        
++        # exclude() with NOT EXISTS of empty set should exclude everything
++        qs_exclude_not_exists = self.TestModel.objects.exclude(
++            ~models.Exists(self.TestModel.objects.none())
++        )
++        self.assertEqual(qs_exclude_not_exists.count(), 0)  # No records
++    
++    def test_complex_query_with_empty_exists_and_regular_exists(self):
++        """
++        Test combining empty EXISTS with regular EXISTS subqueries.
++        """
++        # Create a subquery that actually has results
++        regular_subquery = self.TestModel.objects.filter(value__gt=2)
++        
++        qs = self.TestModel.objects.filter(
++            ~models.Exists(self.TestModel.objects.none()),  # Should be True
++            models.Exists(regular_subquery),  # Should be True (other record exists)
++            name='test1'
++        )
++        
++        # Should find test1 since both EXISTS conditions are satisfied
++        self.assertEqual(qs.count(), 1)
++        self.assertEqual(qs.first().name, 'test1')
++    
++    def test_or_condition_with_empty_exists(self):
++        """
++        Test OR conditions involving empty EXISTS subqueries.
++        """
++        from django.db.models import Q
++        
++        # (name='nonexistent' OR NOT EXISTS empty) should find all records
++        qs = self.TestModel.objects.filter(
++            Q(name='nonexistent') | Q(~models.Exists(self.TestModel.objects.none()))
++        )
++        self.assertEqual(qs.count(), 3)  # All records
++        
++        # (name='nonexistent' OR EXISTS empty) should find no records
++        qs = self.TestModel.objects.filter(
++            Q(name='nonexistent') | Q(models.Exists(self.TestModel.objects.none()))
++        )
++        self.assertEqual(qs.count(), 0)  # No records
++    
++    def test_annotation_with_empty_exists(self):
++        """
++        Test using empty EXISTS in annotations.
++        """
++        qs = self.TestModel.objects.annotate(
++            has_empty=models.Exists(self.TestModel.objects.none()),
++            not_has_empty=~models.Exists(self.TestModel.objects.none())
++        )
++        
++        for obj in qs:
++            self.assertFalse(obj.has_empty)  # EXISTS empty should be False
++            self.assertTrue(obj.not_has_empty)  # NOT EXISTS empty should be True
++    
++    def test_subquery_with_none_and_additional_filters(self):
++        """
++        Test that .none() subqueries work correctly when combined with additional filters.
++        """
++        # Even though we add filters after .none(), it should still be empty
++        empty_subquery = self.TestModel.objects.none().filter(name='test1')
++        
++        qs = self.TestModel.objects.filter(
++            ~models.Exists(empty_subquery),
++            name='test1'
++        )
++        
++        self.assertEqual(qs.count(), 1)
++        self.assertEqual(qs.first().name, 'test1')
++
++
++class ExistsEmptySubqueryBugReproductionTest(TestCase):
++    """
++    Specific test to reproduce the exact bug described in the issue.
++    
++    This test should fail before the fix and pass after the fix.
++    """
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        class MyModel(models.Model):
++            name = models.CharField(max_length=100)
++            
++            class Meta:
++                app_label = 'queries'
++        
++        cls.MyModel = MyModel
++        
++        # Create the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.create_model(cls.MyModel)
++    
++    @classmethod
++    def tearDownClass(cls):
++        # Drop the table
++        with cls._get_connection().schema_editor() as schema_editor:
++            schema_editor.delete_model(cls.MyModel)
++        super().tearDownClass()
++    
++    @classmethod
++    def _get_connection(cls):
++        from django.db import connection
++        return connection
++    
++    def setUp(self):
++        self.MyModel.objects.create(name='test')
++        self.MyModel.objects.create(name='other')
++    
++    def tearDown(self):
++        self.MyModel.objects.all().delete()
++    
++    def test_bug_reproduction_exact_case(self):
++        """
++        Reproduce the exact bug case from the issue description.
++        
++        Before fix: This would result in EmptyResultSet and missing WHERE clause.
++        After fix: This should properly filter by name='test' and return 1 result.
++        """
++        # This is the exact code from the bug report
++        qs = self.MyModel.objects.filter(
++            ~models.Exists(self.MyModel.objects.none()), 
++            name='test'
++        )
++        
++        # Before fix: qs would be empty and str(qs.query) would be 'EmptyResultSet'
++        # After fix: qs should contain the record with name='test'
++        self.assertEqual(qs.count(), 1)
++        self.assertEqual(qs.first().name, 'test')
++        
++        # Verify that the query string is not 'EmptyResultSet'
++        query_str = str(qs.query)
++        self.assertNotEqual(query_str, 'EmptyResultSet')
++        
++        # Verify that the WHERE clause contains the name filter
++        self.assertIn('name', query_str.lower())
++    
++    def test_query_compilation_does_not_raise_empty_result_set(self):
++        """
++        Test that query compilation doesn't raise EmptyResultSet inappropriately.
++        """
++        qs = self.MyModel.objects.filter(
++            ~models.Exists(self.MyModel.objects.none()), 
++            name='test'
++        )
++        
++        # This should not raise EmptyResultSet during compilation
++        try:
++            # Force query compilation by accessing the SQL
++            from django.db import connection
++            compiler = qs.query.get_compiler(connection=connection)
++            sql, params = compiler.as_sql()
++            
++            # Should successfully compile to SQL
++            self.assertIsInstance(sql, str)
++            self.assertIsInstance(params, (list, tuple))
++            self.assertIn('name', sql.lower())
++            
++        except EmptyResultSet:
++            self.fail("Query compilation should not raise EmptyResultSet")

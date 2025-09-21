@@ -1,0 +1,235 @@
+--- a/tests/backends/sqlite/test_constraint_checking.py
++++ b/tests/backends/sqlite/test_constraint_checking.py
+-# Empty if creating new file
++import pytest
++from django.db import connection, models
++from django.db.utils import IntegrityError
++from django.test import TestCase, TransactionTestCase
++from django.test.utils import override_settings
++import sqlite3
++
++
++class OrderModel(models.Model):
++    """Model with table name 'order' which is a SQL keyword."""
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'test_app'
++        db_table = 'order'
++
++
++class GroupModel(models.Model):
++    """Model with table name 'group' which is a SQL keyword."""
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'test_app'
++        db_table = 'group'
++
++
++class SelectModel(models.Model):
++    """Model with table name 'select' which is a SQL keyword."""
++    name = models.CharField(max_length=100)
++    order = models.ForeignKey(OrderModel, on_delete=models.CASCADE, null=True)
++    
++    class Meta:
++        app_label = 'test_app'
++        db_table = 'select'
++
++
++@override_settings(USE_TZ=False)
++class SQLiteConstraintCheckingTestCase(TransactionTestCase):
++    """Test constraint checking with SQL keyword table names in SQLite."""
++    
++    available_apps = ['test_app']
++    
++    def setUp(self):
++        """Set up test models and database tables."""
++        if connection.vendor != 'sqlite':
++            self.skipTest("This test is specific to SQLite backend")
++            
++        # Create tables for our test models
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(OrderModel)
++            schema_editor.create_model(GroupModel)
++            schema_editor.create_model(SelectModel)
++    
++    def tearDown(self):
++        """Clean up test tables."""
++        if connection.vendor == 'sqlite':
++            with connection.schema_editor() as schema_editor:
++                schema_editor.delete_model(SelectModel)
++                schema_editor.delete_model(GroupModel)
++                schema_editor.delete_model(OrderModel)
++    
++    def test_check_constraints_with_keyword_table_names_fails_before_fix(self):
++        """
++        Test that check_constraints fails with SQL keyword table names before fix.
++        This test demonstrates the bug by directly calling the problematic code.
++        """
++        # This test should fail before the fix is applied
++        table_names = ['order', 'group', 'select']
++        
++        # Before the fix, this should raise sqlite3.OperationalError
++        with self.assertRaises(sqlite3.OperationalError) as cm:
++            # Directly test the buggy behavior by calling check_constraints
++            # with table names that are SQL keywords
++            connection.check_constraints(table_names)
++        
++        # The error message should mention syntax error near the keyword
++        self.assertIn('syntax error', str(cm.exception).lower())
++    
++    def test_check_constraints_with_keyword_table_names_passes_after_fix(self):
++        """
++        Test that check_constraints works with SQL keyword table names after fix.
++        This test verifies the fix works correctly.
++        """
++        # Create some test data
++        order_obj = OrderModel.objects.create(name="Test Order")
++        group_obj = GroupModel.objects.create(name="Test Group")
++        select_obj = SelectModel.objects.create(name="Test Select", order=order_obj)
++        
++        # After the fix, this should work without errors
++        table_names = ['order', 'group', 'select']
++        
++        try:
++            # This should not raise any exceptions after the fix
++            connection.check_constraints(table_names)
++        except sqlite3.OperationalError as e:
++            self.fail(f"check_constraints failed with SQL keyword table names: {e}")
++    
++    def test_check_constraints_with_no_table_names(self):
++        """Test that check_constraints works when table_names is None."""
++        # Create some test data
++        order_obj = OrderModel.objects.create(name="Test Order")
++        
++        try:
++            # This should work regardless of table names being keywords
++            connection.check_constraints(None)
++        except sqlite3.OperationalError as e:
++            self.fail(f"check_constraints failed with table_names=None: {e}")
++    
++    def test_check_constraints_with_foreign_key_violations(self):
++        """Test that check_constraints properly detects foreign key violations."""
++        # Create test data with valid foreign key
++        order_obj = OrderModel.objects.create(name="Test Order")
++        select_obj = SelectModel.objects.create(name="Test Select", order=order_obj)
++        
++        # Disable constraint checking to create invalid data
++        connection.disable_constraint_checking()
++        
++        try:
++            # Delete the referenced order while constraint checking is disabled
++            order_obj.delete()
++            
++            # Re-enable constraint checking
++            connection.enable_constraint_checking()
++            
++            # Now check constraints - this should detect the violation
++            with self.assertRaises(IntegrityError):
++                connection.check_constraints(['select'])
++                
++        finally:
++            # Clean up - re-enable constraints if they were left disabled
++            connection.enable_constraint_checking()
++    
++    def test_pragma_foreign_key_check_direct_sql_keyword_table(self):
++        """
++        Test direct PRAGMA foreign_key_check with SQL keyword table names.
++        This test directly exercises the problematic SQL statements.
++        """
++        # Create a table with a keyword name
++        OrderModel.objects.create(name="Test Order")
++        
++        with connection.cursor() as cursor:
++            # Before fix: This would fail with syntax error
++            # After fix: This should work with quoted table names
++            try:
++                # Test the specific PRAGMA statements that were failing
++                cursor.execute('PRAGMA foreign_key_check("order")')
++                result = cursor.fetchall()
++                # Should not raise an exception
++                self.assertIsInstance(result, list)
++            except sqlite3.OperationalError as e:
++                if 'syntax error' in str(e).lower():
++                    self.fail("PRAGMA foreign_key_check failed with quoted table name")
++                else:
++                    # Re-raise if it's a different error
++                    raise
++    
++    def test_pragma_foreign_key_list_direct_sql_keyword_table(self):
++        """
++        Test direct PRAGMA foreign_key_list with SQL keyword table names.
++        """
++        # Create tables with foreign key relationship
++        order_obj = OrderModel.objects.create(name="Test Order")
++        SelectModel.objects.create(name="Test Select", order=order_obj)
++        
++        with connection.cursor() as cursor:
++            try:
++                # Test the specific PRAGMA statement that was failing
++                cursor.execute('PRAGMA foreign_key_list("select")')
++                result = cursor.fetchall()
++                # Should not raise an exception and should return foreign key info
++                self.assertIsInstance(result, list)
++            except sqlite3.OperationalError as e:
++                if 'syntax error' in str(e).lower():
++                    self.fail("PRAGMA foreign_key_list failed with quoted table name")
++                else:
++                    # Re-raise if it's a different error
++                    raise
++    
++    def test_edge_case_table_names_with_special_characters(self):
++        """Test constraint checking with table names containing special characters."""
++        # Test with table names that might cause issues
++        special_table_names = [
++            'order',      # SQL keyword
++            'group',      # SQL keyword  
++            'select',     # SQL keyword
++            'table-name', # Hyphen
++            'table_name', # Underscore (should be fine)
++        ]
++        
++        # This should not crash even with special table names
++        try:
++            connection.check_constraints(special_table_names)
++        except sqlite3.OperationalError as e:
++            if 'syntax error' in str(e).lower():
++                self.fail(f"check_constraints failed with special table names: {e}")
++            # Other operational errors might be expected (e.g., table doesn't exist)
++    
++    def test_empty_table_names_list(self):
++        """Test constraint checking with empty table names list."""
++        # Empty list should not cause issues
++        try:
++            connection.check_constraints([])
++        except sqlite3.OperationalError as e:
++            self.fail(f"check_constraints failed with empty table names list: {e}")
++
++
++class SQLiteConstraintCheckingUnitTest(TestCase):
++    """Unit tests for SQLite constraint checking functionality."""
++    
++    def test_quote_name_functionality(self):
++        """Test that the quote_name method works correctly for SQLite."""
++        if connection.vendor != 'sqlite':
++            self.skipTest("This test is specific to SQLite backend")
++        
++        # Test basic quoting
++        self.assertEqual(connection.ops.quote_name('order'), '"order"')
++        self.assertEqual(connection.ops.quote_name('group'), '"group"')
++        self.assertEqual(connection.ops.quote_name('select'), '"select"')
++        
++        # Test that already quoted names are not double-quoted
++        self.assertEqual(connection.ops.quote_name('"order"'), '"order"')
++        
++        # Test normal table names
++        self.assertEqual(connection.ops.quote_name('normal_table'), '"normal_table"')
++    
++    def test_supports_pragma_foreign_key_check_feature(self):
++        """Test that SQLite backend supports PRAGMA foreign_key_check."""
++        if connection.vendor != 'sqlite':
++            self.skipTest("This test is specific to SQLite backend")
++        
++        # SQLite should support PRAGMA foreign_key_check
++        self.assertTrue(connection.features.supports_pragma_foreign_key_check)

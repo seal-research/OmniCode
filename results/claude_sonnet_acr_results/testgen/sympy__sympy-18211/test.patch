@@ -1,0 +1,307 @@
+--- a/sympy/solvers/tests/test_solveset_conditionset.py
++++ b/sympy/solvers/tests/test_solveset_conditionset.py
+-# Empty if creating new file
++import pytest
++from sympy import symbols, cos, sin, Eq, S, ConditionSet
++from sympy.solvers.solveset import solveset, _solveset
++from sympy.core.relational import Equality
++
++
++def test_solveset_returns_conditionset_for_unsolvable_equation():
++    """Test that solveset returns ConditionSet instead of raising NotImplementedError
++    for equations that cannot be solved analytically.
++    
++    This test reproduces the bug where Eq(n*cos(n) - 3*sin(n), 0).as_set()
++    raises NotImplementedError instead of returning a ConditionSet.
++    """
++    n = symbols('n', real=True)
++    
++    # This equation cannot be solved analytically
++    equation = n*cos(n) - 3*sin(n)
++    
++    # Test that solveset returns a ConditionSet instead of raising NotImplementedError
++    result = solveset(equation, n, S.Reals)
++    
++    # The result should be a ConditionSet
++    assert isinstance(result, ConditionSet)
++    
++    # The condition should be the original equation equal to zero
++    assert result.condition == Eq(equation, 0)
++    
++    # The symbol should be n
++    assert result.sym == n
++    
++    # The base set should be the real domain
++    assert result.base_set == S.Reals
++
++
++def test_solveset_returns_conditionset_for_complex_transcendental():
++    """Test that solveset returns ConditionSet for complex transcendental equations."""
++    x = symbols('x')
++    
++    # Another transcendental equation that cannot be solved analytically
++    equation = x*sin(x) - cos(x)
++    
++    result = solveset(equation, x, S.Complexes)
++    
++    assert isinstance(result, ConditionSet)
++    assert result.condition == Eq(equation, 0)
++    assert result.sym == x
++    assert result.base_set == S.Complexes
++
++
++def test_solveset_preserves_existing_functionality():
++    """Test that solveset still works correctly for solvable equations."""
++    x = symbols('x')
++    
++    # Simple polynomial equation that can be solved
++    equation = x**2 - 4
++    result = solveset(equation, x, S.Reals)
++    
++    # Should return a FiniteSet with solutions
++    from sympy.sets import FiniteSet
++    assert isinstance(result, FiniteSet)
++    assert result == FiniteSet(-2, 2)
++
++
++def test_eq_as_set_returns_conditionset():
++    """Test that Eq.as_set() returns ConditionSet instead of raising NotImplementedError
++    for unsolvable equations.
++    
++    This is the main test case from the issue description.
++    """
++    n = symbols('n', real=True)
++    
++    # Create the equation from the issue
++    eq = Eq(n*cos(n) - 3*sin(n), 0)
++    
++    # This should return a ConditionSet, not raise NotImplementedError
++    result = eq.as_set()
++    
++    assert isinstance(result, ConditionSet)
++    assert result.condition == eq
++    assert result.sym == n
++    # For real symbols, the domain should be Reals
++    assert result.base_set == S.Reals
++
++
++def test_eq_as_set_with_complex_symbol():
++    """Test that Eq.as_set() works with complex symbols."""
++    z = symbols('z')  # Complex symbol by default
++    
++    eq = Eq(z*cos(z) - 3*sin(z), 0)
++    result = eq.as_set()
++    
++    assert isinstance(result, ConditionSet)
++    assert result.condition == eq
++    assert result.sym == z
++    # For complex symbols, the domain should be Complexes
++    assert result.base_set == S.Complexes
++
++
++def test_eq_as_set_preserves_existing_functionality():
++    """Test that Eq.as_set() still works for solvable equations."""
++    x = symbols('x')
++    
++    # Simple equation that can be solved
++    eq = Eq(x**2 - 4, 0)
++    result = eq.as_set()
++    
++    from sympy.sets import FiniteSet
++    assert isinstance(result, FiniteSet)
++    assert result == FiniteSet(-2, 2)
++
++
++def test_multiple_variables_unsolvable():
++    """Test behavior with equations containing multiple variables."""
++    x, y = symbols('x y', real=True)
++    
++    # Equation with multiple variables - should focus on the specified variable
++    equation = x*cos(y) - y*sin(x)
++    
++    # Solve for x
++    result = solveset(equation, x, S.Reals)
++    assert isinstance(result, ConditionSet)
++    assert result.sym == x
++    assert result.base_set == S.Reals
++
++
++def test_edge_case_no_free_symbols():
++    """Test edge case where equation has no free symbols."""
++    # This should still work with existing functionality
++    result = solveset(1, domain=S.Reals)  # No solution
++    from sympy.sets import EmptySet
++    assert result == EmptySet
++
++
++def test_edge_case_always_true():
++    """Test edge case where equation is always true."""
++    x = symbols('x')
++    result = solveset(0, x, S.Reals)  # Always true
++    assert result == S.Reals
++
++
++def test_failing_case_before_fix():
++    """Test that demonstrates the bug before the fix is applied.
++    
++    This test should fail before the fix and pass after the fix.
++    It's designed to catch regressions.
++    """
++    n = symbols('n', real=True)
++    
++    # This specific case was mentioned in the issue
++    eq = Eq(n*cos(n) - 3*sin(n), 0)
++    
++    # Before fix: this would raise NotImplementedError
++    # After fix: this should return ConditionSet
++    try:
++        result = eq.as_set()
++        # If we get here, the fix is working
++        assert isinstance(result, ConditionSet)
++        expected = ConditionSet(n, Eq(n*cos(n) - 3*sin(n), 0), S.Reals)
++        assert result == expected
++    except NotImplementedError:
++        # This indicates the bug is still present
++        pytest.fail("as_set() raised NotImplementedError instead of returning ConditionSet")
++
++
++def test_conditionset_equality():
++    """Test that the returned ConditionSet matches the expected form."""
++    n = symbols('n', real=True)
++    
++    eq = Eq(n*cos(n) - 3*sin(n), 0)
++    result = eq.as_set()
++    
++    # Manually construct the expected ConditionSet
++    expected = ConditionSet(n, Eq(n*cos(n) - 3*sin(n), 0), S.Reals)
++    
++    assert result == expected
++    assert str(result) == str(expected)
+
+--- a/sympy/logic/tests/test_boolalg_as_set.py
++++ b/sympy/logic/tests/test_boolalg_as_set.py
+-# Empty if creating new file
++import pytest
++from sympy import symbols, cos, sin, Eq, S, ConditionSet
++from sympy.logic.boolalg import Boolean
++
++
++def test_boolean_as_set_with_unsolvable_relational():
++    """Test that Boolean.as_set() handles unsolvable relational expressions correctly."""
++    n = symbols('n', real=True)
++    
++    # Create a relational expression that cannot be solved analytically
++    expr = Eq(n*cos(n) - 3*sin(n), 0)
++    
++    # This should return a ConditionSet, not raise NotImplementedError
++    result = expr.as_set()
++    
++    assert isinstance(result, ConditionSet)
++    assert result.condition == expr
++    assert result.sym == n
++    assert result.base_set == S.Reals
++
++
++def test_boolean_as_set_fallback_mechanism():
++    """Test that the as_set method properly falls back to ConditionSet when solveset fails."""
++    x = symbols('x')
++    
++    # Another transcendental equation
++    expr = Eq(x*sin(x) + cos(x), 0)
++    result = expr.as_set()
++    
++    assert isinstance(result, ConditionSet)
++    assert result.condition == expr
++    assert result.sym == x
++
++
++def test_boolean_as_set_with_multiple_symbols():
++    """Test as_set behavior with multiple free symbols."""
++    x, y = symbols('x y')
++    
++    # Equation with multiple symbols - should handle appropriately
++    expr = Eq(x*y + sin(x*y), 0)
++    
++    # When there are multiple symbols, it should still work
++    # The implementation should pick one symbol or handle appropriately
++    result = expr.as_set()
++    
++    # Should return a ConditionSet
++    assert isinstance(result, ConditionSet)
++    assert result.condition == expr
++
++
++def test_boolean_as_set_preserves_solvable_cases():
++    """Test that as_set still works correctly for solvable equations."""
++    x = symbols('x')
++    
++    # Simple solvable equation
++    expr = Eq(x**2 - 1, 0)
++    result = expr.as_set()
++    
++    from sympy.sets import FiniteSet
++    assert isinstance(result, FiniteSet)
++    assert result == FiniteSet(-1, 1)
++
++
++def test_boolean_as_set_domain_inference():
++    """Test that as_set correctly infers the domain based on symbol assumptions."""
++    # Real symbol
++    x_real = symbols('x', real=True)
++    expr_real = Eq(x_real*cos(x_real), 0)
++    result_real = expr_real.as_set()
++    
++    if isinstance(result_real, ConditionSet):
++        assert result_real.base_set == S.Reals
++    
++    # Complex symbol (default)
++    x_complex = symbols('x')
++    expr_complex = Eq(x_complex*cos(x_complex), 0)
++    result_complex = expr_complex.as_set()
++    
++    if isinstance(result_complex, ConditionSet):
++        assert result_complex.base_set == S.Complexes
++
++
++def test_boolean_as_set_error_handling():
++    """Test that as_set properly handles and recovers from NotImplementedError."""
++    n = symbols('n', real=True)
++    
++    # This specific equation was problematic in the original issue
++    expr = Eq(n*cos(n) - 3*sin(n), 0)
++    
++    # Should not raise NotImplementedError
++    try:
++        result = expr.as_set()
++        assert isinstance(result, ConditionSet)
++    except NotImplementedError:
++        pytest.fail("as_set() should not raise NotImplementedError for unsolvable equations")
++
++
++def test_boolean_as_set_consistency():
++    """Test that as_set returns consistent results."""
++    n = symbols('n', real=True)
++    expr = Eq(n*cos(n) - 3*sin(n), 0)
++    
++    # Multiple calls should return the same result
++    result1 = expr.as_set()
++    result2 = expr.as_set()
++    
++    assert result1 == result2
++    assert type(result1) == type(result2)
++
++
++def test_boolean_as_set_with_inequalities():
++    """Test as_set with inequality expressions that might be unsolvable."""
++    x = symbols('x', real=True)
++    
++    # Complex inequality that might not be easily solvable
++    from sympy import Lt
++    expr = Lt(x*cos(x), sin(x))
++    
++    # Should handle this gracefully
++    result = expr.as_set()
++    
++    # The result should be some kind of set (ConditionSet or other)
++    from sympy.sets.sets import Set
++    assert isinstance(result, Set)

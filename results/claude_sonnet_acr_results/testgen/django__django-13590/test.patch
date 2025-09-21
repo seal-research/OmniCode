@@ -1,0 +1,178 @@
+--- a/tests/queries/test_namedtuple_range.py
++++ b/tests/queries/test_namedtuple_range.py
++import pytest
++from collections import namedtuple
++from django.db import models
++from django.test import TestCase
++from django.db.models.sql.query import Query
++from django.db.models import Q
++
++
++class TestModel(models.Model):
++    """Test model for range queries with named tuples."""
++    value = models.IntegerField()
++    
++    class Meta:
++        app_label = 'test'
++
++
++class TestNamedTupleRange(TestCase):
++    """Test that named tuples work correctly with __range queries."""
++    
++    def setUp(self):
++        """Set up test data."""
++        # Create a named tuple type for testing
++        self.Range = namedtuple('Range', ['start', 'end'])
++        self.Point = namedtuple('Point', ['x', 'y'])
++        
++    def test_named_tuple_range_query_basic(self):
++        """Test that named tuples work with __range queries."""
++        # Create a named tuple for range values
++        range_tuple = self.Range(1, 10)
++        
++        # This should not raise an error
++        query = TestModel.objects.filter(value__range=range_tuple).query
++        
++        # Verify the query was constructed properly
++        self.assertIsNotNone(query)
++        
++    def test_named_tuple_range_query_with_expressions(self):
++        """Test named tuples with expressions in range queries."""
++        from django.db.models import Value
++        
++        # Create a named tuple with expressions
++        range_tuple = self.Range(Value(1), Value(10))
++        
++        # This should not raise an error after the fix
++        query = TestModel.objects.filter(value__range=range_tuple).query
++        
++        # Verify the query was constructed properly
++        self.assertIsNotNone(query)
++        
++    def test_resolve_lookup_value_with_named_tuple(self):
++        """Test resolve_lookup_value method directly with named tuples."""
++        query = Query(TestModel)
++        
++        # Test with a simple named tuple
++        range_tuple = self.Range(1, 10)
++        resolved = query.resolve_lookup_value(range_tuple, set(), True)
++        
++        # Should return a named tuple of the same type
++        self.assertIsInstance(resolved, self.Range)
++        self.assertEqual(resolved.start, 1)
++        self.assertEqual(resolved.end, 10)
++        
++    def test_resolve_lookup_value_with_named_tuple_expressions(self):
++        """Test resolve_lookup_value with named tuples containing expressions."""
++        from django.db.models import Value
++        
++        query = Query(TestModel)
++        
++        # Test with named tuple containing expressions
++        range_tuple = self.Range(Value(1), Value(10))
++        resolved = query.resolve_lookup_value(range_tuple, set(), True)
++        
++        # Should return a named tuple of the same type with resolved expressions
++        self.assertIsInstance(resolved, self.Range)
++        # The expressions should be resolved but we can't easily test the exact values
++        # Just ensure it doesn't crash and returns the right type
++        
++    def test_resolve_lookup_value_with_regular_tuple(self):
++        """Test that regular tuples still work correctly."""
++        query = Query(TestModel)
++        
++        # Test with regular tuple
++        regular_tuple = (1, 10)
++        resolved = query.resolve_lookup_value(regular_tuple, set(), True)
++        
++        # Should return a regular tuple
++        self.assertIsInstance(resolved, tuple)
++        self.assertEqual(resolved, (1, 10))
++        
++    def test_resolve_lookup_value_with_list(self):
++        """Test that lists still work correctly."""
++        query = Query(TestModel)
++        
++        # Test with list
++        test_list = [1, 10]
++        resolved = query.resolve_lookup_value(test_list, set(), True)
++        
++        # Should return a list
++        self.assertIsInstance(resolved, list)
++        self.assertEqual(resolved, [1, 10])
++        
++    def test_named_tuple_with_different_field_count(self):
++        """Test named tuples with different numbers of fields."""
++        query = Query(TestModel)
++        
++        # Test with 2-field named tuple
++        point = self.Point(1, 2)
++        resolved = query.resolve_lookup_value(point, set(), True)
++        
++        self.assertIsInstance(resolved, self.Point)
++        self.assertEqual(resolved.x, 1)
++        self.assertEqual(resolved.y, 2)
++        
++        # Test with 3-field named tuple
++        Triple = namedtuple('Triple', ['a', 'b', 'c'])
++        triple = Triple(1, 2, 3)
++        resolved = query.resolve_lookup_value(triple, set(), True)
++        
++        self.assertIsInstance(resolved, Triple)
++        self.assertEqual(resolved.a, 1)
++        self.assertEqual(resolved.b, 2)
++        self.assertEqual(resolved.c, 3)
++        
++    def test_nested_named_tuples(self):
++        """Test nested structures with named tuples."""
++        query = Query(TestModel)
++        
++        # Test list containing named tuples
++        range_list = [self.Range(1, 5), self.Range(10, 15)]
++        resolved = query.resolve_lookup_value(range_list, set(), True)
++        
++        self.assertIsInstance(resolved, list)
++        self.assertEqual(len(resolved), 2)
++        self.assertIsInstance(resolved[0], self.Range)
++        self.assertIsInstance(resolved[1], self.Range)
++        self.assertEqual(resolved[0].start, 1)
++        self.assertEqual(resolved[0].end, 5)
++        self.assertEqual(resolved[1].start, 10)
++        self.assertEqual(resolved[1].end, 15)
++        
++    def test_named_tuple_error_reproduction(self):
++        """Test that reproduces the original error before the fix."""
++        from django.db.models import Value
++        
++        # This test demonstrates the bug that should be fixed
++        # Before the fix, this would raise:
++        # TypeError: __new__() missing 1 required positional argument: 'end'
++        
++        query = Query(TestModel)
++        range_tuple = self.Range(Value(1), Value(10))
++        
++        # This should work after the fix
++        try:
++            resolved = query.resolve_lookup_value(range_tuple, set(), True)
++            # If we get here, the fix is working
++            self.assertIsInstance(resolved, self.Range)
++        except TypeError as e:
++            if "missing 1 required positional argument" in str(e):
++                self.fail("The named tuple bug is not fixed: " + str(e))
++            else:
++                # Some other TypeError, re-raise it
++                raise
++                
++    def test_q_object_with_named_tuple_range(self):
++        """Test Q objects with named tuple ranges."""
++        range_tuple = self.Range(1, 10)
++        
++        # This should not raise an error
++        q = Q(value__range=range_tuple)
++        
++        # Should be able to use it in a filter
++        queryset = TestModel.objects.filter(q)
++        
++        # Just verify it doesn't crash when building the query
++        query = queryset.query
++        self.assertIsNotNone(query)

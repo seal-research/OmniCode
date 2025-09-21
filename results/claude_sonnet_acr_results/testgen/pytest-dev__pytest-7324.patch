@@ -1,0 +1,6 @@
+{
+  "instance_id": "pytest-dev__pytest-7324",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/pytest-dev__pytest-7324/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/pytest-dev__pytest-7324/pytest-dev__pytest-7324.pred"
+}

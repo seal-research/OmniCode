@@ -1,0 +1,6 @@
+{
+  "instance_id": "fastapi__fastapi-1524",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/fastapi__fastapi-1524/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/fastapi__fastapi-1524/fastapi__fastapi-1524.pred"
+}

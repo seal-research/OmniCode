@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/html.py b/django/utils/html.py\nindex 3bc02b8dd3..694d1d8ee8 100644\n--- a/django/utils/html.py\n+++ b/django/utils/html.py\n@@ -284,7 +284,7 @@ def urlize(text, trim_url_limit=None, nofollow=False, autoescape=False):\n             stripped = middle_unescaped.rstrip(TRAILING_PUNCTUATION_CHARS)\n             if middle_unescaped != stripped:\n                 trail = middle[len(stripped):] + trail\n-                middle = middle[:len(stripped) - len(middle_unescaped)]\n+                middle = middle[:len(stripped)]\n                 trimmed_something = True\n         return lead, middle, trail\n \n"
+}

@@ -1,0 +1,230 @@
+--- a/tests/urls_tests/test_resolvers.py
++++ b/tests/urls_tests/test_resolvers.py
+-# Empty if creating new file
++import functools
++import pytest
++from django.urls.resolvers import ResolverMatch
++
++
++def dummy_view(request, arg1, arg2=None):
++    """A dummy view function for testing."""
++    return "dummy response"
++
++
++def another_view(request, x, y, z=10):
++    """Another dummy view function for testing."""
++    return "another response"
++
++
++class DummyClass:
++    """A dummy class-based view for testing."""
++    def __call__(self, request):
++        return "class response"
++
++
++class TestResolverMatchPartialHandling:
++    """Test ResolverMatch handling of functools.partial objects."""
++
++    def test_resolver_match_with_regular_function(self):
++        """Test that regular functions work as before."""
++        match = ResolverMatch(dummy_view, (), {})
++        
++        # Should show the actual function path
++        assert "dummy_view" in match._func_path
++        assert "test_resolvers" in match._func_path
++        
++        # __repr__ should show the function path
++        repr_str = repr(match)
++        assert "dummy_view" in repr_str
++        assert "test_resolvers" in repr_str
++
++    def test_resolver_match_with_class_based_view(self):
++        """Test that class-based views work as before."""
++        view_instance = DummyClass()
++        match = ResolverMatch(view_instance, (), {})
++        
++        # Should show the class path
++        assert "DummyClass" in match._func_path
++        assert "test_resolvers" in match._func_path
++        
++        # __repr__ should show the class path
++        repr_str = repr(match)
++        assert "DummyClass" in repr_str
++
++    def test_resolver_match_with_partial_function_no_args(self):
++        """Test ResolverMatch with functools.partial without pre-filled args."""
++        partial_view = functools.partial(dummy_view)
++        match = ResolverMatch(partial_view, (), {})
++        
++        # Before fix: this would show functools.partial
++        # After fix: should show the underlying function
++        assert "dummy_view" in match._func_path
++        assert "test_resolvers" in match._func_path
++        assert "functools.partial" not in match._func_path
++        
++        # __repr__ should show the underlying function, not functools.partial
++        repr_str = repr(match)
++        assert "dummy_view" in repr_str
++        assert "functools.partial" not in repr_str
++
++    def test_resolver_match_with_partial_function_with_args(self):
++        """Test ResolverMatch with functools.partial with pre-filled args."""
++        partial_view = functools.partial(another_view, "fixed_arg")
++        match = ResolverMatch(partial_view, (), {})
++        
++        # Should show the underlying function, not functools.partial
++        assert "another_view" in match._func_path
++        assert "test_resolvers" in match._func_path
++        assert "functools.partial" not in match._func_path
++        
++        # __repr__ should show the underlying function
++        repr_str = repr(match)
++        assert "another_view" in repr_str
++        assert "functools.partial" not in repr_str
++
++    def test_resolver_match_with_partial_function_with_kwargs(self):
++        """Test ResolverMatch with functools.partial with pre-filled kwargs."""
++        partial_view = functools.partial(another_view, z=99)
++        match = ResolverMatch(partial_view, (), {})
++        
++        # Should show the underlying function, not functools.partial
++        assert "another_view" in match._func_path
++        assert "test_resolvers" in match._func_path
++        assert "functools.partial" not in match._func_path
++        
++        # __repr__ should show the underlying function
++        repr_str = repr(match)
++        assert "another_view" in repr_str
++        assert "functools.partial" not in repr_str
++
++    def test_resolver_match_with_partial_function_mixed_args(self):
++        """Test ResolverMatch with functools.partial with both args and kwargs."""
++        partial_view = functools.partial(another_view, "fixed_arg", z=99)
++        match = ResolverMatch(partial_view, (), {})
++        
++        # Should show the underlying function, not functools.partial
++        assert "another_view" in match._func_path
++        assert "test_resolvers" in match._func_path
++        assert "functools.partial" not in match._func_path
++        
++        # __repr__ should show the underlying function
++        repr_str = repr(match)
++        assert "another_view" in repr_str
++        assert "functools.partial" not in repr_str
++
++    def test_resolver_match_partial_preserves_original_func_reference(self):
++        """Test that the original func is preserved when using partial."""
++        partial_view = functools.partial(dummy_view, "arg")
++        match = ResolverMatch(partial_view, (), {})
++        
++        # The func attribute should still be the partial for backward compatibility
++        assert match.func is partial_view
++        assert isinstance(match.func, functools.partial)
++
++    def test_resolver_match_nested_partial(self):
++        """Test ResolverMatch with nested functools.partial objects."""
++        # Create a partial of a partial
++        first_partial = functools.partial(another_view, "first_arg")
++        nested_partial = functools.partial(first_partial, y="second_arg")
++        match = ResolverMatch(nested_partial, (), {})
++        
++        # Should unwrap to the original function
++        assert "another_view" in match._func_path
++        assert "test_resolvers" in match._func_path
++        assert "functools.partial" not in match._func_path
++        
++        # __repr__ should show the underlying function
++        repr_str = repr(match)
++        assert "another_view" in repr_str
++        assert "functools.partial" not in repr_str
++
++    def test_resolver_match_partial_with_lambda(self):
++        """Test ResolverMatch with functools.partial wrapping a lambda."""
++        lambda_func = lambda request: "lambda response"
++        partial_view = functools.partial(lambda_func)
++        match = ResolverMatch(partial_view, (), {})
++        
++        # Lambda functions have __name__ as '<lambda>'
++        assert "<lambda>" in match._func_path
++        assert "functools.partial" not in match._func_path
++        
++        # __repr__ should show the lambda, not functools.partial
++        repr_str = repr(match)
++        assert "<lambda>" in repr_str
++        assert "functools.partial" not in repr_str
++
++    def test_resolver_match_partial_without_name_attribute(self):
++        """Test ResolverMatch with partial of object without __name__."""
++        class CallableClass:
++            def __call__(self, request):
++                return "callable response"
++        
++        callable_obj = CallableClass()
++        partial_view = functools.partial(callable_obj)
++        match = ResolverMatch(partial_view, (), {})
++        
++        # Should show the class name of the underlying callable
++        assert "CallableClass" in match._func_path
++        assert "test_resolvers" in match._func_path
++        assert "functools.partial" not in match._func_path
++        
++        # __repr__ should show the class, not functools.partial
++        repr_str = repr(match)
++        assert "CallableClass" in repr_str
++        assert "functools.partial" not in repr_str
++
++    def test_resolver_match_repr_bug_demonstration(self):
++        """
++        This test demonstrates the bug before the fix is applied.
++        It should fail before the fix and pass after the fix.
++        """
++        partial_view = functools.partial(dummy_view, "test_arg")
++        match = ResolverMatch(partial_view, (), {})
++        
++        # This is the main bug: __repr__ should not show functools.partial
++        repr_str = repr(match)
++        
++        # The bug: this assertion should fail before the fix
++        # because repr_str would contain "functools.partial" instead of "dummy_view"
++        assert "functools.partial" not in repr_str, (
++            f"ResolverMatch.__repr__() shows 'functools.partial' instead of "
++            f"the underlying function. Got: {repr_str}"
++        )
++        
++        # After the fix, it should show the actual function
++        assert "dummy_view" in repr_str, (
++            f"ResolverMatch.__repr__() should show the underlying function name. "
++            f"Got: {repr_str}"
++        )
++
++    def test_resolver_match_all_attributes_preserved(self):
++        """Test that all ResolverMatch attributes work correctly with partial."""
++        partial_view = functools.partial(dummy_view, "test_arg")
++        args = ("url_arg",)
++        kwargs = {"url_kwarg": "value"}
++        url_name = "test_url"
++        app_names = ["test_app"]
++        namespaces = ["test_ns"]
++        route = "test/route/"
++        
++        match = ResolverMatch(
++            partial_view, args, kwargs, url_name=url_name,
++            app_names=app_names, namespaces=namespaces, route=route
++        )
++        
++        # All attributes should be preserved
++        assert match.func is partial_view
++        assert match.args == args
++        assert match.kwargs == kwargs
++        assert match.url_name == url_name
++        assert match.app_names == app_names
++        assert match.namespaces == namespaces
++        assert match.route == route
++        
++        # The view_name should be constructed correctly
++        assert "dummy_view" in match.view_name
++        
++        # __getitem__ should still work
++        assert match[0] is partial_view
++        assert match[1] == args
++        assert match[2] == kwargs

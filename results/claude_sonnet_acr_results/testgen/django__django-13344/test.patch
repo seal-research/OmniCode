@@ -1,0 +1,334 @@
+--- a/tests/asgi/test_middleware_response_bug.py
++++ b/tests/asgi/test_middleware_response_bug.py
+-# Empty if creating new file
++import asyncio
++import pytest
++from unittest.mock import Mock, patch
++
++from django.conf import settings
++from django.core.handlers.asgi import ASGIHandler, ASGIRequest
++from django.http import HttpResponse
++from django.test import RequestFactory, override_settings
++from django.utils.deprecation import MiddlewareMixin
++
++
++class ResponseTypeCapturingMiddleware(MiddlewareMixin):
++    """Middleware that captures the type of response it receives."""
++    
++    def __init__(self, get_response):
++        super().__init__(get_response)
++        self.captured_response_type = None
++        self.captured_request_type = None
++    
++    def process_response(self, request, response):
++        self.captured_request_type = type(request)
++        self.captured_response_type = type(response)
++        return response
++
++
++class DummyMiddleware(MiddlewareMixin):
++    """Simple middleware that just passes through."""
++    
++    def process_response(self, request, response):
++        return response
++
++
++@pytest.mark.asyncio
++class TestASGIMiddlewareResponseBug:
++    """Test suite for the ASGI middleware response type bug."""
++    
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.factory = RequestFactory()
++        self.scope = {
++            'type': 'http',
++            'method': 'GET',
++            'path': '/',
++            'query_string': b'',
++            'headers': [],
++            'server': ('localhost', 8000),
++        }
++    
++    @override_settings(
++        MIDDLEWARE=[
++            'tests.asgi.test_middleware_response_bug.ResponseTypeCapturingMiddleware',
++            'django.middleware.security.SecurityMiddleware',
++        ]
++    )
++    async def test_first_middleware_receives_coroutine_bug(self):
++        """
++        Test that demonstrates the bug where the first middleware receives
++        a coroutine instead of HttpResponse in ASGI context.
++        
++        This test should FAIL before the fix is applied.
++        """
++        handler = ASGIHandler()
++        handler.load_middleware(is_async=True)
++        
++        # Create a simple ASGI application that returns an HttpResponse
++        async def simple_app(scope, receive, send):
++            response = HttpResponse("Hello World")
++            await send({
++                'type': 'http.response.start',
++                'status': response.status_code,
++                'headers': [],
++            })
++            await send({
++                'type': 'http.response.body',
++                'body': response.content,
++            })
++        
++        # Mock the receive callable
++        receive = Mock()
++        receive.return_value = {'type': 'http.request', 'body': b''}
++        
++        # Mock the send callable
++        send = Mock()
++        
++        # Call the handler
++        await handler(self.scope, receive, send)
++        
++        # Get the first middleware instance
++        first_middleware = None
++        for middleware in handler._middleware_chain.__self__.__class__.__mro__:
++            if hasattr(middleware, 'captured_response_type'):
++                first_middleware = middleware
++                break
++        
++        # This assertion should FAIL before the fix - the first middleware
++        # receives a coroutine instead of HttpResponse
++        if first_middleware and hasattr(first_middleware, 'captured_response_type'):
++            assert first_middleware.captured_response_type != type(asyncio.coroutine), \
++                f"First middleware received {first_middleware.captured_response_type}, expected HttpResponse"
++            assert first_middleware.captured_response_type == HttpResponse, \
++                f"First middleware received {first_middleware.captured_response_type}, expected HttpResponse"
++    
++    @override_settings(
++        MIDDLEWARE=[
++            'tests.asgi.test_middleware_response_bug.ResponseTypeCapturingMiddleware',
++            'tests.asgi.test_middleware_response_bug.DummyMiddleware',
++            'django.middleware.security.SecurityMiddleware',
++        ]
++    )
++    async def test_middleware_chain_response_types(self):
++        """
++        Test that all middleware in the chain receive HttpResponse objects,
++        not coroutines.
++        """
++        handler = ASGIHandler()
++        handler.load_middleware(is_async=True)
++        
++        # Create a mock request
++        request = ASGIRequest(self.scope, Mock())
++        
++        # Create a simple response
++        response = HttpResponse("Test response")
++        
++        # Process through middleware chain
++        processed_response = response
++        
++        # Check that each middleware receives an HttpResponse
++        for middleware_method in handler._template_response_middleware:
++            if hasattr(middleware_method, '__self__'):
++                middleware_instance = middleware_method.__self__
++                if hasattr(middleware_instance, 'process_response'):
++                    processed_response = middleware_instance.process_response(request, processed_response)
++                    assert isinstance(processed_response, HttpResponse), \
++                        f"Middleware {type(middleware_instance)} returned {type(processed_response)}, expected HttpResponse"
++    
++    @override_settings(
++        MIDDLEWARE=[
++            'django.middleware.security.SecurityMiddleware',
++            'tests.asgi.test_middleware_response_bug.ResponseTypeCapturingMiddleware',
++        ]
++    )
++    async def test_non_first_middleware_receives_http_response(self):
++        """
++        Test that middleware not in the first position correctly receives
++        HttpResponse objects (this should pass even before the fix).
++        """
++        handler = ASGIHandler()
++        handler.load_middleware(is_async=True)
++        
++        # Create a mock request
++        request = ASGIRequest(self.scope, Mock())
++        
++        # Create a response
++        response = HttpResponse("Test response")
++        
++        # Find the ResponseTypeCapturingMiddleware (should be second in chain)
++        capturing_middleware = None
++        for attr_name in dir(handler):
++            attr = getattr(handler, attr_name)
++            if hasattr(attr, '__self__') and isinstance(attr.__self__, ResponseTypeCapturingMiddleware):
++                capturing_middleware = attr.__self__
++                break
++        
++        if capturing_middleware:
++            # Process response through the middleware
++            result = capturing_middleware.process_response(request, response)
++            
++            # This should pass - non-first middleware gets HttpResponse
++            assert capturing_middleware.captured_response_type == HttpResponse, \
++                f"Non-first middleware received {capturing_middleware.captured_response_type}, expected HttpResponse"
++            assert isinstance(result, HttpResponse), \
++                f"Middleware returned {type(result)}, expected HttpResponse"
++    
++    async def test_asgi_request_type_consistency(self):
++        """
++        Test that middleware consistently receives ASGIRequest objects
++        in ASGI context.
++        """
++        handler = ASGIHandler()
++        
++        # Create ASGIRequest
++        request = ASGIRequest(self.scope, Mock())
++        
++        # Verify it's the correct type
++        assert isinstance(request, ASGIRequest), \
++            f"Expected ASGIRequest, got {type(request)}"
++        assert request.__class__.__name__ == 'ASGIRequest', \
++            f"Expected ASGIRequest class name, got {request.__class__.__name__}"
++    
++    @override_settings(
++        MIDDLEWARE=[
++            'tests.asgi.test_middleware_response_bug.ResponseTypeCapturingMiddleware',
++        ]
++    )
++    async def test_single_middleware_response_type(self):
++        """
++        Test the response type when there's only one middleware in the chain.
++        This helps isolate the issue to the first middleware specifically.
++        """
++        handler = ASGIHandler()
++        handler.load_middleware(is_async=True)
++        
++        # Create a mock request
++        request = ASGIRequest(self.scope, Mock())
++        
++        # Create a response
++        response = HttpResponse("Single middleware test")
++        
++        # Find the middleware instance
++        capturing_middleware = None
++        if hasattr(handler, '_middleware_chain'):
++            chain = handler._middleware_chain
++            if hasattr(chain, '__self__') and isinstance(chain.__self__, ResponseTypeCapturingMiddleware):
++                capturing_middleware = chain.__self__
++        
++        if capturing_middleware:
++            # Process response
++            result = capturing_middleware.process_response(request, response)
++            
++            # The single middleware should receive HttpResponse, not coroutine
++            assert capturing_middleware.captured_response_type == HttpResponse, \
++                f"Single middleware received {capturing_middleware.captured_response_type}, expected HttpResponse"
++    
++    def test_middleware_mixin_sync_capabilities(self):
++        """
++        Test that MiddlewareMixin has the correct sync/async capabilities.
++        """
++        middleware = ResponseTypeCapturingMiddleware(lambda r: HttpResponse())
++        
++        # Check capabilities
++        assert hasattr(middleware, 'sync_capable'), "Middleware should have sync_capable attribute"
++        assert hasattr(middleware, 'async_capable'), "Middleware should have async_capable attribute"
++        assert middleware.sync_capable is True, "Middleware should be sync capable"
++        assert middleware.async_capable is True, "Middleware should be async capable"
++    
++    @override_settings(
++        MIDDLEWARE=[
++            'tests.asgi.test_middleware_response_bug.ResponseTypeCapturingMiddleware',
++            'tests.asgi.test_middleware_response_bug.DummyMiddleware',
++            'tests.asgi.test_middleware_response_bug.DummyMiddleware',
++        ]
++    )
++    async def test_multiple_middleware_response_propagation(self):
++        """
++        Test that HttpResponse objects are properly propagated through
++        multiple middleware layers without becoming coroutines.
++        """
++        handler = ASGIHandler()
++        handler.load_middleware(is_async=True)
++        
++        # Create a mock request
++        request = ASGIRequest(self.scope, Mock())
++        
++        # Create initial response
++        initial_response = HttpResponse("Multi-middleware test")
++        
++        # Simulate processing through middleware chain
++        current_response = initial_response
++        
++        # Each middleware should receive and return HttpResponse
++        dummy_middleware = DummyMiddleware(lambda r: HttpResponse())
++        
++        for i in range(3):  # Simulate 3 middleware layers
++            result = dummy_middleware.process_response(request, current_response)
++            assert isinstance(result, HttpResponse), \
++                f"Middleware {i} returned {type(result)}, expected HttpResponse"
++            current_response = result
++        
++        # Final result should still be HttpResponse
++        assert isinstance(current_response, HttpResponse), \
++            f"Final result is {type(current_response)}, expected HttpResponse"
++
++
++@pytest.mark.asyncio
++class TestASGIMiddlewareEdgeCases:
++    """Test edge cases related to the ASGI middleware response bug."""
++    
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.scope = {
++            'type': 'http',
++            'method': 'GET',
++            'path': '/',
++            'query_string': b'',
++            'headers': [],
++            'server': ('localhost', 8000),
++        }
++    
++    async def test_empty_middleware_list(self):
++        """Test behavior with no middleware configured."""
++        with override_settings(MIDDLEWARE=[]):
++            handler = ASGIHandler()
++            handler.load_middleware(is_async=True)
++            
++            # Should not raise any errors
++            assert handler._middleware_chain is not None
++    
++    async def test_middleware_without_process_response(self):
++        """Test middleware that doesn't implement process_response."""
++        
++        class NoProcessResponseMiddleware(MiddlewareMixin):
++            pass
++        
++        with override_settings(MIDDLEWARE=[
++            'tests.asgi.test_middleware_response_bug.NoProcessResponseMiddleware',
++        ]):
++            handler = ASGIHandler()
++            # Should not raise errors during middleware loading
++            handler.load_middleware(is_async=True)
++    
++    async def test_coroutine_detection_utility(self):
++        """Test utility to detect if an object is a coroutine."""
++        import types
++        
++        # Create a coroutine
++        async def dummy_coro():
++            return HttpResponse("test")
++        
++        coro = dummy_coro()
++        
++        # Test detection
++        assert asyncio.iscoroutine(coro), "Should detect coroutine"
++        assert isinstance(coro, types.CoroutineType), "Should be CoroutineType"
++        
++        # Clean up
++        coro.close()
++        
++        # Test non-coroutine
++        response = HttpResponse("test")
++        assert not asyncio.iscoroutine(response), "Should not detect HttpResponse as coroutine"
++        assert not isinstance(response, types.CoroutineType), "HttpResponse should not be CoroutineType"

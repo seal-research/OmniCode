@@ -1,0 +1,281 @@
+--- a/test/test_neteasemusic.py
++++ b/test/test_neteasemusic.py
+-# Empty if creating new file
++#!/usr/bin/env python
++# coding: utf-8
++from __future__ import unicode_literals
++
++import unittest
++import pytest
++from unittest.mock import Mock, patch, MagicMock
++
++import sys
++import os
++sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
++
++from youtube_dl.extractor.neteasemusic import NetEaseMusicIE, NetEaseMusicBaseIE
++from youtube_dl.utils import ExtractorError
++
++
++class TestNetEaseMusicExtractor(unittest.TestCase):
++    """Test suite for NetEase Music extractor functionality."""
++
++    def setUp(self):
++        """Set up test fixtures."""
++        self.ie = NetEaseMusicIE()
++        self.base_ie = NetEaseMusicBaseIE()
++        
++        # Mock song info with different format qualities
++        self.mock_song_info = {
++            'id': '33166366',
++            'name': 'Test Song',
++            'artists': [{'name': 'Test Artist'}],
++            'album': {
++                'publishTime': 1431878400000,
++                'picUrl': 'http://example.com/pic.jpg'
++            },
++            'duration': 240000,
++            'bMusic': {
++                'dfsId': 123456789,
++                'extension': 'mp3',
++                'bitrate': 96000
++            },
++            'mMusic': {
++                'dfsId': 123456790,
++                'extension': 'mp3',
++                'bitrate': 128000
++            },
++            'hMusic': {
++                'dfsId': 123456791,
++                'extension': 'mp3',
++                'bitrate': 320000
++            }
++        }
++
++    def test_netease_music_url_matching(self):
++        """Test that NetEase music URLs are correctly matched."""
++        valid_urls = [
++            'https://music.163.com/#/song?id=33166366',
++            'http://music.163.com/#/song?id=33166366',
++            'https://music.163.com/song?id=33166366',
++            'http://music.163.com/song?id=33166366'
++        ]
++        
++        for url in valid_urls:
++            self.assertTrue(NetEaseMusicIE.suitable(url), 
++                          f"URL should be suitable: {url}")
++            match = NetEaseMusicIE._match_id(url)
++            self.assertEqual(match, '33166366', 
++                           f"Should extract correct ID from: {url}")
++
++    def test_extract_formats_with_valid_song_info(self):
++        """Test extract_formats method with valid song information."""
++        with patch.object(self.base_ie, '_download_webpage') as mock_download:
++            # Mock successful URL validation
++            mock_download.return_value = 'success'
++            
++            formats = self.base_ie.extract_formats(self.mock_song_info)
++            
++            # Should attempt to extract formats for all quality levels
++            self.assertIsInstance(formats, list)
++            # Note: The actual implementation may return empty list if URLs are invalid
++            # This test verifies the method doesn't crash
++
++    def test_extract_formats_with_missing_format_info(self):
++        """Test extract_formats handles missing format information gracefully."""
++        incomplete_song_info = {
++            'id': '33166366',
++            'name': 'Test Song',
++            # Missing bMusic, mMusic, hMusic
++        }
++        
++        formats = self.base_ie.extract_formats(incomplete_song_info)
++        self.assertIsInstance(formats, list)
++        # Should return empty list when no format info is available
++
++    def test_extract_formats_with_partial_format_info(self):
++        """Test extract_formats with only some format qualities available."""
++        partial_song_info = {
++            'bMusic': {
++                'dfsId': 123456789,
++                'extension': 'mp3',
++                'bitrate': 96000
++            }
++            # Missing mMusic and hMusic
++        }
++        
++        formats = self.base_ie.extract_formats(partial_song_info)
++        self.assertIsInstance(formats, list)
++
++    @patch('youtube_dl.extractor.neteasemusic.NetEaseMusicBaseIE.query_api')
++    def test_real_extract_successful_download(self, mock_query_api):
++        """Test successful song extraction with mocked API responses."""
++        # Mock API responses
++        mock_query_api.side_effect = [
++            {'songs': [self.mock_song_info]},  # song detail response
++            {'lrc': {'lyric': 'Test lyrics'}}   # lyrics response
++        ]
++        
++        with patch.object(self.ie, 'extract_formats') as mock_extract_formats:
++            mock_extract_formats.return_value = [
++                {
++                    'url': 'http://example.com/song.mp3',
++                    'ext': 'mp3',
++                    'format_id': 'hMusic',
++                    'abr': 320
++                }
++            ]
++            
++            result = self.ie._real_extract('https://music.163.com/#/song?id=33166366')
++            
++            # Verify result structure
++            self.assertEqual(result['id'], '33166366')
++            self.assertEqual(result['title'], 'Test Song')
++            self.assertEqual(result['creator'], 'Test Artist')
++            self.assertIn('formats', result)
++            self.assertTrue(len(result['formats']) > 0)
++
++    @patch('youtube_dl.extractor.neteasemusic.NetEaseMusicBaseIE.query_api')
++    def test_real_extract_no_formats_found_error(self, mock_query_api):
++        """Test that ExtractorError is raised when no formats are found."""
++        # Mock API response with song info
++        mock_query_api.side_effect = [
++            {'songs': [self.mock_song_info]},  # song detail response
++            {'lrc': {'lyric': 'Test lyrics'}}   # lyrics response
++        ]
++        
++        with patch.object(self.ie, 'extract_formats') as mock_extract_formats:
++            # Mock extract_formats returning empty list (no valid URLs found)
++            mock_extract_formats.return_value = []
++            
++            with patch.object(self.ie, '_sort_formats') as mock_sort_formats:
++                # Mock _sort_formats to raise ExtractorError for empty formats
++                mock_sort_formats.side_effect = ExtractorError(
++                    'No video formats found; please report this issue on https://yt-dl.org/bug'
++                )
++                
++                with self.assertRaises(ExtractorError) as context:
++                    self.ie._real_extract('https://music.163.com/#/song?id=33166366')
++                
++                self.assertIn('No video formats found', str(context.exception))
++
++    @patch('youtube_dl.extractor.neteasemusic.NetEaseMusicBaseIE.query_api')
++    def test_real_extract_api_error(self, mock_query_api):
++        """Test handling of API errors during song extraction."""
++        # Mock API error
++        mock_query_api.side_effect = ExtractorError('API request failed')
++        
++        with self.assertRaises(ExtractorError):
++            self.ie._real_extract('https://music.163.com/#/song?id=33166366')
++
++    def test_encrypt_method(self):
++        """Test the encryption method used for generating file paths."""
++        # Test with known values
++        dfsid = 123456789
++        encrypted = NetEaseMusicBaseIE._encrypt(dfsid)
++        
++        # Should return a string
++        self.assertIsInstance(encrypted, str)
++        # Should not contain '/' or '+' (replaced with '_' and '-')
++        self.assertNotIn('/', encrypted)
++        self.assertNotIn('+', encrypted)
++
++    def test_query_api_method(self):
++        """Test the query_api method constructs requests correctly."""
++        with patch.object(self.base_ie, '_download_json') as mock_download_json:
++            mock_download_json.return_value = {'test': 'data'}
++            
++            result = self.base_ie.query_api('test/endpoint', 'video_id', 'Test note')
++            
++            # Verify _download_json was called
++            mock_download_json.assert_called_once()
++            
++            # Verify the request was constructed with correct URL
++            args, kwargs = mock_download_json.call_args
++            request = args[0]
++            self.assertTrue(request.get_full_url().endswith('test/endpoint'))
++            
++            # Verify result
++            self.assertEqual(result, {'test': 'data'})
++
++    def test_netease_music_extractor_reproduces_bug(self):
++        """Test that reproduces the original bug: repeated invalid URL checks."""
++        with patch.object(self.base_ie, 'query_api') as mock_query_api:
++            # Mock successful API response
++            mock_query_api.side_effect = [
++                {'songs': [self.mock_song_info]},
++                {'lrc': {'lyric': 'Test lyrics'}}
++            ]
++            
++            with patch.object(self.base_ie, '_download_webpage') as mock_download:
++                # Mock all URL validation attempts as failing
++                mock_download.side_effect = Exception('HTTP Error 404: Not Found')
++                
++                with patch.object(self.ie, 'to_screen') as mock_to_screen:
++                    # This should trigger the bug: repeated "Checking song URL" messages
++                    try:
++                        self.ie._real_extract('https://music.163.com/#/song?id=33166366')
++                    except ExtractorError:
++                        pass  # Expected when no formats are found
++                    
++                    # In the buggy version, this would show multiple "Checking song URL" messages
++
++    def test_netease_music_extractor_after_fix(self):
++        """Test that verifies the fix works correctly."""
++        with patch.object(self.base_ie, 'query_api') as mock_query_api:
++            # Mock successful API response
++            mock_query_api.side_effect = [
++                {'songs': [self.mock_song_info]},
++                {'lrc': {'lyric': 'Test lyrics'}}
++            ]
++            
++            with patch.object(self.base_ie, 'extract_formats') as mock_extract_formats:
++                # Mock successful format extraction
++                mock_extract_formats.return_value = [
++                    {
++                        'url': 'http://working-cdn.example.com/song.mp3',
++                        'ext': 'mp3',
++                        'format_id': 'hMusic',
++                        'abr': 320
++                    }
++                ]
++                
++                result = self.ie._real_extract('https://music.163.com/#/song?id=33166366')
++                
++                # Should successfully extract without errors
++                self.assertIsNotNone(result)
++                self.assertEqual(result['id'], '33166366')
++                self.assertTrue(len(result['formats']) > 0)
++
++    def test_edge_case_empty_song_details(self):
++        """Test handling of empty or malformed song details."""
++        with patch.object(self.base_ie, 'query_api') as mock_query_api:
++            # Mock API response with empty song details
++            mock_query_api.return_value = {'songs': [{}]}
++            
++            with self.assertRaises((ExtractorError, KeyError, IndexError)):
++                self.ie._real_extract('https://music.163.com/#/song?id=33166366')
++
++    def test_edge_case_invalid_song_id(self):
++        """Test handling of invalid song IDs."""
++        with patch.object(self.base_ie, 'query_api') as mock_query_api:
++            # Mock API response for non-existent song
++            mock_query_api.side_effect = ExtractorError('Song not found')
++            
++            with self.assertRaises(ExtractorError):
++                self.ie._real_extract('https://music.163.com/#/song?id=99999999')
++
++    def test_lyrics_processing(self):
++        """Test lyrics processing functionality."""
++        with patch.object(self.ie, '_process_lyrics') as mock_process_lyrics:
++            mock_process_lyrics.return_value = 'Processed lyrics'
++            
++            lyrics_info = {'lrc': {'lyric': 'Raw lyrics'}}
++            result = self.ie._process_lyrics(lyrics_info)
++            
++            mock_process_lyrics.assert_called_once_with(lyrics_info)
++            self.assertEqual(result, 'Processed lyrics')
++
++
++if __name__ == '__main__':
++    unittest.main()

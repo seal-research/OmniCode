@@ -130,3 +130,11 @@ class ClaudeSonnet4(OpenRouterModel):
             "openrouter/anthropic/claude-sonnet-4", 0.000003, 0.000015, parallel_tool_call=True
         )
         self.note = "Latest Claude Sonnet 4.0 model via OpenRouter"
+
+
+class Gpt5Mini(OpenRouterModel):
+    def __init__(self):
+        super().__init__(
+            "openrouter/openai/gpt-5-mini", 0.00000015, 0.0000006, parallel_tool_call=True
+        )
+        self.note = "GPT-5 Mini model via OpenRouter"

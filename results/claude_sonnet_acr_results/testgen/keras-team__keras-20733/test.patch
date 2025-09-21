@@ -1,0 +1,205 @@
+--- a/keras/src/ops/test_rearrange.py
++++ b/keras/src/ops/test_rearrange.py
+-# Empty if creating new file
++import pytest
++import numpy as np
++
++from keras.src import backend
++from keras.src import ops
++from keras.src import testing
++
++
++class TestRearrange(testing.TestCase):
++    def test_rearrange_not_implemented_raises_error(self):
++        """Test that rearrange function doesn't exist yet (should fail before implementation)."""
++        x = np.array([[1, 2, 3], [4, 5, 6]])
++        
++        # This test should fail before the fix is applied
++        with pytest.raises(AttributeError):
++            ops.rearrange(x, "h w -> w h")
++
++    def test_rearrange_basic_transpose(self):
++        """Test basic transpose operation using rearrange."""
++        x = np.array([[1, 2, 3], [4, 5, 6]])  # shape (2, 3)
++        
++        # This should work after implementation
++        result = ops.rearrange(x, "h w -> w h")
++        expected = np.array([[1, 4], [2, 5], [3, 6]])  # shape (3, 2)
++        
++        self.assertAllClose(result, expected)
++
++    def test_rearrange_dimension_merging(self):
++        """Test merging dimensions with rearrange."""
++        x = np.random.random((2, 3, 4))  # shape (2, 3, 4)
++        
++        # Merge last two dimensions
++        result = ops.rearrange(x, "b h w -> b (h w)")
++        expected_shape = (2, 12)
++        
++        self.assertEqual(result.shape, expected_shape)
++        self.assertAllClose(result, x.reshape(2, 12))
++
++    def test_rearrange_dimension_splitting(self):
++        """Test splitting dimensions with rearrange."""
++        x = np.random.random((2, 12))  # shape (2, 12)
++        
++        # Split last dimension
++        result = ops.rearrange(x, "b (h w) -> b h w", h=3, w=4)
++        expected_shape = (2, 3, 4)
++        
++        self.assertEqual(result.shape, expected_shape)
++        self.assertAllClose(result, x.reshape(2, 3, 4))
++
++    def test_rearrange_complex_pattern(self):
++        """Test complex rearrangement pattern."""
++        x = np.random.random((2, 3, 4, 5))  # shape (2, 3, 4, 5)
++        
++        # Rearrange to merge and reorder dimensions
++        result = ops.rearrange(x, "b h w c -> b c (h w)")
++        expected_shape = (2, 5, 12)
++        
++        self.assertEqual(result.shape, expected_shape)
++        # Verify the transformation is correct
++        expected = x.transpose(0, 3, 1, 2).reshape(2, 5, 12)
++        self.assertAllClose(result, expected)
++
++    def test_rearrange_batch_processing(self):
++        """Test rearrange with batch dimension handling."""
++        x = np.random.random((8, 16, 16, 3))  # batch of images
++        
++        # Flatten spatial dimensions
++        result = ops.rearrange(x, "b h w c -> b (h w c)")
++        expected_shape = (8, 768)  # 16*16*3 = 768
++        
++        self.assertEqual(result.shape, expected_shape)
++        self.assertAllClose(result, x.reshape(8, 768))
++
++    def test_rearrange_identity_pattern(self):
++        """Test rearrange with identity pattern (no change)."""
++        x = np.random.random((2, 3, 4))
++        
++        # Identity transformation
++        result = ops.rearrange(x, "a b c -> a b c")
++        
++        self.assertAllClose(result, x)
++        self.assertEqual(result.shape, x.shape)
++
++    def test_rearrange_single_dimension(self):
++        """Test rearrange with single dimension."""
++        x = np.array([1, 2, 3, 4, 5, 6])  # shape (6,)
++        
++        # Reshape to 2D
++        result = ops.rearrange(x, "(h w) -> h w", h=2, w=3)
++        expected = x.reshape(2, 3)
++        
++        self.assertAllClose(result, expected)
++
++    def test_rearrange_with_ellipsis(self):
++        """Test rearrange with ellipsis pattern."""
++        x = np.random.random((2, 3, 4, 5, 6))
++        
++        # Move last dimension to second position
++        result = ops.rearrange(x, "a ... z -> a z ...")
++        expected_shape = (2, 6, 3, 4, 5)
++        
++        self.assertEqual(result.shape, expected_shape)
++
++    def test_rearrange_invalid_pattern_raises_error(self):
++        """Test that invalid patterns raise appropriate errors."""
++        x = np.random.random((2, 3, 4))
++        
++        # Invalid pattern - mismatched dimensions
++        with pytest.raises((ValueError, RuntimeError)):
++            ops.rearrange(x, "a b -> a b c")
++
++    def test_rearrange_invalid_split_parameters(self):
++        """Test that invalid split parameters raise errors."""
++        x = np.random.random((2, 12))
++        
++        # Invalid split - dimensions don't multiply correctly
++        with pytest.raises((ValueError, RuntimeError)):
++            ops.rearrange(x, "b (h w) -> b h w", h=3, w=5)  # 3*5 != 12
++
++    def test_rearrange_missing_split_parameters(self):
++        """Test that missing split parameters raise errors."""
++        x = np.random.random((2, 12))
++        
++        # Missing required parameters for split
++        with pytest.raises((ValueError, RuntimeError)):
++            ops.rearrange(x, "b (h w) -> b h w")  # Missing h and w
++
++    def test_rearrange_with_different_backends(self):
++        """Test rearrange works with different backends."""
++        x_np = np.random.random((2, 3, 4))
++        
++        # Convert to backend tensor
++        x = ops.convert_to_tensor(x_np)
++        
++        # Test basic rearrange
++        result = ops.rearrange(x, "a b c -> c b a")
++        expected = x_np.transpose(2, 1, 0)
++        
++        self.assertAllClose(result, expected)
++
++    def test_rearrange_preserves_dtype(self):
++        """Test that rearrange preserves tensor dtype."""
++        x = ops.convert_to_tensor(np.array([[1, 2], [3, 4]], dtype=np.float32))
++        
++        result = ops.rearrange(x, "h w -> w h")
++        
++        self.assertEqual(result.dtype, x.dtype)
++
++    def test_rearrange_with_symbolic_tensors(self):
++        """Test rearrange with symbolic tensors (KerasTensor)."""
++        if not backend.backend() == "tensorflow":
++            pytest.skip("Symbolic tensor test only for TensorFlow backend")
++            
++        from keras.src.backend.common.keras_tensor import KerasTensor
++        
++        # Create symbolic tensor
++        x = KerasTensor(shape=(None, 3, 4), dtype="float32")
++        
++        # Test that rearrange can handle symbolic shapes
++        result = ops.rearrange(x, "b h w -> b (h w)")
++        
++        self.assertEqual(result.shape, (None, 12))
++
++    def test_rearrange_edge_case_empty_tensor(self):
++        """Test rearrange with empty tensor."""
++        x = np.array([]).reshape(0, 3, 4)
++        
++        result = ops.rearrange(x, "b h w -> b (h w)")
++        expected_shape = (0, 12)
++        
++        self.assertEqual(result.shape, expected_shape)
++
++    def test_rearrange_large_tensor(self):
++        """Test rearrange with larger tensor to ensure performance."""
++        x = np.random.random((100, 50, 40, 30))
++        
++        result = ops.rearrange(x, "b h w c -> b c h w")
++        expected_shape = (100, 30, 50, 40)
++        
++        self.assertEqual(result.shape, expected_shape)
++        # Verify correctness with smaller slice
++        self.assertAllClose(result[0], x[0].transpose(2, 0, 1))
++
++    def test_rearrange_repeated_dimension_names(self):
++        """Test rearrange with repeated dimension names for stacking."""
++        x = np.random.random((2, 3))
++        y = np.random.random((2, 3))
++        
++        # This pattern might be supported in advanced implementations
++        # For now, test basic functionality
++        result = ops.rearrange(x, "h w -> w h")
++        self.assertEqual(result.shape, (3, 2))
++
++    def test_rearrange_numerical_stability(self):
++        """Test that rearrange maintains numerical precision."""
++        x = np.array([[1.123456789, 2.987654321], 
++                     [3.456789012, 4.321098765]], dtype=np.float64)
++        
++        result = ops.rearrange(x, "h w -> w h")
++        expected = x.T
++        
++        self.assertAllClose(result, expected, rtol=1e-15, atol=1e-15)

@@ -1,0 +1,279 @@
+--- a/testing/test_unittest_skip_class_pdb.py
++++ b/testing/test_unittest_skip_class_pdb.py
+-# Empty if creating new file
++"""Test for unittest.TestCase.tearDown executed for classes marked with unittest.skip when running --pdb"""
++import pytest
++import unittest
++import textwrap
++
++
++class TestUnittestSkipClassPdb:
++    """Test that tearDown is not executed for classes marked with @unittest.skip when using --pdb."""
++
++    def test_unittest_skip_class_teardown_not_executed_with_pdb(self, pytester):
++        """Test that tearDown is not executed for @unittest.skip decorated classes when using --pdb."""
++        # Create a test file with a class decorated with @unittest.skip
++        # The tearDown method contains invalid code that would raise NameError if executed
++        pytester.makepyfile(
++            test_skip_class=textwrap.dedent(
++                """
++                import unittest
++
++                @unittest.skip("skip entire class")
++                class TestSkippedClass(unittest.TestCase):
++                    def setUp(self):
++                        # This should not be executed
++                        xxx
++                    
++                    def test_one(self):
++                        # This should not be executed
++                        pass
++                    
++                    def tearDown(self):
++                        # This should not be executed - would raise NameError if it runs
++                        xxx
++                """
++            )
++        )
++
++        # Run with --pdb - this should NOT execute tearDown and should not raise NameError
++        result = pytester.runpytest("--pdb", "-s")
++        
++        # The test should be skipped without any errors
++        result.assert_outcomes(skipped=1)
++        
++        # Should not contain NameError in the output
++        assert "NameError" not in result.stdout.str()
++        assert "xxx" not in result.stdout.str()
++
++    def test_unittest_skip_class_teardown_not_executed_without_pdb(self, pytester):
++        """Test that tearDown is not executed for @unittest.skip decorated classes without --pdb (baseline)."""
++        # Create a test file with a class decorated with @unittest.skip
++        pytester.makepyfile(
++            test_skip_class=textwrap.dedent(
++                """
++                import unittest
++
++                @unittest.skip("skip entire class")
++                class TestSkippedClass(unittest.TestCase):
++                    def setUp(self):
++                        # This should not be executed
++                        xxx
++                    
++                    def test_one(self):
++                        # This should not be executed
++                        pass
++                    
++                    def tearDown(self):
++                        # This should not be executed
++                        xxx
++                """
++            )
++        )
++
++        # Run without --pdb - this should work fine (baseline test)
++        result = pytester.runpytest()
++        
++        # The test should be skipped without any errors
++        result.assert_outcomes(skipped=1)
++        
++        # Should not contain NameError in the output
++        assert "NameError" not in result.stdout.str()
++
++    def test_unittest_skip_method_teardown_not_executed_with_pdb(self, pytester):
++        """Test that tearDown is not executed for @unittest.skip decorated methods when using --pdb (existing behavior)."""
++        # Create a test file with a method decorated with @unittest.skip
++        pytester.makepyfile(
++            test_skip_method=textwrap.dedent(
++                """
++                import unittest
++
++                class TestSkippedMethod(unittest.TestCase):
++                    def setUp(self):
++                        # This should not be executed for skipped method
++                        xxx
++                    
++                    @unittest.skip("skip this method")
++                    def test_one(self):
++                        # This should not be executed
++                        pass
++                    
++                    def tearDown(self):
++                        # This should not be executed for skipped method
++                        xxx
++                """
++            )
++        )
++
++        # Run with --pdb - this should NOT execute tearDown for skipped method
++        result = pytester.runpytest("--pdb", "-s")
++        
++        # The test should be skipped without any errors
++        result.assert_outcomes(skipped=1)
++        
++        # Should not contain NameError in the output
++        assert "NameError" not in result.stdout.str()
++
++    def test_unittest_normal_class_teardown_executed_with_pdb(self, pytester):
++        """Test that tearDown IS executed for normal (non-skipped) classes when using --pdb."""
++        # Create a test file with a normal class (not skipped)
++        pytester.makepyfile(
++            test_normal_class=textwrap.dedent(
++                """
++                import unittest
++
++                class TestNormalClass(unittest.TestCase):
++                    def setUp(self):
++                        self.setup_called = True
++                    
++                    def test_one(self):
++                        assert self.setup_called
++                    
++                    def tearDown(self):
++                        # This should be executed for normal tests
++                        # We'll write to a file to verify it was called
++                        with open("teardown_called.txt", "w") as f:
++                            f.write("teardown executed")
++                """
++            )
++        )
++
++        # Run with --pdb
++        result = pytester.runpytest("--pdb", "-s")
++        
++        # The test should pass
++        result.assert_outcomes(passed=1)
++        
++        # Verify tearDown was called by checking if the file was created
++        teardown_file = pytester.path / "teardown_called.txt"
++        assert teardown_file.exists()
++        assert teardown_file.read_text() == "teardown executed"
++
++    def test_unittest_skip_class_with_inheritance_pdb(self, pytester):
++        """Test that tearDown is not executed for @unittest.skip decorated classes with inheritance when using --pdb."""
++        # Create a test file with inheritance where the child class is skipped
++        pytester.makepyfile(
++            test_skip_inheritance=textwrap.dedent(
++                """
++                import unittest
++
++                class BaseTestCase(unittest.TestCase):
++                    def setUp(self):
++                        # This should not be executed
++                        xxx
++                    
++                    def tearDown(self):
++                        # This should not be executed
++                        xxx
++
++                @unittest.skip("skip child class")
++                class TestSkippedChild(BaseTestCase):
++                    def test_one(self):
++                        # This should not be executed
++                        pass
++                """
++            )
++        )
++
++        # Run with --pdb - this should NOT execute tearDown and should not raise NameError
++        result = pytester.runpytest("--pdb", "-s")
++        
++        # The test should be skipped without any errors
++        result.assert_outcomes(skipped=1)
++        
++        # Should not contain NameError in the output
++        assert "NameError" not in result.stdout.str()
++
++    def test_unittest_skip_class_multiple_tests_pdb(self, pytester):
++        """Test that tearDown is not executed for @unittest.skip decorated classes with multiple test methods when using --pdb."""
++        # Create a test file with multiple test methods in a skipped class
++        pytester.makepyfile(
++            test_skip_multiple=textwrap.dedent(
++                """
++                import unittest
++
++                @unittest.skip("skip entire class with multiple tests")
++                class TestSkippedMultiple(unittest.TestCase):
++                    def setUp(self):
++                        # This should not be executed
++                        xxx
++                    
++                    def test_one(self):
++                        # This should not be executed
++                        pass
++                    
++                    def test_two(self):
++                        # This should not be executed
++                        pass
++                    
++                    def test_three(self):
++                        # This should not be executed
++                        pass
++                    
++                    def tearDown(self):
++                        # This should not be executed for any test
++                        xxx
++                """
++            )
++        )
++
++        # Run with --pdb - this should NOT execute tearDown for any test
++        result = pytester.runpytest("--pdb", "-s")
++        
++        # All tests should be skipped without any errors
++        result.assert_outcomes(skipped=3)
++        
++        # Should not contain NameError in the output
++        assert "NameError" not in result.stdout.str()
++
++    def test_unittest_mixed_skip_scenarios_pdb(self, pytester):
++        """Test mixed scenarios with both class-level and method-level skips when using --pdb."""
++        # Create a test file with mixed skip scenarios
++        pytester.makepyfile(
++            test_mixed_skip=textwrap.dedent(
++                """
++                import unittest
++
++                @unittest.skip("skip entire class")
++                class TestSkippedClass(unittest.TestCase):
++                    def tearDown(self):
++                        # This should not be executed
++                        xxx_class
++                    
++                    def test_one(self):
++                        pass
++
++                class TestNormalClass(unittest.TestCase):
++                    def setUp(self):
++                        self.setup_called = True
++                    
++                    @unittest.skip("skip this method")
++                    def test_skipped_method(self):
++                        pass
++                    
++                    def test_normal_method(self):
++                        assert self.setup_called
++                    
++                    def tearDown(self):
++                        # This should only be executed for test_normal_method
++                        if hasattr(self, 'setup_called'):
++                            with open("teardown_normal.txt", "w") as f:
++                                f.write("teardown for normal test")
++                """
++            )
++        )
++
++        # Run with --pdb
++        result = pytester.runpytest("--pdb", "-s")
++        
++        # Should have 1 passed, 2 skipped
++        result.assert_outcomes(passed=1, skipped=2)
++        
++        # Should not contain NameError for the skipped class
++        assert "xxx_class" not in result.stdout.str()
++        assert "NameError" not in result.stdout.str()
++        
++        # Verify tearDown was called only for the normal test
++        teardown_file = pytester.path / "teardown_normal.txt"
++        assert teardown_file.exists()
++        assert teardown_file.read_text() == "teardown for normal test"

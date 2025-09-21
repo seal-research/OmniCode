@@ -1,0 +1,278 @@
+--- a/tests/model_fields/test_imagefield_signal_optimization.py
++++ b/tests/model_fields/test_imagefield_signal_optimization.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import Mock, patch
++from django.db import models
++from django.db.models import signals
++from django.test import TestCase
++from django.core.files.uploadedfile import SimpleUploadedFile
++from PIL import Image
++import io
++
++
++class TestImageFieldSignalOptimization(TestCase):
++    """
++    Test that ImageField only connects post_init signal when dimension fields are used.
++    This addresses the performance issue where unnecessary signal handlers are called.
++    """
++
++    def setUp(self):
++        """Create a simple test image for use in tests."""
++        # Create a simple 10x10 red image
++        image = Image.new('RGB', (10, 10), color='red')
++        image_io = io.BytesIO()
++        image.save(image_io, format='JPEG')
++        image_io.seek(0)
++        self.test_image = SimpleUploadedFile(
++            name='test.jpg',
++            content=image_io.getvalue(),
++            content_type='image/jpeg'
++        )
++
++    def test_imagefield_without_dimension_fields_no_signal_connection(self):
++        """
++        Test that ImageField without width_field/height_field does NOT connect post_init signal.
++        This is the main bug fix - unnecessary signal handlers should not be connected.
++        """
++        # Track signal connections
++        original_connect = signals.post_init.connect
++        connect_calls = []
++        
++        def mock_connect(receiver, sender=None, **kwargs):
++            connect_calls.append((receiver, sender))
++            return original_connect(receiver, sender, **kwargs)
++        
++        with patch.object(signals.post_init, 'connect', side_effect=mock_connect):
++            # Create a model with ImageField but no dimension fields
++            class TestModelNoDimensions(models.Model):
++                image = models.ImageField(upload_to='test/')
++                
++                class Meta:
++                    app_label = 'test'
++        
++        # Check that no signal was connected for the ImageField
++        image_field_connections = [
++            call for call in connect_calls 
++            if hasattr(call[0], '__self__') and isinstance(call[0].__self__, models.ImageField)
++        ]
++        
++        # Should be empty - no signal connections for ImageField without dimension fields
++        self.assertEqual(len(image_field_connections), 0, 
++                        "ImageField without dimension fields should not connect post_init signal")
++
++    def test_imagefield_with_width_field_connects_signal(self):
++        """
++        Test that ImageField WITH width_field DOES connect post_init signal.
++        This ensures existing functionality is preserved.
++        """
++        # Track signal connections
++        original_connect = signals.post_init.connect
++        connect_calls = []
++        
++        def mock_connect(receiver, sender=None, **kwargs):
++            connect_calls.append((receiver, sender))
++            return original_connect(receiver, sender, **kwargs)
++        
++        with patch.object(signals.post_init, 'connect', side_effect=mock_connect):
++            # Create a model with ImageField and width_field
++            class TestModelWithWidth(models.Model):
++                image = models.ImageField(upload_to='test/', width_field='image_width')
++                image_width = models.IntegerField(null=True, blank=True)
++                
++                class Meta:
++                    app_label = 'test'
++        
++        # Check that signal was connected for the ImageField
++        image_field_connections = [
++            call for call in connect_calls 
++            if hasattr(call[0], '__self__') and isinstance(call[0].__self__, models.ImageField)
++        ]
++        
++        # Should have one connection for ImageField with width_field
++        self.assertEqual(len(image_field_connections), 1, 
++                        "ImageField with width_field should connect post_init signal")
++
++    def test_imagefield_with_height_field_connects_signal(self):
++        """
++        Test that ImageField WITH height_field DOES connect post_init signal.
++        This ensures existing functionality is preserved.
++        """
++        # Track signal connections
++        original_connect = signals.post_init.connect
++        connect_calls = []
++        
++        def mock_connect(receiver, sender=None, **kwargs):
++            connect_calls.append((receiver, sender))
++            return original_connect(receiver, sender, **kwargs)
++        
++        with patch.object(signals.post_init, 'connect', side_effect=mock_connect):
++            # Create a model with ImageField and height_field
++            class TestModelWithHeight(models.Model):
++                image = models.ImageField(upload_to='test/', height_field='image_height')
++                image_height = models.IntegerField(null=True, blank=True)
++                
++                class Meta:
++                    app_label = 'test'
++        
++        # Check that signal was connected for the ImageField
++        image_field_connections = [
++            call for call in connect_calls 
++            if hasattr(call[0], '__self__') and isinstance(call[0].__self__, models.ImageField)
++        ]
++        
++        # Should have one connection for ImageField with height_field
++        self.assertEqual(len(image_field_connections), 1, 
++                        "ImageField with height_field should connect post_init signal")
++
++    def test_imagefield_with_both_dimension_fields_connects_signal(self):
++        """
++        Test that ImageField WITH both width_field and height_field DOES connect post_init signal.
++        This ensures existing functionality is preserved.
++        """
++        # Track signal connections
++        original_connect = signals.post_init.connect
++        connect_calls = []
++        
++        def mock_connect(receiver, sender=None, **kwargs):
++            connect_calls.append((receiver, sender))
++            return original_connect(receiver, sender, **kwargs)
++        
++        with patch.object(signals.post_init, 'connect', side_effect=mock_connect):
++            # Create a model with ImageField and both dimension fields
++            class TestModelWithBothDimensions(models.Model):
++                image = models.ImageField(upload_to='test/', 
++                                        width_field='image_width', 
++                                        height_field='image_height')
++                image_width = models.IntegerField(null=True, blank=True)
++                image_height = models.IntegerField(null=True, blank=True)
++                
++                class Meta:
++                    app_label = 'test'
++        
++        # Check that signal was connected for the ImageField
++        image_field_connections = [
++            call for call in connect_calls 
++            if hasattr(call[0], '__self__') and isinstance(call[0].__self__, models.ImageField)
++        ]
++        
++        # Should have one connection for ImageField with both dimension fields
++        self.assertEqual(len(image_field_connections), 1, 
++                        "ImageField with both dimension fields should connect post_init signal")
++
++    def test_performance_improvement_no_signal_calls_without_dimension_fields(self):
++        """
++        Test that post_init signal is not called when ImageField has no dimension fields.
++        This demonstrates the performance improvement.
++        """
++        # Create a model without dimension fields
++        class TestModelNoDimensions(models.Model):
++            image = models.ImageField(upload_to='test/')
++            
++            class Meta:
++                app_label = 'test'
++        
++        # Mock the update_dimension_fields method to track calls
++        with patch.object(TestModelNoDimensions._meta.get_field('image'), 'update_dimension_fields') as mock_update:
++            # Create an instance - this should NOT trigger the signal
++            instance = TestModelNoDimensions()
++            
++            # The update_dimension_fields should not have been called
++            mock_update.assert_not_called()
++
++    def test_existing_functionality_preserved_with_dimension_fields(self):
++        """
++        Test that existing functionality is preserved when dimension fields are used.
++        The signal should still be called and dimension fields should be updated.
++        """
++        # Create a model with dimension fields
++        class TestModelWithDimensions(models.Model):
++            image = models.ImageField(upload_to='test/', 
++                                    width_field='image_width', 
++                                    height_field='image_height')
++            image_width = models.IntegerField(null=True, blank=True)
++            image_height = models.IntegerField(null=True, blank=True)
++            
++            class Meta:
++                app_label = 'test'
++        
++        # Create an instance with an image
++        instance = TestModelWithDimensions()
++        instance.image = self.test_image
++        
++        # The dimension fields should be updated (this would happen via signal in real scenario)
++        field = TestModelWithDimensions._meta.get_field('image')
++        field.update_dimension_fields(instance, force=True)
++        
++        # Check that dimensions were set
++        self.assertEqual(instance.image_width, 10)
++        self.assertEqual(instance.image_height, 10)
++
++    def test_update_dimension_fields_early_return_without_dimension_fields(self):
++        """
++        Test that update_dimension_fields returns early when no dimension fields are set.
++        This verifies the existing early return logic works correctly.
++        """
++        # Create a model without dimension fields
++        class TestModelNoDimensions(models.Model):
++            image = models.ImageField(upload_to='test/')
++            
++            class Meta:
++                app_label = 'test'
++        
++        instance = TestModelNoDimensions()
++        instance.image = self.test_image
++        
++        field = TestModelNoDimensions._meta.get_field('image')
++        
++        # Mock the expensive operations to ensure they're not called
++        with patch.object(instance.image, 'width', side_effect=Exception("Should not be called")) as mock_width, \
++             patch.object(instance.image, 'height', side_effect=Exception("Should not be called")) as mock_height:
++            
++            # This should return early and not access width/height
++            field.update_dimension_fields(instance)
++            
++            # Width and height should not have been accessed
++            mock_width.assert_not_called()
++            mock_height.assert_not_called()
++
++    def test_multiple_imagefields_signal_optimization(self):
++        """
++        Test that optimization works correctly with multiple ImageFields in the same model.
++        Only ImageFields with dimension fields should connect signals.
++        """
++        # Track signal connections
++        original_connect = signals.post_init.connect
++        connect_calls = []
++        
++        def mock_connect(receiver, sender=None, **kwargs):
++            connect_calls.append((receiver, sender))
++            return original_connect(receiver, sender, **kwargs)
++        
++        with patch.object(signals.post_init, 'connect', side_effect=mock_connect):
++            # Create a model with multiple ImageFields
++            class TestModelMultipleImages(models.Model):
++                # This should NOT connect signal
++                image1 = models.ImageField(upload_to='test1/')
++                # This should connect signal
++                image2 = models.ImageField(upload_to='test2/', width_field='image2_width')
++                # This should NOT connect signal
++                image3 = models.ImageField(upload_to='test3/')
++                # This should connect signal
++                image4 = models.ImageField(upload_to='test4/', height_field='image4_height')
++                
++                image2_width = models.IntegerField(null=True, blank=True)
++                image4_height = models.IntegerField(null=True, blank=True)
++                
++                class Meta:
++                    app_label = 'test'
++        
++        # Check signal connections for ImageFields
++        image_field_connections = [
++            call for call in connect_calls 
++            if hasattr(call[0], '__self__') and isinstance(call[0].__self__, models.ImageField)
++        ]
++        
++        # Should have exactly 2 connections (for image2 and image4)
++        self.assertEqual(len(image_field_connections), 2, 
++                        "Only ImageFields with dimension fields should connect post_init signal")

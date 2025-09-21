@@ -1,0 +1,329 @@
+--- a/tests/migrations/test_serializer.py
++++ b/tests/migrations/test_serializer.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.migrations.serializer import TypeSerializer, serializer_factory
++
++
++class TestInnerClassSerialization:
++    """Test suite for inner class serialization in Django migrations."""
++    
++    def test_inner_class_field_serialization_reproduces_bug(self):
++        """
++        Test that reproduces the bug where inner class fields are serialized
++        with incorrect paths (should fail before fix is applied).
++        """
++        # Create the exact scenario from the issue description
++        class Outer(object):
++            class Inner(models.CharField):
++                pass
++        
++        # Serialize the inner class
++        serializer = TypeSerializer(Outer.Inner)
++        serialized_string, imports = serializer.serialize()
++        
++        # This test should fail before the fix - it will generate incorrect path
++        # The bug produces something like "test_module.Inner" instead of "test_module.Outer.Inner"
++        expected_correct_path = f"{Outer.Inner.__module__}.{Outer.Inner.__qualname__}"
++        
++        # Before fix: this assertion should fail because __name__ is used instead of __qualname__
++        assert expected_correct_path in serialized_string, (
++            f"Expected '{expected_correct_path}' in serialized string '{serialized_string}'. "
++            f"This test demonstrates the bug where inner classes are serialized with incorrect paths."
++        )
++    
++    def test_inner_class_field_serialization_after_fix(self):
++        """
++        Test that verifies inner class fields are serialized with correct paths
++        (should pass after fix is applied).
++        """
++        # Create the exact scenario from the issue description
++        class Outer(object):
++            class Inner(models.CharField):
++                pass
++        
++        # Serialize the inner class
++        serializer = TypeSerializer(Outer.Inner)
++        serialized_string, imports = serializer.serialize()
++        
++        # After fix: should use __qualname__ to get the full path
++        expected_path = f"{Outer.Inner.__module__}.{Outer.Inner.__qualname__}"
++        assert expected_path in serialized_string, (
++            f"Expected '{expected_path}' in serialized string '{serialized_string}'"
++        )
++        
++        # Verify the import is correct
++        expected_import = f"import {Outer.Inner.__module__}"
++        assert expected_import in imports, f"Expected '{expected_import}' in imports {imports}"
++    
++    def test_nested_inner_class_serialization(self):
++        """Test serialization of deeply nested inner classes."""
++        class Level1:
++            class Level2:
++                class Level3(models.CharField):
++                    pass
++        
++        serializer = TypeSerializer(Level1.Level2.Level3)
++        serialized_string, imports = serializer.serialize()
++        
++        # Should include the full qualified name path
++        expected_path = f"{Level1.Level2.Level3.__module__}.{Level1.Level2.Level3.__qualname__}"
++        assert expected_path in serialized_string
++        
++        # Verify it contains all levels of nesting
++        assert "Level1.Level2.Level3" in serialized_string
++    
++    def test_top_level_class_serialization_unchanged(self):
++        """Test that top-level class serialization behavior is preserved."""
++        # Create a top-level class (not inner)
++        class TopLevelField(models.CharField):
++            pass
++        
++        serializer = TypeSerializer(TopLevelField)
++        serialized_string, imports = serializer.serialize()
++        
++        # For top-level classes, __name__ and __qualname__ should be the same
++        # So the behavior should be unchanged
++        expected_path = f"{TopLevelField.__module__}.{TopLevelField.__name__}"
++        assert expected_path in serialized_string
++        
++        # Verify import is correct
++        expected_import = f"import {TopLevelField.__module__}"
++        assert expected_import in imports
++    
++    def test_enum_field_inner_class_scenario(self):
++        """
++        Test the real-world scenario mentioned in the issue with EnumField
++        and inner enum classes.
++        """
++        import enum
++        
++        # Simulate the django-enumfields scenario
++        class Thing(models.Model):
++            @enum.unique
++            class State(enum.Enum):
++                on = 'on'
++                off = 'off'
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # Test serialization of the inner enum class
++        serializer = TypeSerializer(Thing.State)
++        serialized_string, imports = serializer.serialize()
++        
++        # Should include the full path with the outer class
++        expected_path = f"{Thing.State.__module__}.{Thing.State.__qualname__}"
++        assert expected_path in serialized_string
++        
++        # Verify it references Thing.State, not just State
++        assert "Thing.State" in serialized_string
++    
++    def test_serializer_factory_with_inner_classes(self):
++        """Test that serializer_factory correctly handles inner classes."""
++        class Container:
++            class InnerField(models.CharField):
++                pass
++        
++        # Test that serializer_factory returns TypeSerializer for inner classes
++        serializer = serializer_factory(Container.InnerField)
++        assert isinstance(serializer, TypeSerializer)
++        
++        # Test the serialization through the factory
++        serialized_string, imports = serializer.serialize()
++        expected_path = f"{Container.InnerField.__module__}.{Container.InnerField.__qualname__}"
++        assert expected_path in serialized_string
++    
++    def test_edge_case_class_with_special_characters(self):
++        """Test inner classes with names that might cause issues."""
++        class Outer_Class:
++            class Inner_Field_123(models.CharField):
++                pass
++        
++        serializer = TypeSerializer(Outer_Class.Inner_Field_123)
++        serialized_string, imports = serializer.serialize()
++        
++        # Should handle special characters in class names correctly
++        expected_path = f"{Outer_Class.Inner_Field_123.__module__}.{Outer_Class.Inner_Field_123.__qualname__}"
++        assert expected_path in serialized_string
++        assert "Outer_Class.Inner_Field_123" in serialized_string
++    
++    def test_multiple_inheritance_inner_class(self):
++        """Test inner class that inherits from multiple classes."""
++        class Mixin:
++            pass
++        
++        class Container:
++            class MultiInheritField(Mixin, models.CharField):
++                pass
++        
++        serializer = TypeSerializer(Container.MultiInheritField)
++        serialized_string, imports = serializer.serialize()
++        
++        expected_path = f"{Container.MultiInheritField.__module__}.{Container.MultiInheritField.__qualname__}"
++        assert expected_path in serialized_string
++        assert "Container.MultiInheritField" in serialized_string
++    
++    def test_comparison_with_function_serializer_behavior(self):
++        """
++        Test that TypeSerializer behaves consistently with FunctionTypeSerializer
++        which already correctly uses __qualname__.
++        """
++        class OuterClass:
++            class InnerClass(models.CharField):
++                pass
++            
++            def inner_function():
++                pass
++        
++        # Test class serialization
++        class_serializer = TypeSerializer(OuterClass.InnerClass)
++        class_result, class_imports = class_serializer.serialize()
++        
++        # Both should use __qualname__ and include the outer class name
++        assert "OuterClass.InnerClass" in class_result
++        
++        # Verify the module import is included
++        expected_import = f"import {OuterClass.InnerClass.__module__}"
++        assert expected_import in class_imports
+
+--- a/tests/migrations/test_writer.py
++++ b/tests/migrations/test_writer.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.migrations.writer import MigrationWriter
++from django.db.migrations.operations.models import CreateModel
++
++
++class TestMigrationWriterInnerClasses:
++    """Test MigrationWriter handling of inner classes in migration generation."""
++    
++    def test_migration_writer_serialize_inner_class_field(self):
++        """Test that MigrationWriter.serialize correctly handles inner class fields."""
++        class Outer(object):
++            class Inner(models.CharField):
++                pass
++        
++        # Test direct serialization through MigrationWriter
++        serialized_string, imports = MigrationWriter.serialize(Outer.Inner)
++        
++        # Should use the full qualified name
++        expected_path = f"{Outer.Inner.__module__}.{Outer.Inner.__qualname__}"
++        assert expected_path in serialized_string
++        
++        # Verify import is included
++        expected_import = f"import {Outer.Inner.__module__}"
++        assert expected_import in imports
++    
++    def test_create_model_operation_with_inner_class_field(self):
++        """Test CreateModel operation serialization with inner class fields."""
++        class Outer(object):
++            class Inner(models.CharField):
++                pass
++        
++        # Create a model with an inner class field
++        operation = CreateModel(
++            name='TestModel',
++            fields=[
++                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
++                ('field', Outer.Inner(max_length=20)),
++            ],
++        )
++        
++        # Serialize the operation
++        serialized_string, imports = MigrationWriter.serialize(operation)
++        
++        # The serialized operation should contain the correct path for the inner class
++        expected_path = f"{Outer.Inner.__module__}.{Outer.Inner.__qualname__}"
++        assert expected_path in serialized_string
++        
++        # Should not contain the incorrect path (just the inner class name)
++        incorrect_path = f"{Outer.Inner.__module__}.{Outer.Inner.__name__}"
++        if Outer.Inner.__name__ != Outer.Inner.__qualname__:
++            assert incorrect_path not in serialized_string
++    
++    def test_migration_file_generation_with_inner_class(self):
++        """Test complete migration file generation with inner class fields."""
++        from django.db.migrations.migration import Migration
++        
++        class Container:
++            class CustomField(models.CharField):
++                pass
++        
++        # Create a migration with inner class field
++        migration = Migration('0001_initial', 'test_app')
++        migration.operations = [
++            CreateModel(
++                name='MyModel',
++                fields=[
++                    ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
++                    ('custom_field', Container.CustomField(max_length=50)),
++                ],
++            ),
++        ]
++        
++        # Generate the migration file content
++        writer = MigrationWriter(migration)
++        migration_string = writer.as_string()
++        
++        # The generated migration should contain the correct qualified name
++        expected_reference = f"{Container.CustomField.__module__}.{Container.CustomField.__qualname__}"
++        assert expected_reference in migration_string
++        
++        # Should contain the full path in the field definition
++        assert "Container.CustomField" in migration_string
++    
++    def test_enum_field_migration_generation(self):
++        """Test migration generation for the enum field scenario from the issue."""
++        import enum
++        
++        class Thing(models.Model):
++            @enum.unique
++            class State(enum.Enum):
++                on = 'on'
++                off = 'off'
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # Test serialization of the enum class itself
++        serialized_string, imports = MigrationWriter.serialize(Thing.State)
++        
++        # Should reference Thing.State, not just State
++        expected_path = f"{Thing.State.__module__}.{Thing.State.__qualname__}"
++        assert expected_path in serialized_string
++        assert "Thing.State" in serialized_string
++    
++    def test_nested_inner_class_migration_serialization(self):
++        """Test migration serialization with deeply nested inner classes."""
++        class Level1:
++            class Level2:
++                class DeepField(models.CharField):
++                    pass
++        
++        # Test serialization
++        serialized_string, imports = MigrationWriter.serialize(Level1.Level2.DeepField)
++        
++        # Should include the complete nested path
++        expected_path = f"{Level1.Level2.DeepField.__module__}.{Level1.Level2.DeepField.__qualname__}"
++        assert expected_path in serialized_string
++        assert "Level1.Level2.DeepField" in serialized_string
++    
++    def test_backward_compatibility_top_level_classes(self):
++        """Ensure backward compatibility for top-level classes."""
++        class RegularField(models.CharField):
++            pass
++        
++        # Serialize top-level class
++        serialized_string, imports = MigrationWriter.serialize(RegularField)
++        
++        # For top-level classes, behavior should be unchanged
++        # __name__ and __qualname__ are the same for top-level classes
++        expected_path = f"{RegularField.__module__}.{RegularField.__name__}"
++        assert expected_path in serialized_string
++        
++        # Verify import
++        expected_import = f"import {RegularField.__module__}"
++        assert expected_import in imports

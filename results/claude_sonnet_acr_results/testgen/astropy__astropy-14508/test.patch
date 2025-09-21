@@ -1,0 +1,195 @@
+--- a/astropy/io/fits/tests/test_card_float_formatting.py
++++ b/astropy/io/fits/tests/test_card_float_formatting.py
++import pytest
++import warnings
++from astropy.io import fits
++from astropy.io.fits.card import _format_float
++from astropy.io.fits.verify import VerifyWarning
++
++
++class TestCardFloatFormatting:
++    """Test suite for Card float formatting bug fix."""
++
++    def test_format_float_preserves_short_representation(self):
++        """Test that _format_float uses shorter representation when possible."""
++        # This is the main bug case - 0.009125 should not be expanded unnecessarily
++        value = 0.009125
++        result = _format_float(value)
++        
++        # Before fix: would be "0.009124999999999999" (19 chars)
++        # After fix: should be "0.009125" (8 chars)
++        assert len(result) <= 8, f"Expected short representation, got {result} ({len(result)} chars)"
++        assert result == "0.009125"
++
++    def test_format_float_handles_various_values(self):
++        """Test _format_float with various float values that should have short representations."""
++        test_cases = [
++            (0.009125, "0.009125"),
++            (1.5, "1.5"),
++            (0.1, "0.1"),
++            (123.456, "123.456"),
++            (0.0001, "0.0001"),
++            (1000.0, "1000.0"),
++        ]
++        
++        for value, expected in test_cases:
++            result = _format_float(value)
++            assert result == expected, f"For {value}, expected {expected}, got {result}"
++
++    def test_format_float_fallback_to_scientific_for_long_values(self):
++        """Test that _format_float falls back to scientific notation for very long values."""
++        # Test a value that would have a very long decimal representation
++        value = 1.0 / 3.0  # 0.3333333333333333...
++        result = _format_float(value)
++        
++        # Should use scientific notation or truncated representation
++        assert len(result) <= 20
++        assert "." in result or "E" in result
++
++    def test_format_float_preserves_decimal_point(self):
++        """Test that _format_float ensures decimal point is present."""
++        # Integer-like floats should have .0 added
++        value = 42.0
++        result = _format_float(value)
++        assert "." in result
++        assert result == "42.0"
++
++    def test_format_float_handles_scientific_notation(self):
++        """Test that _format_float properly handles scientific notation."""
++        test_cases = [
++            (1e-10, True),  # Should use scientific notation
++            (1e20, True),   # Should use scientific notation
++            (1.23e5, True), # Should use scientific notation
++        ]
++        
++        for value, should_have_e in test_cases:
++            result = _format_float(value)
++            if should_have_e:
++                assert "E" in result
++            assert len(result) <= 20
++
++    def test_format_float_truncation_limit(self):
++        """Test that _format_float respects 20-character limit."""
++        # Test with a value that might produce a very long string
++        import math
++        value = math.pi * 1e10
++        result = _format_float(value)
++        assert len(result) <= 20
++
++    def test_card_creation_with_problematic_float(self):
++        """Test creating a Card with the problematic float value from the issue."""
++        # This test reproduces the exact issue described
++        keyword = "HIERARCH ESO IFM CL RADIUS"
++        value = 0.009125
++        comment = "[m] radius arround actuator to avoid"
++        
++        # Before fix: this would generate a warning about truncated comment
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            card = fits.Card(keyword, value, comment)
++            
++            # After fix: should not generate truncation warning
++            truncation_warnings = [warning for warning in w 
++                                 if issubclass(warning.category, VerifyWarning) 
++                                 and "truncated" in str(warning.message)]
++            assert len(truncation_warnings) == 0, f"Unexpected truncation warning: {truncation_warnings}"
++
++        # Verify the card content is correct
++        assert card.keyword == "ESO IFM CL RADIUS"
++        assert card.value == value
++        assert card.comment == comment
++        
++        # Verify the string representation uses the short float format
++        card_str = str(card)
++        assert "0.009125" in card_str
++        assert "0.009124999999999999" not in card_str
++
++    def test_card_creation_preserves_full_comment(self):
++        """Test that the fix allows full comment preservation."""
++        keyword = "HIERARCH ESO IFM CL RADIUS"
++        value = 0.009125
++        comment = "[m] radius arround actuator to avoid"
++        
++        card = fits.Card(keyword, value, comment)
++        
++        # The comment should be preserved in full
++        assert card.comment == comment
++        
++        # Check that the full card string contains the complete comment
++        card_str = str(card)
++        assert comment in card_str
++
++    def test_card_creation_edge_cases(self):
++        """Test Card creation with various edge case float values."""
++        test_cases = [
++            ("TEST1", 0.1, "Short comment"),
++            ("TEST2", 1.5, "Another comment"),
++            ("TEST3", 123.456, "Longer comment here"),
++            ("HIERARCH LONG KEYWORD", 0.009125, "Very long comment that should not be truncated"),
++        ]
++        
++        for keyword, value, comment in test_cases:
++            with warnings.catch_warnings(record=True) as w:
++                warnings.simplefilter("always")
++                card = fits.Card(keyword, value, comment)
++                
++                # Should not generate truncation warnings for these reasonable cases
++                truncation_warnings = [warning for warning in w 
++                                     if issubclass(warning.category, VerifyWarning) 
++                                     and "truncated" in str(warning.message)]
++                assert len(truncation_warnings) == 0, f"Unexpected truncation for {keyword}={value}: {truncation_warnings}"
++
++    def test_format_float_regression_cases(self):
++        """Test that the fix doesn't break existing functionality."""
++        # Test cases that should continue to work as before
++        test_cases = [
++            # Very small numbers that need scientific notation
++            (1e-20, lambda x: "E" in x and len(x) <= 20),
++            # Very large numbers
++            (1e20, lambda x: "E" in x and len(x) <= 20),
++            # Numbers that need full precision
++            (1.23456789012345, lambda x: len(x) <= 20),
++            # Zero
++            (0.0, lambda x: x == "0.0"),
++            # Negative numbers
++            (-0.009125, lambda x: x == "-0.009125"),
++        ]
++        
++        for value, validator in test_cases:
++            result = _format_float(value)
++            assert validator(result), f"Validation failed for {value}: got {result}"
++
++    def test_card_roundtrip_with_short_floats(self):
++        """Test that cards with short float representations can be round-tripped."""
++        original_keyword = "HIERARCH ESO IFM CL RADIUS"
++        original_value = 0.009125
++        original_comment = "[m] radius arround actuator to avoid"
++        
++        # Create card
++        card1 = fits.Card(original_keyword, original_value, original_comment)
++        
++        # Convert to string and back
++        card_str = str(card1)
++        card2 = fits.Card.fromstring(card_str)
++        
++        # Should preserve all information
++        assert card2.keyword == card1.keyword
++        assert card2.value == card1.value
++        assert card2.comment == card1.comment
++
++    def test_failing_case_before_fix(self):
++        """Test that demonstrates the bug before the fix is applied.
++        
++        This test should fail before the fix and pass after the fix.
++        """
++        # This test specifically checks for the bug condition
++        value = 0.009125
++        
++        # The current implementation would produce a long string
++        # After fix, it should produce a short string
++        result = _format_float(value)
++        
++        # This assertion will fail before the fix (when result is "0.009124999999999999")
++        # and pass after the fix (when result is "0.009125")
++        assert len(result) < 10, f"Float representation too long: {result} ({len(result)} chars)"
++        assert result == "0.009125", f"Expected '0.009125', got '{result}'"

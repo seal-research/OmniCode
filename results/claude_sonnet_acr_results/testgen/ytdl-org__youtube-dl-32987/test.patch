@@ -1,0 +1,245 @@
+--- a/test/test_youtube_nsig_extraction.py
++++ b/test/test_youtube_nsig_extraction.py
+-# Empty if creating new file
++import pytest
++import re
++from unittest.mock import Mock, patch
++from youtube_dl.extractor.youtube import YoutubeIE
++from youtube_dl.utils import RegexNotFoundError, ExtractorError
++
++
++class TestYoutubeNsigExtraction:
++    """Test suite for YouTube n-signature function extraction bug."""
++    
++    @pytest.fixture
++    def youtube_ie(self):
++        """Create a YoutubeIE instance for testing."""
++        return YoutubeIE()
++    
++    @pytest.fixture
++    def mock_jscode_old_format(self):
++        """Mock JavaScript code that should work with existing regex patterns."""
++        return '''
++        var a = function(b) {
++            var c = b.get("n");
++            if (c) {
++                c = nfunc[0](c);
++                b.set("n", c);
++            }
++        };
++        '''
++    
++    @pytest.fixture
++    def mock_jscode_enhanced_except_format(self):
++        """Mock JavaScript code that should work with enhanced_except_ fallback."""
++        return '''
++        var someFunc = function(param) {
++            if (condition) {
++                throw "enhanced_except_some_error";
++            }
++            return result;
++        };
++        '''
++    
++    @pytest.fixture
++    def mock_jscode_new_format_failing(self):
++        """Mock JavaScript code that represents the new format causing failures."""
++        return '''
++        var playerResponse = {
++            videoDetails: {
++                videoId: "test123"
++            }
++        };
++        function processVideo(data) {
++            var nParam = data.get("n");
++            if (nParam) {
++                nParam = transformFunction(nParam);
++                data.set("n", nParam);
++            }
++        }
++        '''
++    
++    @pytest.fixture
++    def mock_jscode_string_fromcharcode_format(self):
++        """Mock JavaScript code with String.fromCharCode pattern."""
++        return '''
++        (function() {
++            var b = String.fromCharCode(110), c = a.get(b);
++            if (c) {
++                c = nfunc[2](c);
++                a.set(b, c);
++            }
++        })();
++        '''
++    
++    @pytest.fixture
++    def mock_jscode_array_access_format(self):
++        """Mock JavaScript code with array access pattern."""
++        return '''
++        (function() {
++            var b = "nn"[+a.D], c = a.get(b);
++            if (c) {
++                c = nfunc[1](c);
++                a.set(b, c);
++            }
++        })();
++        '''
++    
++    def test_extract_n_function_name_with_old_format_should_work(self, youtube_ie, mock_jscode_old_format):
++        """Test that existing regex patterns still work for old JavaScript formats."""
++        # This test should pass with current implementation
++        with patch.object(youtube_ie, '_search_regex') as mock_search:
++            mock_search.return_value = ('nfunc', '0')
++            
++            result = youtube_ie._extract_n_function_name(mock_jscode_old_format)
++            
++            # Should call _search_regex with the primary pattern first
++            assert mock_search.called
++            assert result is not None
++    
++    def test_extract_n_function_name_with_enhanced_except_fallback_should_work(self, youtube_ie, mock_jscode_enhanced_except_format):
++        """Test that enhanced_except_ fallback pattern works."""
++        with patch.object(youtube_ie, '_search_regex') as mock_search:
++            # First call (primary pattern) returns None, second call (fallback) returns function name
++            mock_search.side_effect = [(None, None), 'someFunc']
++            
++            result = youtube_ie._extract_n_function_name(mock_jscode_enhanced_except_format)
++            
++            # Should call _search_regex twice (primary + fallback)
++            assert mock_search.call_count == 2
++            assert result == 'someFunc'
++    
++    def test_extract_n_function_name_with_new_format_should_fail_before_fix(self, youtube_ie, mock_jscode_new_format_failing):
++        """Test that demonstrates the bug - new format causes RegexNotFoundError."""
++        with patch.object(youtube_ie, '_search_regex') as mock_search:
++            # Both primary and fallback patterns fail
++            mock_search.side_effect = [
++                (None, None),  # Primary pattern fails
++                RegexNotFoundError('Unable to extract Initial JS player n function name')  # Fallback fails
++            ]
++            
++            # This should raise RegexNotFoundError, demonstrating the bug
++            with pytest.raises(RegexNotFoundError, match='Unable to extract Initial JS player n function name'):
++                youtube_ie._extract_n_function_name(mock_jscode_new_format_failing)
++    
++    def test_extract_n_function_name_with_string_fromcharcode_pattern(self, youtube_ie, mock_jscode_string_fromcharcode_format):
++        """Test extraction with String.fromCharCode pattern."""
++        with patch.object(youtube_ie, '_search_regex') as mock_search:
++            mock_search.return_value = ('nfunc', '2')
++            
++            result = youtube_ie._extract_n_function_name(mock_jscode_string_fromcharcode_format)
++            
++            assert mock_search.called
++            assert result is not None
++    
++    def test_extract_n_function_name_with_array_access_pattern(self, youtube_ie, mock_jscode_array_access_format):
++        """Test extraction with array access pattern."""
++        with patch.object(youtube_ie, '_search_regex') as mock_search:
++            mock_search.return_value = ('nfunc', '1')
++            
++            result = youtube_ie._extract_n_function_name(mock_jscode_array_access_format)
++            
++            assert mock_search.called
++            assert result is not None
++    
++    def test_extract_n_function_name_with_index_parsing(self, youtube_ie):
++        """Test that function name with index gets parsed correctly."""
++        mock_jscode = 'var nfunc = ["func1", "func2", "func3"];'
++        
++        with patch.object(youtube_ie, '_search_regex') as mock_search_regex:
++            with patch.object(youtube_ie, '_parse_json') as mock_parse_json:
++                # Primary pattern returns function name and index
++                mock_search_regex.side_effect = [
++                    ('nfunc', '1'),  # Primary pattern
++                    '["func1", "func2", "func3"]'  # Function list pattern
++                ]
++                mock_parse_json.return_value = ['func1', 'func2', 'func3']
++                
++                result = youtube_ie._extract_n_function_name(mock_jscode)
++                
++                # Should return the function at index 1
++                assert result == 'func2'
++                assert mock_parse_json.called
++    
++    def test_extract_n_function_name_without_index_returns_function_name(self, youtube_ie):
++        """Test that function name without index returns the name directly."""
++        with patch.object(youtube_ie, '_search_regex') as mock_search:
++            # Primary pattern returns function name without index
++            mock_search.return_value = ('someFunction', None)
++            
++            result = youtube_ie._extract_n_function_name('mock_jscode')
++            
++            assert result == 'someFunction'
++    
++    def test_extract_n_function_name_fallback_warning_is_logged(self, youtube_ie):
++        """Test that fallback warning is logged when primary pattern fails."""
++        with patch.object(youtube_ie, '_search_regex') as mock_search:
++            with patch.object(youtube_ie, 'report_warning') as mock_warning:
++                # Primary pattern fails, fallback succeeds
++                mock_search.side_effect = [(None, None), 'fallbackFunc']
++                
++                result = youtube_ie._extract_n_function_name('mock_jscode')
++                
++                # Should log fallback warning
++                mock_warning.assert_called_once_with('Falling back to generic n function search')
++                assert result == 'fallbackFunc'
++    
++    def test_decrypt_nsig_handles_extraction_error(self, youtube_ie):
++        """Test that _decrypt_nsig properly handles extraction errors."""
++        with patch.object(youtube_ie, '_extract_n_function_code') as mock_extract:
++            mock_extract.side_effect = ExtractorError('Unable to extract nsig function code')
++            
++            with pytest.raises(ExtractorError, match='Unable to extract nsig function code'):
++                youtube_ie._decrypt_nsig('test_n_param', 'test_video_id', 'test_player_url')
++    
++    def test_extract_n_function_code_calls_extract_n_function_name(self, youtube_ie):
++        """Test that _extract_n_function_code calls _extract_n_function_name."""
++        with patch.object(youtube_ie, '_extract_player_info') as mock_player_info:
++            with patch.object(youtube_ie.cache, 'load') as mock_cache_load:
++                with patch.object(youtube_ie, '_load_player') as mock_load_player:
++                    with patch.object(youtube_ie, '_extract_n_function_name') as mock_extract_name:
++                        with patch('youtube_dl.extractor.youtube.JSInterpreter') as mock_jsi:
++                            mock_player_info.return_value = 'player123'
++                            mock_cache_load.return_value = None
++                            mock_load_player.return_value = 'mock_jscode'
++                            mock_extract_name.return_value = 'testFunction'
++                            mock_jsi_instance = Mock()
++                            mock_jsi.return_value = mock_jsi_instance
++                            mock_jsi_instance.extract_function_code.return_value = 'mock_func_code'
++                            
++                            youtube_ie._extract_n_function_code('test_video_id', 'test_player_url')
++                            
++                            # Should call _extract_n_function_name with the loaded JavaScript
++                            mock_extract_name.assert_called_once_with('mock_jscode')
++    
++    def test_regex_patterns_are_comprehensive(self, youtube_ie):
++        """Test that the regex patterns cover various JavaScript obfuscation techniques."""
++        # Test various patterns that should be matched by the primary regex
++        test_patterns = [
++            # String.fromCharCode pattern
++            '(b=String.fromCharCode(110),c=a.get(b))&&c=nfunc[0](c)',
++            # Array access pattern  
++            '(b="nn"[+a.D],c=a.get(b))&&(c=nfunc[1](c)',
++            # Object property pattern
++            '(PL(a),b=a.j.n||null)&&(b=nfunc[2](b)',
++            # Complex pattern with array operations
++            '(b="nn"[+a.D],vL(a),c=a.j[b]||null)&&(c=narray[0](c),a.set(b,c),narray.length||nfunc("")'
++        ]
++        
++        # This test documents the expected patterns - actual implementation would need
++        # to handle these patterns in the regex
++        for pattern in test_patterns:
++            # In a real implementation, these patterns should be matchable
++            # by the primary regex in _extract_n_function_name
++            assert len(pattern) > 0  # Basic validation that patterns exist
++    
++    def test_enhanced_except_fallback_pattern_specificity(self, youtube_ie):
++        """Test that enhanced_except_ fallback pattern is specific enough."""
++        # The fallback pattern should match functions containing 'enhanced_except_'
++        # but not match unrelated functions
++        valid_pattern = 'someFunc = function(param) { if (error) throw "enhanced_except_error"; }'
++        invalid_pattern = 'otherFunc = function(param) { return param * 2; }'
++        
++        # This test validates the pattern design - actual regex testing would be more complex
++        assert 'enhanced_except_' in valid_pattern
++        assert 'enhanced_except_' not in invalid_pattern

@@ -1,0 +1,159 @@
+--- a/tests/test_utils_reactor_deprecation.py
++++ b/tests/test_utils_reactor_deprecation.py
++import asyncio
++import sys
++import warnings
++from unittest.mock import patch, MagicMock
++
++import pytest
++from twisted.internet import asyncioreactor, error
++
++from scrapy.utils.reactor import install_reactor
++
++
++class TestReactorDeprecationWarnings:
++    """Test suite for asyncio deprecation warnings in reactor utilities."""
++
++    def setup_method(self):
++        """Reset asyncio event loop state before each test."""
++        # Close any existing event loop
++        try:
++            loop = asyncio.get_event_loop()
++            if loop and not loop.is_closed():
++                loop.close()
++        except RuntimeError:
++            pass
++        
++        # Set no event loop to trigger the deprecation warning scenario
++        asyncio.set_event_loop(None)
++
++    def teardown_method(self):
++        """Clean up after each test."""
++        try:
++            loop = asyncio.get_event_loop()
++            if loop and not loop.is_closed():
++                loop.close()
++        except RuntimeError:
++            pass
++        asyncio.set_event_loop(None)
++
++    @pytest.mark.skipif(sys.version_info < (3, 10), reason="Deprecation warning only in Python 3.10+")
++    def test_install_reactor_triggers_deprecation_warning_before_fix(self):
++        """Test that install_reactor triggers deprecation warning when no event loop exists (before fix)."""
++        with patch('scrapy.utils.reactor.load_object') as mock_load_object:
++            mock_load_object.return_value = asyncioreactor.AsyncioSelectorReactor
++            
++            with patch('twisted.internet.asyncioreactor.install') as mock_install:
++                with warnings.catch_warnings(record=True) as w:
++                    warnings.simplefilter("always")
++                    
++                    # This should trigger the deprecation warning
++                    install_reactor('twisted.internet.asyncioreactor.AsyncioSelectorReactor')
++                    
++                    # Check that deprecation warning was raised
++                    deprecation_warnings = [warning for warning in w 
++                                          if issubclass(warning.category, DeprecationWarning)
++                                          and "There is no current event loop" in str(warning.message)]
++                    
++                    assert len(deprecation_warnings) > 0, "Expected deprecation warning about no current event loop"
++                    assert any("asyncio.get_event_loop()" in str(warning.filename) for warning in deprecation_warnings)
++
++    def test_install_reactor_with_event_loop_path_no_warning(self):
++        """Test that install_reactor doesn't trigger warning when event_loop_path is provided."""
++        with patch('scrapy.utils.reactor.load_object') as mock_load_object:
++            # Mock the reactor class
++            mock_load_object.side_effect = [
++                asyncioreactor.AsyncioSelectorReactor,  # reactor_class
++                asyncio.SelectorEventLoop  # event_loop_class
++            ]
++            
++            with patch('twisted.internet.asyncioreactor.install') as mock_install:
++                with warnings.catch_warnings(record=True) as w:
++                    warnings.simplefilter("always")
++                    
++                    # This should NOT trigger the deprecation warning
++                    install_reactor(
++                        'twisted.internet.asyncioreactor.AsyncioSelectorReactor',
++                        event_loop_path='asyncio.SelectorEventLoop'
++                    )
++                    
++                    # Check that no deprecation warning was raised
++                    deprecation_warnings = [warning for warning in w 
++                                          if issubclass(warning.category, DeprecationWarning)
++                                          and "There is no current event loop" in str(warning.message)]
++                    
++                    assert len(deprecation_warnings) == 0, "Should not trigger deprecation warning when event_loop_path is provided"
++
++    def test_install_reactor_non_asyncio_reactor_no_warning(self):
++        """Test that install_reactor doesn't trigger warning for non-asyncio reactors."""
++        mock_reactor_class = MagicMock()
++        mock_reactor_class.__name__ = "SomeOtherReactor"
++        
++        with patch('scrapy.utils.reactor.load_object') as mock_load_object:
++            mock_load_object.side_effect = [
++                mock_reactor_class,  # reactor_class
++                MagicMock()  # installer
++            ]
++            
++            with warnings.catch_warnings(record=True) as w:
++                warnings.simplefilter("always")
++                
++                # This should NOT trigger the deprecation warning
++                install_reactor('some.other.reactor.SomeOtherReactor')
++                
++                # Check that no deprecation warning was raised
++                deprecation_warnings = [warning for warning in w 
++                                      if issubclass(warning.category, DeprecationWarning)
++                                      and "There is no current event loop" in str(warning.message)]
++                
++                assert len(deprecation_warnings) == 0, "Should not trigger deprecation warning for non-asyncio reactors"
++
++    @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific test")
++    def test_install_reactor_windows_policy_handling(self):
++        """Test that install_reactor handles Windows event loop policy correctly."""
++        with patch('scrapy.utils.reactor.load_object') as mock_load_object:
++            mock_load_object.return_value = asyncioreactor.AsyncioSelectorReactor
++            
++            with patch('twisted.internet.asyncioreactor.install') as mock_install:
++                with patch('asyncio.get_event_loop_policy') as mock_get_policy:
++                    with patch('asyncio.set_event_loop_policy') as mock_set_policy:
++                        mock_policy = MagicMock()
++                        mock_get_policy.return_value = mock_policy
++                        
++                        with warnings.catch_warnings(record=True) as w:
++                            warnings.simplefilter("always")
++                            
++                            install_reactor('twisted.internet.asyncioreactor.AsyncioSelectorReactor')
++                            
++                            # Verify the policy was checked
++                            mock_get_policy.assert_called_once()
++
++    def test_install_reactor_already_installed_error_suppressed(self):
++        """Test that ReactorAlreadyInstalledError is properly suppressed."""
++        with patch('scrapy.utils.reactor.load_object') as mock_load_object:
++            mock_load_object.return_value = asyncioreactor.AsyncioSelectorReactor
++            
++            with patch('twisted.internet.asyncioreactor.install') as mock_install:
++                mock_install.side_effect = error.ReactorAlreadyInstalledError("Already installed")
++                
++                # This should not raise an exception
++                try:
++                    install_reactor('twisted.internet.asyncioreactor.AsyncioSelectorReactor')
++                except error.ReactorAlreadyInstalledError:
++                    pytest.fail("ReactorAlreadyInstalledError should be suppressed")
++
++    def test_install_reactor_preserves_functionality_after_fix(self):
++        """Test that install_reactor preserves its core functionality after fixing deprecation warnings."""
++        with patch('scrapy.utils.reactor.load_object') as mock_load_object:
++            mock_load_object.return_value = asyncioreactor.AsyncioSelectorReactor
++            
++            with patch('twisted.internet.asyncioreactor.install') as mock_install:
++                with patch('asyncio.set_event_loop') as mock_set_loop:
++                    # Call the function
++                    install_reactor('twisted.internet.asyncioreactor.AsyncioSelectorReactor')
++                    
++                    # Verify that asyncioreactor.install was called with an event loop
++                    mock_install.assert_called_once()
++                    args, kwargs = mock_install.call_args
++                    assert 'eventloop' in kwargs
++                    assert kwargs['eventloop'] is not None

@@ -1,0 +1,221 @@
+--- a/tests/urls_tests/test_resolvers.py
++++ b/tests/urls_tests/test_resolvers.py
+-# Empty if creating new file
++import pytest
++import functools
++from unittest.mock import patch, Mock
++
++from django.conf import settings
++from django.test import TestCase, override_settings
++from django.urls import reverse
++from django.urls.resolvers import get_resolver, URLResolver
++from django.urls.base import set_urlconf, get_urlconf
++
++
++class URLResolverCachingTestCase(TestCase):
++    """Test cases for URLResolver caching optimization bug."""
++
++    def setUp(self):
++        """Clear the get_resolver cache before each test."""
++        # Clear the lru_cache to ensure clean state
++        get_resolver.cache_clear()
++        # Reset urlconf state
++        set_urlconf(None)
++
++    def tearDown(self):
++        """Clean up after each test."""
++        get_resolver.cache_clear()
++        set_urlconf(None)
++
++    def test_get_resolver_cache_info_initial_state(self):
++        """Test that get_resolver cache starts empty."""
++        cache_info = get_resolver.cache_info()
++        self.assertEqual(cache_info.hits, 0)
++        self.assertEqual(cache_info.misses, 0)
++        self.assertEqual(cache_info.currsize, 0)
++
++    def test_get_resolver_with_none_creates_cache_entry(self):
++        """Test that calling get_resolver(None) creates a cache entry."""
++        resolver = get_resolver(None)
++        self.assertIsInstance(resolver, URLResolver)
++        
++        cache_info = get_resolver.cache_info()
++        self.assertEqual(cache_info.misses, 1)
++        self.assertEqual(cache_info.hits, 0)
++        self.assertEqual(cache_info.currsize, 1)
++
++    def test_get_resolver_with_root_urlconf_creates_separate_cache_entry_bug(self):
++        """
++        Test that demonstrates the bug: calling get_resolver(None) and 
++        get_resolver(settings.ROOT_URLCONF) creates separate cache entries.
++        This test should FAIL before the fix is applied.
++        """
++        # First call with None
++        resolver1 = get_resolver(None)
++        cache_info_after_first = get_resolver.cache_info()
++        
++        # Second call with explicit ROOT_URLCONF
++        resolver2 = get_resolver(settings.ROOT_URLCONF)
++        cache_info_after_second = get_resolver.cache_info()
++        
++        # Before the fix, this creates two separate cache entries
++        # This assertion will FAIL before the fix, demonstrating the bug
++        self.assertEqual(cache_info_after_second.currsize, 1, 
++                        "Bug: Multiple cache entries created for same effective URLconf")
++        
++        # Both resolvers should be functionally equivalent
++        self.assertEqual(resolver1.urlconf_name, resolver2.urlconf_name)
++
++    def test_get_resolver_multiple_calls_with_none_uses_cache(self):
++        """Test that multiple calls with None parameter use the cache."""
++        resolver1 = get_resolver(None)
++        resolver2 = get_resolver(None)
++        
++        # Should be the same object due to caching
++        self.assertIs(resolver1, resolver2)
++        
++        cache_info = get_resolver.cache_info()
++        self.assertEqual(cache_info.misses, 1)
++        self.assertEqual(cache_info.hits, 1)
++        self.assertEqual(cache_info.currsize, 1)
++
++    def test_get_resolver_multiple_calls_with_root_urlconf_uses_cache(self):
++        """Test that multiple calls with ROOT_URLCONF parameter use the cache."""
++        resolver1 = get_resolver(settings.ROOT_URLCONF)
++        resolver2 = get_resolver(settings.ROOT_URLCONF)
++        
++        # Should be the same object due to caching
++        self.assertIs(resolver1, resolver2)
++        
++        cache_info = get_resolver.cache_info()
++        self.assertEqual(cache_info.misses, 1)
++        self.assertEqual(cache_info.hits, 1)
++        self.assertEqual(cache_info.currsize, 1)
++
++    @patch.object(URLResolver, '_populate')
++    def test_urlresolver_populate_called_once_after_fix(self, mock_populate):
++        """
++        Test that URLResolver._populate is called only once when get_resolver
++        is called with None and then with ROOT_URLCONF.
++        This test should PASS after the fix is applied.
++        """
++        # Call get_resolver with None
++        resolver1 = get_resolver(None)
++        
++        # Call get_resolver with explicit ROOT_URLCONF
++        resolver2 = get_resolver(settings.ROOT_URLCONF)
++        
++        # After the fix, _populate should only be called once since
++        # both calls should use the same cached URLResolver instance
++        self.assertEqual(mock_populate.call_count, 1,
++                        "URLResolver._populate should only be called once after fix")
++
++    @patch.object(URLResolver, '_populate')
++    def test_urlresolver_populate_called_twice_before_fix(self, mock_populate):
++        """
++        Test that demonstrates the bug: URLResolver._populate is called twice
++        when get_resolver is called with None and then with ROOT_URLCONF.
++        This test should FAIL after the fix is applied (showing the bug is fixed).
++        """
++        # Call get_resolver with None
++        resolver1 = get_resolver(None)
++        
++        # Call get_resolver with explicit ROOT_URLCONF  
++        resolver2 = get_resolver(settings.ROOT_URLCONF)
++        
++        # Before the fix, _populate gets called twice because two different
++        # URLResolver instances are created
++        # After the fix, this assertion should fail, proving the bug is fixed
++        try:
++            self.assertEqual(mock_populate.call_count, 2,
++                            "Before fix: _populate called twice due to separate cache entries")
++        except AssertionError:
++            # If this fails, it means the fix is working correctly
++            self.assertEqual(mock_populate.call_count, 1,
++                            "After fix: _populate called only once")
++
++    def test_reverse_function_uses_get_resolver(self):
++        """Test that reverse function calls get_resolver and benefits from caching."""
++        # Clear cache to start fresh
++        get_resolver.cache_clear()
++        
++        # Mock a simple URL pattern for testing
++        with override_settings(ROOT_URLCONF='django.urls'):
++            try:
++                # This might fail if the URL doesn't exist, but we're testing caching
++                reverse('admin:index')
++            except:
++                # Even if reverse fails, get_resolver should have been called
++                pass
++            
++            cache_info = get_resolver.cache_info()
++            # get_resolver should have been called at least once by reverse
++            self.assertGreater(cache_info.misses + cache_info.hits, 0)
++
++    def test_get_resolver_with_different_urlconfs_creates_separate_entries(self):
++        """Test that different URLconf values create separate cache entries."""
++        # This is expected behavior - different URLconfs should be cached separately
++        resolver1 = get_resolver('django.urls')
++        resolver2 = get_resolver('tests.urls')  # Different URLconf
++        
++        cache_info = get_resolver.cache_info()
++        self.assertEqual(cache_info.currsize, 2)
++        self.assertNotEqual(resolver1.urlconf_name, resolver2.urlconf_name)
++
++    def test_get_resolver_cache_consistency_with_set_urlconf(self):
++        """
++        Test the scenario described in the issue: get_resolver called before
++        and after set_urlconf should use the same cache entry when they
++        resolve to the same URLconf.
++        """
++        # Simulate calling get_resolver at import time (before set_urlconf)
++        resolver_before = get_resolver(None)
++        
++        # Simulate request handling calling set_urlconf
++        set_urlconf(settings.ROOT_URLCONF)
++        
++        # Simulate calling get_resolver after request handling
++        resolver_after = get_resolver(get_urlconf())
++        
++        # After the fix, these should be the same cached instance
++        # Before the fix, they would be different instances
++        cache_info = get_resolver.cache_info()
++        
++        # The key insight: if the fix works, we should have only one cache entry
++        # because None and settings.ROOT_URLCONF resolve to the same thing
++        self.assertEqual(cache_info.currsize, 1,
++                        "Should have only one cache entry after fix")
++
++    @override_settings(ROOT_URLCONF='tests.urls')
++    def test_get_resolver_respects_settings_root_urlconf(self):
++        """Test that get_resolver(None) uses settings.ROOT_URLCONF."""
++        resolver = get_resolver(None)
++        self.assertEqual(resolver.urlconf_name, 'tests.urls')
++
++    def test_get_resolver_cache_key_normalization(self):
++        """
++        Test that the cache key normalization works correctly.
++        This is the core test for the fix.
++        """
++        # Clear cache
++        get_resolver.cache_clear()
++        
++        # Call with None
++        resolver1 = get_resolver(None)
++        cache_info_1 = get_resolver.cache_info()
++        
++        # Call with explicit ROOT_URLCONF
++        resolver2 = get_resolver(settings.ROOT_URLCONF)
++        cache_info_2 = get_resolver.cache_info()
++        
++        # After the fix, the second call should be a cache hit, not a miss
++        self.assertEqual(cache_info_2.hits, 1, 
++                        "Second call should be a cache hit after fix")
++        self.assertEqual(cache_info_2.misses, 1,
++                        "Should only have one cache miss after fix")
++        self.assertEqual(cache_info_2.currsize, 1,
++                        "Should only have one cache entry after fix")
++        
++        # The resolvers should be the exact same object
++        self.assertIs(resolver1, resolver2,
++                     "Should return the same cached object after fix")

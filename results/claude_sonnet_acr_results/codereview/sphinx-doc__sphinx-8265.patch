@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/pycode/ast.py b/sphinx/pycode/ast.py\nindex 9bafff11c..38ea7ffa2 100644\n--- a/sphinx/pycode/ast.py\n+++ b/sphinx/pycode/ast.py\n@@ -173,7 +173,7 @@ class _UnparseVisitor(ast.NodeVisitor):\n \n     def visit_Tuple(self, node: ast.Tuple) -> str:\n         if node.elts:\n-            return \", \".join(self.visit(e) for e in node.elts)\n+            return \"(\" + \", \".join(self.visit(e) for e in node.elts) + \")\"\n         else:\n             return \"()\"\n \n"
+}

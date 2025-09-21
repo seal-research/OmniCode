@@ -1,0 +1,169 @@
+--- a/testing/logging/test_caplog_get_records_clear_conflict.py
++++ b/testing/logging/test_caplog_get_records_clear_conflict.py
+-# Empty if creating new file
++import logging
++import pytest
++
++
++class TestCaplogGetRecordsClearConflict:
++    """Test suite for the caplog.get_records and caplog.clear conflict bug."""
++
++    def test_caplog_get_records_and_records_consistency_before_clear(self, caplog):
++        """Test that get_records and records are consistent before calling clear."""
++        # Initially both should be empty and consistent
++        assert caplog.get_records("call") == caplog.records
++        assert len(caplog.get_records("call")) == 0
++        assert len(caplog.records) == 0
++
++    def test_caplog_get_records_and_records_consistency_after_logging(self, caplog):
++        """Test that get_records and records are consistent after logging."""
++        logging.warning("test message")
++        
++        # Both should contain the same log record
++        assert caplog.get_records("call") == caplog.records
++        assert len(caplog.get_records("call")) == 1
++        assert len(caplog.records) == 1
++        assert caplog.get_records("call")[0].getMessage() == "test message"
++        assert caplog.records[0].getMessage() == "test message"
++
++    def test_caplog_get_records_and_records_consistency_after_clear_bug_reproduction(self, caplog):
++        """Test that reproduces the bug where get_records and records become inconsistent after clear."""
++        # Add a log record
++        logging.warning("test message")
++        
++        # Verify consistency before clear
++        assert caplog.get_records("call") == caplog.records
++        assert len(caplog.get_records("call")) == 1
++        assert len(caplog.records) == 1
++        
++        # Clear the logs
++        caplog.clear()
++        
++        # This test will fail before the fix is applied
++        # After clear, both should be empty and consistent
++        assert caplog.get_records("call") == caplog.records, (
++            f"get_records returned {caplog.get_records('call')} but records is {caplog.records}. "
++            "They should be the same after clear()."
++        )
++        assert len(caplog.get_records("call")) == 0
++        assert len(caplog.records) == 0
++
++    def test_caplog_get_records_receives_new_records_after_clear(self, caplog):
++        """Test that get_records receives new records after clear is called."""
++        # Add initial log record
++        logging.warning("first message")
++        assert len(caplog.get_records("call")) == 1
++        assert len(caplog.records) == 1
++        
++        # Clear logs
++        caplog.clear()
++        
++        # Add new log record after clear
++        logging.error("second message")
++        
++        # Both should contain the new record (this will fail before fix)
++        assert caplog.get_records("call") == caplog.records
++        assert len(caplog.get_records("call")) == 1
++        assert len(caplog.records) == 1
++        assert caplog.get_records("call")[0].getMessage() == "second message"
++        assert caplog.records[0].getMessage() == "second message"
++
++    def test_caplog_multiple_clear_calls(self, caplog):
++        """Test that multiple clear calls maintain consistency."""
++        # Add log, clear, add log, clear again
++        logging.info("message 1")
++        assert len(caplog.get_records("call")) == 1
++        
++        caplog.clear()
++        assert caplog.get_records("call") == caplog.records
++        assert len(caplog.get_records("call")) == 0
++        
++        logging.info("message 2")
++        assert len(caplog.get_records("call")) == 1
++        assert caplog.get_records("call")[0].getMessage() == "message 2"
++        
++        caplog.clear()
++        assert caplog.get_records("call") == caplog.records
++        assert len(caplog.get_records("call")) == 0
++
++    def test_caplog_clear_preserves_object_identity(self, caplog):
++        """Test that clear preserves the object identity of the records list."""
++        # Get initial reference to records
++        initial_records_id = id(caplog.records)
++        initial_get_records_result = caplog.get_records("call")
++        initial_get_records_id = id(initial_get_records_result)
++        
++        # Add a log record
++        logging.warning("test")
++        
++        # Clear should not change object identity
++        caplog.clear()
++        
++        # The records list object should be the same
++        assert id(caplog.records) == initial_records_id, (
++            "caplog.records object identity changed after clear()"
++        )
++        
++        # get_records should return the same list object
++        post_clear_get_records = caplog.get_records("call")
++        assert id(post_clear_get_records) == initial_get_records_id, (
++            "get_records() returned different object after clear()"
++        )
++
++    def test_caplog_different_phases_independence(self, caplog):
++        """Test that different test phases (setup, call, teardown) maintain independence."""
++        # This test focuses on the "call" phase but ensures the fix doesn't break other phases
++        logging.warning("call phase message")
++        
++        call_records_before = caplog.get_records("call")
++        setup_records_before = caplog.get_records("setup")
++        teardown_records_before = caplog.get_records("teardown")
++        
++        assert len(call_records_before) == 1
++        assert len(setup_records_before) == 0
++        assert len(teardown_records_before) == 0
++        
++        caplog.clear()
++        
++        # All phases should be cleared
++        assert len(caplog.get_records("call")) == 0
++        assert len(caplog.get_records("setup")) == 0
++        assert len(caplog.get_records("teardown")) == 0
++        
++        # Verify consistency for call phase specifically
++        assert caplog.get_records("call") == caplog.records
++
++    def test_caplog_text_property_consistency_after_clear(self, caplog):
++        """Test that the text property is also consistent after clear."""
++        logging.warning("test message for text")
++        
++        # Verify text contains the message
++        assert "test message for text" in caplog.text
++        assert len(caplog.records) == 1
++        
++        caplog.clear()
++        
++        # After clear, text should be empty and records should be empty
++        assert caplog.text == ""
++        assert len(caplog.records) == 0
++        assert len(caplog.get_records("call")) == 0
++        
++        # Add new message after clear
++        logging.error("new message after clear")
++        
++        # Text should contain new message, and records should be consistent
++        assert "new message after clear" in caplog.text
++        assert len(caplog.records) == 1
++        assert len(caplog.get_records("call")) == 1
++        assert caplog.get_records("call") == caplog.records
++
++    def test_original_issue_reproduction(self, caplog):
++        """Direct reproduction of the original issue example."""
++        def verify_consistency():
++            assert caplog.get_records("call") == caplog.records
++
++        verify_consistency()
++        logging.warning("test")
++        verify_consistency()
++        caplog.clear()
++        verify_consistency()  # This should not fail after the fix

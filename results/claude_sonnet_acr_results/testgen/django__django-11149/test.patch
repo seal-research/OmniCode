@@ -1,0 +1,333 @@
+--- a/tests/admin_inlines/test_permissions.py
++++ b/tests/admin_inlines/test_permissions.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admin import TabularInline
++from django.contrib.auth import get_user_model
++from django.contrib.auth.models import Permission
++from django.contrib.contenttypes.models import ContentType
++from django.db import models
++from django.test import TestCase, RequestFactory
++from django.contrib.admin.sites import AdminSite
++
++
++# Test models for ManyToManyField inline permissions
++class Photo(models.Model):
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'admin_inlines'
++
++
++class Report(models.Model):
++    title = models.CharField(max_length=100)
++    photos = models.ManyToManyField(Photo)
++    
++    class Meta:
++        app_label = 'admin_inlines'
++
++
++class ReportPhotoInlineModelAdmin(TabularInline):
++    model = Report.photos.through
++    show_change_link = True
++
++
++User = get_user_model()
++
++
++class TestManyToManyInlinePermissions(TestCase):
++    """Test permissions for auto-created ManyToManyField inlines."""
++    
++    def setUp(self):
++        """Set up test data and users."""
++        self.factory = RequestFactory()
++        self.admin_site = AdminSite()
++        
++        # Create test models
++        self.photo = Photo.objects.create(name="Test Photo")
++        self.report = Report.objects.create(title="Test Report")
++        
++        # Create users
++        self.view_only_user = User.objects.create_user(
++            username='viewonly', 
++            password='test'
++        )
++        self.add_user = User.objects.create_user(
++            username='adduser', 
++            password='test'
++        )
++        self.change_user = User.objects.create_user(
++            username='changeuser', 
++            password='test'
++        )
++        self.delete_user = User.objects.create_user(
++            username='deleteuser', 
++            password='test'
++        )
++        self.full_user = User.objects.create_user(
++            username='fulluser', 
++            password='test'
++        )
++        
++        # Get content types and permissions
++        photo_ct = ContentType.objects.get_for_model(Photo)
++        report_ct = ContentType.objects.get_for_model(Report)
++        
++        # Assign permissions
++        view_photo_perm = Permission.objects.get(
++            content_type=photo_ct, 
++            codename='view_photo'
++        )
++        add_photo_perm = Permission.objects.get(
++            content_type=photo_ct, 
++            codename='add_photo'
++        )
++        change_photo_perm = Permission.objects.get(
++            content_type=photo_ct, 
++            codename='change_photo'
++        )
++        delete_photo_perm = Permission.objects.get(
++            content_type=photo_ct, 
++            codename='delete_photo'
++        )
++        
++        # View only user - only has view permission
++        self.view_only_user.user_permissions.add(view_photo_perm)
++        
++        # Add user - has view and add permissions
++        self.add_user.user_permissions.add(view_photo_perm, add_photo_perm)
++        
++        # Change user - has view and change permissions
++        self.change_user.user_permissions.add(view_photo_perm, change_photo_perm)
++        
++        # Delete user - has view and delete permissions
++        self.delete_user.user_permissions.add(view_photo_perm, delete_photo_perm)
++        
++        # Full user - has all permissions
++        self.full_user.user_permissions.add(
++            view_photo_perm, 
++            add_photo_perm, 
++            change_photo_perm, 
++            delete_photo_perm
++        )
++        
++        # Create inline admin instance
++        self.inline_admin = ReportPhotoInlineModelAdmin(Report, self.admin_site)
++    
++    def test_view_only_user_cannot_add_inline_items(self):
++        """Test that user with only view permission cannot add inline items."""
++        request = self.factory.get('/')
++        request.user = self.view_only_user
++        
++        # This should fail before the fix is applied
++        has_add_perm = self.inline_admin.has_add_permission(request, self.report)
++        self.assertFalse(
++            has_add_perm,
++            "User with only view permission should not be able to add inline items"
++        )
++    
++    def test_view_only_user_cannot_change_inline_items(self):
++        """Test that user with only view permission cannot change inline items."""
++        request = self.factory.get('/')
++        request.user = self.view_only_user
++        
++        # This should fail before the fix is applied
++        has_change_perm = self.inline_admin.has_change_permission(request, self.report)
++        self.assertFalse(
++            has_change_perm,
++            "User with only view permission should not be able to change inline items"
++        )
++    
++    def test_view_only_user_cannot_delete_inline_items(self):
++        """Test that user with only view permission cannot delete inline items."""
++        request = self.factory.get('/')
++        request.user = self.view_only_user
++        
++        # This should fail before the fix is applied
++        has_delete_perm = self.inline_admin.has_delete_permission(request, self.report)
++        self.assertFalse(
++            has_delete_perm,
++            "User with only view permission should not be able to delete inline items"
++        )
++    
++    def test_add_user_can_add_inline_items(self):
++        """Test that user with add permission can add inline items."""
++        request = self.factory.get('/')
++        request.user = self.add_user
++        
++        has_add_perm = self.inline_admin.has_add_permission(request, self.report)
++        self.assertTrue(
++            has_add_perm,
++            "User with add permission should be able to add inline items"
++        )
++    
++    def test_add_user_cannot_change_inline_items(self):
++        """Test that user with only add permission cannot change inline items."""
++        request = self.factory.get('/')
++        request.user = self.add_user
++        
++        has_change_perm = self.inline_admin.has_change_permission(request, self.report)
++        self.assertFalse(
++            has_change_perm,
++            "User with only add permission should not be able to change inline items"
++        )
++    
++    def test_add_user_cannot_delete_inline_items(self):
++        """Test that user with only add permission cannot delete inline items."""
++        request = self.factory.get('/')
++        request.user = self.add_user
++        
++        has_delete_perm = self.inline_admin.has_delete_permission(request, self.report)
++        self.assertFalse(
++            has_delete_perm,
++            "User with only add permission should not be able to delete inline items"
++        )
++    
++    def test_change_user_can_change_inline_items(self):
++        """Test that user with change permission can change inline items."""
++        request = self.factory.get('/')
++        request.user = self.change_user
++        
++        has_change_perm = self.inline_admin.has_change_permission(request, self.report)
++        self.assertTrue(
++            has_change_perm,
++            "User with change permission should be able to change inline items"
++        )
++    
++    def test_change_user_cannot_add_inline_items(self):
++        """Test that user with only change permission cannot add inline items."""
++        request = self.factory.get('/')
++        request.user = self.change_user
++        
++        has_add_perm = self.inline_admin.has_add_permission(request, self.report)
++        self.assertFalse(
++            has_add_perm,
++            "User with only change permission should not be able to add inline items"
++        )
++    
++    def test_change_user_cannot_delete_inline_items(self):
++        """Test that user with only change permission cannot delete inline items."""
++        request = self.factory.get('/')
++        request.user = self.change_user
++        
++        has_delete_perm = self.inline_admin.has_delete_permission(request, self.report)
++        self.assertFalse(
++            has_delete_perm,
++            "User with only change permission should not be able to delete inline items"
++        )
++    
++    def test_delete_user_can_delete_inline_items(self):
++        """Test that user with delete permission can delete inline items."""
++        request = self.factory.get('/')
++        request.user = self.delete_user
++        
++        has_delete_perm = self.inline_admin.has_delete_permission(request, self.report)
++        self.assertTrue(
++            has_delete_perm,
++            "User with delete permission should be able to delete inline items"
++        )
++    
++    def test_delete_user_cannot_add_inline_items(self):
++        """Test that user with only delete permission cannot add inline items."""
++        request = self.factory.get('/')
++        request.user = self.delete_user
++        
++        has_add_perm = self.inline_admin.has_add_permission(request, self.report)
++        self.assertFalse(
++            has_add_perm,
++            "User with only delete permission should not be able to add inline items"
++        )
++    
++    def test_delete_user_cannot_change_inline_items(self):
++        """Test that user with only delete permission cannot change inline items."""
++        request = self.factory.get('/')
++        request.user = self.delete_user
++        
++        has_change_perm = self.inline_admin.has_change_permission(request, self.report)
++        self.assertFalse(
++            has_change_perm,
++            "User with only delete permission should not be able to change inline items"
++        )
++    
++    def test_full_user_has_all_permissions(self):
++        """Test that user with all permissions can perform all operations."""
++        request = self.factory.get('/')
++        request.user = self.full_user
++        
++        has_add_perm = self.inline_admin.has_add_permission(request, self.report)
++        has_change_perm = self.inline_admin.has_change_permission(request, self.report)
++        has_delete_perm = self.inline_admin.has_delete_permission(request, self.report)
++        
++        self.assertTrue(has_add_perm, "User with all permissions should be able to add")
++        self.assertTrue(has_change_perm, "User with all permissions should be able to change")
++        self.assertTrue(has_delete_perm, "User with all permissions should be able to delete")
++    
++    def test_view_permission_still_works(self):
++        """Test that view permission still works correctly for all users."""
++        request = self.factory.get('/')
++        
++        # All users should have view permission since they all have view_photo permission
++        for user in [self.view_only_user, self.add_user, self.change_user, 
++                     self.delete_user, self.full_user]:
++            request.user = user
++            has_view_perm = self.inline_admin.has_view_permission(request, self.report)
++            self.assertTrue(
++                has_view_perm,
++                f"User {user.username} should have view permission"
++            )
++    
++    def test_auto_created_model_detection(self):
++        """Test that the inline correctly detects auto-created models."""
++        # The through model should be auto-created
++        self.assertTrue(
++            self.inline_admin.opts.auto_created,
++            "ManyToManyField through model should be auto-created"
++        )
++    
++    def test_permissions_without_obj_parameter(self):
++        """Test permissions when obj parameter is None."""
++        request = self.factory.get('/')
++        request.user = self.view_only_user
++        
++        # Test with obj=None (should still respect permissions)
++        has_add_perm = self.inline_admin.has_add_permission(request, None)
++        has_change_perm = self.inline_admin.has_change_permission(request, None)
++        has_delete_perm = self.inline_admin.has_delete_permission(request, None)
++        
++        self.assertFalse(has_add_perm, "View-only user should not have add permission")
++        self.assertFalse(has_change_perm, "View-only user should not have change permission")
++        self.assertFalse(has_delete_perm, "View-only user should not have delete permission")
++
++
++class TestNonAutoCreatedInlinePermissions(TestCase):
++    """Test that non-auto-created inlines still work correctly."""
++    
++    def setUp(self):
++        """Set up test data for non-auto-created inline."""
++        self.factory = RequestFactory()
++        self.admin_site = AdminSite()
++        
++        # Create a user
++        self.user = User.objects.create_user(username='testuser', password='test')
++        
++        # Create a non-auto-created inline (using a regular model)
++        class RegularInline(TabularInline):
++            model = Photo
++        
++        self.inline_admin = RegularInline(Report, self.admin_site)
++    
++    def test_non_auto_created_inline_uses_super_methods(self):
++        """Test that non-auto-created inlines delegate to parent class methods."""
++        request = self.factory.get('/')
++        request.user = self.user
++        
++        # For non-auto-created models, should call super() methods
++        # These will check permissions on the Photo model itself
++        has_add_perm = self.inline_admin.has_add_permission(request, None)
++        has_change_perm = self.inline_admin.has_change_permission(request, None)
++        has_delete_perm = self.inline_admin.has_delete_permission(request, None)
++        
++        # Without specific permissions, these should be False
++        self.assertFalse(has_add_perm)
++        self.assertFalse(has_change_perm)
++        self.assertFalse(has_delete_perm)

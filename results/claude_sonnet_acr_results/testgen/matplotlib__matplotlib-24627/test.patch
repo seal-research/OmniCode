@@ -1,0 +1,266 @@
+--- a/lib/matplotlib/tests/test_artist_axes_clearing.py
++++ b/lib/matplotlib/tests/test_artist_axes_clearing.py
+-# Empty if creating new file
++import pytest
++import matplotlib.pyplot as plt
++import matplotlib.patches as patches
++from matplotlib.lines import Line2D
++from matplotlib.text import Text
++from matplotlib.collections import LineCollection
++import numpy as np
++
++
++class TestArtistAxesClearing:
++    """Test that cla() and clf() properly unset .axes and .figure attributes of deparented artists."""
++    
++    def test_artist_remove_unsets_axes_attribute(self):
++        """Test that artist.remove() properly unsets the .axes attribute (baseline behavior)."""
++        fig, ax = plt.subplots()
++        line, = ax.plot([1, 2, 3], [1, 2, 3])
++        
++        # Verify the line has axes reference
++        assert line.axes is ax
++        
++        # Remove the line
++        line.remove()
++        
++        # Verify the axes attribute is unset
++        assert line.axes is None
++        
++        plt.close(fig)
++    
++    def test_axes_cla_unsets_axes_attribute_for_lines(self):
++        """Test that axes.cla() unsets .axes attribute for line artists."""
++        fig, ax = plt.subplots()
++        line, = ax.plot([1, 2, 3], [1, 2, 3])
++        
++        # Verify the line has axes reference
++        assert line.axes is ax
++        
++        # Clear the axes
++        ax.cla()
++        
++        # The line's axes attribute should be unset
++        assert line.axes is None
++        
++        plt.close(fig)
++    
++    def test_axes_clear_unsets_axes_attribute_for_lines(self):
++        """Test that axes.clear() unsets .axes attribute for line artists."""
++        fig, ax = plt.subplots()
++        line, = ax.plot([1, 2, 3], [1, 2, 3])
++        
++        # Verify the line has axes reference
++        assert line.axes is ax
++        
++        # Clear the axes
++        ax.clear()
++        
++        # The line's axes attribute should be unset
++        assert line.axes is None
++        
++        plt.close(fig)
++    
++    def test_axes_cla_unsets_axes_attribute_for_patches(self):
++        """Test that axes.cla() unsets .axes attribute for patch artists."""
++        fig, ax = plt.subplots()
++        patch = patches.Rectangle((0, 0), 1, 1)
++        ax.add_patch(patch)
++        
++        # Verify the patch has axes reference
++        assert patch.axes is ax
++        
++        # Clear the axes
++        ax.cla()
++        
++        # The patch's axes attribute should be unset
++        assert patch.axes is None
++        
++        plt.close(fig)
++    
++    def test_axes_cla_unsets_axes_attribute_for_text(self):
++        """Test that axes.cla() unsets .axes attribute for text artists."""
++        fig, ax = plt.subplots()
++        text = ax.text(0.5, 0.5, "Test text")
++        
++        # Verify the text has axes reference
++        assert text.axes is ax
++        
++        # Clear the axes
++        ax.cla()
++        
++        # The text's axes attribute should be unset
++        assert text.axes is None
++        
++        plt.close(fig)
++    
++    def test_axes_cla_unsets_axes_attribute_for_collections(self):
++        """Test that axes.cla() unsets .axes attribute for collection artists."""
++        fig, ax = plt.subplots()
++        x = np.array([0, 1, 2])
++        y = np.array([0, 1, 0])
++        points = np.array([x, y]).T.reshape(-1, 1, 2)
++        segments = np.concatenate([points[:-1], points[1:]], axis=1)
++        collection = LineCollection(segments)
++        ax.add_collection(collection)
++        
++        # Verify the collection has axes reference
++        assert collection.axes is ax
++        
++        # Clear the axes
++        ax.cla()
++        
++        # The collection's axes attribute should be unset
++        assert collection.axes is None
++        
++        plt.close(fig)
++    
++    def test_multiple_artists_cla_unsets_all_axes_attributes(self):
++        """Test that axes.cla() unsets .axes attribute for multiple artists."""
++        fig, ax = plt.subplots()
++        
++        # Create multiple artists
++        line, = ax.plot([1, 2, 3], [1, 2, 3])
++        patch = patches.Circle((0.5, 0.5), 0.2)
++        ax.add_patch(patch)
++        text = ax.text(0.1, 0.1, "Test")
++        
++        # Verify all have axes references
++        assert line.axes is ax
++        assert patch.axes is ax
++        assert text.axes is ax
++        
++        # Clear the axes
++        ax.cla()
++        
++        # All axes attributes should be unset
++        assert line.axes is None
++        assert patch.axes is None
++        assert text.axes is None
++        
++        plt.close(fig)
++    
++    def test_figure_clf_unsets_axes_attributes(self):
++        """Test that figure.clf() unsets .axes attributes of all artists."""
++        fig, ax = plt.subplots()
++        line, = ax.plot([1, 2, 3], [1, 2, 3])
++        patch = patches.Rectangle((0, 0), 1, 1)
++        ax.add_patch(patch)
++        
++        # Verify artists have axes references
++        assert line.axes is ax
++        assert patch.axes is ax
++        
++        # Clear the figure
++        fig.clf()
++        
++        # All axes attributes should be unset
++        assert line.axes is None
++        assert patch.axes is None
++        
++        plt.close(fig)
++    
++    def test_pyplot_cla_unsets_axes_attributes(self):
++        """Test that pyplot.cla() unsets .axes attributes."""
++        plt.figure()
++        line, = plt.plot([1, 2, 3], [1, 2, 3])
++        
++        # Get current axes
++        ax = plt.gca()
++        assert line.axes is ax
++        
++        # Clear using pyplot
++        plt.cla()
++        
++        # The line's axes attribute should be unset
++        assert line.axes is None
++        
++        plt.close()
++    
++    def test_pyplot_clf_unsets_axes_attributes(self):
++        """Test that pyplot.clf() unsets .axes attributes."""
++        plt.figure()
++        line, = plt.plot([1, 2, 3], [1, 2, 3])
++        
++        # Get current axes
++        ax = plt.gca()
++        assert line.axes is ax
++        
++        # Clear using pyplot
++        plt.clf()
++        
++        # The line's axes attribute should be unset
++        assert line.axes is None
++        
++        plt.close()
++    
++    def test_axes_cla_preserves_functionality(self):
++        """Test that axes.cla() still works correctly after the fix."""
++        fig, ax = plt.subplots()
++        
++        # Add some content
++        line, = ax.plot([1, 2, 3], [1, 2, 3])
++        ax.set_title("Test Title")
++        ax.set_xlabel("X Label")
++        
++        # Clear the axes
++        ax.cla()
++        
++        # Verify axes is cleared (no children)
++        assert len(ax.get_children()) > 0  # Still has spines, ticks, etc.
++        assert len([child for child in ax.get_children() if isinstance(child, Line2D)]) == 0
++        
++        # Verify we can still use the axes
++        new_line, = ax.plot([4, 5, 6], [4, 5, 6])
++        assert new_line.axes is ax
++        
++        plt.close(fig)
++    
++    def test_edge_case_artist_without_axes_attribute(self):
++        """Test that clearing works even if some artists don't have .axes attribute."""
++        fig, ax = plt.subplots()
++        
++        # Create a custom artist without axes attribute
++        class CustomArtist:
++            def __init__(self):
++                pass
++        
++        custom = CustomArtist()
++        
++        # Add normal artist
++        line, = ax.plot([1, 2, 3], [1, 2, 3])
++        
++        # Manually add custom artist to children (this is unusual but possible)
++        ax._children.append(custom)
++        
++        assert line.axes is ax
++        
++        # This should not raise an error
++        ax.cla()
++        
++        # Normal artist should have axes unset
++        assert line.axes is None
++        
++        plt.close(fig)
++    
++    def test_consistency_between_remove_and_cla(self):
++        """Test that remove() and cla() have consistent behavior for axes attribute."""
++        # Test with remove()
++        fig1, ax1 = plt.subplots()
++        line1, = ax1.plot([1, 2, 3], [1, 2, 3])
++        line1.remove()
++        remove_result = line1.axes
++        
++        # Test with cla()
++        fig2, ax2 = plt.subplots()
++        line2, = ax2.plot([1, 2, 3], [1, 2, 3])
++        ax2.cla()
++        cla_result = line2.axes
++        
++        # Both should be None
++        assert remove_result is None
++        assert cla_result is None
++        assert remove_result == cla_result
++        
++        plt.close(fig1)
++        plt.close(fig2)

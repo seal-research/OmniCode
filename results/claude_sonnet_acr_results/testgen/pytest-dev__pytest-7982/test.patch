@@ -1,0 +1,243 @@
+--- a/testing/test_symlink_collection.py
++++ b/testing/test_symlink_collection.py
+-# Empty if creating new file
++import os
++import pytest
++from pathlib import Path
++
++
++class TestSymlinkCollection:
++    """Test collection of symlinked directories and files."""
++
++    def test_symlinked_directory_is_collected(self, tmp_path):
++        """Test that symlinked directories are followed and collected."""
++        # Create a real directory with a test file
++        real_dir = tmp_path / "real_test_dir"
++        real_dir.mkdir()
++        
++        test_file = real_dir / "test_example.py"
++        test_file.write_text("""
++def test_in_symlinked_dir():
++    assert True
++""")
++        
++        # Create a symlink to the directory
++        symlink_dir = tmp_path / "symlinked_test_dir"
++        symlink_dir.symlink_to(real_dir)
++        
++        # Run pytest collection on the symlinked directory
++        result = pytest.main([
++            "--collect-only", 
++            "-q",
++            str(symlink_dir)
++        ])
++        
++        # Should successfully collect the test (exit code 0)
++        assert result == 0
++
++    def test_symlinked_directory_contains_collected_tests(self, tmp_path, pytestconfig):
++        """Test that tests in symlinked directories are actually collected."""
++        # Create a real directory with a test file
++        real_dir = tmp_path / "real_test_dir"
++        real_dir.mkdir()
++        
++        test_file = real_dir / "test_example.py"
++        test_file.write_text("""
++def test_in_symlinked_dir():
++    assert True
++
++def test_another_in_symlinked_dir():
++    assert 1 + 1 == 2
++""")
++        
++        # Create a symlink to the directory
++        symlink_dir = tmp_path / "symlinked_test_dir"
++        symlink_dir.symlink_to(real_dir)
++        
++        # Use pytest's collection mechanism directly
++        from _pytest.main import Session
++        from _pytest.config import Config
++        
++        config = pytestconfig
++        session = Session.from_config(config)
++        
++        # Collect from the symlinked directory
++        collected_items = []
++        for item in session.collect([str(symlink_dir)]):
++            collected_items.extend(item.collect())
++        
++        # Should collect both test functions
++        test_names = [item.name for item in collected_items if hasattr(item, 'name')]
++        assert len([name for name in test_names if 'test_' in name]) >= 2
++
++    def test_nested_symlinked_directories(self, tmp_path):
++        """Test that nested symlinked directories are properly collected."""
++        # Create nested real directories
++        real_parent = tmp_path / "real_parent"
++        real_parent.mkdir()
++        
++        real_child = real_parent / "child_dir"
++        real_child.mkdir()
++        
++        # Create test files in both directories
++        parent_test = real_parent / "test_parent.py"
++        parent_test.write_text("""
++def test_parent():
++    assert True
++""")
++        
++        child_test = real_child / "test_child.py"
++        child_test.write_text("""
++def test_child():
++    assert True
++""")
++        
++        # Create symlink to parent directory
++        symlink_parent = tmp_path / "symlinked_parent"
++        symlink_parent.symlink_to(real_parent)
++        
++        # Run pytest collection
++        result = pytest.main([
++            "--collect-only",
++            "-q", 
++            str(symlink_parent)
++        ])
++        
++        # Should successfully collect tests from both parent and child
++        assert result == 0
++
++    def test_symlinked_file_is_collected(self, tmp_path):
++        """Test that individual symlinked test files are collected."""
++        # Create a real test file
++        real_file = tmp_path / "real_test.py"
++        real_file.write_text("""
++def test_in_symlinked_file():
++    assert True
++""")
++        
++        # Create a symlink to the file
++        symlink_file = tmp_path / "symlinked_test.py"
++        symlink_file.symlink_to(real_file)
++        
++        # Run pytest collection on the symlinked file
++        result = pytest.main([
++            "--collect-only",
++            "-q",
++            str(symlink_file)
++        ])
++        
++        # Should successfully collect the test
++        assert result == 0
++
++    def test_broken_symlink_handling(self, tmp_path):
++        """Test that broken symlinks don't break collection."""
++        # Create a symlink to a non-existent target
++        broken_symlink = tmp_path / "broken_symlink"
++        broken_symlink.symlink_to("non_existent_target")
++        
++        # Create a valid test file in the same directory
++        valid_test = tmp_path / "test_valid.py"
++        valid_test.write_text("""
++def test_valid():
++    assert True
++""")
++        
++        # Run pytest collection on the directory
++        result = pytest.main([
++            "--collect-only",
++            "-q",
++            str(tmp_path)
++        ])
++        
++        # Should still collect the valid test despite broken symlink
++        assert result == 0
++
++    def test_symlink_to_directory_with_conftest(self, tmp_path):
++        """Test that symlinked directories with conftest.py work correctly."""
++        # Create real directory with conftest.py
++        real_dir = tmp_path / "real_dir"
++        real_dir.mkdir()
++        
++        conftest = real_dir / "conftest.py"
++        conftest.write_text("""
++import pytest
++
++@pytest.fixture
++def custom_fixture():
++    return "from_conftest"
++""")
++        
++        test_file = real_dir / "test_with_conftest.py"
++        test_file.write_text("""
++def test_uses_conftest_fixture(custom_fixture):
++    assert custom_fixture == "from_conftest"
++""")
++        
++        # Create symlink to directory
++        symlink_dir = tmp_path / "symlinked_dir"
++        symlink_dir.symlink_to(real_dir)
++        
++        # Run pytest on symlinked directory
++        result = pytest.main([
++            "-v",
++            str(symlink_dir)
++        ])
++        
++        # Should pass (conftest.py should be loaded)
++        assert result == 0
++
++    @pytest.mark.skipif(os.name == "nt", reason="Symlinks may not work on Windows")
++    def test_symlink_collection_regression_from_6_1_0(self, tmp_path):
++        """
++        Regression test for the specific issue where symlinked directories
++        stopped being collected in pytest 6.1.0 due to follow_symlinks=False.
++        """
++        # Create the exact scenario described in the issue
++        test_dir = tmp_path / "tests"
++        test_dir.mkdir()
++        
++        # Create a real directory with tests outside the test directory
++        external_tests = tmp_path / "external_tests"
++        external_tests.mkdir()
++        
++        external_test_file = external_tests / "test_external.py"
++        external_test_file.write_text("""
++def test_external_functionality():
++    '''This test should be collected via symlink'''
++    assert True
++
++def test_another_external():
++    '''Another test to ensure multiple tests are collected'''
++    assert 42 == 42
++""")
++        
++        # Create a symlink to the external tests directory inside the test directory
++        symlinked_tests = test_dir / "external_via_symlink"
++        symlinked_tests.symlink_to(external_tests)
++        
++        # Also create a regular test file to ensure normal collection still works
++        regular_test = test_dir / "test_regular.py"
++        regular_test.write_text("""
++def test_regular_functionality():
++    assert True
++""")
++        
++        # Run pytest collection on the test directory
++        # This should collect both regular tests and symlinked tests
++        result = pytest.main([
++            "--collect-only",
++            "-v",
++            str(test_dir)
++        ])
++        
++        # Collection should succeed
++        assert result == 0
++        
++        # Now run the actual tests to ensure they execute properly
++        result = pytest.main([
++            "-v",
++            str(test_dir)
++        ])
++        
++        # All tests should pass
++        assert result == 0

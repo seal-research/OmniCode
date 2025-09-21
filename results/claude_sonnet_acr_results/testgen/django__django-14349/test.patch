@@ -1,0 +1,156 @@
+--- a/tests/validators/test_url_validator_bpo43882.py
++++ b/tests/validators/test_url_validator_bpo43882.py
+-# Empty if creating new file
++import pytest
++from django.core.exceptions import ValidationError
++from django.core.validators import URLValidator
++
++
++class TestURLValidatorBPO43882:
++    """
++    Test URLValidator behavior with URLs containing LF, CR, and tab characters.
++    
++    These tests verify that Django continues to reject URLs with potentially
++    dangerous whitespace characters even after Python's bpo-43882 fix which
++    strips these characters in urlsplit().
++    """
++    
++    def setup_method(self):
++        """Set up URLValidator instance for each test."""
++        self.validator = URLValidator()
++    
++    def test_url_with_newline_at_end_should_fail(self):
++        """Test that URLs with newline at the end are rejected."""
++        url_with_newline = 'http://www.djangoproject.com/\n'
++        
++        with pytest.raises(ValidationError) as exc_info:
++            self.validator(url_with_newline)
++        
++        # Verify the error message and code are as expected
++        assert exc_info.value.code == 'invalid'
++        assert 'Enter a valid URL.' in str(exc_info.value)
++    
++    def test_ipv6_url_with_newline_at_end_should_fail(self):
++        """Test that IPv6 URLs with newline at the end are rejected."""
++        ipv6_url_with_newline = 'http://[::ffff:192.9.5.5]\n'
++        
++        with pytest.raises(ValidationError) as exc_info:
++            self.validator(ipv6_url_with_newline)
++        
++        assert exc_info.value.code == 'invalid'
++        assert 'Enter a valid URL.' in str(exc_info.value)
++    
++    def test_url_with_carriage_return_should_fail(self):
++        """Test that URLs with carriage return are rejected."""
++        url_with_cr = 'http://www.example.com/\r'
++        
++        with pytest.raises(ValidationError):
++            self.validator(url_with_cr)
++    
++    def test_url_with_tab_should_fail(self):
++        """Test that URLs with tab character are rejected."""
++        url_with_tab = 'http://www.example.com/\t'
++        
++        with pytest.raises(ValidationError):
++            self.validator(url_with_tab)
++    
++    def test_url_with_newline_in_middle_should_fail(self):
++        """Test that URLs with newline in the middle are rejected."""
++        url_with_newline_middle = 'http://www.example\n.com/'
++        
++        with pytest.raises(ValidationError):
++            self.validator(url_with_newline_middle)
++    
++    def test_url_with_multiple_whitespace_chars_should_fail(self):
++        """Test that URLs with multiple whitespace characters are rejected."""
++        url_with_multiple = 'http://www.example.com/\n\r\t'
++        
++        with pytest.raises(ValidationError):
++            self.validator(url_with_multiple)
++    
++    def test_url_with_cr_lf_combination_should_fail(self):
++        """Test that URLs with CRLF combination are rejected."""
++        url_with_crlf = 'http://www.example.com/\r\n'
++        
++        with pytest.raises(ValidationError):
++            self.validator(url_with_crlf)
++    
++    def test_valid_url_without_whitespace_should_pass(self):
++        """Test that valid URLs without problematic whitespace pass validation."""
++        valid_urls = [
++            'http://www.djangoproject.com/',
++            'https://example.com/path',
++            'http://[::ffff:192.9.5.5]',
++            'ftp://files.example.com/file.txt',
++            'https://subdomain.example.com:8080/path?query=value#fragment'
++        ]
++        
++        for url in valid_urls:
++            # Should not raise ValidationError
++            self.validator(url)
++    
++    def test_url_with_encoded_whitespace_should_pass(self):
++        """Test that URLs with properly encoded whitespace characters pass."""
++        # These should be valid as the whitespace is properly URL-encoded
++        valid_encoded_urls = [
++            'http://www.example.com/path%20with%20spaces',
++            'http://www.example.com/path%0A',  # encoded newline
++            'http://www.example.com/path%0D',  # encoded carriage return
++            'http://www.example.com/path%09',  # encoded tab
++        ]
++        
++        for url in valid_encoded_urls:
++            # Should not raise ValidationError
++            self.validator(url)
++    
++    def test_edge_cases_with_whitespace_in_different_url_parts(self):
++        """Test whitespace characters in different parts of the URL."""
++        # Test cases where whitespace appears in different URL components
++        invalid_urls = [
++            'http\n://www.example.com/',  # in scheme
++            'http://www.exam\nple.com/',  # in hostname
++            'http://www.example.com:80\n80/',  # in port
++            'http://www.example.com/pa\nth/',  # in path
++            'http://www.example.com/?que\nry=value',  # in query
++            'http://www.example.com/#frag\nment',  # in fragment
++        ]
++        
++        for url in invalid_urls:
++            with pytest.raises(ValidationError):
++                self.validator(url)
++    
++    def test_custom_schemes_with_whitespace_should_fail(self):
++        """Test that custom schemes also reject whitespace characters."""
++        custom_validator = URLValidator(schemes=['custom', 'http', 'https'])
++        
++        invalid_urls = [
++            'custom://example.com/\n',
++            'custom://example.com/\r',
++            'custom://example.com/\t',
++        ]
++        
++        for url in invalid_urls:
++            with pytest.raises(ValidationError):
++                custom_validator(url)
++    
++    def test_regression_original_failing_cases(self):
++        """
++        Regression test for the specific cases mentioned in the bug report.
++        
++        These are the exact URLs that were failing in the original issue:
++        - 'http://www.djangoproject.com/\n'
++        - 'http://[::ffff:192.9.5.5]\n'
++        """
++        # These should fail validation (reproduce the bug)
++        failing_urls = [
++            'http://www.djangoproject.com/\n',
++            'http://[::ffff:192.9.5.5]\n'
++        ]
++        
++        for url in failing_urls:
++            with pytest.raises(ValidationError) as exc_info:
++                self.validator(url)
++            
++            # Ensure we get the expected error
++            assert exc_info.value.code == 'invalid'
++            assert 'Enter a valid URL.' in str(exc_info.value)

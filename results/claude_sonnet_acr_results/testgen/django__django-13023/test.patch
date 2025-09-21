@@ -1,0 +1,182 @@
+--- a/tests/model_fields/test_decimalfield.py
++++ b/tests/model_fields/test_decimalfield.py
++import pytest
++from decimal import Decimal
++from django.core.exceptions import ValidationError
++from django.db import models
++from django.test import TestCase
++
++
++class DecimalFieldTopythonTests(TestCase):
++    """Test DecimalField.to_python() method behavior with various input types."""
++    
++    def setUp(self):
++        """Set up a DecimalField instance for testing."""
++        self.field = models.DecimalField(max_digits=10, decimal_places=2)
++    
++    def test_to_python_with_valid_decimal(self):
++        """Test that valid decimal values are handled correctly."""
++        # Test with Decimal instance
++        value = Decimal('10.50')
++        result = self.field.to_python(value)
++        self.assertEqual(result, value)
++        
++        # Test with string representation
++        result = self.field.to_python('10.50')
++        self.assertEqual(result, Decimal('10.50'))
++        
++        # Test with integer
++        result = self.field.to_python(10)
++        self.assertEqual(result, Decimal('10'))
++    
++    def test_to_python_with_none(self):
++        """Test that None values are handled correctly."""
++        result = self.field.to_python(None)
++        self.assertIsNone(result)
++    
++    def test_to_python_with_float(self):
++        """Test that float values are converted using context."""
++        result = self.field.to_python(10.5)
++        self.assertIsInstance(result, Decimal)
++        # Float conversion should use the field's context
++        self.assertEqual(str(result), '10.5')
++    
++    def test_to_python_with_dict_raises_validation_error(self):
++        """Test that dictionary values raise ValidationError, not TypeError."""
++        test_dict = {'invalid': 'value'}
++        
++        # This should raise ValidationError, not TypeError
++        with self.assertRaises(ValidationError) as cm:
++            self.field.to_python(test_dict)
++        
++        # Verify it's a ValidationError with the correct code
++        self.assertEqual(cm.exception.code, 'invalid')
++        self.assertIn('value', cm.exception.message_dict or {})
++    
++    def test_to_python_with_list_raises_validation_error(self):
++        """Test that list values raise ValidationError, not TypeError."""
++        test_list = [1, 2, 3]
++        
++        # This should raise ValidationError, not TypeError
++        with self.assertRaises(ValidationError) as cm:
++            self.field.to_python(test_list)
++        
++        # Verify it's a ValidationError with the correct code
++        self.assertEqual(cm.exception.code, 'invalid')
++    
++    def test_to_python_with_complex_object_raises_validation_error(self):
++        """Test that complex objects raise ValidationError, not TypeError."""
++        class CustomObject:
++            def __str__(self):
++                return "custom"
++        
++        test_obj = CustomObject()
++        
++        # This should raise ValidationError, not TypeError
++        with self.assertRaises(ValidationError) as cm:
++            self.field.to_python(test_obj)
++        
++        # Verify it's a ValidationError with the correct code
++        self.assertEqual(cm.exception.code, 'invalid')
++    
++    def test_to_python_with_invalid_string_raises_validation_error(self):
++        """Test that invalid string values raise ValidationError."""
++        invalid_strings = ['not_a_number', 'abc', '10.5.5', '']
++        
++        for invalid_string in invalid_strings:
++            with self.subTest(value=invalid_string):
++                with self.assertRaises(ValidationError) as cm:
++                    self.field.to_python(invalid_string)
++                
++                # Verify it's a ValidationError with the correct code
++                self.assertEqual(cm.exception.code, 'invalid')
++    
++    def test_to_python_error_message_contains_value(self):
++        """Test that ValidationError message contains the invalid value."""
++        test_dict = {'key': 'value'}
++        
++        with self.assertRaises(ValidationError) as cm:
++            self.field.to_python(test_dict)
++        
++        # The error should contain information about the invalid value
++        error = cm.exception
++        self.assertEqual(error.code, 'invalid')
++        # Check that the error params contain the value
++        if hasattr(error, 'params') and error.params:
++            self.assertIn('value', error.params)
++            self.assertEqual(error.params['value'], test_dict)
++
++
++class DecimalFieldModelIntegrationTests(TestCase):
++    """Integration tests for DecimalField in model context."""
++    
++    def test_model_save_with_dict_in_decimal_field(self):
++        """Test that saving a model with dict in DecimalField raises ValidationError."""
++        # Create a simple model for testing
++        class TestModel(models.Model):
++            decimal_field = models.DecimalField(max_digits=10, decimal_places=2)
++            
++            class Meta:
++                app_label = 'test'
++        
++        # Create instance with invalid data
++        instance = TestModel()
++        instance.decimal_field = {'invalid': 'dict'}
++        
++        # This should raise ValidationError during field validation
++        with self.assertRaises(ValidationError):
++            instance.full_clean()
++    
++    def test_model_field_validation_with_various_invalid_types(self):
++        """Test field validation with various invalid types."""
++        class TestModel(models.Model):
++            decimal_field = models.DecimalField(max_digits=10, decimal_places=2)
++            
++            class Meta:
++                app_label = 'test'
++        
++        invalid_values = [
++            {'dict': 'value'},
++            [1, 2, 3],
++            set([1, 2, 3]),
++            object(),
++        ]
++        
++        for invalid_value in invalid_values:
++            with self.subTest(value=type(invalid_value).__name__):
++                instance = TestModel()
++                instance.decimal_field = invalid_value
++                
++                # Should raise ValidationError, not TypeError
++                with self.assertRaises(ValidationError):
++                    instance.full_clean()
++
++
++# Test to demonstrate the bug before the fix
++class DecimalFieldBugReproductionTest(TestCase):
++    """Test that reproduces the original bug behavior."""
++    
++    def test_decimal_field_dict_value_bug_reproduction(self):
++        """
++        This test reproduces the original bug where DecimalField.to_python()
++        raises TypeError instead of ValidationError when given a dict.
++        
++        Before the fix: This would raise TypeError
++        After the fix: This should raise ValidationError
++        """
++        field = models.DecimalField(max_digits=10, decimal_places=2)
++        test_dict = {'invalid': 'value'}
++        
++        # The bug was that this raised TypeError instead of ValidationError
++        # After the fix, it should raise ValidationError
++        with self.assertRaises(ValidationError) as cm:
++            field.to_python(test_dict)
++        
++        # Verify the error details
++        error = cm.exception
++        self.assertEqual(error.code, 'invalid')
++        
++        # Ensure it's not a TypeError being raised
++        # (This assertion would fail before the fix)
++        self.assertIsInstance(error, ValidationError)
++        self.assertNotIsInstance(error, TypeError)

@@ -1,0 +1,382 @@
+--- a/tests/schema/test_db_collation_foreign_keys.py
++++ b/tests/schema/test_db_collation_foreign_keys.py
+-# Empty if creating new file
++import pytest
++from django.db import models, connection
++from django.db.migrations.state import ProjectState
++from django.db.migrations.autodetector import MigrationAutodetector
++from django.test import TestCase, TransactionTestCase, skipUnlessDBFeature
++from django.test.utils import isolate_apps
++from django.db.backends.base.schema import BaseDatabaseSchemaEditor
++
++
++class TestDbCollationForeignKeys(TransactionTestCase):
++    """
++    Test that db_collation is properly propagated from primary keys to foreign keys.
++    This addresses the issue where foreign key constraint creation fails in MySQL
++    when the primary key has a db_collation but the foreign key doesn't inherit it.
++    """
++    
++    available_apps = ['tests.schema']
++    
++    def setUp(self):
++        self.schema_editor = connection.schema_editor()
++    
++    def tearDown(self):
++        # Clean up any tables created during tests
++        with connection.schema_editor() as editor:
++            try:
++                editor.execute("DROP TABLE IF EXISTS test_profile")
++                editor.execute("DROP TABLE IF EXISTS test_address") 
++                editor.execute("DROP TABLE IF EXISTS test_account")
++            except:
++                pass
++    
++    @skipUnlessDBFeature('supports_collation_on_charfield')
++    def test_foreign_key_inherits_target_field_collation(self):
++        """
++        Test that a ForeignKey field inherits the db_collation from its target field.
++        This is the core functionality needed to fix the MySQL constraint issue.
++        """
++        # Create a model with a primary key that has db_collation
++        class Account(models.Model):
++            id = models.CharField(
++                primary_key=True, 
++                max_length=22, 
++                db_collation='utf8_bin'
++            )
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_account'
++        
++        # Create a model with a foreign key to the above model
++        class Profile(models.Model):
++            id = models.CharField(
++                primary_key=True,
++                max_length=22,
++                db_collation='utf8_bin'
++            )
++            account = models.ForeignKey(
++                Account, 
++                on_delete=models.CASCADE
++            )
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_profile'
++        
++        # Test that the foreign key field gets the target field's db_parameters
++        account_field = Account._meta.get_field('id')
++        profile_account_field = Profile._meta.get_field('account')
++        
++        # Get db_parameters for both fields
++        account_params = account_field.db_parameters(connection)
++        fk_params = profile_account_field.db_parameters(connection)
++        
++        # The foreign key should inherit the collation from the target field
++        self.assertEqual(
++            account_params.get('collation'), 
++            fk_params.get('collation'),
++            "Foreign key field should inherit collation from target field"
++        )
++        
++        # Verify the collation is actually set
++        if connection.vendor == 'mysql':
++            self.assertEqual(fk_params.get('collation'), 'utf8_bin')
++    
++    @skipUnlessDBFeature('supports_collation_on_charfield')
++    def test_foreign_key_db_type_includes_collation(self):
++        """
++        Test that the db_type of a foreign key includes collation information
++        when the target field has db_collation set.
++        """
++        class Account(models.Model):
++            id = models.CharField(
++                primary_key=True,
++                max_length=22, 
++                db_collation='utf8_bin'
++            )
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_account'
++        
++        class Address(models.Model):
++            account = models.OneToOneField(
++                Account,
++                on_delete=models.CASCADE
++            )
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_address'
++        
++        address_account_field = Address._meta.get_field('account')
++        
++        # Get the db_type for the foreign key field
++        db_type = address_account_field.db_type(connection)
++        
++        # The db_type should match the target field's db_type
++        target_db_type = Account._meta.get_field('id').db_type(connection)
++        self.assertEqual(
++            db_type, 
++            target_db_type,
++            "Foreign key db_type should match target field db_type"
++        )
++    
++    @skipUnlessDBFeature('supports_collation_on_charfield')
++    def test_migration_sql_includes_collation_for_foreign_keys(self):
++        """
++        Test that migration SQL includes COLLATE clause for foreign key fields
++        when altering a primary key field that has foreign key references.
++        This is the specific scenario described in the bug report.
++        """
++        # Create initial models without collation
++        class Account(models.Model):
++            id = models.CharField(primary_key=True, max_length=22)
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_account'
++        
++        class Profile(models.Model):
++            account = models.ForeignKey(Account, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_profile'
++        
++        # Create the tables first
++        with self.schema_editor:
++            self.schema_editor.create_model(Account)
++            self.schema_editor.create_model(Profile)
++        
++        # Now create models with collation (simulating the migration)
++        class AccountWithCollation(models.Model):
++            id = models.CharField(
++                primary_key=True, 
++                max_length=22, 
++                db_collation='utf8_bin'
++            )
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_account'
++        
++        class ProfileWithCollation(models.Model):
++            account = models.ForeignKey(AccountWithCollation, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_profile'
++        
++        # Test the field alteration
++        old_account_field = Account._meta.get_field('id')
++        new_account_field = AccountWithCollation._meta.get_field('id')
++        
++        old_profile_field = Profile._meta.get_field('account')
++        new_profile_field = ProfileWithCollation._meta.get_field('account')
++        
++        # The new foreign key field should have the same db_parameters as the new target field
++        new_account_params = new_account_field.db_parameters(connection)
++        new_fk_params = new_profile_field.db_parameters(connection)
++        
++        self.assertEqual(
++            new_account_params.get('collation'),
++            new_fk_params.get('collation'),
++            "After migration, foreign key should have same collation as target field"
++        )
++    
++    def test_foreign_key_without_target_collation(self):
++        """
++        Test that foreign keys work normally when target field has no db_collation.
++        This ensures we don't break existing functionality.
++        """
++        class SimpleAccount(models.Model):
++            id = models.CharField(primary_key=True, max_length=22)
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_simple_account'
++        
++        class SimpleProfile(models.Model):
++            account = models.ForeignKey(SimpleAccount, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_simple_profile'
++        
++        # Test that db_parameters work without collation
++        account_field = SimpleAccount._meta.get_field('id')
++        profile_field = SimpleProfile._meta.get_field('account')
++        
++        account_params = account_field.db_parameters(connection)
++        fk_params = profile_field.db_parameters(connection)
++        
++        # Both should have no collation
++        self.assertIsNone(account_params.get('collation'))
++        self.assertIsNone(fk_params.get('collation'))
++        
++        # db_type should still work
++        self.assertIsNotNone(profile_field.db_type(connection))
++    
++    @skipUnlessDBFeature('supports_collation_on_charfield')
++    def test_multiple_foreign_keys_same_target(self):
++        """
++        Test that multiple foreign keys to the same target all inherit the collation.
++        """
++        class Account(models.Model):
++            id = models.CharField(
++                primary_key=True,
++                max_length=22,
++                db_collation='utf8_bin'
++            )
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_account'
++        
++        class Profile(models.Model):
++            account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='profiles')
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_profile'
++        
++        class Address(models.Model):
++            account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='addresses')
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_address'
++        
++        # Both foreign keys should inherit the same collation
++        profile_fk = Profile._meta.get_field('account')
++        address_fk = Address._meta.get_field('account')
++        
++        profile_params = profile_fk.db_parameters(connection)
++        address_params = address_fk.db_parameters(connection)
++        
++        self.assertEqual(
++            profile_params.get('collation'),
++            address_params.get('collation'),
++            "All foreign keys to same target should have same collation"
++        )
++        
++        if connection.vendor == 'mysql':
++            self.assertEqual(profile_params.get('collation'), 'utf8_bin')
++            self.assertEqual(address_params.get('collation'), 'utf8_bin')
++    
++    @skipUnlessDBFeature('supports_collation_on_charfield')
++    def test_foreign_key_to_non_primary_key_with_collation(self):
++        """
++        Test foreign key to a non-primary key field that has db_collation.
++        """
++        class Account(models.Model):
++            id = models.AutoField(primary_key=True)
++            code = models.CharField(
++                max_length=22,
++                unique=True,
++                db_collation='utf8_bin'
++            )
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_account'
++        
++        class Profile(models.Model):
++            account = models.ForeignKey(
++                Account,
++                to_field='code',
++                on_delete=models.CASCADE
++            )
++            
++            class Meta:
++                app_label = 'tests'
++                db_table = 'test_profile'
++        
++        # Foreign key should inherit collation from the target field (code)
++        account_code_field = Account._meta.get_field('code')
++        profile_fk_field = Profile._meta.get_field('account')
++        
++        code_params = account_code_field.db_parameters(connection)
++        fk_params = profile_fk_field.db_parameters(connection)
++        
++        self.assertEqual(
++            code_params.get('collation'),
++            fk_params.get('collation'),
++            "Foreign key should inherit collation from non-primary target field"
++        )
++
++
++@isolate_apps('tests.schema')
++class TestDbCollationMigrationGeneration(TestCase):
++    """
++    Test that migration generation properly handles db_collation propagation.
++    """
++    
++    def test_migration_detects_collation_changes(self):
++        """
++        Test that the migration autodetector properly handles collation changes
++        that affect foreign key fields.
++        """
++        # This test ensures that when we change a primary key's collation,
++        # the migration system understands that related foreign keys also need updating
++        
++        # Create initial state
++        class Account(models.Model):
++            id = models.CharField(primary_key=True, max_length=22)
++            
++            class Meta:
++                app_label = 'tests'
++        
++        class Profile(models.Model):
++            account = models.ForeignKey(Account, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'tests'
++        
++        # Create new state with collation
++        class AccountWithCollation(models.Model):
++            id = models.CharField(
++                primary_key=True,
++                max_length=22,
++                db_collation='utf8_bin'
++            )
++            
++            class Meta:
++                app_label = 'tests'
++        
++        class ProfileWithCollation(models.Model):
++            account = models.ForeignKey(AccountWithCollation, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'tests'
++        
++        # Test that the foreign key field properly reflects the target field's properties
++        old_fk_field = Profile._meta.get_field('account')
++        new_fk_field = ProfileWithCollation._meta.get_field('account')
++        
++        # The target field should be different
++        old_target = old_fk_field.target_field
++        new_target = new_fk_field.target_field
++        
++        old_target_params = old_target.db_parameters(connection)
++        new_target_params = new_target.db_parameters(connection)
++        
++        # Verify the target field collation changed
++        self.assertNotEqual(
++            old_target_params.get('collation'),
++            new_target_params.get('collation')
++        )
++        
++        # Verify the foreign key field reflects this change
++        old_fk_params = old_fk_field.db_parameters(connection)
++        new_fk_params = new_fk_field.db_parameters(connection)
++        
++        self.assertEqual(
++            new_target_params.get('collation'),
++            new_fk_params.get('collation'),
++            "Foreign key should inherit new target field collation"
++        )

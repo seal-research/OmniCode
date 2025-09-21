@@ -1,0 +1,164 @@
+--- a/tests/auth_tests/test_forms.py
++++ b/tests/auth_tests/test_forms.py
+-# Empty if creating new file
++import pytest
++from django.contrib.auth.forms import AuthenticationForm
++from django.contrib.auth import get_user_model
++from django.test import TestCase
++from django.forms.widgets import TextInput
++
++
++class AuthenticationFormMaxLengthTests(TestCase):
++    """
++    Test that AuthenticationForm's username field properly sets the maxlength HTML attribute.
++    This tests the regression described in the issue where the maxlength attribute
++    was not being set on the username field widget.
++    """
++
++    def setUp(self):
++        """Set up test data."""
++        self.User = get_user_model()
++
++    def test_username_field_has_maxlength_attribute_in_widget_attrs(self):
++        """
++        Test that the username field's widget has the maxlength attribute set
++        based on the User model's USERNAME_FIELD max_length.
++        """
++        form = AuthenticationForm()
++        username_field = form.fields['username']
++        
++        # Get the expected max_length from the User model
++        username_model_field = self.User._meta.get_field(self.User.USERNAME_FIELD)
++        expected_max_length = username_model_field.max_length or 254
++        
++        # Check that the field's max_length is set correctly
++        self.assertEqual(username_field.max_length, expected_max_length)
++        
++        # Check that the widget's maxlength attribute is set correctly
++        self.assertIn('maxlength', username_field.widget.attrs)
++        self.assertEqual(username_field.widget.attrs['maxlength'], expected_max_length)
++
++    def test_username_field_renders_with_maxlength_attribute(self):
++        """
++        Test that the username field renders with the maxlength HTML attribute
++        in the actual HTML output.
++        """
++        form = AuthenticationForm()
++        username_field = form.fields['username']
++        
++        # Get the expected max_length
++        username_model_field = self.User._meta.get_field(self.User.USERNAME_FIELD)
++        expected_max_length = username_model_field.max_length or 254
++        
++        # Render the field and check for maxlength attribute
++        rendered_field = str(username_field.widget.render('username', ''))
++        self.assertIn(f'maxlength="{expected_max_length}"', rendered_field)
++
++    def test_username_field_maxlength_with_custom_user_model_max_length(self):
++        """
++        Test that the maxlength attribute is correctly set when the User model
++        has a specific max_length for the username field.
++        """
++        form = AuthenticationForm()
++        username_field = form.fields['username']
++        
++        # The max_length should be taken from the User model's USERNAME_FIELD
++        username_model_field = self.User._meta.get_field(self.User.USERNAME_FIELD)
++        if username_model_field.max_length:
++            expected_max_length = username_model_field.max_length
++        else:
++            expected_max_length = 254  # Default fallback
++        
++        self.assertEqual(username_field.max_length, expected_max_length)
++        self.assertEqual(username_field.widget.attrs['maxlength'], expected_max_length)
++
++    def test_username_field_preserves_other_widget_attributes(self):
++        """
++        Test that setting the maxlength attribute doesn't interfere with
++        other widget attributes like autofocus and autocomplete.
++        """
++        form = AuthenticationForm()
++        username_field = form.fields['username']
++        
++        # Check that other attributes are preserved
++        self.assertIn('autofocus', username_field.widget.attrs)
++        self.assertTrue(username_field.widget.attrs['autofocus'])
++        
++        # Check that autocomplete attributes from UsernameField are preserved
++        self.assertIn('autocomplete', username_field.widget.attrs)
++        self.assertEqual(username_field.widget.attrs['autocomplete'], 'username')
++        
++        # Check that autocapitalize is preserved
++        self.assertIn('autocapitalize', username_field.widget.attrs)
++        self.assertEqual(username_field.widget.attrs['autocapitalize'], 'none')
++
++    def test_username_field_widget_attrs_method_includes_maxlength(self):
++        """
++        Test that the widget_attrs method of the username field includes
++        the maxlength attribute when called.
++        """
++        form = AuthenticationForm()
++        username_field = form.fields['username']
++        
++        # Create a test widget to pass to widget_attrs
++        test_widget = TextInput()
++        attrs = username_field.widget_attrs(test_widget)
++        
++        # The widget_attrs should include maxlength
++        self.assertIn('maxlength', attrs)
++        self.assertEqual(attrs['maxlength'], str(username_field.max_length))
++
++    def test_form_initialization_sets_maxlength_correctly(self):
++        """
++        Test that form initialization properly sets both the field's max_length
++        and the widget's maxlength attribute.
++        """
++        # Test with a fresh form instance
++        form = AuthenticationForm()
++        
++        # Get expected values
++        username_model_field = self.User._meta.get_field(self.User.USERNAME_FIELD)
++        expected_max_length = username_model_field.max_length or 254
++        
++        # Verify both field and widget attributes are set
++        self.assertEqual(form.fields['username'].max_length, expected_max_length)
++        self.assertEqual(form.fields['username'].widget.attrs['maxlength'], expected_max_length)
++
++    def test_regression_maxlength_attribute_present(self):
++        """
++        Regression test to ensure that the maxlength HTML attribute is present
++        in the username field widget. This test specifically addresses the bug
++        where the maxlength attribute was missing.
++        """
++        form = AuthenticationForm()
++        username_widget = form.fields['username'].widget
++        
++        # This test should fail before the fix and pass after the fix
++        self.assertIn('maxlength', username_widget.attrs, 
++                     "maxlength attribute should be present in username widget attrs")
++        
++        # Verify the value is correct
++        username_model_field = self.User._meta.get_field(self.User.USERNAME_FIELD)
++        expected_max_length = username_model_field.max_length or 254
++        self.assertEqual(username_widget.attrs['maxlength'], expected_max_length)
++
++    def test_username_field_html_output_contains_maxlength(self):
++        """
++        Test that the actual HTML output of the username field contains
++        the maxlength attribute.
++        """
++        form = AuthenticationForm()
++        
++        # Render the entire form and check for maxlength in username field
++        form_html = form.as_p()
++        
++        # Get expected max_length
++        username_model_field = self.User._meta.get_field(self.User.USERNAME_FIELD)
++        expected_max_length = username_model_field.max_length or 254
++        
++        # Check that maxlength appears in the HTML
++        self.assertIn(f'maxlength="{expected_max_length}"', form_html)
++        
++        # Also check that it's specifically in the username field
++        username_field_html = str(form['username'])
++        self.assertIn(f'maxlength="{expected_max_length}"', username_field_html)

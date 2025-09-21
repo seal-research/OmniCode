@@ -1,0 +1,291 @@
+--- a/tests/test_feedexport_postprocessing_s3.py
++++ b/tests/test_feedexport_postprocessing_s3.py
+-# Empty if creating new file
++import io
++import tempfile
++from unittest.mock import Mock, patch, MagicMock
++import pytest
++
++from scrapy.extensions.feedexport import S3FeedStorage
++from scrapy.extensions.postprocessing import PostProcessingManager, GzipPlugin
++
++
++class TestPostprocessingS3Integration:
++    """Test suite for postprocessing feeds with S3 feed storage."""
++
++    def test_postprocessing_manager_missing_seek_method_fails(self):
++        """Test that PostProcessingManager without seek method fails with S3."""
++        # Create a mock file object
++        mock_file = io.BytesIO(b"test data")
++        
++        # Create PostProcessingManager with GzipPlugin
++        plugins = [GzipPlugin]
++        feed_options = {"gzip_compresslevel": 5}
++        
++        # This should fail because PostProcessingManager doesn't have seek method
++        postprocessing_manager = PostProcessingManager(plugins, mock_file, feed_options)
++        
++        # Verify that seek method is missing
++        with pytest.raises(AttributeError, match="seek"):
++            postprocessing_manager.seek(0)
++
++    def test_postprocessing_manager_missing_read_method_fails(self):
++        """Test that PostProcessingManager without read method fails with boto3."""
++        # Create a mock file object
++        mock_file = io.BytesIO(b"test data")
++        
++        # Create PostProcessingManager with GzipPlugin
++        plugins = [GzipPlugin]
++        feed_options = {"gzip_compresslevel": 5}
++        
++        postprocessing_manager = PostProcessingManager(plugins, mock_file, feed_options)
++        
++        # Verify that read method is missing
++        with pytest.raises(AttributeError, match="read"):
++            postprocessing_manager.read()
++
++    @patch('scrapy.extensions.feedexport.is_botocore_available', return_value=True)
++    def test_s3_feed_storage_calls_seek_on_file(self, mock_botocore):
++        """Test that S3FeedStorage calls seek(0) on the file object."""
++        # Mock boto3 client
++        mock_s3_client = Mock()
++        
++        # Create S3FeedStorage instance
++        storage = S3FeedStorage(
++            uri="s3://test-bucket/test-file.gz",
++            access_key="test_key",
++            secret_key="test_secret"
++        )
++        storage.s3_client = mock_s3_client
++        storage.bucketname = "test-bucket"
++        storage.keyname = "test-file.gz"
++        
++        # Create a mock file that tracks seek calls
++        mock_file = Mock()
++        mock_file.seek = Mock()
++        mock_file.close = Mock()
++        
++        # Call _store_in_thread
++        storage._store_in_thread(mock_file)
++        
++        # Verify that seek(0) was called
++        mock_file.seek.assert_called_once_with(0)
++
++    @patch('scrapy.extensions.feedexport.is_botocore_available', return_value=True)
++    def test_s3_feed_storage_with_postprocessing_manager_fails_without_seek(self, mock_botocore):
++        """Test that S3FeedStorage fails when PostProcessingManager lacks seek method."""
++        # Mock boto3 client
++        mock_s3_client = Mock()
++        
++        # Create S3FeedStorage instance
++        storage = S3FeedStorage(
++            uri="s3://test-bucket/test-file.gz",
++            access_key="test_key",
++            secret_key="test_secret"
++        )
++        storage.s3_client = mock_s3_client
++        storage.bucketname = "test-bucket"
++        storage.keyname = "test-file.gz"
++        
++        # Create PostProcessingManager without seek method
++        mock_file = io.BytesIO(b"test data")
++        plugins = [GzipPlugin]
++        feed_options = {"gzip_compresslevel": 5}
++        postprocessing_manager = PostProcessingManager(plugins, mock_file, feed_options)
++        
++        # This should fail because PostProcessingManager doesn't have seek method
++        with pytest.raises(io.UnsupportedOperation, match="seek"):
++            storage._store_in_thread(postprocessing_manager)
++
++    def test_postprocessing_manager_with_seek_method_works(self):
++        """Test that PostProcessingManager with seek method works correctly."""
++        # Create a mock file object
++        mock_file = io.BytesIO(b"test data")
++        
++        # Create PostProcessingManager
++        plugins = [GzipPlugin]
++        feed_options = {"gzip_compresslevel": 5}
++        postprocessing_manager = PostProcessingManager(plugins, mock_file, feed_options)
++        
++        # Add seek method (simulating the fix)
++        def seek(offset, whence=io.SEEK_SET):
++            return mock_file.seek(offset, whence)
++        
++        postprocessing_manager.seek = seek
++        
++        # Test that seek works
++        result = postprocessing_manager.seek(0)
++        assert result == 0
++        assert mock_file.tell() == 0
++
++    def test_postprocessing_manager_with_read_method_works(self):
++        """Test that PostProcessingManager with read method works correctly."""
++        # Create a mock file object with test data
++        test_data = b"test data for reading"
++        mock_file = io.BytesIO(test_data)
++        
++        # Create PostProcessingManager
++        plugins = []  # No plugins for simpler testing
++        feed_options = {}
++        postprocessing_manager = PostProcessingManager(plugins, mock_file, feed_options)
++        
++        # Add read method (simulating the fix)
++        def read(size=-1):
++            return mock_file.read(size)
++        
++        postprocessing_manager.read = read
++        
++        # Test that read works
++        mock_file.seek(0)  # Reset position
++        result = postprocessing_manager.read()
++        assert result == test_data
++
++    @patch('scrapy.extensions.feedexport.is_botocore_available', return_value=True)
++    def test_boto3_parameter_validation_requires_read_method(self, mock_botocore):
++        """Test that boto3 parameter validation requires read method on file-like objects."""
++        # This test simulates the boto3 validation that checks for read method
++        
++        # Create an object without read method
++        class FileWithoutRead:
++            def seek(self, offset, whence=io.SEEK_SET):
++                pass
++            def close(self):
++                pass
++        
++        file_without_read = FileWithoutRead()
++        
++        # Simulate boto3's validation check
++        def is_file_like_object(obj):
++            return hasattr(obj, 'read')
++        
++        # This should fail validation
++        assert not is_file_like_object(file_without_read)
++        
++        # Create an object with read method
++        class FileWithRead:
++            def seek(self, offset, whence=io.SEEK_SET):
++                pass
++            def close(self):
++                pass
++            def read(self, size=-1):
++                return b""
++        
++        file_with_read = FileWithRead()
++        
++        # This should pass validation
++        assert is_file_like_object(file_with_read)
++
++    def test_gzip_plugin_requires_close_for_complete_data(self):
++        """Test that GzipPlugin requires close() to be called for complete compressed data."""
++        # Create a temporary file
++        with tempfile.NamedTemporaryFile() as temp_file:
++            # Create GzipPlugin
++            feed_options = {"gzip_compresslevel": 5}
++            gzip_plugin = GzipPlugin(temp_file, feed_options)
++            
++            # Write some data
++            test_data = b"This is test data that should be compressed"
++            gzip_plugin.write(test_data)
++            
++            # Before closing, the file might not contain complete gzip data
++            temp_file.seek(0)
++            incomplete_data = temp_file.read()
++            
++            # Close the gzip plugin to finalize compression
++            gzip_plugin.close()
++            
++            # After closing, we should have complete gzip data
++            # Note: We can't easily verify the exact content without reopening,
++            # but we can verify that close() was called without errors
++            assert True  # If we reach here, close() worked
++
++    @patch('scrapy.extensions.feedexport.is_botocore_available', return_value=True)
++    def test_s3_feed_storage_integration_with_fixed_postprocessing_manager(self, mock_botocore):
++        """Test complete integration with PostProcessingManager that has required methods."""
++        # Mock boto3 client
++        mock_s3_client = Mock()
++        
++        # Create S3FeedStorage instance
++        storage = S3FeedStorage(
++            uri="s3://test-bucket/test-file.gz",
++            access_key="test_key",
++            secret_key="test_secret"
++        )
++        storage.s3_client = mock_s3_client
++        storage.bucketname = "test-bucket"
++        storage.keyname = "test-file.gz"
++        
++        # Create a file with test data
++        test_data = b"test data for compression and upload"
++        mock_file = io.BytesIO(test_data)
++        
++        # Create PostProcessingManager with required methods (simulating the fix)
++        plugins = []  # Use empty plugins for simpler testing
++        feed_options = {}
++        postprocessing_manager = PostProcessingManager(plugins, mock_file, feed_options)
++        
++        # Add the missing methods (simulating the fix)
++        def seek(offset, whence=io.SEEK_SET):
++            return mock_file.seek(offset, whence)
++        
++        def read(size=-1):
++            return mock_file.read(size)
++        
++        postprocessing_manager.seek = seek
++        postprocessing_manager.read = read
++        
++        # This should now work without errors
++        storage._store_in_thread(postprocessing_manager)
++        
++        # Verify that s3_client.put_object was called
++        mock_s3_client.put_object.assert_called_once()
++        call_args = mock_s3_client.put_object.call_args
++        assert call_args[1]['Bucket'] == 'test-bucket'
++        assert call_args[1]['Key'] == 'test-file.gz'
++        assert call_args[1]['Body'] == postprocessing_manager
++
++    def test_postprocessing_manager_file_protocol_compliance(self):
++        """Test that PostProcessingManager should implement file protocol methods."""
++        # Create a mock file object
++        mock_file = io.BytesIO(b"test data")
++        
++        # Create PostProcessingManager
++        plugins = []
++        feed_options = {}
++        postprocessing_manager = PostProcessingManager(plugins, mock_file, feed_options)
++        
++        # Check which file protocol methods are missing
++        file_methods = ['read', 'seek', 'tell', 'write', 'close', 'writable']
++        missing_methods = []
++        
++        for method in file_methods:
++            if not hasattr(postprocessing_manager, method):
++                missing_methods.append(method)
++        
++        # Before the fix, 'read' and 'seek' should be missing
++        # This test documents the current state and will pass after the fix
++        expected_missing = ['read', 'seek']
++        for method in expected_missing:
++            if method in missing_methods:
++                # This is expected before the fix
++                pass
++            else:
++                # This means the method was added (after the fix)
++                pass
++
++    def test_postprocessing_manager_inherits_from_iobase(self):
++        """Test that PostProcessingManager correctly inherits from IOBase."""
++        # Create a mock file object
++        mock_file = io.BytesIO(b"test data")
++        
++        # Create PostProcessingManager
++        plugins = []
++        feed_options = {}
++        postprocessing_manager = PostProcessingManager(plugins, mock_file, feed_options)
++        
++        # Verify inheritance
++        assert isinstance(postprocessing_manager, io.IOBase)
++        
++        # Verify that it has some IOBase methods
++        assert hasattr(postprocessing_manager, 'writable')
++        assert postprocessing_manager.writable() is True

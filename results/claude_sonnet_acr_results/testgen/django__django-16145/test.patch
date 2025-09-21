@@ -1,0 +1,309 @@
+--- a/tests/management/commands/test_runserver.py
++++ b/tests/management/commands/test_runserver.py
+-# Empty if creating new file
++import pytest
++import io
++import sys
++from unittest.mock import patch, MagicMock
++from django.core.management import call_command
++from django.core.management.commands.runserver import Command
++from django.test import TestCase, override_settings
++from django.core.management.base import CommandError
++
++
++class RunserverDisplayTests(TestCase):
++    """Test cases for runserver command display output."""
++
++    def setUp(self):
++        """Set up test fixtures."""
++        self.command = Command()
++        self.command.stdout = io.StringIO()
++        self.command.stderr = io.StringIO()
++
++    def test_runserver_zero_address_display_bug(self):
++        """
++        Test that demonstrates the bug: when using '0:8000', 
++        the output shows 'http://0:8000/' instead of 'http://0.0.0.0:8000/'.
++        This test should fail before the fix is applied.
++        """
++        # Mock the run function to prevent actual server startup
++        with patch('django.core.management.commands.runserver.run') as mock_run:
++            # Mock autoreload to prevent actual reloading
++            with patch('django.core.management.commands.runserver.autoreload.raise_last_exception'):
++                # Mock check_migrations to prevent migration checks
++                with patch.object(self.command, 'check_migrations'):
++                    # Mock check to prevent system checks
++                    with patch.object(self.command, 'check'):
++                        # Set up command state as if parsing "0:8000"
++                        self.command.addr = "0"
++                        self.command.port = "8000"
++                        self.command.protocol = "http"
++                        self.command._raw_ipv6 = False
++                        self.command.use_ipv6 = False
++                        
++                        # Call inner_run which contains the display logic
++                        options = {
++                            'use_threading': True,
++                            'skip_checks': True,
++                            'shutdown_message': ''
++                        }
++                        
++                        self.command.inner_run(None, **options)
++                        
++                        # Get the output
++                        output = self.command.stdout.getvalue()
++                        
++                        # This assertion should fail before the fix - demonstrates the bug
++                        # The output currently shows "http://0:8000/" but should show "http://0.0.0.0:8000/"
++                        self.assertIn("Starting development server at http://0.0.0.0:8000/", output)
++                        self.assertNotIn("Starting development server at http://0:8000/", output)
++
++    def test_runserver_zero_address_display_current_behavior(self):
++        """
++        Test that shows the current buggy behavior.
++        This test passes before the fix and should fail after the fix.
++        """
++        # Mock the run function to prevent actual server startup
++        with patch('django.core.management.commands.runserver.run') as mock_run:
++            # Mock autoreload to prevent actual reloading
++            with patch('django.core.management.commands.runserver.autoreload.raise_last_exception'):
++                # Mock check_migrations to prevent migration checks
++                with patch.object(self.command, 'check_migrations'):
++                    # Mock check to prevent system checks
++                    with patch.object(self.command, 'check'):
++                        # Set up command state as if parsing "0:8000"
++                        self.command.addr = "0"
++                        self.command.port = "8000"
++                        self.command.protocol = "http"
++                        self.command._raw_ipv6 = False
++                        self.command.use_ipv6 = False
++                        
++                        # Call inner_run which contains the display logic
++                        options = {
++                            'use_threading': True,
++                            'skip_checks': True,
++                            'shutdown_message': ''
++                        }
++                        
++                        self.command.inner_run(None, **options)
++                        
++                        # Get the output
++                        output = self.command.stdout.getvalue()
++                        
++                        # This shows the current buggy behavior
++                        self.assertIn("Starting development server at http://0:8000/", output)
++
++    def test_runserver_explicit_zero_address_display(self):
++        """
++        Test that when using '0.0.0.0:8000' explicitly, 
++        the output correctly shows 'http://0.0.0.0:8000/'.
++        This should pass both before and after the fix.
++        """
++        # Mock the run function to prevent actual server startup
++        with patch('django.core.management.commands.runserver.run') as mock_run:
++            # Mock autoreload to prevent actual reloading
++            with patch('django.core.management.commands.runserver.autoreload.raise_last_exception'):
++                # Mock check_migrations to prevent migration checks
++                with patch.object(self.command, 'check_migrations'):
++                    # Mock check to prevent system checks
++                    with patch.object(self.command, 'check'):
++                        # Set up command state as if parsing "0.0.0.0:8000"
++                        self.command.addr = "0.0.0.0"
++                        self.command.port = "8000"
++                        self.command.protocol = "http"
++                        self.command._raw_ipv6 = False
++                        self.command.use_ipv6 = False
++                        
++                        # Call inner_run which contains the display logic
++                        options = {
++                            'use_threading': True,
++                            'skip_checks': True,
++                            'shutdown_message': ''
++                        }
++                        
++                        self.command.inner_run(None, **options)
++                        
++                        # Get the output
++                        output = self.command.stdout.getvalue()
++                        
++                        # This should work correctly both before and after the fix
++                        self.assertIn("Starting development server at http://0.0.0.0:8000/", output)
++
++    def test_runserver_localhost_address_display(self):
++        """
++        Test that localhost addresses are displayed correctly.
++        This should pass both before and after the fix.
++        """
++        # Mock the run function to prevent actual server startup
++        with patch('django.core.management.commands.runserver.run') as mock_run:
++            # Mock autoreload to prevent actual reloading
++            with patch('django.core.management.commands.runserver.autoreload.raise_last_exception'):
++                # Mock check_migrations to prevent migration checks
++                with patch.object(self.command, 'check_migrations'):
++                    # Mock check to prevent system checks
++                    with patch.object(self.command, 'check'):
++                        # Set up command state as if parsing "127.0.0.1:8000"
++                        self.command.addr = "127.0.0.1"
++                        self.command.port = "8000"
++                        self.command.protocol = "http"
++                        self.command._raw_ipv6 = False
++                        self.command.use_ipv6 = False
++                        
++                        # Call inner_run which contains the display logic
++                        options = {
++                            'use_threading': True,
++                            'skip_checks': True,
++                            'shutdown_message': ''
++                        }
++                        
++                        self.command.inner_run(None, **options)
++                        
++                        # Get the output
++                        output = self.command.stdout.getvalue()
++                        
++                        # This should work correctly both before and after the fix
++                        self.assertIn("Starting development server at http://127.0.0.1:8000/", output)
++
++    def test_runserver_ipv6_address_display(self):
++        """
++        Test that IPv6 addresses are displayed correctly with brackets.
++        This should pass both before and after the fix.
++        """
++        # Mock the run function to prevent actual server startup
++        with patch('django.core.management.commands.runserver.run') as mock_run:
++            # Mock autoreload to prevent actual reloading
++            with patch('django.core.management.commands.runserver.autoreload.raise_last_exception'):
++                # Mock check_migrations to prevent migration checks
++                with patch.object(self.command, 'check_migrations'):
++                    # Mock check to prevent system checks
++                    with patch.object(self.command, 'check'):
++                        # Set up command state as if parsing IPv6 address
++                        self.command.addr = "::1"
++                        self.command.port = "8000"
++                        self.command.protocol = "http"
++                        self.command._raw_ipv6 = True
++                        self.command.use_ipv6 = True
++                        
++                        # Call inner_run which contains the display logic
++                        options = {
++                            'use_threading': True,
++                            'skip_checks': True,
++                            'shutdown_message': ''
++                        }
++                        
++                        self.command.inner_run(None, **options)
++                        
++                        # Get the output
++                        output = self.command.stdout.getvalue()
++                        
++                        # IPv6 addresses should be displayed with brackets
++                        self.assertIn("Starting development server at http://[::1]:8000/", output)
++
++    def test_runserver_address_parsing_zero_shorthand(self):
++        """
++        Test that the address parsing correctly handles '0:8000' input.
++        This tests the handle method's parsing logic.
++        """
++        # Mock the run method to prevent actual server startup
++        with patch.object(self.command, 'run') as mock_run:
++            # Test parsing "0:8000"
++            options = {
++                'addrport': '0:8000',
++                'use_ipv6': False,
++            }
++            
++            self.command.handle(**options)
++            
++            # Verify that addr is set to "0" and port to "8000"
++            self.assertEqual(self.command.addr, "0")
++            self.assertEqual(self.command.port, "8000")
++
++    def test_runserver_address_parsing_explicit_zero(self):
++        """
++        Test that the address parsing correctly handles '0.0.0.0:8000' input.
++        This tests the handle method's parsing logic.
++        """
++        # Mock the run method to prevent actual server startup
++        with patch.object(self.command, 'run') as mock_run:
++            # Test parsing "0.0.0.0:8000"
++            options = {
++                'addrport': '0.0.0.0:8000',
++                'use_ipv6': False,
++            }
++            
++            self.command.handle(**options)
++            
++            # Verify that addr is set to "0.0.0.0" and port to "8000"
++            self.assertEqual(self.command.addr, "0.0.0.0")
++            self.assertEqual(self.command.port, "8000")
++
++    def test_runserver_zero_address_server_binding_unchanged(self):
++        """
++        Test that the actual server binding behavior is unchanged.
++        When addr is "0", the server should still bind to the correct address.
++        """
++        # Mock the run function to capture what address is passed to it
++        with patch('django.core.management.commands.runserver.run') as mock_run:
++            # Mock autoreload to prevent actual reloading
++            with patch('django.core.management.commands.runserver.autoreload.raise_last_exception'):
++                # Mock check_migrations to prevent migration checks
++                with patch.object(self.command, 'check_migrations'):
++                    # Mock check to prevent system checks
++                    with patch.object(self.command, 'check'):
++                        # Set up command state as if parsing "0:8000"
++                        self.command.addr = "0"
++                        self.command.port = "8000"
++                        self.command.protocol = "http"
++                        self.command._raw_ipv6 = False
++                        self.command.use_ipv6 = False
++                        
++                        # Call inner_run which contains the server startup logic
++                        options = {
++                            'use_threading': True,
++                            'skip_checks': True,
++                            'shutdown_message': ''
++                        }
++                        
++                        self.command.inner_run(None, **options)
++                        
++                        # Verify that the run function is called with "0" as the address
++                        # This ensures the server binding behavior is unchanged
++                        mock_run.assert_called_once()
++                        call_args = mock_run.call_args
++                        self.assertEqual(call_args[0][0], "0")  # First argument should be the address
++                        self.assertEqual(call_args[0][1], 8000)  # Second argument should be the port
++
++    def test_runserver_edge_case_empty_address(self):
++        """
++        Test edge case where address is empty (default behavior).
++        This should use the default address and display it correctly.
++        """
++        # Mock the run function to prevent actual server startup
++        with patch('django.core.management.commands.runserver.run') as mock_run:
++            # Mock autoreload to prevent actual reloading
++            with patch('django.core.management.commands.runserver.autoreload.raise_last_exception'):
++                # Mock check_migrations to prevent migration checks
++                with patch.object(self.command, 'check_migrations'):
++                    # Mock check to prevent system checks
++                    with patch.object(self.command, 'check'):
++                        # Set up command state for default address
++                        self.command.addr = "127.0.0.1"  # default_addr
++                        self.command.port = "8000"
++                        self.command.protocol = "http"
++                        self.command._raw_ipv6 = False
++                        self.command.use_ipv6 = False
++                        
++                        # Call inner_run which contains the display logic
++                        options = {
++                            'use_threading': True,
++                            'skip_checks': True,
++                            'shutdown_message': ''
++                        }
++                        
++                        self.command.inner_run(None, **options)
++                        
++                        # Get the output
++                        output = self.command.stdout.getvalue()
++                        
++                        # Default address should be displayed correctly
++                        self.assertIn("Starting development server at http://127.0.0.1:8000/", output)

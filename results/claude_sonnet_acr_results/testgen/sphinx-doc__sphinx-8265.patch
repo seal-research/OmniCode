@@ -1,0 +1,6 @@
+{
+  "instance_id": "sphinx-doc__sphinx-8265",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/sphinx-doc__sphinx-8265/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/sphinx-doc__sphinx-8265/sphinx-doc__sphinx-8265.pred"
+}

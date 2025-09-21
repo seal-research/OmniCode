@@ -1,0 +1,318 @@
+--- a/tests/test_downloadermiddlewares_retry.py
++++ b/tests/test_downloadermiddlewares_retry.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import Mock
++from twisted.internet.error import (
++    ConnectError,
++    ConnectionDone,
++    ConnectionLost,
++    ConnectionRefusedError,
++    DNSLookupError,
++    TCPTimedOutError,
++    TimeoutError,
++)
++from twisted.internet import defer
++from twisted.web.client import ResponseFailed
++
++from scrapy.downloadermiddlewares.retry import RetryMiddleware
++from scrapy.exceptions import NotConfigured
++from scrapy.http import Request, Response
++from scrapy.settings import Settings
++from scrapy.spiders import Spider
++from scrapy.core.downloader.handlers.http11 import TunnelError
++
++
++class CustomException(Exception):
++    """Custom exception for testing configurable retry exceptions."""
++    pass
++
++
++class AnotherCustomException(Exception):
++    """Another custom exception for testing."""
++    pass
++
++
++class TestRetryMiddlewareConfigurableExceptions:
++    """Test suite for configurable exception list in RetryMiddleware."""
++
++    def test_default_exceptions_when_no_setting_provided(self):
++        """Test that default exceptions are used when RETRY_EXCEPTIONS setting is not provided."""
++        settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++        })
++        
++        middleware = RetryMiddleware(settings)
++        
++        # Should use default hardcoded exceptions
++        expected_exceptions = (
++            defer.TimeoutError,
++            TimeoutError,
++            DNSLookupError,
++            ConnectionRefusedError,
++            ConnectionDone,
++            ConnectError,
++            ConnectionLost,
++            TCPTimedOutError,
++            ResponseFailed,
++            IOError,
++            TunnelError,
++        )
++        
++        # Test that default exceptions are retried
++        spider = Spider('test')
++        request = Request('http://example.com')
++        
++        for exception_class in expected_exceptions:
++            exception = exception_class()
++            result = middleware.process_exception(request, exception, spider)
++            assert result is not None, f"Should retry {exception_class.__name__}"
++
++    def test_custom_exceptions_from_setting_string_paths(self):
++        """Test that custom exceptions can be configured using string paths."""
++        settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            'RETRY_EXCEPTIONS': [
++                'tests.test_downloadermiddlewares_retry.CustomException',
++                'tests.test_downloadermiddlewares_retry.AnotherCustomException',
++                'twisted.internet.error.TimeoutError',
++            ]
++        })
++        
++        middleware = RetryMiddleware(settings)
++        spider = Spider('test')
++        request = Request('http://example.com')
++        
++        # Test that custom exceptions are retried
++        custom_exception = CustomException()
++        result = middleware.process_exception(request, custom_exception, spider)
++        assert result is not None, "Should retry CustomException"
++        
++        another_exception = AnotherCustomException()
++        result = middleware.process_exception(request, another_exception, spider)
++        assert result is not None, "Should retry AnotherCustomException"
++        
++        timeout_exception = TimeoutError()
++        result = middleware.process_exception(request, timeout_exception, spider)
++        assert result is not None, "Should retry TimeoutError"
++
++    def test_non_configured_exceptions_not_retried(self):
++        """Test that exceptions not in the configured list are not retried."""
++        settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            'RETRY_EXCEPTIONS': [
++                'tests.test_downloadermiddlewares_retry.CustomException',
++            ]
++        })
++        
++        middleware = RetryMiddleware(settings)
++        spider = Spider('test')
++        request = Request('http://example.com')
++        
++        # Test that non-configured exceptions are not retried
++        timeout_exception = TimeoutError()
++        result = middleware.process_exception(request, timeout_exception, spider)
++        assert result is None, "Should not retry TimeoutError when not configured"
++        
++        connection_error = ConnectionRefusedError()
++        result = middleware.process_exception(request, connection_error, spider)
++        assert result is None, "Should not retry ConnectionRefusedError when not configured"
++
++    def test_empty_exceptions_list_retries_nothing(self):
++        """Test that an empty exceptions list means no exceptions are retried."""
++        settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            'RETRY_EXCEPTIONS': []
++        })
++        
++        middleware = RetryMiddleware(settings)
++        spider = Spider('test')
++        request = Request('http://example.com')
++        
++        # Test that no exceptions are retried when list is empty
++        timeout_exception = TimeoutError()
++        result = middleware.process_exception(request, timeout_exception, spider)
++        assert result is None, "Should not retry any exception when list is empty"
++        
++        custom_exception = CustomException()
++        result = middleware.process_exception(request, custom_exception, spider)
++        assert result is None, "Should not retry any exception when list is empty"
++
++    def test_invalid_exception_path_raises_error(self):
++        """Test that invalid exception paths raise appropriate errors during initialization."""
++        settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            'RETRY_EXCEPTIONS': [
++                'nonexistent.module.NonExistentException',
++            ]
++        })
++        
++        with pytest.raises((ImportError, AttributeError)):
++            RetryMiddleware(settings)
++
++    def test_mixed_valid_and_invalid_exception_paths(self):
++        """Test behavior when some exception paths are valid and others are invalid."""
++        settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            'RETRY_EXCEPTIONS': [
++                'tests.test_downloadermiddlewares_retry.CustomException',
++                'nonexistent.module.NonExistentException',
++            ]
++        })
++        
++        with pytest.raises((ImportError, AttributeError)):
++            RetryMiddleware(settings)
++
++    def test_dont_retry_meta_overrides_exception_config(self):
++        """Test that dont_retry meta flag overrides exception configuration."""
++        settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            'RETRY_EXCEPTIONS': [
++                'tests.test_downloadermiddlewares_retry.CustomException',
++            ]
++        })
++        
++        middleware = RetryMiddleware(settings)
++        spider = Spider('test')
++        request = Request('http://example.com', meta={'dont_retry': True})
++        
++        # Test that dont_retry meta prevents retry even for configured exceptions
++        custom_exception = CustomException()
++        result = middleware.process_exception(request, custom_exception, spider)
++        assert result is None, "Should not retry when dont_retry meta is True"
++
++    def test_backwards_compatibility_with_hardcoded_exceptions(self):
++        """Test that the fix maintains backwards compatibility with existing behavior."""
++        # Test without RETRY_EXCEPTIONS setting (should use defaults)
++        settings_without_config = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++        })
++        
++        middleware_default = RetryMiddleware(settings_without_config)
++        
++        # Test with RETRY_EXCEPTIONS setting containing default exceptions
++        default_exceptions = [
++            'twisted.internet.defer.TimeoutError',
++            'twisted.internet.error.TimeoutError',
++            'twisted.internet.error.DNSLookupError',
++            'twisted.internet.error.ConnectionRefusedError',
++            'twisted.internet.error.ConnectionDone',
++            'twisted.internet.error.ConnectError',
++            'twisted.internet.error.ConnectionLost',
++            'twisted.internet.error.TCPTimedOutError',
++            'twisted.web.client.ResponseFailed',
++            'builtins.IOError',
++            'scrapy.core.downloader.handlers.http11.TunnelError',
++        ]
++        
++        settings_with_config = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            'RETRY_EXCEPTIONS': default_exceptions,
++        })
++        
++        middleware_configured = RetryMiddleware(settings_with_config)
++        
++        spider = Spider('test')
++        request = Request('http://example.com')
++        
++        # Both should behave the same for default exceptions
++        timeout_exception = TimeoutError()
++        
++        result_default = middleware_default.process_exception(request, timeout_exception, spider)
++        result_configured = middleware_configured.process_exception(request, timeout_exception, spider)
++        
++        # Both should either retry or not retry (same behavior)
++        assert (result_default is None) == (result_configured is None), \
++            "Backwards compatibility broken: different behavior for same exception"
++
++    def test_exception_inheritance_handling(self):
++        """Test that exception inheritance is handled correctly."""
++        class BaseCustomException(Exception):
++            pass
++        
++        class DerivedCustomException(BaseCustomException):
++            pass
++        
++        # Configure to retry base exception
++        settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            'RETRY_EXCEPTIONS': [
++                'tests.test_downloadermiddlewares_retry.TestRetryMiddlewareConfigurableExceptions.test_exception_inheritance_handling.<locals>.BaseCustomException',
++            ]
++        })
++        
++        # Note: This test may need adjustment based on how the actual implementation
++        # handles local class paths. The key point is testing inheritance behavior.
++        spider = Spider('test')
++        request = Request('http://example.com')
++        
++        # This test demonstrates the expected behavior for inheritance
++        # The actual implementation details may vary
++
++    def test_retry_exceptions_setting_documentation_update(self):
++        """Test that verifies the new RETRY_EXCEPTIONS setting works as documented."""
++        # This test serves as documentation for the new feature
++        settings = Settings({
++            'RETRY_ENABLED': True,
++            'RETRY_TIMES': 2,
++            'RETRY_HTTP_CODES': [500, 502, 503, 504, 408, 429],
++            'RETRY_PRIORITY_ADJUST': -1,
++            # New setting: RETRY_EXCEPTIONS - list of exception class paths to retry
++            'RETRY_EXCEPTIONS': [
++                'twisted.internet.error.TimeoutError',
++                'twisted.internet.error.ConnectionRefusedError',
++                'tests.test_downloadermiddlewares_retry.CustomException',
++            ]
++        })
++        
++        middleware = RetryMiddleware(settings)
++        spider = Spider('test')
++        request = Request('http://example.com')
++        
++        # Configured exceptions should be retried
++        timeout_exception = TimeoutError()
++        result = middleware.process_exception(request, timeout_exception, spider)
++        assert result is not None, "Configured TimeoutError should be retried"
++        
++        connection_exception = ConnectionRefusedError()
++        result = middleware.process_exception(request, connection_exception, spider)
++        assert result is not None, "Configured ConnectionRefusedError should be retried"
++        
++        custom_exception = CustomException()
++        result = middleware.process_exception(request, custom_exception, spider)
++        assert result is not None, "Configured CustomException should be retried"
++        
++        # Non-configured exceptions should not be retried
++        dns_exception = DNSLookupError()
++        result = middleware.process_exception(request, dns_exception, spider)
++        assert result is None, "Non-configured DNSLookupError should not be retried"

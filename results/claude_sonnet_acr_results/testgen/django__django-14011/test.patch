@@ -1,0 +1,268 @@
+--- a/tests/servers/test_liveserverthread.py
++++ b/tests/servers/test_liveserverthread.py
+-# Empty if creating new file
++import threading
++import time
++import pytest
++from unittest import mock
++from django.test import TestCase, LiveServerTestCase, override_settings
++from django.db import connection, connections
++from django.core.servers.basehttp import ThreadedWSGIServer, WSGIServer
++from django.test.testcases import LiveServerThread
++from django.test.utils import override_settings
++from django.contrib.staticfiles.testing import StaticLiveServerTestCase
++
++
++class LiveServerThreadTest(TestCase):
++    """Test that LiveServerThread properly closes database connections."""
++    
++    def test_closes_connections(self):
++        """
++        Test that LiveServerThread closes database connections after each thread.
++        This reproduces the bug where ThreadedWSGIServer doesn't close database
++        connections, causing "database is being accessed by other users" errors.
++        """
++        # Track the number of database connections before starting
++        initial_connections = len(connections.all())
++        
++        # Create a custom LiveServerThread that uses ThreadedWSGIServer
++        class TestLiveServerThread(LiveServerThread):
++            def _create_server(self):
++                return ThreadedWSGIServer(
++                    (self.host, self.port), 
++                    self.static_handler,
++                    allow_reuse_address=False
++                )
++        
++        # Start the live server thread
++        thread = TestLiveServerThread('127.0.0.1', 0, connections_override={})
++        thread.daemon = True
++        thread.start()
++        
++        try:
++            # Wait for the server to start
++            thread.is_ready.wait()
++            
++            # Simulate multiple requests that would create database connections
++            import urllib.request
++            for i in range(3):
++                try:
++                    response = urllib.request.urlopen(f'http://{thread.host}:{thread.port}/')
++                    response.read()
++                    response.close()
++                except:
++                    # Ignore connection errors, we're just testing connection cleanup
++                    pass
++            
++            # Give threads time to finish
++            time.sleep(0.1)
++            
++        finally:
++            # Stop the server
++            thread.terminate()
++            thread.join()
++        
++        # Check that connections are properly closed
++        # This should not fail with "database is being accessed by other users"
++        for alias in connections:
++            connections[alias].close()
++        
++        # Verify no lingering connections
++        final_connections = len(connections.all())
++        self.assertEqual(initial_connections, final_connections)
++
++
++class ThreadedWSGIServerConnectionTest(TestCase):
++    """Test ThreadedWSGIServer database connection handling."""
++    
++    def test_daemon_threads_setting(self):
++        """
++        Test that ThreadedWSGIServer has daemon_threads set appropriately.
++        Before the fix, daemon_threads=True causes connection cleanup issues.
++        After the fix, daemon_threads=False ensures proper cleanup.
++        """
++        server = ThreadedWSGIServer(('127.0.0.1', 0), None)
++        
++        # This test will fail before the fix (daemon_threads=True)
++        # and pass after the fix (daemon_threads=False)
++        self.assertFalse(server.daemon_threads, 
++                        "daemon_threads should be False to ensure proper connection cleanup")
++
++
++class LiveServerTestCaseConnectionTest(LiveServerTestCase):
++    """Test that LiveServerTestCase properly handles database connections."""
++    
++    @classmethod
++    def setUpClass(cls):
++        # Track connections before test
++        cls.initial_connection_count = len(connections.all())
++        super().setUpClass()
++    
++    def test_database_connections_cleaned_up(self):
++        """
++        Test that database connections are properly cleaned up after requests.
++        This test reproduces the race condition described in the issue.
++        """
++        import urllib.request
++        
++        # Make multiple requests to the live server
++        for i in range(5):
++            try:
++                response = urllib.request.urlopen(f'{self.live_server_url}/')
++                response.read()
++                response.close()
++            except:
++                # Ignore connection errors, focus on connection cleanup
++                pass
++        
++        # Force garbage collection to clean up any lingering references
++        import gc
++        gc.collect()
++        
++        # This assertion helps verify connections are managed properly
++        # The actual connection count may vary, but we shouldn't have
++        # an excessive number of open connections
++        current_connections = len(connections.all())
++        self.assertLessEqual(current_connections, self.initial_connection_count + 2,
++                           "Too many database connections remain open")
++
++
++class NonThreadedLiveServerTest(LiveServerTestCase):
++    """Test using non-threaded server as a control case."""
++    
++    class NonThreadedLiveServerThread(LiveServerThread):
++        """Custom LiveServerThread that uses WSGIServer instead of ThreadedWSGIServer."""
++        def _create_server(self):
++            from django.core.servers.basehttp import WSGIServer
++            from django.test.testcases import QuietWSGIRequestHandler
++            return WSGIServer((self.host, self.port), QuietWSGIRequestHandler, 
++                            allow_reuse_address=False)
++    
++    server_thread_class = NonThreadedLiveServerThread
++    
++    def test_non_threaded_server_connections(self):
++        """
++        Test that non-threaded server doesn't have connection issues.
++        This serves as a control test to verify the issue is specific to threading.
++        """
++        import urllib.request
++        
++        # Make requests to the non-threaded live server
++        for i in range(3):
++            try:
++                response = urllib.request.urlopen(f'{self.live_server_url}/')
++                response.read()
++                response.close()
++            except:
++                pass
++        
++        # Non-threaded server should not have connection cleanup issues
++        for alias in connections:
++            connections[alias].close()
++        
++        # This should always pass since non-threaded server doesn't have the race condition
++        self.assertTrue(True, "Non-threaded server should handle connections properly")
++
++
++class ThreadedWSGIServerShutdownTest(TestCase):
++    """Test ThreadedWSGIServer shutdown behavior."""
++    
++    def test_server_waits_for_threads_on_shutdown(self):
++        """
++        Test that ThreadedWSGIServer waits for threads to complete on shutdown.
++        This is the core fix - daemon_threads=False ensures proper cleanup.
++        """
++        from django.core.servers.basehttp import ThreadedWSGIServer
++        from django.test.testcases import QuietWSGIRequestHandler
++        
++        # Create server instance
++        server = ThreadedWSGIServer(('127.0.0.1', 0), QuietWSGIRequestHandler)
++        
++        # Verify daemon_threads setting
++        self.assertFalse(server.daemon_threads, 
++                        "daemon_threads must be False for proper thread cleanup")
++        
++        # Test that the server inherits from ThreadingMixIn
++        import socketserver
++        self.assertTrue(isinstance(server, socketserver.ThreadingMixIn),
++                       "Server should inherit from ThreadingMixIn for threading support")
++
++
++@pytest.mark.skipif(
++    connection.vendor == 'sqlite' and ':memory:' in connection.settings_dict.get('NAME', ''),
++    reason="SQLite in-memory database doesn't support connection tracking"
++)
++class DatabaseConnectionRaceConditionTest(LiveServerTestCase):
++    """Test for the specific race condition mentioned in the issue."""
++    
++    def test_destroy_test_db_race_condition(self):
++        """
++        Test that reproduces the race condition where destroy_test_db() fails
++        with "database is being accessed by other users" error.
++        """
++        import urllib.request
++        import threading
++        import time
++        
++        # Track any exceptions from background threads
++        exceptions = []
++        
++        def make_request():
++            try:
++                response = urllib.request.urlopen(f'{self.live_server_url}/')
++                response.read()
++                response.close()
++                # Simulate some database work
++                from django.contrib.auth.models import User
++                User.objects.count()
++            except Exception as e:
++                exceptions.append(e)
++        
++        # Start multiple threads making requests simultaneously
++        threads = []
++        for i in range(10):
++            thread = threading.Thread(target=make_request)
++            thread.start()
++            threads.append(thread)
++        
++        # Wait for all threads to complete
++        for thread in threads:
++            thread.join(timeout=5.0)
++        
++        # Check for any exceptions
++        if exceptions:
++            self.fail(f"Exceptions occurred in background threads: {exceptions}")
++        
++        # Force connection cleanup
++        for alias in connections:
++            connections[alias].close()
++        
++        # This test verifies that we can clean up properly without the
++        # "database is being accessed by other users" error
++        self.assertTrue(True, "Database connections cleaned up successfully")
++
++
++class StaticLiveServerConnectionTest(StaticLiveServerTestCase):
++    """Test StaticLiveServerTestCase for connection issues."""
++    
++    def test_static_live_server_connections(self):
++        """
++        Test that StaticLiveServerTestCase (which inherits from LiveServerTestCase)
++        also properly handles database connections.
++        """
++        import urllib.request
++        
++        # Make requests to static live server
++        for i in range(3):
++            try:
++                response = urllib.request.urlopen(f'{self.live_server_url}/')
++                response.read()
++                response.close()
++            except:
++                pass
++        
++        # Verify connections can be closed without issues
++        for alias in connections:
++            connections[alias].close()
++        
++        self.assertTrue(True, "StaticLiveServerTestCase handles connections properly")

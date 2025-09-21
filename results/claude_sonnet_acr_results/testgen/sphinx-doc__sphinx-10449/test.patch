@@ -1,0 +1,288 @@
+--- a/tests/test_ext_autodoc_typehints.py
++++ b/tests/test_ext_autodoc_typehints.py
++"""Test autodoc typehints functionality."""
++
++import pytest
++from docutils import nodes
++from docutils.parsers.rst import directives
++
++from sphinx import addnodes
++from sphinx.ext.autodoc import ClassDocumenter
++from sphinx.ext.autodoc.typehints import record_typehints, merge_typehints
++from sphinx.util.docutils import docutils_namespace
++
++
++@pytest.fixture
++def sample_class():
++    """Sample class for testing."""
++    class Square:
++        """A class representing a square figure."""
++
++        def __init__(self, width: int, height: int) -> None:
++            self.width = width
++            self.height = height
++
++        def area(self) -> int:
++            """Calculate the area of the square."""
++            return self.width * self.height
++
++    return Square
++
++
++@pytest.fixture
++def sample_function():
++    """Sample function for testing."""
++    def calculate_area(width: int, height: int) -> int:
++        """Calculate area of a rectangle."""
++        return width * height
++
++    return calculate_area
++
++
++def test_record_typehints_class_no_return_type(app, sample_class):
++    """Test that record_typehints does not record return type for classes."""
++    # Configure autodoc_typehints to description mode
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_typehints_format = 'short'
++    
++    # Clear any existing annotations
++    app.env.temp_data.pop('annotations', None)
++    
++    # Record typehints for the class
++    record_typehints(app, 'class', 'Square', sample_class, {}, '', '')
++    
++    # Check that annotations were recorded
++    annotations = app.env.temp_data.get('annotations', {})
++    assert 'Square' in annotations
++    
++    # Check that return type was NOT recorded for the class
++    class_annotations = annotations['Square']
++    assert 'return' not in class_annotations
++    
++    # Check that parameter types were recorded for __init__
++    assert 'width' in class_annotations
++    assert 'height' in class_annotations
++    assert class_annotations['width'] == 'int'
++    assert class_annotations['height'] == 'int'
++
++
++def test_record_typehints_function_with_return_type(app, sample_function):
++    """Test that record_typehints records return type for functions."""
++    # Configure autodoc_typehints to description mode
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_typehints_format = 'short'
++    
++    # Clear any existing annotations
++    app.env.temp_data.pop('annotations', None)
++    
++    # Record typehints for the function
++    record_typehints(app, 'function', 'calculate_area', sample_function, {}, '', '')
++    
++    # Check that annotations were recorded
++    annotations = app.env.temp_data.get('annotations', {})
++    assert 'calculate_area' in annotations
++    
++    # Check that return type WAS recorded for the function
++    func_annotations = annotations['calculate_area']
++    assert 'return' in func_annotations
++    assert func_annotations['return'] == 'int'
++    
++    # Check that parameter types were also recorded
++    assert 'width' in func_annotations
++    assert 'height' in func_annotations
++    assert func_annotations['width'] == 'int'
++    assert func_annotations['height'] == 'int'
++
++
++def test_record_typehints_method_with_return_type(app, sample_class):
++    """Test that record_typehints records return type for methods."""
++    # Configure autodoc_typehints to description mode
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_typehints_format = 'short'
++    
++    # Clear any existing annotations
++    app.env.temp_data.pop('annotations', None)
++    
++    # Get the area method from the class
++    area_method = sample_class.area
++    
++    # Record typehints for the method
++    record_typehints(app, 'method', 'Square.area', area_method, {}, '', '')
++    
++    # Check that annotations were recorded
++    annotations = app.env.temp_data.get('annotations', {})
++    assert 'Square.area' in annotations
++    
++    # Check that return type WAS recorded for the method
++    method_annotations = annotations['Square.area']
++    assert 'return' in method_annotations
++    assert method_annotations['return'] == 'int'
++
++
++def test_record_typehints_class_with_signature_mode(app, sample_class):
++    """Test that record_typehints works normally when autodoc_typehints is 'signature'."""
++    # Configure autodoc_typehints to signature mode (default)
++    app.config.autodoc_typehints = 'signature'
++    app.config.autodoc_typehints_format = 'short'
++    
++    # Clear any existing annotations
++    app.env.temp_data.pop('annotations', None)
++    
++    # Record typehints for the class
++    record_typehints(app, 'class', 'Square', sample_class, {}, '', '')
++    
++    # Check that annotations were recorded
++    annotations = app.env.temp_data.get('annotations', {})
++    assert 'Square' in annotations
++    
++    # Even in signature mode, return type should not be recorded for classes
++    class_annotations = annotations['Square']
++    assert 'return' not in class_annotations
++
++
++def test_record_typehints_class_edge_cases(app):
++    """Test edge cases for class typehint recording."""
++    # Configure autodoc_typehints to description mode
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_typehints_format = 'short'
++    
++    # Clear any existing annotations
++    app.env.temp_data.pop('annotations', None)
++    
++    # Test with a class that has no __init__ method
++    class SimpleClass:
++        """A simple class with no __init__."""
++        pass
++    
++    # Record typehints for the class
++    record_typehints(app, 'class', 'SimpleClass', SimpleClass, {}, '', '')
++    
++    # Check that annotations were recorded (even if empty)
++    annotations = app.env.temp_data.get('annotations', {})
++    assert 'SimpleClass' in annotations
++    
++    # Check that return type was NOT recorded
++    class_annotations = annotations['SimpleClass']
++    assert 'return' not in class_annotations
++
++
++def test_record_typehints_non_callable_object(app):
++    """Test that record_typehints handles non-callable objects gracefully."""
++    # Configure autodoc_typehints to description mode
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_typehints_format = 'short'
++    
++    # Clear any existing annotations
++    app.env.temp_data.pop('annotations', None)
++    
++    # Test with a non-callable object
++    non_callable = "not a function or class"
++    
++    # Record typehints for the non-callable object
++    record_typehints(app, 'data', 'some_string', non_callable, {}, '', '')
++    
++    # Check that no annotations were recorded for non-callable objects
++    annotations = app.env.temp_data.get('annotations', {})
++    assert 'some_string' not in annotations
++
++
++def test_autoclass_with_description_typehints_integration(app, sample_class):
++    """Integration test for autoclass with autodoc_typehints='description'."""
++    # Configure autodoc_typehints to description mode
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_typehints_format = 'short'
++    app.config.autodoc_typehints_description_target = 'all'
++    
++    # Clear any existing annotations
++    app.env.temp_data.pop('annotations', None)
++    
++    # Simulate the autodoc process for a class
++    # First, record typehints (this is what happens during autodoc processing)
++    record_typehints(app, 'class', 'Square', sample_class, {}, '', '')
++    
++    # Verify that no return type was recorded for the class
++    annotations = app.env.temp_data.get('annotations', {})
++    assert 'Square' in annotations
++    class_annotations = annotations['Square']
++    assert 'return' not in class_annotations
++    
++    # Verify that parameter types were recorded
++    assert 'width' in class_annotations
++    assert 'height' in class_annotations
++
++
++def test_record_typehints_preserves_existing_functionality(app):
++    """Test that the fix preserves existing functionality for non-class objects."""
++    # Configure autodoc_typehints to description mode
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_typehints_format = 'short'
++    
++    # Clear any existing annotations
++    app.env.temp_data.pop('annotations', None)
++    
++    # Test various object types to ensure they still work correctly
++    
++    # Function with return type
++    def test_func(x: int) -> str:
++        return str(x)
++    
++    record_typehints(app, 'function', 'test_func', test_func, {}, '', '')
++    
++    # Method with return type
++    class TestClass:
++        def test_method(self, x: int) -> str:
++            return str(x)
++    
++    record_typehints(app, 'method', 'TestClass.test_method', TestClass.test_method, {}, '', '')
++    
++    # Check annotations
++    annotations = app.env.temp_data.get('annotations', {})
++    
++    # Function should have return type recorded
++    assert 'test_func' in annotations
++    assert 'return' in annotations['test_func']
++    assert annotations['test_func']['return'] == 'str'
++    
++    # Method should have return type recorded
++    assert 'TestClass.test_method' in annotations
++    assert 'return' in annotations['TestClass.test_method']
++    assert annotations['TestClass.test_method']['return'] == 'str'
++
++
++def test_record_typehints_class_with_complex_init(app):
++    """Test class with complex __init__ signature."""
++    # Configure autodoc_typehints to description mode
++    app.config.autodoc_typehints = 'description'
++    app.config.autodoc_typehints_format = 'short'
++    
++    # Clear any existing annotations
++    app.env.temp_data.pop('annotations', None)
++    
++    from typing import Optional, List
++    
++    class ComplexClass:
++        """A class with complex __init__ signature."""
++        
++        def __init__(self, name: str, values: List[int], optional: Optional[str] = None) -> None:
++            self.name = name
++            self.values = values
++            self.optional = optional
++    
++    # Record typehints for the class
++    record_typehints(app, 'class', 'ComplexClass', ComplexClass, {}, '', '')
++    
++    # Check that annotations were recorded
++    annotations = app.env.temp_data.get('annotations', {})
++    assert 'ComplexClass' in annotations
++    
++    # Check that return type was NOT recorded for the class
++    class_annotations = annotations['ComplexClass']
++    assert 'return' not in class_annotations
++    
++    # Check that all parameter types were recorded correctly
++    assert 'name' in class_annotations
++    assert 'values' in class_annotations
++    assert 'optional' in class_annotations
++    assert class_annotations['name'] == 'str'
++    assert class_annotations['values'] == 'List[int]'
++    assert class_annotations['optional'] == 'Optional[str]'

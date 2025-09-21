@@ -1,0 +1,213 @@
+--- a/tests/model_managers/test_manager_signature.py
++++ b/tests/model_managers/test_manager_signature.py
+-# Empty if creating new file
++import inspect
++import pytest
++from django.db import models
++from django.test import TestCase
++
++
++class Person(models.Model):
++    """Test model for manager signature testing."""
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'model_managers'
++
++
++class TestManagerSignature(TestCase):
++    """Test that inspect.signature() returns correct signatures for manager methods."""
++    
++    def test_bulk_create_signature_before_fix(self):
++        """
++        Test that demonstrates the bug: inspect.signature() returns (*args, **kwargs)
++        instead of the actual bulk_create signature.
++        
++        This test should fail before the fix is applied.
++        """
++        # Get the signature of the manager method
++        manager_signature = inspect.signature(Person.objects.bulk_create)
++        
++        # Get the signature of the original QuerySet method for comparison
++        from django.db.models.query import QuerySet
++        queryset_signature = inspect.signature(QuerySet.bulk_create)
++        
++        # Before the fix, this assertion will fail because manager_signature
++        # will be (*args, **kwargs) instead of the actual signature
++        assert str(manager_signature) != "(*args, **kwargs)", (
++            "Manager method signature should not be generic (*args, **kwargs)"
++        )
++        
++        # The signatures should match
++        assert str(manager_signature) == str(queryset_signature), (
++            f"Manager signature {manager_signature} should match "
++            f"QuerySet signature {queryset_signature}"
++        )
++    
++    def test_bulk_create_signature_parameters(self):
++        """
++        Test that bulk_create signature contains the expected parameters.
++        """
++        signature = inspect.signature(Person.objects.bulk_create)
++        params = list(signature.parameters.keys())
++        
++        # Expected parameters based on QuerySet.bulk_create
++        expected_params = [
++            'self', 'objs', 'batch_size', 'ignore_conflicts', 
++            'update_conflicts', 'update_fields', 'unique_fields'
++        ]
++        
++        assert params == expected_params, (
++            f"Expected parameters {expected_params}, got {params}"
++        )
++    
++    def test_bulk_create_signature_defaults(self):
++        """
++        Test that bulk_create signature has correct default values.
++        """
++        signature = inspect.signature(Person.objects.bulk_create)
++        
++        # Check specific parameter defaults
++        assert signature.parameters['batch_size'].default is None
++        assert signature.parameters['ignore_conflicts'].default is False
++        assert signature.parameters['update_conflicts'].default is False
++        assert signature.parameters['update_fields'].default is None
++        assert signature.parameters['unique_fields'].default is None
++    
++    def test_other_manager_methods_signature(self):
++        """
++        Test that other manager methods also have correct signatures.
++        """
++        # Test filter method
++        filter_signature = inspect.signature(Person.objects.filter)
++        assert str(filter_signature) != "(*args, **kwargs)"
++        
++        # Test create method
++        create_signature = inspect.signature(Person.objects.create)
++        assert str(create_signature) != "(*args, **kwargs)"
++        
++        # Test get method
++        get_signature = inspect.signature(Person.objects.get)
++        assert str(get_signature) != "(*args, **kwargs)"
++    
++    def test_manager_method_docstring_preserved(self):
++        """
++        Test that manager methods preserve the original docstring.
++        """
++        from django.db.models.query import QuerySet
++        
++        # Compare docstrings
++        manager_doc = Person.objects.bulk_create.__doc__
++        queryset_doc = QuerySet.bulk_create.__doc__
++        
++        assert manager_doc == queryset_doc, (
++            "Manager method should preserve original docstring"
++        )
++    
++    def test_manager_method_name_preserved(self):
++        """
++        Test that manager methods preserve the original method name.
++        """
++        assert Person.objects.bulk_create.__name__ == 'bulk_create'
++        assert Person.objects.filter.__name__ == 'filter'
++        assert Person.objects.create.__name__ == 'create'
++    
++    def test_signature_with_complex_method(self):
++        """
++        Test signature inspection with a more complex method that has
++        various parameter types.
++        """
++        # Test bulk_update which has different parameter patterns
++        signature = inspect.signature(Person.objects.bulk_update)
++        params = signature.parameters
++        
++        # Should not be generic (*args, **kwargs)
++        assert str(signature) != "(*args, **kwargs)"
++        
++        # Should have the expected parameters
++        expected_param_names = ['self', 'objs', 'fields', 'batch_size']
++        actual_param_names = list(params.keys())
++        assert actual_param_names == expected_param_names
++    
++    def test_signature_inspection_edge_cases(self):
++        """
++        Test edge cases for signature inspection.
++        """
++        # Test that we can get parameter annotations if they exist
++        signature = inspect.signature(Person.objects.bulk_create)
++        
++        # Verify we can iterate over parameters
++        param_count = len(signature.parameters)
++        assert param_count > 1, "Should have multiple parameters"
++        
++        # Verify we can access parameter details
++        for param_name, param in signature.parameters.items():
++            assert hasattr(param, 'default')
++            assert hasattr(param, 'kind')
++    
++    def test_signature_matches_queryset_exactly(self):
++        """
++        Test that manager method signatures exactly match their QuerySet counterparts.
++        """
++        from django.db.models.query import QuerySet
++        
++        # List of methods to test
++        methods_to_test = [
++            'bulk_create', 'bulk_update', 'filter', 'exclude', 
++            'create', 'get', 'update', 'delete'
++        ]
++        
++        for method_name in methods_to_test:
++            if hasattr(Person.objects, method_name):
++                manager_method = getattr(Person.objects, method_name)
++                queryset_method = getattr(QuerySet, method_name)
++                
++                manager_sig = inspect.signature(manager_method)
++                queryset_sig = inspect.signature(queryset_method)
++                
++                assert str(manager_sig) == str(queryset_sig), (
++                    f"Signature mismatch for {method_name}: "
++                    f"manager={manager_sig}, queryset={queryset_sig}"
++                )
++
++
++class TestManagerSignatureIntegration(TestCase):
++    """Integration tests for manager signature functionality."""
++    
++    def test_ipython_style_introspection(self):
++        """
++        Test that signature inspection works for IPython-style introspection.
++        This simulates what happens when using obj? in IPython/Jupyter.
++        """
++        # This is similar to what IPython does internally
++        method = Person.objects.bulk_create
++        signature = inspect.signature(method)
++        
++        # Should be able to format the signature nicely
++        formatted_sig = f"{method.__name__}{signature}"
++        
++        # Should not be the generic signature
++        assert "(*args, **kwargs)" not in formatted_sig
++        
++        # Should contain the actual parameter names
++        assert "objs" in formatted_sig
++        assert "batch_size" in formatted_sig
++    
++    def test_help_function_integration(self):
++        """
++        Test that Python's help() function can properly introspect manager methods.
++        """
++        import io
++        import contextlib
++        
++        # Capture help output
++        f = io.StringIO()
++        with contextlib.redirect_stdout(f):
++            help(Person.objects.bulk_create)
++        
++        help_output = f.getvalue()
++        
++        # Help should show the proper signature, not (*args, **kwargs)
++        assert "objs" in help_output
++        assert "batch_size" in help_output
++        assert "(*args, **kwargs)" not in help_output or "objs" in help_output

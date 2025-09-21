@@ -1,0 +1,195 @@
+--- a/tests/expressions/test_mod_output_field.py
++++ b/tests/expressions/test_mod_output_field.py
+-# Empty if creating new file
++import pytest
++from decimal import Decimal
++from django.db import models
++from django.db.models import F, Value
++from django.db.models.expressions import CombinedExpression
++from django.db.models.fields import DecimalField, IntegerField, FloatField
++from django.test import TestCase
++
++
++class TestModel(models.Model):
++    """Test model for MOD operator output field resolution tests."""
++    integer_field = models.IntegerField(default=10)
++    decimal_field = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('10.50'))
++    float_field = models.FloatField(default=10.5)
++    
++    class Meta:
++        app_label = 'test_expressions'
++
++
++class ModOutputFieldResolutionTests(TestCase):
++    """Test that MOD operator properly resolves output field types when combining different numeric types."""
++    
++    def test_mod_integer_with_decimal_resolves_to_decimal(self):
++        """Test that Integer % Decimal resolves to DecimalField output."""
++        # Create expression: integer_field % decimal_value
++        expr = F('integer_field') % Value(Decimal('3.5'), output_field=DecimalField())
++        
++        # The output field should be DecimalField, not IntegerField
++        self.assertIsInstance(expr.output_field, DecimalField)
++        
++    def test_mod_decimal_with_integer_resolves_to_decimal(self):
++        """Test that Decimal % Integer resolves to DecimalField output."""
++        # Create expression: decimal_field % integer_value
++        expr = F('decimal_field') % Value(3, output_field=IntegerField())
++        
++        # The output field should be DecimalField, not IntegerField
++        self.assertIsInstance(expr.output_field, DecimalField)
++        
++    def test_mod_integer_with_float_resolves_to_float(self):
++        """Test that Integer % Float resolves to FloatField output."""
++        # Create expression: integer_field % float_value
++        expr = F('integer_field') % Value(3.5, output_field=FloatField())
++        
++        # The output field should be FloatField, not IntegerField
++        self.assertIsInstance(expr.output_field, FloatField)
++        
++    def test_mod_float_with_integer_resolves_to_float(self):
++        """Test that Float % Integer resolves to FloatField output."""
++        # Create expression: float_field % integer_value
++        expr = F('float_field') % Value(3, output_field=IntegerField())
++        
++        # The output field should be FloatField, not IntegerField
++        self.assertIsInstance(expr.output_field, FloatField)
++        
++    def test_mod_same_types_preserve_type(self):
++        """Test that MOD with same types preserves the original type."""
++        # Integer % Integer should remain IntegerField
++        int_expr = F('integer_field') % Value(3, output_field=IntegerField())
++        self.assertIsInstance(int_expr.output_field, IntegerField)
++        
++        # Decimal % Decimal should remain DecimalField
++        decimal_expr = F('decimal_field') % Value(Decimal('3.5'), output_field=DecimalField())
++        self.assertIsInstance(decimal_expr.output_field, DecimalField)
++        
++        # Float % Float should remain FloatField
++        float_expr = F('float_field') % Value(3.5, output_field=FloatField())
++        self.assertIsInstance(float_expr.output_field, FloatField)
++        
++    def test_mod_behavior_matches_other_operators(self):
++        """Test that MOD behaves the same as other mathematical operators for type resolution."""
++        # Test Integer + Decimal vs Integer % Decimal
++        add_expr = F('integer_field') + Value(Decimal('3.5'), output_field=DecimalField())
++        mod_expr = F('integer_field') % Value(Decimal('3.5'), output_field=DecimalField())
++        
++        # Both should resolve to DecimalField
++        self.assertIsInstance(add_expr.output_field, DecimalField)
++        self.assertIsInstance(mod_expr.output_field, DecimalField)
++        self.assertEqual(type(add_expr.output_field), type(mod_expr.output_field))
++        
++        # Test Decimal - Integer vs Decimal % Integer
++        sub_expr = F('decimal_field') - Value(3, output_field=IntegerField())
++        mod_expr2 = F('decimal_field') % Value(3, output_field=IntegerField())
++        
++        # Both should resolve to DecimalField
++        self.assertIsInstance(sub_expr.output_field, DecimalField)
++        self.assertIsInstance(mod_expr2.output_field, DecimalField)
++        self.assertEqual(type(sub_expr.output_field), type(mod_expr2.output_field))
++        
++        # Test Integer * Float vs Integer % Float
++        mul_expr = F('integer_field') * Value(3.5, output_field=FloatField())
++        mod_expr3 = F('integer_field') % Value(3.5, output_field=FloatField())
++        
++        # Both should resolve to FloatField
++        self.assertIsInstance(mul_expr.output_field, FloatField)
++        self.assertIsInstance(mod_expr3.output_field, FloatField)
++        self.assertEqual(type(mul_expr.output_field), type(mod_expr3.output_field))
++        
++    def test_mod_with_none_values(self):
++        """Test that MOD with None values properly resolves output field types."""
++        # Integer % None should preserve IntegerField
++        expr1 = F('integer_field') % Value(None)
++        self.assertIsInstance(expr1.output_field, IntegerField)
++        
++        # Decimal % None should preserve DecimalField
++        expr2 = F('decimal_field') % Value(None)
++        self.assertIsInstance(expr2.output_field, DecimalField)
++        
++        # Float % None should preserve FloatField
++        expr3 = F('float_field') % Value(None)
++        self.assertIsInstance(expr3.output_field, FloatField)
++        
++    def test_mod_combined_expression_creation(self):
++        """Test that MOD creates proper CombinedExpression instances."""
++        expr = F('integer_field') % Value(Decimal('3.5'), output_field=DecimalField())
++        
++        # Should be a CombinedExpression
++        self.assertIsInstance(expr, CombinedExpression)
++        
++        # Should have the correct connector
++        from django.db.models.expressions import Combinable
++        self.assertEqual(expr.connector, Combinable.MOD)
++        
++        # Should have the correct operands
++        self.assertEqual(expr.lhs.name, 'integer_field')
++        self.assertEqual(expr.rhs.value, Decimal('3.5'))
++
++
++class ModOutputFieldFailureTests(TestCase):
++    """Tests that demonstrate the bug before the fix is applied."""
++    
++    def test_mod_integer_decimal_fails_before_fix(self):
++        """
++        This test should fail before the fix is applied, demonstrating the bug.
++        After the fix, it should pass.
++        """
++        # This expression should resolve to DecimalField but currently doesn't
++        expr = F('integer_field') % Value(Decimal('3.5'), output_field=DecimalField())
++        
++        # Before fix: this would be IntegerField (wrong)
++        # After fix: this should be DecimalField (correct)
++        try:
++            # If the bug is present, this will be IntegerField instead of DecimalField
++            self.assertIsInstance(expr.output_field, DecimalField)
++        except AssertionError:
++            # This is expected before the fix - the test should fail
++            # demonstrating that MOD doesn't properly resolve mixed types
++            self.assertIsInstance(expr.output_field, IntegerField)
++            pytest.fail("MOD operator does not properly resolve output field for mixed numeric types")
++            
++    def test_mod_decimal_integer_fails_before_fix(self):
++        """
++        This test should fail before the fix is applied, demonstrating the bug.
++        After the fix, it should pass.
++        """
++        # This expression should resolve to DecimalField but currently doesn't
++        expr = F('decimal_field') % Value(3, output_field=IntegerField())
++        
++        # Before fix: this might not resolve correctly
++        # After fix: this should be DecimalField (correct)
++        try:
++            self.assertIsInstance(expr.output_field, DecimalField)
++        except AssertionError:
++            # This is expected before the fix
++            pytest.fail("MOD operator does not properly resolve output field for mixed numeric types")
++
++
++class ModEdgeCaseTests(TestCase):
++    """Test edge cases for MOD operator output field resolution."""
++    
++    def test_mod_chained_operations(self):
++        """Test MOD in chained operations maintains proper type resolution."""
++        # (integer_field % decimal_value) + float_value
++        expr = (F('integer_field') % Value(Decimal('3.5'), output_field=DecimalField())) + Value(2.5, output_field=FloatField())
++        
++        # The intermediate result should be DecimalField, final should be FloatField
++        # (since Decimal + Float = Float)
++        self.assertIsInstance(expr.output_field, FloatField)
++        
++    def test_mod_nested_expressions(self):
++        """Test MOD with nested expressions."""
++        # integer_field % (decimal_field + integer_value)
++        inner_expr = F('decimal_field') + Value(5, output_field=IntegerField())  # Should be DecimalField
++        outer_expr = F('integer_field') % inner_expr  # Should be DecimalField
++        
++        self.assertIsInstance(outer_expr.output_field, DecimalField)
++        
++    def test_mod_with_f_expressions(self):
++        """Test MOD between two F expressions of different types."""
++        # integer_field % decimal_field should resolve to DecimalField
++        expr = F('integer_field') % F('decimal_field')
++        
++        self.assertIsInstance(expr.output_field, DecimalField)

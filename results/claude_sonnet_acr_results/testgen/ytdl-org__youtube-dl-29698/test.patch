@@ -1,0 +1,306 @@
+--- a/test/test_vimeo.py
++++ b/test/test_vimeo.py
+-# Empty if creating new file
++import pytest
++import sys
++import os
++from unittest.mock import Mock, patch, MagicMock
++from urllib.error import HTTPError
++from urllib.request import Request
++
++# Add the parent directory to the path to import youtube_dl modules
++sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
++
++from youtube_dl.extractor.vimeo import VimeoIE
++from youtube_dl.extractor.common import ExtractorError
++from youtube_dl import YoutubeDL
++
++
++class TestVimeoUnlistedHashFallback:
++    """Test suite for Vimeo extractor handling of unlisted hash API failures."""
++    
++    @pytest.fixture
++    def vimeo_extractor(self):
++        """Create a VimeoIE instance for testing."""
++        ydl = YoutubeDL({'quiet': True})
++        extractor = VimeoIE(ydl)
++        return extractor
++    
++    @pytest.fixture
++    def mock_404_error(self):
++        """Create a mock HTTPError with 404 status code."""
++        error = HTTPError(
++            url='https://api.vimeo.com/videos/581039021:9603038895',
++            code=404,
++            msg='Not Found',
++            hdrs={},
++            fp=None
++        )
++        return error
++    
++    @pytest.fixture
++    def mock_successful_webpage_response(self):
++        """Mock successful webpage response for fallback extraction."""
++        return '''
++        <html>
++        <head>
++            <title>Test Video</title>
++        </head>
++        <body>
++            <script>
++                vimeo.clip_page_config = {
++                    "player": {
++                        "config_url": "https://player.vimeo.com/video/581039021/config"
++                    },
++                    "clip": {
++                        "description": "Test video description",
++                        "uploaded_on": "2021-07-29T23:00:00+00:00"
++                    }
++                };
++            </script>
++        </body>
++        </html>
++        '''
++    
++    @pytest.fixture
++    def mock_config_response(self):
++        """Mock config JSON response for video metadata."""
++        return {
++            "video": {
++                "id": 581039021,
++                "title": "Test Video",
++                "duration": 120,
++                "thumbs": {},
++                "owner": {
++                    "name": "Test User",
++                    "url": "https://vimeo.com/testuser"
++                }
++            },
++            "request": {
++                "files": {
++                    "dash": {
++                        "separate_av": True,
++                        "streams": [
++                            {
++                                "profile": "175",
++                                "quality": "720p",
++                                "id": "test_stream_id",
++                                "fps": 30
++                            }
++                        ],
++                        "cdns": {
++                            "akfire_interconnect_quic": {
++                                "url": "https://test.vimeocdn.com/test.mpd"
++                            }
++                        }
++                    }
++                }
++            }
++        }
++    
++    def test_extract_from_api_handles_404_error_gracefully(self, vimeo_extractor, mock_404_error):
++        """Test that _extract_from_api handles 404 errors gracefully."""
++        with patch.object(vimeo_extractor, '_download_json') as mock_download:
++            # First call (JWT token) succeeds, second call (API) fails with 404
++            mock_download.side_effect = [
++                {'token': 'test_jwt_token'},  # JWT token request succeeds
++                mock_404_error  # API request fails with 404
++            ]
++            
++            # The method should raise an ExtractorError with expected=True for 404
++            with pytest.raises(ExtractorError) as exc_info:
++                vimeo_extractor._extract_from_api('581039021', '9603038895')
++            
++            # Verify the error is marked as expected (recoverable)
++            assert exc_info.value.expected is True
++            assert '404' in str(exc_info.value)
++    
++    def test_real_extract_falls_back_on_api_404_error(self, vimeo_extractor, mock_404_error, 
++                                                     mock_successful_webpage_response, 
++                                                     mock_config_response):
++        """Test that _real_extract falls back to webpage extraction when API returns 404."""
++        url = 'https://vimeo.com/581039021/9603038895'
++        
++        with patch.object(vimeo_extractor, '_download_json') as mock_download_json, \
++             patch.object(vimeo_extractor, '_download_webpage_handle') as mock_webpage, \
++             patch.object(vimeo_extractor, '_extract_from_api') as mock_api_extract:
++            
++            # Mock API extraction to raise 404 error
++            mock_api_extract.side_effect = ExtractorError('API returned 404', expected=True)
++            
++            # Mock successful webpage download for fallback
++            mock_response = Mock()
++            mock_response.geturl.return_value = url
++            mock_webpage.return_value = (mock_successful_webpage_response, mock_response)
++            
++            # Mock config download for fallback extraction
++            mock_download_json.return_value = mock_config_response
++            
++            # Mock other required methods
++            with patch.object(vimeo_extractor, '_parse_config') as mock_parse_config, \
++                 patch.object(vimeo_extractor, '_vimeo_sort_formats') as mock_sort, \
++                 patch.object(vimeo_extractor, '_extract_original_format') as mock_original:
++                
++                mock_parse_config.return_value = {
++                    'id': '581039021',
++                    'title': 'Test Video',
++                    'formats': [{'format_id': 'test', 'url': 'https://test.com/video.mp4'}]
++                }
++                mock_original.return_value = None
++                
++                # This should not raise an exception and should return video info
++                result = vimeo_extractor._real_extract(url)
++                
++                # Verify that API extraction was attempted first
++                mock_api_extract.assert_called_once_with('581039021', '9603038895')
++                
++                # Verify that webpage fallback was used
++                mock_webpage.assert_called_once()
++                
++                # Verify that result contains expected video information
++                assert result['id'] == '581039021'
++                assert result['title'] == 'Test Video'
++                assert 'formats' in result
++    
++    def test_real_extract_without_unlisted_hash_works_normally(self, vimeo_extractor, 
++                                                              mock_successful_webpage_response,
++                                                              mock_config_response):
++        """Test that normal Vimeo URLs without unlisted hash work as before."""
++        url = 'https://vimeo.com/581039021'
++        
++        with patch.object(vimeo_extractor, '_download_webpage_handle') as mock_webpage, \
++             patch.object(vimeo_extractor, '_download_json') as mock_download_json:
++            
++            # Mock successful webpage download
++            mock_response = Mock()
++            mock_response.geturl.return_value = url
++            mock_webpage.return_value = (mock_successful_webpage_response, mock_response)
++            
++            # Mock config download
++            mock_download_json.return_value = mock_config_response
++            
++            # Mock other required methods
++            with patch.object(vimeo_extractor, '_parse_config') as mock_parse_config, \
++                 patch.object(vimeo_extractor, '_vimeo_sort_formats') as mock_sort, \
++                 patch.object(vimeo_extractor, '_extract_original_format') as mock_original, \
++                 patch.object(vimeo_extractor, '_extract_from_api') as mock_api_extract:
++                
++                mock_parse_config.return_value = {
++                    'id': '581039021',
++                    'title': 'Test Video',
++                    'formats': [{'format_id': 'test', 'url': 'https://test.com/video.mp4'}]
++                }
++                mock_original.return_value = None
++                
++                # This should work normally without calling API extraction
++                result = vimeo_extractor._real_extract(url)
++                
++                # Verify that API extraction was NOT called (no unlisted hash)
++                mock_api_extract.assert_not_called()
++                
++                # Verify that result contains expected video information
++                assert result['id'] == '581039021'
++                assert result['title'] == 'Test Video'
++    
++    def test_extract_from_api_succeeds_with_valid_unlisted_hash(self, vimeo_extractor):
++        """Test that _extract_from_api works correctly with valid unlisted hash."""
++        mock_jwt_response = {'token': 'valid_jwt_token'}
++        mock_video_response = {
++            'config_url': 'https://player.vimeo.com/video/580888053/config',
++            'description': 'Working video description',
++            'created_time': '2021-07-29T15:00:00+00:00',
++            'stats': {'plays': 1000}
++        }
++        mock_config_response = {
++            'video': {
++                'id': 580888053,
++                'title': 'Working Video',
++                'duration': 180
++            },
++            'request': {
++                'files': {
++                    'dash': {
++                        'separate_av': True,
++                        'streams': [],
++                        'cdns': {}
++                    }
++                }
++            }
++        }
++        
++        with patch.object(vimeo_extractor, '_download_json') as mock_download, \
++             patch.object(vimeo_extractor, '_parse_config') as mock_parse_config, \
++             patch.object(vimeo_extractor, '_vimeo_sort_formats') as mock_sort:
++            
++            # Mock successful API calls
++            mock_download.side_effect = [
++                mock_jwt_response,      # JWT token request
++                mock_video_response,    # Video metadata request
++                mock_config_response    # Config request
++            ]
++            
++            mock_parse_config.return_value = {
++                'id': '580888053',
++                'title': 'Working Video',
++                'formats': [{'format_id': 'test', 'url': 'https://test.com/video.mp4'}]
++            }
++            
++            # This should succeed without errors
++            result = vimeo_extractor._extract_from_api('580888053', 'a127b5ccd0')
++            
++            # Verify the result contains expected information
++            assert result['id'] == '580888053'
++            assert result['title'] == 'Working Video'
++            assert result['description'] == 'Working video description'
++            assert result['view_count'] == 1000
++    
++    def test_extract_from_api_handles_other_http_errors(self, vimeo_extractor):
++        """Test that _extract_from_api properly handles non-404 HTTP errors."""
++        mock_500_error = HTTPError(
++            url='https://api.vimeo.com/videos/581039021:9603038895',
++            code=500,
++            msg='Internal Server Error',
++            hdrs={},
++            fp=None
++        )
++        
++        with patch.object(vimeo_extractor, '_download_json') as mock_download:
++            # First call (JWT token) succeeds, second call fails with 500
++            mock_download.side_effect = [
++                {'token': 'test_jwt_token'},  # JWT token request succeeds
++                mock_500_error  # API request fails with 500
++            ]
++            
++            # Non-404 errors should not be marked as expected
++            with pytest.raises(ExtractorError) as exc_info:
++                vimeo_extractor._extract_from_api('581039021', '9603038895')
++            
++            # For non-404 errors, expected should be False (or not set)
++            assert not getattr(exc_info.value, 'expected', False)
++    
++    def test_real_extract_reproduces_original_bug(self, vimeo_extractor):
++        """Test that reproduces the original bug before the fix is applied."""
++        # This test demonstrates the bug: it should fail with the original code
++        # but pass after the fix is implemented
++        url = 'https://vimeo.com/581039021/9603038895'
++        
++        # Mock the API to return 404 as in the original bug report
++        mock_404_error = HTTPError(
++            url='https://api.vimeo.com/videos/581039021:9603038895',
++            code=404,
++            msg='Not Found',
++            hdrs={},
++            fp=None
++        )
++        
++        with patch.object(vimeo_extractor, '_download_json') as mock_download:
++            # JWT token succeeds, but API call fails with 404
++            mock_download.side_effect = [
++                {'token': 'test_jwt_token'},
++                mock_404_error
++            ]
++            
++            # Before the fix, this would raise an unhandled HTTPError
++            # After the fix, it should either succeed with fallback or fail gracefully
++            with pytest.raises((ExtractorError, HTTPError)):
++                vimeo_extractor._extract_from_api('581039021', '9603038895')

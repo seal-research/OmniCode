@@ -1,0 +1,360 @@
+--- a/tests/migrations/test_autodetector_uuid_to_fk.py
++++ b/tests/migrations/test_autodetector_uuid_to_fk.py
++import uuid
++from django.db import models
++from django.db.migrations.autodetector import MigrationAutodetector
++from django.db.migrations.state import ProjectState
++from django.test import TestCase
++
++
++class UUIDToFKDependencyTests(TestCase):
++    """
++    Tests for ensuring that changing a UUIDField to ForeignKey creates proper dependencies.
++    """
++
++    def test_uuid_to_fk_creates_dependency(self):
++        """
++        Test that changing a UUIDField to ForeignKey creates a dependency on the target model.
++        This test reproduces the bug where no dependency is created.
++        """
++        # Create the initial state with UUIDField
++        before_state = ProjectState()
++        before_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)),
++                ('text', models.CharField(max_length=100)),
++                ('another_app', models.UUIDField(null=True, blank=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++        before_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp2',
++            'name': 'App2',
++            'fields': [
++                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)),
++                ('text', models.CharField(max_length=100)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Create the after state with ForeignKey
++        after_state = ProjectState()
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)),
++                ('text', models.CharField(max_length=100)),
++                ('another_app', models.ForeignKey('testapp2.App2', null=True, blank=True, on_delete=models.SET_NULL)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp2',
++            'name': 'App2',
++            'fields': [
++                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)),
++                ('text', models.CharField(max_length=100)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # Check that we have changes for testapp1
++        self.assertIn('testapp1', changes)
++        self.assertEqual(len(changes['testapp1']), 1)
++
++        migration = changes['testapp1'][0]
++        self.assertEqual(len(migration.operations), 1)
++
++        # Check that the operation is AlterField
++        operation = migration.operations[0]
++        self.assertEqual(operation.__class__.__name__, 'AlterField')
++        self.assertEqual(operation.model_name, 'App1')
++        self.assertEqual(operation.name, 'another_app')
++
++        # This is the key test - the operation should have dependencies
++        # Before the fix, this would fail because no dependencies are created
++        self.assertTrue(hasattr(operation, '_auto_deps'))
++        self.assertIsNotNone(operation._auto_deps)
++        self.assertGreater(len(operation._auto_deps), 0)
++
++        # Check that the dependency is on testapp2.App2
++        dependency = operation._auto_deps[0]
++        self.assertEqual(dependency[0], 'testapp2')  # app_label
++        self.assertEqual(dependency[1], 'App2')     # model_name
++        self.assertEqual(dependency[2], None)       # field_name
++        self.assertTrue(dependency[3])              # create dependency
++
++    def test_uuid_to_fk_fails_without_dependency(self):
++        """
++        Test that demonstrates the bug - without proper dependencies,
++        the migration would fail during execution.
++        """
++        # Create the initial state with UUIDField
++        before_state = ProjectState()
++        before_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)),
++                ('another_app', models.UUIDField(null=True, blank=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Create the after state with ForeignKey
++        after_state = ProjectState()
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)),
++                ('another_app', models.ForeignKey('testapp2.App2', null=True, blank=True, on_delete=models.SET_NULL)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp2',
++            'name': 'App2',
++            'fields': [
++                ('id', models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # This test will fail before the fix is applied
++        # because the AlterField operation won't have dependencies
++        self.assertIn('testapp1', changes)
++        migration = changes['testapp1'][0]
++        operation = migration.operations[0]
++
++        # Before the fix, this assertion would fail
++        self.assertTrue(hasattr(operation, '_auto_deps'))
++        self.assertIsNotNone(operation._auto_deps)
++
++    def test_regular_field_to_fk_creates_dependency(self):
++        """
++        Test that changing any regular field to ForeignKey creates proper dependencies.
++        """
++        # Create the initial state with CharField
++        before_state = ProjectState()
++        before_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++                ('ref_field', models.CharField(max_length=100, null=True, blank=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++        before_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp2',
++            'name': 'App2',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Create the after state with ForeignKey
++        after_state = ProjectState()
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++                ('ref_field', models.ForeignKey('testapp2.App2', null=True, blank=True, on_delete=models.SET_NULL)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp2',
++            'name': 'App2',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # Check that dependencies are created
++        self.assertIn('testapp1', changes)
++        migration = changes['testapp1'][0]
++        operation = migration.operations[0]
++
++        self.assertEqual(operation.__class__.__name__, 'AlterField')
++        self.assertTrue(hasattr(operation, '_auto_deps'))
++        self.assertIsNotNone(operation._auto_deps)
++        self.assertGreater(len(operation._auto_deps), 0)
++
++    def test_fk_to_uuid_no_dependency_needed(self):
++        """
++        Test that changing ForeignKey to UUIDField doesn't create unnecessary dependencies.
++        """
++        # Create the initial state with ForeignKey
++        before_state = ProjectState()
++        before_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++                ('ref_field', models.ForeignKey('testapp2.App2', null=True, blank=True, on_delete=models.SET_NULL)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++        before_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp2',
++            'name': 'App2',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Create the after state with UUIDField
++        after_state = ProjectState()
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++                ('ref_field', models.UUIDField(null=True, blank=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp2',
++            'name': 'App2',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # Check that no dependencies are created when going from FK to UUID
++        self.assertIn('testapp1', changes)
++        migration = changes['testapp1'][0]
++        operation = migration.operations[0]
++
++        self.assertEqual(operation.__class__.__name__, 'AlterField')
++        # Should have empty or no dependencies since UUIDField doesn't reference other models
++        if hasattr(operation, '_auto_deps'):
++            self.assertEqual(len(operation._auto_deps), 0)
++
++    def test_uuid_to_onetoone_creates_dependency(self):
++        """
++        Test that changing UUIDField to OneToOneField creates proper dependencies.
++        """
++        # Create the initial state with UUIDField
++        before_state = ProjectState()
++        before_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++                ('ref_field', models.UUIDField(null=True, blank=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++        before_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp2',
++            'name': 'App2',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Create the after state with OneToOneField
++        after_state = ProjectState()
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp1',
++            'name': 'App1',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++                ('ref_field', models.OneToOneField('testapp2.App2', null=True, blank=True, on_delete=models.SET_NULL)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++        after_state.add_model(models.Model.from_dict({
++            'app_label': 'testapp2',
++            'name': 'App2',
++            'fields': [
++                ('id', models.AutoField(primary_key=True)),
++            ],
++            'options': {},
++            'bases': (models.Model,),
++            'managers': [],
++        }))
++
++        # Generate migrations
++        autodetector = MigrationAutodetector(before_state, after_state)
++        changes = autodetector.changes(graph=None)
++
++        # Check that dependencies are created for OneToOneField
++        self.assertIn('testapp1', changes)
++        migration = changes['testapp1'][0]
++        operation = migration.operations[0]
++
++        self.assertEqual(operation.__class__.__name__, 'AlterField')
++        self.assertTrue(hasattr(operation, '_auto_deps'))
++        self.assertIsNotNone(operation._auto_deps)
++        self.assertGreater(len(operation._auto_deps), 0)
++
++        # Check that the dependency is on testapp2.App2
++        dependency = operation._auto_deps[0]
++        self.assertEqual(dependency[0], 'testapp2')  # app_label
++        self.assertEqual(dependency[1], 'App2')     # model_name

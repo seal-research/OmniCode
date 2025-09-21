@@ -1,0 +1,295 @@
+--- a/tests/forms_tests/test_limit_choices_to_duplicates.py
++++ b/tests/forms_tests/test_limit_choices_to_duplicates.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.forms import ModelChoiceField
++from django.forms.models import apply_limit_choices_to_to_formfield
++from django.test import TestCase
++from django.db.models import Q
++
++
++class Author(models.Model):
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class Publisher(models.Model):
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class Book(models.Model):
++    title = models.CharField(max_length=100)
++    author = models.ForeignKey(Author, on_delete=models.CASCADE)
++    publisher = models.ForeignKey(Publisher, on_delete=models.CASCADE)
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class Article(models.Model):
++    title = models.CharField(max_length=100)
++    # This field will have limit_choices_to with Q object involving joins
++    book = models.ForeignKey(
++        Book, 
++        on_delete=models.CASCADE,
++        limit_choices_to=Q(author__name__startswith='A') | Q(publisher__name__startswith='P')
++    )
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class LimitChoicesToDuplicatesTest(TestCase):
++    """Test that limit_choices_to with Q objects involving joins doesn't create duplicate options."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        # Create test data that will trigger the duplicate issue
++        cls.author1 = Author.objects.create(name='Alice Author')
++        cls.author2 = Author.objects.create(name='Bob Author')
++        cls.publisher1 = Publisher.objects.create(name='Penguin Books')
++        cls.publisher2 = Publisher.objects.create(name='Random House')
++        
++        # Create a book that matches both conditions in the Q object
++        # This will cause duplicates when the Q object is applied
++        cls.book1 = Book.objects.create(
++            title='Test Book 1',
++            author=cls.author1,  # name starts with 'A'
++            publisher=cls.publisher1  # name starts with 'P'
++        )
++        
++        # Create books that match only one condition each
++        cls.book2 = Book.objects.create(
++            title='Test Book 2',
++            author=cls.author1,  # name starts with 'A'
++            publisher=cls.publisher2  # name doesn't start with 'P'
++        )
++        
++        cls.book3 = Book.objects.create(
++            title='Test Book 3',
++            author=cls.author2,  # name doesn't start with 'A'
++            publisher=cls.publisher1  # name starts with 'P'
++        )
++        
++        # Create a book that matches neither condition
++        cls.book4 = Book.objects.create(
++            title='Test Book 4',
++            author=cls.author2,  # name doesn't start with 'A'
++            publisher=cls.publisher2  # name doesn't start with 'P'
++        )
++
++    def test_limit_choices_to_q_object_with_joins_no_duplicates(self):
++        """Test that Q objects with joins in limit_choices_to don't create duplicate options."""
++        # Get the field with limit_choices_to
++        field = Article._meta.get_field('book')
++        
++        # Create a formfield from the model field
++        formfield = field.formfield()
++        
++        # Apply limit_choices_to (this is normally done automatically)
++        apply_limit_choices_to_to_formfield(formfield)
++        
++        # Get the choices from the formfield
++        choices = list(formfield.choices)
++        
++        # Remove the empty choice if present
++        if choices and choices[0][0] == '':
++            choices = choices[1:]
++        
++        # Extract the book IDs from choices
++        choice_ids = [choice[0].value for choice in choices]
++        
++        # Check that there are no duplicates
++        self.assertEqual(len(choice_ids), len(set(choice_ids)), 
++                        "Duplicate options found in formfield choices")
++        
++        # Verify that the correct books are included (books 1, 2, and 3)
++        expected_book_ids = {self.book1.pk, self.book2.pk, self.book3.pk}
++        actual_book_ids = set(choice_ids)
++        
++        self.assertEqual(actual_book_ids, expected_book_ids,
++                        "Incorrect books in formfield choices")
++        
++        # Verify book4 is not included (doesn't match either condition)
++        self.assertNotIn(self.book4.pk, choice_ids,
++                        "Book4 should not be in choices as it doesn't match limit_choices_to")
++
++    def test_limit_choices_to_q_object_queryset_distinct(self):
++        """Test that the queryset is properly distinct when limit_choices_to is applied."""
++        # Get the field with limit_choices_to
++        field = Article._meta.get_field('book')
++        
++        # Create a formfield from the model field
++        formfield = field.formfield()
++        
++        # Apply limit_choices_to
++        apply_limit_choices_to_to_formfield(formfield)
++        
++        # Get the queryset
++        queryset = formfield.queryset
++        
++        # Count the results
++        count = queryset.count()
++        
++        # Count distinct results
++        distinct_count = queryset.distinct().count()
++        
++        # They should be equal (no duplicates)
++        self.assertEqual(count, distinct_count,
++                        "Queryset contains duplicates after applying limit_choices_to")
++
++    def test_limit_choices_to_dict_no_duplicates(self):
++        """Test that dictionary-based limit_choices_to still works correctly."""
++        # Create a field with dictionary-based limit_choices_to
++        class TestModel(models.Model):
++            book = models.ForeignKey(
++                Book,
++                on_delete=models.CASCADE,
++                limit_choices_to={'author__name__startswith': 'A'}
++            )
++            
++            class Meta:
++                app_label = 'forms_tests'
++        
++        field = TestModel._meta.get_field('book')
++        formfield = field.formfield()
++        
++        # Apply limit_choices_to
++        apply_limit_choices_to_to_formfield(formfield)
++        
++        # Get choices
++        choices = list(formfield.choices)
++        if choices and choices[0][0] == '':
++            choices = choices[1:]
++        
++        choice_ids = [choice[0].value for choice in choices]
++        
++        # Should have no duplicates
++        self.assertEqual(len(choice_ids), len(set(choice_ids)))
++        
++        # Should only include books by authors starting with 'A'
++        expected_book_ids = {self.book1.pk, self.book2.pk}
++        actual_book_ids = set(choice_ids)
++        self.assertEqual(actual_book_ids, expected_book_ids)
++
++    def test_limit_choices_to_callable_no_duplicates(self):
++        """Test that callable limit_choices_to works correctly."""
++        def get_limit():
++            return Q(author__name__startswith='A') | Q(publisher__name__startswith='P')
++        
++        # Create a field with callable limit_choices_to
++        class TestModel(models.Model):
++            book = models.ForeignKey(
++                Book,
++                on_delete=models.CASCADE,
++                limit_choices_to=get_limit
++            )
++            
++            class Meta:
++                app_label = 'forms_tests'
++        
++        field = TestModel._meta.get_field('book')
++        formfield = field.formfield()
++        
++        # Apply limit_choices_to
++        apply_limit_choices_to_to_formfield(formfield)
++        
++        # Get choices
++        choices = list(formfield.choices)
++        if choices and choices[0][0] == '':
++            choices = choices[1:]
++        
++        choice_ids = [choice[0].value for choice in choices]
++        
++        # Should have no duplicates
++        self.assertEqual(len(choice_ids), len(set(choice_ids)))
++        
++        # Should include books 1, 2, and 3
++        expected_book_ids = {self.book1.pk, self.book2.pk, self.book3.pk}
++        actual_book_ids = set(choice_ids)
++        self.assertEqual(actual_book_ids, expected_book_ids)
++
++    def test_limit_choices_to_none_unchanged(self):
++        """Test that None limit_choices_to doesn't change behavior."""
++        # Create a field without limit_choices_to
++        class TestModel(models.Model):
++            book = models.ForeignKey(Book, on_delete=models.CASCADE)
++            
++            class Meta:
++                app_label = 'forms_tests'
++        
++        field = TestModel._meta.get_field('book')
++        formfield = field.formfield()
++        
++        # Store original queryset count
++        original_count = formfield.queryset.count()
++        
++        # Apply limit_choices_to (should do nothing)
++        apply_limit_choices_to_to_formfield(formfield)
++        
++        # Count should be unchanged
++        self.assertEqual(formfield.queryset.count(), original_count)
++        
++        # Should include all books
++        choices = list(formfield.choices)
++        if choices and choices[0][0] == '':
++            choices = choices[1:]
++        
++        choice_ids = [choice[0].value for choice in choices]
++        expected_book_ids = {self.book1.pk, self.book2.pk, self.book3.pk, self.book4.pk}
++        actual_book_ids = set(choice_ids)
++        self.assertEqual(actual_book_ids, expected_book_ids)
++
++    def test_complex_q_object_with_multiple_joins(self):
++        """Test Q objects with multiple levels of joins."""
++        # Create more complex test data
++        author3 = Author.objects.create(name='Charlie Author')
++        publisher3 = Publisher.objects.create(name='Academic Press')
++        
++        book5 = Book.objects.create(
++            title='Complex Book',
++            author=author3,
++            publisher=publisher3
++        )
++        
++        # Create a more complex Q object
++        complex_q = (
++            Q(author__name__contains='A') & Q(publisher__name__startswith='P')
++        ) | Q(title__contains='Complex')
++        
++        class TestModel(models.Model):
++            book = models.ForeignKey(
++                Book,
++                on_delete=models.CASCADE,
++                limit_choices_to=complex_q
++            )
++            
++            class Meta:
++                app_label = 'forms_tests'
++        
++        field = TestModel._meta.get_field('book')
++        formfield = field.formfield()
++        
++        # Apply limit_choices_to
++        apply_limit_choices_to_to_formfield(formfield)
++        
++        # Get choices
++        choices = list(formfield.choices)
++        if choices and choices[0][0] == '':
++            choices = choices[1:]
++        
++        choice_ids = [choice[0].value for choice in choices]
++        
++        # Should have no duplicates
++        self.assertEqual(len(choice_ids), len(set(choice_ids)))
++        
++        # Should include book1 (Alice + Penguin) and book5 (Complex)
++        expected_book_ids = {self.book1.pk, book5.pk}
++        actual_book_ids = set(choice_ids)
++        self.assertEqual(actual_book_ids, expected_book_ids)

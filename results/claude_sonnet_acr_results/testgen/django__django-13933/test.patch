@@ -1,0 +1,185 @@
+--- a/tests/forms_tests/test_models.py
++++ b/tests/forms_tests/test_models.py
+-# This will be added to the existing test file
++import pytest
++from django.core.exceptions import ValidationError
++from django.forms import ModelChoiceField, ModelMultipleChoiceField
++from django.test import TestCase
++from django.db import models
++
++
++class TestModel(models.Model):
++    """Test model for ModelChoiceField tests."""
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'forms_tests'
++
++
++class ModelChoiceFieldValidationErrorTests(TestCase):
++    """Test that ModelChoiceField provides value in ValidationError messages."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        """Create test data."""
++        cls.test_obj1 = TestModel.objects.create(name="Test Object 1")
++        cls.test_obj2 = TestModel.objects.create(name="Test Object 2")
++    
++    def test_model_choice_field_invalid_choice_includes_value_before_fix(self):
++        """
++        Test that demonstrates the bug: ModelChoiceField doesn't include 
++        the invalid value in ValidationError message.
++        This test should fail before the fix is applied.
++        """
++        field = ModelChoiceField(queryset=TestModel.objects.all())
++        
++        # Try to validate an invalid choice
++        invalid_value = 999  # Non-existent primary key
++        
++        with self.assertRaises(ValidationError) as cm:
++            field.to_python(invalid_value)
++        
++        error = cm.exception
++        
++        # Before fix: This assertion will fail because the error message 
++        # doesn't contain the invalid value
++        self.assertIn(str(invalid_value), str(error))
++        
++        # Also check that the error has the correct code
++        self.assertEqual(error.code, 'invalid_choice')
++    
++    def test_model_choice_field_invalid_choice_includes_value_after_fix(self):
++        """
++        Test that ModelChoiceField includes the invalid value in ValidationError 
++        message after the fix is applied.
++        """
++        field = ModelChoiceField(queryset=TestModel.objects.all())
++        
++        # Try to validate an invalid choice
++        invalid_value = 999  # Non-existent primary key
++        
++        with self.assertRaises(ValidationError) as cm:
++            field.to_python(invalid_value)
++        
++        error = cm.exception
++        
++        # After fix: The error message should contain the invalid value
++        self.assertIn(str(invalid_value), str(error))
++        self.assertEqual(error.code, 'invalid_choice')
++        
++        # Check that params contain the value
++        if hasattr(error, 'params') and error.params:
++            self.assertIn('value', error.params)
++            self.assertEqual(error.params['value'], invalid_value)
++    
++    def test_model_choice_field_invalid_string_choice_includes_value(self):
++        """Test that string invalid choices are also included in error message."""
++        field = ModelChoiceField(queryset=TestModel.objects.all())
++        
++        # Try to validate an invalid string choice
++        invalid_value = "invalid_string"
++        
++        with self.assertRaises(ValidationError) as cm:
++            field.to_python(invalid_value)
++        
++        error = cm.exception
++        
++        # The error message should contain the invalid value
++        self.assertIn(invalid_value, str(error))
++        self.assertEqual(error.code, 'invalid_choice')
++    
++    def test_model_choice_field_valid_choice_works(self):
++        """Test that valid choices still work correctly."""
++        field = ModelChoiceField(queryset=TestModel.objects.all())
++        
++        # Valid choice should work
++        valid_value = self.test_obj1.pk
++        result = field.to_python(valid_value)
++        
++        self.assertEqual(result, self.test_obj1)
++    
++    def test_model_choice_field_empty_value_works(self):
++        """Test that empty values are handled correctly."""
++        field = ModelChoiceField(queryset=TestModel.objects.all(), required=False)
++        
++        # Empty values should return None
++        self.assertIsNone(field.to_python(''))
++        self.assertIsNone(field.to_python(None))
++    
++    def test_model_choice_field_error_message_format_consistency(self):
++        """
++        Test that ModelChoiceField error message format is consistent 
++        with ModelMultipleChoiceField and ChoiceField.
++        """
++        # Test ModelChoiceField
++        model_field = ModelChoiceField(queryset=TestModel.objects.all())
++        
++        with self.assertRaises(ValidationError) as cm:
++            model_field.to_python(999)
++        
++        model_error_msg = str(cm.exception)
++        
++        # Test ModelMultipleChoiceField for comparison
++        multi_field = ModelMultipleChoiceField(queryset=TestModel.objects.all())
++        
++        with self.assertRaises(ValidationError) as cm:
++            multi_field._check_values([999])
++        
++        multi_error_msg = str(cm.exception)
++        
++        # Both should contain the invalid value
++        self.assertIn('999', model_error_msg)
++        self.assertIn('999', multi_error_msg)
++        
++        # Both should have similar message structure
++        self.assertIn('Select a valid choice', model_error_msg)
++        self.assertIn('Select a valid choice', multi_error_msg)
++        self.assertIn('not one of the available choices', model_error_msg)
++        self.assertIn('not one of the available choices', multi_error_msg)
++    
++    def test_model_choice_field_custom_to_field_name(self):
++        """Test that custom to_field_name works with error messages."""
++        # Create a field that uses 'name' instead of 'pk'
++        field = ModelChoiceField(
++            queryset=TestModel.objects.all(),
++            to_field_name='name'
++        )
++        
++        invalid_value = "nonexistent_name"
++        
++        with self.assertRaises(ValidationError) as cm:
++            field.to_python(invalid_value)
++        
++        error = cm.exception
++        
++        # The error message should contain the invalid value
++        self.assertIn(invalid_value, str(error))
++        self.assertEqual(error.code, 'invalid_choice')
++    
++    def test_model_choice_field_model_instance_invalid(self):
++        """Test error message when passing invalid model instance."""
++        field = ModelChoiceField(queryset=TestModel.objects.filter(pk=self.test_obj1.pk))
++        
++        # Pass a model instance that's not in the queryset
++        invalid_instance = self.test_obj2
++        
++        with self.assertRaises(ValidationError) as cm:
++            field.to_python(invalid_instance)
++        
++        error = cm.exception
++        
++        # The error message should contain the invalid value (pk of the instance)
++        self.assertIn(str(invalid_instance.pk), str(error))
++        self.assertEqual(error.code, 'invalid_choice')
++    
++    def test_model_choice_field_error_message_template_has_value_placeholder(self):
++        """Test that the error message template includes %(value)s placeholder."""
++        field = ModelChoiceField(queryset=TestModel.objects.all())
++        
++        # Check that the error message template includes the value placeholder
++        error_msg_template = field.error_messages['invalid_choice']
++        self.assertIn('%(value)s', error_msg_template)
++        
++        # Verify the template can be formatted with a value
++        formatted_msg = error_msg_template % {'value': 'test_value'}
++        self.assertIn('test_value', formatted_msg)

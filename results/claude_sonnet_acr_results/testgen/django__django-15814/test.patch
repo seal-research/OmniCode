@@ -1,0 +1,221 @@
+--- a/tests/queries/test_proxy_model_select_related_only.py
++++ b/tests/queries/test_proxy_model_select_related_only.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase
++
++
++class CustomModel(models.Model):
++    """Base model for testing proxy model relationships."""
++    name = models.CharField(max_length=16)
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class ProxyCustomModel(CustomModel):
++    """Proxy model that inherits from CustomModel."""
++    class Meta:
++        proxy = True
++        app_label = 'queries'
++
++
++class AnotherModel(models.Model):
++    """Model with foreign key to proxy model."""
++    custom = models.ForeignKey(
++        ProxyCustomModel,
++        on_delete=models.SET_NULL,
++        null=True,
++        blank=True,
++    )
++    title = models.CharField(max_length=32, default='test')
++    
++    class Meta:
++        app_label = 'queries'
++
++
++class ProxyModelSelectRelatedOnlyTests(TestCase):
++    """Test suite for QuerySet.only() after select_related() with proxy models."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        """Set up test data for all test methods."""
++        # Create a CustomModel instance
++        cls.custom_instance = CustomModel.objects.create(name="test_custom")
++        
++        # Create AnotherModel instances with relationships to the proxy model
++        cls.another_instance1 = AnotherModel.objects.create(
++            custom=cls.custom_instance,
++            title="test_another1"
++        )
++        cls.another_instance2 = AnotherModel.objects.create(
++            custom=cls.custom_instance,
++            title="test_another2"
++        )
++        
++        # Create an instance without a custom relationship
++        cls.another_instance_null = AnotherModel.objects.create(
++            custom=None,
++            title="test_null"
++        )
++    
++    def test_select_related_only_proxy_model_basic(self):
++        """Test basic select_related() with only() on proxy model field."""
++        # This should not raise ValueError: 'id' is not in list
++        queryset = AnotherModel.objects.select_related("custom").only("custom__name")
++        
++        # Force evaluation of the queryset
++        results = list(queryset)
++        
++        # Verify we get the expected number of results
++        self.assertEqual(len(results), 3)
++        
++        # Verify the related objects are properly loaded
++        for result in results:
++            if result.custom:
++                self.assertEqual(result.custom.name, "test_custom")
++                # Verify that only the specified field is loaded
++                self.assertTrue(hasattr(result.custom, 'name'))
++    
++    def test_select_related_only_proxy_model_with_pk(self):
++        """Test select_related() with only() including primary key field."""
++        # Include both the proxy model's pk and name field
++        queryset = AnotherModel.objects.select_related("custom").only("custom__id", "custom__name")
++        
++        results = list(queryset)
++        self.assertEqual(len(results), 3)
++        
++        for result in results:
++            if result.custom:
++                self.assertEqual(result.custom.name, "test_custom")
++                self.assertEqual(result.custom.id, self.custom_instance.id)
++    
++    def test_select_related_only_proxy_model_multiple_fields(self):
++        """Test select_related() with only() on multiple proxy model fields."""
++        queryset = AnotherModel.objects.select_related("custom").only("custom__name", "title")
++        
++        results = list(queryset)
++        self.assertEqual(len(results), 3)
++        
++        # Verify both local and related fields are accessible
++        for result in results:
++            self.assertIn(result.title, ["test_another1", "test_another2", "test_null"])
++            if result.custom:
++                self.assertEqual(result.custom.name, "test_custom")
++    
++    def test_select_related_only_proxy_model_null_relationship(self):
++        """Test select_related() with only() when relationship is null."""
++        queryset = AnotherModel.objects.filter(custom__isnull=True).select_related("custom").only("custom__name")
++        
++        results = list(queryset)
++        self.assertEqual(len(results), 1)
++        self.assertIsNone(results[0].custom)
++    
++    def test_select_related_only_proxy_model_chained_operations(self):
++        """Test chaining select_related() and only() in different orders."""
++        # Test only() then select_related()
++        queryset1 = AnotherModel.objects.only("custom__name").select_related("custom")
++        results1 = list(queryset1)
++        
++        # Test select_related() then only()
++        queryset2 = AnotherModel.objects.select_related("custom").only("custom__name")
++        results2 = list(queryset2)
++        
++        # Both should work and return the same number of results
++        self.assertEqual(len(results1), 3)
++        self.assertEqual(len(results2), 3)
++    
++    def test_select_related_only_proxy_model_with_filter(self):
++        """Test select_related() with only() combined with filtering."""
++        queryset = (AnotherModel.objects
++                   .filter(custom__name="test_custom")
++                   .select_related("custom")
++                   .only("custom__name", "title"))
++        
++        results = list(queryset)
++        self.assertEqual(len(results), 2)  # Should exclude the null relationship
++        
++        for result in results:
++            self.assertEqual(result.custom.name, "test_custom")
++            self.assertIn(result.title, ["test_another1", "test_another2"])
++    
++    def test_select_related_only_proxy_model_values_list(self):
++        """Test that the fix doesn't break values_list functionality."""
++        # This should work without issues
++        values = list(AnotherModel.objects
++                     .select_related("custom")
++                     .values_list("custom__name", "title"))
++        
++        self.assertEqual(len(values), 3)
++        expected_values = [
++            ("test_custom", "test_another1"),
++            ("test_custom", "test_another2"),
++            (None, "test_null")
++        ]
++        
++        for value in values:
++            self.assertIn(value, expected_values)
++    
++    def test_select_related_only_proxy_model_defer(self):
++        """Test that defer() also works correctly with proxy models."""
++        # Test defer() as the counterpart to only()
++        queryset = AnotherModel.objects.select_related("custom").defer("title")
++        
++        results = list(queryset)
++        self.assertEqual(len(results), 3)
++        
++        # Verify that custom fields are accessible
++        for result in results:
++            if result.custom:
++                self.assertEqual(result.custom.name, "test_custom")
++    
++    def test_select_related_only_proxy_model_edge_case_empty_only(self):
++        """Test edge case with empty only() call."""
++        # This should still work (though not very useful)
++        queryset = AnotherModel.objects.select_related("custom").only()
++        
++        # Should not raise an exception
++        results = list(queryset)
++        self.assertEqual(len(results), 3)
++    
++    def test_select_related_only_proxy_model_nonexistent_field(self):
++        """Test error handling for nonexistent fields."""
++        queryset = AnotherModel.objects.select_related("custom").only("custom__nonexistent")
++        
++        # This should raise a FieldError when evaluated
++        with self.assertRaises(models.FieldError):
++            list(queryset)
++
++
++# Additional test for the specific error case mentioned in the issue
++class ProxyModelBugReproductionTest(TestCase):
++    """Test that reproduces the exact bug scenario from the issue."""
++    
++    @classmethod
++    def setUpTestData(cls):
++        """Set up test data matching the issue description."""
++        cls.custom_instance = CustomModel.objects.create(name="test_name")
++        cls.another_instance = AnotherModel.objects.create(custom=cls.custom_instance)
++    
++    def test_reproduce_original_bug(self):
++        """
++        Reproduce the exact scenario from the bug report.
++        
++        This test should fail before the fix is applied and pass after.
++        The original error was: ValueError: 'id' is not in list
++        """
++        # This is the exact query from the bug report
++        queryset = AnotherModel.objects.select_related("custom").only("custom__name")
++        
++        # Before the fix, this would raise: ValueError: 'id' is not in list
++        # After the fix, this should work correctly
++        results = list(queryset)
++        
++        # Verify the query executed successfully
++        self.assertEqual(len(results), 1)
++        self.assertEqual(results[0].custom.name, "test_name")
++        
++        # Verify that the primary key is accessible even though not explicitly in only()
++        # This is important because the pk should be automatically included
++        self.assertIsNotNone(results[0].custom.pk)

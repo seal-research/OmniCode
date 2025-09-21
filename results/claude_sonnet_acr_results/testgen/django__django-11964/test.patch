@@ -1,0 +1,222 @@
+--- a/tests/model_fields/test_choices_enum_bug.py
++++ b/tests/model_fields/test_choices_enum_bug.py
++import pytest
++from django.db import models
++from django.test import TestCase
++from django.utils.translation import gettext_lazy as _
++
++
++class MyTextChoice(models.TextChoices):
++    FIRST_CHOICE = "first", _("The first choice, it is")
++    SECOND_CHOICE = "second", _("The second choice, it is")
++
++
++class MyIntegerChoice(models.IntegerChoices):
++    FIRST_CHOICE = 1, _("The first choice, it is")
++    SECOND_CHOICE = 2, _("The second choice, it is")
++
++
++class MyTextObject(models.Model):
++    my_str_value = models.CharField(max_length=10, choices=MyTextChoice.choices)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class MyIntegerObject(models.Model):
++    my_int_value = models.IntegerField(choices=MyIntegerChoice.choices)
++    
++    class Meta:
++        app_label = 'test_app'
++
++
++class TextChoicesFieldBugTest(TestCase):
++    """Test that TextChoices field values have consistent types."""
++    
++    def test_created_text_object_returns_str_value(self):
++        """Test that a newly created object with TextChoices returns str value."""
++        my_object = MyTextObject.objects.create(my_str_value=MyTextChoice.FIRST_CHOICE)
++        
++        # The field value should be a string, not an enum instance
++        self.assertIsInstance(my_object.my_str_value, str)
++        self.assertEqual(my_object.my_str_value, "first")
++        self.assertEqual(str(my_object.my_str_value), "first")
++        
++        # Should not be an enum instance
++        self.assertNotIsInstance(my_object.my_str_value, MyTextChoice)
++    
++    def test_retrieved_text_object_returns_str_value(self):
++        """Test that a database-retrieved object with TextChoices returns str value."""
++        MyTextObject.objects.create(my_str_value=MyTextChoice.FIRST_CHOICE)
++        my_object = MyTextObject.objects.last()
++        
++        # The field value should be a string, not an enum instance
++        self.assertIsInstance(my_object.my_str_value, str)
++        self.assertEqual(my_object.my_str_value, "first")
++        self.assertEqual(str(my_object.my_str_value), "first")
++        
++        # Should not be an enum instance
++        self.assertNotIsInstance(my_object.my_str_value, MyTextChoice)
++    
++    def test_text_choices_consistency_between_created_and_retrieved(self):
++        """Test that created and retrieved objects have consistent field value types."""
++        # Create object
++        created_object = MyTextObject.objects.create(my_str_value=MyTextChoice.SECOND_CHOICE)
++        
++        # Retrieve object
++        retrieved_object = MyTextObject.objects.get(pk=created_object.pk)
++        
++        # Both should return the same type and value
++        self.assertEqual(type(created_object.my_str_value), type(retrieved_object.my_str_value))
++        self.assertEqual(created_object.my_str_value, retrieved_object.my_str_value)
++        self.assertEqual(str(created_object.my_str_value), str(retrieved_object.my_str_value))
++        
++        # Both should be strings
++        self.assertIsInstance(created_object.my_str_value, str)
++        self.assertIsInstance(retrieved_object.my_str_value, str)
++    
++    def test_text_choices_with_string_assignment(self):
++        """Test that assigning string values directly also works correctly."""
++        my_object = MyTextObject.objects.create(my_str_value="first")
++        
++        # Should still return a string
++        self.assertIsInstance(my_object.my_str_value, str)
++        self.assertEqual(my_object.my_str_value, "first")
++        
++        # Retrieve from database
++        retrieved_object = MyTextObject.objects.get(pk=my_object.pk)
++        self.assertIsInstance(retrieved_object.my_str_value, str)
++        self.assertEqual(retrieved_object.my_str_value, "first")
++
++
++class IntegerChoicesFieldBugTest(TestCase):
++    """Test that IntegerChoices field values have consistent types."""
++    
++    def test_created_integer_object_returns_int_value(self):
++        """Test that a newly created object with IntegerChoices returns int value."""
++        my_object = MyIntegerObject.objects.create(my_int_value=MyIntegerChoice.FIRST_CHOICE)
++        
++        # The field value should be an integer, not an enum instance
++        self.assertIsInstance(my_object.my_int_value, int)
++        self.assertEqual(my_object.my_int_value, 1)
++        self.assertEqual(str(my_object.my_int_value), "1")
++        
++        # Should not be an enum instance
++        self.assertNotIsInstance(my_object.my_int_value, MyIntegerChoice)
++    
++    def test_retrieved_integer_object_returns_int_value(self):
++        """Test that a database-retrieved object with IntegerChoices returns int value."""
++        MyIntegerObject.objects.create(my_int_value=MyIntegerChoice.FIRST_CHOICE)
++        my_object = MyIntegerObject.objects.last()
++        
++        # The field value should be an integer, not an enum instance
++        self.assertIsInstance(my_object.my_int_value, int)
++        self.assertEqual(my_object.my_int_value, 1)
++        self.assertEqual(str(my_object.my_int_value), "1")
++        
++        # Should not be an enum instance
++        self.assertNotIsInstance(my_object.my_int_value, MyIntegerChoice)
++    
++    def test_integer_choices_consistency_between_created_and_retrieved(self):
++        """Test that created and retrieved objects have consistent field value types."""
++        # Create object
++        created_object = MyIntegerObject.objects.create(my_int_value=MyIntegerChoice.SECOND_CHOICE)
++        
++        # Retrieve object
++        retrieved_object = MyIntegerObject.objects.get(pk=created_object.pk)
++        
++        # Both should return the same type and value
++        self.assertEqual(type(created_object.my_int_value), type(retrieved_object.my_int_value))
++        self.assertEqual(created_object.my_int_value, retrieved_object.my_int_value)
++        self.assertEqual(str(created_object.my_int_value), str(retrieved_object.my_int_value))
++        
++        # Both should be integers
++        self.assertIsInstance(created_object.my_int_value, int)
++        self.assertIsInstance(retrieved_object.my_int_value, int)
++    
++    def test_integer_choices_with_int_assignment(self):
++        """Test that assigning integer values directly also works correctly."""
++        my_object = MyIntegerObject.objects.create(my_int_value=1)
++        
++        # Should still return an integer
++        self.assertIsInstance(my_object.my_int_value, int)
++        self.assertEqual(my_object.my_int_value, 1)
++        
++        # Retrieve from database
++        retrieved_object = MyIntegerObject.objects.get(pk=my_object.pk)
++        self.assertIsInstance(retrieved_object.my_int_value, int)
++        self.assertEqual(retrieved_object.my_int_value, 1)
++
++
++class ChoicesFieldEdgeCasesTest(TestCase):
++    """Test edge cases for choices fields."""
++    
++    def test_none_values_handled_correctly(self):
++        """Test that None values are handled correctly for nullable choice fields."""
++        # Create models with nullable choice fields
++        class NullableTextObject(models.Model):
++            my_str_value = models.CharField(max_length=10, choices=MyTextChoice.choices, null=True, blank=True)
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        class NullableIntegerObject(models.Model):
++            my_int_value = models.IntegerField(choices=MyIntegerChoice.choices, null=True, blank=True)
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # Test text field with None
++        text_obj = NullableTextObject(my_str_value=None)
++        self.assertIsNone(text_obj.my_str_value)
++        
++        # Test integer field with None
++        int_obj = NullableIntegerObject(my_int_value=None)
++        self.assertIsNone(int_obj.my_int_value)
++    
++    def test_enum_comparison_still_works(self):
++        """Test that enum comparisons still work with the underlying values."""
++        my_object = MyTextObject.objects.create(my_str_value=MyTextChoice.FIRST_CHOICE)
++        
++        # Should be able to compare with enum values
++        self.assertEqual(my_object.my_str_value, MyTextChoice.FIRST_CHOICE.value)
++        self.assertEqual(my_object.my_str_value, "first")
++        
++        # Should also work with the enum itself due to enum's __eq__ implementation
++        self.assertEqual(my_object.my_str_value, MyTextChoice.FIRST_CHOICE)
++    
++    def test_field_assignment_after_creation(self):
++        """Test that field assignment after object creation works correctly."""
++        my_object = MyTextObject.objects.create(my_str_value=MyTextChoice.FIRST_CHOICE)
++        
++        # Assign new enum value
++        my_object.my_str_value = MyTextChoice.SECOND_CHOICE
++        
++        # Should return the underlying value
++        self.assertIsInstance(my_object.my_str_value, str)
++        self.assertEqual(my_object.my_str_value, "second")
++        
++        # Save and retrieve
++        my_object.save()
++        retrieved_object = MyTextObject.objects.get(pk=my_object.pk)
++        self.assertIsInstance(retrieved_object.my_str_value, str)
++        self.assertEqual(retrieved_object.my_str_value, "second")
++
++
++class ChoicesDisplayMethodTest(TestCase):
++    """Test that get_FOO_display methods work correctly with the fix."""
++    
++    def test_get_display_method_works_with_created_object(self):
++        """Test that get_FOO_display works correctly with newly created objects."""
++        my_object = MyTextObject.objects.create(my_str_value=MyTextChoice.FIRST_CHOICE)
++        
++        # get_FOO_display should work correctly
++        self.assertEqual(my_object.get_my_str_value_display(), "The first choice, it is")
++    
++    def test_get_display_method_works_with_retrieved_object(self):
++        """Test that get_FOO_display works correctly with retrieved objects."""
++        MyTextObject.objects.create(my_str_value=MyTextChoice.FIRST_CHOICE)
++        my_object = MyTextObject.objects.last()
++        
++        # get_FOO_display should work correctly
++        self.assertEqual(my_object.get_my_str_value_display(), "The first choice, it is")

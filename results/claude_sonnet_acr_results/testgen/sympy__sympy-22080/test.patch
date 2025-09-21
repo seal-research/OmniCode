@@ -1,0 +1,182 @@
+--- a/sympy/utilities/tests/test_lambdify_mod_bug.py
++++ b/sympy/utilities/tests/test_lambdify_mod_bug.py
++import pytest
++import inspect
++from sympy import Mod, lambdify, symbols
++
++
++def test_lambdify_mod_with_modules_empty():
++    """Test that lambdify with modules=[] handles Mod correctly.
++    
++    This test reproduces the bug where -Mod(x, y) becomes (-x % y) 
++    instead of (-(x % y)) when modules=[] is specified.
++    """
++    x, y = symbols('x y')
++    
++    # Test case from the issue description
++    expr = -Mod(x, y)
++    
++    # Test with default modules (should work correctly)
++    f = lambdify([x, y], expr)
++    result_default = f(3, 7)
++    
++    # Test with modules=[] (this is where the bug occurs)
++    g = lambdify([x, y], expr, modules=[])
++    result_modules_empty = g(3, 7)
++    
++    # Both should give the same result
++    assert result_default == result_modules_empty, \
++        f"Results differ: default={result_default}, modules=[]={result_modules_empty}"
++    
++    # The correct result should be -3 (not 4)
++    assert result_default == -3, f"Expected -3, got {result_default}"
++    assert result_modules_empty == -3, f"Expected -3, got {result_modules_empty}"
++
++
++def test_lambdify_mod_source_code_inspection():
++    """Test that the generated source code is correct for Mod with modules=[].
++    
++    This test checks that the source code generated when modules=[] 
++    properly parenthesizes the modulo operation.
++    """
++    x, y = symbols('x y')
++    expr = -Mod(x, y)
++    
++    # Generate function with modules=[]
++    g = lambdify([x, y], expr, modules=[])
++    source = inspect.getsource(g)
++    
++    # The source should contain (-(x % y)) not (-x % y)
++    # We check that the negative sign is not absorbed into the first argument
++    assert "(-x % y)" not in source, \
++        f"Source contains incorrect '(-x % y)': {source}"
++    
++    # The source should properly handle the precedence
++    # It should be something like (-(x % y)) or similar correct form
++    assert "%" in source, f"Source should contain % operator: {source}"
++
++
++def test_lambdify_mod_positive_case():
++    """Test that positive Mod expressions work correctly with modules=[]."""
++    x, y = symbols('x y')
++    expr = Mod(x, y)
++    
++    f = lambdify([x, y], expr)
++    g = lambdify([x, y], expr, modules=[])
++    
++    # Test with various values
++    test_cases = [(3, 7), (10, 3), (5, 2), (7, 7)]
++    
++    for x_val, y_val in test_cases:
++        result_default = f(x_val, y_val)
++        result_modules_empty = g(x_val, y_val)
++        
++        assert result_default == result_modules_empty, \
++            f"Results differ for ({x_val}, {y_val}): default={result_default}, modules=[]={result_modules_empty}"
++        
++        # Verify against Python's built-in modulo
++        expected = x_val % y_val
++        assert result_default == expected, \
++            f"Expected {expected}, got {result_default} for ({x_val}, {y_val})"
++
++
++def test_lambdify_mod_multiplication_case():
++    """Test Mod expressions multiplied by constants with modules=[]."""
++    x, y = symbols('x y')
++    
++    # Test case: 2 * Mod(x, y)
++    expr = 2 * Mod(x, y)
++    
++    f = lambdify([x, y], expr)
++    g = lambdify([x, y], expr, modules=[])
++    
++    result_default = f(3, 7)
++    result_modules_empty = g(3, 7)
++    
++    assert result_default == result_modules_empty, \
++        f"Results differ: default={result_default}, modules=[]={result_modules_empty}"
++    
++    # Expected: 2 * (3 % 7) = 2 * 3 = 6
++    assert result_default == 6, f"Expected 6, got {result_default}"
++
++
++def test_lambdify_mod_complex_expression():
++    """Test more complex expressions involving Mod with modules=[]."""
++    x, y, z = symbols('x y z')
++    
++    # Test case: -2 * Mod(x, y) + z
++    expr = -2 * Mod(x, y) + z
++    
++    f = lambdify([x, y, z], expr)
++    g = lambdify([x, y, z], expr, modules=[])
++    
++    result_default = f(3, 7, 10)
++    result_modules_empty = g(3, 7, 10)
++    
++    assert result_default == result_modules_empty, \
++        f"Results differ: default={result_default}, modules=[]={result_modules_empty}"
++    
++    # Expected: -2 * (3 % 7) + 10 = -2 * 3 + 10 = 4
++    assert result_default == 4, f"Expected 4, got {result_default}"
++
++
++def test_lambdify_mod_nested_case():
++    """Test nested Mod expressions with modules=[]."""
++    x, y, z = symbols('x y z')
++    
++    # Test case: Mod(Mod(x, y), z)
++    expr = Mod(Mod(x, y), z)
++    
++    f = lambdify([x, y, z], expr)
++    g = lambdify([x, y, z], expr, modules=[])
++    
++    result_default = f(10, 3, 2)
++    result_modules_empty = g(10, 3, 2)
++    
++    assert result_default == result_modules_empty, \
++        f"Results differ: default={result_default}, modules=[]={result_modules_empty}"
++    
++    # Expected: (10 % 3) % 2 = 1 % 2 = 1
++    assert result_default == 1, f"Expected 1, got {result_default}"
++
++
++def test_lambdify_mod_edge_cases():
++    """Test edge cases for Mod with modules=[]."""
++    x, y = symbols('x y')
++    
++    # Test with negative numbers
++    expr = Mod(x, y)
++    g = lambdify([x, y], expr, modules=[])
++    
++    # Test cases with negative values
++    test_cases = [
++        (-3, 7, -3 % 7),   # Python: -3 % 7 = 4
++        (3, -7, 3 % -7),   # Python: 3 % -7 = -4
++        (-3, -7, -3 % -7), # Python: -3 % -7 = -3
++    ]
++    
++    for x_val, y_val, expected in test_cases:
++        result = g(x_val, y_val)
++        assert result == expected, \
++            f"For Mod({x_val}, {y_val}): expected {expected}, got {result}"
++
++
++def test_lambdify_mod_fails_before_fix():
++    """Test that demonstrates the bug exists before the fix.
++    
++    This test should fail before the fix is applied and pass after.
++    It specifically tests the case mentioned in the issue.
++    """
++    x, y = symbols('x y')
++    expr = -Mod(x, y)
++    
++    # This should fail before the fix
++    g = lambdify([x, y], expr, modules=[])
++    result = g(3, 7)
++    
++    # Before fix: this would be 4 (incorrect)
++    # After fix: this should be -3 (correct)
++    # The test expects the correct behavior
++    assert result == -3, \
++        f"Bug still exists: expected -3, got {result}. " \
++        f"This indicates -Mod(x,y) is being converted to (-x % y) instead of (-(x % y))"

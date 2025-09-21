@@ -1,0 +1,228 @@
+--- a/tests/admin_scripts/test_call_command_mutually_exclusive.py
++++ b/tests/admin_scripts/test_call_command_mutually_exclusive.py
+-# Empty if creating new file
++import pytest
++from django.core.management import call_command
++from django.core.management.base import BaseCommand, CommandError
++from django.test import TestCase
++
++
++class TestMutuallyExclusiveCommand(BaseCommand):
++    """Test command with mutually exclusive required arguments."""
++    
++    def add_arguments(self, parser):
++        # Create a required mutually exclusive group like in the issue
++        shop = parser.add_mutually_exclusive_group(required=True)
++        shop.add_argument('--shop-id', nargs='?', type=int, default=None, dest='shop_id')
++        shop.add_argument('--shop', nargs='?', type=str, default=None, dest='shop_name')
++        
++        # Add a regular required argument for comparison
++        parser.add_argument('--required-arg', required=True, type=str, dest='required_arg')
++        
++        # Add an optional mutually exclusive group
++        optional_group = parser.add_mutually_exclusive_group(required=False)
++        optional_group.add_argument('--opt1', type=str, dest='opt1')
++        optional_group.add_argument('--opt2', type=str, dest='opt2')
++    
++    def handle(self, *args, **options):
++        return {
++            'shop_id': options.get('shop_id'),
++            'shop_name': options.get('shop_name'),
++            'required_arg': options.get('required_arg'),
++            'opt1': options.get('opt1'),
++            'opt2': options.get('opt2'),
++        }
++
++
++class TestCallCommandMutuallyExclusive(TestCase):
++    """Test call_command with mutually exclusive groups."""
++    
++    def setUp(self):
++        self.command = TestMutuallyExclusiveCommand()
++    
++    def test_call_command_with_shop_id_kwarg_should_work(self):
++        """
++        Test that call_command works when passing shop_id as kwarg.
++        This is the main bug described in the issue.
++        """
++        # This should work but currently fails with:
++        # CommandError: Error: one of the arguments --shop-id --shop is required
++        result = call_command(self.command, shop_id=1, required_arg='test')
++        
++        self.assertEqual(result['shop_id'], 1)
++        self.assertIsNone(result['shop_name'])
++        self.assertEqual(result['required_arg'], 'test')
++    
++    def test_call_command_with_shop_name_kwarg_should_work(self):
++        """Test that call_command works when passing shop_name as kwarg."""
++        result = call_command(self.command, shop_name='myshop', required_arg='test')
++        
++        self.assertIsNone(result['shop_id'])
++        self.assertEqual(result['shop_name'], 'myshop')
++        self.assertEqual(result['required_arg'], 'test')
++    
++    def test_call_command_with_shop_id_arg_works(self):
++        """Test that call_command works with --shop-id as positional arg (current working case)."""
++        result = call_command(self.command, '--shop-id=1', '--required-arg=test')
++        
++        self.assertEqual(result['shop_id'], 1)
++        self.assertIsNone(result['shop_name'])
++        self.assertEqual(result['required_arg'], 'test')
++    
++    def test_call_command_with_shop_name_arg_works(self):
++        """Test that call_command works with --shop as positional arg."""
++        result = call_command(self.command, '--shop=myshop', '--required-arg=test')
++        
++        self.assertIsNone(result['shop_id'])
++        self.assertEqual(result['shop_name'], 'myshop')
++        self.assertEqual(result['required_arg'], 'test')
++    
++    def test_call_command_with_both_mutually_exclusive_kwargs_fails(self):
++        """Test that providing both mutually exclusive arguments fails."""
++        with self.assertRaises(CommandError):
++            call_command(self.command, shop_id=1, shop_name='myshop', required_arg='test')
++    
++    def test_call_command_with_neither_mutually_exclusive_kwarg_fails(self):
++        """Test that providing neither required mutually exclusive argument fails."""
++        with self.assertRaises(CommandError):
++            call_command(self.command, required_arg='test')
++    
++    def test_call_command_with_regular_required_kwarg_works(self):
++        """Test that regular required arguments still work as expected."""
++        result = call_command(self.command, shop_id=1, required_arg='test')
++        
++        self.assertEqual(result['required_arg'], 'test')
++    
++    def test_call_command_missing_regular_required_kwarg_fails(self):
++        """Test that missing regular required arguments still fail."""
++        with self.assertRaises(CommandError):
++            call_command(self.command, shop_id=1)
++    
++    def test_call_command_with_optional_mutually_exclusive_kwargs(self):
++        """Test that optional mutually exclusive groups work with kwargs."""
++        result = call_command(self.command, shop_id=1, required_arg='test', opt1='value1')
++        
++        self.assertEqual(result['opt1'], 'value1')
++        self.assertIsNone(result['opt2'])
++    
++    def test_call_command_with_both_optional_mutually_exclusive_kwargs_fails(self):
++        """Test that providing both optional mutually exclusive arguments fails."""
++        with self.assertRaises(CommandError):
++            call_command(self.command, shop_id=1, required_arg='test', opt1='value1', opt2='value2')
++
++
++class TestComplexMutuallyExclusiveCommand(BaseCommand):
++    """Test command with multiple mutually exclusive groups."""
++    
++    def add_arguments(self, parser):
++        # First required mutually exclusive group
++        shop = parser.add_mutually_exclusive_group(required=True)
++        shop.add_argument('--shop-id', type=int, dest='shop_id')
++        shop.add_argument('--shop-name', type=str, dest='shop_name')
++        
++        # Second required mutually exclusive group
++        format_group = parser.add_mutually_exclusive_group(required=True)
++        format_group.add_argument('--json', action='store_true', dest='json_format')
++        format_group.add_argument('--xml', action='store_true', dest='xml_format')
++        format_group.add_argument('--csv', action='store_true', dest='csv_format')
++    
++    def handle(self, *args, **options):
++        return options
++
++
++class TestCallCommandMultipleGroups(TestCase):
++    """Test call_command with multiple mutually exclusive groups."""
++    
++    def setUp(self):
++        self.command = TestComplexMutuallyExclusiveCommand()
++    
++    def test_call_command_with_multiple_required_groups_kwargs(self):
++        """Test that call_command works with multiple required mutually exclusive groups."""
++        result = call_command(self.command, shop_id=1, json_format=True)
++        
++        self.assertEqual(result['shop_id'], 1)
++        self.assertIsNone(result['shop_name'])
++        self.assertTrue(result['json_format'])
++        self.assertFalse(result['xml_format'])
++        self.assertFalse(result['csv_format'])
++    
++    def test_call_command_missing_one_required_group_fails(self):
++        """Test that missing one required group fails."""
++        with self.assertRaises(CommandError):
++            call_command(self.command, shop_id=1)  # Missing format group
++    
++    def test_call_command_missing_both_required_groups_fails(self):
++        """Test that missing both required groups fails."""
++        with self.assertRaises(CommandError):
++            call_command(self.command)
++
++
++class TestEdgeCasesCommand(BaseCommand):
++    """Test command for edge cases."""
++    
++    def add_arguments(self, parser):
++        # Group with long option names and different dest names
++        group = parser.add_mutually_exclusive_group(required=True)
++        group.add_argument('--very-long-option-name', dest='short_dest', type=str)
++        group.add_argument('--another-long-name', dest='another_dest', type=str)
++        
++        # Group with short options
++        short_group = parser.add_mutually_exclusive_group(required=True)
++        short_group.add_argument('-a', '--alpha', dest='alpha_val', type=str)
++        short_group.add_argument('-b', '--beta', dest='beta_val', type=str)
++    
++    def handle(self, *args, **options):
++        return options
++
++
++class TestCallCommandEdgeCases(TestCase):
++    """Test edge cases for call_command with mutually exclusive groups."""
++    
++    def setUp(self):
++        self.command = TestEdgeCasesCommand()
++    
++    def test_call_command_with_long_option_names(self):
++        """Test that call_command works with long option names and different dest."""
++        result = call_command(self.command, short_dest='value', alpha_val='alpha')
++        
++        self.assertEqual(result['short_dest'], 'value')
++        self.assertIsNone(result['another_dest'])
++        self.assertEqual(result['alpha_val'], 'alpha')
++        self.assertIsNone(result['beta_val'])
++    
++    def test_call_command_with_short_options_as_kwargs(self):
++        """Test that call_command works with short option destinations as kwargs."""
++        result = call_command(self.command, short_dest='value', beta_val='beta')
++        
++        self.assertEqual(result['short_dest'], 'value')
++        self.assertEqual(result['beta_val'], 'beta')
++
++
++# Test to demonstrate the bug before fix
++class TestBugReproduction(TestCase):
++    """Test that reproduces the exact bug described in the issue."""
++    
++    def test_reproduce_original_bug(self):
++        """
++        This test reproduces the exact scenario from the issue.
++        Before the fix, this should fail with:
++        CommandError: Error: one of the arguments --shop-id --shop is required
++        """
++        command = TestMutuallyExclusiveCommand()
++        
++        # This call should work but currently fails
++        with self.assertRaises(CommandError) as cm:
++            call_command(command, shop_id=1, required_arg='test')
++        
++        # Verify it's the specific error mentioned in the issue
++        self.assertIn("one of the arguments --shop-id --shop is required", str(cm.exception))
++    
++    def test_workaround_with_args_works(self):
++        """Test that the workaround mentioned in the issue works."""
++        command = TestMutuallyExclusiveCommand()
++        
++        # This should work (the workaround from the issue)
++        result = call_command(command, '--shop-id=1', '--required-arg=test')
++        
++        self.assertEqual(result['shop_id'], 1)
++        self.assertEqual(result['required_arg'], 'test')

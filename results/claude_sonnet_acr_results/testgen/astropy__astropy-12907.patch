@@ -1,0 +1,6 @@
+{
+  "instance_id": "astropy__astropy-12907",
+  "status": "success",
+  "patch_file": "../../results/claude_sonnet_acr_results/testgen/astropy__astropy-12907/test.patch",
+  "pred_file": "../../results/claude_sonnet_acr_results/testgen/astropy__astropy-12907/astropy__astropy-12907.pred"
+}

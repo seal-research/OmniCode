@@ -1,0 +1,259 @@
+--- a/tests/model_fields/test_field_hash_immutability.py
++++ b/tests/model_fields/test_field_hash_immutability.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase
++
++
++class FieldHashImmutabilityTests(TestCase):
++    """
++    Test that Field.__hash__() remains immutable when a field is assigned to a model class.
++    This tests the bug described in the issue where Field.__hash__ changes value when
++    a field is assigned to a model class, breaking its use in dictionaries.
++    """
++
++    def test_field_hash_immutable_before_and_after_model_assignment(self):
++        """
++        Test that a field's hash remains the same before and after being assigned to a model.
++        This is the main test case that reproduces the bug described in the issue.
++        """
++        # Create a field before assigning it to any model
++        f = models.CharField(max_length=200)
++        
++        # Get the hash before model assignment
++        hash_before = hash(f)
++        
++        # Create a model class and assign the field to it
++        class Book(models.Model):
++            title = f
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # Get the hash after model assignment
++        hash_after = hash(f)
++        
++        # The hash should remain the same
++        self.assertEqual(hash_before, hash_after, 
++                        "Field hash changed after being assigned to a model class")
++
++    def test_field_can_be_used_as_dict_key_before_model_assignment(self):
++        """
++        Test that a field can be used as a dictionary key before being assigned to a model.
++        This reproduces the exact scenario described in the issue.
++        """
++        # Create a field and use it as a dictionary key
++        f = models.CharField(max_length=200)
++        d = {f: 1}
++        
++        # Verify the field is in the dictionary
++        self.assertIn(f, d)
++        self.assertEqual(d[f], 1)
++        
++        # Assign the field to a model class
++        class Book(models.Model):
++            title = f
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # The field should still be found in the dictionary
++        # This assertion would fail with the buggy implementation
++        self.assertIn(f, d, "Field not found in dictionary after model assignment")
++        self.assertEqual(d[f], 1, "Dictionary value changed after model assignment")
++
++    def test_multiple_fields_hash_consistency(self):
++        """
++        Test that multiple fields maintain hash consistency when assigned to models.
++        """
++        # Create multiple fields
++        field1 = models.CharField(max_length=100)
++        field2 = models.IntegerField()
++        field3 = models.TextField()
++        
++        # Store their hashes before model assignment
++        hashes_before = {
++            'field1': hash(field1),
++            'field2': hash(field2),
++            'field3': hash(field3),
++        }
++        
++        # Create a model with all fields
++        class TestModel(models.Model):
++            char_field = field1
++            int_field = field2
++            text_field = field3
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # Check that all hashes remain the same
++        self.assertEqual(hash(field1), hashes_before['field1'])
++        self.assertEqual(hash(field2), hashes_before['field2'])
++        self.assertEqual(hash(field3), hashes_before['field3'])
++
++    def test_field_hash_uniqueness_based_on_creation_counter(self):
++        """
++        Test that different fields have different hashes based on their creation_counter.
++        """
++        # Create multiple fields of the same type
++        field1 = models.CharField(max_length=100)
++        field2 = models.CharField(max_length=100)
++        field3 = models.CharField(max_length=100)
++        
++        # They should have different hashes due to different creation_counter values
++        hash1 = hash(field1)
++        hash2 = hash(field2)
++        hash3 = hash(field3)
++        
++        self.assertNotEqual(hash1, hash2)
++        self.assertNotEqual(hash2, hash3)
++        self.assertNotEqual(hash1, hash3)
++        
++        # Hashes should remain different after model assignment
++        class TestModel(models.Model):
++            field1 = field1
++            field2 = field2
++            field3 = field3
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        self.assertEqual(hash(field1), hash1)
++        self.assertEqual(hash(field2), hash2)
++        self.assertEqual(hash(field3), hash3)
++
++    def test_field_in_set_before_and_after_model_assignment(self):
++        """
++        Test that a field can be used in sets before and after model assignment.
++        """
++        # Create fields and add them to a set
++        field1 = models.CharField(max_length=100)
++        field2 = models.IntegerField()
++        
++        field_set = {field1, field2}
++        
++        # Verify fields are in the set
++        self.assertIn(field1, field_set)
++        self.assertIn(field2, field_set)
++        self.assertEqual(len(field_set), 2)
++        
++        # Assign fields to a model
++        class TestModel(models.Model):
++            char_field = field1
++            int_field = field2
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # Fields should still be in the set
++        self.assertIn(field1, field_set)
++        self.assertIn(field2, field_set)
++        self.assertEqual(len(field_set), 2)
++
++    def test_field_hash_with_different_field_types(self):
++        """
++        Test hash immutability across different field types.
++        """
++        # Test various field types
++        fields = [
++            models.CharField(max_length=100),
++            models.IntegerField(),
++            models.TextField(),
++            models.BooleanField(),
++            models.DateField(),
++            models.DateTimeField(),
++            models.EmailField(),
++            models.FloatField(),
++            models.URLField(),
++        ]
++        
++        # Store hashes before model assignment
++        hashes_before = [hash(field) for field in fields]
++        
++        # Create a model with all field types
++        class MultiFieldModel(models.Model):
++            char_field = fields[0]
++            int_field = fields[1]
++            text_field = fields[2]
++            bool_field = fields[3]
++            date_field = fields[4]
++            datetime_field = fields[5]
++            email_field = fields[6]
++            float_field = fields[7]
++            url_field = fields[8]
++            
++            class Meta:
++                app_label = 'test_app'
++        
++        # Check that all hashes remain the same
++        hashes_after = [hash(field) for field in fields]
++        self.assertEqual(hashes_before, hashes_after)
++
++    def test_field_equality_still_works_after_hash_fix(self):
++        """
++        Test that field equality comparison still works correctly after fixing the hash.
++        This ensures that the fix doesn't break the equality functionality that was
++        addressed in the original ticket #31750.
++        """
++        # Create two identical fields
++        field1 = models.CharField(max_length=100)
++        field2 = models.CharField(max_length=100)
++        
++        # They should not be equal (different creation_counter)
++        self.assertNotEqual(field1, field2)
++        
++        # Same field should be equal to itself
++        self.assertEqual(field1, field1)
++        
++        # Assign to models
++        class Model1(models.Model):
++            field = field1
++            
++            class Meta:
++                app_label = 'test_app1'
++        
++        class Model2(models.Model):
++            field = field2
++            
++            class Meta:
++                app_label = 'test_app2'
++        
++        # Equality should still work the same way
++        self.assertNotEqual(field1, field2)
++        self.assertEqual(field1, field1)
++        self.assertEqual(field2, field2)
++
++    def test_cloned_field_has_different_hash(self):
++        """
++        Test that cloned fields have different hashes due to different creation_counter.
++        """
++        # Create a field
++        original_field = models.CharField(max_length=100)
++        original_hash = hash(original_field)
++        
++        # Clone the field
++        cloned_field = original_field.clone()
++        cloned_hash = hash(cloned_field)
++        
++        # Cloned field should have a different hash
++        self.assertNotEqual(original_hash, cloned_hash)
++        
++        # Assign both to models
++        class OriginalModel(models.Model):
++            field = original_field
++            
++            class Meta:
++                app_label = 'original_app'
++        
++        class ClonedModel(models.Model):
++            field = cloned_field
++            
++            class Meta:
++                app_label = 'cloned_app'
++        
++        # Hashes should remain different and unchanged
++        self.assertEqual(hash(original_field), original_hash)
++        self.assertEqual(hash(cloned_field), cloned_hash)
++        self.assertNotEqual(hash(original_field), hash(cloned_field))

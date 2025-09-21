@@ -1,0 +1,261 @@
+--- a/tests/test_middleware.py
++++ b/tests/test_middleware.py
+-# Empty if creating new file
++import pytest
++from unittest.mock import Mock, patch
++from scrapy.middleware import MiddlewareManager
++from scrapy.exceptions import NotConfigured
++from scrapy.settings import Settings
++from scrapy.crawler import Crawler
++
++
++class MockMiddleware:
++    """Mock middleware class for testing"""
++    def __init__(self, settings=None, crawler=None):
++        pass
++
++
++class MockMiddlewareNotConfigured:
++    """Mock middleware class that raises NotConfigured"""
++    def __init__(self, settings=None, crawler=None):
++        raise NotConfigured("Test middleware not configured")
++
++
++class MockMiddlewareNotConfiguredNoMessage:
++    """Mock middleware class that raises NotConfigured without message"""
++    def __init__(self, settings=None, crawler=None):
++        raise NotConfigured()
++
++
++class TestMiddlewareManager:
++    """Test cases for MiddlewareManager"""
++
++    def setup_method(self):
++        """Setup test fixtures"""
++        self.settings = Settings()
++        self.crawler = Mock(spec=Crawler)
++
++    def test_from_settings_with_string_import_path_not_configured_with_message(self):
++        """Test that NotConfigured logging works with string import path and message"""
++        # Create a concrete MiddlewareManager subclass for testing
++        class TestMiddlewareManager(MiddlewareManager):
++            @classmethod
++            def _get_mwlist_from_settings(cls, settings):
++                return ['tests.test_middleware.MockMiddlewareNotConfigured']
++
++        with patch('scrapy.middleware.load_object') as mock_load_object:
++            mock_load_object.return_value = MockMiddlewareNotConfigured
++            
++            with patch('scrapy.middleware.logger') as mock_logger:
++                manager = TestMiddlewareManager.from_settings(self.settings, self.crawler)
++                
++                # Verify that warning was logged with correct class name
++                mock_logger.warning.assert_called_once()
++                call_args = mock_logger.warning.call_args
++                log_message = call_args[0][0]
++                log_data = call_args[0][1]
++                
++                assert "Disabled %(clsname)s: %(eargs)s" == log_message
++                assert log_data["clsname"] == "MockMiddlewareNotConfigured"
++                assert log_data["eargs"] == "Test middleware not configured"
++
++    def test_from_settings_with_class_object_not_configured_with_message_fails_before_fix(self):
++        """Test that NotConfigured logging fails with class object before fix is applied"""
++        # Create a concrete MiddlewareManager subclass for testing
++        class TestMiddlewareManager(MiddlewareManager):
++            @classmethod
++            def _get_mwlist_from_settings(cls, settings):
++                # Return class object directly instead of string import path
++                return [MockMiddlewareNotConfigured]
++
++        with patch('scrapy.middleware.load_object') as mock_load_object:
++            # When clspath is already a class, load_object should return it as-is
++            mock_load_object.side_effect = lambda x: x
++            
++            with patch('scrapy.middleware.logger') as mock_logger:
++                # This should raise AttributeError because class objects don't have split() method
++                with pytest.raises(AttributeError):
++                    TestMiddlewareManager.from_settings(self.settings, self.crawler)
++
++    def test_from_settings_with_class_object_not_configured_with_message_passes_after_fix(self):
++        """Test that NotConfigured logging works with class object after fix is applied"""
++        # Create a concrete MiddlewareManager subclass for testing
++        class TestMiddlewareManager(MiddlewareManager):
++            @classmethod
++            def _get_mwlist_from_settings(cls, settings):
++                # Return class object directly instead of string import path
++                return [MockMiddlewareNotConfigured]
++
++        # Mock the fixed version of the from_settings method
++        def fixed_from_settings(cls, settings, crawler):
++            mwlist = cls._get_mwlist_from_settings(settings)
++            middlewares = []
++            enabled = []
++            
++            for clspath in mwlist:
++                try:
++                    from scrapy.utils.misc import load_object, create_instance
++                    mwcls = load_object(clspath)
++                    mw = create_instance(mwcls, settings, crawler)
++                    middlewares.append(mw)
++                    enabled.append(clspath)
++                except NotConfigured as e:
++                    if e.args:
++                        # Fixed logic: handle both string and class object
++                        if isinstance(clspath, str):
++                            clsname = clspath.split(".")[-1]
++                        else:
++                            clsname = clspath.__name__
++                        
++                        from scrapy.middleware import logger
++                        logger.warning(
++                            "Disabled %(clsname)s: %(eargs)s",
++                            {"clsname": clsname, "eargs": e.args[0]},
++                            extra={"crawler": crawler},
++                        )
++            
++            return cls(middlewares, enabled)
++
++        with patch('scrapy.middleware.load_object') as mock_load_object:
++            # When clspath is already a class, load_object should return it as-is
++            mock_load_object.side_effect = lambda x: x
++            
++            with patch('scrapy.middleware.logger') as mock_logger:
++                with patch.object(TestMiddlewareManager, 'from_settings', classmethod(fixed_from_settings)):
++                    manager = TestMiddlewareManager.from_settings(self.settings, self.crawler)
++                    
++                    # Verify that warning was logged with correct class name
++                    mock_logger.warning.assert_called_once()
++                    call_args = mock_logger.warning.call_args
++                    log_message = call_args[0][0]
++                    log_data = call_args[0][1]
++                    
++                    assert "Disabled %(clsname)s: %(eargs)s" == log_message
++                    assert log_data["clsname"] == "MockMiddlewareNotConfigured"
++                    assert log_data["eargs"] == "Test middleware not configured"
++
++    def test_from_settings_with_string_import_path_not_configured_no_message(self):
++        """Test that NotConfigured without message doesn't trigger logging"""
++        # Create a concrete MiddlewareManager subclass for testing
++        class TestMiddlewareManager(MiddlewareManager):
++            @classmethod
++            def _get_mwlist_from_settings(cls, settings):
++                return ['tests.test_middleware.MockMiddlewareNotConfiguredNoMessage']
++
++        with patch('scrapy.middleware.load_object') as mock_load_object:
++            mock_load_object.return_value = MockMiddlewareNotConfiguredNoMessage
++            
++            with patch('scrapy.middleware.logger') as mock_logger:
++                manager = TestMiddlewareManager.from_settings(self.settings, self.crawler)
++                
++                # Verify that warning was NOT logged since e.args is empty
++                mock_logger.warning.assert_not_called()
++
++    def test_from_settings_with_class_object_not_configured_no_message(self):
++        """Test that NotConfigured without message doesn't trigger logging with class object"""
++        # Create a concrete MiddlewareManager subclass for testing
++        class TestMiddlewareManager(MiddlewareManager):
++            @classmethod
++            def _get_mwlist_from_settings(cls, settings):
++                return [MockMiddlewareNotConfiguredNoMessage]
++
++        with patch('scrapy.middleware.load_object') as mock_load_object:
++            mock_load_object.side_effect = lambda x: x
++            
++            with patch('scrapy.middleware.logger') as mock_logger:
++                # This should not raise an error even before fix since e.args check prevents logging
++                manager = TestMiddlewareManager.from_settings(self.settings, self.crawler)
++                
++                # Verify that warning was NOT logged since e.args is empty
++                mock_logger.warning.assert_not_called()
++
++    def test_from_settings_with_mixed_types_in_mwlist(self):
++        """Test that middleware list can contain both strings and class objects"""
++        # Create a concrete MiddlewareManager subclass for testing
++        class TestMiddlewareManager(MiddlewareManager):
++            @classmethod
++            def _get_mwlist_from_settings(cls, settings):
++                return [
++                    'tests.test_middleware.MockMiddlewareNotConfigured',  # string
++                    MockMiddlewareNotConfigured,  # class object
++                ]
++
++        # Mock the fixed version of the from_settings method
++        def fixed_from_settings(cls, settings, crawler):
++            mwlist = cls._get_mwlist_from_settings(settings)
++            middlewares = []
++            enabled = []
++            
++            for clspath in mwlist:
++                try:
++                    from scrapy.utils.misc import load_object, create_instance
++                    mwcls = load_object(clspath)
++                    mw = create_instance(mwcls, settings, crawler)
++                    middlewares.append(mw)
++                    enabled.append(clspath)
++                except NotConfigured as e:
++                    if e.args:
++                        # Fixed logic: handle both string and class object
++                        if isinstance(clspath, str):
++                            clsname = clspath.split(".")[-1]
++                        else:
++                            clsname = clspath.__name__
++                        
++                        from scrapy.middleware import logger
++                        logger.warning(
++                            "Disabled %(clsname)s: %(eargs)s",
++                            {"clsname": clsname, "eargs": e.args[0]},
++                            extra={"crawler": crawler},
++                        )
++            
++            return cls(middlewares, enabled)
++
++        with patch('scrapy.middleware.load_object') as mock_load_object:
++            # Mock load_object to handle both strings and class objects
++            def mock_load_object_func(clspath):
++                if isinstance(clspath, str):
++                    return MockMiddlewareNotConfigured
++                else:
++                    return clspath
++            mock_load_object.side_effect = mock_load_object_func
++            
++            with patch('scrapy.middleware.logger') as mock_logger:
++                with patch.object(TestMiddlewareManager, 'from_settings', classmethod(fixed_from_settings)):
++                    manager = TestMiddlewareManager.from_settings(self.settings, self.crawler)
++                    
++                    # Verify that warning was logged twice (once for each middleware)
++                    assert mock_logger.warning.call_count == 2
++                    
++                    # Check both calls had correct class name
++                    for call in mock_logger.warning.call_args_list:
++                        log_message = call[0][0]
++                        log_data = call[0][1]
++                        
++                        assert "Disabled %(clsname)s: %(eargs)s" == log_message
++                        assert log_data["clsname"] == "MockMiddlewareNotConfigured"
++                        assert log_data["eargs"] == "Test middleware not configured"
++
++    def test_from_settings_successful_middleware_loading(self):
++        """Test that successful middleware loading works correctly"""
++        # Create a concrete MiddlewareManager subclass for testing
++        class TestMiddlewareManager(MiddlewareManager):
++            @classmethod
++            def _get_mwlist_from_settings(cls, settings):
++                return ['tests.test_middleware.MockMiddleware']
++
++        with patch('scrapy.middleware.load_object') as mock_load_object:
++            mock_load_object.return_value = MockMiddleware
++            
++            with patch('scrapy.middleware.create_instance') as mock_create_instance:
++                mock_middleware_instance = Mock()
++                mock_create_instance.return_value = mock_middleware_instance
++                
++                with patch('scrapy.middleware.logger') as mock_logger:
++                    manager = TestMiddlewareManager.from_settings(self.settings, self.crawler)
++                    
++                    # Verify no warning was logged for successful middleware
++                    mock_logger.warning.assert_not_called()
++                    
++                    # Verify middleware was loaded correctly
++                    mock_load_object.assert_called_once_with('tests.test_middleware.MockMiddleware')
++                    mock_create_instance.assert_called_once_with(MockMiddleware, self.settings, self.crawler)

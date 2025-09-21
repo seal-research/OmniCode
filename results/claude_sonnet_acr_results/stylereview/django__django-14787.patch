@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/utils/decorators.py b/django/utils/decorators.py\nindex 5c9a5d01c7..21d5075291 100644\n--- a/django/utils/decorators.py\n+++ b/django/utils/decorators.py\n@@ -14,7 +14,7 @@ def _update_method_wrapper(_wrapper, decorator):\n     # _multi_decorate()'s bound_method isn't available in this scope. Cheat by\n     # using it on a dummy function.\n     @decorator\n-    def dummy(*args, **kwargs):\n+    def dummy(*_args, **_kwargs):\n         pass\n     update_wrapper(_wrapper, dummy)\n \n"
+}

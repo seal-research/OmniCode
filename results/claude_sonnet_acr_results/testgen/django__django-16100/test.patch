@@ -1,0 +1,386 @@
+--- a/tests/admin_views/test_changelist_transaction.py
++++ b/tests/admin_views/test_changelist_transaction.py
+-# Empty if creating new file
++import pytest
++from django.contrib.admin import ModelAdmin
++from django.contrib.admin.sites import AdminSite
++from django.contrib.auth.models import User
++from django.db import IntegrityError, transaction
++from django.http import HttpRequest
++from django.test import TestCase, TransactionTestCase
++from django.test.client import RequestFactory
++from django.urls import reverse
++from unittest.mock import Mock, patch
++
++from .models import Article
++
++
++class MockException(Exception):
++    """Custom exception for testing transaction rollback."""
++    pass
++
++
++class ArticleAdmin(ModelAdmin):
++    list_display = ['title', 'content', 'author']
++    list_editable = ['content', 'author']
++
++
++class ChangelistTransactionTestCase(TransactionTestCase):
++    """
++    Test transaction handling in changelist_view for list_editable processing.
++    Uses TransactionTestCase to properly test transaction behavior.
++    """
++    
++    def setUp(self):
++        self.factory = RequestFactory()
++        self.site = AdminSite()
++        self.admin = ArticleAdmin(Article, self.site)
++        
++        # Create test user
++        self.user = User.objects.create_superuser(
++            username='admin',
++            email='admin@test.com',
++            password='password'
++        )
++        
++        # Create test articles
++        self.article1 = Article.objects.create(
++            title='Article 1',
++            content='Content 1',
++            author='Author 1'
++        )
++        self.article2 = Article.objects.create(
++            title='Article 2', 
++            content='Content 2',
++            author='Author 2'
++        )
++
++    def test_changelist_list_editable_without_transaction_fails_partially(self):
++        """
++        Test that demonstrates the bug: without transaction wrapping,
++        if an error occurs during list_editable processing, some changes
++        may be saved while others are not, leading to inconsistent state.
++        This test should fail before the fix is applied.
++        """
++        # Prepare POST data for list_editable form submission
++        post_data = {
++            '_save': 'Save',
++            'form-TOTAL_FORMS': '2',
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            f'form-0-id': str(self.article1.id),
++            f'form-0-content': 'Updated Content 1',
++            f'form-0-author': 'Updated Author 1',
++            f'form-1-id': str(self.article2.id),
++            f'form-1-content': 'Updated Content 2',
++            f'form-1-author': 'Updated Author 2',
++        }
++        
++        request = self.factory.post('/admin/admin_views/article/', post_data)
++        request.user = self.user
++        
++        # Mock save_model to raise exception on second article
++        original_save_model = self.admin.save_model
++        call_count = 0
++        
++        def mock_save_model(request, obj, form, change):
++            nonlocal call_count
++            call_count += 1
++            if call_count == 2:  # Fail on second save
++                raise MockException("Simulated save error")
++            return original_save_model(request, obj, form, change)
++        
++        with patch.object(self.admin, 'save_model', side_effect=mock_save_model):
++            with pytest.raises(MockException):
++                self.admin.changelist_view(request)
++        
++        # Refresh from database
++        self.article1.refresh_from_db()
++        self.article2.refresh_from_db()
++        
++        # Without transaction, first article would be updated but second wouldn't
++        # This demonstrates the bug - partial updates occur
++        # After the fix, both should remain unchanged due to rollback
++        assert self.article1.content == 'Updated Content 1'  # This shows the bug
++        assert self.article2.content == 'Content 2'  # This remains unchanged
++
++    def test_changelist_list_editable_with_transaction_rolls_back_all_changes(self):
++        """
++        Test that with proper transaction handling, if an error occurs during
++        list_editable processing, ALL changes are rolled back.
++        This test should pass after the fix is applied.
++        """
++        # Store original values
++        original_content1 = self.article1.content
++        original_content2 = self.article2.content
++        original_author1 = self.article1.author
++        original_author2 = self.article2.author
++        
++        # Prepare POST data for list_editable form submission
++        post_data = {
++            '_save': 'Save',
++            'form-TOTAL_FORMS': '2',
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            f'form-0-id': str(self.article1.id),
++            f'form-0-content': 'Updated Content 1',
++            f'form-0-author': 'Updated Author 1',
++            f'form-1-id': str(self.article2.id),
++            f'form-1-content': 'Updated Content 2',
++            f'form-1-author': 'Updated Author 2',
++        }
++        
++        request = self.factory.post('/admin/admin_views/article/', post_data)
++        request.user = self.user
++        
++        # Mock save_related to raise exception on second article
++        original_save_related = self.admin.save_related
++        call_count = 0
++        
++        def mock_save_related(request, form, formsets, change):
++            nonlocal call_count
++            call_count += 1
++            if call_count == 2:  # Fail on second save_related
++                raise MockException("Simulated save_related error")
++            return original_save_related(request, form, formsets, change)
++        
++        with patch.object(self.admin, 'save_related', side_effect=mock_save_related):
++            with pytest.raises(MockException):
++                self.admin.changelist_view(request)
++        
++        # Refresh from database
++        self.article1.refresh_from_db()
++        self.article2.refresh_from_db()
++        
++        # With proper transaction handling, both articles should remain unchanged
++        assert self.article1.content == original_content1
++        assert self.article1.author == original_author1
++        assert self.article2.content == original_content2
++        assert self.article2.author == original_author2
++
++    def test_changelist_list_editable_successful_save_commits_all_changes(self):
++        """
++        Test that when list_editable processing succeeds, all changes are committed.
++        """
++        # Prepare POST data for list_editable form submission
++        post_data = {
++            '_save': 'Save',
++            'form-TOTAL_FORMS': '2',
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            f'form-0-id': str(self.article1.id),
++            f'form-0-content': 'Successfully Updated Content 1',
++            f'form-0-author': 'Successfully Updated Author 1',
++            f'form-1-id': str(self.article2.id),
++            f'form-1-content': 'Successfully Updated Content 2',
++            f'form-1-author': 'Successfully Updated Author 2',
++        }
++        
++        request = self.factory.post('/admin/admin_views/article/', post_data)
++        request.user = self.user
++        
++        # This should succeed without exceptions
++        response = self.admin.changelist_view(request)
++        
++        # Refresh from database
++        self.article1.refresh_from_db()
++        self.article2.refresh_from_db()
++        
++        # All changes should be committed
++        assert self.article1.content == 'Successfully Updated Content 1'
++        assert self.article1.author == 'Successfully Updated Author 1'
++        assert self.article2.content == 'Successfully Updated Content 2'
++        assert self.article2.author == 'Successfully Updated Author 2'
++
++    def test_changelist_list_editable_form_validation_error_no_database_changes(self):
++        """
++        Test that when form validation fails, no database changes occur.
++        """
++        # Store original values
++        original_content1 = self.article1.content
++        original_content2 = self.article2.content
++        
++        # Prepare POST data with invalid form data (missing required field)
++        post_data = {
++            '_save': 'Save',
++            'form-TOTAL_FORMS': '2',
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            f'form-0-id': str(self.article1.id),
++            f'form-0-content': '',  # Empty content should cause validation error
++            f'form-0-author': 'Updated Author 1',
++            f'form-1-id': str(self.article2.id),
++            f'form-1-content': 'Updated Content 2',
++            f'form-1-author': 'Updated Author 2',
++        }
++        
++        request = self.factory.post('/admin/admin_views/article/', post_data)
++        request.user = self.user
++        
++        # This should handle validation errors gracefully
++        response = self.admin.changelist_view(request)
++        
++        # Refresh from database
++        self.article1.refresh_from_db()
++        self.article2.refresh_from_db()
++        
++        # No changes should be made due to validation failure
++        assert self.article1.content == original_content1
++        assert self.article2.content == original_content2
++
++    def test_changelist_list_editable_log_change_error_rolls_back(self):
++        """
++        Test that if log_change fails, all database changes are rolled back.
++        """
++        # Store original values
++        original_content1 = self.article1.content
++        original_author1 = self.article1.author
++        
++        # Prepare POST data for single article update
++        post_data = {
++            '_save': 'Save',
++            'form-TOTAL_FORMS': '1',
++            'form-INITIAL_FORMS': '1',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            f'form-0-id': str(self.article1.id),
++            f'form-0-content': 'Updated Content 1',
++            f'form-0-author': 'Updated Author 1',
++        }
++        
++        request = self.factory.post('/admin/admin_views/article/', post_data)
++        request.user = self.user
++        
++        # Mock log_change to raise exception
++        with patch.object(self.admin, 'log_change', side_effect=MockException("Log change failed")):
++            with pytest.raises(MockException):
++                self.admin.changelist_view(request)
++        
++        # Refresh from database
++        self.article1.refresh_from_db()
++        
++        # Changes should be rolled back due to log_change failure
++        assert self.article1.content == original_content1
++        assert self.article1.author == original_author1
++
++    def test_changelist_non_list_editable_request_not_affected(self):
++        """
++        Test that non-list_editable requests (GET, actions, etc.) are not affected
++        by transaction changes.
++        """
++        # Test GET request
++        request = self.factory.get('/admin/admin_views/article/')
++        request.user = self.user
++        
++        response = self.admin.changelist_view(request)
++        assert response.status_code == 200
++        
++        # Test POST without _save (action)
++        post_data = {
++            'action': 'delete_selected',
++            '_selected_action': [str(self.article1.id)],
++        }
++        request = self.factory.post('/admin/admin_views/article/', post_data)
++        request.user = self.user
++        
++        # This should work normally without transaction interference
++        response = self.admin.changelist_view(request)
++        # Response could be redirect or template response depending on action
++
++
++class ChangelistTransactionIntegrationTest(TestCase):
++    """
++    Integration tests using Django's test client to test the full request/response cycle.
++    """
++    
++    def setUp(self):
++        self.user = User.objects.create_superuser(
++            username='admin',
++            email='admin@test.com', 
++            password='password'
++        )
++        self.client.login(username='admin', password='password')
++        
++        self.article1 = Article.objects.create(
++            title='Article 1',
++            content='Content 1',
++            author='Author 1'
++        )
++        self.article2 = Article.objects.create(
++            title='Article 2',
++            content='Content 2', 
++            author='Author 2'
++        )
++
++    def test_changelist_list_editable_integration_successful_update(self):
++        """
++        Integration test for successful list_editable update through admin interface.
++        """
++        url = reverse('admin:admin_views_article_changelist')
++        
++        # First get the changelist to get the formset data
++        response = self.client.get(url)
++        assert response.status_code == 200
++        
++        # Submit list_editable changes
++        post_data = {
++            '_save': 'Save',
++            'form-TOTAL_FORMS': '2',
++            'form-INITIAL_FORMS': '2',
++            'form-MIN_NUM_FORMS': '0',
++            'form-MAX_NUM_FORMS': '1000',
++            f'form-0-id': str(self.article1.id),
++            f'form-0-content': 'Integration Updated Content 1',
++            f'form-0-author': 'Integration Updated Author 1',
++            f'form-1-id': str(self.article2.id),
++            f'form-1-content': 'Integration Updated Content 2',
++            f'form-1-author': 'Integration Updated Author 2',
++        }
++        
++        response = self.client.post(url, post_data)
++        
++        # Should redirect after successful save
++        assert response.status_code == 302
++        
++        # Verify changes were saved
++        self.article1.refresh_from_db()
++        self.article2.refresh_from_db()
++        
++        assert self.article1.content == 'Integration Updated Content 1'
++        assert self.article1.author == 'Integration Updated Author 1'
++        assert self.article2.content == 'Integration Updated Content 2'
++        assert self.article2.author == 'Integration Updated Author 2'
+
+--- a/tests/admin_views/models.py
++++ b/tests/admin_views/models.py
+-# Empty if creating new file
++from django.db import models
++
++
++class Article(models.Model):
++    """Test model for changelist transaction testing."""
++    title = models.CharField(max_length=100)
++    content = models.TextField()
++    author = models.CharField(max_length=50)
++    
++    def __str__(self):
++        return self.title
++    
++    class Meta:
++        app_label = 'admin_views'
+
+--- a/tests/admin_views/admin.py
++++ b/tests/admin_views/admin.py
+-# Empty if creating new file
++from django.contrib import admin
++from .models import Article
++
++
++@admin.register(Article)
++class ArticleAdmin(admin.ModelAdmin):
++    list_display = ['title', 'content', 'author']
++    list_editable = ['content', 'author']

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/forms/widgets.py b/django/forms/widgets.py\nindex 338d54d72f..c54199f9f0 100644\n--- a/django/forms/widgets.py\n+++ b/django/forms/widgets.py\n@@ -388,6 +388,8 @@ class FileInput(Input):\n         return name not in files\n \n \n+\n+\n FILE_INPUT_CONTRADICTION = object()\n \n \n"
+}

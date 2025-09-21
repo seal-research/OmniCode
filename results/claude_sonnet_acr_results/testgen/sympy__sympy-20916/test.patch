@@ -1,0 +1,195 @@
+--- a/sympy/printing/pretty/tests/test_pretty_symbology.py
++++ b/sympy/printing/pretty/tests/test_pretty_symbology.py
+-# Empty if creating new file
++import pytest
++from sympy.printing.pretty.pretty_symbology import pretty_symbol, pretty_use_unicode
++from sympy import symbols
++
++
++class TestPrettySymbolSubscripts:
++    """Test that pretty_symbol correctly formats subscripts for all symbol types."""
++    
++    def setup_method(self):
++        """Enable unicode for testing."""
++        self.original_unicode_setting = pretty_use_unicode()
++        pretty_use_unicode(True)
++    
++    def teardown_method(self):
++        """Restore original unicode setting."""
++        pretty_use_unicode(self.original_unicode_setting)
++    
++    def test_greek_letter_subscripts_basic(self):
++        """Test that Greek letters with numeric subscripts are formatted correctly."""
++        # Test omega with subscripts
++        result = pretty_symbol('omega0')
++        expected = 'ω₀'  # omega with subscript 0
++        assert result == expected, f"Expected 'ω₀', got '{result}'"
++        
++        result = pretty_symbol('omega1')
++        expected = 'ω₁'  # omega with subscript 1
++        assert result == expected, f"Expected 'ω₁', got '{result}'"
++        
++        result = pretty_symbol('omega2')
++        expected = 'ω₂'  # omega with subscript 2
++        assert result == expected, f"Expected 'ω₂', got '{result}'"
++    
++    def test_greek_letter_subscripts_all_digits(self):
++        """Test all digits 0-9 as subscripts on Greek letters."""
++        for i in range(10):
++            result = pretty_symbol(f'alpha{i}')
++            # Expected subscript unicode characters
++            subscript_chars = ['₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉']
++            expected = f'α{subscript_chars[i]}'
++            assert result == expected, f"Expected 'α{subscript_chars[i]}', got '{result}'"
++    
++    def test_multiple_greek_letters_with_subscripts(self):
++        """Test various Greek letters with subscripts."""
++        test_cases = [
++            ('alpha0', 'α₀'),
++            ('beta1', 'β₁'),
++            ('gamma2', 'γ₂'),
++            ('delta3', 'δ₃'),
++            ('epsilon4', 'ε₄'),
++            ('zeta5', 'ζ₅'),
++            ('eta6', 'η₆'),
++            ('theta7', 'θ₇'),
++            ('iota8', 'ι₈'),
++            ('kappa9', 'κ₉'),
++            ('lambda0', 'λ₀'),
++            ('mu1', 'μ₁'),
++            ('nu2', 'ν₂'),
++            ('xi3', 'ξ₃'),
++            ('omicron4', 'ο₄'),
++            ('pi5', 'π₅'),
++            ('rho6', 'ρ₆'),
++            ('sigma7', 'σ₇'),
++            ('tau8', 'τ₈'),
++            ('upsilon9', 'υ₉'),
++            ('phi0', 'φ₀'),
++            ('chi1', 'χ₁'),
++            ('psi2', 'ψ₂'),
++            ('omega3', 'ω₃'),
++        ]
++        
++        for input_symbol, expected in test_cases:
++            result = pretty_symbol(input_symbol)
++            assert result == expected, f"For '{input_symbol}': expected '{expected}', got '{result}'"
++    
++    def test_non_greek_symbols_still_work(self):
++        """Test that non-Greek symbols with subscripts still work correctly."""
++        # These should already work, but let's verify they're not broken
++        test_cases = [
++            ('t0', 't₀'),
++            ('w0', 'w₀'),
++            ('x1', 'x₁'),
++            ('y2', 'y₂'),
++            ('z3', 'z₃'),
++        ]
++        
++        for input_symbol, expected in test_cases:
++            result = pretty_symbol(input_symbol)
++            assert result == expected, f"For '{input_symbol}': expected '{expected}', got '{result}'"
++    
++    def test_greek_letters_without_subscripts(self):
++        """Test that Greek letters without subscripts are still formatted correctly."""
++        test_cases = [
++            ('alpha', 'α'),
++            ('beta', 'β'),
++            ('gamma', 'γ'),
++            ('omega', 'ω'),
++        ]
++        
++        for input_symbol, expected in test_cases:
++            result = pretty_symbol(input_symbol)
++            assert result == expected, f"For '{input_symbol}': expected '{expected}', got '{result}'"
++    
++    def test_capital_greek_letters_with_subscripts(self):
++        """Test that capital Greek letters with subscripts work correctly."""
++        test_cases = [
++            ('Alpha0', 'Α₀'),
++            ('Beta1', 'Β₁'),
++            ('Gamma2', 'Γ₂'),
++            ('Omega3', 'Ω₃'),
++        ]
++        
++        for input_symbol, expected in test_cases:
++            result = pretty_symbol(input_symbol)
++            assert result == expected, f"For '{input_symbol}': expected '{expected}', got '{result}'"
++    
++    def test_multiple_subscripts(self):
++        """Test Greek letters with multiple digit subscripts."""
++        # Note: This tests the current behavior - multiple digits might be handled differently
++        result = pretty_symbol('omega12')
++        # This should convert both digits to subscripts
++        expected = 'ω₁₂'
++        assert result == expected, f"Expected 'ω₁₂', got '{result}'"
++    
++    def test_greek_letters_with_superscripts(self):
++        """Test that Greek letters with superscripts work correctly."""
++        # Test basic superscript functionality
++        result = pretty_symbol('alpha__1')  # Using __ for superscript based on split_super_sub
++        # This should produce alpha with superscript 1
++        # The exact format depends on how split_super_sub handles superscripts
++        assert 'α' in result, f"Expected alpha character in result, got '{result}'"
++    
++    def test_unicode_disabled(self):
++        """Test that when unicode is disabled, subscripts are not converted."""
++        pretty_use_unicode(False)
++        
++        result = pretty_symbol('omega0')
++        # When unicode is disabled, should return the original string
++        expected = 'omega0'
++        assert result == expected, f"Expected 'omega0', got '{result}'"
++        
++        # Re-enable unicode for other tests
++        pretty_use_unicode(True)
++    
++    def test_consistency_with_matrix_example(self):
++        """Test the specific case mentioned in the issue description."""
++        # The issue shows that t₀⋅w₀ works but ω0 doesn't
++        # Let's test the individual components
++        
++        t_result = pretty_symbol('t0')
++        w_result = pretty_symbol('w0')
++        omega_result = pretty_symbol('omega0')
++        
++        # All should have proper subscripts
++        assert t_result == 't₀', f"Expected 't₀', got '{t_result}'"
++        assert w_result == 'w₀', f"Expected 'w₀', got '{w_result}'"
++        assert omega_result == 'ω₀', f"Expected 'ω₀', got '{omega_result}'"
++        
++        # The omega case is the one that was failing
++        assert '₀' in omega_result, "Omega should have subscript 0, not regular 0"
++        assert '0' not in omega_result, "Omega should not have regular digit 0"
++
++
++class TestPrettySymbolEdgeCases:
++    """Test edge cases for pretty_symbol subscript formatting."""
++    
++    def setup_method(self):
++        """Enable unicode for testing."""
++        self.original_unicode_setting = pretty_use_unicode()
++        pretty_use_unicode(True)
++    
++    def teardown_method(self):
++        """Restore original unicode setting."""
++        pretty_use_unicode(self.original_unicode_setting)
++    
++    def test_empty_string(self):
++        """Test that empty string is handled gracefully."""
++        result = pretty_symbol('')
++        assert result == '', f"Expected empty string, got '{result}'"
++    
++    def test_invalid_greek_name(self):
++        """Test that invalid Greek letter names fall back gracefully."""
++        result = pretty_symbol('notgreek0')
++        # Should not be converted to Greek, but subscript should still work
++        expected = 'notgreek₀'
++        assert result == expected, f"Expected 'notgreek₀', got '{result}'"
++    
++    def test_mixed_subscripts(self):
++        """Test Greek letters with mixed character subscripts."""
++        # Test with letter subscripts (if supported)
++        result = pretty_symbol('omegai')
++        # This should convert omega to unicode but leave 'i' as is or convert to subscript
++        assert 'ω' in result, f"Expected omega character in result, got '{result}'"

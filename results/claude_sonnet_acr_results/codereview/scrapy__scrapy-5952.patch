@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/exporters.py b/scrapy/exporters.py\nindex 4538c9ee1..2fecff050 100644\n--- a/scrapy/exporters.py\n+++ b/scrapy/exporters.py\n@@ -142,13 +142,14 @@ class JsonItemExporter(BaseItemExporter):\n         self.file.write(b\"]\")\n \n     def export_item(self, item):\n+        itemdict = dict(self._get_serialized_fields(item))\n+        data = self.encoder.encode(itemdict)\n+        \n         if self.first_item:\n             self.first_item = False\n         else:\n             self.file.write(b\",\")\n             self._beautify_newline()\n-        itemdict = dict(self._get_serialized_fields(item))\n-        data = self.encoder.encode(itemdict)\n         self.file.write(to_bytes(data, self.encoding))\n \n \n"
+}

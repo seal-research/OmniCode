@@ -1,0 +1,182 @@
+--- a/tests/queries/test_composed_queries_values.py
++++ b/tests/queries/test_composed_queries_values.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.test import TestCase
++
++
++class ReservedName(models.Model):
++    name = models.CharField(max_length=20)
++    order = models.IntegerField()
++
++    class Meta:
++        app_label = 'queries'
++
++
++class ComposedQueriesValuesTest(TestCase):
++    """Test that composed queries can properly change columns with values()/values_list()."""
++
++    @classmethod
++    def setUpTestData(cls):
++        # Create test data
++        ReservedName.objects.create(name='a', order=2)
++        ReservedName.objects.create(name='b', order=1)
++        ReservedName.objects.create(name='c', order=3)
++
++    def test_union_values_list_multiple_calls_bug_reproduction(self):
++        """
++        Test that reproduces the bug where composed queries cannot change
++        the list of columns when values_list() is evaluated multiple times.
++        
++        This test should fail before the fix is applied.
++        """
++        qs1 = ReservedName.objects.all()
++        
++        # First call with multiple fields
++        result1 = qs1.union(qs1).values_list('name', 'order').get()
++        self.assertEqual(result1, ('a', 2))
++        
++        # Second call with single field - this should return only the order field
++        # but due to the bug, it returns both fields
++        result2 = qs1.union(qs1).values_list('order').get()
++        
++        # This assertion will fail before the fix because result2 will be ('a', 2)
++        # instead of the expected (2,)
++        self.assertEqual(result2, (2,))
++
++    def test_union_values_list_single_field_first(self):
++        """Test that union works correctly when single field is called first."""
++        qs1 = ReservedName.objects.all()
++        
++        # First call with single field
++        result1 = qs1.union(qs1).values_list('order').get()
++        self.assertEqual(result1, (2,))
++        
++        # Second call with multiple fields
++        result2 = qs1.union(qs1).values_list('name', 'order').get()
++        self.assertEqual(result2, ('a', 2))
++
++    def test_union_values_multiple_calls_bug_reproduction(self):
++        """
++        Test that reproduces the bug with values() method as well.
++        """
++        qs1 = ReservedName.objects.all()
++        
++        # First call with multiple fields
++        result1 = qs1.union(qs1).values('name', 'order').get()
++        self.assertEqual(result1, {'name': 'a', 'order': 2})
++        
++        # Second call with single field - this should return only the order field
++        result2 = qs1.union(qs1).values('order').get()
++        
++        # This assertion will fail before the fix
++        self.assertEqual(result2, {'order': 2})
++
++    def test_intersection_values_list_multiple_calls(self):
++        """Test that intersection queries also handle values_list() correctly."""
++        qs1 = ReservedName.objects.all()
++        
++        # First call with multiple fields
++        result1 = qs1.intersection(qs1).values_list('name', 'order').get()
++        self.assertEqual(result1, ('a', 2))
++        
++        # Second call with single field
++        result2 = qs1.intersection(qs1).values_list('order').get()
++        self.assertEqual(result2, (2,))
++
++    def test_difference_values_list_multiple_calls(self):
++        """Test that difference queries also handle values_list() correctly."""
++        qs1 = ReservedName.objects.all()
++        qs2 = ReservedName.objects.filter(name='nonexistent')
++        
++        # First call with multiple fields
++        result1 = qs1.difference(qs2).values_list('name', 'order').get()
++        self.assertEqual(result1, ('a', 2))
++        
++        # Second call with single field
++        result2 = qs1.difference(qs2).values_list('order').get()
++        self.assertEqual(result2, (2,))
++
++    def test_union_values_list_flat_parameter(self):
++        """Test that flat parameter works correctly with union queries."""
++        qs1 = ReservedName.objects.all()
++        
++        # First call with flat=True
++        result1 = qs1.union(qs1).values_list('order', flat=True).get()
++        self.assertEqual(result1, 2)
++        
++        # Second call with different field and flat=True
++        result2 = qs1.union(qs1).values_list('name', flat=True).get()
++        self.assertEqual(result2, 'a')
++
++    def test_union_values_list_named_parameter(self):
++        """Test that named parameter works correctly with union queries."""
++        qs1 = ReservedName.objects.all()
++        
++        # First call with named=True
++        result1 = qs1.union(qs1).values_list('name', 'order', named=True).get()
++        self.assertEqual(result1.name, 'a')
++        self.assertEqual(result1.order, 2)
++        
++        # Second call with different fields and named=True
++        result2 = qs1.union(qs1).values_list('order', named=True).get()
++        self.assertEqual(result2.order, 2)
++
++    def test_union_values_list_with_expressions(self):
++        """Test that values_list works with expressions in union queries."""
++        from django.db.models import F
++        
++        qs1 = ReservedName.objects.all()
++        
++        # First call with expression
++        result1 = qs1.union(qs1).values_list('name', F('order') + 1).get()
++        self.assertEqual(result1, ('a', 3))
++        
++        # Second call with different fields
++        result2 = qs1.union(qs1).values_list('order').get()
++        self.assertEqual(result2, (2,))
++
++    def test_union_values_list_empty_fields(self):
++        """Test that values_list with no fields works correctly."""
++        qs1 = ReservedName.objects.all()
++        
++        # First call with specific fields
++        result1 = qs1.union(qs1).values_list('name').get()
++        self.assertEqual(result1, ('a',))
++        
++        # Second call with no fields (should return all fields)
++        result2 = list(qs1.union(qs1).values_list().get())
++        # Should return all fields in the model
++        self.assertEqual(len(result2), 3)  # id, name, order
++
++    def test_chained_union_values_list(self):
++        """Test that chained union operations work correctly with values_list."""
++        qs1 = ReservedName.objects.filter(name='a')
++        qs2 = ReservedName.objects.filter(name='b')
++        qs3 = ReservedName.objects.filter(name='c')
++        
++        # Chain multiple unions
++        chained_qs = qs1.union(qs2).union(qs3)
++        
++        # First call with multiple fields
++        results1 = list(chained_qs.values_list('name', 'order'))
++        self.assertEqual(len(results1), 3)
++        
++        # Second call with single field
++        results2 = list(chained_qs.values_list('order'))
++        self.assertEqual(len(results2), 3)
++        # Each result should be a tuple with single element
++        for result in results2:
++            self.assertEqual(len(result), 1)
++
++    def test_union_values_list_ordering_preserved(self):
++        """Test that field ordering is preserved in union queries."""
++        qs1 = ReservedName.objects.all()
++        
++        # Test different field orders
++        result1 = qs1.union(qs1).values_list('order', 'name').get()
++        self.assertEqual(result1, (2, 'a'))
++        
++        result2 = qs1.union(qs1).values_list('name', 'order').get()
++        self.assertEqual(result2, ('a', 2))

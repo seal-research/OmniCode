@@ -1,0 +1,157 @@
+--- a/sklearn/metrics/tests/test_ranking.py
++++ b/sklearn/metrics/tests/test_ranking.py
++import numpy as np
++import pytest
++from sklearn.metrics import roc_curve
++from sklearn.metrics._ranking import _binary_clf_curve
++
++
++def test_roc_curve_with_probability_estimates():
++    """Test that roc_curve doesn't produce thresholds > 1 with probability estimates.
++    
++    This is a regression test for the issue where thresholds can exceed 1
++    when providing probability estimates to roc_curve.
++    """
++    rng = np.random.RandomState(42)
++    y_true = rng.randint(0, 2, size=10)
++    y_score = rng.rand(10)  # Probability estimates between 0 and 1
++    
++    fpr, tpr, thresholds = roc_curve(y_true, y_score)
++    
++    # All thresholds should be between 0 and 1 for probability estimates
++    assert np.all(thresholds >= 0), f"Found negative thresholds: {thresholds[thresholds < 0]}"
++    assert np.all(thresholds <= 1), f"Found thresholds > 1: {thresholds[thresholds > 1]}"
++
++
++def test_roc_curve_with_probability_estimates_edge_cases():
++    """Test edge cases for probability estimates in roc_curve."""
++    # Test with all zeros
++    y_true = np.array([0, 1, 0, 1])
++    y_score = np.array([0.0, 0.0, 0.0, 0.0])
++    fpr, tpr, thresholds = roc_curve(y_true, y_score)
++    assert np.all(thresholds >= 0)
++    assert np.all(thresholds <= 1)
++    
++    # Test with all ones
++    y_score = np.array([1.0, 1.0, 1.0, 1.0])
++    fpr, tpr, thresholds = roc_curve(y_true, y_score)
++    assert np.all(thresholds >= 0)
++    assert np.all(thresholds <= 1)
++    
++    # Test with mixed probability values
++    y_score = np.array([0.1, 0.9, 0.3, 0.7])
++    fpr, tpr, thresholds = roc_curve(y_true, y_score)
++    assert np.all(thresholds >= 0)
++    assert np.all(thresholds <= 1)
++
++
++def test_roc_curve_with_decision_function_scores():
++    """Test that roc_curve still works correctly with decision function scores.
++    
++    Decision function scores can exceed 1, so this tests backward compatibility.
++    """
++    y_true = np.array([0, 1, 0, 1, 0, 1])
++    y_score = np.array([-2.5, 3.2, -1.1, 2.8, -0.5, 4.1])  # Decision function scores
++    
++    fpr, tpr, thresholds = roc_curve(y_true, y_score)
++    
++    # For decision function scores, thresholds can exceed 1
++    # The first threshold should be max(y_score) + 1 to ensure (0,0) start
++    expected_first_threshold = y_score.max() + 1
++    assert thresholds[0] == expected_first_threshold
++    
++    # Verify ROC curve properties
++    assert fpr[0] == 0.0  # Should start at (0, 0)
++    assert tpr[0] == 0.0
++    assert fpr[-1] == 1.0  # Should end at (1, 1)
++    assert tpr[-1] == 1.0
++
++
++def test_roc_curve_threshold_behavior_comparison():
++    """Compare threshold behavior between probability and decision function scores."""
++    y_true = np.array([0, 1, 0, 1, 0, 1])
++    
++    # Probability estimates
++    y_prob = np.array([0.1, 0.9, 0.2, 0.8, 0.3, 0.7])
++    fpr_prob, tpr_prob, thresh_prob = roc_curve(y_true, y_prob)
++    
++    # Decision function scores (scaled version of probabilities)
++    y_decision = y_prob * 10 - 5  # Scale to [-5, 5] range
++    fpr_dec, tpr_dec, thresh_dec = roc_curve(y_true, y_decision)
++    
++    # Both should produce valid ROC curves starting at (0,0)
++    assert fpr_prob[0] == 0.0 and tpr_prob[0] == 0.0
++    assert fpr_dec[0] == 0.0 and tpr_dec[0] == 0.0
++    
++    # Probability thresholds should be <= 1
++    assert np.all(thresh_prob <= 1)
++    
++    # Decision function thresholds can exceed 1
++    assert thresh_dec[0] > 1  # First threshold should be max + 1
++
++
++def test_roc_curve_preserves_curve_properties():
++    """Test that the fix preserves essential ROC curve properties."""
++    rng = np.random.RandomState(123)
++    y_true = rng.randint(0, 2, size=50)
++    y_score = rng.rand(50)
++    
++    fpr, tpr, thresholds = roc_curve(y_true, y_score)
++    
++    # Essential ROC curve properties
++    assert len(fpr) == len(tpr) == len(thresholds)
++    assert fpr[0] == 0.0  # Starts at (0, 0)
++    assert tpr[0] == 0.0
++    assert fpr[-1] == 1.0  # Ends at (1, 1)
++    assert tpr[-1] == 1.0
++    
++    # FPR and TPR should be non-decreasing
++    assert np.all(np.diff(fpr) >= 0)
++    assert np.all(np.diff(tpr) >= 0)
++    
++    # Thresholds should be non-increasing
++    assert np.all(np.diff(thresholds) <= 0)
++    
++    # For probability estimates, all thresholds should be valid
++    assert np.all(thresholds >= 0)
++    assert np.all(thresholds <= 1)
++
++
++def test_roc_curve_drop_intermediate_with_probabilities():
++    """Test drop_intermediate parameter works correctly with probability estimates."""
++    y_true = np.array([0, 0, 1, 1, 0, 1, 0, 1])
++    y_score = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8])
++    
++    # Test with drop_intermediate=True (default)
++    fpr1, tpr1, thresh1 = roc_curve(y_true, y_score, drop_intermediate=True)
++    
++    # Test with drop_intermediate=False
++    fpr2, tpr2, thresh2 = roc_curve(y_true, y_score, drop_intermediate=False)
++    
++    # Both should have valid thresholds for probability estimates
++    assert np.all(thresh1 >= 0) and np.all(thresh1 <= 1)
++    assert np.all(thresh2 >= 0) and np.all(thresh2 <= 1)
++    
++    # drop_intermediate=False should have more or equal points
++    assert len(thresh2) >= len(thresh1)
++
++
++def test_roc_curve_binary_clf_curve_consistency():
++    """Test that _binary_clf_curve output is handled correctly in roc_curve."""
++    y_true = np.array([0, 1, 0, 1, 0])
++    y_score = np.array([0.2, 0.8, 0.3, 0.9, 0.1])
++    
++    # Get raw output from _binary_clf_curve
++    fps, tps, raw_thresholds = _binary_clf_curve(y_true, y_score)
++    
++    # Get processed output from roc_curve
++    fpr, tpr, processed_thresholds = roc_curve(y_true, y_score)
++    
++    # The processed thresholds should include the added threshold
++    assert len(processed_thresholds) == len(raw_thresholds) + 1
++    
++    # For probability estimates, the first threshold should not exceed 1
++    assert processed_thresholds[0] <= 1.0
++    
++    # The remaining thresholds should match the raw thresholds
++    np.testing.assert_array_equal(processed_thresholds[1:], raw_thresholds)

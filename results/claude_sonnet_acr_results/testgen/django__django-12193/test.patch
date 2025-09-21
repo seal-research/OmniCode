@@ -1,0 +1,287 @@
+--- a/tests/postgres_tests/test_array_forms.py
++++ b/tests/postgres_tests/test_array_forms.py
+-# Empty if creating new file
++import pytest
++from django import forms
++from django.contrib.postgres.forms import SplitArrayField
++from django.test import TestCase
++
++
++class SplitArrayFieldBooleanTest(TestCase):
++    """Test SplitArrayField with BooleanField for checkbox widget behavior."""
++
++    def test_split_array_boolean_field_widgets_not_all_checked_after_first_true(self):
++        """
++        Test that SplitArrayField with BooleanField doesn't have all widgets
++        checked after the first True value in the initial data.
++        
++        This test reproduces the bug where CheckboxInput.get_context() modifies
++        the attrs dict, causing subsequent widgets to be incorrectly checked.
++        """
++        # Create a SplitArrayField with BooleanField
++        field = SplitArrayField(
++            forms.BooleanField(required=False),
++            size=5,
++            remove_trailing_nulls=False
++        )
++        
++        # Initial data with mixed True/False values
++        # The pattern [True, False, True, False, False] should be preserved
++        initial_data = [True, False, True, False, False]
++        
++        # Create a form with this field
++        class TestForm(forms.Form):
++            bool_array = field
++        
++        form = TestForm(initial={'bool_array': initial_data})
++        
++        # Render the form to trigger widget context generation
++        rendered_form = str(form)
++        
++        # Get the widget contexts to check the 'checked' attribute
++        widget = form.fields['bool_array'].widget
++        context = widget.get_context('bool_array', initial_data, {})
++        subwidgets = context['widget']['subwidgets']
++        
++        # Check that only the widgets with True values have 'checked' attribute
++        expected_checked = [True, False, True, False, False]
++        
++        for i, (subwidget, should_be_checked) in enumerate(zip(subwidgets, expected_checked)):
++            widget_attrs = subwidget.get('attrs', {})
++            is_checked = widget_attrs.get('checked', False)
++            
++            if should_be_checked:
++                self.assertTrue(
++                    is_checked,
++                    f"Widget {i} should be checked but isn't. Widget attrs: {widget_attrs}"
++                )
++            else:
++                self.assertFalse(
++                    is_checked,
++                    f"Widget {i} should not be checked but is. Widget attrs: {widget_attrs}"
++                )
++
++    def test_split_array_boolean_field_all_false_values(self):
++        """
++        Test SplitArrayField with all False values to ensure none are checked.
++        """
++        field = SplitArrayField(
++            forms.BooleanField(required=False),
++            size=4,
++            remove_trailing_nulls=False
++        )
++        
++        initial_data = [False, False, False, False]
++        
++        class TestForm(forms.Form):
++            bool_array = field
++        
++        form = TestForm(initial={'bool_array': initial_data})
++        
++        widget = form.fields['bool_array'].widget
++        context = widget.get_context('bool_array', initial_data, {})
++        subwidgets = context['widget']['subwidgets']
++        
++        # None of the widgets should be checked
++        for i, subwidget in enumerate(subwidgets):
++            widget_attrs = subwidget.get('attrs', {})
++            is_checked = widget_attrs.get('checked', False)
++            self.assertFalse(
++                is_checked,
++                f"Widget {i} should not be checked but is. Widget attrs: {widget_attrs}"
++            )
++
++    def test_split_array_boolean_field_all_true_values(self):
++        """
++        Test SplitArrayField with all True values to ensure all are checked.
++        """
++        field = SplitArrayField(
++            forms.BooleanField(required=False),
++            size=3,
++            remove_trailing_nulls=False
++        )
++        
++        initial_data = [True, True, True]
++        
++        class TestForm(forms.Form):
++            bool_array = field
++        
++        form = TestForm(initial={'bool_array': initial_data})
++        
++        widget = form.fields['bool_array'].widget
++        context = widget.get_context('bool_array', initial_data, {})
++        subwidgets = context['widget']['subwidgets']
++        
++        # All widgets should be checked
++        for i, subwidget in enumerate(subwidgets):
++            widget_attrs = subwidget.get('attrs', {})
++            is_checked = widget_attrs.get('checked', False)
++            self.assertTrue(
++                is_checked,
++                f"Widget {i} should be checked but isn't. Widget attrs: {widget_attrs}"
++            )
++
++    def test_split_array_boolean_field_true_followed_by_false_pattern(self):
++        """
++        Test the specific pattern that triggers the bug: True followed by False values.
++        This test should fail before the fix and pass after the fix.
++        """
++        field = SplitArrayField(
++            forms.BooleanField(required=False),
++            size=6,
++            remove_trailing_nulls=False
++        )
++        
++        # Pattern that specifically triggers the bug
++        initial_data = [True, False, False, False, False, False]
++        
++        class TestForm(forms.Form):
++            bool_array = field
++        
++        form = TestForm(initial={'bool_array': initial_data})
++        
++        widget = form.fields['bool_array'].widget
++        context = widget.get_context('bool_array', initial_data, {})
++        subwidgets = context['widget']['subwidgets']
++        
++        # Only the first widget should be checked
++        for i, subwidget in enumerate(subwidgets):
++            widget_attrs = subwidget.get('attrs', {})
++            is_checked = widget_attrs.get('checked', False)
++            
++            if i == 0:
++                self.assertTrue(
++                    is_checked,
++                    f"First widget should be checked but isn't. Widget attrs: {widget_attrs}"
++                )
++            else:
++                self.assertFalse(
++                    is_checked,
++                    f"Widget {i} should not be checked but is. Widget attrs: {widget_attrs}"
++                )
++
++    def test_split_array_boolean_field_empty_initial_data(self):
++        """
++        Test SplitArrayField with empty initial data.
++        """
++        field = SplitArrayField(
++            forms.BooleanField(required=False),
++            size=3,
++            remove_trailing_nulls=False
++        )
++        
++        initial_data = []
++        
++        class TestForm(forms.Form):
++            bool_array = field
++        
++        form = TestForm(initial={'bool_array': initial_data})
++        
++        widget = form.fields['bool_array'].widget
++        context = widget.get_context('bool_array', initial_data, {})
++        subwidgets = context['widget']['subwidgets']
++        
++        # All widgets should be unchecked since there's no initial data
++        for i, subwidget in enumerate(subwidgets):
++            widget_attrs = subwidget.get('attrs', {})
++            is_checked = widget_attrs.get('checked', False)
++            self.assertFalse(
++                is_checked,
++                f"Widget {i} should not be checked but is. Widget attrs: {widget_attrs}"
++            )
++
++    def test_split_array_boolean_field_none_initial_data(self):
++        """
++        Test SplitArrayField with None initial data.
++        """
++        field = SplitArrayField(
++            forms.BooleanField(required=False),
++            size=3,
++            remove_trailing_nulls=False
++        )
++        
++        initial_data = None
++        
++        class TestForm(forms.Form):
++            bool_array = field
++        
++        form = TestForm(initial={'bool_array': initial_data})
++        
++        widget = form.fields['bool_array'].widget
++        context = widget.get_context('bool_array', initial_data, {})
++        subwidgets = context['widget']['subwidgets']
++        
++        # All widgets should be unchecked since initial data is None
++        for i, subwidget in enumerate(subwidgets):
++            widget_attrs = subwidget.get('attrs', {})
++            is_checked = widget_attrs.get('checked', False)
++            self.assertFalse(
++                is_checked,
++                f"Widget {i} should not be checked but is. Widget attrs: {widget_attrs}"
++            )
++
++    def test_checkbox_input_attrs_not_modified_directly(self):
++        """
++        Test that CheckboxInput.get_context() doesn't modify the original attrs dict.
++        This is a unit test for the specific bug in CheckboxInput.
++        """
++        from django.forms.widgets import CheckboxInput
++        
++        # Create a CheckboxInput widget
++        widget = CheckboxInput()
++        
++        # Create an attrs dict that we'll pass to get_context
++        original_attrs = {'class': 'test-class', 'id': 'test-id'}
++        attrs_copy = original_attrs.copy()
++        
++        # Call get_context with a True value (which should set checked=True)
++        context = widget.get_context('test_name', True, original_attrs)
++        
++        # The original attrs dict should not be modified
++        self.assertEqual(
++            original_attrs, 
++            attrs_copy,
++            "CheckboxInput.get_context() should not modify the original attrs dict"
++        )
++        
++        # But the context should have the checked attribute
++        widget_attrs = context['widget']['attrs']
++        self.assertTrue(
++            widget_attrs.get('checked', False),
++            "The widget context should have checked=True"
++        )
++
++    def test_checkbox_input_attrs_modification_isolation(self):
++        """
++        Test that multiple calls to CheckboxInput.get_context() with the same attrs
++        dict don't interfere with each other.
++        """
++        from django.forms.widgets import CheckboxInput
++        
++        widget = CheckboxInput()
++        shared_attrs = {'class': 'shared-class'}
++        
++        # First call with True value
++        context1 = widget.get_context('test1', True, shared_attrs)
++        
++        # Second call with False value using the same attrs dict
++        context2 = widget.get_context('test2', False, shared_attrs)
++        
++        # The first context should have checked=True
++        self.assertTrue(
++            context1['widget']['attrs'].get('checked', False),
++            "First widget should be checked"
++        )
++        
++        # The second context should NOT have checked=True
++        self.assertFalse(
++            context2['widget']['attrs'].get('checked', False),
++            "Second widget should not be checked"
++        )
++        
++        # The original shared_attrs should not be modified
++        self.assertNotIn(
++            'checked',
++            shared_attrs,
++            "Original shared attrs should not contain 'checked' key"
++        )

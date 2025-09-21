@@ -1,0 +1,242 @@
+--- a/tests/apps_tests/test_registry.py
++++ b/tests/apps_tests/test_registry.py
+-# Empty if creating new file
++import pytest
++from django.apps import apps
++from django.apps.registry import Apps
++from django.test import TestCase, override_settings
++from django.test.utils import isolate_apps
++
++
++class AppsClearCacheTests(TestCase):
++    """Test that Apps.clear_cache() clears all internal caches."""
++
++    def setUp(self):
++        """Set up test environment."""
++        # Store original apps instance to restore later
++        self.original_apps = apps
++        
++    def tearDown(self):
++        """Clean up after tests."""
++        # Ensure we restore the original apps instance
++        apps.clear_cache()
++
++    def test_clear_cache_clears_get_models_cache(self):
++        """Test that clear_cache() clears the get_models cache."""
++        # First call to populate cache
++        models_before = apps.get_models()
++        
++        # Verify cache is populated by checking the cache_info
++        cache_info_before = apps.get_models.cache_info()
++        self.assertGreater(cache_info_before.hits + cache_info_before.misses, 0)
++        
++        # Clear cache
++        apps.clear_cache()
++        
++        # Check that cache was cleared
++        cache_info_after = apps.get_models.cache_info()
++        self.assertEqual(cache_info_after.currsize, 0)
++
++    def test_clear_cache_clears_get_swappable_settings_name_cache(self):
++        """Test that clear_cache() clears the get_swappable_settings_name cache."""
++        # First call to populate cache
++        result_before = apps.get_swappable_settings_name('auth.User')
++        
++        # Verify cache is populated
++        cache_info_before = apps.get_swappable_settings_name.cache_info()
++        self.assertGreater(cache_info_before.hits + cache_info_before.misses, 0)
++        
++        # Clear cache
++        apps.clear_cache()
++        
++        # Check that cache was cleared
++        cache_info_after = apps.get_swappable_settings_name.cache_info()
++        self.assertEqual(cache_info_after.currsize, 0)
++
++    def test_clear_cache_clears_both_caches_simultaneously(self):
++        """Test that clear_cache() clears both get_models and get_swappable_settings_name caches."""
++        # Populate both caches
++        models = apps.get_models()
++        swappable_result = apps.get_swappable_settings_name('auth.User')
++        
++        # Verify both caches are populated
++        models_cache_info = apps.get_models.cache_info()
++        swappable_cache_info = apps.get_swappable_settings_name.cache_info()
++        
++        self.assertGreater(models_cache_info.currsize, 0)
++        self.assertGreater(swappable_cache_info.currsize, 0)
++        
++        # Clear cache
++        apps.clear_cache()
++        
++        # Check that both caches were cleared
++        models_cache_after = apps.get_models.cache_info()
++        swappable_cache_after = apps.get_swappable_settings_name.cache_info()
++        
++        self.assertEqual(models_cache_after.currsize, 0)
++        self.assertEqual(swappable_cache_after.currsize, 0)
++
++    def test_get_swappable_settings_name_cache_behavior(self):
++        """Test the caching behavior of get_swappable_settings_name method."""
++        # Clear cache to start fresh
++        apps.clear_cache()
++        
++        # First call should be a cache miss
++        result1 = apps.get_swappable_settings_name('auth.User')
++        cache_info1 = apps.get_swappable_settings_name.cache_info()
++        self.assertEqual(cache_info1.misses, 1)
++        self.assertEqual(cache_info1.hits, 0)
++        
++        # Second call with same argument should be a cache hit
++        result2 = apps.get_swappable_settings_name('auth.User')
++        cache_info2 = apps.get_swappable_settings_name.cache_info()
++        self.assertEqual(cache_info2.misses, 1)
++        self.assertEqual(cache_info2.hits, 1)
++        
++        # Results should be the same
++        self.assertEqual(result1, result2)
++
++    def test_clear_cache_after_multiple_calls(self):
++        """Test that clear_cache works correctly after multiple cached calls."""
++        # Make multiple calls to populate cache
++        for _ in range(5):
++            apps.get_models()
++            apps.get_swappable_settings_name('auth.User')
++            apps.get_swappable_settings_name('contenttypes.ContentType')
++        
++        # Verify caches have multiple entries
++        models_cache = apps.get_models.cache_info()
++        swappable_cache = apps.get_swappable_settings_name.cache_info()
++        
++        self.assertGreater(models_cache.currsize, 0)
++        self.assertGreater(swappable_cache.currsize, 0)
++        
++        # Clear cache
++        apps.clear_cache()
++        
++        # Verify all caches are empty
++        models_cache_after = apps.get_models.cache_info()
++        swappable_cache_after = apps.get_swappable_settings_name.cache_info()
++        
++        self.assertEqual(models_cache_after.currsize, 0)
++        self.assertEqual(swappable_cache_after.currsize, 0)
++
++    @isolate_apps('apps_tests')
++    def test_clear_cache_with_custom_apps_instance(self):
++        """Test that clear_cache works with a custom Apps instance."""
++        # Create a custom Apps instance
++        custom_apps = Apps()
++        
++        # Populate its caches
++        try:
++            custom_apps.populate(['django.contrib.auth', 'django.contrib.contenttypes'])
++            
++            # Make calls to populate cache
++            models = custom_apps.get_models()
++            swappable_result = custom_apps.get_swappable_settings_name('auth.User')
++            
++            # Verify caches are populated
++            models_cache = custom_apps.get_models.cache_info()
++            swappable_cache = custom_apps.get_swappable_settings_name.cache_info()
++            
++            self.assertGreater(models_cache.currsize, 0)
++            self.assertGreater(swappable_cache.currsize, 0)
++            
++            # Clear cache
++            custom_apps.clear_cache()
++            
++            # Verify caches are cleared
++            models_cache_after = custom_apps.get_models.cache_info()
++            swappable_cache_after = custom_apps.get_swappable_settings_name.cache_info()
++            
++            self.assertEqual(models_cache_after.currsize, 0)
++            self.assertEqual(swappable_cache_after.currsize, 0)
++            
++        finally:
++            # Clean up
++            custom_apps.clear_cache()
++
++    def test_clear_cache_preserves_functionality(self):
++        """Test that clear_cache doesn't break the functionality of cached methods."""
++        # Clear cache
++        apps.clear_cache()
++        
++        # Call methods after clearing cache - they should still work
++        models = apps.get_models()
++        swappable_result = apps.get_swappable_settings_name('auth.User')
++        
++        # Verify we get expected results
++        self.assertIsInstance(models, list)
++        # swappable_result could be None or a string depending on settings
++        self.assertTrue(swappable_result is None or isinstance(swappable_result, str))
++        
++        # Verify caches are working again
++        models_cache = apps.get_models.cache_info()
++        swappable_cache = apps.get_swappable_settings_name.cache_info()
++        
++        self.assertGreater(models_cache.currsize, 0)
++        self.assertGreater(swappable_cache.currsize, 0)
++
++
++class AppsClearCacheFailureTests(TestCase):
++    """Tests that demonstrate the bug before the fix is applied."""
++    
++    def test_clear_cache_does_not_clear_swappable_settings_cache_before_fix(self):
++        """
++        This test demonstrates the bug: clear_cache() doesn't clear 
++        get_swappable_settings_name cache before the fix.
++        
++        This test should FAIL before the fix is applied and PASS after.
++        """
++        # Populate the get_swappable_settings_name cache
++        apps.get_swappable_settings_name('auth.User')
++        
++        # Verify cache is populated
++        cache_info_before = apps.get_swappable_settings_name.cache_info()
++        self.assertGreater(cache_info_before.currsize, 0, 
++                          "Cache should be populated before clear_cache()")
++        
++        # Call clear_cache()
++        apps.clear_cache()
++        
++        # Check if the cache was actually cleared
++        cache_info_after = apps.get_swappable_settings_name.cache_info()
++        
++        # This assertion will FAIL before the fix because clear_cache() 
++        # doesn't clear get_swappable_settings_name cache
++        self.assertEqual(cache_info_after.currsize, 0,
++                        "get_swappable_settings_name cache should be cleared by clear_cache()")
++
++    def test_inconsistent_cache_clearing_behavior_before_fix(self):
++        """
++        Test that demonstrates inconsistent behavior between different cached methods.
++        
++        This test shows that get_models cache is cleared but get_swappable_settings_name 
++        cache is not, which is inconsistent behavior.
++        """
++        # Populate both caches
++        apps.get_models()
++        apps.get_swappable_settings_name('auth.User')
++        
++        # Verify both caches are populated
++        models_cache_before = apps.get_models.cache_info()
++        swappable_cache_before = apps.get_swappable_settings_name.cache_info()
++        
++        self.assertGreater(models_cache_before.currsize, 0)
++        self.assertGreater(swappable_cache_before.currsize, 0)
++        
++        # Clear cache
++        apps.clear_cache()
++        
++        # Check cache states after clearing
++        models_cache_after = apps.get_models.cache_info()
++        swappable_cache_after = apps.get_swappable_settings_name.cache_info()
++        
++        # get_models cache should be cleared (this works)
++        self.assertEqual(models_cache_after.currsize, 0,
++                        "get_models cache should be cleared")
++        
++        # get_swappable_settings_name cache should also be cleared but isn't (this is the bug)
++        # This assertion will FAIL before the fix
++        self.assertEqual(swappable_cache_after.currsize, 0,
++                        "get_swappable_settings_name cache should also be cleared for consistency")

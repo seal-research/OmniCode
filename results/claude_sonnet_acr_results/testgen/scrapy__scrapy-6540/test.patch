@@ -1,0 +1,337 @@
+--- a/tests/test_utils_misc.py
++++ b/tests/test_utils_misc.py
++import pytest
++from unittest.mock import Mock, patch
++from scrapy.utils.misc import build_from_crawler, create_instance
++from scrapy.crawler import Crawler
++from scrapy.settings import Settings
++from scrapy.exceptions import ScrapyDeprecationWarning
++
++
++class MockClass:
++    """Mock class for testing build functions."""
++    
++    def __init__(self, value=None):
++        self.value = value
++    
++    @classmethod
++    def from_crawler(cls, crawler):
++        return cls(value="from_crawler")
++    
++    @classmethod
++    def from_settings(cls, settings):
++        return cls(value="from_settings")
++
++
++class MockClassOnlyFromSettings:
++    """Mock class that only has from_settings method."""
++    
++    def __init__(self, value=None):
++        self.value = value
++    
++    @classmethod
++    def from_settings(cls, settings):
++        return cls(value="from_settings")
++
++
++class MockClassNoMethods:
++    """Mock class with no special constructor methods."""
++    
++    def __init__(self, value=None):
++        self.value = value
++
++
++class TestBuildFromCrawler:
++    """Test build_from_crawler function behavior."""
++    
++    def test_build_from_crawler_uses_from_crawler_when_available(self):
++        """Test that build_from_crawler uses from_crawler method when available."""
++        crawler = Mock(spec=Crawler)
++        
++        instance = build_from_crawler(MockClass, crawler)
++        
++        assert instance.value == "from_crawler"
++    
++    def test_build_from_crawler_falls_back_to_from_settings(self):
++        """Test that build_from_crawler falls back to from_settings when from_crawler not available."""
++        crawler = Mock(spec=Crawler)
++        crawler.settings = Mock(spec=Settings)
++        
++        instance = build_from_crawler(MockClassOnlyFromSettings, crawler)
++        
++        assert instance.value == "from_settings"
++    
++    def test_build_from_crawler_falls_back_to_constructor(self):
++        """Test that build_from_crawler falls back to regular constructor when no special methods."""
++        crawler = Mock(spec=Crawler)
++        
++        instance = build_from_crawler(MockClassNoMethods, crawler, value="constructor")
++        
++        assert instance.value == "constructor"
++    
++    def test_build_from_crawler_passes_args_and_kwargs(self):
++        """Test that build_from_crawler passes additional args and kwargs."""
++        class MockWithArgs:
++            def __init__(self, arg1, arg2, kwarg1=None):
++                self.arg1 = arg1
++                self.arg2 = arg2
++                self.kwarg1 = kwarg1
++        
++        crawler = Mock(spec=Crawler)
++        
++        instance = build_from_crawler(MockWithArgs, crawler, "test1", "test2", kwarg1="test3")
++        
++        assert instance.arg1 == "test1"
++        assert instance.arg2 == "test2"
++        assert instance.kwarg1 == "test3"
++    
++    def test_build_from_crawler_raises_type_error_when_none_returned(self):
++        """Test that build_from_crawler raises TypeError when constructor returns None."""
++        class MockReturnsNone:
++            @classmethod
++            def from_crawler(cls, crawler):
++                return None
++        
++        crawler = Mock(spec=Crawler)
++        
++        with pytest.raises(TypeError, match="MockReturnsNone.from_crawler returned None"):
++            build_from_crawler(MockReturnsNone, crawler)
++
++
++class TestBuildFromSettingsRemoval:
++    """Test that build_from_settings function is removed."""
++    
++    def test_build_from_settings_function_does_not_exist(self):
++        """Test that build_from_settings function is no longer available."""
++        from scrapy.utils import misc
++        
++        # This test should fail before the fix is applied
++        assert not hasattr(misc, 'build_from_settings'), \
++            "build_from_settings function should be removed"
++    
++    def test_build_from_settings_import_fails(self):
++        """Test that importing build_from_settings fails."""
++        with pytest.raises(ImportError):
++            from scrapy.utils.misc import build_from_settings
++
++
++class TestCreateInstanceDeprecation:
++    """Test create_instance deprecation warning."""
++    
++    def test_create_instance_warns_only_about_build_from_crawler(self):
++        """Test that create_instance deprecation warning only mentions build_from_crawler."""
++        crawler = Mock(spec=Crawler)
++        settings = Mock(spec=Settings)
++        
++        with pytest.warns(ScrapyDeprecationWarning) as warning_info:
++            create_instance(MockClass, settings, crawler)
++        
++        warning_message = str(warning_info[0].message)
++        assert "build_from_crawler()" in warning_message
++        # This test should fail before the fix - it should not mention build_from_settings
++        assert "build_from_settings()" not in warning_message, \
++            "Deprecation warning should not mention build_from_settings"
++    
++    def test_create_instance_still_works_with_crawler(self):
++        """Test that create_instance still works when crawler is provided."""
++        crawler = Mock(spec=Crawler)
++        settings = Mock(spec=Settings)
++        
++        with pytest.warns(ScrapyDeprecationWarning):
++            instance = create_instance(MockClass, settings, crawler)
++        
++        assert instance.value == "from_crawler"
++    
++    def test_create_instance_works_with_settings_only_when_no_from_crawler(self):
++        """Test that create_instance works with settings only when class has no from_crawler."""
++        settings = Mock(spec=Settings)
++        
++        with pytest.warns(ScrapyDeprecationWarning):
++            instance = create_instance(MockClassOnlyFromSettings, settings, None)
++        
++        assert instance.value == "from_settings"
++
++
++class TestBuildFromCrawlerDocstring:
++    """Test that build_from_crawler has correct docstring."""
++    
++    def test_build_from_crawler_docstring_mentions_from_settings_fallback(self):
++        """Test that build_from_crawler docstring properly documents from_settings fallback."""
++        docstring = build_from_crawler.__doc__
++        
++        # The docstring should mention the fallback to from_settings method
++        assert "from_settings" in docstring.lower(), \
++            "Docstring should mention fallback to from_settings method"
++        
++        # Should mention it's a constructor method, not the build_from_settings function
++        assert "from_settings" in docstring and "method" in docstring.lower(), \
++            "Docstring should clarify it falls back to from_settings method"
+
+--- a/tests/test_middleware.py
++++ b/tests/test_middleware.py
++import pytest
++from unittest.mock import Mock, patch
++from scrapy.middleware import MiddlewareManager
++from scrapy.crawler import Crawler
++from scrapy.settings import Settings
++from scrapy.exceptions import NotConfigured
++
++
++class MockMiddleware:
++    """Mock middleware class for testing."""
++    
++    def __init__(self, value=None):
++        self.value = value
++    
++    @classmethod
++    def from_crawler(cls, crawler):
++        return cls(value="from_crawler")
++    
++    @classmethod
++    def from_settings(cls, settings):
++        return cls(value="from_settings")
++
++
++class MockMiddlewareOnlyFromSettings:
++    """Mock middleware that only has from_settings method."""
++    
++    def __init__(self, value=None):
++        self.value = value
++    
++    @classmethod
++    def from_settings(cls, settings):
++        return cls(value="from_settings")
++
++
++class MockMiddlewareNotConfigured:
++    """Mock middleware that raises NotConfigured."""
++    
++    @classmethod
++    def from_crawler(cls, crawler):
++        raise NotConfigured("Test not configured")
++
++
++class TestMiddlewareManagerFromSettings:
++    """Test MiddlewareManager.from_settings method behavior."""
++    
++    def test_from_settings_requires_crawler_parameter(self):
++        """Test that from_settings method requires a Crawler instance."""
++        settings = Mock(spec=Settings)
++        crawler = Mock(spec=Crawler)
++        
++        # This should work with crawler provided
++        with patch.object(MiddlewareManager, '_get_mwlist_from_settings', return_value=[]):
++            manager = MiddlewareManager.from_settings(settings, crawler)
++            assert isinstance(manager, MiddlewareManager)
++    
++    def test_from_settings_signature_requires_crawler(self):
++        """Test that from_settings method signature requires crawler parameter."""
++        import inspect
++        
++        sig = inspect.signature(MiddlewareManager.from_settings)
++        params = sig.parameters
++        
++        # After the fix, crawler should be required (not optional)
++        assert 'crawler' in params
++        crawler_param = params['crawler']
++        
++        # This test should fail before the fix - crawler should not have a default value
++        assert crawler_param.default == inspect.Parameter.empty, \
++            "crawler parameter should be required, not optional"
++    
++    @patch('scrapy.middleware.load_object')
++    @patch('scrapy.middleware.build_from_crawler')
++    def test_from_settings_always_uses_build_from_crawler(self, mock_build_from_crawler, mock_load_object):
++        """Test that from_settings always uses build_from_crawler, never build_from_settings."""
++        settings = Mock(spec=Settings)
++        crawler = Mock(spec=Crawler)
++        
++        # Setup mocks
++        mock_load_object.return_value = MockMiddleware
++        mock_build_from_crawler.return_value = MockMiddleware(value="test")
++        
++        with patch.object(MiddlewareManager, '_get_mwlist_from_settings', 
++                         return_value=['test.middleware.MockMiddleware']):
++            MiddlewareManager.from_settings(settings, crawler)
++        
++        # Should call build_from_crawler, not build_from_settings
++        mock_build_from_crawler.assert_called_once_with(MockMiddleware, crawler)
++    
++    @patch('scrapy.middleware.load_object')
++    @patch('scrapy.middleware.build_from_crawler')
++    def test_from_settings_handles_not_configured_middleware(self, mock_build_from_crawler, mock_load_object):
++        """Test that from_settings properly handles NotConfigured exceptions."""
++        settings = Mock(spec=Settings)
++        crawler = Mock(spec=Crawler)
++        
++        # Setup mocks
++        mock_load_object.return_value = MockMiddlewareNotConfigured
++        mock_build_from_crawler.side_effect = NotConfigured("Test not configured")
++        
++        with patch.object(MiddlewareManager, '_get_mwlist_from_settings', 
++                         return_value=['test.middleware.MockMiddlewareNotConfigured']):
++            manager = MiddlewareManager.from_settings(settings, crawler)
++        
++        # Should create empty manager when middleware is not configured
++        assert len(manager._middlewares) == 0
++    
++    def test_from_settings_no_build_from_settings_usage(self):
++        """Test that from_settings method doesn't use build_from_settings function."""
++        import inspect
++        
++        # Get the source code of the from_settings method
++        source = inspect.getsource(MiddlewareManager.from_settings)
++        
++        # This test should fail before the fix - build_from_settings should not be used
++        assert 'build_from_settings' not in source, \
++            "from_settings method should not use build_from_settings function"
++
++
++class TestMiddlewareManagerFromCrawler:
++    """Test MiddlewareManager.from_crawler method behavior."""
++    
++    def test_from_crawler_calls_from_settings_with_crawler(self):
++        """Test that from_crawler properly calls from_settings with crawler."""
++        crawler = Mock(spec=Crawler)
++        crawler.settings = Mock(spec=Settings)
++        
++        with patch.object(MiddlewareManager, 'from_settings') as mock_from_settings:
++            mock_from_settings.return_value = MiddlewareManager()
++            
++            MiddlewareManager.from_crawler(crawler)
++            
++            # Should call from_settings with both settings and crawler
++            mock_from_settings.assert_called_once_with(crawler.settings, crawler)
++
++
++class TestMiddlewareManagerIntegration:
++    """Integration tests for MiddlewareManager."""
++    
++    def test_middleware_manager_creation_with_real_middleware(self):
++        """Test creating MiddlewareManager with real middleware classes."""
++        from scrapy.downloadermiddlewares.useragent import UserAgentMiddleware
++        
++        settings = Settings({
++            'DOWNLOADER_MIDDLEWARES': {
++                'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': 500,
++            },
++            'USER_AGENT': 'Test Agent'
++        })
++        crawler = Mock(spec=Crawler)
++        crawler.settings = settings
++        
++        # This should work without issues
++        manager = MiddlewareManager.from_settings(settings, crawler)
++        assert isinstance(manager, MiddlewareManager)
++    
++    def test_middleware_manager_backward_compatibility(self):
++        """Test that existing code using from_crawler still works."""
++        settings = Settings({
++            'DOWNLOADER_MIDDLEWARES': {},
++        })
++        crawler = Mock(spec=Crawler)
++        crawler.settings = settings
++        
++        # from_crawler should still work as before
++        manager = MiddlewareManager.from_crawler(crawler)
++        assert isinstance(manager, MiddlewareManager)

@@ -1,0 +1,276 @@
+--- a/tests/admin_tests/test_radio_fields_empty_label.py
++++ b/tests/admin_tests/test_radio_fields_empty_label.py
+-# Empty if creating new file
++import pytest
++from django.contrib import admin
++from django.contrib.admin.options import BaseModelAdmin
++from django.db import models
++from django.forms import ModelForm
++from django.test import TestCase, RequestFactory
++from django.contrib.auth.models import User
++from django.contrib.admin.sites import AdminSite
++
++
++class TestModel(models.Model):
++    """Test model with a ForeignKey field for testing radio_fields."""
++    name = models.CharField(max_length=100)
++    
++    class Meta:
++        app_label = 'admin_tests'
++
++
++class RelatedModel(models.Model):
++    """Related model for ForeignKey testing."""
++    title = models.CharField(max_length=100)
++    related = models.ForeignKey(TestModel, on_delete=models.CASCADE, blank=True, null=True)
++    
++    class Meta:
++        app_label = 'admin_tests'
++
++
++class CustomEmptyLabelModelAdmin(admin.ModelAdmin):
++    """ModelAdmin that sets custom empty_label for radio fields."""
++    radio_fields = {'related': admin.VERTICAL}
++    
++    def formfield_for_foreignkey(self, db_field, request, **kwargs):
++        if db_field.name == 'related':
++            kwargs['empty_label'] = "I WANT TO SET MY OWN EMPTY LABEL"
++        return super().formfield_for_foreignkey(db_field, request, **kwargs)
++
++
++class DefaultEmptyLabelModelAdmin(admin.ModelAdmin):
++    """ModelAdmin that uses default empty_label for radio fields."""
++    radio_fields = {'related': admin.VERTICAL}
++
++
++class NoRadioFieldsModelAdmin(admin.ModelAdmin):
++    """ModelAdmin without radio_fields to test normal behavior."""
++    pass
++
++
++class TestRadioFieldsEmptyLabel(TestCase):
++    """Test suite for radio_fields empty_label override issue."""
++    
++    def setUp(self):
++        """Set up test environment."""
++        self.factory = RequestFactory()
++        self.site = AdminSite()
++        self.request = self.factory.get('/')
++        self.request.user = User.objects.create_superuser(
++            'admin', 'admin@example.com', 'password'
++        )
++        
++        # Create test instances
++        self.test_obj = TestModel.objects.create(name='Test Object')
++        self.related_obj = RelatedModel.objects.create(
++            title='Related Object',
++            related=self.test_obj
++        )
++    
++    def test_custom_empty_label_preserved_with_radio_fields(self):
++        """
++        Test that custom empty_label is preserved when radio_fields is defined.
++        This is the main bug being fixed - custom empty_label should not be overridden.
++        """
++        admin_instance = CustomEmptyLabelModelAdmin(RelatedModel, self.site)
++        
++        # Get the form field for the ForeignKey with radio_fields
++        db_field = RelatedModel._meta.get_field('related')
++        formfield = admin_instance.formfield_for_foreignkey(db_field, self.request)
++        
++        # The custom empty_label should be preserved
++        self.assertEqual(formfield.empty_label, "I WANT TO SET MY OWN EMPTY LABEL")
++    
++    def test_default_empty_label_with_radio_fields_blank_true(self):
++        """
++        Test that default empty_label is used when no custom one is provided
++        and the field allows blank values.
++        """
++        admin_instance = DefaultEmptyLabelModelAdmin(RelatedModel, self.site)
++        
++        # Get the form field for the ForeignKey with radio_fields
++        db_field = RelatedModel._meta.get_field('related')
++        formfield = admin_instance.formfield_for_foreignkey(db_field, self.request)
++        
++        # Should use default "None" for blank=True fields
++        self.assertEqual(formfield.empty_label, "None")
++    
++    def test_no_empty_label_with_radio_fields_blank_false(self):
++        """
++        Test that no empty_label is set when field doesn't allow blank values.
++        """
++        # Create a model with blank=False ForeignKey for this test
++        class NonBlankRelatedModel(models.Model):
++            title = models.CharField(max_length=100)
++            related = models.ForeignKey(TestModel, on_delete=models.CASCADE, blank=False)
++            
++            class Meta:
++                app_label = 'admin_tests'
++        
++        class NonBlankModelAdmin(admin.ModelAdmin):
++            radio_fields = {'related': admin.VERTICAL}
++        
++        admin_instance = NonBlankModelAdmin(NonBlankRelatedModel, self.site)
++        
++        # Get the form field for the ForeignKey with radio_fields
++        db_field = NonBlankRelatedModel._meta.get_field('related')
++        formfield = admin_instance.formfield_for_foreignkey(db_field, self.request)
++        
++        # Should be None for blank=False fields
++        self.assertIsNone(formfield.empty_label)
++    
++    def test_no_radio_fields_preserves_normal_behavior(self):
++        """
++        Test that fields not in radio_fields maintain normal behavior.
++        """
++        admin_instance = NoRadioFieldsModelAdmin(RelatedModel, self.site)
++        
++        # Get the form field for the ForeignKey without radio_fields
++        db_field = RelatedModel._meta.get_field('related')
++        formfield = admin_instance.formfield_for_foreignkey(db_field, self.request)
++        
++        # Should use the default form field behavior (typically "---------")
++        self.assertEqual(formfield.empty_label, "---------")
++    
++    def test_custom_empty_label_with_none_value(self):
++        """
++        Test that explicitly setting empty_label to None is preserved.
++        """
++        class NoneEmptyLabelModelAdmin(admin.ModelAdmin):
++            radio_fields = {'related': admin.VERTICAL}
++            
++            def formfield_for_foreignkey(self, db_field, request, **kwargs):
++                if db_field.name == 'related':
++                    kwargs['empty_label'] = None
++                return super().formfield_for_foreignkey(db_field, request, **kwargs)
++        
++        admin_instance = NoneEmptyLabelModelAdmin(RelatedModel, self.site)
++        
++        # Get the form field for the ForeignKey with radio_fields
++        db_field = RelatedModel._meta.get_field('related')
++        formfield = admin_instance.formfield_for_foreignkey(db_field, self.request)
++        
++        # Should preserve the explicitly set None value
++        self.assertIsNone(formfield.empty_label)
++    
++    def test_custom_empty_label_with_empty_string(self):
++        """
++        Test that explicitly setting empty_label to empty string is preserved.
++        """
++        class EmptyStringLabelModelAdmin(admin.ModelAdmin):
++            radio_fields = {'related': admin.VERTICAL}
++            
++            def formfield_for_foreignkey(self, db_field, request, **kwargs):
++                if db_field.name == 'related':
++                    kwargs['empty_label'] = ""
++                return super().formfield_for_foreignkey(db_field, request, **kwargs)
++        
++        admin_instance = EmptyStringLabelModelAdmin(RelatedModel, self.site)
++        
++        # Get the form field for the ForeignKey with radio_fields
++        db_field = RelatedModel._meta.get_field('related')
++        formfield = admin_instance.formfield_for_foreignkey(db_field, self.request)
++        
++        # Should preserve the explicitly set empty string
++        self.assertEqual(formfield.empty_label, "")
++    
++    def test_widget_is_admin_radio_select_with_radio_fields(self):
++        """
++        Test that the widget is correctly set to AdminRadioSelect when using radio_fields.
++        """
++        admin_instance = CustomEmptyLabelModelAdmin(RelatedModel, self.site)
++        
++        # Get the form field for the ForeignKey with radio_fields
++        db_field = RelatedModel._meta.get_field('related')
++        formfield = admin_instance.formfield_for_foreignkey(db_field, self.request)
++        
++        # Should use AdminRadioSelect widget
++        from django.contrib.admin import widgets
++        self.assertIsInstance(formfield.widget, widgets.AdminRadioSelect)
++    
++    def test_multiple_fields_with_different_empty_labels(self):
++        """
++        Test that multiple fields can have different custom empty labels.
++        """
++        # Create a model with multiple ForeignKey fields
++        class MultiFieldModel(models.Model):
++            title = models.CharField(max_length=100)
++            related1 = models.ForeignKey(TestModel, on_delete=models.CASCADE, blank=True, null=True, related_name='multi1')
++            related2 = models.ForeignKey(TestModel, on_delete=models.CASCADE, blank=True, null=True, related_name='multi2')
++            
++            class Meta:
++                app_label = 'admin_tests'
++        
++        class MultiFieldModelAdmin(admin.ModelAdmin):
++            radio_fields = {'related1': admin.VERTICAL, 'related2': admin.HORIZONTAL}
++            
++            def formfield_for_foreignkey(self, db_field, request, **kwargs):
++                if db_field.name == 'related1':
++                    kwargs['empty_label'] = "Custom Label 1"
++                elif db_field.name == 'related2':
++                    kwargs['empty_label'] = "Custom Label 2"
++                return super().formfield_for_foreignkey(db_field, request, **kwargs)
++        
++        admin_instance = MultiFieldModelAdmin(MultiFieldModel, self.site)
++        
++        # Test first field
++        db_field1 = MultiFieldModel._meta.get_field('related1')
++        formfield1 = admin_instance.formfield_for_foreignkey(db_field1, self.request)
++        self.assertEqual(formfield1.empty_label, "Custom Label 1")
++        
++        # Test second field
++        db_field2 = MultiFieldModel._meta.get_field('related2')
++        formfield2 = admin_instance.formfield_for_foreignkey(db_field2, self.request)
++        self.assertEqual(formfield2.empty_label, "Custom Label 2")
++
++
++class TestRadioFieldsEmptyLabelBugReproduction(TestCase):
++    """
++    Test case that specifically reproduces the bug described in the issue.
++    This test should fail before the fix and pass after the fix.
++    """
++    
++    def setUp(self):
++        """Set up test environment."""
++        self.factory = RequestFactory()
++        self.site = AdminSite()
++        self.request = self.factory.get('/')
++        self.request.user = User.objects.create_superuser(
++            'admin', 'admin@example.com', 'password'
++        )
++    
++    def test_bug_reproduction_custom_empty_label_overridden(self):
++        """
++        This test reproduces the exact bug described in the issue.
++        Before the fix: This test should fail because custom empty_label is overridden.
++        After the fix: This test should pass because custom empty_label is preserved.
++        """
++        # This is the exact example from the issue description
++        class MyModelAdmin(admin.ModelAdmin):
++            radio_fields = {'related': admin.VERTICAL}
++            
++            def formfield_for_foreignkey(self, db_field, request, **kwargs):
++                if db_field.name == 'related':
++                    kwargs['empty_label'] = "I WANT TO SET MY OWN EMPTY LABEL"
++                return super().formfield_for_foreignkey(db_field, request, **kwargs)
++        
++        admin_instance = MyModelAdmin(RelatedModel, self.site)
++        
++        # Get the form field for the ForeignKey with radio_fields
++        db_field = RelatedModel._meta.get_field('related')
++        formfield = admin_instance.formfield_for_foreignkey(db_field, self.request)
++        
++        # Before fix: This assertion would fail because the custom label gets overridden
++        # After fix: This assertion should pass because the custom label is preserved
++        self.assertEqual(
++            formfield.empty_label, 
++            "I WANT TO SET MY OWN EMPTY LABEL",
++            "Custom empty_label should be preserved and not overridden by default 'None'"
++        )
++        
++        # Additional assertion to ensure it's not the default
++        self.assertNotEqual(
++            formfield.empty_label,
++            "None",
++            "Custom empty_label should not be overridden with default 'None'"
++        )

@@ -1,0 +1,276 @@
+--- a/sympy/printing/tests/test_mathematica.py
++++ b/sympy/printing/tests/test_mathematica.py
+-from sympy import symbols, sin, cos, tan, cot, asin, acos, atan, acot, \
+-    sinh, cosh, tanh, coth, asinh, acosh, atanh, acoth, sech, csch, \
+-    asech, acsch, exp, log, pi, E, I, oo, zoo, nan, Rational, \
+-    Function, Integral, Derivative, conjugate, Max, Min
+-from sympy.printing.mathematica import mathematica_code
+-
+-
+-def test_Integer():
+-    assert mathematica_code(5) == "5"
+-
+-
+-def test_Rational():
+-    assert mathematica_code(Rational(1, 2)) == "1/2"
+-    assert mathematica_code(Rational(-1, 2)) == "-1/2"
+-
+-
+-def test_Function():
+-    f = Function('f')
+-    assert mathematica_code(f(5)) == "f[5]"
+-    assert mathematica_code(sin(5)) == "Sin[5]"
+-    assert mathematica_code(atan(5)) == "ArcTan[5]"
+-
+-
+-def test_Pow():
+-    assert mathematica_code(x**3) == "x^3"
+-    assert mathematica_code(x**(y**3)) == "x^(y^3)"
+-    assert mathematica_code(1/(f(x)*3.5)**(x - y**x)/(x**2 + y)) == \
+-        "(3.5*f[x])^(-x + y^x)/(x^2 + y)"
+-    assert mathematica_code(x**-1.0) == 'x^(-1.0)'
+-    assert mathematica_code(x**Rational(2, 3)) == 'x^(2/3)'
+-
+-
+-def test_Mul():
+-    A, B, C, D = symbols('A B C D', commutative=False)
+-    assert mathematica_code(x*y*z) == "x*y*z"
+-    assert mathematica_code(x*y*A) == "x*y*A"
+-    assert mathematica_code(x*y*A*B) == "x*y*A**B"
+-    assert mathematica_code(x*y*A*B*C) == "x*y*A**B**C"
+-    assert mathematica_code(x*A*B*(C + D)*A*y) == "x*y*A**B**(C + D)**A"
+-
+-
+-def test_constants():
+-    assert mathematica_code(pi) == "Pi"
+-    assert mathematica_code(oo) == "Infinity"
+-    assert mathematica_code(-oo) == "-Infinity"
+-    assert mathematica_code(zoo) == "ComplexInfinity"
+-    assert mathematica_code(nan) == "Indeterminate"
+-    assert mathematica_code(E) == "E"
+-    assert mathematica_code(I) == "I"
+-
+-
+-def test_containers():
+-    assert mathematica_code([1, 2, 3, [4, 5, [6, 7]], 8, [9, 10], 11]) == \
+-        "{1, 2, 3, {4, 5, {6, 7}}, 8, {9, 10}, 11}"
+-    assert mathematica_code((1, 2, (3, 4))) == "{1, 2, {3, 4}}"
+-    assert mathematica_code([1]) == "{1}"
+-    assert mathematica_code((1,)) == "{1}"
+-    assert mathematica_code(Tuple(*[1, 2, 3])) == "{1, 2, 3}"
+-
+-
+-def test_Integral():
+-    assert mathematica_code(Integral(sin(sin(x)), x)) == "Hold[Integrate[Sin[Sin[x]], x]]"
+-    assert mathematica_code(Integral(exp(-x**2 - y**2),
+-                            (x, -oo, oo),
+-                            (y, -oo, oo))) == \
+-        "Hold[Integrate[Exp[-x^2 - y^2], {x, -Infinity, Infinity}, " \
+-        "{y, -Infinity, Infinity}]]"
+-
+-
+-def test_Derivative():
+-    assert mathematica_code(Derivative(sin(x), x)) == "Hold[D[Sin[x], x]]"
+-    assert mathematica_code(Derivative(x, x)) == "Hold[D[x, x]]"
+-    assert mathematica_code(Derivative(sin(x)*y**4, x, 2)) == \
+-        "Hold[D[y^4*Sin[x], {x, 2}]]"
+-    assert mathematica_code(Derivative(sin(x)*y**4, x, y, x)) == \
+-        "Hold[D[y^4*Sin[x], x, y, x]]"
+-    assert mathematica_code(Derivative(sin(x)*y**4, x, y, 3, x)) == \
+-        "Hold[D[y^4*Sin[x], x, {y, 3}, x]]"
+-
+-
+-def test_user_functions():
+-    g = Function('g')
+-    custom_functions = {"g": "foo"}
+-    assert mathematica_code(g(x), user_functions=custom_functions) == "foo[x]"
+-    assert mathematica_code(g(x, y), user_functions=custom_functions) == "foo[x, y]"
+-
+-
+-def test_Max():
+-    # Test case from the issue
+-    assert mathematica_code(Max(x, 2)) == "Max[x, 2]"
+-    assert mathematica_code(Max(x, y)) == "Max[x, y]"
+-    assert mathematica_code(Max(x, y, z)) == "Max[x, y, z]"
+-
+-
+-def test_Min():
+-    # Test Min for consistency
+-    assert mathematica_code(Min(x, 2)) == "Min[x, 2]"
+-    assert mathematica_code(Min(x, y)) == "Min[x, y]"
+-    assert mathematica_code(Min(x, y, z)) == "Min[x, y, z]"
+-
+-
+-x, y, z = symbols('x,y,z')
++from sympy import symbols, sin, cos, tan, cot, asin, acos, atan, acot, \
++    sinh, cosh, tanh, coth, asinh, acosh, atanh, acoth, sech, csch, \
++    asech, acsch, exp, log, pi, E, I, oo, zoo, nan, Rational, \
++    Function, Integral, Derivative, conjugate, Max, Min
++from sympy.printing.mathematica import mathematica_code
++
++
++def test_Integer():
++    assert mathematica_code(5) == "5"
++
++
++def test_Rational():
++    assert mathematica_code(Rational(1, 2)) == "1/2"
++    assert mathematica_code(Rational(-1, 2)) == "-1/2"
++
++
++def test_Function():
++    f = Function('f')
++    assert mathematica_code(f(5)) == "f[5]"
++    assert mathematica_code(sin(5)) == "Sin[5]"
++    assert mathematica_code(atan(5)) == "ArcTan[5]"
++
++
++def test_Pow():
++    assert mathematica_code(x**3) == "x^3"
++    assert mathematica_code(x**(y**3)) == "x^(y^3)"
++    assert mathematica_code(1/(f(x)*3.5)**(x - y**x)/(x**2 + y)) == \
++        "(3.5*f[x])^(-x + y^x)/(x^2 + y)"
++    assert mathematica_code(x**-1.0) == 'x^(-1.0)'
++    assert mathematica_code(x**Rational(2, 3)) == 'x^(2/3)'
++
++
++def test_Mul():
++    A, B, C, D = symbols('A B C D', commutative=False)
++    assert mathematica_code(x*y*z) == "x*y*z"
++    assert mathematica_code(x*y*A) == "x*y*A"
++    assert mathematica_code(x*y*A*B) == "x*y*A**B"
++    assert mathematica_code(x*y*A*B*C) == "x*y*A**B**C"
++    assert mathematica_code(x*A*B*(C + D)*A*y) == "x*y*A**B**(C + D)**A"
++
++
++def test_constants():
++    assert mathematica_code(pi) == "Pi"
++    assert mathematica_code(oo) == "Infinity"
++    assert mathematica_code(-oo) == "-Infinity"
++    assert mathematica_code(zoo) == "ComplexInfinity"
++    assert mathematica_code(nan) == "Indeterminate"
++    assert mathematica_code(E) == "E"
++    assert mathematica_code(I) == "I"
++
++
++def test_containers():
++    assert mathematica_code([1, 2, 3, [4, 5, [6, 7]], 8, [9, 10], 11]) == \
++        "{1, 2, 3, {4, 5, {6, 7}}, 8, {9, 10}, 11}"
++    assert mathematica_code((1, 2, (3, 4))) == "{1, 2, {3, 4}}"
++    assert mathematica_code([1]) == "{1}"
++    assert mathematica_code((1,)) == "{1}"
++    assert mathematica_code(Tuple(*[1, 2, 3])) == "{1, 2, 3}"
++
++
++def test_Integral():
++    assert mathematica_code(Integral(sin(sin(x)), x)) == "Hold[Integrate[Sin[Sin[x]], x]]"
++    assert mathematica_code(Integral(exp(-x**2 - y**2),
++                            (x, -oo, oo),
++                            (y, -oo, oo))) == \
++        "Hold[Integrate[Exp[-x^2 - y^2], {x, -Infinity, Infinity}, " \
++        "{y, -Infinity, Infinity}]]"
++
++
++def test_Derivative():
++    assert mathematica_code(Derivative(sin(x), x)) == "Hold[D[Sin[x], x]]"
++    assert mathematica_code(Derivative(x, x)) == "Hold[D[x, x]]"
++    assert mathematica_code(Derivative(sin(x)*y**4, x, 2)) == \
++        "Hold[D[y^4*Sin[x], {x, 2}]]"
++    assert mathematica_code(Derivative(sin(x)*y**4, x, y, x)) == \
++        "Hold[D[y^4*Sin[x], x, y, x]]"
++    assert mathematica_code(Derivative(sin(x)*y**4, x, y, 3, x)) == \
++        "Hold[D[y^4*Sin[x], x, {y, 3}, x]]"
++
++
++def test_user_functions():
++    g = Function('g')
++    custom_functions = {"g": "foo"}
++    assert mathematica_code(g(x), user_functions=custom_functions) == "foo[x]"
++    assert mathematica_code(g(x, y), user_functions=custom_functions) == "foo[x, y]"
++
++
++def test_Max():
++    """Test that Max expressions are properly formatted with square brackets."""
++    # Test case from the issue - this should fail before the fix
++    assert mathematica_code(Max(x, 2)) == "Max[x, 2]"
++    
++    # Test with multiple arguments
++    assert mathematica_code(Max(x, y)) == "Max[x, y]"
++    assert mathematica_code(Max(x, y, z)) == "Max[x, y, z]"
++    
++    # Test with numeric arguments
++    assert mathematica_code(Max(1, 2, 3)) == "Max[1, 2, 3]"
++    
++    # Test with mixed arguments
++    assert mathematica_code(Max(x, 5, y)) == "Max[x, 5, y]"
++    
++    # Test nested Max
++    assert mathematica_code(Max(x, Max(y, z))) == "Max[x, Max[y, z]]"
++    
++    # Test Max with expressions
++    assert mathematica_code(Max(x + 1, y - 2)) == "Max[x + 1, y - 2]"
++
++
++def test_Min():
++    """Test that Min expressions are properly formatted with square brackets."""
++    # Test basic Min functionality for consistency with Max
++    assert mathematica_code(Min(x, 2)) == "Min[x, 2]"
++    
++    # Test with multiple arguments
++    assert mathematica_code(Min(x, y)) == "Min[x, y]"
++    assert mathematica_code(Min(x, y, z)) == "Min[x, y, z]"
++    
++    # Test with numeric arguments
++    assert mathematica_code(Min(1, 2, 3)) == "Min[1, 2, 3]"
++    
++    # Test with mixed arguments
++    assert mathematica_code(Min(x, 5, y)) == "Min[x, 5, y]"
++    
++    # Test nested Min
++    assert mathematica_code(Min(x, Min(y, z))) == "Min[x, Min[y, z]]"
++    
++    # Test Min with expressions
++    assert mathematica_code(Min(x + 1, y - 2)) == "Min[x + 1, y - 2]"
++
++
++def test_Max_Min_edge_cases():
++    """Test edge cases for Max and Min functions."""
++    # Test single argument
++    assert mathematica_code(Max(x)) == "Max[x]"
++    assert mathematica_code(Min(x)) == "Min[x]"
++    
++    # Test with constants
++    assert mathematica_code(Max(pi, E)) == "Max[Pi, E]"
++    assert mathematica_code(Min(pi, E)) == "Min[Pi, E]"
++    
++    # Test with infinity
++    assert mathematica_code(Max(x, oo)) == "Max[x, Infinity]"
++    assert mathematica_code(Min(x, -oo)) == "Min[x, -Infinity]"
++    
++    # Test Max and Min together
++    assert mathematica_code(Max(x, Min(y, z))) == "Max[x, Min[y, z]]"
++    assert mathematica_code(Min(x, Max(y, z))) == "Min[x, Max[y, z]]"
++
++
++def test_Max_Min_reproduces_bug():
++    """Test that reproduces the original bug described in the issue."""
++    # This test should fail before the fix is applied
++    # The issue states that Max(x,2) produces 'Max(2, x)' instead of 'Max[x,2]'
++    result = mathematica_code(Max(x, 2))
++    
++    # The expected correct output
++    expected = "Max[x, 2]"
++    
++    # This assertion should pass after the fix
++    assert result == expected
++    
++    # Ensure it's not producing the buggy output with parentheses
++    buggy_output = "Max(2, x)"
++    assert result != buggy_output
++    
++    # Also test that it's not producing parentheses in any form
++    assert "(" not in result
++    assert ")" not in result
++
++
++x, y, z = symbols('x,y,z')

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/db/models/enums.py b/django/db/models/enums.py\nindex bbe362a6ab..1e94ce79b4 100644\n--- a/django/db/models/enums.py\n+++ b/django/db/models/enums.py\n@@ -65,7 +65,9 @@ class Choices(enum.Enum, metaclass=ChoicesMeta):\n \n class IntegerChoices(int, Choices):\n     \"\"\"Class for creating enumerated integer choices.\"\"\"\n-    pass\n+    \n+    def __str__(self):\n+        return str(self.value)\n \n \n class TextChoices(str, Choices):\n@@ -73,3 +75,6 @@ class TextChoices(str, Choices):\n \n     def _generate_next_value_(name, start, count, last_values):\n         return name\n+    \n+    def __str__(self):\n+        return self.value\n"
+}

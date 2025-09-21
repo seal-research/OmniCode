@@ -1,0 +1,314 @@
+--- a/tests/test_downloader_deprecation.py
++++ b/tests/test_downloader_deprecation.py
+-# Empty if creating new file
++import warnings
++import pytest
++from unittest.mock import Mock
++
++from scrapy import Request, Spider
++from scrapy.core.downloader import Downloader
++from scrapy.crawler import Crawler
++from scrapy.settings import Settings
++
++
++class TestDownloaderGetSlotKeyDeprecation:
++    """Test suite for deprecation of spider argument in Downloader._get_slot_key()"""
++
++    @pytest.fixture
++    def crawler(self):
++        """Create a mock crawler with default settings"""
++        crawler = Mock(spec=Crawler)
++        crawler.settings = Settings({
++            'CONCURRENT_REQUESTS': 16,
++            'CONCURRENT_REQUESTS_PER_DOMAIN': 8,
++            'CONCURRENT_REQUESTS_PER_IP': 1,
++            'RANDOMIZE_DOWNLOAD_DELAY': 0.5,
++            'DOWNLOAD_SLOTS': {},
++            'SCHEDULER_SLOT_POLICY': 'scrapy.core.scheduler.DefaultSlotPolicy',
++        })
++        crawler.signals = Mock()
++        return crawler
++
++    @pytest.fixture
++    def downloader(self, crawler):
++        """Create a Downloader instance"""
++        return Downloader(crawler)
++
++    @pytest.fixture
++    def request(self):
++        """Create a test request"""
++        return Request('http://example.com/test')
++
++    @pytest.fixture
++    def spider(self):
++        """Create a test spider"""
++        return Spider('test_spider')
++
++    def test_get_slot_key_with_none_spider_no_warning(self, downloader, request):
++        """Test that passing None as spider parameter does not trigger deprecation warning"""
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            result = downloader._get_slot_key(request, None)
++            
++            # Should not trigger any warnings
++            assert len(w) == 0
++            # Should return expected slot key (hostname)
++            assert result == "example.com"
++
++    def test_get_slot_key_with_spider_triggers_deprecation_warning(self, downloader, request, spider):
++        """Test that passing a spider instance triggers deprecation warning"""
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            result = downloader._get_slot_key(request, spider)
++            
++            # Should trigger exactly one deprecation warning
++            assert len(w) == 1
++            assert issubclass(w[0].category, DeprecationWarning)
++            assert "spider" in str(w[0].message).lower()
++            assert "deprecated" in str(w[0].message).lower()
++            
++            # Should still return correct result despite warning
++            assert result == "example.com"
++
++    def test_get_slot_key_functionality_unchanged_with_spider(self, downloader, request, spider):
++        """Test that functionality remains the same regardless of spider parameter"""
++        # Get result with None spider (no warning)
++        with warnings.catch_warnings():
++            warnings.simplefilter("ignore")
++            result_none = downloader._get_slot_key(request, None)
++        
++        # Get result with spider instance (with warning)
++        with warnings.catch_warnings():
++            warnings.simplefilter("ignore")
++            result_spider = downloader._get_slot_key(request, spider)
++        
++        # Results should be identical
++        assert result_none == result_spider
++
++    def test_get_slot_key_with_custom_slot_in_meta(self, downloader, spider):
++        """Test that custom slot key in request meta works correctly with deprecation"""
++        request = Request('http://example.com/test')
++        request.meta[downloader.DOWNLOAD_SLOT] = "custom_slot"
++        
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            result = downloader._get_slot_key(request, spider)
++            
++            # Should trigger deprecation warning
++            assert len(w) == 1
++            assert issubclass(w[0].category, DeprecationWarning)
++            
++            # Should return custom slot key
++            assert result == "custom_slot"
++
++    def test_get_slot_key_with_ip_concurrency(self, crawler, spider):
++        """Test slot key generation with IP concurrency enabled"""
++        crawler.settings.set('CONCURRENT_REQUESTS_PER_IP', 2)
++        downloader = Downloader(crawler)
++        request = Request('http://example.com/test')
++        
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            result = downloader._get_slot_key(request, spider)
++            
++            # Should trigger deprecation warning
++            assert len(w) == 1
++            assert issubclass(w[0].category, DeprecationWarning)
++            
++            # Result should be hostname (or resolved IP if DNS cache has it)
++            assert isinstance(result, str)
++            assert len(result) > 0
++
++    def test_get_slot_key_backward_compatibility_external_usage(self, downloader, request):
++        """Test that external usage pattern (like in pqueues.py) continues to work"""
++        # This simulates how pqueues.py calls the method
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            result = downloader._get_slot_key(request, None)
++            
++            # Should not trigger warning when called with None (external pattern)
++            assert len(w) == 0
++            assert result == "example.com"
++
++    def test_get_slot_key_internal_usage_pattern(self, downloader, request, spider):
++        """Test that internal usage pattern (_get_slot method) works correctly"""
++        # This simulates how _get_slot method calls _get_slot_key
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            # Internal method passes spider normally
++            result = downloader._get_slot_key(request, spider)
++            
++            # Should trigger warning since spider is not None
++            assert len(w) == 1
++            assert issubclass(w[0].category, DeprecationWarning)
++            assert result == "example.com"
++
++    def test_deprecation_warning_message_content(self, downloader, request, spider):
++        """Test that deprecation warning contains appropriate message"""
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            downloader._get_slot_key(request, spider)
++            
++            assert len(w) == 1
++            message = str(w[0].message)
++            
++            # Check that message contains key information
++            assert "spider" in message.lower()
++            assert "deprecated" in message.lower()
++            assert "_get_slot_key" in message
++
++    def test_multiple_calls_multiple_warnings(self, downloader, request, spider):
++        """Test that each call with spider parameter triggers a warning"""
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            
++            # Make multiple calls
++            downloader._get_slot_key(request, spider)
++            downloader._get_slot_key(request, spider)
++            downloader._get_slot_key(request, spider)
++            
++            # Should get one warning per call
++            assert len(w) == 3
++            for warning in w:
++                assert issubclass(warning.category, DeprecationWarning)
++
++    def test_mixed_calls_selective_warnings(self, downloader, request, spider):
++        """Test that warnings are only triggered for calls with non-None spider"""
++        with warnings.catch_warnings(record=True) as w:
++            warnings.simplefilter("always")
++            
++            # Mix of calls with None and spider
++            downloader._get_slot_key(request, None)      # No warning
++            downloader._get_slot_key(request, spider)    # Warning
++            downloader._get_slot_key(request, None)      # No warning
++            downloader._get_slot_key(request, spider)    # Warning
++            
++            # Should get exactly 2 warnings (only for spider calls)
++            assert len(w) == 2
++            for warning in w:
++                assert issubclass(warning.category, DeprecationWarning)
+
+--- a/tests/test_downloader.py
++++ b/tests/test_downloader.py
+-import pytest
+-from unittest.mock import Mock
+-
+-from scrapy import Request, Spider
+-from scrapy.core.downloader import Downloader
+-from scrapy.crawler import Crawler
+-from scrapy.settings import Settings
+-
+-
+-class TestDownloader:
+-    @pytest.fixture
+-    def crawler(self):
+-        crawler = Mock(spec=Crawler)
+-        crawler.settings = Settings({
+-            'CONCURRENT_REQUESTS': 16,
+-            'CONCURRENT_REQUESTS_PER_DOMAIN': 8,
+-            'CONCURRENT_REQUESTS_PER_IP': 1,
+-            'RANDOMIZE_DOWNLOAD_DELAY': 0.5,
+-            'DOWNLOAD_SLOTS': {},
+-            'SCHEDULER_SLOT_POLICY': 'scrapy.core.scheduler.DefaultSlotPolicy',
+-        })
+-        crawler.signals = Mock()
+-        return crawler
+-
+-    @pytest.fixture
+-    def downloader(self, crawler):
+-        return Downloader(crawler)
+-
+-    @pytest.fixture
+-    def request(self):
+-        return Request('http://example.com/test')
+-
+-    @pytest.fixture
+-    def spider(self):
+-        return Spider('test_spider')
+-
+-    def test_get_slot_key_basic(self, downloader, request):
+-        """Test basic slot key generation"""
+-        result = downloader._get_slot_key(request, None)
+-        assert result == "example.com"
+-
+-    def test_get_slot_key_with_custom_slot(self, downloader, spider):
+-        """Test slot key with custom slot in meta"""
+-        request = Request('http://example.com/test')
+-        request.meta[downloader.DOWNLOAD_SLOT] = "custom_slot"
+-        result = downloader._get_slot_key(request, None)
+-        assert result == "custom_slot"
++import warnings
++import pytest
++from unittest.mock import Mock
++
++from scrapy import Request, Spider
++from scrapy.core.downloader import Downloader
++from scrapy.crawler import Crawler
++from scrapy.settings import Settings
++
++
++class TestDownloader:
++    @pytest.fixture
++    def crawler(self):
++        crawler = Mock(spec=Crawler)
++        crawler.settings = Settings({
++            'CONCURRENT_REQUESTS': 16,
++            'CONCURRENT_REQUESTS_PER_DOMAIN': 8,
++            'CONCURRENT_REQUESTS_PER_IP': 1,
++            'RANDOMIZE_DOWNLOAD_DELAY': 0.5,
++            'DOWNLOAD_SLOTS': {},
++            'SCHEDULER_SLOT_POLICY': 'scrapy.core.scheduler.DefaultSlotPolicy',
++        })
++        crawler.signals = Mock()
++        return crawler
++
++    @pytest.fixture
++    def downloader(self, crawler):
++        return Downloader(crawler)
++
++    @pytest.fixture
++    def request(self):
++        return Request('http://example.com/test')
++
++    @pytest.fixture
++    def spider(self):
++        return Spider('test_spider')
++
++    def test_get_slot_key_basic(self, downloader, request):
++        """Test basic slot key generation"""
++        result = downloader._get_slot_key(request, None)
++        assert result == "example.com"
++
++    def test_get_slot_key_with_custom_slot(self, downloader, spider):
++        """Test slot key with custom slot in meta"""
++        request = Request('http://example.com/test')
++        request.meta[downloader.DOWNLOAD_SLOT] = "custom_slot"
++        # Suppress deprecation warning for this test
++        with warnings.catch_warnings():
++            warnings.simplefilter("ignore", DeprecationWarning)
++            result = downloader._get_slot_key(request, spider)
++        assert result == "custom_slot"
++
++    def test_get_slot_key_preserves_existing_behavior(self, downloader, request, spider):
++        """Test that existing behavior is preserved after deprecation changes"""
++        # Test with None spider (should work without warning)
++        result_none = downloader._get_slot_key(request, None)
++        
++        # Test with spider (should work with warning)
++        with warnings.catch_warnings():
++            warnings.simplefilter("ignore", DeprecationWarning)
++            result_spider = downloader._get_slot_key(request, spider)
++        
++        # Both should return the same result
++        assert result_none == result_spider == "example.com"
++
++    def test_get_slot_integration_with_get_slot_method(self, downloader, request, spider):
++        """Test that _get_slot method still works correctly with deprecation"""
++        # This tests the integration between _get_slot and _get_slot_key
++        with warnings.catch_warnings():
++            warnings.simplefilter("ignore", DeprecationWarning)
++            key, slot = downloader._get_slot(request, spider)
++        
++        assert key == "example.com"
++        assert slot is not None
++        assert key in downloader.slots

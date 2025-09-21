@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sklearn/preprocessing/_discretization.py b/sklearn/preprocessing/_discretization.py\nindex dd969c12b2..0b4a8e7195 100644\n--- a/sklearn/preprocessing/_discretization.py\n+++ b/sklearn/preprocessing/_discretization.py\n@@ -172,6 +172,7 @@ class KBinsDiscretizer(BaseEstimator, TransformerMixin):\n                 # 1D k-means procedure\n                 km = KMeans(n_clusters=n_bins[jj], init=init, n_init=1)\n                 centers = km.fit(column[:, None]).cluster_centers_[:, 0]\n+                centers = np.sort(centers)\n                 bin_edges[jj] = (centers[1:] + centers[:-1]) * 0.5\n                 bin_edges[jj] = np.r_[col_min, bin_edges[jj], col_max]\n \n"
+}

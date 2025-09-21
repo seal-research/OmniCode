@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/scrapy/core/downloader/__init__.py b/scrapy/core/downloader/__init__.py\nindex 98e1af6fb..4dcfab9e9 100644\n--- a/scrapy/core/downloader/__init__.py\n+++ b/scrapy/core/downloader/__init__.py\n@@ -171,8 +171,6 @@ class Downloader:\n         return deferred\n \n     def _process_queue(self, spider: Spider, slot: Slot) -> None:\n-        from twisted.internet import reactor\n-\n         if slot.latercall and slot.latercall.active():\n             return\n \n"
+}

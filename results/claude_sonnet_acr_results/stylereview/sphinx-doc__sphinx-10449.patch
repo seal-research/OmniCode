@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/sphinx/ext/autodoc/typehints.py b/sphinx/ext/autodoc/typehints.py\nindex 06768168e..80110b167 100644\n--- a/sphinx/ext/autodoc/typehints.py\n+++ b/sphinx/ext/autodoc/typehints.py\n@@ -12,8 +12,8 @@ from sphinx.application import Sphinx\n from sphinx.util import inspect, typing\n \n \n-def record_typehints(app: Sphinx, objtype: str, name: str, obj: Any,\n-                     options: Dict, args: str, retann: str) -> None:\n+def record_typehints(app: Sphinx, _objtype: str, name: str, obj: Any,\n+                     _options: Dict, _args: str, _retann: str) -> None:\n     \"\"\"Record type hints to env object.\"\"\"\n     if app.config.autodoc_typehints_format == 'short':\n         mode = 'smart'\n"
+}

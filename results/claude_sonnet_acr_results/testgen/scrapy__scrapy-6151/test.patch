@@ -1,0 +1,231 @@
+--- a/tests/test_request_offsite_filtering.py
++++ b/tests/test_request_offsite_filtering.py
+-# Empty if creating new file
++import pytest
++from scrapy import Request, Spider
++from scrapy.downloadermiddlewares.offsite import OffsiteMiddleware
++from scrapy.spidermiddlewares.offsite import OffsiteMiddleware as SpiderOffsiteMiddleware
++from scrapy.core.scheduler import Scheduler
++from scrapy.dupefilters import RFPDupeFilter
++from scrapy.exceptions import IgnoreRequest
++from scrapy.statscollectors import MemoryStatsCollector
++from scrapy.utils.test import get_crawler
++
++
++class TestOffsiteFilteringSeparation:
++    """Test suite for separating dont_filter and dont_filter_offsite attributes."""
++
++    def setup_method(self):
++        """Set up test fixtures."""
++        self.spider = Spider('test_spider')
++        self.spider.allowed_domains = ['example.com']
++        self.stats = MemoryStatsCollector()
++        
++        # Set up downloader middleware
++        self.downloader_middleware = OffsiteMiddleware(self.stats)
++        self.downloader_middleware.spider_opened(self.spider)
++        
++        # Set up spider middleware
++        self.spider_middleware = SpiderOffsiteMiddleware(self.stats)
++        self.spider_middleware.spider_opened(self.spider)
++        
++        # Set up scheduler with dupefilter
++        crawler = get_crawler()
++        self.scheduler = Scheduler.from_crawler(crawler)
++        self.scheduler.open(self.spider)
++
++    def test_request_has_dont_filter_offsite_attribute(self):
++        """Test that Request objects have the new dont_filter_offsite attribute."""
++        # Test default value
++        request = Request('http://example.com')
++        assert hasattr(request, 'dont_filter_offsite')
++        assert request.dont_filter_offsite is False
++        
++        # Test explicit setting
++        request_with_offsite = Request('http://example.com', dont_filter_offsite=True)
++        assert request_with_offsite.dont_filter_offsite is True
++
++    def test_dont_filter_offsite_in_attributes_tuple(self):
++        """Test that dont_filter_offsite is included in Request.attributes."""
++        request = Request('http://example.com')
++        assert 'dont_filter_offsite' in request.attributes
++
++    def test_request_copy_preserves_dont_filter_offsite(self):
++        """Test that Request.copy() preserves the dont_filter_offsite attribute."""
++        original = Request('http://example.com', dont_filter_offsite=True)
++        copied = original.copy()
++        assert copied.dont_filter_offsite is True
++
++    def test_request_replace_can_modify_dont_filter_offsite(self):
++        """Test that Request.replace() can modify the dont_filter_offsite attribute."""
++        original = Request('http://example.com', dont_filter_offsite=False)
++        replaced = original.replace(dont_filter_offsite=True)
++        assert replaced.dont_filter_offsite is True
++        assert original.dont_filter_offsite is False  # Original unchanged
++
++    def test_downloader_middleware_respects_dont_filter_offsite_true(self):
++        """Test that downloader middleware allows offsite requests when dont_filter_offsite=True."""
++        # This should be allowed even though it's offsite
++        offsite_request = Request('http://offsite.com', dont_filter_offsite=True)
++        
++        # Should not raise IgnoreRequest
++        result = self.downloader_middleware.process_request(offsite_request, self.spider)
++        assert result is None  # None means request is allowed
++
++    def test_downloader_middleware_blocks_offsite_when_dont_filter_offsite_false(self):
++        """Test that downloader middleware blocks offsite requests when dont_filter_offsite=False."""
++        # This should be blocked because it's offsite and dont_filter_offsite=False
++        offsite_request = Request('http://offsite.com', dont_filter_offsite=False)
++        
++        # Should raise IgnoreRequest
++        with pytest.raises(IgnoreRequest):
++            self.downloader_middleware.process_request(offsite_request, self.spider)
++
++    def test_downloader_middleware_allows_onsite_regardless_of_dont_filter_offsite(self):
++        """Test that downloader middleware allows onsite requests regardless of dont_filter_offsite."""
++        # Onsite request with dont_filter_offsite=False should be allowed
++        onsite_request_false = Request('http://example.com/page', dont_filter_offsite=False)
++        result = self.downloader_middleware.process_request(onsite_request_false, self.spider)
++        assert result is None
++        
++        # Onsite request with dont_filter_offsite=True should also be allowed
++        onsite_request_true = Request('http://example.com/page', dont_filter_offsite=True)
++        result = self.downloader_middleware.process_request(onsite_request_true, self.spider)
++        assert result is None
++
++    def test_spider_middleware_respects_dont_filter_offsite_true(self):
++        """Test that spider middleware allows offsite requests when dont_filter_offsite=True."""
++        # This should be allowed even though it's offsite
++        offsite_request = Request('http://offsite.com', dont_filter_offsite=True)
++        
++        # Should return True (allow request)
++        result = self.spider_middleware._filter(offsite_request, self.spider)
++        assert result is True
++
++    def test_spider_middleware_blocks_offsite_when_dont_filter_offsite_false(self):
++        """Test that spider middleware blocks offsite requests when dont_filter_offsite=False."""
++        # This should be blocked because it's offsite and dont_filter_offsite=False
++        offsite_request = Request('http://offsite.com', dont_filter_offsite=False)
++        
++        # Should return False (block request)
++        result = self.spider_middleware._filter(offsite_request, self.spider)
++        assert result is False
++
++    def test_spider_middleware_allows_onsite_regardless_of_dont_filter_offsite(self):
++        """Test that spider middleware allows onsite requests regardless of dont_filter_offsite."""
++        # Onsite request with dont_filter_offsite=False should be allowed
++        onsite_request_false = Request('http://example.com/page', dont_filter_offsite=False)
++        result = self.spider_middleware._filter(onsite_request_false, self.spider)
++        assert result is True
++        
++        # Onsite request with dont_filter_offsite=True should also be allowed
++        onsite_request_true = Request('http://example.com/page', dont_filter_offsite=True)
++        result = self.spider_middleware._filter(onsite_request_true, self.spider)
++        assert result is True
++
++    def test_dont_filter_still_controls_duplicate_filtering(self):
++        """Test that dont_filter still controls duplicate filtering in scheduler."""
++        # First request should be accepted
++        request1 = Request('http://example.com/page', dont_filter=False)
++        result1 = self.scheduler.enqueue_request(request1)
++        assert result1 is True
++        
++        # Duplicate request with dont_filter=False should be rejected
++        request2 = Request('http://example.com/page', dont_filter=False)
++        result2 = self.scheduler.enqueue_request(request2)
++        assert result2 is False
++        
++        # Duplicate request with dont_filter=True should be accepted
++        request3 = Request('http://example.com/page', dont_filter=True)
++        result3 = self.scheduler.enqueue_request(request3)
++        assert result3 is True
++
++    def test_independent_control_of_filtering_types(self):
++        """Test that dont_filter and dont_filter_offsite work independently."""
++        # Case 1: Allow duplicates but block offsite (dont_filter=True, dont_filter_offsite=False)
++        request1 = Request('http://offsite.com', dont_filter=True, dont_filter_offsite=False)
++        
++        # Should be accepted by scheduler (dont_filter=True)
++        scheduler_result = self.scheduler.enqueue_request(request1)
++        assert scheduler_result is True
++        
++        # Should be blocked by offsite middleware (dont_filter_offsite=False)
++        with pytest.raises(IgnoreRequest):
++            self.downloader_middleware.process_request(request1, self.spider)
++        
++        # Case 2: Block duplicates but allow offsite (dont_filter=False, dont_filter_offsite=True)
++        request2 = Request('http://offsite.com', dont_filter=False, dont_filter_offsite=True)
++        
++        # Should be accepted by scheduler first time
++        scheduler_result = self.scheduler.enqueue_request(request2)
++        assert scheduler_result is True
++        
++        # Should be allowed by offsite middleware (dont_filter_offsite=True)
++        offsite_result = self.downloader_middleware.process_request(request2, self.spider)
++        assert offsite_result is None
++        
++        # Duplicate should be blocked by scheduler (dont_filter=False)
++        request2_dup = Request('http://offsite.com', dont_filter=False, dont_filter_offsite=True)
++        scheduler_result_dup = self.scheduler.enqueue_request(request2_dup)
++        assert scheduler_result_dup is False
++
++    def test_backward_compatibility_with_dont_filter(self):
++        """Test that existing behavior with dont_filter is preserved for backward compatibility."""
++        # Legacy behavior: dont_filter=True should still bypass offsite filtering
++        # This test ensures we don't break existing code that relies on dont_filter
++        # for offsite filtering until the new attribute is widely adopted
++        
++        # Create request with only dont_filter=True (no dont_filter_offsite)
++        legacy_request = Request('http://offsite.com', dont_filter=True)
++        
++        # For backward compatibility, this might still work depending on implementation
++        # The exact behavior here depends on how the migration is handled
++        # This test documents the expected behavior during transition period
++        
++        # At minimum, it should work with scheduler (duplicate filtering)
++        scheduler_result = self.scheduler.enqueue_request(legacy_request)
++        assert scheduler_result is True
++
++    def test_edge_case_both_attributes_true(self):
++        """Test behavior when both dont_filter and dont_filter_offsite are True."""
++        request = Request('http://offsite.com', dont_filter=True, dont_filter_offsite=True)
++        
++        # Should bypass duplicate filtering
++        scheduler_result = self.scheduler.enqueue_request(request)
++        assert scheduler_result is True
++        
++        # Should bypass offsite filtering
++        offsite_result = self.downloader_middleware.process_request(request, self.spider)
++        assert offsite_result is None
++        
++        spider_result = self.spider_middleware._filter(request, self.spider)
++        assert spider_result is True
++
++    def test_edge_case_both_attributes_false(self):
++        """Test behavior when both dont_filter and dont_filter_offsite are False."""
++        # First request should work
++        request1 = Request('http://example.com/page', dont_filter=False, dont_filter_offsite=False)
++        scheduler_result1 = self.scheduler.enqueue_request(request1)
++        assert scheduler_result1 is True
++        
++        # Duplicate should be blocked by scheduler
++        request2 = Request('http://example.com/page', dont_filter=False, dont_filter_offsite=False)
++        scheduler_result2 = self.scheduler.enqueue_request(request2)
++        assert scheduler_result2 is False
++        
++        # Offsite request should be blocked by offsite middleware
++        offsite_request = Request('http://offsite.com', dont_filter=False, dont_filter_offsite=False)
++        with pytest.raises(IgnoreRequest):
++            self.downloader_middleware.process_request(offsite_request, self.spider)
++
++    def test_request_to_dict_includes_dont_filter_offsite(self):
++        """Test that Request.to_dict() includes the dont_filter_offsite attribute."""
++        request = Request('http://example.com', dont_filter_offsite=True)
++        request_dict = request.to_dict(spider=self.spider)
++        assert 'dont_filter_offsite' in request_dict
++        assert request_dict['dont_filter_offsite'] is True
++
++    def teardown_method(self):
++        """Clean up after each test."""
++        if hasattr(self.scheduler, 'close'):
++            self.scheduler.close('finished')

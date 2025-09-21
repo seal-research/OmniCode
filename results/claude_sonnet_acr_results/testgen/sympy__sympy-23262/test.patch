@@ -1,0 +1,165 @@
+--- a/sympy/printing/tests/test_pycode.py
++++ b/sympy/printing/tests/test_pycode.py
+-# Empty if creating new file
++import pytest
++import inspect
++from sympy import lambdify, symbols, Tuple
++from sympy.printing.pycode import PythonCodePrinter, AbstractPythonCodePrinter
++
++
++def test_single_element_tuple_lambdify():
++    """Test that lambdify generates correct Python code for single-element tuples."""
++    # This test reproduces the bug described in the issue
++    func = lambdify([], tuple([1]))
++    source = inspect.getsource(func)
++    
++    # The generated code should contain "(1,)" not "(1)"
++    assert "(1,)" in source, f"Expected '(1,)' in generated code, got: {source}"
++    
++    # Verify the function returns a tuple, not an integer
++    result = func()
++    assert isinstance(result, tuple), f"Expected tuple, got {type(result)}"
++    assert result == (1,), f"Expected (1,), got {result}"
++
++
++def test_multi_element_tuple_lambdify():
++    """Test that lambdify generates correct Python code for multi-element tuples."""
++    func = lambdify([], tuple([1, 2]))
++    source = inspect.getsource(func)
++    
++    # The generated code should contain "(1, 2)"
++    assert "(1, 2)" in source, f"Expected '(1, 2)' in generated code, got: {source}"
++    
++    # Verify the function returns the correct tuple
++    result = func()
++    assert isinstance(result, tuple), f"Expected tuple, got {type(result)}"
++    assert result == (1, 2), f"Expected (1, 2), got {result}"
++
++
++def test_empty_tuple_lambdify():
++    """Test that lambdify generates correct Python code for empty tuples."""
++    func = lambdify([], tuple([]))
++    source = inspect.getsource(func)
++    
++    # The generated code should contain "()"
++    assert "()" in source, f"Expected '()' in generated code, got: {source}"
++    
++    # Verify the function returns an empty tuple
++    result = func()
++    assert isinstance(result, tuple), f"Expected tuple, got {type(result)}"
++    assert result == (), f"Expected (), got {result}"
++
++
++def test_python_code_printer_single_element_tuple():
++    """Test that PythonCodePrinter handles single-element tuples correctly."""
++    printer = PythonCodePrinter()
++    
++    # Test single-element tuple
++    single_tuple = Tuple(1)
++    result = printer._print(single_tuple)
++    assert result == "(1,)", f"Expected '(1,)', got '{result}'"
++
++
++def test_python_code_printer_multi_element_tuple():
++    """Test that PythonCodePrinter handles multi-element tuples correctly."""
++    printer = PythonCodePrinter()
++    
++    # Test multi-element tuple
++    multi_tuple = Tuple(1, 2, 3)
++    result = printer._print(multi_tuple)
++    assert result == "(1, 2, 3)", f"Expected '(1, 2, 3)', got '{result}'"
++
++
++def test_python_code_printer_empty_tuple():
++    """Test that PythonCodePrinter handles empty tuples correctly."""
++    printer = PythonCodePrinter()
++    
++    # Test empty tuple
++    empty_tuple = Tuple()
++    result = printer._print(empty_tuple)
++    assert result == "()", f"Expected '()', got '{result}'"
++
++
++def test_abstract_python_code_printer_single_element_tuple():
++    """Test that AbstractPythonCodePrinter handles single-element tuples correctly."""
++    printer = AbstractPythonCodePrinter()
++    
++    # Test single-element tuple
++    single_tuple = Tuple(1)
++    result = printer._print(single_tuple)
++    assert result == "(1,)", f"Expected '(1,)', got '{result}'"
++
++
++def test_abstract_python_code_printer_multi_element_tuple():
++    """Test that AbstractPythonCodePrinter handles multi-element tuples correctly."""
++    printer = AbstractPythonCodePrinter()
++    
++    # Test multi-element tuple
++    multi_tuple = Tuple(1, 2, 3)
++    result = printer._print(multi_tuple)
++    assert result == "(1, 2, 3)", f"Expected '(1, 2, 3)', got '{result}'"
++
++
++def test_lambdify_with_symbols_single_element_tuple():
++    """Test lambdify with symbols in single-element tuple."""
++    x = symbols('x')
++    func = lambdify([x], tuple([x]))
++    source = inspect.getsource(func)
++    
++    # The generated code should contain "(x,)" not "(x)"
++    assert "(x,)" in source, f"Expected '(x,)' in generated code, got: {source}"
++    
++    # Verify the function returns a tuple
++    result = func(5)
++    assert isinstance(result, tuple), f"Expected tuple, got {type(result)}"
++    assert result == (5,), f"Expected (5,), got {result}"
++
++
++def test_lambdify_nested_single_element_tuple():
++    """Test lambdify with nested single-element tuples."""
++    func = lambdify([], tuple([tuple([1])]))
++    source = inspect.getsource(func)
++    
++    # The generated code should contain "((1,),)" 
++    assert "((1,),)" in source, f"Expected '((1,),)' in generated code, got: {source}"
++    
++    # Verify the function returns the correct nested tuple
++    result = func()
++    assert isinstance(result, tuple), f"Expected tuple, got {type(result)}"
++    assert result == ((1,),), f"Expected ((1,),), got {result}"
++
++
++def test_regression_single_element_tuple_type():
++    """Regression test to ensure single-element tuples maintain tuple type."""
++    # This is the core issue: single-element tuples were being converted to scalars
++    func = lambdify([], tuple([42]))
++    result = func()
++    
++    # The critical assertion: result must be a tuple, not an integer
++    assert type(result) is tuple, f"Expected tuple type, got {type(result)}"
++    assert len(result) == 1, f"Expected tuple of length 1, got length {len(result)}"
++    assert result[0] == 42, f"Expected first element to be 42, got {result[0]}"
++
++
++def test_comparison_with_str_printer():
++    """Test that pycode printer behavior matches str printer for tuples."""
++    from sympy.printing.str import StrPrinter
++    
++    str_printer = StrPrinter()
++    py_printer = PythonCodePrinter()
++    
++    # Single-element tuple
++    single_tuple = Tuple(1)
++    str_result = str_printer._print(single_tuple)
++    py_result = py_printer._print(single_tuple)
++    
++    # Both should produce the same result for single-element tuples
++    assert str_result == py_result == "(1,)", f"Str: '{str_result}', Py: '{py_result}'"
++    
++    # Multi-element tuple
++    multi_tuple = Tuple(1, 2)
++    str_result = str_printer._print(multi_tuple)
++    py_result = py_printer._print(multi_tuple)
++    
++    # Both should produce the same result for multi-element tuples
++    assert str_result == py_result == "(1, 2)", f"Str: '{str_result}', Py: '{py_result}'"

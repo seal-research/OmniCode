@@ -1,0 +1,306 @@
+--- a/tests/test_settings.py
++++ b/tests/test_settings.py
+-# Empty if creating new file
++import pytest
++import json
++from scrapy.settings import BaseSettings
++
++
++class TestGetDictOrList:
++    """Test cases for the getdictorlist method in BaseSettings."""
++
++    def test_getdictorlist_with_tuple_should_fail_before_fix(self):
++        """Test that getdictorlist fails with tuple input before fix is applied.
++        
++        This test reproduces the bug described in the issue where FEED_EXPORT_FIELDS
++        is set to a tuple and causes an AssertionError.
++        """
++        settings = BaseSettings()
++        # Set FEED_EXPORT_FIELDS to a tuple as described in the issue
++        feed_fields_tuple = tuple(
++            're_num idgood num code title price artikul valuta url_id url_rsp '
++            'is_auto_valuta code_nohash url_item'.split()
++        )
++        settings.set('FEED_EXPORT_FIELDS', feed_fields_tuple)
++        
++        # This should raise AssertionError before the fix
++        with pytest.raises(AssertionError):
++            settings.getdictorlist('FEED_EXPORT_FIELDS')
++
++    def test_getdictorlist_with_tuple_should_pass_after_fix(self):
++        """Test that getdictorlist works with tuple input after fix is applied.
++        
++        This test verifies that tuples are properly converted to lists
++        while maintaining the expected functionality.
++        """
++        settings = BaseSettings()
++        # Set FEED_EXPORT_FIELDS to a tuple as described in the issue
++        feed_fields_tuple = tuple(
++            're_num idgood num code title price artikul valuta url_id url_rsp '
++            'is_auto_valuta code_nohash url_item'.split()
++        )
++        settings.set('FEED_EXPORT_FIELDS', feed_fields_tuple)
++        
++        # After fix, this should return a list without raising an error
++        result = settings.getdictorlist('FEED_EXPORT_FIELDS')
++        
++        # Verify the result is a list
++        assert isinstance(result, list)
++        # Verify the content is preserved
++        expected_list = list(feed_fields_tuple)
++        assert result == expected_list
++
++    def test_getdictorlist_with_list_still_works(self):
++        """Test that getdictorlist continues to work with list input."""
++        settings = BaseSettings()
++        feed_fields_list = [
++            're_num', 'idgood', 'num', 'code', 'title', 'price', 
++            'artikul', 'valuta', 'url_id', 'url_rsp', 'is_auto_valuta', 
++            'code_nohash', 'url_item'
++        ]
++        settings.set('FEED_EXPORT_FIELDS', feed_fields_list)
++        
++        result = settings.getdictorlist('FEED_EXPORT_FIELDS')
++        
++        # Verify the result is a list
++        assert isinstance(result, list)
++        # Verify the content is preserved (should be a deep copy)
++        assert result == feed_fields_list
++        # Verify it's a copy, not the same object
++        assert result is not feed_fields_list
++
++    def test_getdictorlist_with_dict_still_works(self):
++        """Test that getdictorlist continues to work with dict input."""
++        settings = BaseSettings()
++        feed_fields_dict = {'field1': 'value1', 'field2': 'value2'}
++        settings.set('FEED_EXPORT_FIELDS', feed_fields_dict)
++        
++        result = settings.getdictorlist('FEED_EXPORT_FIELDS')
++        
++        # Verify the result is a dict
++        assert isinstance(result, dict)
++        # Verify the content is preserved (should be a deep copy)
++        assert result == feed_fields_dict
++        # Verify it's a copy, not the same object
++        assert result is not feed_fields_dict
++
++    def test_getdictorlist_with_string_json_list_still_works(self):
++        """Test that getdictorlist continues to work with JSON string list input."""
++        settings = BaseSettings()
++        json_list_string = '["field1", "field2", "field3"]'
++        settings.set('FEED_EXPORT_FIELDS', json_list_string)
++        
++        result = settings.getdictorlist('FEED_EXPORT_FIELDS')
++        
++        # Verify the result is a list
++        assert isinstance(result, list)
++        # Verify the content matches the JSON
++        assert result == ["field1", "field2", "field3"]
++
++    def test_getdictorlist_with_string_json_dict_still_works(self):
++        """Test that getdictorlist continues to work with JSON string dict input."""
++        settings = BaseSettings()
++        json_dict_string = '{"field1": "value1", "field2": "value2"}'
++        settings.set('FEED_EXPORT_FIELDS', json_dict_string)
++        
++        result = settings.getdictorlist('FEED_EXPORT_FIELDS')
++        
++        # Verify the result is a dict
++        assert isinstance(result, dict)
++        # Verify the content matches the JSON
++        assert result == {"field1": "value1", "field2": "value2"}
++
++    def test_getdictorlist_with_string_comma_separated_still_works(self):
++        """Test that getdictorlist continues to work with comma-separated string input."""
++        settings = BaseSettings()
++        comma_separated_string = 'field1,field2,field3'
++        settings.set('FEED_EXPORT_FIELDS', comma_separated_string)
++        
++        result = settings.getdictorlist('FEED_EXPORT_FIELDS')
++        
++        # Verify the result is a list
++        assert isinstance(result, list)
++        # Verify the content is split correctly
++        assert result == ["field1", "field2", "field3"]
++
++    def test_getdictorlist_with_none_returns_empty_dict(self):
++        """Test that getdictorlist returns empty dict when value is None."""
++        settings = BaseSettings()
++        
++        result = settings.getdictorlist('NONEXISTENT_SETTING')
++        
++        # Verify the result is an empty dict
++        assert isinstance(result, dict)
++        assert result == {}
++
++    def test_getdictorlist_with_default_value(self):
++        """Test that getdictorlist returns default value when setting doesn't exist."""
++        settings = BaseSettings()
++        default_value = ['default1', 'default2']
++        
++        result = settings.getdictorlist('NONEXISTENT_SETTING', default_value)
++        
++        # Verify the result matches the default
++        assert isinstance(result, list)
++        assert result == default_value
++
++    def test_getdictorlist_empty_tuple_edge_case(self):
++        """Test that getdictorlist handles empty tuple correctly."""
++        settings = BaseSettings()
++        settings.set('EMPTY_TUPLE_SETTING', tuple())
++        
++        result = settings.getdictorlist('EMPTY_TUPLE_SETTING')
++        
++        # Verify the result is an empty list
++        assert isinstance(result, list)
++        assert result == []
++
++    def test_getdictorlist_nested_tuple_edge_case(self):
++        """Test that getdictorlist handles tuple with nested elements correctly."""
++        settings = BaseSettings()
++        nested_tuple = ('field1', ('nested1', 'nested2'), 'field3')
++        settings.set('NESTED_TUPLE_SETTING', nested_tuple)
++        
++        result = settings.getdictorlist('NESTED_TUPLE_SETTING')
++        
++        # Verify the result is a list with preserved structure
++        assert isinstance(result, list)
++        assert result == list(nested_tuple)
++        assert result[1] == ('nested1', 'nested2')  # Nested tuple preserved
+
+--- a/tests/test_feedexport_integration.py
++++ b/tests/test_feedexport_integration.py
+-# Empty if creating new file
++import pytest
++from scrapy.settings import Settings
++from scrapy.utils.conf import feed_complete_default_values_from_settings
++
++
++class TestFeedExportIntegration:
++    """Integration tests for feed export functionality with tuple FEED_EXPORT_FIELDS."""
++
++    def test_feed_complete_default_values_with_tuple_fields_should_fail_before_fix(self):
++        """Test that feed_complete_default_values_from_settings fails with tuple FEED_EXPORT_FIELDS before fix.
++        
++        This test reproduces the exact scenario from the issue where the error occurs
++        in the feed export functionality.
++        """
++        settings = Settings()
++        # Reproduce the exact setting from the issue
++        feed_fields_tuple = tuple(
++            're_num idgood num code title price artikul valuta url_id url_rsp '
++            'is_auto_valuta code_nohash url_item'.split()
++        )
++        settings.set('FEED_EXPORT_FIELDS', feed_fields_tuple)
++        
++        # Create a minimal feed configuration
++        feed = {}
++        
++        # This should raise AssertionError before the fix
++        with pytest.raises(AssertionError):
++            feed_complete_default_values_from_settings(feed, settings)
++
++    def test_feed_complete_default_values_with_tuple_fields_should_pass_after_fix(self):
++        """Test that feed_complete_default_values_from_settings works with tuple FEED_EXPORT_FIELDS after fix.
++        
++        This test verifies that the integration between feed export and settings
++        works correctly after the fix is applied.
++        """
++        settings = Settings()
++        # Reproduce the exact setting from the issue
++        feed_fields_tuple = tuple(
++            're_num idgood num code title price artikul valuta url_id url_rsp '
++            'is_auto_valuta code_nohash url_item'.split()
++        )
++        settings.set('FEED_EXPORT_FIELDS', feed_fields_tuple)
++        
++        # Set other required settings with defaults
++        settings.set('FEED_EXPORT_BATCH_ITEM_COUNT', 0)
++        settings.set('FEED_EXPORT_ENCODING', 'utf-8')
++        settings.set('FEED_STORE_EMPTY', False)
++        settings.set('FEED_URI_PARAMS', '')
++        settings.set('FEED_EXPORT_INDENT', None)
++        
++        # Create a minimal feed configuration
++        feed = {}
++        
++        # After fix, this should work without raising an error
++        result = feed_complete_default_values_from_settings(feed, settings)
++        
++        # Verify the result contains the expected fields
++        assert 'fields' in result
++        assert isinstance(result['fields'], list)
++        # Verify the fields content matches the original tuple
++        expected_fields = list(feed_fields_tuple)
++        assert result['fields'] == expected_fields
++
++    def test_feed_complete_default_values_with_list_fields_still_works(self):
++        """Test that feed_complete_default_values_from_settings continues to work with list FEED_EXPORT_FIELDS."""
++        settings = Settings()
++        feed_fields_list = [
++            're_num', 'idgood', 'num', 'code', 'title', 'price', 
++            'artikul', 'valuta', 'url_id', 'url_rsp', 'is_auto_valuta', 
++            'code_nohash', 'url_item'
++        ]
++        settings.set('FEED_EXPORT_FIELDS', feed_fields_list)
++        
++        # Set other required settings with defaults
++        settings.set('FEED_EXPORT_BATCH_ITEM_COUNT', 0)
++        settings.set('FEED_EXPORT_ENCODING', 'utf-8')
++        settings.set('FEED_STORE_EMPTY', False)
++        settings.set('FEED_URI_PARAMS', '')
++        settings.set('FEED_EXPORT_INDENT', None)
++        
++        # Create a minimal feed configuration
++        feed = {}
++        
++        result = feed_complete_default_values_from_settings(feed, settings)
++        
++        # Verify the result contains the expected fields
++        assert 'fields' in result
++        assert isinstance(result['fields'], list)
++        assert result['fields'] == feed_fields_list
++
++    def test_feed_complete_default_values_with_none_fields(self):
++        """Test that feed_complete_default_values_from_settings handles None FEED_EXPORT_FIELDS correctly."""
++        settings = Settings()
++        # Don't set FEED_EXPORT_FIELDS, so it defaults to None
++        
++        # Set other required settings with defaults
++        settings.set('FEED_EXPORT_BATCH_ITEM_COUNT', 0)
++        settings.set('FEED_EXPORT_ENCODING', 'utf-8')
++        settings.set('FEED_STORE_EMPTY', False)
++        settings.set('FEED_URI_PARAMS', '')
++        settings.set('FEED_EXPORT_INDENT', None)
++        
++        # Create a minimal feed configuration
++        feed = {}
++        
++        result = feed_complete_default_values_from_settings(feed, settings)
++        
++        # Verify the result has fields set to None when no FEED_EXPORT_FIELDS is configured
++        assert 'fields' in result
++        assert result['fields'] is None
++
++    def test_feed_complete_default_values_preserves_existing_fields(self):
++        """Test that feed_complete_default_values_from_settings preserves existing fields in feed config."""
++        settings = Settings()
++        feed_fields_tuple = tuple(['field1', 'field2', 'field3'])
++        settings.set('FEED_EXPORT_FIELDS', feed_fields_tuple)
++        
++        # Set other required settings with defaults
++        settings.set('FEED_EXPORT_BATCH_ITEM_COUNT', 0)
++        settings.set('FEED_EXPORT_ENCODING', 'utf-8')
++        settings.set('FEED_STORE_EMPTY', False)
++        settings.set('FEED_URI_PARAMS', '')
++        settings.set('FEED_EXPORT_INDENT', None)
++        
++        # Create a feed configuration with existing fields
++        existing_fields = ['existing1', 'existing2']
++        feed = {'fields': existing_fields}
++        
++        result = feed_complete_default_values_from_settings(feed, settings)
++        
++        # Verify the existing fields are preserved (not overwritten by defaults)
++        assert 'fields' in result
++        assert result['fields'] == existing_fields

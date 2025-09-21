@@ -1,0 +1,331 @@
+--- a/tests/expressions/test_expression_wrapper.py
++++ b/tests/expressions/test_expression_wrapper.py
+-# Empty if creating new file
++import pytest
++from django.db import models
++from django.db.models import ExpressionWrapper, Value, Sum, IntegerField
++from django.test import TestCase, override_settings
++from django.test.utils import isolate_apps
++
++
++@isolate_apps('expressions')
++class ExpressionWrapperGroupByTests(TestCase):
++    """
++    Test cases for ExpressionWrapper GROUP BY behavior with constant expressions.
++    
++    This tests the bug where constant expressions wrapped in ExpressionWrapper
++    are incorrectly included in GROUP BY clauses, causing PostgreSQL errors.
++    """
++    
++    @classmethod
++    def setUpClass(cls):
++        super().setUpClass()
++        
++        # Create a test model for our queries
++        class TestModel(models.Model):
++            column_a = models.CharField(max_length=100)
++            column_b = models.IntegerField()
++            
++            class Meta:
++                app_label = 'expressions'
++        
++        cls.TestModel = TestModel
++    
++    def setUp(self):
++        """Set up test data."""
++        # Create test table
++        with self.connection.schema_editor() as schema_editor:
++            schema_editor.create_model(self.TestModel)
++        
++        # Insert test data
++        self.TestModel.objects.create(column_a='group1', column_b=10)
++        self.TestModel.objects.create(column_a='group1', column_b=20)
++        self.TestModel.objects.create(column_a='group2', column_b=30)
++    
++    def tearDown(self):
++        """Clean up test data."""
++        with self.connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(self.TestModel)
++    
++    def test_expression_wrapper_constant_not_in_group_by(self):
++        """
++        Test that constant expressions wrapped in ExpressionWrapper
++        are not included in GROUP BY clause.
++        
++        This is the main test case that reproduces the bug described in the issue.
++        Before the fix, this would fail with a PostgreSQL error about
++        aggregate functions not being allowed in GROUP BY.
++        """
++        # Create a constant expression wrapped in ExpressionWrapper
++        constant_expr = ExpressionWrapper(Value(3), output_field=IntegerField())
++        
++        # This query should work without including the constant in GROUP BY
++        queryset = (
++            self.TestModel.objects
++            .annotate(expr_res=constant_expr)
++            .values('expr_res', 'column_a')
++            .annotate(sum=Sum('column_b'))
++        )
++        
++        # Execute the query - this should not raise an exception
++        results = list(queryset)
++        
++        # Verify the results are correct
++        expected_results = [
++            {'expr_res': 3, 'column_a': 'group1', 'sum': 30},
++            {'expr_res': 3, 'column_a': 'group2', 'sum': 30},
++        ]
++        
++        # Sort results for consistent comparison
++        results.sort(key=lambda x: x['column_a'])
++        expected_results.sort(key=lambda x: x['column_a'])
++        
++        self.assertEqual(results, expected_results)
++    
++    def test_expression_wrapper_constant_sql_generation(self):
++        """
++        Test that the SQL generated for ExpressionWrapper with constants
++        does not include the constant in the GROUP BY clause.
++        """
++        constant_expr = ExpressionWrapper(Value(42), output_field=IntegerField())
++        
++        queryset = (
++            self.TestModel.objects
++            .annotate(expr_res=constant_expr)
++            .values('expr_res', 'column_a')
++            .annotate(sum=Sum('column_b'))
++        )
++        
++        # Get the SQL query
++        sql, params = queryset.query.sql_with_params()
++        
++        # The SQL should not contain the constant (42) in the GROUP BY clause
++        # It should only group by column_a
++        self.assertIn('GROUP BY', sql.upper())
++        
++        # Split the SQL to find the GROUP BY clause
++        sql_upper = sql.upper()
++        group_by_start = sql_upper.find('GROUP BY')
++        self.assertNotEqual(group_by_start, -1, "GROUP BY clause should be present")
++        
++        # Extract the GROUP BY clause (everything after GROUP BY until ORDER BY or end)
++        group_by_clause = sql[group_by_start:]
++        order_by_pos = group_by_clause.upper().find('ORDER BY')
++        if order_by_pos != -1:
++            group_by_clause = group_by_clause[:order_by_pos]
++        
++        # The GROUP BY should contain column_a but not the constant value 42
++        self.assertIn('column_a', group_by_clause)
++        self.assertNotIn('42', group_by_clause)
++    
++    def test_unwrapped_constant_comparison(self):
++        """
++        Test that unwrapped constant expressions work correctly
++        (this should pass both before and after the fix).
++        
++        This serves as a control test to ensure our fix doesn't break
++        the existing correct behavior.
++        """
++        # Use Value directly without ExpressionWrapper
++        queryset = (
++            self.TestModel.objects
++            .annotate(expr_res=Value(5, output_field=IntegerField()))
++            .values('expr_res', 'column_a')
++            .annotate(sum=Sum('column_b'))
++        )
++        
++        # This should work fine
++        results = list(queryset)
++        
++        # Verify the results
++        expected_results = [
++            {'expr_res': 5, 'column_a': 'group1', 'sum': 30},
++            {'expr_res': 5, 'column_a': 'group2', 'sum': 30},
++        ]
++        
++        results.sort(key=lambda x: x['column_a'])
++        expected_results.sort(key=lambda x: x['column_a'])
++        
++        self.assertEqual(results, expected_results)
++    
++    def test_expression_wrapper_non_constant_expression(self):
++        """
++        Test that ExpressionWrapper with non-constant expressions
++        still works correctly (should be included in GROUP BY when appropriate).
++        """
++        from django.db.models import F
++        
++        # Use a field reference wrapped in ExpressionWrapper
++        field_expr = ExpressionWrapper(F('column_b'), output_field=IntegerField())
++        
++        queryset = (
++            self.TestModel.objects
++            .annotate(expr_res=field_expr)
++            .values('expr_res', 'column_a')
++            .annotate(count=models.Count('id'))
++        )
++        
++        # This should work and include the field expression in GROUP BY
++        results = list(queryset)
++        
++        # Should have one result per unique combination of column_a and column_b
++        self.assertEqual(len(results), 3)  # 3 unique combinations in our test data
++    
++    def test_expression_wrapper_get_group_by_cols_method(self):
++        """
++        Test that ExpressionWrapper.get_group_by_cols() delegates correctly
++        to the wrapped expression.
++        """
++        # Test with a constant expression (should return empty list)
++        constant_expr = ExpressionWrapper(Value(10), output_field=IntegerField())
++        group_by_cols = constant_expr.get_group_by_cols()
++        self.assertEqual(group_by_cols, [])
++        
++        # Test with a field expression (should return the field)
++        from django.db.models import F
++        field_expr = ExpressionWrapper(F('column_a'), output_field=models.CharField())
++        group_by_cols = field_expr.get_group_by_cols()
++        # Should delegate to F('column_a').get_group_by_cols()
++        self.assertNotEqual(group_by_cols, [])
++    
++    def test_multiple_expression_wrappers_with_constants(self):
++        """
++        Test multiple ExpressionWrapper instances with constants in the same query.
++        """
++        expr1 = ExpressionWrapper(Value(1), output_field=IntegerField())
++        expr2 = ExpressionWrapper(Value(2), output_field=IntegerField())
++        
++        queryset = (
++            self.TestModel.objects
++            .annotate(expr1=expr1, expr2=expr2)
++            .values('expr1', 'expr2', 'column_a')
++            .annotate(sum=Sum('column_b'))
++        )
++        
++        # Should execute without errors
++        results = list(queryset)
++        
++        # Verify all results have the expected constant values
++        for result in results:
++            self.assertEqual(result['expr1'], 1)
++            self.assertEqual(result['expr2'], 2)
++    
++    def test_nested_expression_wrapper_with_constant(self):
++        """
++        Test ExpressionWrapper containing another ExpressionWrapper with a constant.
++        """
++        inner_expr = ExpressionWrapper(Value(100), output_field=IntegerField())
++        outer_expr = ExpressionWrapper(inner_expr, output_field=IntegerField())
++        
++        queryset = (
++            self.TestModel.objects
++            .annotate(expr_res=outer_expr)
++            .values('expr_res', 'column_a')
++            .annotate(sum=Sum('column_b'))
++        )
++        
++        # Should execute without errors
++        results = list(queryset)
++        
++        # Verify the nested constant is handled correctly
++        for result in results:
++            self.assertEqual(result['expr_res'], 100)
++
++
++@pytest.mark.django_db
++class TestExpressionWrapperGroupByPytest:
++    """
++    Pytest-style tests for ExpressionWrapper GROUP BY behavior.
++    
++    These tests use pytest fixtures and assertions to provide
++    an alternative testing approach for the same functionality.
++    """
++    
++    @pytest.fixture
++    def test_model(self, db):
++        """Create a test model and data for testing."""
++        from django.db import models
++        
++        class TestModel(models.Model):
++            column_a = models.CharField(max_length=100)
++            column_b = models.IntegerField()
++            
++            class Meta:
++                app_label = 'expressions'
++        
++        # Create the table
++        from django.db import connection
++        with connection.schema_editor() as schema_editor:
++            schema_editor.create_model(TestModel)
++        
++        # Insert test data
++        TestModel.objects.create(column_a='group1', column_b=10)
++        TestModel.objects.create(column_a='group1', column_b=20)
++        TestModel.objects.create(column_a='group2', column_b=30)
++        
++        yield TestModel
++        
++        # Cleanup
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(TestModel)
++    
++    def test_constant_expression_wrapper_group_by_exclusion(self, test_model):
++        """
++        Pytest version: Test that constant expressions in ExpressionWrapper
++        are excluded from GROUP BY clauses.
++        """
++        constant_expr = ExpressionWrapper(Value(99), output_field=IntegerField())
++        
++        queryset = (
++            test_model.objects
++            .annotate(expr_res=constant_expr)
++            .values('expr_res', 'column_a')
++            .annotate(sum=Sum('column_b'))
++        )
++        
++        # Should execute without PostgreSQL GROUP BY errors
++        results = list(queryset)
++        
++        assert len(results) == 2  # Two groups
++        assert all(result['expr_res'] == 99 for result in results)
++    
++    def test_expression_wrapper_delegates_group_by_cols(self):
++        """
++        Pytest version: Test that ExpressionWrapper.get_group_by_cols()
++        properly delegates to the wrapped expression.
++        """
++        # Test with Value (constant) - should return empty list
++        value_wrapper = ExpressionWrapper(Value(42), output_field=IntegerField())
++        assert value_wrapper.get_group_by_cols() == []
++        
++        # Test with F expression - should return non-empty list
++        from django.db.models import F
++        field_wrapper = ExpressionWrapper(F('some_field'), output_field=IntegerField())
++        group_by_cols = field_wrapper.get_group_by_cols()
++        assert len(group_by_cols) > 0
++    
++    @pytest.mark.parametrize("constant_value", [0, 1, -1, 999, None])
++    def test_various_constant_values_in_expression_wrapper(self, test_model, constant_value):
++        """
++        Pytest version: Test ExpressionWrapper with various constant values.
++        """
++        if constant_value is None:
++            # Handle NULL values specially
++            constant_expr = ExpressionWrapper(Value(None), output_field=IntegerField())
++        else:
++            constant_expr = ExpressionWrapper(Value(constant_value), output_field=IntegerField())
++        
++        queryset = (
++            test_model.objects
++            .annotate(expr_res=constant_expr)
++            .values('expr_res', 'column_a')
++            .annotate(sum=Sum('column_b'))
++        )
++        
++        # Should execute without errors regardless of constant value
++        results = list(queryset)
++        assert len(results) == 2  # Two groups in test data
++        
++        # All results should have the expected constant value
++        for result in results:
++            assert result['expr_res'] == constant_value
