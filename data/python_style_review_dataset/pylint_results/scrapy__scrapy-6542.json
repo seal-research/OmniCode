@@ -2,7 +2,7 @@
   "label": "scrapy__scrapy-6542",
   "files": [
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/scrapy/utils/url.py",
+      "file": "scrapy/utils/url.py",
       "messages": [
         {
           "line": 87,

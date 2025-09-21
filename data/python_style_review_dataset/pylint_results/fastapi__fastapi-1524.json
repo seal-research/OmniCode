@@ -2,7 +2,7 @@
   "label": "fastapi__fastapi-1524",
   "files": [
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_starlette_exception.py",
+      "file": "tests/test_starlette_exception.py",
       "messages": [
         {
           "line": 22,
@@ -16,7 +16,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_security_oauth2.py",
+      "file": "tests/test_security_oauth2.py",
       "messages": [
         {
           "line": 38,
@@ -30,7 +30,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_param_in_path_and_dependency.py",
+      "file": "tests/test_param_in_path_and_dependency.py",
       "messages": [
         {
           "line": 7,
@@ -51,7 +51,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_include_route.py",
+      "file": "tests/test_include_route.py",
       "messages": [
         {
           "line": 10,
@@ -65,7 +65,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_invalid_sequence_param.py",
+      "file": "tests/test_invalid_sequence_param.py",
       "messages": [
         {
           "line": 16,
@@ -107,7 +107,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_invalid_path_param.py",
+      "file": "tests/test_invalid_path_param.py",
       "messages": [
         {
           "line": 16,
@@ -212,7 +212,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_router_prefix_with_template.py",
+      "file": "tests/test_router_prefix_with_template.py",
       "messages": [
         {
           "line": 10,
@@ -226,7 +226,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ws_router.py",
+      "file": "tests/test_ws_router.py",
       "messages": [
         {
           "line": 31,
@@ -240,7 +240,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_dependency_class.py",
+      "file": "tests/test_dependency_class.py",
       "messages": [
         {
           "line": 37,
@@ -254,7 +254,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_jsonable_encoder.py",
+      "file": "tests/test_jsonable_encoder.py",
       "messages": [
         {
           "line": 12,
@@ -275,7 +275,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_dependency_contextmanager.py",
+      "file": "tests/test_dependency_contextmanager.py",
       "messages": [
         {
           "line": 38,
@@ -534,7 +534,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_additional_responses_custom_validationerror.py",
+      "file": "tests/test_additional_responses_custom_validationerror.py",
       "messages": [
         {
           "line": 29,
@@ -555,7 +555,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_security_oauth2_optional.py",
+      "file": "tests/test_security_oauth2_optional.py",
       "messages": [
         {
           "line": 40,
@@ -569,7 +569,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_swagger_ui_init_oauth.py",
+      "file": "tests/test_swagger_ui_init_oauth.py",
       "messages": [
         {
           "line": 21,
@@ -597,7 +597,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_application.py",
+      "file": "tests/test_application.py",
       "messages": [
         {
           "line": 1135,
@@ -611,7 +611,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_filter_pydantic_sub_model.py",
+      "file": "tests/test_filter_pydantic_sub_model.py",
       "messages": [
         {
           "line": 23,
@@ -632,7 +632,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_additional_responses_default_validationerror.py",
+      "file": "tests/test_additional_responses_default_validationerror.py",
       "messages": [
         {
           "line": 8,
@@ -653,7 +653,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_sub_callbacks.py",
+      "file": "tests/test_sub_callbacks.py",
       "messages": [
         {
           "line": 31,
@@ -681,7 +681,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/main.py",
+      "file": "tests/main.py",
       "messages": [
         {
           "line": 168,
@@ -695,7 +695,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_skip_defaults.py",
+      "file": "tests/test_skip_defaults.py",
       "messages": [
         {
           "line": 40,
@@ -730,7 +730,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_extra_routes.py",
+      "file": "tests/test_extra_routes.py",
       "messages": [
         {
           "line": 33,
@@ -772,7 +772,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_request_body_parameters_media_type.py",
+      "file": "tests/test_request_body_parameters_media_type.py",
       "messages": [
         {
           "line": 23,
@@ -800,7 +800,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_async_sql_databases/test_tutorial001.py",
+      "file": "tests/test_tutorial/test_async_sql_databases/test_tutorial001.py",
       "messages": [
         {
           "line": 129,
@@ -814,7 +814,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_extending_openapi/test_tutorial002.py",
+      "file": "tests/test_tutorial/test_extending_openapi/test_tutorial002.py",
       "messages": [
         {
           "line": 15,
@@ -856,7 +856,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_advanced_middleware/test_tutorial001.py",
+      "file": "tests/test_tutorial/test_advanced_middleware/test_tutorial001.py",
       "messages": [
         {
           "line": 12,
@@ -870,7 +870,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_custom_response/test_tutorial006.py",
+      "file": "tests/test_tutorial/test_custom_response/test_tutorial006.py",
       "messages": [
         {
           "line": 9,
@@ -884,7 +884,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_background_tasks/test_tutorial002.py",
+      "file": "tests/test_tutorial/test_background_tasks/test_tutorial002.py",
       "messages": [
         {
           "line": 18,
@@ -898,7 +898,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_background_tasks/test_tutorial001.py",
+      "file": "tests/test_tutorial/test_background_tasks/test_tutorial001.py",
       "messages": [
         {
           "line": 18,
@@ -912,7 +912,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_events/test_tutorial002.py",
+      "file": "tests/test_tutorial/test_events/test_tutorial002.py",
       "messages": [
         {
           "line": 33,
@@ -926,7 +926,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_body_fields/test_tutorial001.py",
+      "file": "tests/test_tutorial/test_body_fields/test_tutorial001.py",
       "messages": [
         {
           "line": 6,
@@ -947,7 +947,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_sql_databases/test_sql_databases_middleware.py",
+      "file": "tests/test_tutorial/test_sql_databases/test_sql_databases_middleware.py",
       "messages": [
         {
           "line": 302,
@@ -1003,7 +1003,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_sql_databases/test_sql_databases.py",
+      "file": "tests/test_tutorial/test_sql_databases/test_sql_databases.py",
       "messages": [
         {
           "line": 301,
@@ -1059,7 +1059,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_request_forms_and_files/test_tutorial001.py",
+      "file": "tests/test_tutorial/test_request_forms_and_files/test_tutorial001.py",
       "messages": [
         {
           "line": 171,
@@ -1080,7 +1080,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_request_files/test_tutorial002.py",
+      "file": "tests/test_tutorial/test_request_files/test_tutorial002.py",
       "messages": [
         {
           "line": 183,
@@ -1108,7 +1108,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_request_files/test_tutorial001.py",
+      "file": "tests/test_tutorial/test_request_files/test_tutorial001.py",
       "messages": [
         {
           "line": 160,
@@ -1136,7 +1136,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_tutorial/test_sql_databases_peewee/test_sql_databases_peewee.py",
+      "file": "tests/test_tutorial/test_sql_databases_peewee/test_sql_databases_peewee.py",
       "messages": [
         {
           "line": 344,
@@ -1199,7 +1199,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/pending_tests/main.py",
+      "file": "pending_tests/main.py",
       "messages": [
         {
           "line": 1,
@@ -1283,7 +1283,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/params.py",
+      "file": "fastapi/params.py",
       "messages": [
         {
           "line": 7,
@@ -1325,7 +1325,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/responses.py",
+      "file": "fastapi/responses.py",
       "messages": [
         {
           "line": 3,
@@ -1381,7 +1381,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/templating.py",
+      "file": "fastapi/templating.py",
       "messages": [
         {
           "line": 1,
@@ -1395,7 +1395,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/exception_handlers.py",
+      "file": "fastapi/exception_handlers.py",
       "messages": [
         {
           "line": 9,
@@ -1416,7 +1416,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/websockets.py",
+      "file": "fastapi/websockets.py",
       "messages": [
         {
           "line": 1,
@@ -1437,7 +1437,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/applications.py",
+      "file": "fastapi/applications.py",
       "messages": [
         {
           "line": 30,
@@ -1556,7 +1556,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/concurrency.py",
+      "file": "fastapi/concurrency.py",
       "messages": [
         {
           "line": 14,
@@ -1598,7 +1598,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/background.py",
+      "file": "fastapi/background.py",
       "messages": [
         {
           "line": 1,
@@ -1612,7 +1612,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/encoders.py",
+      "file": "fastapi/encoders.py",
       "messages": [
         {
           "line": 21,
@@ -1661,7 +1661,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/staticfiles.py",
+      "file": "fastapi/staticfiles.py",
       "messages": [
         {
           "line": 1,
@@ -1675,7 +1675,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/utils.py",
+      "file": "fastapi/utils.py",
       "messages": [
         {
           "line": 20,
@@ -1731,7 +1731,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/routing.py",
+      "file": "fastapi/routing.py",
       "messages": [
         {
           "line": 46,
@@ -1892,7 +1892,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/testclient.py",
+      "file": "fastapi/testclient.py",
       "messages": [
         {
           "line": 1,
@@ -1906,7 +1906,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/requests.py",
+      "file": "fastapi/requests.py",
       "messages": [
         {
           "line": 1,
@@ -1920,7 +1920,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/middleware/gzip.py",
+      "file": "fastapi/middleware/gzip.py",
       "messages": [
         {
           "line": 1,
@@ -1934,7 +1934,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/middleware/cors.py",
+      "file": "fastapi/middleware/cors.py",
       "messages": [
         {
           "line": 1,
@@ -1948,7 +1948,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/middleware/httpsredirect.py",
+      "file": "fastapi/middleware/httpsredirect.py",
       "messages": [
         {
           "line": 1,
@@ -1962,7 +1962,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/middleware/trustedhost.py",
+      "file": "fastapi/middleware/trustedhost.py",
       "messages": [
         {
           "line": 1,
@@ -1976,7 +1976,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/middleware/wsgi.py",
+      "file": "fastapi/middleware/wsgi.py",
       "messages": [
         {
           "line": 1,
@@ -1990,7 +1990,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/security/http.py",
+      "file": "fastapi/security/http.py",
       "messages": [
         {
           "line": 51,
@@ -2025,7 +2025,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/dependencies/models.py",
+      "file": "fastapi/dependencies/models.py",
       "messages": [
         {
           "line": 8,
@@ -2039,7 +2039,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/dependencies/utils.py",
+      "file": "fastapi/dependencies/utils.py",
       "messages": [
         {
           "line": 62,
@@ -2081,7 +2081,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/openapi/models.py",
+      "file": "fastapi/openapi/models.py",
       "messages": [
         {
           "line": 10,
@@ -2102,7 +2102,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/fastapi/openapi/utils.py",
+      "file": "fastapi/openapi/utils.py",
       "messages": [
         {
           "line": 35,
@@ -2137,7 +2137,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/scripts/docs.py",
+      "file": "scripts/docs.py",
       "messages": [
         {
           "line": 135,
@@ -2165,7 +2165,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/scripts/gitter_releases_bot.py",
+      "file": "scripts/gitter_releases_bot.py",
       "messages": [
         {
           "line": 17,
@@ -2200,7 +2200,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/openapi_callbacks/tutorial001.py",
+      "file": "docs_src/openapi_callbacks/tutorial001.py",
       "messages": [
         {
           "line": 30,
@@ -2228,7 +2228,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/security/tutorial004.py",
+      "file": "docs_src/security/tutorial004.py",
       "messages": [
         {
           "line": 102,
@@ -2242,7 +2242,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/security/tutorial005.py",
+      "file": "docs_src/security/tutorial005.py",
       "messages": [
         {
           "line": 111,
@@ -2270,7 +2270,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/background_tasks/tutorial002.py",
+      "file": "docs_src/background_tasks/tutorial002.py",
       "messages": [
         {
           "line": 7,
@@ -2291,7 +2291,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/background_tasks/tutorial001.py",
+      "file": "docs_src/background_tasks/tutorial001.py",
       "messages": [
         {
           "line": 7,
@@ -2305,7 +2305,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/encoder/tutorial001.py",
+      "file": "docs_src/encoder/tutorial001.py",
       "messages": [
         {
           "line": 20,
@@ -2319,7 +2319,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/path_operation_advanced_configuration/tutorial002.py",
+      "file": "docs_src/path_operation_advanced_configuration/tutorial002.py",
       "messages": [
         {
           "line": 12,
@@ -2333,7 +2333,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/sql_databases_peewee/sql_app/database.py",
+      "file": "docs_src/sql_databases_peewee/sql_app/database.py",
       "messages": [
         {
           "line": 10,
@@ -2354,7 +2354,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/sql_databases_peewee/sql_app/main.py",
+      "file": "docs_src/sql_databases_peewee/sql_app/main.py",
       "messages": [
         {
           "line": 19,
@@ -2396,7 +2396,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/dependencies/tutorial007.py",
+      "file": "docs_src/dependencies/tutorial007.py",
       "messages": [
         {
           "line": 2,
@@ -2410,7 +2410,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/dependencies/tutorial008.py",
+      "file": "docs_src/dependencies/tutorial008.py",
       "messages": [
         {
           "line": 5,
@@ -2438,7 +2438,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/dependencies/tutorial009.py",
+      "file": "docs_src/dependencies/tutorial009.py",
       "messages": [
         {
           "line": 5,
@@ -2466,7 +2466,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/dependencies/tutorial010.py",
+      "file": "docs_src/dependencies/tutorial010.py",
       "messages": [
         {
           "line": 3,
@@ -2480,7 +2480,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/additional_responses/tutorial002.py",
+      "file": "docs_src/additional_responses/tutorial002.py",
       "messages": [
         {
           "line": 24,
@@ -2494,7 +2494,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/additional_responses/tutorial004.py",
+      "file": "docs_src/additional_responses/tutorial004.py",
       "messages": [
         {
           "line": 26,
@@ -2508,7 +2508,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/request_forms/tutorial001.py",
+      "file": "docs_src/request_forms/tutorial001.py",
       "messages": [
         {
           "line": 7,
@@ -2522,7 +2522,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/handling_errors/tutorial003.py",
+      "file": "docs_src/handling_errors/tutorial003.py",
       "messages": [
         {
           "line": 14,
@@ -2536,7 +2536,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/handling_errors/tutorial004.py",
+      "file": "docs_src/handling_errors/tutorial004.py",
       "messages": [
         {
           "line": 10,
@@ -2557,7 +2557,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/handling_errors/tutorial005.py",
+      "file": "docs_src/handling_errors/tutorial005.py",
       "messages": [
         {
           "line": 11,
@@ -2571,7 +2571,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/path_params_numeric_validations/tutorial006.py",
+      "file": "docs_src/path_params_numeric_validations/tutorial006.py",
       "messages": [
         {
           "line": 11,
@@ -2585,7 +2585,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/graphql/tutorial001.py",
+      "file": "docs_src/graphql/tutorial001.py",
       "messages": [
         {
           "line": 9,
@@ -2599,7 +2599,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/templates/tutorial001.py",
+      "file": "docs_src/templates/tutorial001.py",
       "messages": [
         {
           "line": 14,
@@ -2613,7 +2613,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/custom_request_and_route/tutorial002.py",
+      "file": "docs_src/custom_request_and_route/tutorial002.py",
       "messages": [
         {
           "line": 18,
@@ -2627,7 +2627,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/custom_request_and_route/tutorial001.py",
+      "file": "docs_src/custom_request_and_route/tutorial001.py",
       "messages": [
         {
           "line": 14,
@@ -2641,7 +2641,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/app_testing/tutorial002.py",
+      "file": "docs_src/app_testing/tutorial002.py",
       "messages": [
         {
           "line": 14,
@@ -2662,7 +2662,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/events/tutorial002.py",
+      "file": "docs_src/events/tutorial002.py",
       "messages": [
         {
           "line": 8,
@@ -2676,7 +2676,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/custom_response/tutorial007.py",
+      "file": "docs_src/custom_response/tutorial007.py",
       "messages": [
         {
           "line": 8,
@@ -2690,7 +2690,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs_src/response_directly/tutorial001.py",
+      "file": "docs_src/response_directly/tutorial001.py",
       "messages": [
         {
           "line": 19,

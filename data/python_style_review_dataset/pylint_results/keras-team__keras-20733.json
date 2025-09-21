@@ -2,7 +2,7 @@
   "label": "keras-team__keras-20733",
   "files": [
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/conftest.py",
+      "file": "conftest.py",
       "messages": [
         {
           "line": 27,
@@ -23,7 +23,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/pip_build.py",
+      "file": "pip_build.py",
       "messages": [
         {
           "line": 42,
@@ -121,7 +121,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/api_gen.py",
+      "file": "api_gen.py",
       "messages": [
         {
           "line": 43,
@@ -205,7 +205,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/activations/__init__.py",
+      "file": "keras/api/activations/__init__.py",
       "messages": [
         {
           "line": 18,
@@ -226,7 +226,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/layers/__init__.py",
+      "file": "keras/api/layers/__init__.py",
       "messages": [
         {
           "line": 23,
@@ -373,7 +373,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/constraints/__init__.py",
+      "file": "keras/api/constraints/__init__.py",
       "messages": [
         {
           "line": 12,
@@ -408,7 +408,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/mixed_precision/__init__.py",
+      "file": "keras/api/mixed_precision/__init__.py",
       "messages": [
         {
           "line": 8,
@@ -436,7 +436,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/utils/__init__.py",
+      "file": "keras/api/utils/__init__.py",
       "messages": [
         {
           "line": 15,
@@ -457,7 +457,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/optimizers/legacy/__init__.py",
+      "file": "keras/api/optimizers/legacy/__init__.py",
       "messages": [
         {
           "line": 8,
@@ -499,7 +499,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/regularizers/__init__.py",
+      "file": "keras/api/regularizers/__init__.py",
       "messages": [
         {
           "line": 11,
@@ -534,7 +534,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/activations/__init__.py",
+      "file": "keras/api/_tf_keras/keras/activations/__init__.py",
       "messages": [
         {
           "line": 18,
@@ -555,7 +555,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/metrics/__init__.py",
+      "file": "keras/api/_tf_keras/keras/metrics/__init__.py",
       "messages": [
         {
           "line": 15,
@@ -604,7 +604,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/losses/__init__.py",
+      "file": "keras/api/_tf_keras/keras/losses/__init__.py",
       "messages": [
         {
           "line": 45,
@@ -653,7 +653,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/layers/__init__.py",
+      "file": "keras/api/_tf_keras/keras/layers/__init__.py",
       "messages": [
         {
           "line": 23,
@@ -800,7 +800,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/constraints/__init__.py",
+      "file": "keras/api/_tf_keras/keras/constraints/__init__.py",
       "messages": [
         {
           "line": 12,
@@ -835,7 +835,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/mixed_precision/__init__.py",
+      "file": "keras/api/_tf_keras/keras/mixed_precision/__init__.py",
       "messages": [
         {
           "line": 8,
@@ -863,7 +863,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/utils/__init__.py",
+      "file": "keras/api/_tf_keras/keras/utils/__init__.py",
       "messages": [
         {
           "line": 15,
@@ -884,7 +884,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/backend/__init__.py",
+      "file": "keras/api/_tf_keras/keras/backend/__init__.py",
       "messages": [
         {
           "line": 20,
@@ -954,7 +954,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/optimizers/legacy/__init__.py",
+      "file": "keras/api/_tf_keras/keras/optimizers/legacy/__init__.py",
       "messages": [
         {
           "line": 8,
@@ -996,7 +996,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/regularizers/__init__.py",
+      "file": "keras/api/_tf_keras/keras/regularizers/__init__.py",
       "messages": [
         {
           "line": 11,
@@ -1031,7 +1031,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/ops/__init__.py",
+      "file": "keras/api/_tf_keras/keras/ops/__init__.py",
       "messages": [
         {
           "line": 20,
@@ -1115,7 +1115,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/ops/nn/__init__.py",
+      "file": "keras/api/_tf_keras/keras/ops/nn/__init__.py",
       "messages": [
         {
           "line": 24,
@@ -1136,7 +1136,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/ops/numpy/__init__.py",
+      "file": "keras/api/_tf_keras/keras/ops/numpy/__init__.py",
       "messages": [
         {
           "line": 7,
@@ -1192,7 +1192,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/saving/__init__.py",
+      "file": "keras/api/_tf_keras/keras/saving/__init__.py",
       "messages": [
         {
           "line": 9,
@@ -1206,7 +1206,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/_tf_keras/keras/initializers/__init__.py",
+      "file": "keras/api/_tf_keras/keras/initializers/__init__.py",
       "messages": [
         {
           "line": 11,
@@ -1346,7 +1346,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/ops/__init__.py",
+      "file": "keras/api/ops/__init__.py",
       "messages": [
         {
           "line": 20,
@@ -1430,7 +1430,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/ops/nn/__init__.py",
+      "file": "keras/api/ops/nn/__init__.py",
       "messages": [
         {
           "line": 24,
@@ -1451,7 +1451,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/ops/numpy/__init__.py",
+      "file": "keras/api/ops/numpy/__init__.py",
       "messages": [
         {
           "line": 7,
@@ -1507,7 +1507,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/saving/__init__.py",
+      "file": "keras/api/saving/__init__.py",
       "messages": [
         {
           "line": 9,
@@ -1521,7 +1521,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/api/initializers/__init__.py",
+      "file": "keras/api/initializers/__init__.py",
       "messages": [
         {
           "line": 11,
@@ -1661,7 +1661,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/api_export.py",
+      "file": "keras/src/api_export.py",
       "messages": [
         {
           "line": 14,
@@ -1675,7 +1675,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/activations/activations_test.py",
+      "file": "keras/src/activations/activations_test.py",
       "messages": [
         {
           "line": 646,
@@ -1717,7 +1717,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/activations/activations.py",
+      "file": "keras/src/activations/activations.py",
       "messages": [
         {
           "line": 7,
@@ -1850,7 +1850,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/visualization/plot_image_gallery.py",
+      "file": "keras/src/visualization/plot_image_gallery.py",
       "messages": [
         {
           "line": 136,
@@ -1864,7 +1864,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/tree/dmtree_impl.py",
+      "file": "keras/src/tree/dmtree_impl.py",
       "messages": [
         {
           "line": 129,
@@ -1892,7 +1892,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/tree/tree_test.py",
+      "file": "keras/src/tree/tree_test.py",
       "messages": [
         {
           "line": 73,
@@ -1913,7 +1913,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/tree/tree_api.py",
+      "file": "keras/src/tree/tree_api.py",
       "messages": [
         {
           "line": 26,
@@ -1927,7 +1927,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/confusion_metrics_test.py",
+      "file": "keras/src/metrics/confusion_metrics_test.py",
       "messages": [
         {
           "line": 1174,
@@ -1955,7 +1955,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/reduction_metrics_test.py",
+      "file": "keras/src/metrics/reduction_metrics_test.py",
       "messages": [
         {
           "line": 15,
@@ -2004,7 +2004,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/metric_test.py",
+      "file": "keras/src/metrics/metric_test.py",
       "messages": [
         {
           "line": 27,
@@ -2095,7 +2095,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/reduction_metrics.py",
+      "file": "keras/src/metrics/reduction_metrics.py",
       "messages": [
         {
           "line": 83,
@@ -2144,7 +2144,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/accuracy_metrics_test.py",
+      "file": "keras/src/metrics/accuracy_metrics_test.py",
       "messages": [
         {
           "line": 12,
@@ -2235,7 +2235,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/f_score_metrics.py",
+      "file": "keras/src/metrics/f_score_metrics.py",
       "messages": [
         {
           "line": 158,
@@ -2284,7 +2284,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/iou_metrics_test.py",
+      "file": "keras/src/metrics/iou_metrics_test.py",
       "messages": [
         {
           "line": 422,
@@ -2305,7 +2305,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/confusion_metrics.py",
+      "file": "keras/src/metrics/confusion_metrics.py",
       "messages": [
         {
           "line": 46,
@@ -2389,7 +2389,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/__init__.py",
+      "file": "keras/src/metrics/__init__.py",
       "messages": [
         {
           "line": 116,
@@ -2403,7 +2403,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/regression_metrics.py",
+      "file": "keras/src/metrics/regression_metrics.py",
       "messages": [
         {
           "line": 225,
@@ -2466,7 +2466,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/probabilistic_metrics_test.py",
+      "file": "keras/src/metrics/probabilistic_metrics_test.py",
       "messages": [
         {
           "line": 24,
@@ -2543,7 +2543,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/regression_metrics_test.py",
+      "file": "keras/src/metrics/regression_metrics_test.py",
       "messages": [
         {
           "line": 10,
@@ -2690,7 +2690,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/metrics_utils.py",
+      "file": "keras/src/metrics/metrics_utils.py",
       "messages": [
         {
           "line": 306,
@@ -2718,7 +2718,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/hinge_metrics_test.py",
+      "file": "keras/src/metrics/hinge_metrics_test.py",
       "messages": [
         {
           "line": 11,
@@ -2767,7 +2767,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/f_score_metrics_test.py",
+      "file": "keras/src/metrics/f_score_metrics_test.py",
       "messages": [
         {
           "line": 367,
@@ -2788,7 +2788,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/metrics/iou_metrics.py",
+      "file": "keras/src/metrics/iou_metrics.py",
       "messages": [
         {
           "line": 11,
@@ -2816,7 +2816,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/losses/loss_test.py",
+      "file": "keras/src/losses/loss_test.py",
       "messages": [
         {
           "line": 189,
@@ -2872,7 +2872,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/losses/losses.py",
+      "file": "keras/src/losses/losses.py",
       "messages": [
         {
           "line": 2462,
@@ -2893,7 +2893,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/losses/losses_test.py",
+      "file": "keras/src/losses/losses_test.py",
       "messages": [
         {
           "line": 518,
@@ -3089,7 +3089,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/wrappers/sklearn_test.py",
+      "file": "keras/src/wrappers/sklearn_test.py",
       "messages": [
         {
           "line": 42,
@@ -3138,7 +3138,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/wrappers/fixes.py",
+      "file": "keras/src/wrappers/fixes.py",
       "messages": [
         {
           "line": 22,
@@ -3166,7 +3166,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/wrappers/sklearn_wrapper.py",
+      "file": "keras/src/wrappers/sklearn_wrapper.py",
       "messages": [
         {
           "line": 137,
@@ -3215,7 +3215,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/wrappers/utils.py",
+      "file": "keras/src/wrappers/utils.py",
       "messages": [
         {
           "line": 84,
@@ -3236,7 +3236,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/input_spec.py",
+      "file": "keras/src/layers/input_spec.py",
       "messages": [
         {
           "line": 81,
@@ -3250,7 +3250,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/layer.py",
+      "file": "keras/src/layers/layer.py",
       "messages": [
         {
           "line": 823,
@@ -3432,7 +3432,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/layer_test.py",
+      "file": "keras/src/layers/layer_test.py",
       "messages": [
         {
           "line": 1266,
@@ -4993,7 +4993,7 @@
       "error_count": 7
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/activations/leaky_relu.py",
+      "file": "keras/src/layers/activations/leaky_relu.py",
       "messages": [
         {
           "line": 9,
@@ -5035,7 +5035,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/activations/relu_test.py",
+      "file": "keras/src/layers/activations/relu_test.py",
       "messages": [
         {
           "line": 25,
@@ -5063,7 +5063,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/activations/activation.py",
+      "file": "keras/src/layers/activations/activation.py",
       "messages": [
         {
           "line": 7,
@@ -5105,7 +5105,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/activations/prelu.py",
+      "file": "keras/src/layers/activations/prelu.py",
       "messages": [
         {
           "line": 11,
@@ -5154,7 +5154,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/activations/softmax_test.py",
+      "file": "keras/src/layers/activations/softmax_test.py",
       "messages": [
         {
           "line": 21,
@@ -5182,7 +5182,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/activations/relu.py",
+      "file": "keras/src/layers/activations/relu.py",
       "messages": [
         {
           "line": 7,
@@ -5224,7 +5224,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/activations/leaky_relu_test.py",
+      "file": "keras/src/layers/activations/leaky_relu_test.py",
       "messages": [
         {
           "line": 23,
@@ -5238,7 +5238,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/activations/elu.py",
+      "file": "keras/src/layers/activations/elu.py",
       "messages": [
         {
           "line": 7,
@@ -5280,7 +5280,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/activations/softmax.py",
+      "file": "keras/src/layers/activations/softmax.py",
       "messages": [
         {
           "line": 15,
@@ -5322,7 +5322,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/attention/grouped_query_attention.py",
+      "file": "keras/src/layers/attention/grouped_query_attention.py",
       "messages": [
         {
           "line": 16,
@@ -5434,7 +5434,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/attention/attention.py",
+      "file": "keras/src/layers/attention/attention.py",
       "messages": [
         {
           "line": 9,
@@ -5539,7 +5539,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/attention/grouped_query_attention_test.py",
+      "file": "keras/src/layers/attention/grouped_query_attention_test.py",
       "messages": [
         {
           "line": 217,
@@ -5609,7 +5609,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/attention/attention_test.py",
+      "file": "keras/src/layers/attention/attention_test.py",
       "messages": [
         {
           "line": 134,
@@ -5644,7 +5644,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/attention/multi_head_attention_test.py",
+      "file": "keras/src/layers/attention/multi_head_attention_test.py",
       "messages": [
         {
           "line": 181,
@@ -5868,7 +5868,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/attention/multi_head_attention.py",
+      "file": "keras/src/layers/attention/multi_head_attention.py",
       "messages": [
         {
           "line": 20,
@@ -6036,7 +6036,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/attention/additive_attention.py",
+      "file": "keras/src/layers/attention/additive_attention.py",
       "messages": [
         {
           "line": 7,
@@ -6064,7 +6064,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/up_sampling3d.py",
+      "file": "keras/src/layers/reshaping/up_sampling3d.py",
       "messages": [
         {
           "line": 10,
@@ -6106,7 +6106,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/up_sampling2d.py",
+      "file": "keras/src/layers/reshaping/up_sampling2d.py",
       "messages": [
         {
           "line": 10,
@@ -6148,7 +6148,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/permute.py",
+      "file": "keras/src/layers/reshaping/permute.py",
       "messages": [
         {
           "line": 9,
@@ -6204,7 +6204,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/up_sampling1d.py",
+      "file": "keras/src/layers/reshaping/up_sampling1d.py",
       "messages": [
         {
           "line": 8,
@@ -6246,7 +6246,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/flatten.py",
+      "file": "keras/src/layers/reshaping/flatten.py",
       "messages": [
         {
           "line": 12,
@@ -6302,7 +6302,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/repeat_vector.py",
+      "file": "keras/src/layers/reshaping/repeat_vector.py",
       "messages": [
         {
           "line": 8,
@@ -6344,7 +6344,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/cropping1d.py",
+      "file": "keras/src/layers/reshaping/cropping1d.py",
       "messages": [
         {
           "line": 8,
@@ -6386,7 +6386,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/flatten_test.py",
+      "file": "keras/src/layers/reshaping/flatten_test.py",
       "messages": [
         {
           "line": 45,
@@ -6400,7 +6400,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/reshape.py",
+      "file": "keras/src/layers/reshaping/reshape.py",
       "messages": [
         {
           "line": 9,
@@ -6463,7 +6463,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/cropping3d.py",
+      "file": "keras/src/layers/reshaping/cropping3d.py",
       "messages": [
         {
           "line": 9,
@@ -6505,7 +6505,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/cropping2d.py",
+      "file": "keras/src/layers/reshaping/cropping2d.py",
       "messages": [
         {
           "line": 9,
@@ -6547,7 +6547,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/reshape_test.py",
+      "file": "keras/src/layers/reshaping/reshape_test.py",
       "messages": [
         {
           "line": 97,
@@ -6568,7 +6568,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/zero_padding3d.py",
+      "file": "keras/src/layers/reshaping/zero_padding3d.py",
       "messages": [
         {
           "line": 10,
@@ -6610,7 +6610,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/zero_padding2d.py",
+      "file": "keras/src/layers/reshaping/zero_padding2d.py",
       "messages": [
         {
           "line": 10,
@@ -6652,7 +6652,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/reshaping/zero_padding1d.py",
+      "file": "keras/src/layers/reshaping/zero_padding1d.py",
       "messages": [
         {
           "line": 10,
@@ -6694,7 +6694,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/max_pooling1d.py",
+      "file": "keras/src/layers/pooling/max_pooling1d.py",
       "messages": [
         {
           "line": 6,
@@ -6708,7 +6708,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/max_pooling3d.py",
+      "file": "keras/src/layers/pooling/max_pooling3d.py",
       "messages": [
         {
           "line": 6,
@@ -6722,7 +6722,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/max_pooling2d.py",
+      "file": "keras/src/layers/pooling/max_pooling2d.py",
       "messages": [
         {
           "line": 6,
@@ -6736,7 +6736,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/global_max_pooling1d.py",
+      "file": "keras/src/layers/pooling/global_max_pooling1d.py",
       "messages": [
         {
           "line": 12,
@@ -6750,7 +6750,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/average_pooling1d.py",
+      "file": "keras/src/layers/pooling/average_pooling1d.py",
       "messages": [
         {
           "line": 6,
@@ -6764,7 +6764,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/global_max_pooling2d.py",
+      "file": "keras/src/layers/pooling/global_max_pooling2d.py",
       "messages": [
         {
           "line": 12,
@@ -6778,7 +6778,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/average_pooling3d.py",
+      "file": "keras/src/layers/pooling/average_pooling3d.py",
       "messages": [
         {
           "line": 6,
@@ -6792,7 +6792,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/average_pooling2d.py",
+      "file": "keras/src/layers/pooling/average_pooling2d.py",
       "messages": [
         {
           "line": 6,
@@ -6806,7 +6806,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/global_max_pooling3d.py",
+      "file": "keras/src/layers/pooling/global_max_pooling3d.py",
       "messages": [
         {
           "line": 12,
@@ -6820,7 +6820,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/global_average_pooling2d.py",
+      "file": "keras/src/layers/pooling/global_average_pooling2d.py",
       "messages": [
         {
           "line": 12,
@@ -6834,7 +6834,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/global_average_pooling3d.py",
+      "file": "keras/src/layers/pooling/global_average_pooling3d.py",
       "messages": [
         {
           "line": 12,
@@ -6848,7 +6848,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/base_global_pooling.py",
+      "file": "keras/src/layers/pooling/base_global_pooling.py",
       "messages": [
         {
           "line": 19,
@@ -6883,7 +6883,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/global_average_pooling1d.py",
+      "file": "keras/src/layers/pooling/global_average_pooling1d.py",
       "messages": [
         {
           "line": 13,
@@ -6911,7 +6911,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/pooling/base_pooling.py",
+      "file": "keras/src/layers/pooling/base_pooling.py",
       "messages": [
         {
           "line": 9,
@@ -6953,7 +6953,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/wrapper.py",
+      "file": "keras/src/layers/core/wrapper.py",
       "messages": [
         {
           "line": 7,
@@ -6974,7 +6974,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/embedding.py",
+      "file": "keras/src/layers/core/embedding.py",
       "messages": [
         {
           "line": 15,
@@ -7093,7 +7093,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/dense.py",
+      "file": "keras/src/layers/core/dense.py",
       "messages": [
         {
           "line": 16,
@@ -7303,7 +7303,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/wrapper_test.py",
+      "file": "keras/src/layers/core/wrapper_test.py",
       "messages": [
         {
           "line": 8,
@@ -7331,7 +7331,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/embedding_test.py",
+      "file": "keras/src/layers/core/embedding_test.py",
       "messages": [
         {
           "line": 92,
@@ -7380,7 +7380,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/masking.py",
+      "file": "keras/src/layers/core/masking.py",
       "messages": [
         {
           "line": 8,
@@ -7436,7 +7436,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/input_layer_test.py",
+      "file": "keras/src/layers/core/input_layer_test.py",
       "messages": [
         {
           "line": 127,
@@ -7450,7 +7450,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/lambda_layer.py",
+      "file": "keras/src/layers/core/lambda_layer.py",
       "messages": [
         {
           "line": 13,
@@ -7513,7 +7513,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/masking_test.py",
+      "file": "keras/src/layers/core/masking_test.py",
       "messages": [
         {
           "line": 40,
@@ -7555,7 +7555,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/input_layer.py",
+      "file": "keras/src/layers/core/input_layer.py",
       "messages": [
         {
           "line": 23,
@@ -7583,7 +7583,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/dense_test.py",
+      "file": "keras/src/layers/core/dense_test.py",
       "messages": [
         {
           "line": 122,
@@ -7667,7 +7667,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/einsum_dense.py",
+      "file": "keras/src/layers/core/einsum_dense.py",
       "messages": [
         {
           "line": 20,
@@ -8024,7 +8024,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/identity.py",
+      "file": "keras/src/layers/core/identity.py",
       "messages": [
         {
           "line": 8,
@@ -8080,7 +8080,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/core/einsum_dense_test.py",
+      "file": "keras/src/layers/core/einsum_dense_test.py",
       "messages": [
         {
           "line": 397,
@@ -8143,7 +8143,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/normalization/batch_normalization.py",
+      "file": "keras/src/layers/normalization/batch_normalization.py",
       "messages": [
         {
           "line": 12,
@@ -8185,7 +8185,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/normalization/layer_normalization.py",
+      "file": "keras/src/layers/normalization/layer_normalization.py",
       "messages": [
         {
           "line": 11,
@@ -8255,7 +8255,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/normalization/batch_normalization_test.py",
+      "file": "keras/src/layers/normalization/batch_normalization_test.py",
       "messages": [
         {
           "line": 137,
@@ -8269,7 +8269,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/normalization/unit_normalization.py",
+      "file": "keras/src/layers/normalization/unit_normalization.py",
       "messages": [
         {
           "line": 7,
@@ -8311,7 +8311,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/normalization/group_normalization.py",
+      "file": "keras/src/layers/normalization/group_normalization.py",
       "messages": [
         {
           "line": 12,
@@ -8381,7 +8381,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/normalization/spectral_normalization.py",
+      "file": "keras/src/layers/normalization/spectral_normalization.py",
       "messages": [
         {
           "line": 10,
@@ -8458,7 +8458,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/base_depthwise_conv.py",
+      "file": "keras/src/layers/convolutional/base_depthwise_conv.py",
       "messages": [
         {
           "line": 16,
@@ -8521,7 +8521,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/depthwise_conv2d.py",
+      "file": "keras/src/layers/convolutional/depthwise_conv2d.py",
       "messages": [
         {
           "line": 6,
@@ -8535,7 +8535,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/depthwise_conv1d.py",
+      "file": "keras/src/layers/convolutional/depthwise_conv1d.py",
       "messages": [
         {
           "line": 6,
@@ -8549,7 +8549,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/base_conv_transpose.py",
+      "file": "keras/src/layers/convolutional/base_conv_transpose.py",
       "messages": [
         {
           "line": 18,
@@ -8612,7 +8612,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/separable_conv2d.py",
+      "file": "keras/src/layers/convolutional/separable_conv2d.py",
       "messages": [
         {
           "line": 11,
@@ -8626,7 +8626,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/conv_test.py",
+      "file": "keras/src/layers/convolutional/conv_test.py",
       "messages": [
         {
           "line": 170,
@@ -8668,7 +8668,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/separable_conv1d.py",
+      "file": "keras/src/layers/convolutional/separable_conv1d.py",
       "messages": [
         {
           "line": 11,
@@ -8682,7 +8682,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/conv3d_transpose.py",
+      "file": "keras/src/layers/convolutional/conv3d_transpose.py",
       "messages": [
         {
           "line": 11,
@@ -8696,7 +8696,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/conv1d.py",
+      "file": "keras/src/layers/convolutional/conv1d.py",
       "messages": [
         {
           "line": 7,
@@ -8710,7 +8710,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/conv2d_transpose.py",
+      "file": "keras/src/layers/convolutional/conv2d_transpose.py",
       "messages": [
         {
           "line": 11,
@@ -8724,7 +8724,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/conv3d.py",
+      "file": "keras/src/layers/convolutional/conv3d.py",
       "messages": [
         {
           "line": 6,
@@ -8738,7 +8738,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/conv2d.py",
+      "file": "keras/src/layers/convolutional/conv2d.py",
       "messages": [
         {
           "line": 6,
@@ -8752,7 +8752,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/conv1d_transpose.py",
+      "file": "keras/src/layers/convolutional/conv1d_transpose.py",
       "messages": [
         {
           "line": 11,
@@ -8766,7 +8766,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/conv_transpose_test.py",
+      "file": "keras/src/layers/convolutional/conv_transpose_test.py",
       "messages": [
         {
           "line": 43,
@@ -8801,7 +8801,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/base_separable_conv.py",
+      "file": "keras/src/layers/convolutional/base_separable_conv.py",
       "messages": [
         {
           "line": 16,
@@ -8871,7 +8871,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/convolutional/base_conv.py",
+      "file": "keras/src/layers/convolutional/base_conv.py",
       "messages": [
         {
           "line": 16,
@@ -8948,7 +8948,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/regularization/spatial_dropout.py",
+      "file": "keras/src/layers/regularization/spatial_dropout.py",
       "messages": [
         {
           "line": 8,
@@ -8983,7 +8983,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/regularization/gaussian_dropout.py",
+      "file": "keras/src/layers/regularization/gaussian_dropout.py",
       "messages": [
         {
           "line": 10,
@@ -9025,7 +9025,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/regularization/activity_regularization.py",
+      "file": "keras/src/layers/regularization/activity_regularization.py",
       "messages": [
         {
           "line": 7,
@@ -9067,7 +9067,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/regularization/dropout.py",
+      "file": "keras/src/layers/regularization/dropout.py",
       "messages": [
         {
           "line": 7,
@@ -9109,7 +9109,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/regularization/gaussian_noise.py",
+      "file": "keras/src/layers/regularization/gaussian_noise.py",
       "messages": [
         {
           "line": 8,
@@ -9151,7 +9151,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/regularization/alpha_dropout.py",
+      "file": "keras/src/layers/regularization/alpha_dropout.py",
       "messages": [
         {
           "line": 8,
@@ -9193,7 +9193,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/mel_spectrogram.py",
+      "file": "keras/src/layers/preprocessing/mel_spectrogram.py",
       "messages": [
         {
           "line": 10,
@@ -9235,7 +9235,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/pipeline_test.py",
+      "file": "keras/src/layers/preprocessing/pipeline_test.py",
       "messages": [
         {
           "line": 10,
@@ -9305,7 +9305,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/rescaling.py",
+      "file": "keras/src/layers/preprocessing/rescaling.py",
       "messages": [
         {
           "line": 8,
@@ -9347,7 +9347,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/category_encoding_test.py",
+      "file": "keras/src/layers/preprocessing/category_encoding_test.py",
       "messages": [
         {
           "line": 272,
@@ -9375,7 +9375,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/index_lookup.py",
+      "file": "keras/src/layers/preprocessing/index_lookup.py",
       "messages": [
         {
           "line": 818,
@@ -9480,7 +9480,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/tf_data_layer.py",
+      "file": "keras/src/layers/preprocessing/tf_data_layer.py",
       "messages": [
         {
           "line": 10,
@@ -9501,7 +9501,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/hashed_crossing.py",
+      "file": "keras/src/layers/preprocessing/hashed_crossing.py",
       "messages": [
         {
           "line": 12,
@@ -9550,7 +9550,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/discretization.py",
+      "file": "keras/src/layers/preprocessing/discretization.py",
       "messages": [
         {
           "line": 12,
@@ -9592,7 +9592,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/integer_lookup_test.py",
+      "file": "keras/src/layers/preprocessing/integer_lookup_test.py",
       "messages": [
         {
           "line": 10,
@@ -9606,7 +9606,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/category_encoding.py",
+      "file": "keras/src/layers/preprocessing/category_encoding.py",
       "messages": [
         {
           "line": 9,
@@ -9669,7 +9669,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/mel_spectrogram_test.py",
+      "file": "keras/src/layers/preprocessing/mel_spectrogram_test.py",
       "messages": [
         {
           "line": 103,
@@ -9683,7 +9683,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/string_lookup_test.py",
+      "file": "keras/src/layers/preprocessing/string_lookup_test.py",
       "messages": [
         {
           "line": 12,
@@ -9697,7 +9697,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/hashing_test.py",
+      "file": "keras/src/layers/preprocessing/hashing_test.py",
       "messages": [
         {
           "line": 435,
@@ -9739,7 +9739,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/text_vectorization_test.py",
+      "file": "keras/src/layers/preprocessing/text_vectorization_test.py",
       "messages": [
         {
           "line": 17,
@@ -9767,7 +9767,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/integer_lookup.py",
+      "file": "keras/src/layers/preprocessing/integer_lookup.py",
       "messages": [
         {
           "line": 11,
@@ -9788,7 +9788,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/pipeline.py",
+      "file": "keras/src/layers/preprocessing/pipeline.py",
       "messages": [
         {
           "line": 8,
@@ -9830,7 +9830,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/text_vectorization.py",
+      "file": "keras/src/layers/preprocessing/text_vectorization.py",
       "messages": [
         {
           "line": 16,
@@ -9907,7 +9907,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/stft_spectrogram.py",
+      "file": "keras/src/layers/preprocessing/stft_spectrogram.py",
       "messages": [
         {
           "line": 13,
@@ -9963,7 +9963,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/index_lookup_test.py",
+      "file": "keras/src/layers/preprocessing/index_lookup_test.py",
       "messages": [
         {
           "line": 284,
@@ -9977,7 +9977,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/string_lookup.py",
+      "file": "keras/src/layers/preprocessing/string_lookup.py",
       "messages": [
         {
           "line": 11,
@@ -9998,7 +9998,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/normalization.py",
+      "file": "keras/src/layers/preprocessing/normalization.py",
       "messages": [
         {
           "line": 13,
@@ -10117,7 +10117,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/stft_spectrogram_test.py",
+      "file": "keras/src/layers/preprocessing/stft_spectrogram_test.py",
       "messages": [
         {
           "line": 345,
@@ -10131,7 +10131,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/hashing.py",
+      "file": "keras/src/layers/preprocessing/hashing.py",
       "messages": [
         {
           "line": 11,
@@ -10173,7 +10173,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/feature_space.py",
+      "file": "keras/src/layers/preprocessing/feature_space.py",
       "messages": [
         {
           "line": 511,
@@ -10271,7 +10271,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/discretization_test.py",
+      "file": "keras/src/layers/preprocessing/discretization_test.py",
       "messages": [
         {
           "line": 122,
@@ -10285,7 +10285,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/base_image_preprocessing_layer.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/base_image_preprocessing_layer.py",
       "messages": [
         {
           "line": 58,
@@ -10334,7 +10334,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/max_num_bounding_box.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/max_num_bounding_box.py",
       "messages": [
         {
           "line": 8,
@@ -10362,7 +10362,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/center_crop_test.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/center_crop_test.py",
       "messages": [
         {
           "line": 177,
@@ -10376,7 +10376,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/auto_contrast.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/auto_contrast.py",
       "messages": [
         {
           "line": 10,
@@ -10404,7 +10404,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/mix_up.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/mix_up.py",
       "messages": [
         {
           "line": 11,
@@ -10439,7 +10439,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_flip_test.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_flip_test.py",
       "messages": [
         {
           "line": 13,
@@ -10460,7 +10460,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_posterization.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_posterization.py",
       "messages": [
         {
           "line": 8,
@@ -10495,7 +10495,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_zoom.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_zoom.py",
       "messages": [
         {
           "line": 17,
@@ -10537,7 +10537,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_grayscale.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_grayscale.py",
       "messages": [
         {
           "line": 9,
@@ -10649,7 +10649,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_color_jitter.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_color_jitter.py",
       "messages": [
         {
           "line": 14,
@@ -10705,7 +10705,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_contrast.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_contrast.py",
       "messages": [
         {
           "line": 9,
@@ -10740,7 +10740,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/center_crop.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/center_crop.py",
       "messages": [
         {
           "line": 15,
@@ -10768,7 +10768,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_brightness.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_brightness.py",
       "messages": [
         {
           "line": 9,
@@ -10803,7 +10803,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_color_degeneration.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_color_degeneration.py",
       "messages": [
         {
           "line": 9,
@@ -10845,7 +10845,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/rand_augment.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/rand_augment.py",
       "messages": [
         {
           "line": 13,
@@ -10880,7 +10880,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/resizing.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/resizing.py",
       "messages": [
         {
           "line": 16,
@@ -10908,7 +10908,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/solarization_test.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/solarization_test.py",
       "messages": [
         {
           "line": 13,
@@ -10922,7 +10922,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_rotation.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_rotation.py",
       "messages": [
         {
           "line": 12,
@@ -10957,7 +10957,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/solarization.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/solarization.py",
       "messages": [
         {
           "line": 11,
@@ -10999,7 +10999,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_brightness_test.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_brightness_test.py",
       "messages": [
         {
           "line": 81,
@@ -11020,7 +11020,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_saturation.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_saturation.py",
       "messages": [
         {
           "line": 9,
@@ -11055,7 +11055,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_translation.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_translation.py",
       "messages": [
         {
           "line": 16,
@@ -11097,7 +11097,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_shear.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_shear.py",
       "messages": [
         {
           "line": 16,
@@ -11132,7 +11132,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_sharpness.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_sharpness.py",
       "messages": [
         {
           "line": 9,
@@ -11167,7 +11167,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_flip.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_flip.py",
       "messages": [
         {
           "line": 20,
@@ -11202,7 +11202,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_hue.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_hue.py",
       "messages": [
         {
           "line": 8,
@@ -11237,7 +11237,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/equalization.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/equalization.py",
       "messages": [
         {
           "line": 9,
@@ -11279,7 +11279,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/random_crop.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/random_crop.py",
       "messages": [
         {
           "line": 16,
@@ -11307,7 +11307,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/bounding_boxes/bounding_box.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/bounding_boxes/bounding_box.py",
       "messages": [
         {
           "line": 250,
@@ -11447,7 +11447,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/preprocessing/image_preprocessing/bounding_boxes/converters.py",
+      "file": "keras/src/layers/preprocessing/image_preprocessing/bounding_boxes/converters.py",
       "messages": [
         {
           "line": 225,
@@ -11468,7 +11468,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/concatenate.py",
+      "file": "keras/src/layers/merging/concatenate.py",
       "messages": [
         {
           "line": 9,
@@ -11482,7 +11482,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/add.py",
+      "file": "keras/src/layers/merging/add.py",
       "messages": [
         {
           "line": 7,
@@ -11496,7 +11496,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/subtract.py",
+      "file": "keras/src/layers/merging/subtract.py",
       "messages": [
         {
           "line": 7,
@@ -11510,7 +11510,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/multiply.py",
+      "file": "keras/src/layers/merging/multiply.py",
       "messages": [
         {
           "line": 8,
@@ -11524,7 +11524,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/maximum.py",
+      "file": "keras/src/layers/merging/maximum.py",
       "messages": [
         {
           "line": 7,
@@ -11538,7 +11538,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/minimum.py",
+      "file": "keras/src/layers/merging/minimum.py",
       "messages": [
         {
           "line": 7,
@@ -11552,7 +11552,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/merging_test.py",
+      "file": "keras/src/layers/merging/merging_test.py",
       "messages": [
         {
           "line": 83,
@@ -11685,7 +11685,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/dot.py",
+      "file": "keras/src/layers/merging/dot.py",
       "messages": [
         {
           "line": 178,
@@ -11720,7 +11720,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/average.py",
+      "file": "keras/src/layers/merging/average.py",
       "messages": [
         {
           "line": 7,
@@ -11734,7 +11734,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/merging/base_merge.py",
+      "file": "keras/src/layers/merging/base_merge.py",
       "messages": [
         {
           "line": 80,
@@ -11846,7 +11846,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/time_distributed.py",
+      "file": "keras/src/layers/rnn/time_distributed.py",
       "messages": [
         {
           "line": 11,
@@ -11909,7 +11909,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/gru_test.py",
+      "file": "keras/src/layers/rnn/gru_test.py",
       "messages": [
         {
           "line": 51,
@@ -11923,7 +11923,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/rnn_test.py",
+      "file": "keras/src/layers/rnn/rnn_test.py",
       "messages": [
         {
           "line": 386,
@@ -12014,7 +12014,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/time_distributed_test.py",
+      "file": "keras/src/layers/rnn/time_distributed_test.py",
       "messages": [
         {
           "line": 53,
@@ -12049,7 +12049,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/bidirectional.py",
+      "file": "keras/src/layers/rnn/bidirectional.py",
       "messages": [
         {
           "line": 11,
@@ -12133,7 +12133,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/dropout_rnn_cell_test.py",
+      "file": "keras/src/layers/rnn/dropout_rnn_cell_test.py",
       "messages": [
         {
           "line": 10,
@@ -12175,7 +12175,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/conv_lstm3d.py",
+      "file": "keras/src/layers/rnn/conv_lstm3d.py",
       "messages": [
         {
           "line": 6,
@@ -12189,7 +12189,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/stacked_rnn_cells.py",
+      "file": "keras/src/layers/rnn/stacked_rnn_cells.py",
       "messages": [
         {
           "line": 9,
@@ -12224,7 +12224,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/conv_lstm2d.py",
+      "file": "keras/src/layers/rnn/conv_lstm2d.py",
       "messages": [
         {
           "line": 6,
@@ -12238,7 +12238,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/lstm.py",
+      "file": "keras/src/layers/rnn/lstm.py",
       "messages": [
         {
           "line": 16,
@@ -12308,7 +12308,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/gru.py",
+      "file": "keras/src/layers/rnn/gru.py",
       "messages": [
         {
           "line": 16,
@@ -12385,7 +12385,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/conv_lstm1d.py",
+      "file": "keras/src/layers/rnn/conv_lstm1d.py",
       "messages": [
         {
           "line": 6,
@@ -12399,7 +12399,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/rnn.py",
+      "file": "keras/src/layers/rnn/rnn.py",
       "messages": [
         {
           "line": 13,
@@ -12476,7 +12476,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/dropout_rnn_cell.py",
+      "file": "keras/src/layers/rnn/dropout_rnn_cell.py",
       "messages": [
         {
           "line": 39,
@@ -12525,7 +12525,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/simple_rnn.py",
+      "file": "keras/src/layers/rnn/simple_rnn.py",
       "messages": [
         {
           "line": 15,
@@ -12602,7 +12602,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/layers/rnn/conv_lstm.py",
+      "file": "keras/src/layers/rnn/conv_lstm.py",
       "messages": [
         {
           "line": 16,
@@ -12735,7 +12735,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/csv_logger_test.py",
+      "file": "keras/src/callbacks/csv_logger_test.py",
       "messages": [
         {
           "line": 65,
@@ -12770,7 +12770,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/callback_list.py",
+      "file": "keras/src/callbacks/callback_list.py",
       "messages": [
         {
           "line": 17,
@@ -12784,7 +12784,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/remote_monitor.py",
+      "file": "keras/src/callbacks/remote_monitor.py",
       "messages": [
         {
           "line": 70,
@@ -12805,7 +12805,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/backup_and_restore.py",
+      "file": "keras/src/callbacks/backup_and_restore.py",
       "messages": [
         {
           "line": 152,
@@ -12819,7 +12819,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/backup_and_restore_test.py",
+      "file": "keras/src/callbacks/backup_and_restore_test.py",
       "messages": [
         {
           "line": 14,
@@ -12952,7 +12952,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/swap_ema_weights.py",
+      "file": "keras/src/callbacks/swap_ema_weights.py",
       "messages": [
         {
           "line": 58,
@@ -13015,7 +13015,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/lambda_callback_test.py",
+      "file": "keras/src/callbacks/lambda_callback_test.py",
       "messages": [
         {
           "line": 102,
@@ -13043,7 +13043,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/reduce_lr_on_plateau.py",
+      "file": "keras/src/callbacks/reduce_lr_on_plateau.py",
       "messages": [
         {
           "line": 49,
@@ -13057,7 +13057,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/callback_test.py",
+      "file": "keras/src/callbacks/callback_test.py",
       "messages": [
         {
           "line": 12,
@@ -13092,7 +13092,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/model_checkpoint.py",
+      "file": "keras/src/callbacks/model_checkpoint.py",
       "messages": [
         {
           "line": 294,
@@ -13127,7 +13127,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/swap_ema_weights_test.py",
+      "file": "keras/src/callbacks/swap_ema_weights_test.py",
       "messages": [
         {
           "line": 158,
@@ -13155,7 +13155,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/csv_logger.py",
+      "file": "keras/src/callbacks/csv_logger.py",
       "messages": [
         {
           "line": 49,
@@ -13169,7 +13169,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/early_stopping.py",
+      "file": "keras/src/callbacks/early_stopping.py",
       "messages": [
         {
           "line": 124,
@@ -13225,7 +13225,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/tensorboard_test.py",
+      "file": "keras/src/callbacks/tensorboard_test.py",
       "messages": [
         {
           "line": 468,
@@ -13316,7 +13316,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/tensorboard.py",
+      "file": "keras/src/callbacks/tensorboard.py",
       "messages": [
         {
           "line": 180,
@@ -13456,7 +13456,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/callbacks/history.py",
+      "file": "keras/src/callbacks/history.py",
       "messages": [
         {
           "line": 32,
@@ -13470,7 +13470,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/quantizers/quantizers.py",
+      "file": "keras/src/quantizers/quantizers.py",
       "messages": [
         {
           "line": 9,
@@ -13491,7 +13491,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/datasets/imdb.py",
+      "file": "keras/src/datasets/imdb.py",
       "messages": [
         {
           "line": 93,
@@ -13540,7 +13540,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/datasets/boston_housing.py",
+      "file": "keras/src/datasets/boston_housing.py",
       "messages": [
         {
           "line": 63,
@@ -13561,7 +13561,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/datasets/reuters.py",
+      "file": "keras/src/datasets/reuters.py",
       "messages": [
         {
           "line": 101,
@@ -13589,7 +13589,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/datasets/california_housing.py",
+      "file": "keras/src/datasets/california_housing.py",
       "messages": [
         {
           "line": 86,
@@ -13610,7 +13610,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/distribution/distribution_lib_test.py",
+      "file": "keras/src/distribution/distribution_lib_test.py",
       "messages": [
         {
           "line": 189,
@@ -13673,7 +13673,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/distribution/distribution_lib.py",
+      "file": "keras/src/distribution/distribution_lib.py",
       "messages": [
         {
           "line": 672,
@@ -13701,7 +13701,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/backend.py",
+      "file": "keras/src/legacy/backend.py",
       "messages": [
         {
           "line": 16,
@@ -14065,7 +14065,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/layers.py",
+      "file": "keras/src/legacy/layers.py",
       "messages": [
         {
           "line": 16,
@@ -14212,7 +14212,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/preprocessing/sequence.py",
+      "file": "keras/src/legacy/preprocessing/sequence.py",
       "messages": [
         {
           "line": 55,
@@ -14226,7 +14226,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/preprocessing/text.py",
+      "file": "keras/src/legacy/preprocessing/text.py",
       "messages": [
         {
           "line": 68,
@@ -14240,7 +14240,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/preprocessing/image.py",
+      "file": "keras/src/legacy/preprocessing/image.py",
       "messages": [
         {
           "line": 37,
@@ -14268,7 +14268,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/saving/saving_utils.py",
+      "file": "keras/src/legacy/saving/saving_utils.py",
       "messages": [
         {
           "line": 49,
@@ -14296,7 +14296,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/saving/json_utils_test.py",
+      "file": "keras/src/legacy/saving/json_utils_test.py",
       "messages": [
         {
           "line": 47,
@@ -14310,7 +14310,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/saving/json_utils.py",
+      "file": "keras/src/legacy/saving/json_utils.py",
       "messages": [
         {
           "line": 20,
@@ -14352,7 +14352,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/saving/serialization.py",
+      "file": "keras/src/legacy/saving/serialization.py",
       "messages": [
         {
           "line": 63,
@@ -14471,7 +14471,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/saving/legacy_h5_format_test.py",
+      "file": "keras/src/legacy/saving/legacy_h5_format_test.py",
       "messages": [
         {
           "line": 15,
@@ -14681,7 +14681,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/legacy/saving/legacy_h5_format.py",
+      "file": "keras/src/legacy/saving/legacy_h5_format.py",
       "messages": [
         {
           "line": 76,
@@ -14758,7 +14758,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/timeseries_dataset_utils.py",
+      "file": "keras/src/utils/timeseries_dataset_utils.py",
       "messages": [
         {
           "line": 258,
@@ -14772,7 +14772,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/model_visualization.py",
+      "file": "keras/src/utils/model_visualization.py",
       "messages": [
         {
           "line": 290,
@@ -14800,7 +14800,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/image_utils.py",
+      "file": "keras/src/utils/image_utils.py",
       "messages": [
         {
           "line": 258,
@@ -14814,7 +14814,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/summary_utils_test.py",
+      "file": "keras/src/utils/summary_utils_test.py",
       "messages": [
         {
           "line": 26,
@@ -14891,7 +14891,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/traceback_utils.py",
+      "file": "keras/src/utils/traceback_utils.py",
       "messages": [
         {
           "line": 167,
@@ -14912,7 +14912,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/dtype_utils_test.py",
+      "file": "keras/src/utils/dtype_utils_test.py",
       "messages": [
         {
           "line": 138,
@@ -14926,7 +14926,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/file_utils_test.py",
+      "file": "keras/src/utils/file_utils_test.py",
       "messages": [
         {
           "line": 77,
@@ -15122,7 +15122,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/image_dataset_utils_test.py",
+      "file": "keras/src/utils/image_dataset_utils_test.py",
       "messages": [
         {
           "line": 478,
@@ -15136,7 +15136,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/jax_layer.py",
+      "file": "keras/src/utils/jax_layer.py",
       "messages": [
         {
           "line": 16,
@@ -15171,7 +15171,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/dataset_utils.py",
+      "file": "keras/src/utils/dataset_utils.py",
       "messages": [
         {
           "line": 259,
@@ -15192,7 +15192,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/dataset_utils_test.py",
+      "file": "keras/src/utils/dataset_utils_test.py",
       "messages": [
         {
           "line": 48,
@@ -15227,7 +15227,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/summary_utils.py",
+      "file": "keras/src/utils/summary_utils.py",
       "messages": [
         {
           "line": 49,
@@ -15346,7 +15346,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/jax_layer_test.py",
+      "file": "keras/src/utils/jax_layer_test.py",
       "messages": [
         {
           "line": 32,
@@ -15710,7 +15710,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/code_stats.py",
+      "file": "keras/src/utils/code_stats.py",
       "messages": [
         {
           "line": 32,
@@ -15724,7 +15724,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/audio_dataset_utils.py",
+      "file": "keras/src/utils/audio_dataset_utils.py",
       "messages": [
         {
           "line": 449,
@@ -15738,7 +15738,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/torch_utils_test.py",
+      "file": "keras/src/utils/torch_utils_test.py",
       "messages": [
         {
           "line": 16,
@@ -15808,7 +15808,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/file_utils.py",
+      "file": "keras/src/utils/file_utils.py",
       "messages": [
         {
           "line": 313,
@@ -15850,7 +15850,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/module_utils.py",
+      "file": "keras/src/utils/module_utils.py",
       "messages": [
         {
           "line": 29,
@@ -15864,7 +15864,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/python_utils.py",
+      "file": "keras/src/utils/python_utils.py",
       "messages": [
         {
           "line": 10,
@@ -15892,7 +15892,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/text_dataset_utils_test.py",
+      "file": "keras/src/utils/text_dataset_utils_test.py",
       "messages": [
         {
           "line": 38,
@@ -15913,7 +15913,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/python_utils_test.py",
+      "file": "keras/src/utils/python_utils_test.py",
       "messages": [
         {
           "line": 10,
@@ -15969,7 +15969,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/tracking.py",
+      "file": "keras/src/utils/tracking.py",
       "messages": [
         {
           "line": 97,
@@ -16004,7 +16004,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/argument_validation.py",
+      "file": "keras/src/utils/argument_validation.py",
       "messages": [
         {
           "line": 26,
@@ -16025,7 +16025,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/audio_dataset_utils_test.py",
+      "file": "keras/src/utils/audio_dataset_utils_test.py",
       "messages": [
         {
           "line": 336,
@@ -16039,7 +16039,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/tf_utils.py",
+      "file": "keras/src/utils/tf_utils.py",
       "messages": [
         {
           "line": 11,
@@ -16060,7 +16060,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/utils/torch_utils.py",
+      "file": "keras/src/utils/torch_utils.py",
       "messages": [
         {
           "line": 13,
@@ -16074,7 +16074,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/config.py",
+      "file": "keras/src/backend/config.py",
       "messages": [
         {
           "line": 64,
@@ -16116,7 +16116,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/__init__.py",
+      "file": "keras/src/backend/__init__.py",
       "messages": [
         {
           "line": 63,
@@ -16151,7 +16151,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tests/compute_output_spec_test.py",
+      "file": "keras/src/backend/tests/compute_output_spec_test.py",
       "messages": [
         {
           "line": 100,
@@ -16172,7 +16172,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/openvino/nn.py",
+      "file": "keras/src/backend/openvino/nn.py",
       "messages": [
         {
           "line": 57,
@@ -16200,7 +16200,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/openvino/core.py",
+      "file": "keras/src/backend/openvino/core.py",
       "messages": [
         {
           "line": 525,
@@ -16284,7 +16284,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/openvino/numpy.py",
+      "file": "keras/src/backend/openvino/numpy.py",
       "messages": [
         {
           "line": 83,
@@ -16375,7 +16375,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/openvino/random.py",
+      "file": "keras/src/backend/openvino/random.py",
       "messages": [
         {
           "line": 102,
@@ -16403,7 +16403,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/openvino/linalg.py",
+      "file": "keras/src/backend/openvino/linalg.py",
       "messages": [
         {
           "line": 29,
@@ -16417,7 +16417,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/openvino/math.py",
+      "file": "keras/src/backend/openvino/math.py",
       "messages": [
         {
           "line": 8,
@@ -16459,7 +16459,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/openvino/trainer.py",
+      "file": "keras/src/backend/openvino/trainer.py",
       "messages": [
         {
           "line": 107,
@@ -16480,7 +16480,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/openvino/rnn.py",
+      "file": "keras/src/backend/openvino/rnn.py",
       "messages": [
         {
           "line": 37,
@@ -16501,7 +16501,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/openvino/image.py",
+      "file": "keras/src/backend/openvino/image.py",
       "messages": [
         {
           "line": 35,
@@ -16515,7 +16515,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/nn.py",
+      "file": "keras/src/backend/torch/nn.py",
       "messages": [
         {
           "line": 110,
@@ -16592,7 +16592,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/core.py",
+      "file": "keras/src/backend/torch/core.py",
       "messages": [
         {
           "line": 42,
@@ -16697,7 +16697,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/numpy.py",
+      "file": "keras/src/backend/torch/numpy.py",
       "messages": [
         {
           "line": 42,
@@ -17061,7 +17061,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/export.py",
+      "file": "keras/src/backend/torch/export.py",
       "messages": [
         {
           "line": 45,
@@ -17117,7 +17117,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/random.py",
+      "file": "keras/src/backend/torch/random.py",
       "messages": [
         {
           "line": 140,
@@ -17159,7 +17159,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/linalg.py",
+      "file": "keras/src/backend/torch/linalg.py",
       "messages": [
         {
           "line": 36,
@@ -17173,7 +17173,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/layer.py",
+      "file": "keras/src/backend/torch/layer.py",
       "messages": [
         {
           "line": 27,
@@ -17187,7 +17187,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/math.py",
+      "file": "keras/src/backend/torch/math.py",
       "messages": [
         {
           "line": 55,
@@ -17222,7 +17222,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/trainer.py",
+      "file": "keras/src/backend/torch/trainer.py",
       "messages": [
         {
           "line": 28,
@@ -17369,7 +17369,7 @@
       "error_count": 9
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/rnn.py",
+      "file": "keras/src/backend/torch/rnn.py",
       "messages": [
         {
           "line": 355,
@@ -17397,7 +17397,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/image.py",
+      "file": "keras/src/backend/torch/image.py",
       "messages": [
         {
           "line": 492,
@@ -17418,7 +17418,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_optimizer.py",
+      "file": "keras/src/backend/torch/optimizers/torch_optimizer.py",
       "messages": [
         {
           "line": 8,
@@ -17439,7 +17439,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_adadelta.py",
+      "file": "keras/src/backend/torch/optimizers/torch_adadelta.py",
       "messages": [
         {
           "line": 34,
@@ -17530,7 +17530,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_sgd.py",
+      "file": "keras/src/backend/torch/optimizers/torch_sgd.py",
       "messages": [
         {
           "line": 26,
@@ -17579,7 +17579,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_rmsprop.py",
+      "file": "keras/src/backend/torch/optimizers/torch_rmsprop.py",
       "messages": [
         {
           "line": 30,
@@ -17691,7 +17691,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_lion.py",
+      "file": "keras/src/backend/torch/optimizers/torch_lion.py",
       "messages": [
         {
           "line": 26,
@@ -17740,7 +17740,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_nadam.py",
+      "file": "keras/src/backend/torch/optimizers/torch_nadam.py",
       "messages": [
         {
           "line": 44,
@@ -17859,7 +17859,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_adamax.py",
+      "file": "keras/src/backend/torch/optimizers/torch_adamax.py",
       "messages": [
         {
           "line": 36,
@@ -17936,7 +17936,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_parallel_optimizer.py",
+      "file": "keras/src/backend/torch/optimizers/torch_parallel_optimizer.py",
       "messages": [
         {
           "line": 7,
@@ -17964,7 +17964,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_adam.py",
+      "file": "keras/src/backend/torch/optimizers/torch_adam.py",
       "messages": [
         {
           "line": 35,
@@ -18048,7 +18048,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/torch/optimizers/torch_adagrad.py",
+      "file": "keras/src/backend/torch/optimizers/torch_adagrad.py",
       "messages": [
         {
           "line": 27,
@@ -18104,7 +18104,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/numpy/nn.py",
+      "file": "keras/src/backend/numpy/nn.py",
       "messages": [
         {
           "line": 53,
@@ -18160,7 +18160,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/numpy/core.py",
+      "file": "keras/src/backend/numpy/core.py",
       "messages": [
         {
           "line": 153,
@@ -18230,7 +18230,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/numpy/numpy.py",
+      "file": "keras/src/backend/numpy/numpy.py",
       "messages": [
         {
           "line": 36,
@@ -18300,7 +18300,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/numpy/random.py",
+      "file": "keras/src/backend/numpy/random.py",
       "messages": [
         {
           "line": 115,
@@ -18328,7 +18328,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/numpy/linalg.py",
+      "file": "keras/src/backend/numpy/linalg.py",
       "messages": [
         {
           "line": 43,
@@ -18342,7 +18342,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/numpy/math.py",
+      "file": "keras/src/backend/numpy/math.py",
       "messages": [
         {
           "line": 12,
@@ -18384,7 +18384,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/numpy/trainer.py",
+      "file": "keras/src/backend/numpy/trainer.py",
       "messages": [
         {
           "line": 238,
@@ -18461,7 +18461,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/numpy/rnn.py",
+      "file": "keras/src/backend/numpy/rnn.py",
       "messages": [
         {
           "line": 14,
@@ -18489,7 +18489,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/numpy/image.py",
+      "file": "keras/src/backend/numpy/image.py",
       "messages": [
         {
           "line": 59,
@@ -18517,7 +18517,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/name_scope.py",
+      "file": "keras/src/backend/common/name_scope.py",
       "messages": [
         {
           "line": 69,
@@ -18531,7 +18531,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/thread_safe_test.py",
+      "file": "keras/src/backend/common/thread_safe_test.py",
       "messages": [
         {
           "line": 15,
@@ -18559,7 +18559,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/variables.py",
+      "file": "keras/src/backend/common/variables.py",
       "messages": [
         {
           "line": 531,
@@ -18594,7 +18594,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/dtypes_test.py",
+      "file": "keras/src/backend/common/dtypes_test.py",
       "messages": [
         {
           "line": 18,
@@ -18825,7 +18825,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/tensor_attributes.py",
+      "file": "keras/src/backend/common/tensor_attributes.py",
       "messages": [
         {
           "line": 8,
@@ -18846,7 +18846,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/symbolic_scope.py",
+      "file": "keras/src/backend/common/symbolic_scope.py",
       "messages": [
         {
           "line": 10,
@@ -18860,7 +18860,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/dtypes.py",
+      "file": "keras/src/backend/common/dtypes.py",
       "messages": [
         {
           "line": 151,
@@ -18874,7 +18874,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/global_state.py",
+      "file": "keras/src/backend/common/global_state.py",
       "messages": [
         {
           "line": 73,
@@ -18895,7 +18895,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/stateless_scope.py",
+      "file": "keras/src/backend/common/stateless_scope.py",
       "messages": [
         {
           "line": 71,
@@ -18909,7 +18909,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/common/variables_test.py",
+      "file": "keras/src/backend/common/variables_test.py",
       "messages": [
         {
           "line": 785,
@@ -19133,7 +19133,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/nn.py",
+      "file": "keras/src/backend/tensorflow/nn.py",
       "messages": [
         {
           "line": 25,
@@ -19189,7 +19189,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/distribute_test.py",
+      "file": "keras/src/backend/tensorflow/distribute_test.py",
       "messages": [
         {
           "line": 25,
@@ -19203,7 +19203,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/core.py",
+      "file": "keras/src/backend/tensorflow/core.py",
       "messages": [
         {
           "line": 406,
@@ -19315,7 +19315,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/numpy.py",
+      "file": "keras/src/backend/tensorflow/numpy.py",
       "messages": [
         {
           "line": 337,
@@ -19497,7 +19497,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/trackable.py",
+      "file": "keras/src/backend/tensorflow/trackable.py",
       "messages": [
         {
           "line": 46,
@@ -19511,7 +19511,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/export.py",
+      "file": "keras/src/backend/tensorflow/export.py",
       "messages": [
         {
           "line": 28,
@@ -19532,7 +19532,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/random.py",
+      "file": "keras/src/backend/tensorflow/random.py",
       "messages": [
         {
           "line": 107,
@@ -19581,7 +19581,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/linalg.py",
+      "file": "keras/src/backend/tensorflow/linalg.py",
       "messages": [
         {
           "line": 37,
@@ -19595,7 +19595,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/saved_model_test.py",
+      "file": "keras/src/backend/tensorflow/saved_model_test.py",
       "messages": [
         {
           "line": 22,
@@ -19854,7 +19854,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/layer.py",
+      "file": "keras/src/backend/tensorflow/layer.py",
       "messages": [
         {
           "line": 10,
@@ -19924,7 +19924,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/optimizer.py",
+      "file": "keras/src/backend/tensorflow/optimizer.py",
       "messages": [
         {
           "line": 19,
@@ -19966,7 +19966,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/math.py",
+      "file": "keras/src/backend/tensorflow/math.py",
       "messages": [
         {
           "line": 10,
@@ -20015,7 +20015,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/trainer.py",
+      "file": "keras/src/backend/tensorflow/trainer.py",
       "messages": [
         {
           "line": 312,
@@ -20246,7 +20246,7 @@
       "error_count": 11
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/optimizer_distribute_test.py",
+      "file": "keras/src/backend/tensorflow/optimizer_distribute_test.py",
       "messages": [
         {
           "line": 23,
@@ -20351,7 +20351,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/distribution_lib.py",
+      "file": "keras/src/backend/tensorflow/distribution_lib.py",
       "messages": [
         {
           "line": 49,
@@ -20379,7 +20379,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/rnn.py",
+      "file": "keras/src/backend/tensorflow/rnn.py",
       "messages": [
         {
           "line": 497,
@@ -20414,7 +20414,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/tensorflow/image.py",
+      "file": "keras/src/backend/tensorflow/image.py",
       "messages": [
         {
           "line": 475,
@@ -20442,7 +20442,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/nn.py",
+      "file": "keras/src/backend/jax/nn.py",
       "messages": [
         {
           "line": 56,
@@ -20512,7 +20512,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/distribution_lib_test.py",
+      "file": "keras/src/backend/jax/distribution_lib_test.py",
       "messages": [
         {
           "line": 45,
@@ -20666,7 +20666,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/core.py",
+      "file": "keras/src/backend/jax/core.py",
       "messages": [
         {
           "line": 257,
@@ -20736,7 +20736,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/numpy.py",
+      "file": "keras/src/backend/jax/numpy.py",
       "messages": [
         {
           "line": 803,
@@ -20834,7 +20834,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/export.py",
+      "file": "keras/src/backend/jax/export.py",
       "messages": [
         {
           "line": 52,
@@ -20862,7 +20862,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/random.py",
+      "file": "keras/src/backend/jax/random.py",
       "messages": [
         {
           "line": 107,
@@ -20890,7 +20890,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/linalg.py",
+      "file": "keras/src/backend/jax/linalg.py",
       "messages": [
         {
           "line": 48,
@@ -20911,7 +20911,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/sparse.py",
+      "file": "keras/src/backend/jax/sparse.py",
       "messages": [
         {
           "line": 238,
@@ -20925,7 +20925,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/optimizer.py",
+      "file": "keras/src/backend/jax/optimizer.py",
       "messages": [
         {
           "line": 15,
@@ -20939,7 +20939,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/math.py",
+      "file": "keras/src/backend/jax/math.py",
       "messages": [
         {
           "line": 14,
@@ -20981,7 +20981,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/trainer.py",
+      "file": "keras/src/backend/jax/trainer.py",
       "messages": [
         {
           "line": 351,
@@ -21261,7 +21261,7 @@
       "error_count": 6
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/distribution_lib.py",
+      "file": "keras/src/backend/jax/distribution_lib.py",
       "messages": [
         {
           "line": 184,
@@ -21282,7 +21282,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/backend/jax/rnn.py",
+      "file": "keras/src/backend/jax/rnn.py",
       "messages": [
         {
           "line": 18,
@@ -21310,7 +21310,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/model_test.py",
+      "file": "keras/src/models/model_test.py",
       "messages": [
         {
           "line": 1256,
@@ -21499,7 +21499,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/cloning_test.py",
+      "file": "keras/src/models/cloning_test.py",
       "messages": [
         {
           "line": 74,
@@ -21555,7 +21555,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/variable_mapping.py",
+      "file": "keras/src/models/variable_mapping.py",
       "messages": [
         {
           "line": 18,
@@ -21604,7 +21604,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/functional_test.py",
+      "file": "keras/src/models/functional_test.py",
       "messages": [
         {
           "line": 309,
@@ -21723,7 +21723,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/variable_mapping_test.py",
+      "file": "keras/src/models/variable_mapping_test.py",
       "messages": [
         {
           "line": 9,
@@ -21772,7 +21772,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/sequential_test.py",
+      "file": "keras/src/models/sequential_test.py",
       "messages": [
         {
           "line": 33,
@@ -21933,7 +21933,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/cloning.py",
+      "file": "keras/src/models/cloning.py",
       "messages": [
         {
           "line": 291,
@@ -21968,7 +21968,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/model.py",
+      "file": "keras/src/models/model.py",
       "messages": [
         {
           "line": 156,
@@ -22031,7 +22031,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/sequential.py",
+      "file": "keras/src/models/sequential.py",
       "messages": [
         {
           "line": 190,
@@ -22143,7 +22143,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/models/functional.py",
+      "file": "keras/src/models/functional.py",
       "messages": [
         {
           "line": 242,
@@ -22416,7 +22416,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/rmsprop.py",
+      "file": "keras/src/optimizers/rmsprop.py",
       "messages": [
         {
           "line": 91,
@@ -22451,7 +22451,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/optimizer_test.py",
+      "file": "keras/src/optimizers/optimizer_test.py",
       "messages": [
         {
           "line": 77,
@@ -22633,7 +22633,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/optimizer_sparse_test.py",
+      "file": "keras/src/optimizers/optimizer_sparse_test.py",
       "messages": [
         {
           "line": 25,
@@ -22738,7 +22738,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/lion.py",
+      "file": "keras/src/optimizers/lion.py",
       "messages": [
         {
           "line": 83,
@@ -22759,7 +22759,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/lamb.py",
+      "file": "keras/src/optimizers/lamb.py",
       "messages": [
         {
           "line": 74,
@@ -22787,7 +22787,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adamw_test.py",
+      "file": "keras/src/optimizers/adamw_test.py",
       "messages": [
         {
           "line": 27,
@@ -22815,7 +22815,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adafactor.py",
+      "file": "keras/src/optimizers/adafactor.py",
       "messages": [
         {
           "line": 84,
@@ -22850,7 +22850,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/base_optimizer.py",
+      "file": "keras/src/optimizers/base_optimizer.py",
       "messages": [
         {
           "line": 700,
@@ -22990,7 +22990,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adagrad_test.py",
+      "file": "keras/src/optimizers/adagrad_test.py",
       "messages": [
         {
           "line": 24,
@@ -23018,7 +23018,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/sgd.py",
+      "file": "keras/src/optimizers/sgd.py",
       "messages": [
         {
           "line": 91,
@@ -23032,7 +23032,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/lamb_test.py",
+      "file": "keras/src/optimizers/lamb_test.py",
       "messages": [
         {
           "line": 22,
@@ -23060,7 +23060,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adamax_test.py",
+      "file": "keras/src/optimizers/adamax_test.py",
       "messages": [
         {
           "line": 25,
@@ -23088,7 +23088,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adam_test.py",
+      "file": "keras/src/optimizers/adam_test.py",
       "messages": [
         {
           "line": 81,
@@ -23123,7 +23123,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adamax.py",
+      "file": "keras/src/optimizers/adamax.py",
       "messages": [
         {
           "line": 89,
@@ -23151,7 +23151,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/ftrl.py",
+      "file": "keras/src/optimizers/ftrl.py",
       "messages": [
         {
           "line": 153,
@@ -23179,7 +23179,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/nadam_test.py",
+      "file": "keras/src/optimizers/nadam_test.py",
       "messages": [
         {
           "line": 25,
@@ -23207,7 +23207,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adagrad.py",
+      "file": "keras/src/optimizers/adagrad.py",
       "messages": [
         {
           "line": 69,
@@ -23228,7 +23228,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/loss_scale_optimizer_test.py",
+      "file": "keras/src/optimizers/loss_scale_optimizer_test.py",
       "messages": [
         {
           "line": 39,
@@ -23263,7 +23263,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/ftrl_test.py",
+      "file": "keras/src/optimizers/ftrl_test.py",
       "messages": [
         {
           "line": 27,
@@ -23291,7 +23291,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adafactor_test.py",
+      "file": "keras/src/optimizers/adafactor_test.py",
       "messages": [
         {
           "line": 26,
@@ -23326,7 +23326,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adam.py",
+      "file": "keras/src/optimizers/adam.py",
       "messages": [
         {
           "line": 81,
@@ -23361,7 +23361,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adadelta_test.py",
+      "file": "keras/src/optimizers/adadelta_test.py",
       "messages": [
         {
           "line": 21,
@@ -23389,7 +23389,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/optimizer.py",
+      "file": "keras/src/optimizers/optimizer.py",
       "messages": [
         {
           "line": 17,
@@ -23410,7 +23410,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/nadam.py",
+      "file": "keras/src/optimizers/nadam.py",
       "messages": [
         {
           "line": 75,
@@ -23445,7 +23445,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/rmsprop_test.py",
+      "file": "keras/src/optimizers/rmsprop_test.py",
       "messages": [
         {
           "line": 23,
@@ -23473,7 +23473,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/loss_scale_optimizer.py",
+      "file": "keras/src/optimizers/loss_scale_optimizer.py",
       "messages": [
         {
           "line": 16,
@@ -23508,7 +23508,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/lion_test.py",
+      "file": "keras/src/optimizers/lion_test.py",
       "messages": [
         {
           "line": 80,
@@ -23543,7 +23543,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/adadelta.py",
+      "file": "keras/src/optimizers/adadelta.py",
       "messages": [
         {
           "line": 74,
@@ -23578,7 +23578,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/optimizers/sgd_test.py",
+      "file": "keras/src/optimizers/sgd_test.py",
       "messages": [
         {
           "line": 25,
@@ -23606,7 +23606,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/compile_utils.py",
+      "file": "keras/src/trainers/compile_utils.py",
       "messages": [
         {
           "line": 19,
@@ -23732,7 +23732,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/trainer_test.py",
+      "file": "keras/src/trainers/trainer_test.py",
       "messages": [
         {
           "line": 508,
@@ -24705,7 +24705,7 @@
       "error_count": 7
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/compile_utils_test.py",
+      "file": "keras/src/trainers/compile_utils_test.py",
       "messages": [
         {
           "line": 8,
@@ -24726,7 +24726,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/epoch_iterator_test.py",
+      "file": "keras/src/trainers/epoch_iterator_test.py",
       "messages": [
         {
           "line": 228,
@@ -24754,7 +24754,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/trainer.py",
+      "file": "keras/src/trainers/trainer.py",
       "messages": [
         {
           "line": 1045,
@@ -24831,7 +24831,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/tf_dataset_adapter_test.py",
+      "file": "keras/src/trainers/data_adapters/tf_dataset_adapter_test.py",
       "messages": [
         {
           "line": 39,
@@ -24866,7 +24866,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/__init__.py",
+      "file": "keras/src/trainers/data_adapters/__init__.py",
       "messages": [
         {
           "line": 64,
@@ -24901,7 +24901,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/data_adapter.py",
+      "file": "keras/src/trainers/data_adapters/data_adapter.py",
       "messages": [
         {
           "line": 93,
@@ -24922,7 +24922,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/torch_data_loader_adapter_test.py",
+      "file": "keras/src/trainers/data_adapters/torch_data_loader_adapter_test.py",
       "messages": [
         {
           "line": 42,
@@ -24964,7 +24964,7 @@
       "error_count": 5
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/generator_data_adapter.py",
+      "file": "keras/src/trainers/data_adapters/generator_data_adapter.py",
       "messages": [
         {
           "line": 8,
@@ -24985,7 +24985,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/array_data_adapter_test.py",
+      "file": "keras/src/trainers/data_adapters/array_data_adapter_test.py",
       "messages": [
         {
           "line": 102,
@@ -25006,7 +25006,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/array_data_adapter.py",
+      "file": "keras/src/trainers/data_adapters/array_data_adapter.py",
       "messages": [
         {
           "line": 42,
@@ -25020,7 +25020,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/generator_data_adapter_test.py",
+      "file": "keras/src/trainers/data_adapters/generator_data_adapter_test.py",
       "messages": [
         {
           "line": 84,
@@ -25076,7 +25076,7 @@
       "error_count": 7
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/array_slicing.py",
+      "file": "keras/src/trainers/data_adapters/array_slicing.py",
       "messages": [
         {
           "line": 127,
@@ -25132,7 +25132,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/py_dataset_adapter.py",
+      "file": "keras/src/trainers/data_adapters/py_dataset_adapter.py",
       "messages": [
         {
           "line": 175,
@@ -25202,7 +25202,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/trainers/data_adapters/py_dataset_adapter_test.py",
+      "file": "keras/src/trainers/data_adapters/py_dataset_adapter_test.py",
       "messages": [
         {
           "line": 220,
@@ -25279,7 +25279,7 @@
       "error_count": 5
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/testing/test_case.py",
+      "file": "keras/src/testing/test_case.py",
       "messages": [
         {
           "line": 61,
@@ -25342,7 +25342,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/dtype_policies/dtype_policy.py",
+      "file": "keras/src/dtype_policies/dtype_policy.py",
       "messages": [
         {
           "line": 90,
@@ -25363,7 +25363,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/dtype_policies/__init__.py",
+      "file": "keras/src/dtype_policies/__init__.py",
       "messages": [
         {
           "line": 22,
@@ -25384,7 +25384,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/dtype_policies/dtype_policy_test.py",
+      "file": "keras/src/dtype_policies/dtype_policy_test.py",
       "messages": [
         {
           "line": 28,
@@ -25405,7 +25405,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/dtype_policies/dtype_policy_map_test.py",
+      "file": "keras/src/dtype_policies/dtype_policy_map_test.py",
       "messages": [
         {
           "line": 31,
@@ -25461,7 +25461,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/dtype_policies/dtype_policy_map.py",
+      "file": "keras/src/dtype_policies/dtype_policy_map.py",
       "messages": [
         {
           "line": 63,
@@ -25510,7 +25510,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/applications/inception_resnet_v2.py",
+      "file": "keras/src/applications/inception_resnet_v2.py",
       "messages": [
         {
           "line": 294,
@@ -25538,7 +25538,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/applications/imagenet_utils.py",
+      "file": "keras/src/applications/imagenet_utils.py",
       "messages": [
         {
           "line": 133,
@@ -25559,7 +25559,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/applications/mobilenet_v2.py",
+      "file": "keras/src/applications/mobilenet_v2.py",
       "messages": [
         {
           "line": 138,
@@ -25580,7 +25580,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/applications/mobilenet_v3.py",
+      "file": "keras/src/applications/mobilenet_v3.py",
       "messages": [
         {
           "line": 195,
@@ -25608,7 +25608,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/applications/imagenet_utils_test.py",
+      "file": "keras/src/applications/imagenet_utils_test.py",
       "messages": [
         {
           "line": 87,
@@ -25622,7 +25622,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/applications/efficientnet.py",
+      "file": "keras/src/applications/efficientnet.py",
       "messages": [
         {
           "line": 830,
@@ -25636,7 +25636,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/applications/efficientnet_v2.py",
+      "file": "keras/src/applications/efficientnet_v2.py",
       "messages": [
         {
           "line": 1334,
@@ -25650,7 +25650,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/applications/applications_test.py",
+      "file": "keras/src/applications/applications_test.py",
       "messages": [
         {
           "line": 151,
@@ -25692,7 +25692,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/applications/convnext.py",
+      "file": "keras/src/applications/convnext.py",
       "messages": [
         {
           "line": 141,
@@ -25755,7 +25755,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/einops.py",
+      "file": "keras/src/ops/einops.py",
       "messages": [
         {
           "line": 89,
@@ -25797,7 +25797,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/function_test.py",
+      "file": "keras/src/ops/function_test.py",
       "messages": [
         {
           "line": 117,
@@ -25811,7 +25811,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/operation_test.py",
+      "file": "keras/src/ops/operation_test.py",
       "messages": [
         {
           "line": 12,
@@ -26056,7 +26056,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/nn.py",
+      "file": "keras/src/ops/nn.py",
       "messages": [
         {
           "line": 18,
@@ -27645,7 +27645,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/numpy_test.py",
+      "file": "keras/src/ops/numpy_test.py",
       "messages": [
         {
           "line": 5275,
@@ -28079,7 +28079,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/__init__.py",
+      "file": "keras/src/ops/__init__.py",
       "messages": [
         {
           "line": 12,
@@ -28149,7 +28149,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/core.py",
+      "file": "keras/src/ops/core.py",
       "messages": [
         {
           "line": 1036,
@@ -28919,7 +28919,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/numpy.py",
+      "file": "keras/src/ops/numpy.py",
       "messages": [
         {
           "line": 4534,
@@ -34631,7 +34631,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/symbolic_arguments_test.py",
+      "file": "keras/src/ops/symbolic_arguments_test.py",
       "messages": [
         {
           "line": 22,
@@ -34680,7 +34680,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/core_test.py",
+      "file": "keras/src/ops/core_test.py",
       "messages": [
         {
           "line": 887,
@@ -34911,7 +34911,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/operation.py",
+      "file": "keras/src/ops/operation.py",
       "messages": [
         {
           "line": 236,
@@ -34946,7 +34946,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/nn_test.py",
+      "file": "keras/src/ops/nn_test.py",
       "messages": [
         {
           "line": 2996,
@@ -35051,7 +35051,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/linalg_test.py",
+      "file": "keras/src/ops/linalg_test.py",
       "messages": [
         {
           "line": 445,
@@ -35065,7 +35065,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/linalg.py",
+      "file": "keras/src/ops/linalg.py",
       "messages": [
         {
           "line": 9,
@@ -35520,7 +35520,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/image_test.py",
+      "file": "keras/src/ops/image_test.py",
       "messages": [
         {
           "line": 760,
@@ -35604,7 +35604,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/math.py",
+      "file": "keras/src/ops/math.py",
       "messages": [
         {
           "line": 34,
@@ -36248,7 +36248,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/operation_utils.py",
+      "file": "keras/src/ops/operation_utils.py",
       "messages": [
         {
           "line": 405,
@@ -36276,7 +36276,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/node.py",
+      "file": "keras/src/ops/node.py",
       "messages": [
         {
           "line": 104,
@@ -36304,7 +36304,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/math_test.py",
+      "file": "keras/src/ops/math_test.py",
       "messages": [
         {
           "line": 981,
@@ -36339,7 +36339,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/image.py",
+      "file": "keras/src/ops/image.py",
       "messages": [
         {
           "line": 10,
@@ -36675,7 +36675,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/function.py",
+      "file": "keras/src/ops/function.py",
       "messages": [
         {
           "line": 11,
@@ -36773,7 +36773,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/ops/node_test.py",
+      "file": "keras/src/ops/node_test.py",
       "messages": [
         {
           "line": 9,
@@ -36808,7 +36808,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/saving/file_editor.py",
+      "file": "keras/src/saving/file_editor.py",
       "messages": [
         {
           "line": 329,
@@ -36871,7 +36871,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/saving/serialization_lib.py",
+      "file": "keras/src/saving/serialization_lib.py",
       "messages": [
         {
           "line": 47,
@@ -36955,7 +36955,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/saving/saving_api.py",
+      "file": "keras/src/saving/saving_api.py",
       "messages": [
         {
           "line": 125,
@@ -36969,7 +36969,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/saving/serialization_lib_test.py",
+      "file": "keras/src/saving/serialization_lib_test.py",
       "messages": [
         {
           "line": 177,
@@ -37186,7 +37186,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/saving/saving_api_test.py",
+      "file": "keras/src/saving/saving_api_test.py",
       "messages": [
         {
           "line": 157,
@@ -37214,7 +37214,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/saving/saving_lib_test.py",
+      "file": "keras/src/saving/saving_lib_test.py",
       "messages": [
         {
           "line": 23,
@@ -37648,7 +37648,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/saving/keras_saveable.py",
+      "file": "keras/src/saving/keras_saveable.py",
       "messages": [
         {
           "line": 21,
@@ -37662,7 +37662,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/saving/saving_lib.py",
+      "file": "keras/src/saving/saving_lib.py",
       "messages": [
         {
           "line": 164,
@@ -37788,7 +37788,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/saving/object_registration_test.py",
+      "file": "keras/src/saving/object_registration_test.py",
       "messages": [
         {
           "line": 58,
@@ -37816,7 +37816,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/export/export_utils.py",
+      "file": "keras/src/export/export_utils.py",
       "messages": [
         {
           "line": 26,
@@ -37830,7 +37830,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/export/onnx_test.py",
+      "file": "keras/src/export/onnx_test.py",
       "messages": [
         {
           "line": 77,
@@ -38012,7 +38012,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/export/onnx.py",
+      "file": "keras/src/export/onnx.py",
       "messages": [
         {
           "line": 75,
@@ -38068,7 +38068,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/export/tfsm_layer.py",
+      "file": "keras/src/export/tfsm_layer.py",
       "messages": [
         {
           "line": 9,
@@ -38096,7 +38096,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/export/saved_model_test.py",
+      "file": "keras/src/export/saved_model_test.py",
       "messages": [
         {
           "line": 78,
@@ -38397,7 +38397,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/export/tf2onnx_lib.py",
+      "file": "keras/src/export/tf2onnx_lib.py",
       "messages": [
         {
           "line": 126,
@@ -38425,7 +38425,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/export/saved_model.py",
+      "file": "keras/src/export/saved_model.py",
       "messages": [
         {
           "line": 300,
@@ -38481,7 +38481,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/random/random_test.py",
+      "file": "keras/src/random/random_test.py",
       "messages": [
         {
           "line": 446,
@@ -38565,7 +38565,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/random/random.py",
+      "file": "keras/src/random/random.py",
       "messages": [
         {
           "line": 313,
@@ -38579,7 +38579,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/random/seed_generator.py",
+      "file": "keras/src/random/seed_generator.py",
       "messages": [
         {
           "line": 82,
@@ -38593,7 +38593,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/initializers/constant_initializers.py",
+      "file": "keras/src/initializers/constant_initializers.py",
       "messages": [
         {
           "line": 233,
@@ -38607,7 +38607,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/keras/src/initializers/random_initializers.py",
+      "file": "keras/src/initializers/random_initializers.py",
       "messages": [
         {
           "line": 10,
@@ -38621,7 +38621,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/integration_tests/torch_custom_fit_test.py",
+      "file": "integration_tests/torch_custom_fit_test.py",
       "messages": [
         {
           "line": 8,
@@ -38642,7 +38642,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/integration_tests/tf_custom_fit_test.py",
+      "file": "integration_tests/tf_custom_fit_test.py",
       "messages": [
         {
           "line": 8,
@@ -38663,7 +38663,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/integration_tests/jax_custom_fit_test.py",
+      "file": "integration_tests/jax_custom_fit_test.py",
       "messages": [
         {
           "line": 8,
@@ -38698,7 +38698,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/integration_tests/import_test.py",
+      "file": "integration_tests/import_test.py",
       "messages": [
         {
           "line": 20,
@@ -38726,7 +38726,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/integration_tests/basic_full_flow.py",
+      "file": "integration_tests/basic_full_flow.py",
       "messages": [
         {
           "line": 12,
@@ -38754,7 +38754,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/integration_tests/model_visualization_test.py",
+      "file": "integration_tests/model_visualization_test.py",
       "messages": [
         {
           "line": 249,
@@ -38824,7 +38824,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/integration_tests/dataset_tests/california_housing_test.py",
+      "file": "integration_tests/dataset_tests/california_housing_test.py",
       "messages": [
         {
           "line": 7,
@@ -38859,7 +38859,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/integration_tests/dataset_tests/boston_housing_test.py",
+      "file": "integration_tests/dataset_tests/boston_housing_test.py",
       "messages": [
         {
           "line": 7,
@@ -38880,7 +38880,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/custom_train_step_in_torch.py",
+      "file": "guides/custom_train_step_in_torch.py",
       "messages": [
         {
           "line": 10,
@@ -39167,7 +39167,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/writing_a_custom_training_loop_in_tensorflow.py",
+      "file": "guides/writing_a_custom_training_loop_in_tensorflow.py",
       "messages": [
         {
           "line": 10,
@@ -39482,7 +39482,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/writing_your_own_callbacks.py",
+      "file": "guides/writing_your_own_callbacks.py",
       "messages": [
         {
           "line": 10,
@@ -39622,7 +39622,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/understanding_masking_and_padding.py",
+      "file": "guides/understanding_masking_and_padding.py",
       "messages": [
         {
           "line": 10,
@@ -39979,7 +39979,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/writing_a_custom_training_loop_in_torch.py",
+      "file": "guides/writing_a_custom_training_loop_in_torch.py",
       "messages": [
         {
           "line": 10,
@@ -40091,7 +40091,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/distributed_training_with_tensorflow.py",
+      "file": "guides/distributed_training_with_tensorflow.py",
       "messages": [
         {
           "line": 10,
@@ -40161,7 +40161,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/custom_train_step_in_tensorflow.py",
+      "file": "guides/custom_train_step_in_tensorflow.py",
       "messages": [
         {
           "line": 10,
@@ -40448,7 +40448,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/custom_train_step_in_jax.py",
+      "file": "guides/custom_train_step_in_jax.py",
       "messages": [
         {
           "line": 10,
@@ -40672,7 +40672,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/distributed_training_with_jax.py",
+      "file": "guides/distributed_training_with_jax.py",
       "messages": [
         {
           "line": 10,
@@ -40854,7 +40854,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/writing_a_custom_training_loop_in_jax.py",
+      "file": "guides/writing_a_custom_training_loop_in_jax.py",
       "messages": [
         {
           "line": 10,
@@ -41337,7 +41337,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/transfer_learning.py",
+      "file": "guides/transfer_learning.py",
       "messages": [
         {
           "line": 10,
@@ -41491,7 +41491,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/sequential_model.py",
+      "file": "guides/sequential_model.py",
       "messages": [
         {
           "line": 10,
@@ -41652,7 +41652,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/making_new_layers_and_models_via_subclassing.py",
+      "file": "guides/making_new_layers_and_models_via_subclassing.py",
       "messages": [
         {
           "line": 10,
@@ -42352,7 +42352,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/training_with_built_in_methods.py",
+      "file": "guides/training_with_built_in_methods.py",
       "messages": [
         {
           "line": 10,
@@ -42863,7 +42863,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/distributed_training_with_torch.py",
+      "file": "guides/distributed_training_with_torch.py",
       "messages": [
         {
           "line": 10,
@@ -42947,7 +42947,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/guides/functional_api.py",
+      "file": "guides/functional_api.py",
       "messages": [
         {
           "line": 10,
@@ -43353,7 +43353,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/demo_custom_jax_workflow.py",
+      "file": "examples/demo_custom_jax_workflow.py",
       "messages": [
         {
           "line": 18,
@@ -43507,7 +43507,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/demo_custom_torch_workflow.py",
+      "file": "examples/demo_custom_torch_workflow.py",
       "messages": [
         {
           "line": 59,
@@ -43549,7 +43549,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/demo_subclass.py",
+      "file": "examples/demo_subclass.py",
       "messages": [
         {
           "line": 10,
@@ -43584,7 +43584,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/demo_jax_distributed.py",
+      "file": "examples/demo_jax_distributed.py",
       "messages": [
         {
           "line": 24,
@@ -43738,7 +43738,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/demo_custom_layer_backend_agnostic.py",
+      "file": "examples/demo_custom_layer_backend_agnostic.py",
       "messages": [
         {
           "line": 13,
@@ -43829,7 +43829,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/demo_custom_tf_workflow.py",
+      "file": "examples/demo_custom_tf_workflow.py",
       "messages": [
         {
           "line": 18,
@@ -43906,7 +43906,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/demo_torch_multi_gpu.py",
+      "file": "examples/demo_torch_multi_gpu.py",
       "messages": [
         {
           "line": 30,
@@ -43969,7 +43969,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/model_benchmark/benchmark_utils.py",
+      "file": "benchmarks/model_benchmark/benchmark_utils.py",
       "messages": [
         {
           "line": 7,
@@ -43983,7 +43983,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/model_benchmark/bert_benchmark.py",
+      "file": "benchmarks/model_benchmark/bert_benchmark.py",
       "messages": [
         {
           "line": 111,
@@ -43997,7 +43997,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/reshaping_benchmark.py",
+      "file": "benchmarks/layer_benchmark/reshaping_benchmark.py",
       "messages": [
         {
           "line": 322,
@@ -44011,7 +44011,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/attention_benchmark.py",
+      "file": "benchmarks/layer_benchmark/attention_benchmark.py",
       "messages": [
         {
           "line": 118,
@@ -44025,7 +44025,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/rnn_benchmark.py",
+      "file": "benchmarks/layer_benchmark/rnn_benchmark.py",
       "messages": [
         {
           "line": 269,
@@ -44039,7 +44039,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/core_benchmark.py",
+      "file": "benchmarks/layer_benchmark/core_benchmark.py",
       "messages": [
         {
           "line": 124,
@@ -44053,7 +44053,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/pooling_benchmark.py",
+      "file": "benchmarks/layer_benchmark/pooling_benchmark.py",
       "messages": [
         {
           "line": 358,
@@ -44067,7 +44067,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/activation_benchmark.py",
+      "file": "benchmarks/layer_benchmark/activation_benchmark.py",
       "messages": [
         {
           "line": 159,
@@ -44081,7 +44081,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/conv_benchmark.py",
+      "file": "benchmarks/layer_benchmark/conv_benchmark.py",
       "messages": [
         {
           "line": 326,
@@ -44102,7 +44102,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/normalization_benchmark.py",
+      "file": "benchmarks/layer_benchmark/normalization_benchmark.py",
       "messages": [
         {
           "line": 140,
@@ -44116,7 +44116,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/merge_benchmark.py",
+      "file": "benchmarks/layer_benchmark/merge_benchmark.py",
       "messages": [
         {
           "line": 250,
@@ -44130,7 +44130,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/regularization_benchmark.py",
+      "file": "benchmarks/layer_benchmark/regularization_benchmark.py",
       "messages": [
         {
           "line": 202,
@@ -44144,7 +44144,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/benchmarks/layer_benchmark/base_benchmark.py",
+      "file": "benchmarks/layer_benchmark/base_benchmark.py",
       "messages": [
         {
           "line": 44,

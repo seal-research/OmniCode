@@ -2,7 +2,7 @@
   "label": "sphinx-doc__sphinx-11510",
   "files": [
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_util_i18n.py",
+      "file": "tests/test_util_i18n.py",
       "messages": [
         {
           "line": 58,
@@ -16,7 +16,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_theming.py",
+      "file": "tests/test_theming.py",
       "messages": [
         {
           "line": 16,
@@ -100,7 +100,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_coverage.py",
+      "file": "tests/test_ext_coverage.py",
       "messages": [
         {
           "line": 9,
@@ -156,7 +156,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_toctree.py",
+      "file": "tests/test_toctree.py",
       "messages": [
         {
           "line": 8,
@@ -212,7 +212,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_catalogs.py",
+      "file": "tests/test_catalogs.py",
       "messages": [
         {
           "line": 33,
@@ -261,7 +261,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_math.py",
+      "file": "tests/test_ext_math.py",
       "messages": [
         {
           "line": 29,
@@ -513,7 +513,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_linkcheck.py",
+      "file": "tests/test_build_linkcheck.py",
       "messages": [
         {
           "line": 398,
@@ -590,7 +590,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_domain_cpp.py",
+      "file": "tests/test_domain_cpp.py",
       "messages": [
         {
           "line": 468,
@@ -842,7 +842,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_apidoc.py",
+      "file": "tests/test_ext_apidoc.py",
       "messages": [
         {
           "line": 13,
@@ -1087,7 +1087,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_highlighting.py",
+      "file": "tests/test_highlighting.py",
       "messages": [
         {
           "line": 34,
@@ -1108,7 +1108,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_util_docutils.py",
+      "file": "tests/test_util_docutils.py",
       "messages": [
         {
           "line": 79,
@@ -1129,7 +1129,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_domain_std.py",
+      "file": "tests/test_domain_std.py",
       "messages": [
         {
           "line": 182,
@@ -1150,7 +1150,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/conftest.py",
+      "file": "tests/conftest.py",
       "messages": [
         {
           "line": 10,
@@ -1185,7 +1185,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_autodoc_mock.py",
+      "file": "tests/test_ext_autodoc_mock.py",
       "messages": [
         {
           "line": 16,
@@ -1227,7 +1227,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_todo.py",
+      "file": "tests/test_ext_todo.py",
       "messages": [
         {
           "line": 13,
@@ -1276,7 +1276,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_util_display.py",
+      "file": "tests/test_util_display.py",
       "messages": [
         {
           "line": 81,
@@ -1304,7 +1304,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_quickstart.py",
+      "file": "tests/test_quickstart.py",
       "messages": [
         {
           "line": 103,
@@ -1353,7 +1353,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_autodoc.py",
+      "file": "tests/test_ext_autodoc.py",
       "messages": [
         {
           "line": 937,
@@ -1542,7 +1542,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_domain_c.py",
+      "file": "tests/test_domain_c.py",
       "messages": [
         {
           "line": 271,
@@ -1661,7 +1661,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_duration.py",
+      "file": "tests/test_ext_duration.py",
       "messages": [
         {
           "line": 10,
@@ -1675,7 +1675,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_intl.py",
+      "file": "tests/test_intl.py",
       "messages": [
         {
           "line": 1075,
@@ -1689,7 +1689,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_epub.py",
+      "file": "tests/test_build_epub.py",
       "messages": [
         {
           "line": 198,
@@ -1745,7 +1745,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_search.py",
+      "file": "tests/test_search.py",
       "messages": [
         {
           "line": 41,
@@ -1969,7 +1969,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_autosummary.py",
+      "file": "tests/test_ext_autosummary.py",
       "messages": [
         {
           "line": 160,
@@ -2200,7 +2200,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_imgmockconverter.py",
+      "file": "tests/test_ext_imgmockconverter.py",
       "messages": [
         {
           "line": 7,
@@ -2221,7 +2221,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_transforms_post_transforms_code.py",
+      "file": "tests/test_transforms_post_transforms_code.py",
       "messages": [
         {
           "line": 5,
@@ -2270,7 +2270,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/typing_test_data.py",
+      "file": "tests/typing_test_data.py",
       "messages": [
         {
           "line": 6,
@@ -2620,7 +2620,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_gettext.py",
+      "file": "tests/test_build_gettext.py",
       "messages": [
         {
           "line": 133,
@@ -2634,7 +2634,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_directive_code.py",
+      "file": "tests/test_directive_code.py",
       "messages": [
         {
           "line": 22,
@@ -3229,7 +3229,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_text.py",
+      "file": "tests/test_build_text.py",
       "messages": [
         {
           "line": 19,
@@ -3404,7 +3404,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_domain_js.py",
+      "file": "tests/test_domain_js.py",
       "messages": [
         {
           "line": 29,
@@ -3481,7 +3481,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_util_typing.py",
+      "file": "tests/test_util_typing.py",
       "messages": [
         {
           "line": 140,
@@ -3502,7 +3502,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_util_logging.py",
+      "file": "tests/test_util_logging.py",
       "messages": [
         {
           "line": 134,
@@ -3558,7 +3558,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_api_translator.py",
+      "file": "tests/test_api_translator.py",
       "messages": [
         {
           "line": 17,
@@ -3719,7 +3719,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_graphviz.py",
+      "file": "tests/test_ext_graphviz.py",
       "messages": [
         {
           "line": 13,
@@ -3782,7 +3782,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_directive_only.py",
+      "file": "tests/test_directive_only.py",
       "messages": [
         {
           "line": 10,
@@ -3803,7 +3803,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_directives_no_typesetting.py",
+      "file": "tests/test_directives_no_typesetting.py",
       "messages": [
         {
           "line": 23,
@@ -3922,7 +3922,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_githubpages.py",
+      "file": "tests/test_ext_githubpages.py",
       "messages": [
         {
           "line": 7,
@@ -3971,7 +3971,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_inheritance_diagram.py",
+      "file": "tests/test_ext_inheritance_diagram.py",
       "messages": [
         {
           "line": 20,
@@ -4013,7 +4013,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_smartquotes.py",
+      "file": "tests/test_smartquotes.py",
       "messages": [
         {
           "line": 8,
@@ -4160,7 +4160,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_metadata.py",
+      "file": "tests/test_metadata.py",
       "messages": [
         {
           "line": 10,
@@ -4181,7 +4181,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_napoleon.py",
+      "file": "tests/test_ext_napoleon.py",
       "messages": [
         {
           "line": 25,
@@ -4286,7 +4286,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_manpage.py",
+      "file": "tests/test_build_manpage.py",
       "messages": [
         {
           "line": 11,
@@ -4363,7 +4363,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_changes.py",
+      "file": "tests/test_build_changes.py",
       "messages": [
         {
           "line": 10,
@@ -4377,7 +4377,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_doctest.py",
+      "file": "tests/test_ext_doctest.py",
       "messages": [
         {
           "line": 17,
@@ -4475,7 +4475,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_texinfo.py",
+      "file": "tests/test_build_texinfo.py",
       "messages": [
         {
           "line": 30,
@@ -4601,7 +4601,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_correct_year.py",
+      "file": "tests/test_correct_year.py",
       "messages": [
         {
           "line": 26,
@@ -4615,7 +4615,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_intersphinx.py",
+      "file": "tests/test_ext_intersphinx.py",
       "messages": [
         {
           "line": 26,
@@ -4790,7 +4790,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_versioning.py",
+      "file": "tests/test_versioning.py",
       "messages": [
         {
           "line": 16,
@@ -4818,7 +4818,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_viewcode.py",
+      "file": "tests/test_ext_viewcode.py",
       "messages": [
         {
           "line": 64,
@@ -4874,7 +4874,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build.py",
+      "file": "tests/test_build.py",
       "messages": [
         {
           "line": 13,
@@ -4930,7 +4930,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_util_nodes.py",
+      "file": "tests/test_util_nodes.py",
       "messages": [
         {
           "line": 149,
@@ -4944,7 +4944,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_latex.py",
+      "file": "tests/test_build_latex.py",
       "messages": [
         {
           "line": 1751,
@@ -5532,7 +5532,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_ifconfig.py",
+      "file": "tests/test_ext_ifconfig.py",
       "messages": [
         {
           "line": 11,
@@ -5553,7 +5553,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_config.py",
+      "file": "tests/test_config.py",
       "messages": [
         {
           "line": 52,
@@ -5651,7 +5651,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_docutilsconf.py",
+      "file": "tests/test_docutilsconf.py",
       "messages": [
         {
           "line": 11,
@@ -5686,7 +5686,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_autodoc_events.py",
+      "file": "tests/test_ext_autodoc_events.py",
       "messages": [
         {
           "line": 12,
@@ -5770,7 +5770,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_imgconverter.py",
+      "file": "tests/test_ext_imgconverter.py",
       "messages": [
         {
           "line": 13,
@@ -5798,7 +5798,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_dirhtml.py",
+      "file": "tests/test_build_dirhtml.py",
       "messages": [
         {
           "line": 11,
@@ -5819,7 +5819,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_build_html.py",
+      "file": "tests/test_build_html.py",
       "messages": [
         {
           "line": 406,
@@ -6211,7 +6211,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_application.py",
+      "file": "tests/test_application.py",
       "messages": [
         {
           "line": 18,
@@ -6281,7 +6281,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_autodoc_autoclass.py",
+      "file": "tests/test_ext_autodoc_autoclass.py",
       "messages": [
         {
           "line": 302,
@@ -6302,7 +6302,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_util_inspect.py",
+      "file": "tests/test_util_inspect.py",
       "messages": [
         {
           "line": 47,
@@ -6463,7 +6463,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_napoleon_docstring.py",
+      "file": "tests/test_ext_napoleon_docstring.py",
       "messages": [
         {
           "line": 2588,
@@ -6505,7 +6505,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_autosectionlabel.py",
+      "file": "tests/test_ext_autosectionlabel.py",
       "messages": [
         {
           "line": 9,
@@ -6540,7 +6540,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_util_rst.py",
+      "file": "tests/test_util_rst.py",
       "messages": [
         {
           "line": 16,
@@ -6596,7 +6596,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_directive_other.py",
+      "file": "tests/test_directive_other.py",
       "messages": [
         {
           "line": 157,
@@ -6624,7 +6624,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_transforms_post_transforms.py",
+      "file": "tests/test_transforms_post_transforms.py",
       "messages": [
         {
           "line": 8,
@@ -6673,7 +6673,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_environment.py",
+      "file": "tests/test_environment.py",
       "messages": [
         {
           "line": 21,
@@ -6708,7 +6708,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_domain_py.py",
+      "file": "tests/test_domain_py.py",
       "messages": [
         {
           "line": 52,
@@ -6883,7 +6883,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_ext_autodoc_configs.py",
+      "file": "tests/test_ext_autodoc_configs.py",
       "messages": [
         {
           "line": 366,
@@ -6897,7 +6897,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_util_inventory.py",
+      "file": "tests/test_util_inventory.py",
       "messages": [
         {
           "line": 89,
@@ -6911,7 +6911,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_markup.py",
+      "file": "tests/test_markup.py",
       "messages": [
         {
           "line": 34,
@@ -7163,7 +7163,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-autosummary/dummy_module.py",
+      "file": "tests/roots/test-autosummary/dummy_module.py",
       "messages": [
         {
           "line": 18,
@@ -7212,7 +7212,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-autosummary/underscore_module_.py",
+      "file": "tests/roots/test-autosummary/underscore_module_.py",
       "messages": [
         {
           "line": 8,
@@ -7240,7 +7240,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-changes/conf.py",
+      "file": "tests/roots/test-changes/conf.py",
       "messages": [
         {
           "line": 2,
@@ -7254,7 +7254,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-imported_members/autosummary_dummy_package/autosummary_dummy_module.py",
+      "file": "tests/roots/test-ext-autosummary-imported_members/autosummary_dummy_package/autosummary_dummy_module.py",
       "messages": [
         {
           "line": 3,
@@ -7275,7 +7275,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-directive-code/target.py",
+      "file": "tests/roots/test-directive-code/target.py",
       "messages": [
         {
           "line": 25,
@@ -7303,7 +7303,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-module_all/autosummary_dummy_package_all/__init__.py",
+      "file": "tests/roots/test-ext-autosummary-module_all/autosummary_dummy_package_all/__init__.py",
       "messages": [
         {
           "line": 6,
@@ -7317,7 +7317,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-module_all/autosummary_dummy_package_all/extra_dummy_module.py",
+      "file": "tests/roots/test-ext-autosummary-module_all/autosummary_dummy_package_all/extra_dummy_module.py",
       "messages": [
         {
           "line": 4,
@@ -7352,7 +7352,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-module_all/autosummary_dummy_package_all/autosummary_dummy_module.py",
+      "file": "tests/roots/test-ext-autosummary-module_all/autosummary_dummy_package_all/autosummary_dummy_module.py",
       "messages": [
         {
           "line": 4,
@@ -7387,7 +7387,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-mock_imports/foo.py",
+      "file": "tests/roots/test-ext-autosummary-mock_imports/foo.py",
       "messages": [
         {
           "line": 6,
@@ -7401,7 +7401,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-apidoc-trailing-underscore/package_/module_.py",
+      "file": "tests/roots/test-apidoc-trailing-underscore/package_/module_.py",
       "messages": [
         {
           "line": 8,
@@ -7415,7 +7415,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-root/parsermod.py",
+      "file": "tests/roots/test-root/parsermod.py",
       "messages": [
         {
           "line": 5,
@@ -7443,7 +7443,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-root/conf.py",
+      "file": "tests/roots/test-root/conf.py",
       "messages": [
         {
           "line": 23,
@@ -7471,7 +7471,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-root/autodoc_target.py",
+      "file": "tests/roots/test-root/autodoc_target.py",
       "messages": [
         {
           "line": 12,
@@ -7576,7 +7576,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/autodoc_dummy_module.py",
+      "file": "tests/roots/test-ext-autodoc/autodoc_dummy_module.py",
       "messages": [
         {
           "line": 1,
@@ -7597,7 +7597,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/descriptor.py",
+      "file": "tests/roots/test-ext-autodoc/target/descriptor.py",
       "messages": [
         {
           "line": 7,
@@ -7611,7 +7611,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/callable.py",
+      "file": "tests/roots/test-ext-autodoc/target/callable.py",
       "messages": [
         {
           "line": 9,
@@ -7625,7 +7625,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/singledispatch.py",
+      "file": "tests/roots/test-ext-autodoc/target/singledispatch.py",
       "messages": [
         {
           "line": 5,
@@ -7681,7 +7681,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/enums.py",
+      "file": "tests/roots/test-ext-autodoc/target/enums.py",
       "messages": [
         {
           "line": 18,
@@ -7702,7 +7702,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/name_mangling.py",
+      "file": "tests/roots/test-ext-autodoc/target/name_mangling.py",
       "messages": [
         {
           "line": 3,
@@ -7730,7 +7730,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/pep604.py",
+      "file": "tests/roots/test-ext-autodoc/target/pep604.py",
       "messages": [
         {
           "line": 6,
@@ -7758,7 +7758,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/imported_members.py",
+      "file": "tests/roots/test-ext-autodoc/target/imported_members.py",
       "messages": [
         {
           "line": 1,
@@ -7779,7 +7779,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/preserve_defaults.py",
+      "file": "tests/roots/test-ext-autodoc/target/preserve_defaults.py",
       "messages": [
         {
           "line": 10,
@@ -7828,7 +7828,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/singledispatchmethod.py",
+      "file": "tests/roots/test-ext-autodoc/target/singledispatchmethod.py",
       "messages": [
         {
           "line": 10,
@@ -7863,7 +7863,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/autodoc_type_aliases.py",
+      "file": "tests/roots/test-ext-autodoc/target/autodoc_type_aliases.py",
       "messages": [
         {
           "line": 22,
@@ -7884,7 +7884,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/TYPE_CHECKING.py",
+      "file": "tests/roots/test-ext-autodoc/target/TYPE_CHECKING.py",
       "messages": [
         {
           "line": 15,
@@ -7898,7 +7898,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/wrappedfunction.py",
+      "file": "tests/roots/test-ext-autodoc/target/wrappedfunction.py",
       "messages": [
         {
           "line": 9,
@@ -7926,7 +7926,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/decorator.py",
+      "file": "tests/roots/test-ext-autodoc/target/decorator.py",
       "messages": [
         {
           "line": 13,
@@ -7961,7 +7961,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/typed_vars.py",
+      "file": "tests/roots/test-ext-autodoc/target/typed_vars.py",
       "messages": [
         {
           "line": 12,
@@ -7975,7 +7975,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/__init__.py",
+      "file": "tests/roots/test-ext-autodoc/target/__init__.py",
       "messages": [
         {
           "line": 14,
@@ -8073,7 +8073,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/need_mocks.py",
+      "file": "tests/roots/test-ext-autodoc/target/need_mocks.py",
       "messages": [
         {
           "line": 5,
@@ -8115,7 +8115,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/coroutine.py",
+      "file": "tests/roots/test-ext-autodoc/target/coroutine.py",
       "messages": [
         {
           "line": 8,
@@ -8143,7 +8143,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/partialfunction.py",
+      "file": "tests/roots/test-ext-autodoc/target/partialfunction.py",
       "messages": [
         {
           "line": 6,
@@ -8178,7 +8178,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/_functions_to_import.py",
+      "file": "tests/roots/test-ext-autodoc/target/_functions_to_import.py",
       "messages": [
         {
           "line": 7,
@@ -8192,7 +8192,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/instance_variable.py",
+      "file": "tests/roots/test-ext-autodoc/target/instance_variable.py",
       "messages": [
         {
           "line": 8,
@@ -8206,7 +8206,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/classes.py",
+      "file": "tests/roots/test-ext-autodoc/target/classes.py",
       "messages": [
         {
           "line": 31,
@@ -8220,7 +8220,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/overload.py",
+      "file": "tests/roots/test-ext-autodoc/target/overload.py",
       "messages": [
         {
           "line": 7,
@@ -8255,7 +8255,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/typehints.py",
+      "file": "tests/roots/test-ext-autodoc/target/typehints.py",
       "messages": [
         {
           "line": 44,
@@ -8332,7 +8332,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/annotated.py",
+      "file": "tests/roots/test-ext-autodoc/target/annotated.py",
       "messages": [
         {
           "line": 8,
@@ -8353,7 +8353,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/bound_method.py",
+      "file": "tests/roots/test-ext-autodoc/target/bound_method.py",
       "messages": [
         {
           "line": 4,
@@ -8367,7 +8367,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/private.py",
+      "file": "tests/roots/test-ext-autodoc/target/private.py",
       "messages": [
         {
           "line": 1,
@@ -8388,7 +8388,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/inheritance.py",
+      "file": "tests/roots/test-ext-autodoc/target/inheritance.py",
       "messages": [
         {
           "line": 13,
@@ -8402,7 +8402,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/canonical/original.py",
+      "file": "tests/roots/test-ext-autodoc/target/canonical/original.py",
       "messages": [
         {
           "line": 9,
@@ -8416,7 +8416,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/target/name_conflict/__init__.py",
+      "file": "tests/roots/test-ext-autodoc/target/name_conflict/__init__.py",
       "messages": [
         {
           "line": 6,
@@ -8430,7 +8430,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autodoc/bug2437/autodoc_dummy_foo.py",
+      "file": "tests/roots/test-ext-autodoc/bug2437/autodoc_dummy_foo.py",
       "messages": [
         {
           "line": 3,
@@ -8444,7 +8444,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-skip-member/conf.py",
+      "file": "tests/roots/test-ext-autosummary-skip-member/conf.py",
       "messages": [
         {
           "line": 12,
@@ -8486,7 +8486,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-skip-member/target.py",
+      "file": "tests/roots/test-ext-autosummary-skip-member/target.py",
       "messages": [
         {
           "line": 6,
@@ -8514,7 +8514,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-recursive/package2/module.py",
+      "file": "tests/roots/test-ext-autosummary-recursive/package2/module.py",
       "messages": [
         {
           "line": 1,
@@ -8542,7 +8542,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-recursive/package/module.py",
+      "file": "tests/roots/test-ext-autosummary-recursive/package/module.py",
       "messages": [
         {
           "line": 1,
@@ -8570,7 +8570,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-recursive/package/package/module.py",
+      "file": "tests/roots/test-ext-autosummary-recursive/package/package/module.py",
       "messages": [
         {
           "line": 1,
@@ -8598,7 +8598,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-math-compat/conf.py",
+      "file": "tests/roots/test-ext-math-compat/conf.py",
       "messages": [
         {
           "line": 7,
@@ -8661,7 +8661,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-imgmockconverter/mocksvgconverter.py",
+      "file": "tests/roots/test-ext-imgmockconverter/mocksvgconverter.py",
       "messages": [
         {
           "line": 9,
@@ -8675,7 +8675,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-extensions/write_parallel.py",
+      "file": "tests/roots/test-extensions/write_parallel.py",
       "messages": [
         {
           "line": 1,
@@ -8689,7 +8689,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-extensions/read_serial.py",
+      "file": "tests/roots/test-extensions/read_serial.py",
       "messages": [
         {
           "line": 1,
@@ -8703,7 +8703,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-extensions/read_parallel.py",
+      "file": "tests/roots/test-extensions/read_parallel.py",
       "messages": [
         {
           "line": 1,
@@ -8717,7 +8717,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-extensions/write_serial.py",
+      "file": "tests/roots/test-extensions/write_serial.py",
       "messages": [
         {
           "line": 1,
@@ -8731,7 +8731,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary-filename-map/autosummary_dummy_module.py",
+      "file": "tests/roots/test-ext-autosummary-filename-map/autosummary_dummy_module.py",
       "messages": [
         {
           "line": 22,
@@ -8766,7 +8766,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary/autosummary_class_module.py",
+      "file": "tests/roots/test-ext-autosummary/autosummary_class_module.py",
       "messages": [
         {
           "line": 2,
@@ -8780,7 +8780,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-autosummary/autosummary_dummy_module.py",
+      "file": "tests/roots/test-ext-autosummary/autosummary_dummy_module.py",
       "messages": [
         {
           "line": 45,
@@ -8801,7 +8801,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-napoleon/mypackage/typehints.py",
+      "file": "tests/roots/test-ext-napoleon/mypackage/typehints.py",
       "messages": [
         {
           "line": 1,
@@ -8829,7 +8829,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-copyright-multiline/conf.py",
+      "file": "tests/roots/test-copyright-multiline/conf.py",
       "messages": [
         {
           "line": 1,
@@ -8843,7 +8843,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-correct-year/conf.py",
+      "file": "tests/roots/test-correct-year/conf.py",
       "messages": [
         {
           "line": 1,
@@ -8857,7 +8857,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-viewcode/conf.py",
+      "file": "tests/roots/test-ext-viewcode/conf.py",
       "messages": [
         {
           "line": 11,
@@ -8871,7 +8871,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/roots/test-ext-viewcode-find/not_a_package/submodule.py",
+      "file": "tests/roots/test-ext-viewcode-find/not_a_package/submodule.py",
       "messages": [
         {
           "line": 7,
@@ -8885,7 +8885,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/utils/babel_runner.py",
+      "file": "utils/babel_runner.py",
       "messages": [
         {
           "line": 244,
@@ -8906,7 +8906,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/jinja2glue.py",
+      "file": "sphinx/jinja2glue.py",
       "messages": [
         {
           "line": 203,
@@ -8948,7 +8948,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/theming.py",
+      "file": "sphinx/theming.py",
       "messages": [
         {
           "line": 148,
@@ -8962,7 +8962,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/config.py",
+      "file": "sphinx/config.py",
       "messages": [
         {
           "line": 310,
@@ -9039,7 +9039,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/roles.py",
+      "file": "sphinx/roles.py",
       "messages": [
         {
           "line": 37,
@@ -9193,7 +9193,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/registry.py",
+      "file": "sphinx/registry.py",
       "messages": [
         {
           "line": 453,
@@ -9214,7 +9214,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/io.py",
+      "file": "sphinx/io.py",
       "messages": [
         {
           "line": 101,
@@ -9270,7 +9270,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/__init__.py",
+      "file": "sphinx/__init__.py",
       "messages": [
         {
           "line": 43,
@@ -9284,7 +9284,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/addnodes.py",
+      "file": "sphinx/addnodes.py",
       "messages": [
         {
           "line": 153,
@@ -9319,7 +9319,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/parsers.py",
+      "file": "sphinx/parsers.py",
       "messages": [
         {
           "line": 44,
@@ -9340,7 +9340,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/application.py",
+      "file": "sphinx/application.py",
       "messages": [
         {
           "line": 320,
@@ -9424,7 +9424,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/versioning.py",
+      "file": "sphinx/versioning.py",
       "messages": [
         {
           "line": 149,
@@ -9438,7 +9438,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/errors.py",
+      "file": "sphinx/errors.py",
       "messages": [
         {
           "line": 122,
@@ -9459,7 +9459,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/project.py",
+      "file": "sphinx/project.py",
       "messages": [
         {
           "line": 43,
@@ -9480,7 +9480,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/directives/code.py",
+      "file": "sphinx/directives/code.py",
       "messages": [
         {
           "line": 210,
@@ -9564,7 +9564,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/directives/__init__.py",
+      "file": "sphinx/directives/__init__.py",
       "messages": [
         {
           "line": 115,
@@ -9634,7 +9634,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/directives/other.py",
+      "file": "sphinx/directives/other.py",
       "messages": [
         {
           "line": 86,
@@ -9669,7 +9669,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/directives/patches.py",
+      "file": "sphinx/directives/patches.py",
       "messages": [
         {
           "line": 178,
@@ -9683,7 +9683,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/cmd/build.py",
+      "file": "sphinx/cmd/build.py",
       "messages": [
         {
           "line": 246,
@@ -9704,7 +9704,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/cmd/quickstart.py",
+      "file": "sphinx/cmd/quickstart.py",
       "messages": [
         {
           "line": 388,
@@ -9725,7 +9725,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/citation.py",
+      "file": "sphinx/domains/citation.py",
       "messages": [
         {
           "line": 56,
@@ -9760,7 +9760,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/index.py",
+      "file": "sphinx/domains/index.py",
       "messages": [
         {
           "line": 30,
@@ -9774,7 +9774,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/std.py",
+      "file": "sphinx/domains/std.py",
       "messages": [
         {
           "line": 682,
@@ -9942,7 +9942,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/__init__.py",
+      "file": "sphinx/domains/__init__.py",
       "messages": [
         {
           "line": 266,
@@ -10012,7 +10012,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/changeset.py",
+      "file": "sphinx/domains/changeset.py",
       "messages": [
         {
           "line": 134,
@@ -10033,7 +10033,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/cpp.py",
+      "file": "sphinx/domains/cpp.py",
       "messages": [
         {
           "line": 781,
@@ -11055,7 +11055,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/c.py",
+      "file": "sphinx/domains/c.py",
       "messages": [
         {
           "line": 220,
@@ -11678,7 +11678,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/python.py",
+      "file": "sphinx/domains/python.py",
       "messages": [
         {
           "line": 1547,
@@ -11916,7 +11916,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/math.py",
+      "file": "sphinx/domains/math.py",
       "messages": [
         {
           "line": 101,
@@ -11930,7 +11930,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/javascript.py",
+      "file": "sphinx/domains/javascript.py",
       "messages": [
         {
           "line": 421,
@@ -11972,7 +11972,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/domains/rst.py",
+      "file": "sphinx/domains/rst.py",
       "messages": [
         {
           "line": 253,
@@ -12035,7 +12035,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/locale/__init__.py",
+      "file": "sphinx/locale/__init__.py",
       "messages": [
         {
           "line": 52,
@@ -12056,7 +12056,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/writers/texinfo.py",
+      "file": "sphinx/writers/texinfo.py",
       "messages": [
         {
           "line": 497,
@@ -12875,7 +12875,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/writers/manpage.py",
+      "file": "sphinx/writers/manpage.py",
       "messages": [
         {
           "line": 36,
@@ -13008,7 +13008,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/writers/html5.py",
+      "file": "sphinx/writers/html5.py",
       "messages": [
         {
           "line": 76,
@@ -13253,7 +13253,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/writers/html.py",
+      "file": "sphinx/writers/html.py",
       "messages": [
         {
           "line": 35,
@@ -13281,7 +13281,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/writers/xml.py",
+      "file": "sphinx/writers/xml.py",
       "messages": [
         {
           "line": 21,
@@ -13323,7 +13323,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/writers/text.py",
+      "file": "sphinx/writers/text.py",
       "messages": [
         {
           "line": 467,
@@ -14079,7 +14079,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/writers/latex.py",
+      "file": "sphinx/writers/latex.py",
       "messages": [
         {
           "line": 978,
@@ -15003,7 +15003,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/logging.py",
+      "file": "sphinx/util/logging.py",
       "messages": [
         {
           "line": 149,
@@ -15045,7 +15045,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/texescape.py",
+      "file": "sphinx/util/texescape.py",
       "messages": [
         {
           "line": 91,
@@ -15059,7 +15059,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/docutils.py",
+      "file": "sphinx/util/docutils.py",
       "messages": [
         {
           "line": 66,
@@ -15220,7 +15220,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/fileutil.py",
+      "file": "sphinx/util/fileutil.py",
       "messages": [
         {
           "line": 84,
@@ -15241,7 +15241,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/docfields.py",
+      "file": "sphinx/util/docfields.py",
       "messages": [
         {
           "line": 100,
@@ -15269,7 +15269,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/display.py",
+      "file": "sphinx/util/display.py",
       "messages": [
         {
           "line": 10,
@@ -15283,7 +15283,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/inspect.py",
+      "file": "sphinx/util/inspect.py",
       "messages": [
         {
           "line": 324,
@@ -15367,7 +15367,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/cfamily.py",
+      "file": "sphinx/util/cfamily.py",
       "messages": [
         {
           "line": 380,
@@ -15430,7 +15430,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/index_entries.py",
+      "file": "sphinx/util/index_entries.py",
       "messages": [
         {
           "line": 21,
@@ -15444,7 +15444,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/images.py",
+      "file": "sphinx/util/images.py",
       "messages": [
         {
           "line": 50,
@@ -15458,7 +15458,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/osutil.py",
+      "file": "sphinx/util/osutil.py",
       "messages": [
         {
           "line": 111,
@@ -15500,7 +15500,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/i18n.py",
+      "file": "sphinx/util/i18n.py",
       "messages": [
         {
           "line": 62,
@@ -15535,7 +15535,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/math.py",
+      "file": "sphinx/util/math.py",
       "messages": [
         {
           "line": 21,
@@ -15549,7 +15549,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/nodes.py",
+      "file": "sphinx/util/nodes.py",
       "messages": [
         {
           "line": 190,
@@ -15612,7 +15612,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/requests.py",
+      "file": "sphinx/util/requests.py",
       "messages": [
         {
           "line": 49,
@@ -15626,7 +15626,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/typing.py",
+      "file": "sphinx/util/typing.py",
       "messages": [
         {
           "line": 164,
@@ -15668,7 +15668,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/parallel.py",
+      "file": "sphinx/util/parallel.py",
       "messages": [
         {
           "line": 78,
@@ -15682,7 +15682,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/util/inventory.py",
+      "file": "sphinx/util/inventory.py",
       "messages": [
         {
           "line": 96,
@@ -15710,7 +15710,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/texinfo.py",
+      "file": "sphinx/builders/texinfo.py",
       "messages": [
         {
           "line": 161,
@@ -15780,7 +15780,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/changes.py",
+      "file": "sphinx/builders/changes.py",
       "messages": [
         {
           "line": 25,
@@ -15822,7 +15822,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/manpage.py",
+      "file": "sphinx/builders/manpage.py",
       "messages": [
         {
           "line": 29,
@@ -15850,7 +15850,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/gettext.py",
+      "file": "sphinx/builders/gettext.py",
       "messages": [
         {
           "line": 6,
@@ -15878,7 +15878,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/xml.py",
+      "file": "sphinx/builders/xml.py",
       "messages": [
         {
           "line": 54,
@@ -15892,7 +15892,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/__init__.py",
+      "file": "sphinx/builders/__init__.py",
       "messages": [
         {
           "line": 109,
@@ -15976,7 +15976,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/text.py",
+      "file": "sphinx/builders/text.py",
       "messages": [
         {
           "line": 49,
@@ -16011,7 +16011,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/linkcheck.py",
+      "file": "sphinx/builders/linkcheck.py",
       "messages": [
         {
           "line": 636,
@@ -16095,7 +16095,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/singlehtml.py",
+      "file": "sphinx/builders/singlehtml.py",
       "messages": [
         {
           "line": 99,
@@ -16123,7 +16123,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/_epub_base.py",
+      "file": "sphinx/builders/_epub_base.py",
       "messages": [
         {
           "line": 55,
@@ -16263,7 +16263,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/epub3.py",
+      "file": "sphinx/builders/epub3.py",
       "messages": [
         {
           "line": 253,
@@ -16284,7 +16284,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/latex/transforms.py",
+      "file": "sphinx/builders/latex/transforms.py",
       "messages": [
         {
           "line": 37,
@@ -16305,7 +16305,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/latex/__init__.py",
+      "file": "sphinx/builders/latex/__init__.py",
       "messages": [
         {
           "line": 391,
@@ -16459,7 +16459,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/latex/nodes.py",
+      "file": "sphinx/builders/latex/nodes.py",
       "messages": [
         {
           "line": 8,
@@ -16494,7 +16494,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/html/_assets.py",
+      "file": "sphinx/builders/html/_assets.py",
       "messages": [
         {
           "line": 23,
@@ -16508,7 +16508,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/builders/html/__init__.py",
+      "file": "sphinx/builders/html/__init__.py",
       "messages": [
         {
           "line": 400,
@@ -16774,7 +16774,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/extlinks.py",
+      "file": "sphinx/ext/extlinks.py",
       "messages": [
         {
           "line": 98,
@@ -16830,7 +16830,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/mathjax.py",
+      "file": "sphinx/ext/mathjax.py",
       "messages": [
         {
           "line": 73,
@@ -16858,7 +16858,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/graphviz.py",
+      "file": "sphinx/ext/graphviz.py",
       "messages": [
         {
           "line": 252,
@@ -16921,7 +16921,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/intersphinx.py",
+      "file": "sphinx/ext/intersphinx.py",
       "messages": [
         {
           "line": 232,
@@ -16998,7 +16998,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/githubpages.py",
+      "file": "sphinx/ext/githubpages.py",
       "messages": [
         {
           "line": 22,
@@ -17012,7 +17012,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/duration.py",
+      "file": "sphinx/ext/duration.py",
       "messages": [
         {
           "line": 23,
@@ -17054,7 +17054,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/coverage.py",
+      "file": "sphinx/ext/coverage.py",
       "messages": [
         {
           "line": 44,
@@ -17180,7 +17180,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/imgmath.py",
+      "file": "sphinx/ext/imgmath.py",
       "messages": [
         {
           "line": 76,
@@ -17257,7 +17257,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/inheritance_diagram.py",
+      "file": "sphinx/ext/inheritance_diagram.py",
       "messages": [
         {
           "line": 204,
@@ -17292,7 +17292,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/doctest.py",
+      "file": "sphinx/ext/doctest.py",
       "messages": [
         {
           "line": 375,
@@ -17530,7 +17530,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/ifconfig.py",
+      "file": "sphinx/ext/ifconfig.py",
       "messages": [
         {
           "line": 48,
@@ -17565,7 +17565,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/todo.py",
+      "file": "sphinx/ext/todo.py",
       "messages": [
         {
           "line": 77,
@@ -17586,7 +17586,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/viewcode.py",
+      "file": "sphinx/ext/viewcode.py",
       "messages": [
         {
           "line": 67,
@@ -17768,7 +17768,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/autodoc/importer.py",
+      "file": "sphinx/ext/autodoc/importer.py",
       "messages": [
         {
           "line": 127,
@@ -17789,7 +17789,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/autodoc/__init__.py",
+      "file": "sphinx/ext/autodoc/__init__.py",
       "messages": [
         {
           "line": 149,
@@ -18090,7 +18090,7 @@
       "error_count": 5
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/autodoc/typehints.py",
+      "file": "sphinx/ext/autodoc/typehints.py",
       "messages": [
         {
           "line": 22,
@@ -18125,7 +18125,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/autodoc/type_comment.py",
+      "file": "sphinx/ext/autodoc/type_comment.py",
       "messages": [
         {
           "line": 116,
@@ -18139,7 +18139,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/autodoc/mock.py",
+      "file": "sphinx/ext/autodoc/mock.py",
       "messages": [
         {
           "line": 40,
@@ -18181,7 +18181,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/napoleon/__init__.py",
+      "file": "sphinx/ext/napoleon/__init__.py",
       "messages": [
         {
           "line": 323,
@@ -18216,7 +18216,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/napoleon/docstring.py",
+      "file": "sphinx/ext/napoleon/docstring.py",
       "messages": [
         {
           "line": 289,
@@ -18335,7 +18335,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/autosummary/generate.py",
+      "file": "sphinx/ext/autosummary/generate.py",
       "messages": [
         {
           "line": 192,
@@ -18398,7 +18398,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/ext/autosummary/__init__.py",
+      "file": "sphinx/ext/autosummary/__init__.py",
       "messages": [
         {
           "line": 119,
@@ -18482,7 +18482,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/pycode/__init__.py",
+      "file": "sphinx/pycode/__init__.py",
       "messages": [
         {
           "line": 106,
@@ -18496,7 +18496,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/pycode/parser.py",
+      "file": "sphinx/pycode/parser.py",
       "messages": [
         {
           "line": 51,
@@ -18510,7 +18510,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/ja.py",
+      "file": "sphinx/search/ja.py",
       "messages": [
         {
           "line": 39,
@@ -18601,7 +18601,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/pt.py",
+      "file": "sphinx/search/pt.py",
       "messages": [
         {
           "line": 5,
@@ -18622,7 +18622,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/__init__.py",
+      "file": "sphinx/search/__init__.py",
       "messages": [
         {
           "line": 82,
@@ -18664,7 +18664,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/no.py",
+      "file": "sphinx/search/no.py",
       "messages": [
         {
           "line": 5,
@@ -18685,7 +18685,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/ru.py",
+      "file": "sphinx/search/ru.py",
       "messages": [
         {
           "line": 5,
@@ -18706,7 +18706,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/fi.py",
+      "file": "sphinx/search/fi.py",
       "messages": [
         {
           "line": 5,
@@ -18727,7 +18727,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/hu.py",
+      "file": "sphinx/search/hu.py",
       "messages": [
         {
           "line": 5,
@@ -18748,7 +18748,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/fr.py",
+      "file": "sphinx/search/fr.py",
       "messages": [
         {
           "line": 5,
@@ -18769,7 +18769,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/nl.py",
+      "file": "sphinx/search/nl.py",
       "messages": [
         {
           "line": 5,
@@ -18790,7 +18790,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/zh.py",
+      "file": "sphinx/search/zh.py",
       "messages": [
         {
           "line": 238,
@@ -18832,7 +18832,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/sv.py",
+      "file": "sphinx/search/sv.py",
       "messages": [
         {
           "line": 5,
@@ -18853,7 +18853,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/en.py",
+      "file": "sphinx/search/en.py",
       "messages": [
         {
           "line": 5,
@@ -18874,35 +18874,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/tr.py",
-      "messages": [
-        {
-          "line": 5,
-          "column": 0,
-          "symbol": "unused-import",
-          "message": "Unused TYPE_CHECKING imported from typing",
-          "type": "warning"
-        },
-        {
-          "line": 5,
-          "column": 0,
-          "symbol": "unused-import",
-          "message": "Unused Dict imported from typing",
-          "type": "warning"
-        },
-        {
-          "line": 5,
-          "column": 0,
-          "symbol": "unused-import",
-          "message": "Unused Set imported from typing",
-          "type": "warning"
-        }
-      ],
-      "score": 10.0,
-      "error_count": 0
-    },
-    {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/ro.py",
+      "file": "sphinx/search/tr.py",
       "messages": [
         {
           "line": 5,
@@ -18930,7 +18902,35 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/es.py",
+      "file": "sphinx/search/ro.py",
+      "messages": [
+        {
+          "line": 5,
+          "column": 0,
+          "symbol": "unused-import",
+          "message": "Unused TYPE_CHECKING imported from typing",
+          "type": "warning"
+        },
+        {
+          "line": 5,
+          "column": 0,
+          "symbol": "unused-import",
+          "message": "Unused Dict imported from typing",
+          "type": "warning"
+        },
+        {
+          "line": 5,
+          "column": 0,
+          "symbol": "unused-import",
+          "message": "Unused Set imported from typing",
+          "type": "warning"
+        }
+      ],
+      "score": 10.0,
+      "error_count": 0
+    },
+    {
+      "file": "sphinx/search/es.py",
       "messages": [
         {
           "line": 5,
@@ -18951,7 +18951,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/it.py",
+      "file": "sphinx/search/it.py",
       "messages": [
         {
           "line": 5,
@@ -18972,7 +18972,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/de.py",
+      "file": "sphinx/search/de.py",
       "messages": [
         {
           "line": 5,
@@ -18993,7 +18993,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/search/da.py",
+      "file": "sphinx/search/da.py",
       "messages": [
         {
           "line": 5,
@@ -19014,7 +19014,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/testing/util.py",
+      "file": "sphinx/testing/util.py",
       "messages": [
         {
           "line": 132,
@@ -19049,7 +19049,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/testing/path.py",
+      "file": "sphinx/testing/path.py",
       "messages": [
         {
           "line": 101,
@@ -19077,7 +19077,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/testing/fixtures.py",
+      "file": "sphinx/testing/fixtures.py",
       "messages": [
         {
           "line": 47,
@@ -19245,7 +19245,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/transforms/references.py",
+      "file": "sphinx/transforms/references.py",
       "messages": [
         {
           "line": 27,
@@ -19273,7 +19273,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/transforms/__init__.py",
+      "file": "sphinx/transforms/__init__.py",
       "messages": [
         {
           "line": 104,
@@ -19399,7 +19399,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/transforms/compact_bullet_list.py",
+      "file": "sphinx/transforms/compact_bullet_list.py",
       "messages": [
         {
           "line": 49,
@@ -19420,7 +19420,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/transforms/i18n.py",
+      "file": "sphinx/transforms/i18n.py",
       "messages": [
         {
           "line": 120,
@@ -19504,7 +19504,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/transforms/post_transforms/code.py",
+      "file": "sphinx/transforms/post_transforms/code.py",
       "messages": [
         {
           "line": 37,
@@ -19560,7 +19560,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/transforms/post_transforms/__init__.py",
+      "file": "sphinx/transforms/post_transforms/__init__.py",
       "messages": [
         {
           "line": 172,
@@ -19574,7 +19574,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/transforms/post_transforms/images.py",
+      "file": "sphinx/transforms/post_transforms/images.py",
       "messages": [
         {
           "line": 30,
@@ -19609,7 +19609,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/environment/__init__.py",
+      "file": "sphinx/environment/__init__.py",
       "messages": [
         {
           "line": 374,
@@ -19651,7 +19651,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/environment/collectors/toctree.py",
+      "file": "sphinx/environment/collectors/toctree.py",
       "messages": [
         {
           "line": 185,
@@ -19672,7 +19672,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/environment/collectors/asset.py",
+      "file": "sphinx/environment/collectors/asset.py",
       "messages": [
         {
           "line": 102,
@@ -19686,7 +19686,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/environment/collectors/__init__.py",
+      "file": "sphinx/environment/collectors/__init__.py",
       "messages": [
         {
           "line": 59,
@@ -19742,7 +19742,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/environment/adapters/toctree.py",
+      "file": "sphinx/environment/adapters/toctree.py",
       "messages": [
         {
           "line": 292,
@@ -19770,7 +19770,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/sphinx/environment/adapters/indexentries.py",
+      "file": "sphinx/environment/adapters/indexentries.py",
       "messages": [
         {
           "line": 170,
@@ -19784,7 +19784,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/conf.py",
+      "file": "doc/conf.py",
       "messages": [
         {
           "line": 19,
@@ -19812,7 +19812,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/development/tutorials/examples/autodoc_intenum.py",
+      "file": "doc/development/tutorials/examples/autodoc_intenum.py",
       "messages": [
         {
           "line": 39,
@@ -19826,7 +19826,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/development/tutorials/examples/recipe.py",
+      "file": "doc/development/tutorials/examples/recipe.py",
       "messages": [
         {
           "line": 25,
@@ -19861,7 +19861,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/development/tutorials/examples/todo.py",
+      "file": "doc/development/tutorials/examples/todo.py",
       "messages": [
         {
           "line": 56,
@@ -19889,7 +19889,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/usage/extensions/example_google.py",
+      "file": "doc/usage/extensions/example_google.py",
       "messages": [
         {
           "line": 45,
@@ -19980,7 +19980,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/usage/extensions/example_numpy.py",
+      "file": "doc/usage/extensions/example_numpy.py",
       "messages": [
         {
           "line": 55,

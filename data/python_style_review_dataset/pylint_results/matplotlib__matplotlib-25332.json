@@ -2,7 +2,7 @@
   "label": "matplotlib__matplotlib-25332",
   "files": [
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/setupext.py",
+      "file": "setupext.py",
       "messages": [
         {
           "line": 90,
@@ -51,7 +51,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/setup.py",
+      "file": "setup.py",
       "messages": [
         {
           "line": 64,
@@ -114,7 +114,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/gh_api.py",
+      "file": "tools/gh_api.py",
       "messages": [
         {
           "line": 35,
@@ -198,7 +198,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/boilerplate.py",
+      "file": "tools/boilerplate.py",
       "messages": [
         {
           "line": 370,
@@ -212,7 +212,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/cache_zenodo_svg.py",
+      "file": "tools/cache_zenodo_svg.py",
       "messages": [
         {
           "line": 7,
@@ -261,7 +261,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/github_stats.py",
+      "file": "tools/github_stats.py",
       "messages": [
         {
           "line": 85,
@@ -345,7 +345,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/embed_js.py",
+      "file": "tools/embed_js.py",
       "messages": [
         {
           "line": 39,
@@ -394,7 +394,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/triage_tests.py",
+      "file": "tools/triage_tests.py",
       "messages": [
         {
           "line": 76,
@@ -415,7 +415,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/run_examples.py",
+      "file": "tools/run_examples.py",
       "messages": [
         {
           "line": 85,
@@ -429,7 +429,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/subset.py",
+      "file": "tools/subset.py",
       "messages": [
         {
           "line": 24,
@@ -471,7 +471,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/visualize_tests.py",
+      "file": "tools/visualize_tests.py",
       "messages": [
         {
           "line": 117,
@@ -492,7 +492,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tools/memleak.py",
+      "file": "tools/memleak.py",
       "messages": [
         {
           "line": 58,
@@ -520,7 +520,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/pylab.py",
+      "file": "lib/pylab.py",
       "messages": [
         {
           "line": 1,
@@ -534,7 +534,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/inset_locator.py",
+      "file": "lib/mpl_toolkits/axes_grid1/inset_locator.py",
       "messages": [
         {
           "line": 61,
@@ -597,7 +597,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/axes_grid.py",
+      "file": "lib/mpl_toolkits/axes_grid1/axes_grid.py",
       "messages": [
         {
           "line": 43,
@@ -618,7 +618,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/parasite_axes.py",
+      "file": "lib/mpl_toolkits/axes_grid1/parasite_axes.py",
       "messages": [
         {
           "line": 21,
@@ -723,7 +723,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/anchored_artists.py",
+      "file": "lib/mpl_toolkits/axes_grid1/anchored_artists.py",
       "messages": [
         {
           "line": 14,
@@ -737,7 +737,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/axes_size.py",
+      "file": "lib/mpl_toolkits/axes_grid1/axes_size.py",
       "messages": [
         {
           "line": 61,
@@ -779,7 +779,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/mpl_axes.py",
+      "file": "lib/mpl_toolkits/axes_grid1/mpl_axes.py",
       "messages": [
         {
           "line": 51,
@@ -800,7 +800,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/axes_rgb.py",
+      "file": "lib/mpl_toolkits/axes_grid1/axes_rgb.py",
       "messages": [
         {
           "line": 107,
@@ -814,7 +814,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/axes_divider.py",
+      "file": "lib/mpl_toolkits/axes_grid1/axes_divider.py",
       "messages": [
         {
           "line": 264,
@@ -870,7 +870,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/tests/conftest.py",
+      "file": "lib/mpl_toolkits/axes_grid1/tests/conftest.py",
       "messages": [
         {
           "line": 1,
@@ -898,7 +898,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axes_grid1/tests/test_axes_grid1.py",
+      "file": "lib/mpl_toolkits/axes_grid1/tests/test_axes_grid1.py",
       "messages": [
         {
           "line": 109,
@@ -1094,7 +1094,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/mplot3d/axes3d.py",
+      "file": "lib/mpl_toolkits/mplot3d/axes3d.py",
       "messages": [
         {
           "line": 1357,
@@ -1703,7 +1703,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/mplot3d/axis3d.py",
+      "file": "lib/mpl_toolkits/mplot3d/axis3d.py",
       "messages": [
         {
           "line": 314,
@@ -2060,7 +2060,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/mplot3d/art3d.py",
+      "file": "lib/mpl_toolkits/mplot3d/art3d.py",
       "messages": [
         {
           "line": 367,
@@ -2585,7 +2585,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/mplot3d/tests/conftest.py",
+      "file": "lib/mpl_toolkits/mplot3d/tests/conftest.py",
       "messages": [
         {
           "line": 1,
@@ -2613,7 +2613,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/mplot3d/tests/test_legend3d.py",
+      "file": "lib/mpl_toolkits/mplot3d/tests/test_legend3d.py",
       "messages": [
         {
           "line": 13,
@@ -2676,7 +2676,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/mplot3d/tests/test_axes3d.py",
+      "file": "lib/mpl_toolkits/mplot3d/tests/test_axes3d.py",
       "messages": [
         {
           "line": 28,
@@ -2998,7 +2998,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/axislines.py",
+      "file": "lib/mpl_toolkits/axisartist/axislines.py",
       "messages": [
         {
           "line": 125,
@@ -3124,7 +3124,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/grid_finder.py",
+      "file": "lib/mpl_toolkits/axisartist/grid_finder.py",
       "messages": [
         {
           "line": 282,
@@ -3138,7 +3138,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/axis_artist.py",
+      "file": "lib/mpl_toolkits/axisartist/axis_artist.py",
       "messages": [
         {
           "line": 70,
@@ -3327,7 +3327,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/axisline_style.py",
+      "file": "lib/mpl_toolkits/axisartist/axisline_style.py",
       "messages": [
         {
           "line": 70,
@@ -3355,7 +3355,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/grid_helper_curvelinear.py",
+      "file": "lib/mpl_toolkits/axisartist/grid_helper_curvelinear.py",
       "messages": [
         {
           "line": 84,
@@ -3488,7 +3488,7 @@
       "error_count": 10
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/floating_axes.py",
+      "file": "lib/mpl_toolkits/axisartist/floating_axes.py",
       "messages": [
         {
           "line": 5,
@@ -3635,7 +3635,7 @@
       "error_count": 6
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/axes_rgb.py",
+      "file": "lib/mpl_toolkits/axisartist/axes_rgb.py",
       "messages": [
         {
           "line": 1,
@@ -3649,7 +3649,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/axes_divider.py",
+      "file": "lib/mpl_toolkits/axisartist/axes_divider.py",
       "messages": [
         {
           "line": 1,
@@ -3691,7 +3691,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/tests/test_axis_artist.py",
+      "file": "lib/mpl_toolkits/axisartist/tests/test_axis_artist.py",
       "messages": [
         {
           "line": 11,
@@ -3761,7 +3761,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/tests/conftest.py",
+      "file": "lib/mpl_toolkits/axisartist/tests/conftest.py",
       "messages": [
         {
           "line": 1,
@@ -3789,7 +3789,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/tests/test_grid_finder.py",
+      "file": "lib/mpl_toolkits/axisartist/tests/test_grid_finder.py",
       "messages": [
         {
           "line": 29,
@@ -3810,7 +3810,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/tests/test_grid_helper_curvelinear.py",
+      "file": "lib/mpl_toolkits/axisartist/tests/test_grid_helper_curvelinear.py",
       "messages": [
         {
           "line": 61,
@@ -3824,7 +3824,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/mpl_toolkits/axisartist/tests/test_floating_axes.py",
+      "file": "lib/mpl_toolkits/axisartist/tests/test_floating_axes.py",
       "messages": [
         {
           "line": 114,
@@ -3838,7 +3838,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_tight_layout.py",
+      "file": "lib/matplotlib/_tight_layout.py",
       "messages": [
         {
           "line": 82,
@@ -3887,7 +3887,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/hatch.py",
+      "file": "lib/matplotlib/hatch.py",
       "messages": [
         {
           "line": 11,
@@ -3915,7 +3915,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/transforms.py",
+      "file": "lib/matplotlib/transforms.py",
       "messages": [
         {
           "line": 153,
@@ -4195,7 +4195,7 @@
       "error_count": 7
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/legend_handler.py",
+      "file": "lib/matplotlib/legend_handler.py",
       "messages": [
         {
           "line": 90,
@@ -4475,7 +4475,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/axis.py",
+      "file": "lib/matplotlib/axis.py",
       "messages": [
         {
           "line": 2016,
@@ -5140,7 +5140,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_tight_bbox.py",
+      "file": "lib/matplotlib/_tight_bbox.py",
       "messages": [
         {
           "line": 20,
@@ -5168,7 +5168,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/textpath.py",
+      "file": "lib/matplotlib/textpath.py",
       "messages": [
         {
           "line": 34,
@@ -5217,7 +5217,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/quiver.py",
+      "file": "lib/matplotlib/quiver.py",
       "messages": [
         {
           "line": 321,
@@ -5329,7 +5329,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backend_bases.py",
+      "file": "lib/matplotlib/backend_bases.py",
       "messages": [
         {
           "line": 642,
@@ -6057,7 +6057,7 @@
       "error_count": 6
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/units.py",
+      "file": "lib/matplotlib/units.py",
       "messages": [
         {
           "line": 115,
@@ -6127,7 +6127,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/pylab.py",
+      "file": "lib/matplotlib/pylab.py",
       "messages": [
         {
           "line": 39,
@@ -6589,7 +6589,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/colorbar.py",
+      "file": "lib/matplotlib/colorbar.py",
       "messages": [
         {
           "line": 774,
@@ -6841,7 +6841,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_cm.py",
+      "file": "lib/matplotlib/_cm.py",
       "messages": [
         {
           "line": 112,
@@ -6869,7 +6869,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backend_managers.py",
+      "file": "lib/matplotlib/backend_managers.py",
       "messages": [
         {
           "line": 251,
@@ -6883,7 +6883,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/cbook.py",
+      "file": "lib/matplotlib/cbook.py",
       "messages": [
         {
           "line": 959,
@@ -7009,7 +7009,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/mathtext.py",
+      "file": "lib/matplotlib/mathtext.py",
       "messages": [
         {
           "line": 245,
@@ -7044,7 +7044,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/font_manager.py",
+      "file": "lib/matplotlib/font_manager.py",
       "messages": [
         {
           "line": 1459,
@@ -7212,7 +7212,7 @@
       "error_count": 7
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/bezier.py",
+      "file": "lib/matplotlib/bezier.py",
       "messages": [
         {
           "line": 351,
@@ -7226,7 +7226,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_afm.py",
+      "file": "lib/matplotlib/_afm.py",
       "messages": [
         {
           "line": 388,
@@ -7254,7 +7254,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/cm.py",
+      "file": "lib/matplotlib/cm.py",
       "messages": [
         {
           "line": 262,
@@ -7338,7 +7338,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/legend.py",
+      "file": "lib/matplotlib/legend.py",
       "messages": [
         {
           "line": 1145,
@@ -7471,7 +7471,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/figure.py",
+      "file": "lib/matplotlib/figure.py",
       "messages": [
         {
           "line": 2648,
@@ -7842,7 +7842,7 @@
       "error_count": 5
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/__init__.py",
+      "file": "lib/matplotlib/__init__.py",
       "messages": [
         {
           "line": 131,
@@ -8031,7 +8031,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_mathtext.py",
+      "file": "lib/matplotlib/_mathtext.py",
       "messages": [
         {
           "line": 173,
@@ -8738,7 +8738,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_enums.py",
+      "file": "lib/matplotlib/_enums.py",
       "messages": [
         {
           "line": 20,
@@ -8752,7 +8752,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/offsetbox.py",
+      "file": "lib/matplotlib/offsetbox.py",
       "messages": [
         {
           "line": 241,
@@ -9172,7 +9172,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/container.py",
+      "file": "lib/matplotlib/container.py",
       "messages": [
         {
           "line": 19,
@@ -9193,7 +9193,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/gridspec.py",
+      "file": "lib/matplotlib/gridspec.py",
       "messages": [
         {
           "line": 177,
@@ -9249,7 +9249,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/lines.py",
+      "file": "lib/matplotlib/lines.py",
       "messages": [
         {
           "line": 618,
@@ -9571,7 +9571,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/widgets.py",
+      "file": "lib/matplotlib/widgets.py",
       "messages": [
         {
           "line": 85,
@@ -9921,7 +9921,7 @@
       "error_count": 5
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/dviread.py",
+      "file": "lib/matplotlib/dviread.py",
       "messages": [
         {
           "line": 355,
@@ -10628,7 +10628,7 @@
       "error_count": 14
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/animation.py",
+      "file": "lib/matplotlib/animation.py",
       "messages": [
         {
           "line": 1,
@@ -11055,7 +11055,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/artist.py",
+      "file": "lib/matplotlib/artist.py",
       "messages": [
         {
           "line": 260,
@@ -11370,7 +11370,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backend_tools.py",
+      "file": "lib/matplotlib/backend_tools.py",
       "messages": [
         {
           "line": 156,
@@ -11580,7 +11580,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_internal_utils.py",
+      "file": "lib/matplotlib/_internal_utils.py",
       "messages": [
         {
           "line": 44,
@@ -11601,7 +11601,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/texmanager.py",
+      "file": "lib/matplotlib/texmanager.py",
       "messages": [
         {
           "line": 194,
@@ -11636,7 +11636,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/patches.py",
+      "file": "lib/matplotlib/patches.py",
       "messages": [
         {
           "line": 4360,
@@ -12147,7 +12147,7 @@
       "error_count": 33
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/stackplot.py",
+      "file": "lib/matplotlib/stackplot.py",
       "messages": [
         {
           "line": 77,
@@ -12161,7 +12161,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/collections.py",
+      "file": "lib/matplotlib/collections.py",
       "messages": [
         {
           "line": 307,
@@ -12574,7 +12574,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/spines.py",
+      "file": "lib/matplotlib/spines.py",
       "messages": [
         {
           "line": 577,
@@ -12749,7 +12749,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_text_helpers.py",
+      "file": "lib/matplotlib/_text_helpers.py",
       "messages": [
         {
           "line": 60,
@@ -12763,7 +12763,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/text.py",
+      "file": "lib/matplotlib/text.py",
       "messages": [
         {
           "line": 61,
@@ -13295,7 +13295,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/markers.py",
+      "file": "lib/matplotlib/markers.py",
       "messages": [
         {
           "line": 425,
@@ -14520,7 +14520,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/mlab.py",
+      "file": "lib/matplotlib/mlab.py",
       "messages": [
         {
           "line": 160,
@@ -14576,7 +14576,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/layout_engine.py",
+      "file": "lib/matplotlib/layout_engine.py",
       "messages": [
         {
           "line": 103,
@@ -14674,7 +14674,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_pylab_helpers.py",
+      "file": "lib/matplotlib/_pylab_helpers.py",
       "messages": [
         {
           "line": 65,
@@ -14702,7 +14702,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/dates.py",
+      "file": "lib/matplotlib/dates.py",
       "messages": [
         {
           "line": 272,
@@ -14849,7 +14849,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/table.py",
+      "file": "lib/matplotlib/table.py",
       "messages": [
         {
           "line": 434,
@@ -14940,7 +14940,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/pyplot.py",
+      "file": "lib/matplotlib/pyplot.py",
       "messages": [
         {
           "line": 132,
@@ -15640,7 +15640,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_type1font.py",
+      "file": "lib/matplotlib/_type1font.py",
       "messages": [
         {
           "line": 67,
@@ -15696,7 +15696,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/rcsetup.py",
+      "file": "lib/matplotlib/rcsetup.py",
       "messages": [
         {
           "line": 724,
@@ -15787,7 +15787,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/ticker.py",
+      "file": "lib/matplotlib/ticker.py",
       "messages": [
         {
           "line": 2933,
@@ -15983,7 +15983,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_docstring.py",
+      "file": "lib/matplotlib/_docstring.py",
       "messages": [
         {
           "line": 76,
@@ -15997,7 +15997,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/path.py",
+      "file": "lib/matplotlib/path.py",
       "messages": [
         {
           "line": 182,
@@ -16060,7 +16060,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_layoutgrid.py",
+      "file": "lib/matplotlib/_layoutgrid.py",
       "messages": [
         {
           "line": 118,
@@ -16074,7 +16074,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/contour.py",
+      "file": "lib/matplotlib/contour.py",
       "messages": [
         {
           "line": 226,
@@ -16298,7 +16298,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/image.py",
+      "file": "lib/matplotlib/image.py",
       "messages": [
         {
           "line": 422,
@@ -16578,7 +16578,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/scale.py",
+      "file": "lib/matplotlib/scale.py",
       "messages": [
         {
           "line": 78,
@@ -16613,7 +16613,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/category.py",
+      "file": "lib/matplotlib/category.py",
       "messages": [
         {
           "line": 58,
@@ -16669,7 +16669,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_constrained_layout.py",
+      "file": "lib/matplotlib/_constrained_layout.py",
       "messages": [
         {
           "line": 102,
@@ -17103,7 +17103,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/sankey.py",
+      "file": "lib/matplotlib/sankey.py",
       "messages": [
         {
           "line": 42,
@@ -17124,7 +17124,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/patheffects.py",
+      "file": "lib/matplotlib/patheffects.py",
       "messages": [
         {
           "line": 67,
@@ -17180,7 +17180,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/streamplot.py",
+      "file": "lib/matplotlib/streamplot.py",
       "messages": [
         {
           "line": 103,
@@ -17243,7 +17243,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/colors.py",
+      "file": "lib/matplotlib/colors.py",
       "messages": [
         {
           "line": 119,
@@ -17495,7 +17495,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/_tripcolor.py",
+      "file": "lib/matplotlib/tri/_tripcolor.py",
       "messages": [
         {
           "line": 143,
@@ -17509,7 +17509,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/_triangulation.py",
+      "file": "lib/matplotlib/tri/_triangulation.py",
       "messages": [
         {
           "line": 245,
@@ -17523,7 +17523,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/trirefine.py",
+      "file": "lib/matplotlib/tri/trirefine.py",
       "messages": [
         {
           "line": 1,
@@ -17544,7 +17544,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/tripcolor.py",
+      "file": "lib/matplotlib/tri/tripcolor.py",
       "messages": [
         {
           "line": 1,
@@ -17565,7 +17565,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/trifinder.py",
+      "file": "lib/matplotlib/tri/trifinder.py",
       "messages": [
         {
           "line": 1,
@@ -17586,7 +17586,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/_trirefine.py",
+      "file": "lib/matplotlib/tri/_trirefine.py",
       "messages": [
         {
           "line": 61,
@@ -17607,7 +17607,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/triplot.py",
+      "file": "lib/matplotlib/tri/triplot.py",
       "messages": [
         {
           "line": 1,
@@ -17628,7 +17628,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/_triplot.py",
+      "file": "lib/matplotlib/tri/_triplot.py",
       "messages": [
         {
           "line": 45,
@@ -17649,7 +17649,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/tritools.py",
+      "file": "lib/matplotlib/tri/tritools.py",
       "messages": [
         {
           "line": 1,
@@ -17670,7 +17670,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/tricontour.py",
+      "file": "lib/matplotlib/tri/tricontour.py",
       "messages": [
         {
           "line": 1,
@@ -17691,7 +17691,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/_triinterpolate.py",
+      "file": "lib/matplotlib/tri/_triinterpolate.py",
       "messages": [
         {
           "line": 1013,
@@ -17733,7 +17733,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/_tricontour.py",
+      "file": "lib/matplotlib/tri/_tricontour.py",
       "messages": [
         {
           "line": 19,
@@ -17845,7 +17845,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/triangulation.py",
+      "file": "lib/matplotlib/tri/triangulation.py",
       "messages": [
         {
           "line": 1,
@@ -17866,7 +17866,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tri/triinterpolate.py",
+      "file": "lib/matplotlib/tri/triinterpolate.py",
       "messages": [
         {
           "line": 1,
@@ -17887,7 +17887,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/axes/_axes.py",
+      "file": "lib/matplotlib/axes/_axes.py",
       "messages": [
         {
           "line": 171,
@@ -18363,7 +18363,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/axes/_base.py",
+      "file": "lib/matplotlib/axes/_base.py",
       "messages": [
         {
           "line": 235,
@@ -19329,7 +19329,7 @@
       "error_count": 19
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/axes/_secondary_axes.py",
+      "file": "lib/matplotlib/axes/_secondary_axes.py",
       "messages": [
         {
           "line": 223,
@@ -19357,7 +19357,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/sphinxext/mathmpl.py",
+      "file": "lib/matplotlib/sphinxext/mathmpl.py",
       "messages": [
         {
           "line": 85,
@@ -19483,7 +19483,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/sphinxext/plot_directive.py",
+      "file": "lib/matplotlib/sphinxext/plot_directive.py",
       "messages": [
         {
           "line": 198,
@@ -19567,7 +19567,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/_backend_gtk.py",
+      "file": "lib/matplotlib/backends/_backend_gtk.py",
       "messages": [
         {
           "line": 40,
@@ -19693,7 +19693,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_template.py",
+      "file": "lib/matplotlib/backends/backend_template.py",
       "messages": [
         {
           "line": 93,
@@ -19756,7 +19756,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_qt.py",
+      "file": "lib/matplotlib/backends/backend_qt.py",
       "messages": [
         {
           "line": 445,
@@ -20134,7 +20134,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_gtk3cairo.py",
+      "file": "lib/matplotlib/backends/backend_gtk3cairo.py",
       "messages": [
         {
           "line": 10,
@@ -20155,7 +20155,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_gtk4agg.py",
+      "file": "lib/matplotlib/backends/backend_gtk4agg.py",
       "messages": [
         {
           "line": 22,
@@ -20169,7 +20169,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_qt5agg.py",
+      "file": "lib/matplotlib/backends/backend_qt5agg.py",
       "messages": [
         {
           "line": 6,
@@ -20183,7 +20183,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_qt5.py",
+      "file": "lib/matplotlib/backends/backend_qt5.py",
       "messages": [
         {
           "line": 3,
@@ -20358,7 +20358,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_gtk3agg.py",
+      "file": "lib/matplotlib/backends/backend_gtk3agg.py",
       "messages": [
         {
           "line": 37,
@@ -20372,7 +20372,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_cairo.py",
+      "file": "lib/matplotlib/backends/backend_cairo.py",
       "messages": [
         {
           "line": 160,
@@ -20533,7 +20533,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_pdf.py",
+      "file": "lib/matplotlib/backends/backend_pdf.py",
       "messages": [
         {
           "line": 1085,
@@ -21219,7 +21219,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_pgf.py",
+      "file": "lib/matplotlib/backends/backend_pgf.py",
       "messages": [
         {
           "line": 742,
@@ -21387,7 +21387,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_mixed.py",
+      "file": "lib/matplotlib/backends/backend_mixed.py",
       "messages": [
         {
           "line": 102,
@@ -21408,7 +21408,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_macosx.py",
+      "file": "lib/matplotlib/backends/backend_macosx.py",
       "messages": [
         {
           "line": 49,
@@ -21443,7 +21443,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_gtk4.py",
+      "file": "lib/matplotlib/backends/backend_gtk4.py",
       "messages": [
         {
           "line": 218,
@@ -21793,7 +21793,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_gtk3.py",
+      "file": "lib/matplotlib/backends/backend_gtk3.py",
       "messages": [
         {
           "line": 240,
@@ -22101,7 +22101,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_nbagg.py",
+      "file": "lib/matplotlib/backends/backend_nbagg.py",
       "messages": [
         {
           "line": 87,
@@ -22150,7 +22150,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_webagg_core.py",
+      "file": "lib/matplotlib/backends/backend_webagg_core.py",
       "messages": [
         {
           "line": 320,
@@ -22290,7 +22290,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_gtk4cairo.py",
+      "file": "lib/matplotlib/backends/backend_gtk4cairo.py",
       "messages": [
         {
           "line": 12,
@@ -22311,7 +22311,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_wx.py",
+      "file": "lib/matplotlib/backends/backend_wx.py",
       "messages": [
         {
           "line": 284,
@@ -22829,7 +22829,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_qt5cairo.py",
+      "file": "lib/matplotlib/backends/backend_qt5cairo.py",
       "messages": [
         {
           "line": 3,
@@ -22843,7 +22843,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/_backend_tk.py",
+      "file": "lib/matplotlib/backends/_backend_tk.py",
       "messages": [
         {
           "line": 229,
@@ -23452,7 +23452,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/qt_compat.py",
+      "file": "lib/matplotlib/backends/qt_compat.py",
       "messages": [
         {
           "line": 52,
@@ -23543,7 +23543,7 @@
       "error_count": 5
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_svg.py",
+      "file": "lib/matplotlib/backends/backend_svg.py",
       "messages": [
         {
           "line": 156,
@@ -23648,7 +23648,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/_backend_pdf_ps.py",
+      "file": "lib/matplotlib/backends/_backend_pdf_ps.py",
       "messages": [
         {
           "line": 68,
@@ -23711,7 +23711,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_webagg.py",
+      "file": "lib/matplotlib/backends/backend_webagg.py",
       "messages": [
         {
           "line": 42,
@@ -23823,7 +23823,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_ps.py",
+      "file": "lib/matplotlib/backends/backend_ps.py",
       "messages": [
         {
           "line": 235,
@@ -24054,7 +24054,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_qtagg.py",
+      "file": "lib/matplotlib/backends/backend_qtagg.py",
       "messages": [
         {
           "line": 59,
@@ -24075,7 +24075,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/backend_agg.py",
+      "file": "lib/matplotlib/backends/backend_agg.py",
       "messages": [
         {
           "line": 191,
@@ -24180,7 +24180,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/qt_editor/_formlayout.py",
+      "file": "lib/matplotlib/backends/qt_editor/_formlayout.py",
       "messages": [
         {
           "line": 306,
@@ -24250,7 +24250,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/backends/qt_editor/figureoptions.py",
+      "file": "lib/matplotlib/backends/qt_editor/figureoptions.py",
       "messages": [
         {
           "line": 42,
@@ -24327,7 +24327,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_marker.py",
+      "file": "lib/matplotlib/tests/test_marker.py",
       "messages": [
         {
           "line": 73,
@@ -24425,7 +24425,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_determinism.py",
+      "file": "lib/matplotlib/tests/test_determinism.py",
       "messages": [
         {
           "line": 12,
@@ -24439,7 +24439,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_tk.py",
+      "file": "lib/matplotlib/tests/test_backend_tk.py",
       "messages": [
         {
           "line": 78,
@@ -24474,7 +24474,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_skew.py",
+      "file": "lib/matplotlib/tests/test_skew.py",
       "messages": [
         {
           "line": 77,
@@ -24523,7 +24523,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_cycles.py",
+      "file": "lib/matplotlib/tests/test_cycles.py",
       "messages": [
         {
           "line": 10,
@@ -24635,7 +24635,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_artist.py",
+      "file": "lib/matplotlib/tests/test_artist.py",
       "messages": [
         {
           "line": 36,
@@ -24775,7 +24775,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_webagg.py",
+      "file": "lib/matplotlib/tests/test_backend_webagg.py",
       "messages": [
         {
           "line": 33,
@@ -24789,7 +24789,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_pdf.py",
+      "file": "lib/matplotlib/tests/test_backend_pdf.py",
       "messages": [
         {
           "line": 37,
@@ -24887,7 +24887,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_lines.py",
+      "file": "lib/matplotlib/tests/test_lines.py",
       "messages": [
         {
           "line": 16,
@@ -24978,7 +24978,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_bases.py",
+      "file": "lib/matplotlib/tests/test_backend_bases.py",
       "messages": [
         {
           "line": 23,
@@ -25055,7 +25055,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_ft2font.py",
+      "file": "lib/matplotlib/tests/test_ft2font.py",
       "messages": [
         {
           "line": 53,
@@ -25083,7 +25083,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_pgf.py",
+      "file": "lib/matplotlib/tests/test_backend_pgf.py",
       "messages": [
         {
           "line": 25,
@@ -25111,7 +25111,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/conftest.py",
+      "file": "lib/matplotlib/tests/conftest.py",
       "messages": [
         {
           "line": 1,
@@ -25153,7 +25153,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_simplification.py",
+      "file": "lib/matplotlib/tests/test_simplification.py",
       "messages": [
         {
           "line": 176,
@@ -25223,7 +25223,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_spines.py",
+      "file": "lib/matplotlib/tests/test_spines.py",
       "messages": [
         {
           "line": 39,
@@ -25293,7 +25293,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_mathtext.py",
+      "file": "lib/matplotlib/tests/test_mathtext.py",
       "messages": [
         {
           "line": 143,
@@ -25426,7 +25426,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_arrow_patches.py",
+      "file": "lib/matplotlib/tests/test_arrow_patches.py",
       "messages": [
         {
           "line": 20,
@@ -25454,7 +25454,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_tightlayout.py",
+      "file": "lib/matplotlib/tests/test_tightlayout.py",
       "messages": [
         {
           "line": 25,
@@ -25580,7 +25580,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_ps.py",
+      "file": "lib/matplotlib/tests/test_backend_ps.py",
       "messages": [
         {
           "line": 42,
@@ -25650,7 +25650,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_type1font.py",
+      "file": "lib/matplotlib/tests/test_type1font.py",
       "messages": [
         {
           "line": 23,
@@ -25769,7 +25769,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_animation.py",
+      "file": "lib/matplotlib/tests/test_animation.py",
       "messages": [
         {
           "line": 58,
@@ -26070,7 +26070,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_pickle.py",
+      "file": "lib/matplotlib/tests/test_pickle.py",
       "messages": [
         {
           "line": 115,
@@ -26133,7 +26133,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_dates.py",
+      "file": "lib/matplotlib/tests/test_dates.py",
       "messages": [
         {
           "line": 103,
@@ -26287,7 +26287,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_table.py",
+      "file": "lib/matplotlib/tests/test_table.py",
       "messages": [
         {
           "line": 183,
@@ -26301,7 +26301,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_gtk3.py",
+      "file": "lib/matplotlib/tests/test_backend_gtk3.py",
       "messages": [
         {
           "line": 13,
@@ -26322,7 +26322,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_texmanager.py",
+      "file": "lib/matplotlib/tests/test_texmanager.py",
       "messages": [
         {
           "line": 17,
@@ -26350,7 +26350,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_pyplot.py",
+      "file": "lib/matplotlib/tests/test_pyplot.py",
       "messages": [
         {
           "line": 19,
@@ -26455,7 +26455,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backends_interactive.py",
+      "file": "lib/matplotlib/tests/test_backends_interactive.py",
       "messages": [
         {
           "line": 186,
@@ -26812,7 +26812,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_subplots.py",
+      "file": "lib/matplotlib/tests/test_subplots.py",
       "messages": [
         {
           "line": 146,
@@ -26931,7 +26931,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_ticker.py",
+      "file": "lib/matplotlib/tests/test_ticker.py",
       "messages": [
         {
           "line": 90,
@@ -27127,7 +27127,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_image.py",
+      "file": "lib/matplotlib/tests/test_image.py",
       "messages": [
         {
           "line": 35,
@@ -27456,7 +27456,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_scale.py",
+      "file": "lib/matplotlib/tests/test_scale.py",
       "messages": [
         {
           "line": 128,
@@ -27631,7 +27631,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_colorbar.py",
+      "file": "lib/matplotlib/tests/test_colorbar.py",
       "messages": [
         {
           "line": 148,
@@ -27729,7 +27729,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_colors.py",
+      "file": "lib/matplotlib/tests/test_colors.py",
       "messages": [
         {
           "line": 150,
@@ -27960,7 +27960,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_usetex.py",
+      "file": "lib/matplotlib/tests/test_usetex.py",
       "messages": [
         {
           "line": 23,
@@ -27988,7 +27988,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_mlab.py",
+      "file": "lib/matplotlib/tests/test_mlab.py",
       "messages": [
         {
           "line": 157,
@@ -28121,7 +28121,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_font_manager.py",
+      "file": "lib/matplotlib/tests/test_font_manager.py",
       "messages": [
         {
           "line": 204,
@@ -28191,7 +28191,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_polar.py",
+      "file": "lib/matplotlib/tests/test_polar.py",
       "messages": [
         {
           "line": 26,
@@ -28261,7 +28261,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_agg.py",
+      "file": "lib/matplotlib/tests/test_agg.py",
       "messages": [
         {
           "line": 57,
@@ -28289,7 +28289,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_quiver.py",
+      "file": "lib/matplotlib/tests/test_quiver.py",
       "messages": [
         {
           "line": 24,
@@ -28408,7 +28408,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_text.py",
+      "file": "lib/matplotlib/tests/test_text.py",
       "messages": [
         {
           "line": 28,
@@ -28597,7 +28597,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_units.py",
+      "file": "lib/matplotlib/tests/test_units.py",
       "messages": [
         {
           "line": 63,
@@ -28695,7 +28695,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_dviread.py",
+      "file": "lib/matplotlib/tests/test_dviread.py",
       "messages": [
         {
           "line": 58,
@@ -28716,7 +28716,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_widgets.py",
+      "file": "lib/matplotlib/tests/test_widgets.py",
       "messages": [
         {
           "line": 1142,
@@ -29619,7 +29619,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_preprocess_data.py",
+      "file": "lib/matplotlib/tests/test_preprocess_data.py",
       "messages": [
         {
           "line": 20,
@@ -29920,7 +29920,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_constrainedlayout.py",
+      "file": "lib/matplotlib/tests/test_constrainedlayout.py",
       "messages": [
         {
           "line": 47,
@@ -30032,7 +30032,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_nbagg.py",
+      "file": "lib/matplotlib/tests/test_backend_nbagg.py",
       "messages": [
         {
           "line": 25,
@@ -30046,7 +30046,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_macosx.py",
+      "file": "lib/matplotlib/tests/test_backend_macosx.py",
       "messages": [
         {
           "line": 19,
@@ -30074,7 +30074,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_patheffects.py",
+      "file": "lib/matplotlib/tests/test_patheffects.py",
       "messages": [
         {
           "line": 117,
@@ -30095,7 +30095,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_patches.py",
+      "file": "lib/matplotlib/tests/test_patches.py",
       "messages": [
         {
           "line": 196,
@@ -30235,7 +30235,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_rcparams.py",
+      "file": "lib/matplotlib/tests/test_rcparams.py",
       "messages": [
         {
           "line": 273,
@@ -30277,7 +30277,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_agg_filter.py",
+      "file": "lib/matplotlib/tests/test_agg_filter.py",
       "messages": [
         {
           "line": 18,
@@ -30291,7 +30291,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_style.py",
+      "file": "lib/matplotlib/tests/test_style.py",
       "messages": [
         {
           "line": 161,
@@ -30333,7 +30333,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_category.py",
+      "file": "lib/matplotlib/tests/test_category.py",
       "messages": [
         {
           "line": 22,
@@ -30529,7 +30529,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_offsetbox.py",
+      "file": "lib/matplotlib/tests/test_offsetbox.py",
       "messages": [
         {
           "line": 28,
@@ -30592,7 +30592,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_contour.py",
+      "file": "lib/matplotlib/tests/test_contour.py",
       "messages": [
         {
           "line": 22,
@@ -30767,7 +30767,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_triangulation.py",
+      "file": "lib/matplotlib/tests/test_triangulation.py",
       "messages": [
         {
           "line": 32,
@@ -31082,7 +31082,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_bbox_tight.py",
+      "file": "lib/matplotlib/tests/test_bbox_tight.py",
       "messages": [
         {
           "line": 54,
@@ -31124,7 +31124,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_transforms.py",
+      "file": "lib/matplotlib/tests/test_transforms.py",
       "messages": [
         {
           "line": 68,
@@ -31334,7 +31334,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_cbook.py",
+      "file": "lib/matplotlib/tests/test_cbook.py",
       "messages": [
         {
           "line": 56,
@@ -31733,7 +31733,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_api.py",
+      "file": "lib/matplotlib/tests/test_api.py",
       "messages": [
         {
           "line": 28,
@@ -31810,7 +31810,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_qt.py",
+      "file": "lib/matplotlib/tests/test_backend_qt.py",
       "messages": [
         {
           "line": 31,
@@ -32230,7 +32230,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_afm.py",
+      "file": "lib/matplotlib/tests/test_afm.py",
       "messages": [
         {
           "line": 42,
@@ -32286,7 +32286,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_path.py",
+      "file": "lib/matplotlib/tests/test_path.py",
       "messages": [
         {
           "line": 56,
@@ -32356,7 +32356,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_collections.py",
+      "file": "lib/matplotlib/tests/test_collections.py",
       "messages": [
         {
           "line": 44,
@@ -32657,7 +32657,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_axes.py",
+      "file": "lib/matplotlib/tests/test_axes.py",
       "messages": [
         {
           "line": 1570,
@@ -34715,7 +34715,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_figure.py",
+      "file": "lib/matplotlib/tests/test_figure.py",
       "messages": [
         {
           "line": 158,
@@ -34946,7 +34946,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_legend.py",
+      "file": "lib/matplotlib/tests/test_legend.py",
       "messages": [
         {
           "line": 32,
@@ -35429,7 +35429,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_sphinxext.py",
+      "file": "lib/matplotlib/tests/test_sphinxext.py",
       "messages": [
         {
           "line": 53,
@@ -35450,7 +35450,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_matplotlib.py",
+      "file": "lib/matplotlib/tests/test_matplotlib.py",
       "messages": [
         {
           "line": 17,
@@ -35464,7 +35464,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_ttconv.py",
+      "file": "lib/matplotlib/tests/test_ttconv.py",
       "messages": [
         {
           "line": 11,
@@ -35485,7 +35485,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_backend_svg.py",
+      "file": "lib/matplotlib/tests/test_backend_svg.py",
       "messages": [
         {
           "line": 28,
@@ -35576,7 +35576,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/test_testing.py",
+      "file": "lib/matplotlib/tests/test_testing.py",
       "messages": [
         {
           "line": 19,
@@ -35639,7 +35639,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/tests/tinypages/conf.py",
+      "file": "lib/matplotlib/tests/tinypages/conf.py",
       "messages": [
         {
           "line": 11,
@@ -35653,7 +35653,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/_api/__init__.py",
+      "file": "lib/matplotlib/_api/__init__.py",
       "messages": [
         {
           "line": 188,
@@ -35688,7 +35688,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/style/core.py",
+      "file": "lib/matplotlib/style/core.py",
       "messages": [
         {
           "line": 156,
@@ -35709,7 +35709,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/projections/geo.py",
+      "file": "lib/matplotlib/projections/geo.py",
       "messages": [
         {
           "line": 122,
@@ -35856,7 +35856,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/projections/polar.py",
+      "file": "lib/matplotlib/projections/polar.py",
       "messages": [
         {
           "line": 56,
@@ -36367,7 +36367,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/conftest.py",
+      "file": "lib/matplotlib/testing/conftest.py",
       "messages": [
         {
           "line": 28,
@@ -36423,7 +36423,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/__init__.py",
+      "file": "lib/matplotlib/testing/__init__.py",
       "messages": [
         {
           "line": 178,
@@ -36437,7 +36437,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/widgets.py",
+      "file": "lib/matplotlib/testing/widgets.py",
       "messages": [
         {
           "line": 15,
@@ -36465,7 +36465,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/_markers.py",
+      "file": "lib/matplotlib/testing/_markers.py",
       "messages": [
         {
           "line": 39,
@@ -36493,7 +36493,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/compare.py",
+      "file": "lib/matplotlib/testing/compare.py",
       "messages": [
         {
           "line": 57,
@@ -36591,7 +36591,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/decorators.py",
+      "file": "lib/matplotlib/testing/decorators.py",
       "messages": [
         {
           "line": 164,
@@ -36626,7 +36626,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/jpl_units/UnitDbl.py",
+      "file": "lib/matplotlib/testing/jpl_units/UnitDbl.py",
       "messages": [
         {
           "line": 95,
@@ -36668,7 +36668,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/jpl_units/EpochConverter.py",
+      "file": "lib/matplotlib/testing/jpl_units/EpochConverter.py",
       "messages": [
         {
           "line": 20,
@@ -36682,7 +36682,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/jpl_units/Duration.py",
+      "file": "lib/matplotlib/testing/jpl_units/Duration.py",
       "messages": [
         {
           "line": 53,
@@ -36710,7 +36710,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/jpl_units/__init__.py",
+      "file": "lib/matplotlib/testing/jpl_units/__init__.py",
       "messages": [
         {
           "line": 73,
@@ -36724,7 +36724,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/jpl_units/UnitDblConverter.py",
+      "file": "lib/matplotlib/testing/jpl_units/UnitDblConverter.py",
       "messages": [
         {
           "line": 14,
@@ -36738,7 +36738,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/jpl_units/Epoch.py",
+      "file": "lib/matplotlib/testing/jpl_units/Epoch.py",
       "messages": [
         {
           "line": 100,
@@ -36829,7 +36829,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/lib/matplotlib/testing/jpl_units/StrConverter.py",
+      "file": "lib/matplotlib/testing/jpl_units/StrConverter.py",
       "messages": [
         {
           "line": 22,
@@ -36871,7 +36871,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/conf.py",
+      "file": "doc/conf.py",
       "messages": [
         {
           "line": 324,
@@ -36941,7 +36941,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/sphinxext/missing_references.py",
+      "file": "doc/sphinxext/missing_references.py",
       "messages": [
         {
           "line": 69,
@@ -36962,7 +36962,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/sphinxext/math_symbol_table.py",
+      "file": "doc/sphinxext/math_symbol_table.py",
       "messages": [
         {
           "line": 112,
@@ -37011,7 +37011,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/sphinxext/mock_gui_toolkits.py",
+      "file": "doc/sphinxext/mock_gui_toolkits.py",
       "messages": [
         {
           "line": 9,
@@ -37025,7 +37025,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/sphinxext/redirect_from.py",
+      "file": "doc/sphinxext/redirect_from.py",
       "messages": [
         {
           "line": 76,
@@ -37053,7 +37053,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/sphinxext/skip_deprecated.py",
+      "file": "doc/sphinxext/skip_deprecated.py",
       "messages": [
         {
           "line": 4,
@@ -37088,7 +37088,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/sphinxext/github.py",
+      "file": "doc/sphinxext/github.py",
       "messages": [
         {
           "line": 25,
@@ -37200,7 +37200,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/sphinxext/custom_roles.py",
+      "file": "doc/sphinxext/custom_roles.py",
       "messages": [
         {
           "line": 43,
@@ -37242,7 +37242,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/users/generate_credits.py",
+      "file": "doc/users/generate_credits.py",
       "messages": [
         {
           "line": 83,
@@ -37256,7 +37256,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/statistics/confidence_ellipse.py",
+      "file": "galleries/examples/statistics/confidence_ellipse.py",
       "messages": [
         {
           "line": 42,
@@ -37305,7 +37305,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/statistics/customized_violin.py",
+      "file": "galleries/examples/statistics/customized_violin.py",
       "messages": [
         {
           "line": 29,
@@ -37326,7 +37326,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/statistics/boxplot_demo.py",
+      "file": "galleries/examples/statistics/boxplot_demo.py",
       "messages": [
         {
           "line": 204,
@@ -37340,7 +37340,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/statistics/barchart_demo.py",
+      "file": "galleries/examples/statistics/barchart_demo.py",
       "messages": [
         {
           "line": 47,
@@ -37361,7 +37361,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/statistics/errorbars_and_boxes.py",
+      "file": "galleries/examples/statistics/errorbars_and_boxes.py",
       "messages": [
         {
           "line": 43,
@@ -37375,7 +37375,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/statistics/time_series_histogram.py",
+      "file": "galleries/examples/statistics/time_series_histogram.py",
       "messages": [
         {
           "line": 31,
@@ -37389,7 +37389,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/misc/anchored_artists.py",
+      "file": "galleries/examples/misc/anchored_artists.py",
       "messages": [
         {
           "line": 25,
@@ -37424,7 +37424,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/misc/packed_bubbles.py",
+      "file": "galleries/examples/misc/packed_bubbles.py",
       "messages": [
         {
           "line": 138,
@@ -37438,7 +37438,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/misc/demo_agg_filter.py",
+      "file": "galleries/examples/misc/demo_agg_filter.py",
       "messages": [
         {
           "line": 39,
@@ -37466,7 +37466,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/misc/multiprocess_sgskip.py",
+      "file": "galleries/examples/misc/multiprocess_sgskip.py",
       "messages": [
         {
           "line": 54,
@@ -37494,7 +37494,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/misc/demo_ribbon_box.py",
+      "file": "galleries/examples/misc/demo_ribbon_box.py",
       "messages": [
         {
           "line": 64,
@@ -37508,7 +37508,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/misc/coords_report.py",
+      "file": "galleries/examples/misc/coords_report.py",
       "messages": [
         {
           "line": 14,
@@ -37522,7 +37522,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/misc/custom_projection.py",
+      "file": "galleries/examples/misc/custom_projection.py",
       "messages": [
         {
           "line": 193,
@@ -37662,7 +37662,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axes_grid1/simple_anchored_artists.py",
+      "file": "galleries/examples/axes_grid1/simple_anchored_artists.py",
       "messages": [
         {
           "line": 15,
@@ -37697,7 +37697,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axes_grid1/demo_edge_colorbar.py",
+      "file": "galleries/examples/axes_grid1/demo_edge_colorbar.py",
       "messages": [
         {
           "line": 22,
@@ -37718,7 +37718,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axes_grid1/inset_locator_demo2.py",
+      "file": "galleries/examples/axes_grid1/inset_locator_demo2.py",
       "messages": [
         {
           "line": 41,
@@ -37732,7 +37732,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axes_grid1/demo_axes_grid2.py",
+      "file": "galleries/examples/axes_grid1/demo_axes_grid2.py",
       "messages": [
         {
           "line": 17,
@@ -37746,7 +37746,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/ticks/date_concise_formatter.py",
+      "file": "galleries/examples/ticks/date_concise_formatter.py",
       "messages": [
         {
           "line": 152,
@@ -37760,7 +37760,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/ticks/custom_ticker1.py",
+      "file": "galleries/examples/ticks/custom_ticker1.py",
       "messages": [
         {
           "line": 16,
@@ -37774,7 +37774,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/ticks/date_formatters_locators.py",
+      "file": "galleries/examples/ticks/date_formatters_locators.py",
       "messages": [
         {
           "line": 42,
@@ -37956,7 +37956,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/ticks/tick_labels_from_values.py",
+      "file": "galleries/examples/ticks/tick_labels_from_values.py",
       "messages": [
         {
           "line": 28,
@@ -37970,7 +37970,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/ticks/tick-formatters.py",
+      "file": "galleries/examples/ticks/tick-formatters.py",
       "messages": [
         {
           "line": 81,
@@ -37984,7 +37984,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/ticks/date_precision_and_epochs.py",
+      "file": "galleries/examples/ticks/date_precision_and_epochs.py",
       "messages": [
         {
           "line": 33,
@@ -37998,7 +37998,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/userdemo/demo_gridspec03.py",
+      "file": "galleries/examples/userdemo/demo_gridspec03.py",
       "messages": [
         {
           "line": 18,
@@ -38012,7 +38012,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/userdemo/demo_gridspec06.py",
+      "file": "galleries/examples/userdemo/demo_gridspec06.py",
       "messages": [
         {
           "line": 13,
@@ -38047,7 +38047,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/userdemo/connectionstyle_demo.py",
+      "file": "galleries/examples/userdemo/connectionstyle_demo.py",
       "messages": [
         {
           "line": 14,
@@ -38061,7 +38061,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/userdemo/custom_boxstyle01.py",
+      "file": "galleries/examples/userdemo/custom_boxstyle01.py",
       "messages": [
         {
           "line": 120,
@@ -38082,7 +38082,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/userdemo/demo_gridspec01.py",
+      "file": "galleries/examples/userdemo/demo_gridspec01.py",
       "messages": [
         {
           "line": 14,
@@ -38096,7 +38096,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/images_contours_and_fields/layer_images.py",
+      "file": "galleries/examples/images_contours_and_fields/layer_images.py",
       "messages": [
         {
           "line": 12,
@@ -38117,7 +38117,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/images_contours_and_fields/multi_image.py",
+      "file": "galleries/examples/images_contours_and_fields/multi_image.py",
       "messages": [
         {
           "line": 43,
@@ -38131,7 +38131,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/images_contours_and_fields/image_transparency_blend.py",
+      "file": "galleries/examples/images_contours_and_fields/image_transparency_blend.py",
       "messages": [
         {
           "line": 25,
@@ -38145,7 +38145,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/images_contours_and_fields/image_annotated_heatmap.py",
+      "file": "galleries/examples/images_contours_and_fields/image_annotated_heatmap.py",
       "messages": [
         {
           "line": 44,
@@ -38243,7 +38243,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/images_contours_and_fields/contour_label_demo.py",
+      "file": "galleries/examples/images_contours_and_fields/contour_label_demo.py",
       "messages": [
         {
           "line": 35,
@@ -38264,7 +38264,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/images_contours_and_fields/affine_image.py",
+      "file": "galleries/examples/images_contours_and_fields/affine_image.py",
       "messages": [
         {
           "line": 28,
@@ -38285,7 +38285,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/images_contours_and_fields/trigradient_demo.py",
+      "file": "galleries/examples/images_contours_and_fields/trigradient_demo.py",
       "messages": [
         {
           "line": 19,
@@ -38306,7 +38306,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/images_contours_and_fields/pcolormesh_grids.py",
+      "file": "galleries/examples/images_contours_and_fields/pcolormesh_grids.py",
       "messages": [
         {
           "line": 41,
@@ -38334,7 +38334,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/images_contours_and_fields/tricontour_smooth_user.py",
+      "file": "galleries/examples/images_contours_and_fields/tricontour_smooth_user.py",
       "messages": [
         {
           "line": 18,
@@ -38362,7 +38362,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/color/colormap_reference.py",
+      "file": "galleries/examples/color/colormap_reference.py",
       "messages": [
         {
           "line": 48,
@@ -38383,7 +38383,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/toolmanager_sgskip.py",
+      "file": "galleries/examples/user_interfaces/toolmanager_sgskip.py",
       "messages": [
         {
           "line": 28,
@@ -38418,7 +38418,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/embedding_webagg_sgskip.py",
+      "file": "galleries/examples/user_interfaces/embedding_webagg_sgskip.py",
       "messages": [
         {
           "line": 46,
@@ -38474,7 +38474,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/embedding_in_wx3_sgskip.py",
+      "file": "galleries/examples/user_interfaces/embedding_in_wx3_sgskip.py",
       "messages": [
         {
           "line": 79,
@@ -38551,7 +38551,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/embedding_in_wx5_sgskip.py",
+      "file": "galleries/examples/user_interfaces/embedding_in_wx5_sgskip.py",
       "messages": [
         {
           "line": 19,
@@ -38572,7 +38572,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/gtk4_spreadsheet_sgskip.py",
+      "file": "galleries/examples/user_interfaces/gtk4_spreadsheet_sgskip.py",
       "messages": [
         {
           "line": 64,
@@ -38600,7 +38600,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/embedding_in_gtk4_panzoom_sgskip.py",
+      "file": "galleries/examples/user_interfaces/embedding_in_gtk4_panzoom_sgskip.py",
       "messages": [
         {
           "line": 23,
@@ -38614,7 +38614,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/mathtext_wx_sgskip.py",
+      "file": "galleries/examples/user_interfaces/mathtext_wx_sgskip.py",
       "messages": [
         {
           "line": 41,
@@ -38649,7 +38649,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/mpl_with_glade3_sgskip.py",
+      "file": "galleries/examples/user_interfaces/mpl_with_glade3_sgskip.py",
       "messages": [
         {
           "line": 22,
@@ -38663,7 +38663,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/embedding_in_gtk4_sgskip.py",
+      "file": "galleries/examples/user_interfaces/embedding_in_gtk4_sgskip.py",
       "messages": [
         {
           "line": 22,
@@ -38677,7 +38677,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/gtk3_spreadsheet_sgskip.py",
+      "file": "galleries/examples/user_interfaces/gtk3_spreadsheet_sgskip.py",
       "messages": [
         {
           "line": 68,
@@ -38698,7 +38698,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/fourier_demo_wx_sgskip.py",
+      "file": "galleries/examples/user_interfaces/fourier_demo_wx_sgskip.py",
       "messages": [
         {
           "line": 97,
@@ -38782,7 +38782,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/wxcursor_demo_sgskip.py",
+      "file": "galleries/examples/user_interfaces/wxcursor_demo_sgskip.py",
       "messages": [
         {
           "line": 49,
@@ -38796,7 +38796,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/user_interfaces/mplcvd.py",
+      "file": "galleries/examples/user_interfaces/mplcvd.py",
       "messages": [
         {
           "line": 205,
@@ -38880,7 +38880,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/pause_resume.py",
+      "file": "galleries/examples/animation/pause_resume.py",
       "messages": [
         {
           "line": 45,
@@ -38901,7 +38901,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/dynamic_image.py",
+      "file": "galleries/examples/animation/dynamic_image.py",
       "messages": [
         {
           "line": 17,
@@ -38922,7 +38922,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/bayes_update.py",
+      "file": "galleries/examples/animation/bayes_update.py",
       "messages": [
         {
           "line": 28,
@@ -38936,7 +38936,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/strip_chart.py",
+      "file": "galleries/examples/animation/strip_chart.py",
       "messages": [
         {
           "line": 19,
@@ -38950,7 +38950,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/multiple_axes.py",
+      "file": "galleries/examples/animation/multiple_axes.py",
       "messages": [
         {
           "line": 54,
@@ -38964,7 +38964,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/unchained.py",
+      "file": "galleries/examples/animation/unchained.py",
       "messages": [
         {
           "line": 68,
@@ -38985,7 +38985,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/random_walk.py",
+      "file": "galleries/examples/animation/random_walk.py",
       "messages": [
         {
           "line": 18,
@@ -39013,7 +39013,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/animated_histogram.py",
+      "file": "galleries/examples/animation/animated_histogram.py",
       "messages": [
         {
           "line": 31,
@@ -39048,7 +39048,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/rain.py",
+      "file": "galleries/examples/animation/rain.py",
       "messages": [
         {
           "line": 26,
@@ -39069,7 +39069,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/animation/double_pendulum.py",
+      "file": "galleries/examples/animation/double_pendulum.py",
       "messages": [
         {
           "line": 32,
@@ -39104,7 +39104,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/specialty_plots/advanced_hillshading.py",
+      "file": "galleries/examples/specialty_plots/advanced_hillshading.py",
       "messages": [
         {
           "line": 69,
@@ -39118,7 +39118,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/specialty_plots/sankey_links.py",
+      "file": "galleries/examples/specialty_plots/sankey_links.py",
       "messages": [
         {
           "line": 16,
@@ -39139,7 +39139,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/specialty_plots/radar_chart.py",
+      "file": "galleries/examples/specialty_plots/radar_chart.py",
       "messages": [
         {
           "line": 77,
@@ -39188,7 +39188,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/specialty_plots/skewt.py",
+      "file": "galleries/examples/specialty_plots/skewt.py",
       "messages": [
         {
           "line": 87,
@@ -39230,7 +39230,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/specialty_plots/leftventricle_bullseye.py",
+      "file": "galleries/examples/specialty_plots/leftventricle_bullseye.py",
       "messages": [
         {
           "line": 20,
@@ -39258,7 +39258,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/mplot3d/pathpatch3d.py",
+      "file": "galleries/examples/mplot3d/pathpatch3d.py",
       "messages": [
         {
           "line": 18,
@@ -39272,7 +39272,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/mplot3d/voxels_torus.py",
+      "file": "galleries/examples/mplot3d/voxels_torus.py",
       "messages": [
         {
           "line": 15,
@@ -39293,7 +39293,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/mplot3d/scatter3d.py",
+      "file": "galleries/examples/mplot3d/scatter3d.py",
       "messages": [
         {
           "line": 16,
@@ -39307,7 +39307,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/mplot3d/polys3d.py",
+      "file": "galleries/examples/mplot3d/polys3d.py",
       "messages": [
         {
           "line": 22,
@@ -39321,7 +39321,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/scales/custom_scale.py",
+      "file": "galleries/examples/scales/custom_scale.py",
       "messages": [
         {
           "line": 46,
@@ -39342,7 +39342,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/scales/scales.py",
+      "file": "galleries/examples/scales/scales.py",
       "messages": [
         {
           "line": 61,
@@ -39377,7 +39377,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/units/artist_tests.py",
+      "file": "galleries/examples/units/artist_tests.py",
       "messages": [
         {
           "line": 36,
@@ -39398,7 +39398,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/units/evans_test.py",
+      "file": "galleries/examples/units/evans_test.py",
       "messages": [
         {
           "line": 32,
@@ -39433,7 +39433,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/units/basic_units.py",
+      "file": "galleries/examples/units/basic_units.py",
       "messages": [
         {
           "line": 28,
@@ -39545,7 +39545,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/style_sheets/bmh.py",
+      "file": "galleries/examples/style_sheets/bmh.py",
       "messages": [
         {
           "line": 21,
@@ -39559,7 +39559,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/style_sheets/style_sheets_reference.py",
+      "file": "galleries/examples/style_sheets/style_sheets_reference.py",
       "messages": [
         {
           "line": 67,
@@ -39580,7 +39580,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/looking_glass.py",
+      "file": "galleries/examples/event_handling/looking_glass.py",
       "messages": [
         {
           "line": 53,
@@ -39594,7 +39594,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/pick_event_demo2.py",
+      "file": "galleries/examples/event_handling/pick_event_demo2.py",
       "messages": [
         {
           "line": 43,
@@ -39608,7 +39608,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/resample.py",
+      "file": "galleries/examples/event_handling/resample.py",
       "messages": [
         {
           "line": 25,
@@ -39657,7 +39657,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/pong_sgskip.py",
+      "file": "galleries/examples/event_handling/pong_sgskip.py",
       "messages": [
         {
           "line": 47,
@@ -39755,7 +39755,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/poly_editor.py",
+      "file": "galleries/examples/event_handling/poly_editor.py",
       "messages": [
         {
           "line": 24,
@@ -39811,7 +39811,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/cursor_demo.py",
+      "file": "galleries/examples/event_handling/cursor_demo.py",
       "messages": [
         {
           "line": 38,
@@ -39916,7 +39916,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/image_slices_viewer.py",
+      "file": "galleries/examples/event_handling/image_slices_viewer.py",
       "messages": [
         {
           "line": 23,
@@ -39937,7 +39937,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/ginput_manual_clabel_sgskip.py",
+      "file": "galleries/examples/event_handling/ginput_manual_clabel_sgskip.py",
       "messages": [
         {
           "line": 67,
@@ -39958,7 +39958,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/zoom_window.py",
+      "file": "galleries/examples/event_handling/zoom_window.py",
       "messages": [
         {
           "line": 48,
@@ -39979,7 +39979,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/pick_event_demo.py",
+      "file": "galleries/examples/event_handling/pick_event_demo.py",
       "messages": [
         {
           "line": 132,
@@ -39993,7 +39993,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/legend_picking.py",
+      "file": "galleries/examples/event_handling/legend_picking.py",
       "messages": [
         {
           "line": 40,
@@ -40014,7 +40014,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/viewlims.py",
+      "file": "galleries/examples/event_handling/viewlims.py",
       "messages": [
         {
           "line": 50,
@@ -40042,7 +40042,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/data_browser.py",
+      "file": "galleries/examples/event_handling/data_browser.py",
       "messages": [
         {
           "line": 33,
@@ -40098,7 +40098,7 @@
       "error_count": 7
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/lasso_demo.py",
+      "file": "galleries/examples/event_handling/lasso_demo.py",
       "messages": [
         {
           "line": 45,
@@ -40133,7 +40133,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/path_editor.py",
+      "file": "galleries/examples/event_handling/path_editor.py",
       "messages": [
         {
           "line": 92,
@@ -40154,7 +40154,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/event_handling/close_event.py",
+      "file": "galleries/examples/event_handling/close_event.py",
       "messages": [
         {
           "line": 19,
@@ -40168,7 +40168,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/spines/spine_placement_demo.py",
+      "file": "galleries/examples/spines/spine_placement_demo.py",
       "messages": [
         {
           "line": 56,
@@ -40182,7 +40182,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/shapes_and_collections/fancybox_demo.py",
+      "file": "galleries/examples/shapes_and_collections/fancybox_demo.py",
       "messages": [
         {
           "line": 47,
@@ -40217,7 +40217,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/shapes_and_collections/hatch_style_reference.py",
+      "file": "galleries/examples/shapes_and_collections/hatch_style_reference.py",
       "messages": [
         {
           "line": 25,
@@ -40238,7 +40238,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/rainbow_text.py",
+      "file": "galleries/examples/text_labels_and_annotations/rainbow_text.py",
       "messages": [
         {
           "line": 31,
@@ -40252,7 +40252,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/usetex_fonteffects.py",
+      "file": "galleries/examples/text_labels_and_annotations/usetex_fonteffects.py",
       "messages": [
         {
           "line": 13,
@@ -40266,7 +40266,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/arrow_demo.py",
+      "file": "galleries/examples/text_labels_and_annotations/arrow_demo.py",
       "messages": [
         {
           "line": 16,
@@ -40301,7 +40301,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/angle_annotation.py",
+      "file": "galleries/examples/text_labels_and_annotations/angle_annotation.py",
       "messages": [
         {
           "line": 71,
@@ -40343,7 +40343,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/mathtext_asarray.py",
+      "file": "galleries/examples/text_labels_and_annotations/mathtext_asarray.py",
       "messages": [
         {
           "line": 23,
@@ -40357,7 +40357,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/fancyarrow_demo.py",
+      "file": "galleries/examples/text_labels_and_annotations/fancyarrow_demo.py",
       "messages": [
         {
           "line": 48,
@@ -40371,7 +40371,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/font_table.py",
+      "file": "galleries/examples/text_labels_and_annotations/font_table.py",
       "messages": [
         {
           "line": 83,
@@ -40385,7 +40385,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/demo_text_rotation_mode.py",
+      "file": "galleries/examples/text_labels_and_annotations/demo_text_rotation_mode.py",
       "messages": [
         {
           "line": 27,
@@ -40399,7 +40399,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/line_with_text.py",
+      "file": "galleries/examples/text_labels_and_annotations/line_with_text.py",
       "messages": [
         {
           "line": 41,
@@ -40420,7 +40420,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/mathtext_examples.py",
+      "file": "galleries/examples/text_labels_and_annotations/mathtext_examples.py",
       "messages": [
         {
           "line": 105,
@@ -40434,7 +40434,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/font_family_rc.py",
+      "file": "galleries/examples/text_labels_and_annotations/font_family_rc.py",
       "messages": [
         {
           "line": 43,
@@ -40448,7 +40448,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/custom_legends.py",
+      "file": "galleries/examples/text_labels_and_annotations/custom_legends.py",
       "messages": [
         {
           "line": 60,
@@ -40462,7 +40462,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/angles_on_bracket_arrows.py",
+      "file": "galleries/examples/text_labels_and_annotations/angles_on_bracket_arrows.py",
       "messages": [
         {
           "line": 50,
@@ -40476,7 +40476,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/legend_demo.py",
+      "file": "galleries/examples/text_labels_and_annotations/legend_demo.py",
       "messages": [
         {
           "line": 140,
@@ -40504,7 +40504,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/align_ylabels.py",
+      "file": "galleries/examples/text_labels_and_annotations/align_ylabels.py",
       "messages": [
         {
           "line": 15,
@@ -40518,7 +40518,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/text_labels_and_annotations/demo_text_path.py",
+      "file": "galleries/examples/text_labels_and_annotations/demo_text_path.py",
       "messages": [
         {
           "line": 37,
@@ -40532,7 +40532,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/showcase/firefox.py",
+      "file": "galleries/examples/showcase/firefox.py",
       "messages": [
         {
           "line": 21,
@@ -40553,7 +40553,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/showcase/integral.py",
+      "file": "galleries/examples/showcase/integral.py",
       "messages": [
         {
           "line": 21,
@@ -40567,7 +40567,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/showcase/mandelbrot.py",
+      "file": "galleries/examples/showcase/mandelbrot.py",
       "messages": [
         {
           "line": 16,
@@ -40644,7 +40644,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/demo_floating_axis.py",
+      "file": "galleries/examples/axisartist/demo_floating_axis.py",
       "messages": [
         {
           "line": 22,
@@ -40658,7 +40658,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/demo_curvelinear_grid2.py",
+      "file": "galleries/examples/axisartist/demo_curvelinear_grid2.py",
       "messages": [
         {
           "line": 23,
@@ -40672,7 +40672,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/simple_axis_pad.py",
+      "file": "galleries/examples/axisartist/simple_axis_pad.py",
       "messages": [
         {
           "line": 20,
@@ -40728,7 +40728,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/simple_axis_direction03.py",
+      "file": "galleries/examples/axisartist/simple_axis_direction03.py",
       "messages": [
         {
           "line": 13,
@@ -40742,7 +40742,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/demo_ticklabel_direction.py",
+      "file": "galleries/examples/axisartist/demo_ticklabel_direction.py",
       "messages": [
         {
           "line": 13,
@@ -40763,7 +40763,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/demo_ticklabel_alignment.py",
+      "file": "galleries/examples/axisartist/demo_ticklabel_alignment.py",
       "messages": [
         {
           "line": 14,
@@ -40784,7 +40784,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/demo_axis_direction.py",
+      "file": "galleries/examples/axisartist/demo_axis_direction.py",
       "messages": [
         {
           "line": 19,
@@ -40833,7 +40833,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/axis_direction.py",
+      "file": "galleries/examples/axisartist/axis_direction.py",
       "messages": [
         {
           "line": 12,
@@ -40847,7 +40847,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/demo_floating_axes.py",
+      "file": "galleries/examples/axisartist/demo_floating_axes.py",
       "messages": [
         {
           "line": 32,
@@ -40896,7 +40896,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/axisartist/demo_curvelinear_grid.py",
+      "file": "galleries/examples/axisartist/demo_curvelinear_grid.py",
       "messages": [
         {
           "line": 24,
@@ -40917,7 +40917,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/curve_error_band.py",
+      "file": "galleries/examples/lines_bars_and_markers/curve_error_band.py",
       "messages": [
         {
           "line": 42,
@@ -40952,7 +40952,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/multicolored_line.py",
+      "file": "galleries/examples/lines_bars_and_markers/multicolored_line.py",
       "messages": [
         {
           "line": 24,
@@ -40966,7 +40966,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/timeline.py",
+      "file": "galleries/examples/lines_bars_and_markers/timeline.py",
       "messages": [
         {
           "line": 39,
@@ -40980,7 +40980,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/fill.py",
+      "file": "galleries/examples/lines_bars_and_markers/fill.py",
       "messages": [
         {
           "line": 50,
@@ -41001,7 +41001,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/gradient_bar.py",
+      "file": "galleries/examples/lines_bars_and_markers/gradient_bar.py",
       "messages": [
         {
           "line": 26,
@@ -41036,7 +41036,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/horizontal_barchart_distribution.py",
+      "file": "galleries/examples/lines_bars_and_markers/horizontal_barchart_distribution.py",
       "messages": [
         {
           "line": 31,
@@ -41057,7 +41057,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/stackplot_demo.py",
+      "file": "galleries/examples/lines_bars_and_markers/stackplot_demo.py",
       "messages": [
         {
           "line": 52,
@@ -41078,7 +41078,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/hat_graph.py",
+      "file": "galleries/examples/lines_bars_and_markers/hat_graph.py",
       "messages": [
         {
           "line": 14,
@@ -41099,7 +41099,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/scatter_hist.py",
+      "file": "galleries/examples/lines_bars_and_markers/scatter_hist.py",
       "messages": [
         {
           "line": 39,
@@ -41141,7 +41141,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/filled_step.py",
+      "file": "galleries/examples/lines_bars_and_markers/filled_step.py",
       "messages": [
         {
           "line": 20,
@@ -41176,7 +41176,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/lines_bars_and_markers/marker_reference.py",
+      "file": "galleries/examples/lines_bars_and_markers/marker_reference.py",
       "messages": [
         {
           "line": 34,
@@ -41190,7 +41190,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/widgets/lasso_selector_demo_sgskip.py",
+      "file": "galleries/examples/widgets/lasso_selector_demo_sgskip.py",
       "messages": [
         {
           "line": 43,
@@ -41204,7 +41204,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/widgets/slider_demo.py",
+      "file": "galleries/examples/widgets/slider_demo.py",
       "messages": [
         {
           "line": 23,
@@ -41232,7 +41232,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/widgets/annotated_cursor.py",
+      "file": "galleries/examples/widgets/annotated_cursor.py",
       "messages": [
         {
           "line": 80,
@@ -41267,7 +41267,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/widgets/menu.py",
+      "file": "galleries/examples/widgets/menu.py",
       "messages": [
         {
           "line": 28,
@@ -41351,7 +41351,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/widgets/textbox.py",
+      "file": "galleries/examples/widgets/textbox.py",
       "messages": [
         {
           "line": 35,
@@ -41365,7 +41365,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/widgets/slider_snap_demo.py",
+      "file": "galleries/examples/widgets/slider_snap_demo.py",
       "messages": [
         {
           "line": 53,
@@ -41386,7 +41386,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/widgets/buttons.py",
+      "file": "galleries/examples/widgets/buttons.py",
       "messages": [
         {
           "line": 29,
@@ -41407,7 +41407,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/widgets/polygon_selector_demo.py",
+      "file": "galleries/examples/widgets/polygon_selector_demo.py",
       "messages": [
         {
           "line": 38,
@@ -41421,7 +41421,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/subplots_axes_and_figures/gridspec_nested.py",
+      "file": "galleries/examples/subplots_axes_and_figures/gridspec_nested.py",
       "messages": [
         {
           "line": 19,
@@ -41435,7 +41435,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/subplots_axes_and_figures/secondary_axis.py",
+      "file": "galleries/examples/subplots_axes_and_figures/secondary_axis.py",
       "messages": [
         {
           "line": 31,
@@ -41540,7 +41540,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/subplots_axes_and_figures/subfigures.py",
+      "file": "galleries/examples/subplots_axes_and_figures/subfigures.py",
       "messages": [
         {
           "line": 24,
@@ -41561,7 +41561,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/subplots_axes_and_figures/demo_constrained_layout.py",
+      "file": "galleries/examples/subplots_axes_and_figures/demo_constrained_layout.py",
       "messages": [
         {
           "line": 18,
@@ -41575,7 +41575,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/subplots_axes_and_figures/gridspec_multicolumn.py",
+      "file": "galleries/examples/subplots_axes_and_figures/gridspec_multicolumn.py",
       "messages": [
         {
           "line": 16,
@@ -41589,7 +41589,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/subplots_axes_and_figures/demo_tight_layout.py",
+      "file": "galleries/examples/subplots_axes_and_figures/demo_tight_layout.py",
       "messages": [
         {
           "line": 22,
@@ -41603,7 +41603,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/subplots_axes_and_figures/auto_subplots_adjust.py",
+      "file": "galleries/examples/subplots_axes_and_figures/auto_subplots_adjust.py",
       "messages": [
         {
           "line": 52,
@@ -41617,7 +41617,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/subplots_axes_and_figures/fahrenheit_celsius_scales.py",
+      "file": "galleries/examples/subplots_axes_and_figures/fahrenheit_celsius_scales.py",
       "messages": [
         {
           "line": 32,
@@ -41631,7 +41631,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/examples/subplots_axes_and_figures/mosaic.py",
+      "file": "galleries/examples/subplots_axes_and_figures/mosaic.py",
       "messages": [
         {
           "line": 38,
@@ -41645,7 +41645,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/advanced/path_tutorial.py",
+      "file": "galleries/tutorials/advanced/path_tutorial.py",
       "messages": [
         {
           "line": 192,
@@ -41659,7 +41659,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/advanced/patheffects_guide.py",
+      "file": "galleries/tutorials/advanced/patheffects_guide.py",
       "messages": [
         {
           "line": 47,
@@ -41673,7 +41673,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/advanced/blitting.py",
+      "file": "galleries/tutorials/advanced/blitting.py",
       "messages": [
         {
           "line": 173,
@@ -41694,7 +41694,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/colors/colormaps.py",
+      "file": "galleries/tutorials/colors/colormaps.py",
       "messages": [
         {
           "line": 98,
@@ -41792,7 +41792,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/colors/colormapnorms.py",
+      "file": "galleries/tutorials/colors/colormapnorms.py",
       "messages": [
         {
           "line": 289,
@@ -41841,7 +41841,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/colors/colormap-manipulation.py",
+      "file": "galleries/tutorials/colors/colormap-manipulation.py",
       "messages": [
         {
           "line": 99,
@@ -41897,7 +41897,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/colors/colors.py",
+      "file": "galleries/tutorials/colors/colors.py",
       "messages": [
         {
           "line": 134,
@@ -41939,7 +41939,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/text/text_intro.py",
+      "file": "galleries/tutorials/text/text_intro.py",
       "messages": [
         {
           "line": 113,
@@ -41960,7 +41960,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/intermediate/constrainedlayout_guide.py",
+      "file": "galleries/tutorials/intermediate/constrainedlayout_guide.py",
       "messages": [
         {
           "line": 63,
@@ -41974,7 +41974,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/intermediate/arranging_axes.py",
+      "file": "galleries/tutorials/intermediate/arranging_axes.py",
       "messages": [
         {
           "line": 139,
@@ -42016,7 +42016,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/intermediate/tight_layout_guide.py",
+      "file": "galleries/tutorials/intermediate/tight_layout_guide.py",
       "messages": [
         {
           "line": 35,
@@ -42030,7 +42030,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/intermediate/legend_guide.py",
+      "file": "galleries/tutorials/intermediate/legend_guide.py",
       "messages": [
         {
           "line": 277,
@@ -42079,7 +42079,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/intermediate/imshow_extent.py",
+      "file": "galleries/tutorials/intermediate/imshow_extent.py",
       "messages": [
         {
           "line": 57,
@@ -42114,7 +42114,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/introductory/animation_tutorial.py",
+      "file": "galleries/tutorials/introductory/animation_tutorial.py",
       "messages": [
         {
           "line": 110,
@@ -42135,7 +42135,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/introductory/quick_start.py",
+      "file": "galleries/tutorials/introductory/quick_start.py",
       "messages": [
         {
           "line": 214,
@@ -42163,7 +42163,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/introductory/lifecycle.py",
+      "file": "galleries/tutorials/introductory/lifecycle.py",
       "messages": [
         {
           "line": 203,
@@ -42177,7 +42177,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/galleries/tutorials/introductory/pyplot.py",
+      "file": "galleries/tutorials/introductory/pyplot.py",
       "messages": [
         {
           "line": 250,
@@ -42191,7 +42191,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/.circleci/fetch_doc_logs.py",
+      "file": ".circleci/fetch_doc_logs.py",
       "messages": [
         {
           "line": 46,

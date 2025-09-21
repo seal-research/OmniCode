@@ -2,7 +2,7 @@
   "label": "psf__requests-2931",
   "files": [
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/setup.py",
+      "file": "setup.py",
       "messages": [
         {
           "line": 7,
@@ -23,7 +23,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/test_requests.py",
+      "file": "test_requests.py",
       "messages": [
         {
           "line": 19,
@@ -1339,7 +1339,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/docs/conf.py",
+      "file": "docs/conf.py",
       "messages": [
         {
           "line": 49,
@@ -1416,7 +1416,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/cookies.py",
+      "file": "requests/cookies.py",
       "messages": [
         {
           "line": 17,
@@ -1451,7 +1451,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/auth.py",
+      "file": "requests/auth.py",
       "messages": [
         {
           "line": 111,
@@ -1528,7 +1528,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/sessions.py",
+      "file": "requests/sessions.py",
       "messages": [
         {
           "line": 476,
@@ -1675,7 +1675,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/hooks.py",
+      "file": "requests/hooks.py",
       "messages": [
         {
           "line": 20,
@@ -1689,7 +1689,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/compat.py",
+      "file": "requests/compat.py",
       "messages": [
         {
           "line": 45,
@@ -1899,7 +1899,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/models.py",
+      "file": "requests/models.py",
       "messages": [
         {
           "line": 788,
@@ -2018,7 +2018,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/__init__.py",
+      "file": "requests/__init__.py",
       "messages": [
         {
           "line": 63,
@@ -2032,7 +2032,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/api.py",
+      "file": "requests/api.py",
       "messages": [
         {
           "line": 61,
@@ -2186,7 +2186,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/utils.py",
+      "file": "requests/utils.py",
       "messages": [
         {
           "line": 27,
@@ -2242,7 +2242,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/exceptions.py",
+      "file": "requests/exceptions.py",
       "messages": [
         {
           "line": 34,
@@ -2270,7 +2270,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/adapters.py",
+      "file": "requests/adapters.py",
       "messages": [
         {
           "line": 430,
@@ -2403,7 +2403,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/compat.py",
+      "file": "requests/packages/chardet/compat.py",
       "messages": [
         {
           "line": 25,
@@ -2417,7 +2417,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/sjisprober.py",
+      "file": "requests/packages/chardet/sjisprober.py",
       "messages": [
         {
           "line": 57,
@@ -2452,7 +2452,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/__init__.py",
+      "file": "requests/packages/chardet/__init__.py",
       "messages": [
         {
           "line": 23,
@@ -2466,7 +2466,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/chardistribution.py",
+      "file": "requests/packages/chardet/chardistribution.py",
       "messages": [
         {
           "line": 79,
@@ -2487,7 +2487,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/latin1prober.py",
+      "file": "requests/packages/chardet/latin1prober.py",
       "messages": [
         {
           "line": 120,
@@ -2508,7 +2508,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/charsetprober.py",
+      "file": "requests/packages/chardet/charsetprober.py",
       "messages": [
         {
           "line": 61,
@@ -2529,7 +2529,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/mbcharsetprober.py",
+      "file": "requests/packages/chardet/mbcharsetprober.py",
       "messages": [
         {
           "line": 58,
@@ -2564,7 +2564,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/langcyrillicmodel.py",
+      "file": "requests/packages/chardet/langcyrillicmodel.py",
       "messages": [
         {
           "line": 311,
@@ -2578,7 +2578,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/codingstatemachine.py",
+      "file": "requests/packages/chardet/codingstatemachine.py",
       "messages": [
         {
           "line": 53,
@@ -2592,7 +2592,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/escprober.py",
+      "file": "requests/packages/chardet/escprober.py",
       "messages": [
         {
           "line": 83,
@@ -2620,7 +2620,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/universaldetector.py",
+      "file": "requests/packages/chardet/universaldetector.py",
       "messages": [
         {
           "line": 138,
@@ -2774,7 +2774,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/utf8prober.py",
+      "file": "requests/packages/chardet/utf8prober.py",
       "messages": [
         {
           "line": 72,
@@ -2809,7 +2809,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/chardetect.py",
+      "file": "requests/packages/chardet/chardetect.py",
       "messages": [
         {
           "line": 20,
@@ -2823,7 +2823,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/eucjpprober.py",
+      "file": "requests/packages/chardet/eucjpprober.py",
       "messages": [
         {
           "line": 58,
@@ -2858,7 +2858,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/sbcharsetprober.py",
+      "file": "requests/packages/chardet/sbcharsetprober.py",
       "messages": [
         {
           "line": 45,
@@ -2907,7 +2907,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/hebrewprober.py",
+      "file": "requests/packages/chardet/hebrewprober.py",
       "messages": [
         {
           "line": 246,
@@ -2928,7 +2928,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/charsetgroupprober.py",
+      "file": "requests/packages/chardet/charsetgroupprober.py",
       "messages": [
         {
           "line": 90,
@@ -2956,7 +2956,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/chardet/jpcntx.py",
+      "file": "requests/packages/chardet/jpcntx.py",
       "messages": [
         {
           "line": 176,
@@ -3005,7 +3005,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/request.py",
+      "file": "requests/packages/urllib3/request.py",
       "messages": [
         {
           "line": 50,
@@ -3026,7 +3026,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/__init__.py",
+      "file": "requests/packages/urllib3/__init__.py",
       "messages": [
         {
           "line": 71,
@@ -3040,7 +3040,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/poolmanager.py",
+      "file": "requests/packages/urllib3/poolmanager.py",
       "messages": [
         {
           "line": 45,
@@ -3068,7 +3068,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/response.py",
+      "file": "requests/packages/urllib3/response.py",
       "messages": [
         {
           "line": 229,
@@ -3187,7 +3187,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/connection.py",
+      "file": "requests/packages/urllib3/connection.py",
       "messages": [
         {
           "line": 156,
@@ -3264,7 +3264,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/_collections.py",
+      "file": "requests/packages/urllib3/_collections.py",
       "messages": [
         {
           "line": 2,
@@ -3292,7 +3292,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/exceptions.py",
+      "file": "requests/packages/urllib3/exceptions.py",
       "messages": [
         {
           "line": 58,
@@ -3467,7 +3467,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/connectionpool.py",
+      "file": "requests/packages/urllib3/connectionpool.py",
       "messages": [
         {
           "line": 425,
@@ -3656,7 +3656,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/util/timeout.py",
+      "file": "requests/packages/urllib3/util/timeout.py",
       "messages": [
         {
           "line": 126,
@@ -3677,7 +3677,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/util/response.py",
+      "file": "requests/packages/urllib3/util/response.py",
       "messages": [
         {
           "line": 70,
@@ -3698,7 +3698,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/util/ssl_.py",
+      "file": "requests/packages/urllib3/util/ssl_.py",
       "messages": [
         {
           "line": 79,
@@ -3740,7 +3740,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/util/retry.py",
+      "file": "requests/packages/urllib3/util/retry.py",
       "messages": [
         {
           "line": 130,
@@ -3796,7 +3796,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/util/connection.py",
+      "file": "requests/packages/urllib3/util/connection.py",
       "messages": [
         {
           "line": 30,
@@ -3838,7 +3838,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/contrib/pyopenssl.py",
+      "file": "requests/packages/urllib3/contrib/pyopenssl.py",
       "messages": [
         {
           "line": 222,
@@ -3950,7 +3950,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/contrib/appengine.py",
+      "file": "requests/packages/urllib3/contrib/appengine.py",
       "messages": [
         {
           "line": 6,
@@ -4041,7 +4041,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/contrib/ntlmpool.py",
+      "file": "requests/packages/urllib3/contrib/ntlmpool.py",
       "messages": [
         {
           "line": 46,
@@ -4146,7 +4146,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/packages/ordered_dict.py",
+      "file": "requests/packages/urllib3/packages/ordered_dict.py",
       "messages": [
         {
           "line": 142,
@@ -4167,7 +4167,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/packages/six.py",
+      "file": "requests/packages/urllib3/packages/six.py",
       "messages": [
         {
           "line": 232,
@@ -4300,7 +4300,7 @@
       "error_count": 10
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/requests/packages/urllib3/packages/ssl_match_hostname/_implementation.py",
+      "file": "requests/packages/urllib3/packages/ssl_match_hostname/_implementation.py",
       "messages": [
         {
           "line": 89,

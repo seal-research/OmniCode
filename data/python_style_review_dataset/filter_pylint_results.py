@@ -69,7 +69,7 @@ def parse_pylint_output(out_json_path, label):
 
     file_map = {}
     for msg in filtered_msgs:
-        path = os.path.abspath(msg.get("path"))
+        path = msg.get("path")
         entry = file_map.setdefault(path, {"file": path, "messages": []})
         entry["messages"].append({
             "line": msg.get("line"),

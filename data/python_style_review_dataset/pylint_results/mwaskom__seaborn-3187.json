@@ -2,7 +2,7 @@
   "label": "mwaskom__seaborn-3187",
   "files": [
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/ci/check_gallery.py",
+      "file": "ci/check_gallery.py",
       "messages": [
         {
           "line": 12,
@@ -23,7 +23,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/ci/cache_datasets.py",
+      "file": "ci/cache_datasets.py",
       "messages": [
         {
           "line": 18,
@@ -37,7 +37,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/matrix.py",
+      "file": "seaborn/matrix.py",
       "messages": [
         {
           "line": 798,
@@ -79,7 +79,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/categorical.py",
+      "file": "seaborn/categorical.py",
       "messages": [
         {
           "line": 304,
@@ -625,7 +625,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_docstrings.py",
+      "file": "seaborn/_docstrings.py",
       "messages": [
         {
           "line": 62,
@@ -660,7 +660,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/regression.py",
+      "file": "seaborn/regression.py",
       "messages": [
         {
           "line": 397,
@@ -709,7 +709,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/miscplot.py",
+      "file": "seaborn/miscplot.py",
       "messages": [
         {
           "line": 21,
@@ -723,7 +723,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/algorithms.py",
+      "file": "seaborn/algorithms.py",
       "messages": [
         {
           "line": 95,
@@ -744,7 +744,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_oldcore.py",
+      "file": "seaborn/_oldcore.py",
       "messages": [
         {
           "line": 45,
@@ -1010,7 +1010,7 @@
       "error_count": 4
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/rcmod.py",
+      "file": "seaborn/rcmod.py",
       "messages": [
         {
           "line": 126,
@@ -1031,7 +1031,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/palettes.py",
+      "file": "seaborn/palettes.py",
       "messages": [
         {
           "line": 77,
@@ -1150,7 +1150,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/axisgrid.py",
+      "file": "seaborn/axisgrid.py",
       "messages": [
         {
           "line": 429,
@@ -1255,7 +1255,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/__init__.py",
+      "file": "seaborn/__init__.py",
       "messages": [
         {
           "line": 2,
@@ -1269,7 +1269,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/relational.py",
+      "file": "seaborn/relational.py",
       "messages": [
         {
           "line": 190,
@@ -1626,7 +1626,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/widgets.py",
+      "file": "seaborn/widgets.py",
       "messages": [
         {
           "line": 8,
@@ -1738,7 +1738,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/distributions.py",
+      "file": "seaborn/distributions.py",
       "messages": [
         {
           "line": 118,
@@ -2123,7 +2123,7 @@
       "error_count": 9
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/utils.py",
+      "file": "seaborn/utils.py",
       "messages": [
         {
           "line": 708,
@@ -2172,7 +2172,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_statistics.py",
+      "file": "seaborn/_statistics.py",
       "messages": [
         {
           "line": 516,
@@ -2193,7 +2193,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_compat.py",
+      "file": "seaborn/_compat.py",
       "messages": [
         {
           "line": 36,
@@ -2235,7 +2235,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/objects.py",
+      "file": "seaborn/objects.py",
       "messages": [
         {
           "line": 29,
@@ -2473,7 +2473,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_core/subplots.py",
+      "file": "seaborn/_core/subplots.py",
       "messages": [
         {
           "line": 11,
@@ -2550,7 +2550,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_core/moves.py",
+      "file": "seaborn/_core/moves.py",
       "messages": [
         {
           "line": 101,
@@ -2627,7 +2627,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_core/plot.py",
+      "file": "seaborn/_core/plot.py",
       "messages": [
         {
           "line": 64,
@@ -3586,7 +3586,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_core/properties.py",
+      "file": "seaborn/_core/properties.py",
       "messages": [
         {
           "line": 64,
@@ -3852,7 +3852,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_core/scales.py",
+      "file": "seaborn/_core/scales.py",
       "messages": [
         {
           "line": 49,
@@ -4342,7 +4342,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_core/rules.py",
+      "file": "seaborn/_core/rules.py",
       "messages": [
         {
           "line": 25,
@@ -4363,7 +4363,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_core/typing.py",
+      "file": "seaborn/_core/typing.py",
       "messages": [
         {
           "line": 7,
@@ -4391,7 +4391,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_core/groupby.py",
+      "file": "seaborn/_core/groupby.py",
       "messages": [
         {
           "line": 69,
@@ -4405,7 +4405,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_core/data.py",
+      "file": "seaborn/_core/data.py",
       "messages": [
         {
           "line": 61,
@@ -4447,7 +4447,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_marks/line.py",
+      "file": "seaborn/_marks/line.py",
       "messages": [
         {
           "line": 261,
@@ -4496,7 +4496,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_marks/text.py",
+      "file": "seaborn/_marks/text.py",
       "messages": [
         {
           "line": 40,
@@ -4510,7 +4510,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_marks/bar.py",
+      "file": "seaborn/_marks/bar.py",
       "messages": [
         {
           "line": 86,
@@ -4587,7 +4587,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_marks/dot.py",
+      "file": "seaborn/_marks/dot.py",
       "messages": [
         {
           "line": 64,
@@ -4671,7 +4671,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_marks/area.py",
+      "file": "seaborn/_marks/area.py",
       "messages": [
         {
           "line": 35,
@@ -4720,7 +4720,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_marks/base.py",
+      "file": "seaborn/_marks/base.py",
       "messages": [
         {
           "line": 93,
@@ -4881,7 +4881,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_stats/regression.py",
+      "file": "seaborn/_stats/regression.py",
       "messages": [
         {
           "line": 27,
@@ -4902,7 +4902,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_stats/aggregation.py",
+      "file": "seaborn/_stats/aggregation.py",
       "messages": [
         {
           "line": 115,
@@ -4916,7 +4916,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_stats/counting.py",
+      "file": "seaborn/_stats/counting.py",
       "messages": [
         {
           "line": 139,
@@ -4937,7 +4937,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_stats/density.py",
+      "file": "seaborn/_stats/density.py",
       "messages": [
         {
           "line": 112,
@@ -4951,7 +4951,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/_stats/base.py",
+      "file": "seaborn/_stats/base.py",
       "messages": [
         {
           "line": 27,
@@ -4965,7 +4965,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/external/kde.py",
+      "file": "seaborn/external/kde.py",
       "messages": [
         {
           "line": 73,
@@ -5035,7 +5035,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/external/appdirs.py",
+      "file": "seaborn/external/appdirs.py",
       "messages": [
         {
           "line": 38,
@@ -5112,7 +5112,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/external/husl.py",
+      "file": "seaborn/external/husl.py",
       "messages": [
         {
           "line": 43,
@@ -5147,7 +5147,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/seaborn/external/docscrape.py",
+      "file": "seaborn/external/docscrape.py",
       "messages": [
         {
           "line": 164,
@@ -5231,7 +5231,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_palettes.py",
+      "file": "tests/test_palettes.py",
       "messages": [
         {
           "line": 207,
@@ -5308,7 +5308,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_utils.py",
+      "file": "tests/test_utils.py",
       "messages": [
         {
           "line": 136,
@@ -5455,7 +5455,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/conftest.py",
+      "file": "tests/conftest.py",
       "messages": [
         {
           "line": 41,
@@ -5623,7 +5623,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_statistics.py",
+      "file": "tests/test_statistics.py",
       "messages": [
         {
           "line": 295,
@@ -5644,7 +5644,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_decorators.py",
+      "file": "tests/test_decorators.py",
       "messages": [
         {
           "line": 10,
@@ -5665,7 +5665,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_axisgrid.py",
+      "file": "tests/test_axisgrid.py",
       "messages": [
         {
           "line": 47,
@@ -6176,7 +6176,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_categorical.py",
+      "file": "tests/test_categorical.py",
       "messages": [
         {
           "line": 96,
@@ -7149,7 +7149,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_core.py",
+      "file": "tests/test_core.py",
       "messages": [
         {
           "line": 73,
@@ -7807,7 +7807,7 @@
       "error_count": 3
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_relational.py",
+      "file": "tests/test_relational.py",
       "messages": [
         {
           "line": 50,
@@ -8640,7 +8640,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_matrix.py",
+      "file": "tests/test_matrix.py",
       "messages": [
         {
           "line": 52,
@@ -8997,7 +8997,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_distributions.py",
+      "file": "tests/test_distributions.py",
       "messages": [
         {
           "line": 2240,
@@ -9613,7 +9613,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_rcmod.py",
+      "file": "tests/test_rcmod.py",
       "messages": [
         {
           "line": 18,
@@ -9662,7 +9662,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_regression.py",
+      "file": "tests/test_regression.py",
       "messages": [
         {
           "line": 41,
@@ -10124,7 +10124,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/test_algorithms.py",
+      "file": "tests/test_algorithms.py",
       "messages": [
         {
           "line": 16,
@@ -10320,7 +10320,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_core/test_plot.py",
+      "file": "tests/_core/test_plot.py",
       "messages": [
         {
           "line": 27,
@@ -11692,7 +11692,7 @@
       "error_count": 6
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_core/test_subplots.py",
+      "file": "tests/_core/test_subplots.py",
       "messages": [
         {
           "line": 393,
@@ -11720,7 +11720,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_core/test_moves.py",
+      "file": "tests/_core/test_moves.py",
       "messages": [
         {
           "line": 137,
@@ -11748,7 +11748,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_core/test_data.py",
+      "file": "tests/_core/test_data.py",
       "messages": [
         {
           "line": 374,
@@ -11783,7 +11783,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_core/test_groupby.py",
+      "file": "tests/_core/test_groupby.py",
       "messages": [
         {
           "line": 43,
@@ -11860,7 +11860,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_core/test_scales.py",
+      "file": "tests/_core/test_scales.py",
       "messages": [
         {
           "line": 89,
@@ -12497,7 +12497,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_core/test_rules.py",
+      "file": "tests/_core/test_rules.py",
       "messages": [
         {
           "line": 20,
@@ -12511,7 +12511,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_core/test_properties.py",
+      "file": "tests/_core/test_properties.py",
       "messages": [
         {
           "line": 216,
@@ -12560,7 +12560,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_marks/test_line.py",
+      "file": "tests/_marks/test_line.py",
       "messages": [
         {
           "line": 21,
@@ -12833,7 +12833,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_marks/test_dot.py",
+      "file": "tests/_marks/test_dot.py",
       "messages": [
         {
           "line": 40,
@@ -12966,7 +12966,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_marks/test_text.py",
+      "file": "tests/_marks/test_text.py",
       "messages": [
         {
           "line": 27,
@@ -13029,7 +13029,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_marks/test_area.py",
+      "file": "tests/_marks/test_area.py",
       "messages": [
         {
           "line": 17,
@@ -13085,7 +13085,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_marks/test_base.py",
+      "file": "tests/_marks/test_base.py",
       "messages": [
         {
           "line": 18,
@@ -13183,7 +13183,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_marks/test_bar.py",
+      "file": "tests/_marks/test_bar.py",
       "messages": [
         {
           "line": 18,
@@ -13302,7 +13302,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_stats/test_counting.py",
+      "file": "tests/_stats/test_counting.py",
       "messages": [
         {
           "line": 75,
@@ -13358,7 +13358,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_stats/test_density.py",
+      "file": "tests/_stats/test_density.py",
       "messages": [
         {
           "line": 129,
@@ -13379,7 +13379,7 @@
       "error_count": 2
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/tests/_stats/test_order.py",
+      "file": "tests/_stats/test_order.py",
       "messages": [
         {
           "line": 20,
@@ -13393,7 +13393,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/kde_ridgeplot.py",
+      "file": "examples/kde_ridgeplot.py",
       "messages": [
         {
           "line": 36,
@@ -13421,7 +13421,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/palette_generation.py",
+      "file": "examples/palette_generation.py",
       "messages": [
         {
           "line": 34,
@@ -13435,7 +13435,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/examples/timeseries_facets.py",
+      "file": "examples/timeseries_facets.py",
       "messages": [
         {
           "line": 34,
@@ -13456,7 +13456,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/conf.py",
+      "file": "doc/conf.py",
       "messages": [
         {
           "line": 99,
@@ -13568,7 +13568,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/tools/set_nb_kernels.py",
+      "file": "doc/tools/set_nb_kernels.py",
       "messages": [
         {
           "line": 15,
@@ -13589,7 +13589,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/tools/extract_examples.py",
+      "file": "doc/tools/extract_examples.py",
       "messages": [
         {
           "line": 10,
@@ -13631,7 +13631,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/tools/nb_to_doc.py",
+      "file": "doc/tools/nb_to_doc.py",
       "messages": [
         {
           "line": 45,
@@ -13694,7 +13694,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/tools/generate_logos.py",
+      "file": "doc/tools/generate_logos.py",
       "messages": [
         {
           "line": 62,
@@ -13729,7 +13729,7 @@
       "error_count": 1
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/sphinxext/gallery_generator.py",
+      "file": "doc/sphinxext/gallery_generator.py",
       "messages": [
         {
           "line": 22,
@@ -13820,7 +13820,7 @@
       "error_count": 0
     },
     {
-      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/doc/sphinxext/tutorial_builder.py",
+      "file": "doc/sphinxext/tutorial_builder.py",
       "messages": [
         {
           "line": 57,
