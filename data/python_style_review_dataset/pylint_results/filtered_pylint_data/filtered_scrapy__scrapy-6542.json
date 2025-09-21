@@ -1,0 +1,28 @@
+[
+  {
+    "type": "error",
+    "module": "scrapy.utils.url",
+    "obj": "escape_ajax",
+    "line": 87,
+    "column": 11,
+    "endLine": 87,
+    "endColumn": 35,
+    "path": "scrapy/utils/url.py",
+    "symbol": "undefined-variable",
+    "message": "Undefined variable 'add_or_replace_parameter'",
+    "message-id": "E0602"
+  },
+  {
+    "type": "error",
+    "module": "scrapy.utils.url",
+    "obj": "guess_scheme",
+    "line": 147,
+    "column": 15,
+    "endLine": 147,
+    "endColumn": 25,
+    "path": "scrapy/utils/url.py",
+    "symbol": "undefined-variable",
+    "message": "Undefined variable 'any_to_uri'",
+    "message-id": "E0602"
+  }
+]

@@ -1,0 +1,31 @@
+{
+  "label": "scrapy__scrapy-6542",
+  "files": [
+    {
+      "file": "/Users/james.tu/workspace/Cornell_summer_research_program/OmniCode/data/python_style_review_dataset/scrapy/utils/url.py",
+      "messages": [
+        {
+          "line": 87,
+          "column": 11,
+          "symbol": "undefined-variable",
+          "message": "Undefined variable 'add_or_replace_parameter'",
+          "type": "error"
+        },
+        {
+          "line": 147,
+          "column": 15,
+          "symbol": "undefined-variable",
+          "message": "Undefined variable 'any_to_uri'",
+          "type": "error"
+        }
+      ],
+      "score": 9.6,
+      "error_count": 2
+    }
+  ],
+  "overview": {
+    "global_score": 9.6,
+    "total_errors": 2,
+    "total_files": 1
+  }
+}
