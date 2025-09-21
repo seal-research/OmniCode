@@ -16,6 +16,10 @@ mkdir -p "${LOG_DIR}"
 export SWEBENCH_BUILD_DIR="/scratch/cbb89/logs/build_images"
 export SWEBENCH_CACHE_DIR="/scratch/cbb89/logs/cache"
 
+# Create symlink to fix hardcoded /scratch/logs path
+mkdir -p /scratch/cbb89/logs
+ln -sf /scratch/cbb89/logs /scratch/logs 2>/dev/null || true
+
 # Change to the codearena directory
 cd /home/cbb89/codearena/codearena/OmniCode
 
