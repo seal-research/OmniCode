@@ -15,16 +15,16 @@ from collections import defaultdict
 
 
 def get_symbols(inst):
-    files = inst.get("style_review_summary", {}).get("files", {})
+    files = inst.get("style_review", {}).get("files", {})
     return {msg["symbol"] for f in files.values() for msg in f.get("messages", [])}
 
 
 def get_error_count(inst):
-    return sum(f.get("message_count", 0) for f in inst.get("style_review_summary", {}).get("files", {}).values())
+    return sum(f.get("message_count", 0) for f in inst.get("style_review", {}).get("files", {}).values())
 
 
 def is_noisy(inst, max_errors=30):
-    files = inst.get("style_review_summary", {}).get("files", {})
+    files = inst.get("style_review", {}).get("files", {})
     return any(f.get("message_count", 0) > max_errors for f in files.values())
 
 

@@ -76,7 +76,8 @@ def create_sweagent_instance(
     instance_idx: int
 ) -> Dict:
     """Create a SWE agent instance dict."""
-    instance_id = f"{org}__{repo}_{pr_number}_{instance_idx}"
+    instance_id = f"{org}__{repo}-{pr_number}"
+    review_id = f"{org}__{repo}-{pr_number}_{instance_idx}"
     style_review_summary = {
         "total_files": len(violations), 
         "total_messages": 0,
@@ -89,24 +90,18 @@ def create_sweagent_instance(
         style_review_summary["files"][file["file"]]["messages"] = file["messages"]
         total_messages += len(file["messages"])
     style_review_summary["total_messages"] = total_messages
-    
-    return {
-        "repo": f"{org}/{repo}",
-        "pull_number": int(pr_number),
-        "instance_id": instance_id,
-        "issue_numbers": [],
-        "base_commit": "",
-        "patch": "",
-        "test_patch": "",
-        "problem_statement": problem_statement,
-        "hints_text": "",
-        "created_at": "",
-        "version": "",
-        "PASS_TO_PASS": "",
-        "FAIL_TO_PASS": "",
-        "bad_patches": [],
-        "style_review_summary": style_review_summary
-    } 
+    with open("../codearena_instances_python.json", 'r') as f:
+        data = json.load(f)
+    for i in data: 
+        if i["instance_id"] == instance_id:
+            instance = i
+    instance["original_instance_id"] = instance_id
+    instance["instance_id"] = review_id
+    instance["problem_statement"] = problem_statement
+    instance["hints_text"] = None
+    instance["bad_patches"] = []
+    instance["style_review"] = style_review_summary
+    return instance
 
 
 def main():
@@ -145,7 +140,7 @@ def main():
     instances = []
 
     org = args.instance_id.split('__')[0]
-    repo = args.instance_id.split('__')[-1].split('-')[0]
+    repo = '-'.join(args.instance_id.split('__')[-1].split('-')[:-1])
     number = args.instance_id.split('-')[-1]
 
     if args.batch_size == 0:
