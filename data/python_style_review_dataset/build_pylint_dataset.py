@@ -6,6 +6,16 @@ OUTDIR = "pylint_results"
 os.makedirs(OUTDIR, exist_ok=True)
 
 repos = {
+    "astropy__astropy":    ("https://github.com/astropy/astropy.git", 14508),
+    "camel-ai__camel":     ("https://github.com/camel-ai/camel.git", 1627),
+    "django__django":      ("https://github.com/django/django.git", 17087),
+    "fastapi__fastapi":    ("https://github.com/fastapi/fastapi.git", 1524),
+    "keras-team__keras":   ("https://github.com/keras-team/keras.git", 20733),
+    "matplotlib__matplotlib": ("https://github.com/matplotlib/matplotlib.git", 25332),
+    "mwaskom__seaborn":    ("https://github.com/mwaskom/seaborn.git", 3187),
+    "psf__requests":       ("https://github.com/psf/requests.git", 2931),
+    "pytest-dev__pytest":  ("https://github.com/pytest-dev/pytest.git", 10081),
+    "scikit-learn__scikit-learn": ("https://github.com/scikit-learn/scikit-learn.git", 26194),
     "scrapy__scrapy":      ("https://github.com/scrapy/scrapy.git", 6542),
     "sphinx-doc__sphinx":  ("https://github.com/sphinx-doc/sphinx.git", 11510),
     "sympy__sympy":        ("https://github.com/sympy/sympy.git", 24661),

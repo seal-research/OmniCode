@@ -1,0 +1,767 @@
+{
+  "unnecessary-pass": [
+    "camel-ai__camel_1627_126",
+    "matplotlib__matplotlib_25332_65",
+    "psf__requests_2931_13",
+    "psf__requests_2931_37",
+    "psf__requests_2931_40",
+    "sympy__sympy_24661_341"
+  ],
+  "possibly-used-before-assignment": [
+    "astropy__astropy_14508_280",
+    "fastapi__fastapi_1524_43",
+    "mwaskom__seaborn_3187_12",
+    "mwaskom__seaborn_3187_18",
+    "mwaskom__seaborn_3187_47",
+    "sympy__sympy_24661_13",
+    "sympy__sympy_24661_341"
+  ],
+  "redefined-outer-name": [
+    "astropy__astropy_14508_334",
+    "astropy__astropy_14508_356",
+    "astropy__astropy_14508_379",
+    "astropy__astropy_14508_389",
+    "camel-ai__camel_1627_15",
+    "camel-ai__camel_1627_163",
+    "camel-ai__camel_1627_45",
+    "django__django_17087_16",
+    "keras-team__keras_20733_296",
+    "matplotlib__matplotlib_25332_2",
+    "matplotlib__matplotlib_25332_309",
+    "matplotlib__matplotlib_25332_336",
+    "matplotlib__matplotlib_25332_354",
+    "matplotlib__matplotlib_25332_65",
+    "matplotlib__matplotlib_25332_90",
+    "mwaskom__seaborn_3187_47",
+    "mwaskom__seaborn_3187_63",
+    "psf__requests_2931_37",
+    "pytest-dev__pytest_10081_110",
+    "pytest-dev__pytest_10081_92",
+    "scikit-learn__scikit_26194_38",
+    "scikit-learn__scikit_26194_487",
+    "scikit-learn__scikit_26194_510",
+    "sphinx-doc__sphinx_11510_18",
+    "sympy__sympy_24661_341",
+    "sympy__sympy_24661_41",
+    "sympy__sympy_24661_47",
+    "sympy__sympy_24661_565",
+    "sympy__sympy_24661_616",
+    "sympy__sympy_24661_944",
+    "ytdl-org__youtube_32987_15"
+  ],
+  "comparison-with-callable": [
+    "scikit-learn__scikit_26194_52",
+    "sympy__sympy_24661_341"
+  ],
+  "fixme": [
+    "astropy__astropy_14508_334",
+    "astropy__astropy_14508_404",
+    "keras-team__keras_20733_62",
+    "matplotlib__matplotlib_25332_59",
+    "matplotlib__matplotlib_25332_90",
+    "mwaskom__seaborn_3187_12",
+    "mwaskom__seaborn_3187_22",
+    "mwaskom__seaborn_3187_26",
+    "mwaskom__seaborn_3187_35",
+    "mwaskom__seaborn_3187_47",
+    "psf__requests_2931_20",
+    "psf__requests_2931_37",
+    "psf__requests_2931_40",
+    "psf__requests_2931_42",
+    "psf__requests_2931_7",
+    "pytest-dev__pytest_10081_119",
+    "scikit-learn__scikit_26194_52",
+    "sphinx-doc__sphinx_11510_177",
+    "sphinx-doc__sphinx_11510_18",
+    "sympy__sympy_24661_13",
+    "sympy__sympy_24661_341",
+    "sympy__sympy_24661_41",
+    "sympy__sympy_24661_47",
+    "sympy__sympy_24661_616",
+    "sympy__sympy_24661_875",
+    "ytdl-org__youtube_32987_15"
+  ],
+  "reimported": [
+    "camel-ai__camel_1627_163",
+    "mwaskom__seaborn_3187_12",
+    "pytest-dev__pytest_10081_110",
+    "scikit-learn__scikit_26194_491",
+    "sympy__sympy_24661_341"
+  ],
+  "raise-missing-from": [
+    "astropy__astropy_14508_334",
+    "camel-ai__camel_1627_126",
+    "django__django_17087_676",
+    "fastapi__fastapi_1524_65",
+    "keras-team__keras_20733_296",
+    "keras-team__keras_20733_381",
+    "keras-team__keras_20733_62",
+    "psf__requests_2931_37",
+    "psf__requests_2931_40",
+    "sympy__sympy_24661_341",
+    "sympy__sympy_24661_565",
+    "sympy__sympy_24661_796"
+  ],
+  "bad-indentation": [
+    "sympy__sympy_24661_341"
+  ],
+  "dangerous-default-value": [
+    "fastapi__fastapi_1524_43",
+    "sympy__sympy_24661_1032",
+    "sympy__sympy_24661_1034",
+    "sympy__sympy_24661_341"
+  ],
+  "unused-variable": [
+    "astropy__astropy_14508_334",
+    "astropy__astropy_14508_356",
+    "django__django_17087_142",
+    "django__django_17087_267",
+    "django__django_17087_358",
+    "django__django_17087_676",
+    "keras-team__keras_20733_296",
+    "keras-team__keras_20733_466",
+    "keras-team__keras_20733_526",
+    "matplotlib__matplotlib_25332_59",
+    "matplotlib__matplotlib_25332_65",
+    "matplotlib__matplotlib_25332_90",
+    "mwaskom__seaborn_3187_62",
+    "mwaskom__seaborn_3187_84",
+    "psf__requests_2931_26",
+    "psf__requests_2931_37",
+    "pytest-dev__pytest_10081_110",
+    "pytest-dev__pytest_10081_119",
+    "pytest-dev__pytest_10081_29",
+    "pytest-dev__pytest_10081_41",
+    "pytest-dev__pytest_10081_63",
+    "scikit-learn__scikit_26194_150",
+    "sphinx-doc__sphinx_11510_212",
+    "sympy__sympy_24661_13",
+    "sympy__sympy_24661_341",
+    "sympy__sympy_24661_616",
+    "sympy__sympy_24661_713"
+  ],
+  "redefined-builtin": [
+    "astropy__astropy_14508_334",
+    "astropy__astropy_14508_356",
+    "camel-ai__camel_1627_187",
+    "django__django_17087_166",
+    "django__django_17087_36",
+    "keras-team__keras_20733_296",
+    "keras-team__keras_20733_381",
+    "keras-team__keras_20733_62",
+    "matplotlib__matplotlib_25332_336",
+    "matplotlib__matplotlib_25332_364",
+    "mwaskom__seaborn_3187_12",
+    "mwaskom__seaborn_3187_84",
+    "psf__requests_2931_13",
+    "psf__requests_2931_37",
+    "psf__requests_2931_40",
+    "pytest-dev__pytest_10081_110",
+    "pytest-dev__pytest_10081_29",
+    "pytest-dev__pytest_10081_97",
+    "sphinx-doc__sphinx_11510_212",
+    "sphinx-doc__sphinx_11510_243",
+    "sphinx-doc__sphinx_11510_253",
+    "sympy__sympy_24661_13",
+    "sympy__sympy_24661_341",
+    "sympy__sympy_24661_41",
+    "sympy__sympy_24661_734",
+    "sympy__sympy_24661_804",
+    "ytdl-org__youtube_32987_15"
+  ],
+  "cell-var-from-loop": [
+    "sympy__sympy_24661_341",
+    "sympy__sympy_24661_813"
+  ],
+  "no-value-for-parameter": [
+    "astropy__astropy_14508_379",
+    "django__django_17087_353",
+    "sympy__sympy_24661_13"
+  ],
+  "broad-exception-caught": [
+    "astropy__astropy_14508_334",
+    "camel-ai__camel_1627_126",
+    "camel-ai__camel_1627_163",
+    "camel-ai__camel_1627_205",
+    "django__django_17087_166",
+    "django__django_17087_353",
+    "django__django_17087_676",
+    "fastapi__fastapi_1524_44",
+    "keras-team__keras_20733_62",
+    "matplotlib__matplotlib_25332_2",
+    "matplotlib__matplotlib_25332_59",
+    "matplotlib__matplotlib_25332_65",
+    "sphinx-doc__sphinx_11510_16",
+    "ytdl-org__youtube_32987_42"
+  ],
+  "bad-thread-instantiation": [
+    "django__django_17087_353"
+  ],
+  "unnecessary-lambda": [
+    "django__django_17087_353",
+    "django__django_17087_358",
+    "keras-team__keras_20733_296",
+    "keras-team__keras_20733_62",
+    "matplotlib__matplotlib_25332_59"
+  ],
+  "unused-argument": [
+    "astropy__astropy_14508_189",
+    "astropy__astropy_14508_517",
+    "django__django_17087_11",
+    "django__django_17087_16",
+    "django__django_17087_353",
+    "django__django_17087_676",
+    "fastapi__fastapi_1524_43",
+    "fastapi__fastapi_1524_44",
+    "fastapi__fastapi_1524_64",
+    "fastapi__fastapi_1524_82",
+    "keras-team__keras_20733_296",
+    "keras-team__keras_20733_466",
+    "keras-team__keras_20733_62",
+    "matplotlib__matplotlib_25332_336",
+    "matplotlib__matplotlib_25332_59",
+    "mwaskom__seaborn_3187_35",
+    "mwaskom__seaborn_3187_47",
+    "pytest-dev__pytest_10081_110",
+    "pytest-dev__pytest_10081_111",
+    "pytest-dev__pytest_10081_36",
+    "pytest-dev__pytest_10081_92",
+    "scikit-learn__scikit_26194_38",
+    "scikit-learn__scikit_26194_569",
+    "sphinx-doc__sphinx_11510_18",
+    "sphinx-doc__sphinx_11510_212",
+    "sphinx-doc__sphinx_11510_214",
+    "sphinx-doc__sphinx_11510_26",
+    "sphinx-doc__sphinx_11510_46",
+    "sympy__sympy_24661_1032",
+    "sympy__sympy_24661_1034",
+    "sympy__sympy_24661_47"
+  ],
+  "protected-access": [
+    "astropy__astropy_14508_189",
+    "astropy__astropy_14508_225",
+    "astropy__astropy_14508_334",
+    "astropy__astropy_14508_379",
+    "django__django_17087_142",
+    "django__django_17087_166",
+    "django__django_17087_353",
+    "django__django_17087_36",
+    "django__django_17087_604",
+    "django__django_17087_676",
+    "keras-team__keras_20733_381",
+    "keras-team__keras_20733_466",
+    "keras-team__keras_20733_62",
+    "matplotlib__matplotlib_25332_230",
+    "matplotlib__matplotlib_25332_336",
+    "matplotlib__matplotlib_25332_59",
+    "matplotlib__matplotlib_25332_65",
+    "matplotlib__matplotlib_25332_90",
+    "mwaskom__seaborn_3187_35",
+    "psf__requests_2931_40",
+    "psf__requests_2931_42",
+    "psf__requests_2931_6",
+    "pytest-dev__pytest_10081_110",
+    "pytest-dev__pytest_10081_119",
+    "pytest-dev__pytest_10081_29",
+    "pytest-dev__pytest_10081_36",
+    "sphinx-doc__sphinx_11510_18",
+    "sphinx-doc__sphinx_11510_212",
+    "sympy__sympy_24661_13",
+    "sympy__sympy_24661_41",
+    "sympy__sympy_24661_47",
+    "sympy__sympy_24661_565",
+    "sympy__sympy_24661_713",
+    "sympy__sympy_24661_734",
+    "ytdl-org__youtube_32987_42"
+  ],
+  "broad-exception-raised": [
+    "django__django_17087_353"
+  ],
+  "not-callable": [
+    "astropy__astropy_14508_517",
+    "django__django_17087_353",
+    "mwaskom__seaborn_3187_49",
+    "psf__requests_2931_33",
+    "ytdl-org__youtube_32987_15"
+  ],
+  "used-before-assignment": [
+    "django__django_17087_166",
+    "django__django_17087_353"
+  ],
+  "unnecessary-ellipsis": [
+    "camel-ai__camel_1627_205"
+  ],
+  "logging-too-many-args": [
+    "camel-ai__camel_1627_205"
+  ],
+  "arguments-differ": [
+    "astropy__astropy_14508_225",
+    "astropy__astropy_14508_389",
+    "astropy__astropy_14508_404",
+    "camel-ai__camel_1627_205",
+    "django__django_17087_11",
+    "django__django_17087_16",
+    "django__django_17087_604",
+    "keras-team__keras_20733_296",
+    "keras-team__keras_20733_381",
+    "psf__requests_2931_40",
+    "pytest-dev__pytest_10081_90",
+    "sympy__sympy_24661_41"
+  ],
+  "logging-fstring-interpolation": [
+    "camel-ai__camel_1627_205"
+  ],
+  "arguments-renamed": [
+    "camel-ai__camel_1627_205",
+    "matplotlib__matplotlib_25332_90",
+    "psf__requests_2931_40",
+    "pytest-dev__pytest_10081_119",
+    "sphinx-doc__sphinx_11510_243"
+  ],
+  "logging-not-lazy": [
+    "camel-ai__camel_1627_205",
+    "psf__requests_2931_40"
+  ],
+  "unspecified-encoding": [
+    "astropy__astropy_14508_280",
+    "camel-ai__camel_1627_205",
+    "matplotlib__matplotlib_25332_59",
+    "mwaskom__seaborn_3187_84",
+    "pytest-dev__pytest_10081_36",
+    "pytest-dev__pytest_10081_90",
+    "sphinx-doc__sphinx_11510_253"
+  ],
+  "pointless-statement": [
+    "astropy__astropy_14508_379",
+    "django__django_17087_142",
+    "django__django_17087_166",
+    "psf__requests_2931_6",
+    "scikit-learn__scikit_26194_491"
+  ],
+  "super-init-not-called": [
+    "astropy__astropy_14508_379",
+    "fastapi__fastapi_1524_43",
+    "keras-team__keras_20733_381",
+    "pytest-dev__pytest_10081_119",
+    "sympy__sympy_24661_1032"
+  ],
+  "eval-used": [
+    "astropy__astropy_14508_379",
+    "mwaskom__seaborn_3187_84",
+    "sympy__sympy_24661_796"
+  ],
+  "unexpected-special-method-signature": [
+    "astropy__astropy_14508_379"
+  ],
+  "unsubscriptable-object": [
+    "astropy__astropy_14508_379",
+    "astropy__astropy_14508_517"
+  ],
+  "useless-parent-delegation": [
+    "astropy__astropy_14508_379"
+  ],
+  "import-self": [
+    "matplotlib__matplotlib_25332_65"
+  ],
+  "abstract-method": [
+    "django__django_17087_16",
+    "matplotlib__matplotlib_25332_65",
+    "pytest-dev__pytest_10081_110",
+    "sympy__sympy_24661_734",
+    "sympy__sympy_24661_875",
+    "ytdl-org__youtube_32987_145",
+    "ytdl-org__youtube_32987_205",
+    "ytdl-org__youtube_32987_542",
+    "ytdl-org__youtube_32987_545",
+    "ytdl-org__youtube_32987_729",
+    "ytdl-org__youtube_32987_745",
+    "ytdl-org__youtube_32987_794",
+    "ytdl-org__youtube_32987_817"
+  ],
+  "logging-format-interpolation": [
+    "matplotlib__matplotlib_25332_65"
+  ],
+  "abstract-class-instantiated": [
+    "matplotlib__matplotlib_25332_65"
+  ],
+  "unused-import": [
+    "django__django_17087_11",
+    "fastapi__fastapi_1524_39",
+    "fastapi__fastapi_1524_44",
+    "fastapi__fastapi_1524_45",
+    "matplotlib__matplotlib_25332_65",
+    "psf__requests_2931_37",
+    "psf__requests_2931_6",
+    "sphinx-doc__sphinx_11510_243",
+    "sphinx-doc__sphinx_11510_246",
+    "sympy__sympy_24661_1032",
+    "sympy__sympy_24661_804"
+  ],
+  "used-prior-global-declaration": [
+    "sympy__sympy_24661_1034"
+  ],
+  "attribute-defined-outside-init": [
+    "astropy__astropy_14508_517",
+    "django__django_17087_604",
+    "matplotlib__matplotlib_25332_2",
+    "matplotlib__matplotlib_25332_336",
+    "mwaskom__seaborn_3187_12",
+    "psf__requests_2931_20",
+    "psf__requests_2931_26",
+    "psf__requests_2931_37",
+    "scikit-learn__scikit_26194_365",
+    "sympy__sympy_24661_1034",
+    "ytdl-org__youtube_32987_15"
+  ],
+  "global-statement": [
+    "django__django_17087_676",
+    "sympy__sympy_24661_1034"
+  ],
+  "undefined-variable": [
+    "fastapi__fastapi_1524_73",
+    "scrapy__scrapy_6542_1",
+    "sympy__sympy_24661_1034",
+    "sympy__sympy_24661_804"
+  ],
+  "access-member-before-definition": [
+    "scikit-learn__scikit_26194_365",
+    "sympy__sympy_24661_1034"
+  ],
+  "function-redefined": [
+    "django__django_17087_142",
+    "fastapi__fastapi_1524_13",
+    "fastapi__fastapi_1524_2",
+    "sphinx-doc__sphinx_11510_18"
+  ],
+  "no-self-argument": [
+    "django__django_17087_142",
+    "django__django_17087_358",
+    "mwaskom__seaborn_3187_49",
+    "sphinx-doc__sphinx_11510_18"
+  ],
+  "expression-not-assigned": [
+    "django__django_17087_142",
+    "django__django_17087_358"
+  ],
+  "non-iterator-returned": [
+    "django__django_17087_252"
+  ],
+  "invalid-str-returned": [
+    "django__django_17087_11",
+    "django__django_17087_252"
+  ],
+  "bad-string-format-type": [
+    "django__django_17087_252"
+  ],
+  "useless-else-on-loop": [
+    "django__django_17087_676"
+  ],
+  "global-variable-not-assigned": [
+    "astropy__astropy_14508_334",
+    "django__django_17087_676"
+  ],
+  "subprocess-run-check": [
+    "django__django_17087_676",
+    "matplotlib__matplotlib_25332_2"
+  ],
+  "duplicate-value": [
+    "scikit-learn__scikit_26194_52"
+  ],
+  "unbalanced-tuple-unpacking": [
+    "keras-team__keras_20733_333",
+    "scikit-learn__scikit_26194_150",
+    "scikit-learn__scikit_26194_439",
+    "scikit-learn__scikit_26194_491",
+    "scikit-learn__scikit_26194_52"
+  ],
+  "implicit-str-concat": [
+    "mwaskom__seaborn_3187_12",
+    "pytest-dev__pytest_10081_36",
+    "scikit-learn__scikit_26194_52"
+  ],
+  "too-many-function-args": [
+    "astropy__astropy_14508_176",
+    "astropy__astropy_14508_225",
+    "psf__requests_2931_40"
+  ],
+  "anomalous-backslash-in-string": [
+    "psf__requests_2931_40",
+    "psf__requests_2931_6"
+  ],
+  "no-method-argument": [
+    "psf__requests_2931_40"
+  ],
+  "undefined-loop-variable": [
+    "matplotlib__matplotlib_25332_230",
+    "mwaskom__seaborn_3187_84",
+    "scikit-learn__scikit_26194_150",
+    "scikit-learn__scikit_26194_487",
+    "sympy__sympy_24661_13"
+  ],
+  "missing-kwoa": [
+    "sympy__sympy_24661_13"
+  ],
+  "unexpected-keyword-arg": [
+    "sympy__sympy_24661_13"
+  ],
+  "assigning-non-slot": [
+    "sympy__sympy_24661_41",
+    "sympy__sympy_24661_713",
+    "sympy__sympy_24661_734",
+    "sympy__sympy_24661_875"
+  ],
+  "bad-staticmethod-argument": [
+    "sympy__sympy_24661_41"
+  ],
+  "invalid-getnewargs-ex-returned": [
+    "sympy__sympy_24661_41"
+  ],
+  "signature-differs": [
+    "sympy__sympy_24661_47"
+  ],
+  "self-cls-assignment": [
+    "sympy__sympy_24661_47"
+  ],
+  "arguments-out-of-order": [
+    "sympy__sympy_24661_47"
+  ],
+  "wildcard-import": [
+    "matplotlib__matplotlib_25332_109",
+    "sympy__sympy_24661_804"
+  ],
+  "redundant-u-string-prefix": [
+    "sympy__sympy_24661_804"
+  ],
+  "deprecated-module": [
+    "sympy__sympy_24661_804"
+  ],
+  "pointless-string-statement": [
+    "camel-ai__camel_1627_252",
+    "camel-ai__camel_1627_308",
+    "scikit-learn__scikit_26194_569",
+    "ytdl-org__youtube_32987_15"
+  ],
+  "deprecated-method": [
+    "camel-ai__camel_1627_353",
+    "ytdl-org__youtube_32987_15"
+  ],
+  "method-hidden": [
+    "ytdl-org__youtube_32987_15"
+  ],
+  "bare-except": [
+    "keras-team__keras_20733_381",
+    "keras-team__keras_20733_62"
+  ],
+  "try-except-raise": [
+    "keras-team__keras_20733_62"
+  ],
+  "unsupported-membership-test": [
+    "keras-team__keras_20733_338"
+  ],
+  "unsupported-delete-operation": [
+    "keras-team__keras_20733_338"
+  ],
+  "keyword-arg-before-vararg": [
+    "astropy__astropy_14508_280",
+    "django__django_17087_176"
+  ],
+  "return-in-init": [
+    "django__django_17087_176"
+  ],
+  "misplaced-bare-raise": [
+    "sphinx-doc__sphinx_11510_16"
+  ],
+  "raising-format-tuple": [
+    "sphinx-doc__sphinx_11510_16"
+  ],
+  "self-assigning-variable": [
+    "camel-ai__camel_1627_163",
+    "psf__requests_2931_37"
+  ],
+  "missing-timeout": [
+    "camel-ai__camel_1627_163"
+  ],
+  "using-constant-test": [
+    "astropy__astropy_14508_225"
+  ],
+  "not-an-iterable": [
+    "astropy__astropy_14508_225",
+    "keras-team__keras_20733_334"
+  ],
+  "unsupported-assignment-operation": [
+    "astropy__astropy_14508_517"
+  ],
+  "isinstance-second-argument-not-valid-type": [
+    "astropy__astropy_14508_517"
+  ],
+  "bad-chained-comparison": [
+    "sympy__sympy_24661_565"
+  ],
+  "invalid-unary-operand-type": [
+    "sympy__sympy_24661_565"
+  ],
+  "exec-used": [
+    "mwaskom__seaborn_3187_84",
+    "sympy__sympy_24661_796"
+  ],
+  "deprecated-class": [
+    "psf__requests_2931_6",
+    "sympy__sympy_24661_796"
+  ],
+  "unreachable": [
+    "sympy__sympy_24661_1032"
+  ],
+  "nested-min-max": [
+    "sympy__sympy_24661_1032"
+  ],
+  "return-in-finally": [
+    "ytdl-org__youtube_32987_42"
+  ],
+  "lost-exception": [
+    "ytdl-org__youtube_32987_42"
+  ],
+  "assignment-from-none": [
+    "keras-team__keras_20733_115"
+  ],
+  "raising-bad-type": [
+    "keras-team__keras_20733_296"
+  ],
+  "positional-only-arguments-expected": [
+    "keras-team__keras_20733_333"
+  ],
+  "pointless-exception-statement": [
+    "keras-team__keras_20733_368"
+  ],
+  "non-parent-init-called": [
+    "keras-team__keras_20733_381"
+  ],
+  "global-variable-undefined": [
+    "keras-team__keras_20733_466"
+  ],
+  "dict-iter-missing-items": [
+    "keras-team__keras_20733_526"
+  ],
+  "assignment-from-no-return": [
+    "matplotlib__matplotlib_25332_2"
+  ],
+  "invalid-field-call": [
+    "matplotlib__matplotlib_25332_59"
+  ],
+  "unpacking-non-sequence": [
+    "matplotlib__matplotlib_25332_90"
+  ],
+  "unused-wildcard-import": [
+    "matplotlib__matplotlib_25332_109"
+  ],
+  "unbalanced-dict-unpacking": [
+    "matplotlib__matplotlib_25332_230"
+  ],
+  "invalid-sequence-index": [
+    "matplotlib__matplotlib_25332_336"
+  ],
+  "syntax-error": [
+    "django__django_17087_1"
+  ],
+  "invalid-repr-returned": [
+    "django__django_17087_11"
+  ],
+  "bad-super-call": [
+    "django__django_17087_16"
+  ],
+  "invalid-overridden-method": [
+    "django__django_17087_27"
+  ],
+  "super-without-brackets": [
+    "django__django_17087_36"
+  ],
+  "duplicate-except": [
+    "django__django_17087_166"
+  ],
+  "not-context-manager": [
+    "django__django_17087_205"
+  ],
+  "inherit-non-class": [
+    "django__django_17087_267"
+  ],
+  "invalid-length-returned": [
+    "django__django_17087_340"
+  ],
+  "unused-private-member": [
+    "django__django_17087_358"
+  ],
+  "redundant-unittest-assert": [
+    "django__django_17087_475"
+  ],
+  "method-cache-max-size-none": [
+    "django__django_17087_604"
+  ],
+  "bidirectional-unicode": [
+    "django__django_17087_943"
+  ],
+  "deprecated-argument": [
+    "sphinx-doc__sphinx_11510_253"
+  ],
+  "undefined-all-variable": [
+    "camel-ai__camel_1627_81"
+  ],
+  "redundant-keyword-arg": [
+    "camel-ai__camel_1627_252"
+  ],
+  "format-string-without-interpolation": [
+    "scikit-learn__scikit_26194_28"
+  ],
+  "duplicate-string-formatting-argument": [
+    "scikit-learn__scikit_26194_365"
+  ],
+  "f-string-without-interpolation": [
+    "scikit-learn__scikit_26194_491"
+  ],
+  "possibly-unused-variable": [
+    "scikit-learn__scikit_26194_569"
+  ],
+  "unnecessary-semicolon": [
+    "psf__requests_2931_22"
+  ],
+  "notimplemented-raised": [
+    "psf__requests_2931_33"
+  ],
+  "invalid-metaclass": [
+    "astropy__astropy_14508_176"
+  ],
+  "assert-on-string-literal": [
+    "astropy__astropy_14508_280"
+  ],
+  "bad-str-strip-call": [
+    "astropy__astropy_14508_334"
+  ],
+  "contextmanager-generator-missing-cleanup": [
+    "astropy__astropy_14508_356"
+  ],
+  "astroid-error": [
+    "astropy__astropy_14508_404"
+  ],
+  "redeclared-assigned-name": [
+    "sympy__sympy_24661_616"
+  ],
+  "modified-iterating-list": [
+    "sympy__sympy_24661_713"
+  ],
+  "too-few-format-args": [
+    "sympy__sympy_24661_734"
+  ],
+  "duplicate-key": [
+    "sympy__sympy_24661_813"
+  ],
+  "raising-non-exception": [
+    "sympy__sympy_24661_875"
+  ],
+  "shadowed-import": [
+    "sympy__sympy_24661_944"
+  ],
+  "unused-format-string-argument": [
+    "mwaskom__seaborn_3187_12"
+  ],
+  "invalid-bool-returned": [
+    "pytest-dev__pytest_10081_110"
+  ]
+}
