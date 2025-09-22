@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import docker
 import json
+import pandas as pd
 import resource
 import traceback
 
@@ -134,10 +135,13 @@ def get_dataset_from_preds(
     completed_ids = set()
     for _, instance in merged_df.iterrows():
         prediction = merged_df[merged_df['instance_id'] == instance['instance_id']].iloc[0]
+        model_name = prediction["model_name_or_path"]
+        if pd.isna(model_name) or model_name is None:
+            model_name = "openrouter/meta-llama/llama-4-scout"
         report_file = (
             RUN_EVALUATION_LOG_DIR
             / run_id
-            / prediction["model_name_or_path"].replace("/", "__")
+            / model_name.replace("/", "__")
             / (prediction['instance_id']+"_testGeneration")
             / "report.json"
         )
