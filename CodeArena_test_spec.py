@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import pandas as pd
 import platform
 import re
 import os
@@ -325,6 +326,9 @@ def make_eval_script_list(instance, specs, env_name, repo_directory, base_commit
     Applies the test patch and runs the tests.
     """
     HEREDOC_DELIMITER = "EOF_114329324912"
+    # Handle null/NaN test_patch values
+    if test_patch is None or (isinstance(test_patch, float) and pd.isna(test_patch)):
+        test_patch = ""
     test_files = re.findall(DIFF_MODIFIED_FILE_REGEX, test_patch)
     # Reset test files to the state they should be in before the patch.
     reset_tests_command = f"git checkout {base_commit} {' '.join(test_files)}"
