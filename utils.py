@@ -134,11 +134,14 @@ def load_CodeArena_prediction_dataset(
     with open(generated_tests_path, 'r') as f:
         for line in f:
             entry = json.loads(line.strip())
-            if entry['instance_id'] not in instance_ids:
+            if instance_ids is not None and entry['instance_id'] not in instance_ids:
                 continue
             # Fix the `model_patch` if it starts with `---`
-            if entry.get('model_patch', '').startswith('---'):
-                entry['model_patch'] = entry['model_patch'].replace('---', 'diff --git', 1)
+            model_patch = entry.get('model_patch', '')
+            if isinstance(model_patch, dict):
+                model_patch = model_patch.get('model_patch', '')
+            if isinstance(model_patch, str) and model_patch.startswith('---'):
+                entry['model_patch'] = model_patch.replace('---', 'diff --git', 1)
             generated_tests.append(entry)
 
     generated_tests_df = pd.DataFrame(generated_tests)
