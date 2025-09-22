@@ -211,6 +211,10 @@ def get_modified_added_files(patch_string):
     Returns:
         tuple: (list of modified files, list of added files)
     """
+    # Handle null/NaN patch_string values
+    if patch_string is None or (isinstance(patch_string, float) and pd.isna(patch_string)):
+        patch_string = ""
+    
     # Parse the patch
     try:
         patch_set = PatchSet.from_string(patch_string)
