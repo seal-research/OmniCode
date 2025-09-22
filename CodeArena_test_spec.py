@@ -427,6 +427,9 @@ def make_inverted_eval_script_list(instance, specs, env_name, repo_directory, ba
     Applies the given issue patch (gold or bad) and runs the candidate tests.
     """
     HEREDOC_DELIMITER = "EOF_114329324912"
+    # Handle null/NaN test_patch values
+    if test_patch is None or (isinstance(test_patch, float) and pd.isna(test_patch)):
+        test_patch = ""
     test_files = re.findall(DIFF_MODIFIED_FILE_REGEX, test_patch)
     # Reset all files *except* test files to the state they should be in before the patch.
     reset_command = f"git stash push -- {' '.join(test_files)} && git checkout {base_commit} -- . && git stash pop"
