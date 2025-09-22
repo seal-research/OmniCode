@@ -212,7 +212,23 @@ def get_modified_added_files(patch_string):
         tuple: (list of modified files, list of added files)
     """
     # Parse the patch
-    patch_set = PatchSet.from_string(patch_string)
+    try:
+        patch_set = PatchSet.from_string(patch_string)
+    except Exception as e:
+        # If unidiff fails, try to extract file names manually from the patch
+        print(f"Warning: unidiff parsing failed: {e}. Attempting manual extraction.")
+        modified_files = []
+        added_files = []
+        
+        # Look for file paths in the patch
+        lines = patch_string.split('\n')
+        for line in lines:
+            if line.startswith('--- a/') or line.startswith('+++ b/'):
+                file_path = line[6:]  # Remove '--- a/' or '+++ b/'
+                if file_path not in modified_files:
+                    modified_files.append(file_path)
+        
+        return modified_files, added_files
 
     modified_files = []
     added_files = []
