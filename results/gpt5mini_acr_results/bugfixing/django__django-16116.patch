@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/django/contrib/auth/management/commands/changepassword.py b/django/contrib/auth/management/commands/changepassword.py\nindex 669d8cf5d0..95971579c4 100644\n--- a/django/contrib/auth/management/commands/changepassword.py\n+++ b/django/contrib/auth/management/commands/changepassword.py\n@@ -11,7 +11,7 @@ UserModel = get_user_model()\n \n class Command(BaseCommand):\n     help = \"Change a user's password for django.contrib.auth.\"\n-    requires_migrations_checks = True\n+    requires_migrations_checks = False\n     requires_system_checks = []\n \n     def _get_pass(self, prompt=\"Password: \"):\n"
+}

@@ -1,0 +1,3 @@
+{
+  "patch": "diff --git a/seaborn/_core/scales.py b/seaborn/_core/scales.py\nindex bbd71ec1..aea5d4da 100644\n--- a/seaborn/_core/scales.py\n+++ b/seaborn/_core/scales.py\n@@ -225,6 +225,13 @@ class Nominal(Scale):\n         if prop.legend:\n             new._legend = units_seed, list(stringify(units_seed))\n \n+        # Presentation hints for categorical axes. These are lightweight,\n+        # non-breaking metadata that Plotter._finalize_figure can use to\n+        # consistently present nominal scales (padding, grid visibility, y-inversion).\n+        new._categorical_pad = 0.5\n+        new._categorical_hide_grid = True\n+        new._categorical_invert_y = True\n+\n         return new\n \n     def tick(self, locator: Locator | None = None):\n"
+}

@@ -34,10 +34,12 @@ CONFIG_FILE_MAP = {
     "testgen-cpp": CUR_DIR / "testgen_cpp.yaml",
     "stylereview": CUR_DIR / "stylereview.yaml",
     "reviewfix": CUR_DIR / "reviewfix.yaml",
+
     "reviewfix-java": CUR_DIR / "reviewfix_java.yaml",
     "stylereview-java-pmd": CUR_DIR / "jstylereview_pmd.yaml",
     "stylereview-java-checkstyle": CUR_DIR / "jstylereview.yaml",
     "stylereview-cpp-clangtidy": CUR_DIR / "jstylereview_cpp.yaml",
+
 }
 
 # Add style review config map for Java
@@ -185,7 +187,7 @@ def run_sweagent_single(
 
     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
 
-        if mode == 'reviewfix' or mode == 'reviewfix-java':
+        if mode == 'reviewfix':
             # use the problem statement to inject prompt, hacky way to modify prompt easily
             prompt = get_reviewfix_faux_problem_statement(instance)
             if prompt is None:
@@ -469,7 +471,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash")
     parser.add_argument("-k", "--api_key", type=str, default=None)
-    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "bugfixing-cpp", "testgen-cpp", "stylereview", "reviewfix", "reviewfix-java"])
+    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "bugfixing-cpp", "testgen-cpp", "stylereview", "reviewfix","stylereview-java-pmd","stylereview-java-checkstyle","stylereview-cpp-clangtidy"])
     parser.add_argument("--thinking_budget", type=int, default=0)
     parser.add_argument("--style_tool", type=str, default=None, choices=["checkstyle", "pmd"], help="Style review tool to use (Java)")
     parser.add_argument("--use_apptainer", type=str2bool, default=False, help="run with docker or apptainer")

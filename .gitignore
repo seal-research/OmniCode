@@ -219,6 +219,7 @@ testgen_mockito3424.json
 testgen_mockito3424.jsonl
 slurm_logs/
 data/agentless_results/*
+
 server/
 *.Dockerfile 
 clones/
@@ -236,3 +237,9 @@ server_new/
 slurm_logs/
 sweagent_results/
 workspace/
+
+
+# python style review intermediate files during dataset collection
+data/python_style_review_dataset/pylint_results/*
+data/python_style_review_dataset/python_style_review_dataset/*
+
