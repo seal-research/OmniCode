@@ -1,0 +1,14 @@
+astropy__astropy-14508
+camel-ai__camel-1627
+django__django-17087
+fastapi__fastapi-1524
+keras-team__keras-20733
+matplotlib__matplotlib-25332
+mwaskom__seaborn-3187
+psf__requests-2931
+pytest-dev__pytest-10081
+scikit-learn__scikit-learn-26194
+scrapy__scrapy-6542
+sphinx-doc__sphinx-11510
+sympy__sympy-24661
+ytdl-org__youtube-dl-32987
