@@ -28,14 +28,11 @@ from pathlib import Path
 # ---------- Filtering configuration ----------
 STYLE_IGNORE_IDS = {
     "R0917",  # too-many-positional-arguments
-    "C0411",  # wrong-import-order
 }
 ENV_IGNORE_IDS = {
     "E0401",  # import-error
     "E0611",  # no-name-in-module
     "E1101",  # no-member
-    "W0611",  # unused-import
-    "W0404",  # reimported
 }
 IGNORE_IDS = STYLE_IGNORE_IDS | ENV_IGNORE_IDS
 KEEP_TYPES = {"error", "warning", "fatal"}
@@ -120,7 +117,7 @@ def run_pylint(repo_dir, out_json_path, jobs=None):
         subprocess.run(cmd, cwd=repo_dir, stdout=outf, stderr=logf, check=False)
 
 
-def parse_pylint_output(out_json_path):
+def parse_pylint_output(out_json_path, label):
     try:
         with open(out_json_path, "r", encoding="utf-8") as f:
             raw = json.load(f)
@@ -131,12 +128,12 @@ def parse_pylint_output(out_json_path):
     # filter messages before parsing into per-file structure
     filtered_msgs = filter_pylint_output(raw)
 
-    with open(f'pylint_results/filtered_pylint_data/filtered_{out_json_path}', "w", encoding="utf-8") as f:
+    with open(f'pylint_results/filtered_pylint_data/filtered_{label}.json', "w", encoding="utf-8") as f:
         json.dump(filtered_msgs, f, indent=2)
 
     file_map = {}
     for msg in filtered_msgs:
-        path = os.path.abspath(msg.get("path"))
+        path = msg.get("path")
         entry = file_map.setdefault(path, {"file": path, "messages": []})
         entry["messages"].append({
             "line": msg.get("line"),
@@ -187,7 +184,7 @@ def main():
         run(["git", "clone", args.repo_url, str(repo_dir)])
         git_checkout_pr(str(repo_dir), args.pr)
 
-        if args.instance_id:
+        if args.swe_results:
             swe_list = load_swe_results(args.swe_results)
             if swe_list:
                 match = next((e for e in swe_list if e.get("instance_id") == args.instance_id), None)
@@ -198,13 +195,9 @@ def main():
         print("[+] Running pylint ...", file=sys.stderr)
         run_pylint(str(repo_dir), out_json_path, jobs=args.jobs)
 
-        files, overview = parse_pylint_output(out_json_path)
+        files, overview = parse_pylint_output(out_json_path, args.instance_id)
 
-        m = re.search(r'[:/](?P<owner>[^/]+)/' + re.escape(repo_name), args.repo_url)
-        owner = m.group("owner") if m else "unknown"
-        label = f"{owner}/{repo_name}:pr-{args.pr}"
-
-        obj = {"label": label, "files": files, "overview": overview}
+        obj = {"label": args.instance_id, "files": files, "overview": overview}
 
         with open(args.out, "w", encoding="utf-8") as f:
             json.dump(obj, f, indent=2)
