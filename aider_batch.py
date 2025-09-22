@@ -92,25 +92,40 @@ def process(
 
 if __name__=='__main__':
 
-    jobname = "aider_gemini_tg_java"
+    # jobname = "aider_gemini_tg_java"
+    # process(
+    #     jobname = jobname,
+    #     mode = "testgen",
+    #     instance_list_path = "data/g2_sane_java_instances.txt",
+    #     input_data_path = "data/codearena_instances_java.json",
+    #     model = "openrouter/google/gemini-2.5-flash",
+    #     model_provider = "openrouter",
+    #     output_dir = f"logs/baselines/{jobname}",
+    #     output_file = f"logs/baselines/{jobname}/all_preds.jsonl",
+    #     mem = "32G",
+    # )
+
+    # jobname = "aider_gemini_tg_cpp"
+    # process(
+    #     jobname = jobname,
+    #     mode = "testgen",
+    #     instance_list_path = "data/g2_sane_cpp_instances.txt",
+    #     input_data_path = "data/codearena_instances_cpp.json",
+    #     model = "openrouter/google/gemini-2.5-flash",
+    #     model_provider = "openrouter",
+    #     output_dir = f"logs/baselines/{jobname}",
+    #     output_file = f"logs/baselines/{jobname}/all_preds.jsonl",
+    #     mem = "32G",
+    # )
+
+
+
+    jobname = "aider_gemini_rf_java"
     process(
         jobname = jobname,
-        mode = "testgen",
+        mode = "reviewfix",
         instance_list_path = "data/g2_sane_java_instances.txt",
         input_data_path = "data/codearena_instances_java.json",
-        model = "openrouter/google/gemini-2.5-flash",
-        model_provider = "openrouter",
-        output_dir = f"logs/baselines/{jobname}",
-        output_file = f"logs/baselines/{jobname}/all_preds.jsonl",
-        mem = "32G",
-    )
-
-    jobname = "aider_gemini_tg_cpp"
-    process(
-        jobname = jobname,
-        mode = "testgen",
-        instance_list_path = "data/g2_sane_cpp_instances.txt",
-        input_data_path = "data/codearena_instances_cpp.json",
         model = "openrouter/google/gemini-2.5-flash",
         model_provider = "openrouter",
         output_dir = f"logs/baselines/{jobname}",
