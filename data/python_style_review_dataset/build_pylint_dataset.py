@@ -42,17 +42,17 @@ for key, (url, pr) in repos.items():
         print(f"[+] Completed pylint review for {key}_{pr}")
         shutil.rmtree(f'./repo', ignore_errors=True)
 
-    ### Phase 2: filtering dataset
-    try:
-        subprocess.run([
-            "python", 'filter_pylint_results.py',
-            "--instance-id", f'{key}-{pr}',
-            "--input", f'pylint_results/full_pylint_run_data/full_{key.split('__')[-1]}_pylint.json'
-        ], check=False)
-    finally:
-        # cleanup: remove workdir + cloned repo
-        print(f"[+] Completed pylint review for {key}_{pr}")
-        shutil.rmtree(f'./repo', ignore_errors=True)
+    ### Phase 2: (optional) re-filtering dataset (The dataset is filtered by default during Phase 1)
+    # try:
+    #     subprocess.run([
+    #         "python", 'filter_pylint_results.py',
+    #         "--instance-id", f'{key}-{pr}',
+    #         "--input", f'pylint_results/full_pylint_run_data/full_{key.split('__')[-1]}_pylint.json'
+    #     ], check=False)
+    # finally:
+    #     # cleanup: remove workdir + cloned repo
+    #     print(f"[+] Completed pylint review for {key}_{pr}")
+    #     shutil.rmtree(f'./repo', ignore_errors=True)
 
     ### Phase 3: splitting dataset
     try:
@@ -60,7 +60,8 @@ for key, (url, pr) in repos.items():
             "python", 'python_style_review_dataset_generator.py',
             "--instance-id", f'{key}-{pr}',
             "--results", f'pylint_results/{key}-{pr}.json',
-            "--output", f'python_style_review_dataset/{key}-{pr}_review_instances.json'
+            "--output", f'python_style_review_dataset/{key}-{pr}_review_instances.json', 
+            # "--batch-size", '20' # default = 0 => one file per instance
         ], check=False)
     finally:
         # cleanup: remove workdir + cloned repo
