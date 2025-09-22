@@ -399,7 +399,8 @@ def get_test_directives(instance: Union[dict, TestSpec]) -> list:
     # diff_pat = r"diff --git a/.* b/(.*)"
     # directives = re.findall(diff_pat, test_patch)
 
-    directives = get_modified_added_files(test_patch)
+    modified_files, added_files = get_modified_added_files(test_patch)
+    directives = modified_files + added_files
     directives = [
         d for d in directives if not any(d.endswith(ext) for ext in NON_TEST_EXTS)
     ]
