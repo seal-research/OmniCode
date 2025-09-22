@@ -1,6 +1,11 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S bash --noprofile --norc
 
 set -euo pipefail
+
+module purge 2>/dev/null || true
+export PATH=/share/apps/singularity/3.7.0/bin:$PATH
+unset LD_PRELOAD
+unset LD_LIBRARY_PATH
 
 INSTANCE_FILE="data/instance_IDs.txt"
 RUN_ID="claude_sonnet_acr_eval"
