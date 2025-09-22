@@ -2,7 +2,6 @@
 
 set -euo pipefail
 
-module purge 2>/dev/null || true
 export PATH=/share/apps/singularity/3.7.0/bin:$PATH
 unset LD_PRELOAD
 unset LD_LIBRARY_PATH
@@ -63,7 +62,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --export=NONE \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; module purge 2>/dev/null || true; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --BugFixing \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --BugFixing \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -96,7 +95,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --export=NONE \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; module purge 2>/dev/null || true; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --CodeReview \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --CodeReview \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -129,7 +128,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --export=NONE \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; module purge 2>/dev/null || true; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --StyleReview \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --StyleReview \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -162,7 +161,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
            --export=NONE \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; module purge 2>/dev/null || true; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --TestGeneration \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --TestGeneration \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
