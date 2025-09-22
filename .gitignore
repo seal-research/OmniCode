@@ -219,3 +219,6 @@ testgen_mockito3424.json
 testgen_mockito3424.jsonl
 slurm_logs/
 data/agentless_results/*
+
+# python style review intermediate files during dataset collection
+data/python_style_review_dataset/pylint_results/*
