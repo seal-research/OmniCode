@@ -13,17 +13,28 @@ TIME_LIMIT="02:00:00"
 mkdir -p "${LOG_DIR}"
 
 # Set environment variables for SWE-bench
-export SWEBENCH_BUILD_DIR="/scratch/cbb89/logs/build_images"
-export SWEBENCH_CACHE_DIR="/scratch/cbb89/logs/cache"
+# Try different scratch locations, fallback to home directory
+if [ -d "/scratch" ] && [ -w "/scratch" ]; then
+    SCRATCH_BASE="/scratch"
+elif [ -d "/tmp" ] && [ -w "/tmp" ]; then
+    SCRATCH_BASE="/tmp"
+else
+    SCRATCH_BASE="$HOME"
+fi
+
+export SWEBENCH_BUILD_DIR="${SCRATCH_BASE}/logs/build_images"
+export SWEBENCH_CACHE_DIR="${SCRATCH_BASE}/logs/cache"
+
+# Create directories and symlink
+mkdir -p "${SCRATCH_BASE}/logs/build_images/def"
+mkdir -p "${SCRATCH_BASE}/logs/build_images/base"
+mkdir -p "${SCRATCH_BASE}/logs/build_images/env"
+mkdir -p "${SCRATCH_BASE}/logs/build_images/instances"
+mkdir -p "${SCRATCH_BASE}/logs/run_evaluation"
+mkdir -p "${SCRATCH_BASE}/logs/run_validation"
 
 # Create symlink to fix hardcoded /scratch/logs path
-mkdir -p /scratch/cbb89/logs/build_images/def
-mkdir -p /scratch/cbb89/logs/build_images/base
-mkdir -p /scratch/cbb89/logs/build_images/env
-mkdir -p /scratch/cbb89/logs/build_images/instances
-mkdir -p /scratch/cbb89/logs/run_evaluation
-mkdir -p /scratch/cbb89/logs/run_validation
-ln -sf /scratch/cbb89/logs /scratch/logs 2>/dev/null || true
+ln -sf "${SCRATCH_BASE}/logs" /scratch/logs 2>/dev/null || true
 
 # Change to the codearena directory
 cd /home/cbb89/codearena/codearena/OmniCode
@@ -39,15 +50,15 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
     echo "Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})"
 
     sbatch --job-name="${JOB_NAME}" \
-           --exclusive \
            --cpus-per-task="${CPUS}" \
            --gres=gpu:1 \
            --mem="${MEM}" \
            --time="${TIME_LIMIT}" \
            --constraint=gpu \
+           --export=NONE \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --BugFixing \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; module purge 2>/dev/null || true; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --BugFixing \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -72,15 +83,15 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
     echo "Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})"
 
     sbatch --job-name="${JOB_NAME}" \
-           --exclusive \
            --cpus-per-task="${CPUS}" \
            --gres=gpu:1 \
            --mem="${MEM}" \
            --time="${TIME_LIMIT}" \
            --constraint=gpu \
+           --export=NONE \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --CodeReview \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; module purge 2>/dev/null || true; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --CodeReview \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -105,15 +116,15 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
     echo "Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})"
 
     sbatch --job-name="${JOB_NAME}" \
-           --exclusive \
            --cpus-per-task="${CPUS}" \
            --gres=gpu:1 \
            --mem="${MEM}" \
            --time="${TIME_LIMIT}" \
            --constraint=gpu \
+           --export=NONE \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --StyleReview \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; module purge 2>/dev/null || true; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --StyleReview \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
@@ -138,15 +149,15 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
     echo "Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})"
 
     sbatch --job-name="${JOB_NAME}" \
-           --exclusive \
            --cpus-per-task="${CPUS}" \
            --gres=gpu:1 \
            --mem="${MEM}" \
            --time="${TIME_LIMIT}" \
            --constraint=gpu \
+           --export=NONE \
            --output="${LOG_DIR}/%x_%j.out" \
            --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && python codearena.py --TestGeneration \
+           --wrap="(cd /home/cbb89/codearena/codearena/OmniCode && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; module purge 2>/dev/null || true; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --TestGeneration \
                     --predictions_path gold \
                     --run_id ${JOB_NAME} \
                     --max_workers 1 \
