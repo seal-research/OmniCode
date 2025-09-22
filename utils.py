@@ -244,7 +244,7 @@ def get_modified_added_files(patch_string):
         elif patched_file.is_modified_file:
             modified_files.append(patched_file.path)
 
-    return modified_files + added_files
+    return modified_files, added_files
 
 
 
