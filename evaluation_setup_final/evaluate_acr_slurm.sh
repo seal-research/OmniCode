@@ -6,6 +6,23 @@ export PATH=/share/apps/singularity/3.7.0/bin:$PATH
 unset LD_PRELOAD
 unset LD_LIBRARY_PATH
 
+# Locate sbatch even in a minimal environment
+if command -v sbatch >/dev/null 2>&1; then
+    SBATCH_BIN="$(command -v sbatch)"
+else
+    for d in /usr/bin /usr/local/bin /opt/slurm/bin /usr/lib/slurm /cm/shared/apps/slurm/current/bin /cm/local/apps/slurm/*/bin; do
+        if [ -x "$d/sbatch" ]; then
+            SBATCH_BIN="$d/sbatch"
+            break
+        fi
+    done
+fi
+
+if [ -z "${SBATCH_BIN:-}" ]; then
+    echo "ERROR: sbatch not found. Add its directory to PATH or set SBATCH_BIN."
+    exit 1
+fi
+
 INSTANCE_FILE="data/instance_IDs.txt"
 RUN_ID="claude_sonnet_acr_eval"
 LOG_DIR="evaluation_setup_final/logs"
@@ -53,7 +70,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
 
     echo "Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})"
 
-    sbatch --job-name="${JOB_NAME}" \
+    "${SBATCH_BIN}" --job-name="${JOB_NAME}" \
            --cpus-per-task="${CPUS}" \
            --gres=gpu:1 \
            --mem="${MEM}" \
@@ -86,7 +103,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
 
     echo "Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})"
 
-    sbatch --job-name="${JOB_NAME}" \
+    "${SBATCH_BIN}" --job-name="${JOB_NAME}" \
            --cpus-per-task="${CPUS}" \
            --gres=gpu:1 \
            --mem="${MEM}" \
@@ -119,7 +136,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
 
     echo "Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})"
 
-    sbatch --job-name="${JOB_NAME}" \
+    "${SBATCH_BIN}" --job-name="${JOB_NAME}" \
            --cpus-per-task="${CPUS}" \
            --gres=gpu:1 \
            --mem="${MEM}" \
@@ -152,7 +169,7 @@ while IFS= read -r ID || [[ -n "${ID}" ]]; do
 
     echo "Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})"
 
-    sbatch --job-name="${JOB_NAME}" \
+    "${SBATCH_BIN}" --job-name="${JOB_NAME}" \
            --cpus-per-task="${CPUS}" \
            --gres=gpu:1 \
            --mem="${MEM}" \
