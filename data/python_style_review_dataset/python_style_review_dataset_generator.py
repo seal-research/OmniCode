@@ -72,10 +72,24 @@ def create_sweagent_instance(
     repo: str,
     pr_number: int,
     problem_statement: str,
+    violations: list,
     instance_idx: int
 ) -> Dict:
     """Create a SWE agent instance dict."""
     instance_id = f"{org}__{repo}_{pr_number}_{instance_idx}"
+    style_review_summary = {
+        "total_files": len(violations), 
+        "total_messages": 0,
+        "files": {}
+    }
+    total_messages = 0
+    for file in violations: 
+        style_review_summary["files"][file["file"]] = {}
+        style_review_summary["files"][file["file"]]["message_count"] = len(file["messages"])
+        style_review_summary["files"][file["file"]]["messages"] = file["messages"]
+        total_messages += len(file["messages"])
+    style_review_summary["total_messages"] = total_messages
+    
     return {
         "repo": f"{org}/{repo}",
         "pull_number": int(pr_number),
@@ -90,8 +104,9 @@ def create_sweagent_instance(
         "version": "",
         "PASS_TO_PASS": "",
         "FAIL_TO_PASS": "",
-        "bad_patches": []
-    }
+        "bad_patches": [],
+        "style_review_summary": style_review_summary
+    } 
 
 
 def main():
@@ -99,7 +114,7 @@ def main():
     parser.add_argument("--instance-id", required=True, help="org__repo-pr-number (e.g. astropy__astropy-14508)")
     parser.add_argument("--results", default="results.json", help="Path to results.json from pr_pylint_review.py")
     parser.add_argument("--output", required=True, help="Path to save SWE Agent instances (JSON array)")
-    parser.add_argument("--batch_size", type=int, default=0,
+    parser.add_argument("--batch-size", type=int, default=0,
                         help="Approx number of violations per instance (0 = group by file)")
     args = parser.parse_args()
 
@@ -139,7 +154,7 @@ def main():
             if not fr.get("messages"):
                 continue
             ps = generate_problem_statement_for_batch([fr], style_tool="pylint")
-            instances.append(create_sweagent_instance(org, repo, number, ps, instance_idx))
+            instances.append(create_sweagent_instance(org, repo, number, ps, [fr], instance_idx))
             print(f"Created instance {instance_idx} for file {fr.get('file')}")
             instance_idx += 1
     else:
@@ -154,20 +169,20 @@ def main():
             if batch and batch_violation_count + violations_count >= args.batch_size:
                 ps = generate_problem_statement_for_batch(batch, style_tool="pylint")
                 instances.append(
-                    create_sweagent_instance(org, repo, number, ps, instance_idx)
+                    create_sweagent_instance(org, repo, number, ps, batch, instance_idx)
                 )
                 print(f"Created instance {instance_idx} with {batch_violation_count} violations ({len(batch)} file(s))")
                 instance_idx += 1
                 batch = []
                 batch_violation_count = 0
-
+            
             batch.append(fr)
             batch_violation_count += violations_count
 
         if batch:
             ps = generate_problem_statement_for_batch(batch, style_tool="pylint")
             instances.append(
-                create_sweagent_instance(org, repo, number, ps, instance_idx)
+                create_sweagent_instance(org, repo, number, ps, batch, instance_idx)
             )
             print(f"Created instance {instance_idx} with {batch_violation_count} violations ({len(batch)} file(s))")
 
