@@ -1,0 +1,124 @@
+--- a/tests/test_expressions_temporal_subtraction.py
++++ b/tests/test_expressions_temporal_subtraction.py
++import datetime
++import pytest
++
++from django.core.exceptions import FieldError
++from django.db.models import (
++    DateField,
++    DateTimeField,
++    DurationField,
++    TimeField,
++    Value,
++    ExpressionWrapper,
++)
++
++# The tests below exercise inference of output_field for temporal subtraction
++# expressions and chaining them with DurationField arithmetic. The reported bug
++# was that (DateTime - DateTime) + Duration would raise a mixed-types FieldError
++# unless the subtraction was wrapped in an ExpressionWrapper to force the
++# subtraction's output_field to DurationField. The expected / fixed behavior is
++# that (DateTime - DateTime) should be treated as producing a DurationField
++# automatically, so it can be combined with DurationField expressions without
++# the user having to wrap it manually.
++
++
++def _dt(y=2020, m=1, d=1, hh=0, mm=0, ss=0):
++    return datetime.datetime(y, m, d, hh, mm, ss)
++
++
++def _d(y=2020, m=1, d=1):
++    return datetime.date(y, m, d)
++
++
++def _t(hh=0, mm=0, ss=0):
++    return datetime.time(hh, mm, ss)
++
++
++def test_chained_temporal_subtraction_with_expression_wrapper_succeeds():
++    """
++    Regression / sanity test: wrapping a temporal subtraction in an
++    ExpressionWrapper that sets output_field=DurationField should allow
++    chaining with another Duration Value without raising FieldError.
++
++    This is the existing workaround; this test should pass both before and
++    after the framework fix.
++    """
++    # Build a subtraction of two datetimes (Value(...) - Value(...))
++    lhs = Value(_dt(2020, 1, 2, 12, 0, 0), output_field=DateTimeField())
++    rhs = Value(_dt(2020, 1, 1, 12, 0, 0), output_field=DateTimeField())
++    subtraction = lhs - rhs
++
++    # Explicitly wrap the subtraction with a Duration output_field (workaround)
++    wrapped = ExpressionWrapper(subtraction, output_field=DurationField())
++
++    # Add a zero timedelta (Duration) to the wrapped subtraction
++    addend = Value(datetime.timedelta(), output_field=DurationField())
++    expr = wrapped + addend
++
++    # Accessing output_field should succeed and be DurationField
++    out = expr.output_field
++    assert out.get_internal_type() == 'DurationField'
++
++
++def test_chained_temporal_subtraction_without_expression_wrapper_expected_to_be_duration():
++    """
++    This test encodes the desired / fixed behavior:
++    (DateTime - DateTime) + Duration should be treated as Duration arithmetic
++    without the need for ExpressionWrapper. Before the fix this test fails
++    (FieldError is raised). After the fix this test should pass.
++
++    We purposely assert the successful condition (no FieldError and the outer
++    expression's output_field is DurationField) so that this test fails on the
++    unpatched codebase (demonstrating the bug) and passes after the fix.
++    """
++    lhs = Value(_dt(2020, 1, 2, 12, 0, 0), output_field=DateTimeField())
++    rhs = Value(_dt(2020, 1, 1, 12, 0, 0), output_field=DateTimeField())
++    subtraction = lhs - rhs
++
++    addend = Value(datetime.timedelta(hours=1), output_field=DurationField())
++    expr = subtraction + addend
++
++    # The bug manifests as a FieldError being raised when trying to resolve
++    # expr.output_field (mixed DateTimeField vs DurationField). The expected
++    # behavior after the fix is that the resolution succeeds and the outer
++    # expression reports a DurationField.
++    out = expr.output_field
++    assert out.get_internal_type() == 'DurationField'
++
++
++@pytest.mark.parametrize(
++    "left_field,left_value,right_field,right_value",
++    [
++        # Matching temporal types -> subtraction semantically duration
++        (DateField(), _d(2020, 1, 2), DateField(), _d(2020, 1, 1)),
++        (TimeField(), _t(12, 0, 0), TimeField(), _t(11, 0, 0)),
++        # Non-matching temporal types -> should be rejected as mixed types
++        (DateTimeField(), _dt(2020, 1, 2, 12, 0, 0), DateField(), _d(2020, 1, 1)),
++        (DateField(), _d(2020, 1, 2), TimeField(), _t(11, 0, 0)),
++    ],
++)
++def test_temporal_subtraction_type_handling(left_field, left_value, right_field, right_value):
++    """
++    Edge-case coverage:
++    - When subtracting matching temporal types (Date - Date, Time - Time),
++      the subtraction should be a DurationField (and chaining with Duration
++      should be allowed after the fix).
++    - When subtracting mismatched temporal types (e.g., DateTime - Date),
++      the engine should treat this as mixed types and raise FieldError.
++    """
++    left = Value(left_value, output_field=left_field)
++    right = Value(right_value, output_field=right_field)
++    subtraction = left - right
++
++    # If the temporal types match, after the fix subtraction should yield a DurationField.
++    if left_field.get_internal_type() == right_field.get_internal_type():
++        # Chain with a duration to ensure outer inference works.
++        expr = subtraction + Value(datetime.timedelta(), output_field=DurationField())
++        out = expr.output_field
++        assert out.get_internal_type() == 'DurationField'
++    else:
++        # Mismatched temporal types: attempting to resolve output_field should raise.
++        with pytest.raises(FieldError):
++            # Accessing output_field triggers _resolve_output_field and will raise.
++            _ = subtraction.output_field

@@ -1,0 +1,74 @@
+--- a/tests/forms_tests/test_fileinput_required_attribute.py
++++ b/tests/forms_tests/test_fileinput_required_attribute.py
++import pytest
++
++from django.forms.widgets import FileInput, ClearableFileInput
++
++
++def test_fileinput_use_required_attribute_suppresses_when_initial_exists():
++    """
++    Regression test for: FileInput shouldn't display required attribute when
++    initial data exists.
++
++    This test asserts the intended behavior: when initial is truthy (indicating
++    an existing file), FileInput.use_required_attribute(...) should return False
++    so that the rendered <input type="file"> does not include the HTML
++    'required' attribute.
++
++    NOTE: This test fails against the pre-fix behavior where only
++    ClearableFileInput implemented this check and FileInput fell back to the
++    base Widget implementation (which ignores 'initial').
++    """
++    widget = FileInput()
++    # Simulate an "initial" value (truthy). The intended behavior is to
++    # suppress the HTML required attribute when initial data exists.
++    assert widget.use_required_attribute(initial=object()) is False
++
++
++def test_fileinput_use_required_attribute_required_when_no_initial_and_hidden_overrides():
++    """
++    Ensure that when there is no initial data, FileInput uses the required
++    attribute (unless the widget is hidden).
++
++    Also tests the hidden widget edge case: if the widget is hidden, it should
++    never use the required attribute.
++    """
++    widget = FileInput()
++    # No initial data -> 'required' is applicable (unless hidden)
++    assert widget.use_required_attribute(initial=None) is True
++    assert widget.use_required_attribute(initial=False) is True
++    assert widget.use_required_attribute(initial='') is True
++
++    # Hidden widgets should never use the 'required' attribute.
++    widget.is_hidden = True
++    assert widget.use_required_attribute(initial=None) is False
++    # Even with an initial value, hidden widgets shouldn't use 'required'.
++    assert widget.use_required_attribute(initial=object()) is False
++
++
++def test_clearablefileinput_suppresses_required_when_initial_and_allows_when_not():
++    """
++    ClearableFileInput already implemented the suppression of the required
++    attribute when initial data exists. Verify that behavior.
++
++    Also check edge cases where initial is falsy and hidden widget behavior.
++    """
++    cwidget = ClearableFileInput()
++    # Truthy initial should suppress required (this has historically passed).
++    assert cwidget.use_required_attribute(initial=True) is False
++    # Falsy initial should allow required (when not hidden).
++    assert cwidget.use_required_attribute(initial=None) is True
++    assert cwidget.use_required_attribute(initial=False) is True
++
++    # Hidden widget should never use required, even if no initial.
++    cwidget.is_hidden = True
++    assert cwidget.use_required_attribute(initial=None) is False
++
++    # Reset hidden to default for sanity and test an object that might
++    # represent a file-like initial (the use_required_attribute API expects
++    # a boolean-like indicator; this ensures truthy values are respected).
++    cwidget.is_hidden = False
++    class FakeFile:
++        url = '/media/example.txt'
++    # Passing a truthy object should suppress the required attribute.
++    assert cwidget.use_required_attribute(initial=FakeFile()) is False

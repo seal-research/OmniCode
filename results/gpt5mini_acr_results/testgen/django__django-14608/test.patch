@@ -1,0 +1,118 @@
+--- a/tests/forms_tests/test_formsets_nonform_errors.py
++++ b/tests/forms_tests/test_formsets_nonform_errors.py
++import pytest
++from django import forms
++from django.forms import formset_factory
++
++# Tests for the FormSet non-form error CSS class behavior.
++# These tests assert that FormSet-level (non-form) errors are rendered with
++# the "nonform" CSS class on the ErrorList HTML. Before the fix described in
++# the issue, the ErrorList for formset non-form errors didn't include that
++# class, so at least one test below will fail before the fix is applied and
++# will pass after the fix.
++
++def make_simple_form_and_factory(formset_cls=None):
++    """Helper to create a simple form and a formset factory using it."""
++    class SimpleForm(forms.Form):
++        name = forms.CharField(required=False)
++
++    if formset_cls is None:
++        return SimpleForm, formset_factory(SimpleForm, extra=1)
++    return SimpleForm, formset_factory(SimpleForm, formset=formset_cls, extra=1)
++
++
++def management_data_for_prefix(prefix='form', total=1, initial=0):
++    """
++    Return a minimal set of management form data keys for a bound formset.
++    Uses the default prefix ('form') by default to match formset_factory behavior.
++    """
++    return {
++        f'{prefix}-TOTAL_FORMS': str(total),
++        f'{prefix}-INITIAL_FORMS': str(initial),
++        # MIN_NUM_FORM_COUNT and MAX_NUM_FORM_COUNT are included by the
++        # ManagementForm initial output, so include them to be safe.
++        f'{prefix}-MIN_NUM_FORMS': '0',
++        f'{prefix}-MAX_NUM_FORMS': '1000',
++    }
++
++
++def test_form_non_field_errors_have_nonfield_css_class():
++    """
++    Sanity check: Form non-field errors should include the 'nonfield' CSS class.
++    This behavior existed prior to the fix and should continue to work.
++    """
++    class F(forms.Form):
++        name = forms.CharField(required=False)
++
++        def clean(self):
++            # Raise a form-level (non-field) ValidationError.
++            raise forms.ValidationError("Form-level error")
++
++    form = F(data={})
++    # Trigger cleaning and retrieve non-field errors
++    html = form.non_field_errors().as_ul()
++    assert 'nonfield' in html, "Expected 'nonfield' CSS class on form non-field errors"
++
++
++def test_formset_non_form_errors_get_nonform_css_when_clean_raises():
++    """
++    If formset.clean() raises a ValidationError, those errors are considered
++    non-form (formset-level) errors. The ErrorList for those errors should
++    include the 'nonform' CSS class so that renderers can distinguish them.
++    This test fails before the fix (no 'nonform' class) and should pass after.
++    """
++    class CleanFailFormSet(forms.BaseFormSet):
++        def clean(self):
++            raise forms.ValidationError("Formset-level error")
++
++    _, FS = make_simple_form_and_factory(formset_cls=CleanFailFormSet)
++    data = management_data_for_prefix('form', total=1, initial=0)
++    # Provide form data as well (one form, name field)
++    data.update({'form-0-name': ''})
++    fs = FS(data=data)
++
++    # non_form_errors() will trigger full_clean() and collect the ValidationError.
++    html = fs.non_form_errors().as_ul()
++    assert 'nonform' in html, "Expected 'nonform' CSS class on formset non-form errors"
++
++
++def test_formset_non_form_errors_get_nonform_css_when_management_form_missing():
++    """
++    When the management form is missing or invalid, formset.full_clean()
++    appends a missing-management-form ValidationError to _non_form_errors.
++    Verify those non-form errors include the 'nonform' CSS class.
++    This tests an edge case where management data is omitted.
++    """
++    class SimpleForm(forms.Form):
++        name = forms.CharField(required=False)
++
++    FS = formset_factory(SimpleForm, extra=1)
++    # Intentionally omit management form fields to simulate a tampered request.
++    data = {
++        # No 'form-TOTAL_FORMS' etc.
++        'form-0-name': '',
++    }
++    fs = FS(data=data)
++
++    html = fs.non_form_errors().as_ul()
++    assert 'nonform' in html, "Expected 'nonform' CSS class when management form is missing"
++
++
++def test_formset_non_form_errorlist_copy_preserves_nonform_css():
++    """
++    Ensure that copying the ErrorList for formset non-form errors preserves
++    the error_class (and therefore the 'nonform' CSS class). This verifies
++    that ErrorList.copy() retains the class information.
++    """
++    class CleanFailFormSet(forms.BaseFormSet):
++        def clean(self):
++            raise forms.ValidationError("Formset-level error")
++
++    _, FS = make_simple_form_and_factory(formset_cls=CleanFailFormSet)
++    data = management_data_for_prefix('form', total=1, initial=0)
++    data.update({'form-0-name': ''})
++    fs = FS(data=data)
++
++    errors = fs.non_form_errors()
++    copy = errors.copy()
++    assert 'nonform' in copy.as_ul(), "Expected copied ErrorList to retain 'nonform' CSS class"

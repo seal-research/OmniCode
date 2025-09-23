@@ -1,0 +1,90 @@
+--- a/tests/test_postgresql_tzname_prepare.py
++++ b/tests/test_postgresql_tzname_prepare.py
++import pytest
++
++from django.conf import settings
++from django.db.backends.postgresql.operations import DatabaseOperations
++
++
++@pytest.mark.parametrize(
++    "tzname, expected",
++    [
++        # Numeric offset forms should have their leading sign inverted.
++        ("+10", "-10"),
++        ("-05", "+05"),
++        ("+01:30", "-01:30"),
++        ("-00:30", "+00:30"),
++        # UTC-like name without sign should be unchanged.
++        ("UTC", "UTC"),
++    ],
++)
++def test_prepare_tzname_delta_inverts_numeric_offsets(tzname, expected):
++    """
++    Ensure that numeric timezone offsets (e.g. '+10', '-01:30') are inverted
++    by DatabaseOperations._prepare_tzname_delta.
++
++    This test should pass on both the current (buggy) implementation and the
++    intended fixed implementation for pure numeric offsets.
++    """
++    # Call the method as an unbound function; it doesn't rely on instance state.
++    result = DatabaseOperations._prepare_tzname_delta(None, tzname)
++    assert result == expected
++
++
++@pytest.mark.parametrize(
++    "tzname",
++    [
++        # Named tz database identifiers that include signs should NOT be mangled.
++        "Etc/GMT-10",
++        "Etc/GMT+10",
++        "Europe/Paris",
++        "GMT+2",  # not a pure numeric offset; should be treated as a tz identifier
++    ],
++)
++def test_prepare_tzname_delta_does_not_mangle_named_timezones(tzname):
++    """
++    This is the core regression test from the issue:
++    Named timezone identifiers (like 'Etc/GMT-10') must not have their
++    embedded '+'/'-' characters flipped. Prior to the intended fix,
++    _prepare_tzname_delta would incorrectly replace '-' with '+' (and vice versa)
++    anywhere in the string, producing 'Etc/GMT+10' from 'Etc/GMT-10'.
++
++    This test is expected to fail on the repository state before the fix is applied
++    (demonstrating the bug) and pass after the fix (verifying it was resolved).
++    """
++    result = DatabaseOperations._prepare_tzname_delta(None, tzname)
++    # The correct behavior is to return the identifier unchanged.
++    assert result == tzname
++
++
++def test_convert_field_to_tz_generates_sql_with_correct_tzname(monkeypatch):
++    """
++    Ensure _convert_field_to_tz uses the value returned by
++    _prepare_tzname_delta when composing the "AT TIME ZONE" SQL fragment.
++
++    We toggle settings.USE_TZ to ensure the function includes the timezone
++    conversion only when USE_TZ is True.
++    """
++    field_name = '"my_model"."start_at"'
++
++    # Enable timezone support for this test.
++    monkeypatch.setattr(settings, "USE_TZ", True, raising=False)
++
++    # Numeric offset should be inverted in the SQL fragment.
++    sql_numeric = DatabaseOperations._convert_field_to_tz(
++        None, field_name, "+10"
++    )
++    assert "AT TIME ZONE '-10'" in sql_numeric
++
++    # Named timezone identifiers should appear unchanged in the SQL fragment.
++    sql_named = DatabaseOperations._convert_field_to_tz(
++        None, field_name, "Etc/GMT-10"
++    )
++    # This assertion demonstrates the desired (fixed) behavior: named tz remains intact.
++    # Before the fix this would contain "Etc/GMT+10" and therefore fail.
++    assert "AT TIME ZONE 'Etc/GMT-10'" in sql_named
++
++    # If USE_TZ is False, the field should not be altered.
++    monkeypatch.setattr(settings, "USE_TZ", False, raising=False)
++    sql_no_tz = DatabaseOperations._convert_field_to_tz(None, field_name, "Etc/GMT-10")
++    assert sql_no_tz == field_name

@@ -1,0 +1,165 @@
+--- a/tests/test_modelchoicefield_invalid_choice.py
++++ b/tests/test_modelchoicefield_invalid_choice.py
+-# Empty if creating new file
++import pytest
++from django.core.exceptions import ValidationError
++from django.forms.fields import ChoiceField
++from django.forms.models import ModelChoiceField, ModelMultipleChoiceField
++
++# Fake model and queryset classes to avoid depending on the ORM/database.
++class FakeModel:
++    """
++    Minimal fake model object.
++    - Instances have a 'pk' attribute.
++    - The class provides a DoesNotExist exception attribute (mimicking Django models).
++    """
++    class DoesNotExist(Exception):
++        pass
++
++    def __init__(self, pk):
++        self.pk = pk
++        # Provide a truthy _meta attribute so prepare_value() treats instances like models.
++        self._meta = True
++
++    def __repr__(self):
++        return f"<FakeModel pk={self.pk!r}>"
++
++
++class FakeQuerySet:
++    """
++    Minimal fake queryset that supports:
++    - .model attribute referencing FakeModel
++    - .get(**{key: value}) -> returns FakeModel or raises FakeModel.DoesNotExist
++    - .filter(**{key__in: iterable}) -> returns iterable of FakeModel instances (iterable)
++    - .filter(**{key: value}) -> no-op/returns iterable (not used), but may raise TypeError for invalid pk types
++    - .none() -> empty iterable
++    This is sufficient for ModelChoiceField and ModelMultipleChoiceField logic used in tests.
++    """
++    def __init__(self, instances):
++        # instances: iterable of FakeModel instances
++        self.model = FakeModel
++        # Map pk -> instance for quick lookup
++        self._data = {str(inst.pk): inst for inst in instances}
++
++    def get(self, **kwargs):
++        # Only support single-key lookups: pk or to_field_name
++        key, value = next(iter(kwargs.items()))
++        # value may be int/str etc; compare by string representation to be permissive
++        val_str = str(value)
++        if val_str in self._data:
++            return self._data[val_str]
++        raise self.model.DoesNotExist
++
++    def filter(self, **kwargs):
++        # Support both key__in and key lookup forms.
++        key, value = next(iter(kwargs.items()))
++        if key.endswith('__in'):
++            # value should be iterable of pks
++            try:
++                iterable = list(value)
++            except TypeError:
++                # Simulate the DB raising TypeError for un-iterable input
++                raise TypeError("Parameter for __in must be iterable")
++            result = []
++            for v in iterable:
++                v_str = str(v)
++                if v_str in self._data:
++                    result.append(self._data[v_str])
++            return result
++        else:
++            # Single value filter used in ModelMultipleChoiceField._check_values
++            # Simulate validation/conversion errors by raising TypeError for unexpected types.
++            # Accept ints and strings as valid types and return [] (no error).
++            v = value
++            if isinstance(v, (int, str)):
++                # Returning an iterable (possibly empty) is acceptable for the calling code.
++                return []  # The calling code doesn't use the returned value here
++            # Simulate invalid PK type error
++            raise TypeError("Invalid primary key value")
++
++    def none(self):
++        return []
++
++    def __iter__(self):
++        # Allow iteration over the queryset (not strictly needed for these tests)
++        return iter(self._data.values())
++
++
++# Fixtures to provide small datasets for fields.
++@pytest.fixture
++def fake_qs_single():
++    # Provide a queryset containing a single FakeModel with pk '1'
++    return FakeQuerySet([FakeModel('1')])
++
++
++@pytest.fixture
++def fake_qs_multi():
++    # Provide a queryset containing FakeModel pks '1' and '2'
++    return FakeQuerySet([FakeModel('1'), FakeModel('2')])
++
++
++def test_choicefield_includes_invalid_value_in_error_message():
++    """
++    Baseline: ChoiceField includes the invalid value in the ValidationError message.
++    This demonstrates the expected behavior that ModelChoiceField should match.
++    """
++    field = ChoiceField(choices=[('1', 'One'), ('2', 'Two')])
++    with pytest.raises(ValidationError) as excinfo:
++        # '3' is not a valid choice
++        field.validate('3')
++    # ValidationError.messages is a list of error messages; get the first message.
++    message = excinfo.value.messages[0]
++    assert '3' in message
++
++
++def test_modelchoicefield_invalid_choice_error_includes_value(fake_qs_single):
++    """
++    The bug: ModelChoiceField.to_python raises ValidationError for an invalid choice
++    but does not provide the invalid value for interpolation in the error message.
++
++    This test asserts that the invalid value appears in the error message. Before
++    the upstream fix, this test will fail (no '%(value)s' in the message / no params passed).
++    After the fix (adding '%(value)s' to default_error_messages and passing params),
++    this test should pass.
++    """
++    field = ModelChoiceField(queryset=fake_qs_single)
++    invalid_value = 'bad-value'
++    with pytest.raises(ValidationError) as excinfo:
++        # to_python() attempts to look up the value in the queryset and will raise.
++        field.to_python(invalid_value)
++    message = excinfo.value.messages[0]
++    # Expect the invalid value to be interpolated into the error message.
++    assert invalid_value in message
++
++
++def test_modelmultiplechoicefield_invalid_choice_error_includes_value(fake_qs_multi):
++    """
++    ModelMultipleChoiceField already supplies the invalid value in the ValidationError params
++    when a value is not present in the queryset. This test should pass both before and after
++    the ModelChoiceField fix, and verifies the expected behavior.
++    """
++    field = ModelMultipleChoiceField(queryset=fake_qs_multi)
++    invalid_value = 'bad-multi'
++    with pytest.raises(ValidationError) as excinfo:
++        # clean() will call _check_values and should raise an invalid_choice error
++        field.clean([invalid_value])
++    message = excinfo.value.messages[0]
++    assert invalid_value in message
++
++
++def test_modelmultiplechoicefield_invalid_pk_value_includes_pk_in_message(fake_qs_multi):
++    """
++    Edge case: If a PK value cannot be used in a filter() (e.g., wrong type),
++    ModelMultipleChoiceField._check_values raises 'invalid_pk_value' with the pk
++    included in params. Verify that the pk is present in the rendered message.
++    """
++    field = ModelMultipleChoiceField(queryset=fake_qs_multi)
++    # Use an object instance to trigger the FakeQuerySet.filter TypeError path,
++    # which _check_values maps to 'invalid_pk_value'.
++    bad_pk = object()
++    with pytest.raises(ValidationError) as excinfo:
++        field.clean([bad_pk])
++    message = excinfo.value.messages[0]
++    # The message should include a representation of the bad_pk (via str(pk))
++    assert 'not a valid value' in message
++    assert str(bad_pk) in message

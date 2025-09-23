@@ -1,0 +1,102 @@
+--- a/tests/utils_translation/test_rfc5646_language_prefix.py
++++ b/tests/utils_translation/test_rfc5646_language_prefix.py
++import pytest
++
++from django.conf import settings
++from django.test import override_settings
++from django.utils.translation import (
++    get_language_from_path,
++    get_supported_language_variant,
++)
++
++
++@override_settings(
++    USE_I18N=True,
++    LANGUAGES=[
++        ('en-us', "English"),
++        ('en-latn-us', "Latin English"),
++        ('en-Latn-US', "BCP 47 case format"),
++    ],
++)
++def test_get_language_from_path_accepts_script_and_region_lowercase():
++    """
++    Ensure that a path with a language tag that contains both script and region
++    (e.g. en-latn-us) is recognized and mapped to one of the supported
++    languages configured in settings.LANGUAGES.
++
++    This test reproduces the reported bug: before the fix, get_language_from_path
++    would return None for '/en-latn-us/' because the prefix regex didn't accept
++    multiple hyphen-separated subtags.
++    """
++    # The returned value should be one of the configured language codes.
++    lang = get_language_from_path('/en-latn-us/')
++    assert lang in {code for code, _ in settings.LANGUAGES}
++
++
++@override_settings(
++    USE_I18N=True,
++    LANGUAGES=[
++        ('en-us', "English"),
++        ('en-latn-us', "Latin English"),
++        ('en-Latn-US', "BCP 47 case format"),
++    ],
++)
++def test_get_language_from_path_accepts_script_and_region_mixed_case():
++    """
++    Ensure that mixed-case BCP 47 style tags (en-Latn-US) in the path are
++    recognized as supported languages (case-insensitive matching).
++    """
++    lang = get_language_from_path('/en-Latn-US/')
++    assert lang in {code for code, _ in settings.LANGUAGES}
++
++
++@override_settings(
++    USE_I18N=True,
++    LANGUAGES=[
++        ('en-us', "English"),
++        ('en-latn-us', "Latin English"),
++        ('en-Latn-US', "BCP 47 case format"),
++    ],
++)
++def test_get_supported_language_variant_matches_case_insensitive():
++    """
++    get_supported_language_variant should match supported languages in a
++    case-insensitive manner and return a supported variant when possible.
++    """
++    # Mixed-case input should match one of the configured LANGUAGES entries.
++    variant = get_supported_language_variant('en-Latn-US')
++    assert variant in {code for code, _ in settings.LANGUAGES}
++
++
++@override_settings(
++    USE_I18N=True,
++    LANGUAGES=[
++        ('en-us', "English"),
++        ('en-latn-us', "Latin English"),
++        ('en-Latn-US', "BCP 47 case format"),
++    ],
++)
++def test_get_language_from_path_unknown_language_returns_none():
++    """
++    If the language tag extracted from the path isn't present in
++    settings.LANGUAGES, get_language_from_path should return None.
++    This tests an edge case (unconfigured script+region tag).
++    """
++    assert get_language_from_path('/sr-Latn-RS/') is None
++
++
++@override_settings(
++    USE_I18N=True,
++    LANGUAGES=[
++        ('en-us', "English"),
++        ('en-latn-us', "Latin English"),
++        ('en-Latn-US', "BCP 47 case format"),
++    ],
++)
++def test_get_supported_language_variant_raises_lookuperror_for_unknown_strict():
++    """
++    When strict=True, get_supported_language_variant should raise LookupError
++    for unknown language tags.
++    """
++    with pytest.raises(LookupError):
++        get_supported_language_variant('sr-Latn-RS', strict=True)

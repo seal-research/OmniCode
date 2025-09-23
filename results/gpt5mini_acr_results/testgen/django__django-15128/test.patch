@@ -1,0 +1,199 @@
+--- a/tests/test_query_change_aliases.py
++++ b/tests/test_query_change_aliases.py
++import pytest
++
++from django.db.models.sql.query import Query
++
++
++class DummyWhere:
++    """Minimal stand-in for a WhereNode-like object used by Query.where."""
++    def __init__(self):
++        self.relabel_calls = []
++
++    def relabel_aliases(self, change_map):
++        # Record the call for assertion; no real behavior required for tests.
++        self.relabel_calls.append(dict(change_map))
++
++    def clone(self):
++        # Return a shallow copy for combine() path where rhs.where.clone() is used.
++        new = DummyWhere()
++        new.relabel_calls = list(self.relabel_calls)
++        return new
++
++    def add(self, other, connector):
++        # No-op: combine() calls where.add(w, connector). We just accept it.
++        pass
++
++
++class DummyCol:
++    """Minimal stand-in for column-like objects that implement relabeled_clone."""
++    def __init__(self, alias):
++        self.alias = alias
++
++    def relabeled_clone(self, change_map):
++        # Simulate producing a new object after relabelling.
++        return DummyCol(change_map.get(self.alias, self.alias))
++
++
++class DummyAliasData:
++    """
++    Minimal stand-in for the objects stored in Query.alias_map.
++    Must have: table_name, join_type, parent_alias, nullable, filtered_relation,
++    table_alias, relabeled_clone(), equals(), promote()/demote() as minimally used.
++    """
++    def __init__(self, table_name, parent_alias=None, join_type=None,
++                 nullable=False, filtered_relation=None, table_alias=None):
++        self.table_name = table_name
++        self.parent_alias = parent_alias
++        self.join_type = join_type
++        self.nullable = nullable
++        self.filtered_relation = filtered_relation
++        self.table_alias = table_alias
++        # track if equals() will match another DummyAliasData by table_name + parent_alias
++        # this is enough for tests that require join.equal checks.
++
++    def relabeled_clone(self, change_map):
++        # Return a shallow copy with table_alias remapped if present in change_map.
++        new = DummyAliasData(
++            self.table_name,
++            parent_alias=change_map.get(self.parent_alias, self.parent_alias),
++            join_type=self.join_type,
++            nullable=self.nullable,
++            filtered_relation=self.filtered_relation,
++            table_alias=change_map.get(self.table_alias, self.table_alias),
++        )
++        return new
++
++    def equals(self, other):
++        # Consider aliases equal if they have same table_name and same parent_alias.
++        return (self.table_name, self.parent_alias) == (other.table_name, other.parent_alias)
++
++    def promote(self):
++        return self
++
++    def demote(self):
++        return self
++
++
++def make_base_query():
++    """
++    Construct a minimal Query instance with internal structures populated so that
++    change_aliases can be invoked directly. We avoid involving the ORM or DB.
++    """
++    # Query.__init__(self, model, alias_cols=True) - model can be None for tests that
++    # don't use model-dependent code paths.
++    q = Query(model=None)
++    # Minimal structures that change_aliases expects:
++    q.where = DummyWhere()
++    q.group_by = ()
++    q.select = ()
++    q.annotations = {}
++    q.alias_map = {}
++    q.alias_refcount = {}
++    q.table_map = {}
++    q.external_aliases = {}
++    q.subq_aliases = set()
++    return q
++
++
++def test_change_aliases_asserts_on_overlapping_keys_and_values():
++    """
++    Ensure change_aliases raises an AssertionError when the change_map has
++    keys that intersect with values. This encodes the current invariant:
++    a single relabel operation must not map an alias to a name that is
++    also being remapped (would imply double-remapping ambiguity).
++    """
++    q = make_base_query()
++    # Prepare minimal alias_map so the code path that updates alias_map runs
++    q.alias_map = {
++        'T4': DummyAliasData('app_foo'),
++        'T5': DummyAliasData('app_bar'),
++    }
++    q.alias_refcount = {'T4': 1, 'T5': 1}
++    q.table_map = {
++        'app_foo': ['T4'],
++        'app_bar': ['T5'],
++    }
++    q.external_aliases = {'T4': False, 'T5': False}
++
++    # Overlapping change_map values and keys (T4 -> T5 and T5 -> T6). The
++    # assertion inside change_aliases is expected to trigger.
++    overlapping = {'T4': 'T5', 'T5': 'T6'}
++
++    with pytest.raises(AssertionError):
++        q.change_aliases(overlapping)
++
++
++def test_combine_should_not_produce_overlapping_change_map_when_merging_rhs():
++    """
++    This test reproduces the scenario described in the issue:
++    When combining two queries (OR/|), alias generation for the RHS must avoid
++    creating aliases that collide with the RHS's existing aliases. Before the
++    fix, combining a specially crafted pair of queries would lead to a
++    change_map containing keys that intersect its values and thus raise
++    an AssertionError via change_aliases. After the fix, the combine() call
++    should complete without raising.
++
++    We simulate the combine() code path by constructing two Query objects
++    (lhs and rhs) with alias_map entries that mimic the problematic layout:
++      - rhs has two sequential aliases (e.g. T4, T5)
++      - lhs already contains table names that will cause table_alias to try to
++        generate aliases that would conflict with rhs aliases.
++    The test asserts that combine() completes. It is intended to fail on the
++    unpatched code (demonstrating the bug) and pass once the alias-generation
++    logic is fixed to avoid producing overlapping change maps.
++    """
++    lhs = make_base_query()
++    rhs = make_base_query()
++
++    # Prepare rhs to have two aliases that represent two joined tables.
++    # The iteration in combine() skips the base table (first alias), so include
++    # at least three to mirror real structure; we keep base alias name arbitrary.
++    rhs.alias_map = {
++        'T1': DummyAliasData('base_table'),
++        'T4': DummyAliasData('baz_table', parent_alias='T1'),
++        'T5': DummyAliasData('qux_table', parent_alias='T4'),
++    }
++    rhs.alias_refcount = {'T1': 1, 'T4': 1, 'T5': 1}
++    rhs.table_map = {
++        'base_table': ['T1'],
++        'baz_table': ['T4'],
++        'qux_table': ['T5'],
++    }
++    rhs.external_aliases = {'T1': False, 'T4': False, 'T5': False}
++    rhs.where = DummyWhere()
++    rhs.select = (DummyCol('T4'),)  # selection referencing one of the RHS aliases
++
++    # Prepare lhs so that it already contains table names that will cause table_alias
++    # to attempt to create alias names with sequential numeric suffixes. We populate
++    # alias_map with entries such that len(lhs.alias_map) gives the deterministic
++    # starting index for new aliases. In buggy code, this deterministic strategy
++    # can pick names that collide with rhs internal alias names leading to the
++    # overlapping change_map.
++    lhs.alias_map = {
++        'T1': DummyAliasData('base_table'),
++        'T2': DummyAliasData('baz_table', parent_alias='T1'),
++        'T3': DummyAliasData('qux_table', parent_alias='T2'),
++    }
++    lhs.alias_refcount = {'T1': 1, 'T2': 1, 'T3': 1}
++    lhs.table_map = {
++        'base_table': ['T1'],
++        'baz_table': ['T2'],
++        'qux_table': ['T3'],
++    }
++    lhs.external_aliases = {'T1': False, 'T2': False, 'T3': False}
++    lhs.where = DummyWhere()
++    lhs.select = ()
++
++    # Now call combine on lhs with rhs using OR connector. In the buggy version
++    # of the code this would eventually cause change_aliases to raise as a
++    # result of an overlapping change_map produced by the join/table_alias logic.
++    # We assert that combine completes without raising. This test is expected to
++    # fail on the unpatched code and succeed when the alias generation bug is fixed.
++    try:
++        lhs.combine(rhs, connector='OR')  # connector constant isn't required by our minimal path
++    except AssertionError:
++        pytest.fail(
++            "combine() produced an overlapping change_map and raised AssertionError. "
++            "This reproduces the reported bug; the test should pass after the fix."
++        )

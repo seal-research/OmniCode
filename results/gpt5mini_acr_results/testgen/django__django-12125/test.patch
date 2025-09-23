@@ -1,0 +1,78 @@
+--- a/tests/migrations/test_inner_class_serialization.py
++++ b/tests/migrations/test_inner_class_serialization.py
+-# Empty if creating new file
++import pytest
++
++from django.db import models
++from django.db.migrations.serializer import serializer_factory
++
++
++def test_type_serializer_includes_outer_class_for_nested_class():
++    """
++    Regression test for ticket where makemigrations produced incorrect import
++    path for inner classes. When a class is nested (Inner inside Outer),
++    the serializer should use the qualified name (Outer.Inner) so the import
++    path points to the nested class, not to a top-level name that doesn't
++    exist.
++    This test fails on the codebase before the fix (which uses __name__),
++    and should pass after fixing the serializer to use __qualname__.
++    """
++    # Define nested classes inside the test so the module is this test module.
++    class Outer:
++        class Inner:
++            pass
++
++    serializer = serializer_factory(Outer.Inner)
++    serialized_string, imports = serializer.serialize()
++
++    # Expected path should include the qualified name (Outer.Inner)
++    expected_path = "%s.%s" % (Outer.Inner.__module__, Outer.Inner.__qualname__)
++    assert (
++        serialized_string == expected_path
++    ), "Serializer did not include outer class in the qualified name for nested classes"
++
++    # Ensure the module import is present in the imports set (behavior preserved).
++    assert "import %s" % Outer.Inner.__module__ in imports
++
++
++def test_type_serializer_serializes_top_level_class_without_regression():
++    """
++    Sanity check: top-level classes should still serialize to module.ClassName
++    and the behavior must be unchanged by the fix.
++    """
++    class TopLevel:
++        pass
++
++    serializer = serializer_factory(TopLevel)
++    serialized_string, imports = serializer.serialize()
++
++    expected_path = "%s.%s" % (TopLevel.__module__, TopLevel.__name__)
++    assert serialized_string == expected_path
++    assert "import %s" % TopLevel.__module__ in imports
++
++
++def test_serializer_handles_enum_inner_class_correctly():
++    """
++    Edge case: enum.Enum subclasses that are nested should already serialize
++    using the enum-qualified name. Ensure enum serialization continues to
++    include the qualified name for nested enums.
++    """
++    import enum
++
++    class Container:
++        @enum.unique
++        class State(enum.Enum):
++            on = "on"
++            off = "off"
++
++    serializer = serializer_factory(Container.State.on)
++    serialized_string, imports = serializer.serialize()
++
++    # EnumSerializer uses the enum class's __qualname__, so include Container.State
++    expected_enum_path = "%s.%s[%r]" % (
++        Container.State.__module__,
++        Container.State.__qualname__,
++        Container.State.on.name,
++    )
++    assert serialized_string == expected_enum_path
++    assert "import %s" % Container.State.__module__ in imports

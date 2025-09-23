@@ -1,0 +1,43 @@
+--- a/tests/test_urlize_entities.py
++++ b/tests/test_urlize_entities.py
++import pytest
++from django.utils.html import urlize
++
++# Tests for urlize() handling of HTML-escaped entities and trailing/wrapping punctuation.
++# These reproduce the reported bug where HTML entities (e.g. &lt;) caused incorrect
++# slicing of the escaped string and duplication/mangling of entity text.
++
++def test_urlize_handles_html_escaped_entities_and_trailing_punctuation():
++    """
++    Reproduce the reported failing case:
++    Input contains an HTML-escaped entity (&lt;) right before a trailing punctuation mark (!).
++    Expected behavior: the entity remains part of the link text, the trailing punctuation
++    is left outside the anchor, and the href contains the percent-encoded form.
++    This test fails before the fix and should pass after the fix.
++    """
++    inp = 'Search for google.com/?q=1&lt! and see.'
++    result = urlize(inp)
++    # The '<' inside the URL is unescaped for smart_urlquote (so it's encoded as %3C in href),
++    # but the anchor text preserves the original escaped entity '&lt'.
++    expected = 'Search for <a href="http://google.com/?q=1%3C">google.com/?q=1&lt</a>! and see.'
++    assert str(result) == expected
++
++def test_urlize_preserves_html_entities_when_trimming_trailing_punctuation():
++    """
++    Edge case: ensure that common entities like &amp; are preserved in the link text
++    and correctly escaped in the href, and that trailing punctuation (.) is outside the link.
++    """
++    inp = 'Visit example.com?x=1&amp;y=2.'
++    result = urlize(inp)
++    expected = 'Visit <a href="http://example.com?x=1&amp;y=2">example.com?x=1&amp;y=2</a>.'
++    assert str(result) == expected
++
++def test_urlize_handles_wrapping_parentheses_and_entities():
++    """
++    Ensure wrapping punctuation (parentheses) are trimmed correctly even when the text
++    contains HTML entities. The parentheses should surround the anchor, not be part of it.
++    """
++    inp = '(google.com/?q=1&lt).'
++    result = urlize(inp)
++    expected = '(<a href="http://google.com/?q=1%3C">google.com/?q=1&lt</a>).'
++    assert str(result) == expected

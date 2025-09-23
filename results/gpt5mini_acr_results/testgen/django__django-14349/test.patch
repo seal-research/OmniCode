@@ -1,0 +1,74 @@
+--- a/tests/validators/test_urlvalidator_bpo43882.py
++++ b/tests/validators/test_urlvalidator_bpo43882.py
++import pytest
++
++from django.core.exceptions import ValidationError
++from django.core.validators import URLValidator
++
++
++@pytest.mark.parametrize(
++    "value",
++    [
++        # Examples from the original issue: trailing newline should be rejected.
++        "http://www.djangoproject.com/\n",
++        "http://[::ffff:192.9.5.5]\n",
++        # Variations with carriage return and tab characters in the path.
++        "http://www.example.com/\r",
++        "http://www.example.com/\t",
++        # Embedded control characters in the host or path should also be rejected.
++        "http://exa\nmple.com/",
++        "http://www.example.com/pa\rth",
++        "http://www.example.com/pa\tth",
++    ],
++)
++def test_urlvalidator_rejects_urls_containing_cr_lf_tab(value):
++    """
++    URLValidator must reject URLs that contain CR (\r), LF (\n) or TAB (\t)
++    characters in the original input.
++
++    Rationale:
++    On Python versions patched for bpo-43882, the stdlib URL splitting may strip
++    these characters before Django validators run. To preserve Django's previous
++    behaviour and ensure URLs containing these control characters are treated as
++    invalid, URLValidator should raise ValidationError for such inputs.
++    """
++    validator = URLValidator()
++    with pytest.raises(ValidationError):
++        validator(value)
++
++
++def test_urlvalidator_accepts_valid_url_without_control_characters():
++    """
++    A well-formed URL without control characters must be accepted (i.e. not raise).
++    This provides a positive control asserting normal valid inputs still pass.
++    """
++    validator = URLValidator()
++    # Should not raise
++    validator("http://www.djangoproject.com/")
++
++
++@pytest.mark.parametrize(
++    "non_string_value",
++    [
++        None,
++        123,
++        b"http://www.example.com/",
++    ],
++)
++def test_urlvalidator_rejects_non_string_inputs(non_string_value):
++    """
++    Non-string inputs should be rejected by URLValidator, matching the
++    existing behaviour which requires a str.
++    """
++    validator = URLValidator()
++    with pytest.raises(ValidationError):
++        validator(non_string_value)
++
++
++def test_urlvalidator_rejects_empty_string():
++    """
++    Edge case: empty string is not a valid URL and must raise ValidationError.
++    """
++    validator = URLValidator()
++    with pytest.raises(ValidationError):
++        validator("")

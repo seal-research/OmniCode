@@ -1,0 +1,66 @@
+--- a/django/contrib/auth/tests/test_authentication_form_maxlength.py
++++ b/django/contrib/auth/tests/test_authentication_form_maxlength.py
++import pytest
++
++from django import forms
++from django.contrib.auth import get_user_model
++from django.contrib.auth.forms import AuthenticationForm
++
++
++def render_username_html(form):
++    """
++    Helper to render the username bound field to HTML. Using str(bound_field)
++    ensures we exercise the normal BoundField -> Widget rendering path.
++    """
++    return str(form['username'])
++
++
++def test_authentication_form_username_renders_maxlength_html_attribute():
++    """
++    The AuthenticationForm.username field should render an HTML maxlength
++    attribute derived from the User model's username field max_length.
++
++    This test reproduces the reported regression: before the fix, the
++    rendered widget did not include a maxlength="N" attribute. After the
++    fix, the attribute should be present and equal to the model field's
++    max_length (or 254 fallback used in AuthenticationForm.__init__).
++    """
++    UserModel = get_user_model()
++    username_field = UserModel._meta.get_field(UserModel.USERNAME_FIELD)
++    expected_max = username_field.max_length or 254
++
++    form = AuthenticationForm()
++    html = render_username_html(form)
++
++    # Expect an HTML maxlength attribute with the correct numeric value.
++    assert f'maxlength="{expected_max}"' in html
++
++
++def test_authentication_form_username_preserves_explicit_widget_maxlength():
++    """
++    If the widget is explicitly given a maxlength in its attrs, that value
++    must be preserved in the rendered HTML (the widget should not be
++    overwritten by the field logic).
++    """
++    form = AuthenticationForm()
++
++    # Pre-set an explicit maxlength in the widget attrs before binding.
++    # BaseForm._get_bound_field reads widget.attrs when rendering, so
++    # setting it here should make it appear in output.
++    form.fields['username'].widget.attrs['maxlength'] = '10'
++
++    html = render_username_html(form)
++    assert 'maxlength="10"' in html
++
++
++def test_authentication_form_username_has_autocomplete_and_autocapitalize_attributes():
++    """
++    Ensure UsernameField still provides its additional widget attributes
++    (autocomplete and autocapitalize) alongside maxlength.
++    This verifies that the UsernameField.widget_attrs merge behavior is intact.
++    """
++    form = AuthenticationForm()
++    html = render_username_html(form)
++
++    assert 'autocomplete="username"' in html
++    assert 'autocapitalize="none"' in html

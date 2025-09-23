@@ -1,0 +1,110 @@
+--- a/tests/test_queryset_none_on_combined.py
++++ b/tests/test_queryset_none_on_combined.py
++import pytest
++from django.core.exceptions import ValidationError
++from django.contrib.auth import get_user_model
++from django.forms.models import ModelMultipleChoiceField
++
++pytestmark = pytest.mark.django_db
++
++
++def _create_users(n=10):
++    """
++    Helper to create n users with predictable primary keys.
++    Returns the user model class.
++    """
++    User = get_user_model()
++    # Create users; primary keys will be assigned by the test DB.
++    for i in range(n):
++        # Using create() to keep it simple; username must be unique.
++        User.objects.create(username=f"user_{i}")
++    return User
++
++
++def test_none_on_union_combined_queryset_returns_empty():
++    """
++    Regression test for QuerySet.none() on combined (UNION) querysets.
++
++    Before the fix, calling .none() on a combined queryset could still
++    produce results (i.e. not be empty). This test ensures that .none()
++    returns an actually-empty queryset for a combined queryset.
++    """
++    User = _create_users(10)
++
++    # Build a combined queryset using union()
++    left = User.objects.filter(pk__lt=3)
++    right = User.objects.filter(pk__gt=7)
++    combined = left.union(right)
++
++    # Sanity: combined should contain some objects (not empty)
++    assert combined.count() == (left.count() + right.count())
++
++    # The critical assertion: .none() should produce zero results.
++    none_qs = combined.none()
++    assert none_qs.count() == 0
++    # Also assert that evaluating to list is empty
++    assert list(none_qs) == []
++
++
++def test_modelmultiplechoicefield_clean_with_combined_queryset_empty_submission_returns_empty_queryset():
++    """
++    ModelMultipleChoiceField.clean should return an empty queryset when the
++    field is not required and the submitted value is empty (no selections),
++    even when the field's queryset is a combined (UNION) queryset.
++
++    This reproduces the behavior described in the issue: prior to the fix,
++    an empty submission could result in a queryset that returned all matching
++    objects for combined querysets.
++    """
++    User = _create_users(12)
++
++    combined_qs = User.objects.filter(pk__lt=4).union(User.objects.filter(pk__gt=9))
++    # Ensure combined has elements (so we know we're not testing a trivially-empty case).
++    assert combined_qs.count() > 0
++
++    field = ModelMultipleChoiceField(queryset=combined_qs, required=False)
++
++    # Simulate an empty submission (no publications selected)
++    cleaned = field.clean([])
++
++    # Expect an empty queryset/result for empty submission
++    # cleaned may be a QuerySet; ensure it yields no objects.
++    if hasattr(cleaned, "exists"):
++        assert not cleaned.exists()
++    else:
++        # Fallback: ensure list conversion is empty
++        assert list(cleaned) == []
++
++
++def test_modelmultiplechoicefield_clean_with_bar_operator_behaves_same():
++    """
++    Ensure the same behavior when the combined queryset is created with the
++    '|' operator, which delegates to union().
++    """
++    User = _create_users(8)
++
++    combined_via_or = User.objects.filter(pk__lt=2) | User.objects.filter(pk__gt=6)
++    assert combined_via_or.count() > 0
++
++    field = ModelMultipleChoiceField(queryset=combined_via_or, required=False)
++    cleaned = field.clean([])
++
++    # Expect no objects for empty submission
++    if hasattr(cleaned, "exists"):
++        assert not cleaned.exists()
++    else:
++        assert list(cleaned) == []
++
++
++def test_modelmultiplechoicefield_clean_required_field_raises_on_empty_submission():
++    """
++    Edge case: when the field is required, an empty submission should raise
++    a ValidationError regardless of whether the queryset is combined.
++    """
++    User = _create_users(4)
++
++    combined_qs = User.objects.filter(pk__lt=2).union(User.objects.filter(pk__gt=3))
++    field = ModelMultipleChoiceField(queryset=combined_qs, required=True)
++
++    with pytest.raises(ValidationError):
++        field.clean([])

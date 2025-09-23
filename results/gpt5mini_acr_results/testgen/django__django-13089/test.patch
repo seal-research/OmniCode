@@ -1,0 +1,141 @@
+--- a/tests/test_db_cache_cull.py
++++ b/tests/test_db_cache_cull.py
++import pytest
++
++from django.core.cache.backends.db import DatabaseCache
++from django.db import connections
++
++
++class FakeOps:
++    def cache_key_culling_sql(self):
++        # The real code only interpolates the table name and passes cull_num as param.
++        return "SELECT cache_key FROM %s ORDER BY cache_key LIMIT %%s"
++
++
++class FakeCursor:
++    def __init__(self, fetch_results):
++        """
++        fetch_results: a list of values that fetchone() will return on successive calls.
++                       Use None or exhaust the list to simulate no row returned.
++        """
++        # Make a shallow copy so tests can reuse lists safely.
++        self._fetch_results = list(fetch_results)
++        self.execute_calls = []
++
++    def execute(self, sql, params=None):
++        # Record the SQL and params for assertions
++        self.execute_calls.append((sql, params))
++
++    def fetchone(self):
++        # Return next item or None if exhausted
++        if not self._fetch_results:
++            return None
++        return self._fetch_results.pop(0)
++
++
++class FakeConnection:
++    def __init__(self, cursor):
++        self._cursor = cursor
++        self.ops = FakeOps()
++
++    def cursor(self):
++        # Return the same cursor instance so execute/fetchone sequence is preserved
++        return self._cursor
++
++
++@pytest.fixture(autouse=True)
++def restore_connections(monkeypatch):
++    """
++    Ensure tests don't leak into other tests by restoring connections mapping after test.
++    Monkeypatch connections['default'] for the duration of each test.
++    """
++    original_default = connections.get('default', None)
++    try:
++        yield
++    finally:
++        if original_default is None:
++            # Remove if we inserted
++            try:
++                del connections['default']
++            except Exception:
++                pass
++        else:
++            connections['default'] = original_default
++
++
++def test_cull_handles_missing_boundary_row_without_raising(monkeypatch):
++    """
++    This test reproduces the situation described in the issue:
++    - The COUNT(*) query returns a row indicating the table is over the max entries.
++    - The subsequent culling SELECT returns no rows (fetchone() is None).
++    The buggy code used to index cursor.fetchone()[0] without checking for None,
++    raising TypeError. The correct behavior is to handle the absence of a boundary
++    row gracefully and not raise.
++    This is the test that should fail before the fix and pass after the fix.
++    """
++    # Prepare a DatabaseCache configured to trigger culling
++    cache = DatabaseCache(table='cache_table', params={'MAX_ENTRIES': 1, 'CULL_FREQUENCY': 3})
++
++    # Simulate cursor behavior:
++    # 1) First fetchone() -> COUNT(*) returns (100,) to force culling
++    # 2) Second fetchone() -> None to simulate no boundary row found
++    fake_cursor = FakeCursor(fetch_results=[(100,), None])
++    fake_conn = FakeConnection(fake_cursor)
++    # Put our fake connection into django.db.connections under 'default'
++    monkeypatch.setitem(connections, 'default', fake_conn)
++
++    # Exercise _cull. The expected behavior (after fix) is: do not raise.
++    # If the bug is present, this will raise TypeError: 'NoneType' object is not subscriptable.
++    try:
++        cache._cull()
++    except TypeError as exc:
++        pytest.fail(f"_cull raised TypeError (bug present): {exc}")
++
++
++def test_cull_returns_early_if_count_query_returns_none(monkeypatch):
++    """
++    If the COUNT(*) query returns None (e.g., due to an unexpected DB behavior),
++    _cull should return early and not attempt further operations.
++    """
++    cache = DatabaseCache(table='cache_table', params={'MAX_ENTRIES': 10, 'CULL_FREQUENCY': 3})
++
++    # Simulate cursor behavior:
++    # 1) First fetchone() -> None (COUNT(*) returned no row)
++    fake_cursor = FakeCursor(fetch_results=[None])
++    fake_conn = FakeConnection(fake_cursor)
++    monkeypatch.setitem(connections, 'default', fake_conn)
++
++    # Should not raise and should not call further executes beyond the COUNT(*)
++    cache._cull()
++    # Only the COUNT(*) execute should have been recorded.
++    assert len(fake_cursor.execute_calls) == 1
++    assert fake_cursor.execute_calls[0][0].startswith("SELECT COUNT(*)"), "Expected COUNT(*) as first query"
++
++
++def test_cull_deletes_with_boundary_key_when_present(monkeypatch):
++    """
++    When the culling SELECT returns a boundary key, ensure the DELETE is executed
++    with that key as parameter.
++    """
++    # Use settings that will cause culling to run.
++    cache = DatabaseCache(table='cache_table', params={'MAX_ENTRIES': 10, 'CULL_FREQUENCY': 3})
++
++    # Simulate cursor behavior:
++    # 1) First fetchone() -> COUNT(*) returns (100,)
++    # 2) Second fetchone() -> boundary key tuple ('boundary_key',)
++    fake_cursor = FakeCursor(fetch_results=[(100,), ('boundary_key',)])
++    fake_conn = FakeConnection(fake_cursor)
++    monkeypatch.setitem(connections, 'default', fake_conn)
++
++    cache._cull()
++
++    # There should be at least three execute calls:
++    # 1) SELECT COUNT(*)
++    # 2) culling SELECT (connection.ops.cache_key_culling_sql())
++    # 3) DELETE ... WHERE cache_key < %s
++    assert len(fake_cursor.execute_calls) >= 3
++    # The last execute should be the DELETE and its params should include the boundary key
++    last_sql, last_params = fake_cursor.execute_calls[-1]
++    assert last_sql.startswith("DELETE FROM"), "Expected DELETE as the last SQL operation"
++    # The code passes the boundary key as the first element of the params list
++    assert last_params is not None and last_params[0] == 'boundary_key'

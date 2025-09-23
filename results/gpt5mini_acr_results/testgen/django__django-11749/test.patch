@@ -1,0 +1,91 @@
+--- a/tests/test_call_command_mutually_exclusive.py
++++ b/tests/test_call_command_mutually_exclusive.py
++import pytest
++
++from django.core.management import call_command
++from django.core.management.base import BaseCommand, CommandError
++
++
++class MyCommand(BaseCommand):
++    """
++    Minimal command used for testing. It defines a mutually exclusive group
++    which is required. The handle method returns the received options so
++    tests can assert what was parsed/passed to the command.
++    """
++
++    help = "Test command for mutually exclusive group handling"
++
++    def add_arguments(self, parser):
++        # Define a required mutually exclusive group with two optional flags.
++        shop = parser.add_mutually_exclusive_group(required=True)
++        shop.add_argument('--shop-id', nargs='?', type=int, default=None, dest='shop_id')
++        shop.add_argument('--shop', nargs='?', type=str, default=None, dest='shop_name')
++
++    def handle(self, *args, **options):
++        # Return the parsed options for assertions in tests.
++        return options
++
++
++@pytest.fixture
++def cmd_instance():
++    """Fixture creating a fresh command instance for each test."""
++    return MyCommand()
++
++
++def test_call_command_with_flag_style_argument_parses_correctly(cmd_instance):
++    """
++    Control test: calling the command using CLI-style argument should work.
++    This demonstrates the normal behaviour that already works (e.g. call_command(cmd, '--shop-id=1')).
++    This test should pass both before and after the fix.
++    """
++    result = call_command(cmd_instance, '--shop-id=1')
++    # The command's handle returns the options dict; ensure the shop_id was parsed.
++    assert isinstance(result, dict)
++    assert result.get('shop_id') == 1
++    assert result.get('shop_name') is None
++
++
++def test_call_command_with_kwarg_for_required_mutually_exclusive_group_should_parse(cmd_instance):
++    """
++    The bug: before the fix, passing an option that belongs to a required
++    mutually exclusive group via kwargs (e.g. shop_id=1) causes parse failure
++    because call_command didn't forward group members to parse_args().
++    This test asserts the desired behaviour: providing shop_id as a kwarg
++    should be accepted and parsed; therefore this test fails before the fix
++    and should pass after applying the fix.
++    """
++    result = call_command(cmd_instance, shop_id=1)
++    assert isinstance(result, dict)
++    assert result.get('shop_id') == 1
++    assert result.get('shop_name') is None
++
++
++def test_call_command_missing_required_group_raises_CommandError(cmd_instance):
++    """
++    If no member of a required mutually exclusive group is provided, the parser
++    must raise a CommandError indicating that one of the arguments is required.
++    """
++    with pytest.raises(CommandError):
++        call_command(cmd_instance)
++
++
++def test_call_command_providing_both_group_members_via_flags_raises_CommandError(cmd_instance):
++    """
++    Providing both mutually exclusive flags via CLI-style arguments should
++    raise CommandError (mutual exclusion violation).
++    """
++    with pytest.raises(CommandError):
++        call_command(cmd_instance, '--shop-id=1', '--shop=foo')
++
++
++def test_call_command_providing_both_group_members_via_kwargs_raises_CommandError(cmd_instance):
++    """
++    Providing both mutually exclusive options via kwargs should also result
++    in an error (they are mutually exclusive). This verifies the parser's
++    mutual exclusion is enforced even when options are passed as kwargs.
++    Note: before the fix this may raise the 'one of the arguments ... is required'
++    error instead of mutual exclusion error because none were forwarded to parse_args.
++    After the fix this should raise due to mutually exclusive options being both present.
++    """
++    with pytest.raises(CommandError):
++        call_command(cmd_instance, shop_id=1, shop_name='foo')

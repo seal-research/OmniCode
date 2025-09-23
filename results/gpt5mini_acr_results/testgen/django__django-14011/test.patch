@@ -1,0 +1,150 @@
+--- a/tests/test_liveserverthread.py
++++ b/tests/test_liveserverthread.py
+-# Empty if creating new file
++import threading
++import time
++import socket
++import urllib.request
++
++import pytest
++
++from django.core import servers as servers_pkg
++from django.core.servers import basehttp
++import django.db
++
++
++def _start_server(server_cls, app):
++    """
++    Helper to start a WSGI server in a background thread.
++
++    Returns (httpd, thread, port).
++    Caller is responsible for shutting down and closing the server.
++    """
++    # Bind to an ephemeral port on localhost
++    httpd = server_cls(("127.0.0.1", 0), basehttp.WSGIRequestHandler)
++    # Ensure the WSGI app is set
++    httpd.set_app(app)
++    host, port = httpd.server_address
++
++    # Run serve_forever in a background thread
++    thread = threading.Thread(target=httpd.serve_forever)
++    thread.daemon = True
++    thread.start()
++
++    # Wait briefly for the server thread to start accepting connections
++    time.sleep(0.05)
++    return httpd, thread, port
++
++
++def _stop_server(httpd, thread, timeout=5.0):
++    """
++    Stop the server and join the thread.
++    """
++    try:
++        httpd.shutdown()
++    finally:
++        thread.join(timeout)
++        try:
++            httpd.server_close()
++        except Exception:
++            # server_close may raise if the server is already closed;
++            # ignore in teardown to avoid masking test failures.
++            pass
++
++
++def simple_app(response_bytes=b"OK"):
++    """
++    Return a minimal WSGI application that returns a 200 response.
++    """
++    def app(environ, start_response):
++        start_response("200 OK", [("Content-Type", "text/plain")])
++        return [response_bytes]
++    return app
++
++
++def test_threaded_wsgiserver_should_use_non_daemonic_threads_by_default():
++    """
++    This test documents the intended behavior for the threaded WSGI server
++    used in tests: worker threads should be joinable by the process shutting
++    down the server (i.e. not daemon threads). Historically, using daemon
++    threads here caused request-handling threads to be abruptly terminated and
++    leave database connections open, leading to teardown races.
++    ---
++    Expected behavior (after the bugfix): ThreadedWSGIServer.daemon_threads is False.
++    This test will fail on the current (buggy) code which sets daemon_threads = True.
++    """
++    # Inspect the ThreadedWSGIServer class attribute directly.
++    # The regression is due to daemon worker threads being True.
++    assert getattr(basehttp.ThreadedWSGIServer, "daemon_threads", False) is False
++
++
++def test_request_handling_triggers_db_cleanup(monkeypatch):
++    """
++    The server's request lifecycle should perform defensive DB cleanup at the
++    end of each request (for example calling django.db.close_old_connections()).
++    This prevents threads that finish slightly after server shutdown from keeping
++    DB connections open and racing with test database teardown.
++
++    The test monkeypatches django.db.close_old_connections and asserts that a
++    request to the test server causes that cleanup to be invoked.
++
++    This test is expected to fail on the pre-fix code (which doesn't call the
++    cleanup), and pass after the server/request-path is fixed to run cleanup.
++    """
++    called = []
++
++    # Monkeypatch the close_old_connections function to record invocations.
++    def _fake_close_old_connections():
++        called.append(True)
++
++    monkeypatch.setattr(django.db, "close_old_connections", _fake_close_old_connections, raising=True)
++
++    # Create a simple WSGI app that just responds 200 OK.
++    app = simple_app(b"DB-CHECK")
++
++    # Use a single-threaded server for determinism of request handling here.
++    httpd, thread, port = _start_server(basehttp.WSGIServer, app)
++    try:
++        # Perform a simple HTTP request to trigger request handling.
++        with urllib.request.urlopen(f"http://127.0.0.1:{port}/") as response:
++            body = response.read()
++            assert body == b"DB-CHECK"
++        # Give a small amount of time for any cleanup logic to run in request lifecycle.
++        time.sleep(0.05)
++
++        # Expect that close_old_connections() was invoked once per request handling.
++        # On the buggy code path this will be empty and the assertion will fail,
++        # demonstrating the regression. After the fix, this should be True.
++        assert called, "Expected django.db.close_old_connections() to be called during request handling."
++    finally:
++        _stop_server(httpd, thread)
++
++
++def test_server_handles_multiple_requests_and_cleans_up(monkeypatch):
++    """
++    Edge-case: ensure that multiple sequential requests each trigger DB cleanup.
++    This is another defensive test: even if threads are reused (threaded server),
++    per-request cleanup should be performed so no request leaves DB resources behind.
++    """
++    calls = []
++
++    def _fake_close_old_connections():
++        calls.append(True)
++
++    monkeypatch.setattr(django.db, "close_old_connections", _fake_close_old_connections, raising=True)
++
++    app = simple_app(b"BULK")
++
++    # Start a single-threaded server for deterministic sequencing.
++    httpd, thread, port = _start_server(basehttp.WSGIServer, app)
++    try:
++        for _ in range(3):
++            with urllib.request.urlopen(f"http://127.0.0.1:{port}/") as response:
++                assert response.read() == b"BULK"
++            # slight pause to allow request cleanup
++            time.sleep(0.02)
++
++        # Expect cleanup to have been called for each request.
++        assert len(calls) >= 3, "Expected close_old_connections() to be called for each request."
++    finally:
++        _stop_server(httpd, thread)
