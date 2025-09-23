@@ -52,8 +52,7 @@ for key, (url, pr) in repos.items():
     #     ], check=False)
     # finally:
     #     # cleanup: remove workdir + cloned repo
-    #     print(f"[+] Completed pylint review for {key}_{pr}")
-    #     shutil.rmtree(f'./repo', ignore_errors=True)
+    #     print(f"[+] Completed filtering for {key}_{pr}")
 
     ### Phase 3: splitting dataset
     try:
@@ -66,6 +65,5 @@ for key, (url, pr) in repos.items():
         ], check=False)
     finally:
         # cleanup: remove workdir + cloned repo
-        print(f"[+] Completed pylint review for {key}_{pr}")
-        shutil.rmtree(f'./repo', ignore_errors=True)
+        print(f"[+] Completed dataset generation for {key}_{pr}")
 

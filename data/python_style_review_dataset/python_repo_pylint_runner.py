@@ -1,15 +1,10 @@
 #!/usr/bin/env python3
 """
-pr_pylint_review.py
-
-Usage:
-  python pr_pylint_review.py --repo-url https://github.com/astropy/astropy.git --pr 14508 --out results.json --work-dir ./
-
 What it does:
  - clones repo
  - checks out PR (fetches pull/<PR>/head)
- - optionally applies a patch from sweagent_pylint_results.json matching an instance_id
- - runs pylint across repo (parallel jobs if requested)
+ - optionally applies a patch from codeareana_instances matching an instance_id
+ - runs pylint across repo
  - filters out style/env noise (e.g. too-many-args, import errors)
  - parses pylint JSON output
  - emits JSON summary to stdout and to --out
@@ -61,9 +56,12 @@ def run(cmd, cwd=None, capture=False, env=None, check=True):
     else:
         subprocess.run(cmd, cwd=cwd, env=env, check=check)
 
-def git_checkout_pr(repo_dir, pr):
-    run(["git", "fetch", "origin", f"pull/{pr}/head:pr/{pr}"], cwd=repo_dir)
-    run(["git", "checkout", f"pr/{pr}"], cwd=repo_dir)
+def git_checkout_commit(repo_dir, commit_hash):
+    # Ensure the commit is present locally
+    run(["git", "fetch", "origin", commit_hash], cwd=repo_dir)
+    # Checkout the exact commit (detached HEAD state)
+    run(["git", "checkout", commit_hash], cwd=repo_dir)
+    print(f"[+] Checked out commit {commit_hash}", file=sys.stderr)
 
 def load_swe_results(swe_results_path):
     p = Path(swe_results_path).expanduser()
@@ -79,23 +77,53 @@ def load_swe_results(swe_results_path):
 
 def apply_patch_to_repo(repo_dir, patch_text, work_base):
     try:
-        proc = subprocess.run(["git", "apply", "--whitespace=fix", "--index", "-"],
-                              input=patch_text, text=True, cwd=repo_dir,
-                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        # First attempt: apply patch directly to working tree (no index)
+        proc = subprocess.run(
+            ["git", "apply", "--whitespace=fix", "-"],
+            input=patch_text,
+            text=True,
+            cwd=repo_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
         if proc.returncode == 0:
+            print("[+] Patch applied with 'git apply -'.", file=sys.stderr)
+            return True
+
+        # Second attempt: apply and stage
+        proc2 = subprocess.run(
+            ["git", "apply", "--whitespace=fix", "--index", "-"],
+            input=patch_text,
+            text=True,
+            cwd=repo_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        if proc2.returncode == 0:
             print("[+] Patch applied with 'git apply --index'.", file=sys.stderr)
             return True
+
+        # Fallback: write patch to file and try again
         tmp_patch = Path(work_base) / "swe_patch.diff"
         tmp_patch.write_text(patch_text, encoding="utf-8")
-        proc2 = subprocess.run(["git", "apply", "--whitespace=fix", str(tmp_patch)],
-                               cwd=repo_dir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        if proc2.returncode == 0:
-            print("[+] Patch applied with 'git apply <file>'.", file=sys.stderr)
+        proc3 = subprocess.run(
+            ["git", "apply", "--whitespace=fix", str(tmp_patch)],
+            cwd=repo_dir,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        if proc3.returncode == 0:
+            print(f"[+] Patch applied with {tmp_patch}.", file=sys.stderr)
             return True
+
+        # Failed, save for debugging
         failed = Path(work_base) / "failed_patch.diff"
         failed.write_text(patch_text, encoding="utf-8")
         print(f"[!] Patch failed, wrote to {failed}", file=sys.stderr)
+        print(proc.stdout or proc2.stdout or proc3.stdout, file=sys.stderr)
         return False
+
     except Exception as e:
         print(f"[!] Exception applying patch: {e}", file=sys.stderr)
         return False
@@ -164,17 +192,15 @@ def main():
     ap.add_argument("--repo-url", required=True)
     ap.add_argument("--pr", required=True, type=int)
     ap.add_argument("--out", default="pylint_results/results.json")
-    ap.add_argument("--work-dir", default=None)
+    ap.add_argument("--work-dir", default='.')
     ap.add_argument("--jobs", type=int, default=None)
     ap.add_argument("--instance-id", required=False)
-    ap.add_argument("--swe-results", required=False, default="pylint_results/sweagent_pylint_results.json")
+    ap.add_argument("--apply-patch", default=True)
     args = ap.parse_args()
 
     if args.work_dir:
         work_base = Path(args.work_dir).expanduser().resolve()
         work_base.mkdir(parents=True, exist_ok=True)
-    else:
-        work_base = Path(tempfile.mkdtemp(prefix="pylint_review_"))
     
     repo_name = Path(args.repo_url).stem
     repo_dir = (work_base / 'repo').resolve()
@@ -182,14 +208,17 @@ def main():
 
     try:
         run(["git", "clone", args.repo_url, str(repo_dir)])
-        git_checkout_pr(str(repo_dir), args.pr)
-
-        if args.swe_results:
-            swe_list = load_swe_results(args.swe_results)
-            if swe_list:
-                match = next((e for e in swe_list if e.get("instance_id") == args.instance_id), None)
-                if match and match.get("patch"):
-                    apply_patch_to_repo(str(repo_dir), match["patch"], work_base)
+        with open('../codearena_instances_python.json') as f:
+            data = json.load(f)
+        for i in data:
+            if i["instance_id"] == args.instance_id:
+                patch = i["patch"]
+                commit = i["base_commit"]
+        if args.apply_patch:
+            git_checkout_commit(str(repo_dir), commit)
+            apply_patch_to_repo(str(repo_dir), patch, work_base)
+        else: 
+            git_checkout_commit(str(repo_dir), commit)
 
         out_json_path = str(work_base / f"pylint_results/full_pylint_run_data/{repo_name}_pylint.json")
         print("[+] Running pylint ...", file=sys.stderr)
