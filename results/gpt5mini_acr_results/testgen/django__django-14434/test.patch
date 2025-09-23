@@ -1,0 +1,159 @@
+--- a/tests/test_ddl_references_unique_sql.py
++++ b/tests/test_ddl_references_unique_sql.py
++import pytest
++
++from django.db.backends import ddl_references
++from django.db.backends.base.schema import BaseDatabaseSchemaEditor
++from django.db.backends.ddl_references import Table, Columns, Statement, IndexName, TableColumns
++
++
++class DummyConnection:
++    """
++    Minimal dummy connection object providing the attributes accessed by
++    BaseDatabaseSchemaEditor/_create_unique_sql used in these tests.
++    """
++    def __init__(self):
++        class Features:
++            # Keep all supports_* True so _create_unique_sql doesn't return None
++            supports_deferrable_unique_constraints = True
++            supports_partial_indexes = True
++            supports_covering_indexes = True
++            supports_expression_indexes = True
++
++        self.features = Features()
++
++
++class DummyEditor(BaseDatabaseSchemaEditor):
++    """
++    A minimal concrete subclass that provides the required attributes used
++    by BaseDatabaseSchemaEditor methods invoked in the tests.
++    """
++    def __init__(self):
++        # Create a dummy connection and set required attributes
++        self.connection = DummyConnection()
++        # These are used by the _create_unique_sql implementation
++        self.quote_name = lambda x: '"%s"' % x
++        self.quote_value = lambda x: "'%s'" % x
++        # SQL templates referenced in _create_unique_sql
++        self.sql_create_unique = "CREATE UNIQUE ..."
++        self.sql_create_unique_index = "CREATE UNIQUE INDEX ..."
++        # reuse Base class helpers (no DB required)
++        super().__init__(connection=self.connection)
++
++    # provide no-op implementations for abstract methods used elsewhere in BaseDatabaseSchemaEditor
++    # BaseDatabaseSchemaEditor may expect several other attributes/methods; implementing them as simple
++    # stubs keeps the editor usable for unit tests focusing on _create_unique_sql behaviour.
++    def _create_index_name(self, *args, **kwargs):
++        return "dummy_index_name"
++
++    def _index_condition_sql(self, condition):
++        return condition
++
++    def _deferrable_constraint_sql(self, deferrable):
++        return deferrable
++
++    def _index_include_sql(self, model, include):
++        return include
++
++
++class SimpleMeta:
++    def __init__(self, db_table):
++        self.db_table = db_table
++
++
++class DummyModel:
++    def __init__(self, db_table):
++        self._meta = SimpleMeta(db_table)
++
++
++def test_columns_references_with_string_table_are_recognized():
++    """
++    Verify that Columns constructed with a string table name are recognized
++    by Statement.references_column (the expected/correct behavior).
++    This is the behavior _create_unique_sql should produce for its 'columns'
++    argument (when passing the table name to _index_columns).
++    """
++    table_name = "my_table"
++    # columns expect either names or (name, suffix) tuples; use simple name
++    cols = ["my_column"]
++
++    # Construct Columns with a string table name (correct usage)
++    columns_obj = Columns(table_name, cols, quote_name=lambda x: '"%s"' % x)
++    # Use a minimal Statement pointing at the same table (Table instance)
++    stmt = Statement("template", table=Table(table_name, lambda x: '"%s"' % x), name=IndexName(table_name, cols, '_uniq', lambda *a, **k: "n"), columns=columns_obj)
++
++    # references_column should return True because columns reference that table/column
++    assert stmt.references_column(table_name, "my_column"), (
++        "Columns built with a string table name should be recognized by Statement.references_column"
++    )
++
++
++def test_columns_references_with_table_instance_fail_if_bug_present():
++    """
++    This test demonstrates the bug: when Columns is constructed with a Table
++    instance instead of the table name string, Statement.references_column
++    currently (pre-fix) returns False. The correct/fixed behavior is for it
++    to return True. This test is intended to fail before the fix is applied
++    and pass after the fix.
++    """
++    table_name = "my_table"
++    cols = ["my_column"]
++
++    # Construct a Table instance and pass it into Columns (this is what _create_unique_sql
++    # currently does erroneously). If the bug is present, Statement.references_column
++    # will return False; after the fix it should return True.
++    table_obj = Table(table_name, lambda x: '"%s"' % x)
++    columns_with_table_obj = Columns(table_obj, cols, quote_name=lambda x: '"%s"' % x)
++
++    stmt = Statement("template", table=table_obj, name=IndexName(table_name, cols, '_uniq', lambda *a, **k: "n"), columns=columns_with_table_obj)
++
++    # The correct behavior is True; this assertion will fail before the fix is applied.
++    assert stmt.references_column(table_name, "my_column"), (
++        "When Columns is built with a Table instance as the table argument, "
++        "Statement.references_column must still recognize the column. "
++        "This test fails pre-fix and should pass post-fix."
++    )
++
++
++def test_create_unique_sql_constructs_columns_with_string_table():
++    """
++    Integration-style test: ensure _create_unique_sql builds a Statement whose
++    columns object correctly recognizes column references. This test mirrors
++    how _create_unique_sql should call _index_columns with a string table name.
++    """
++    editor = DummyEditor()
++    model = DummyModel("my_table")
++    cols = ["my_column"]
++
++    # Call the method under test. If the bug exists, the returned Statement's
++    # columns will have been constructed incorrectly and references_column
++    # will be False.
++    stmt = editor._create_unique_sql(model, cols)
++
++    assert isinstance(stmt, Statement)
++    # The following assertion encodes the expected/fixed behavior.
++    assert stmt.references_column("my_table", "my_column"), (
++        "_create_unique_sql should create a Statement whose columns reference "
++        "the provided model column name."
++    )
++
++
++def test_create_unique_sql_edge_case_empty_columns_uses_expressions():
++    """
++    Edge case: when columns is falsy and expressions are provided, _create_unique_sql
++    uses an Expressions object (not Columns). Ensure the returned Statement still
++    references table/column appropriately via the Statement API.
++    """
++    editor = DummyEditor()
++    model = DummyModel("my_table")
++
++    # expressions is a list of expressions; we use a trivial expression string
++    # since we don't invoke SQL compilation here — just ensure the branches work.
++    expressions = ["lower(my_column)"]
++
++    stmt = editor._create_unique_sql(model, columns=None, expressions=expressions)
++
++    assert isinstance(stmt, Statement)
++    # Expressions path might not allow direct column reference detection; at minimum,
++    # Statement should report it references the table itself.
++    assert stmt.references_table("my_table"), "Statement should reference the model's table when expressions are used."

@@ -1,0 +1,101 @@
+--- a/tests/test_migrations_optimizer_create_model_managers.py
++++ b/tests/test_migrations_optimizer_create_model_managers.py
+-# Empty if creating new file
++import pytest
++
++from django.db import models
++from django.db.migrations.optimizer import MigrationOptimizer
++from django.db.migrations.operations.models import (
++    CreateModel,
++    AlterModelManagers,
++    AlterModelOptions,
++)
++
++
++def _sample_create_model(name="MyModel", managers=None):
++    """
++    Helper to construct a CreateModel operation with a single simple field.
++    """
++    fields = [("id", models.AutoField(primary_key=True))]
++    return CreateModel(name, fields=fields, managers=managers or [("objects", models.Manager())])
++
++
++def _sample_alter_managers(name="MyModel", managers=None):
++    """
++    Helper to construct an AlterModelManagers operation.
++    """
++    return AlterModelManagers(name, managers=managers or [("custom", models.Manager())])
++
++
++def _sample_alter_options(name="MyModel", options=None):
++    """
++    Helper to construct an AlterModelOptions operation.
++    """
++    return AlterModelOptions(name, options=options or {"verbose_name": "PrettyName"})
++
++
++def test_create_model_plus_alter_model_managers_is_optimized_to_single_createmodel():
++    """
++    Regression test for CreateModel + AlterModelManagers optimization.
++
++    Before the fix, MigrationOptimizer would NOT merge a CreateModel followed by
++    AlterModelManagers into a single CreateModel. This test asserts that the
++    optimizer returns a single CreateModel where the managers have been set to
++    those from the AlterModelManagers operation.
++
++    Note: This test is expected to fail on code that does not include the
++    reducer for AlterModelManagers in CreateModel.reduce. After applying the
++    intended fix, it should pass.
++    """
++    create = _sample_create_model(name="Author", managers=[("objects", models.Manager())])
++    alter_managers = _sample_alter_managers(
++        name="Author", managers=[("custom", models.Manager())]
++    )
++
++    optimizer = MigrationOptimizer()
++    optimized = optimizer.optimize([create, alter_managers], app_label="tests")
++
++    # Expect a single CreateModel operation after optimization.
++    assert len(optimized) == 1, "Expected CreateModel + AlterModelManagers to be merged."
++    assert isinstance(optimized[0], CreateModel)
++    # The resulting CreateModel should use the managers from the AlterModelManagers op.
++    assert optimized[0].managers == alter_managers.managers
++
++
++def test_create_model_plus_alter_model_managers_for_different_model_not_merged():
++    """
++    Ensure that AlterModelManagers targeting a different model name is not merged.
++    This is an edge case: optimizer should not merge when model names differ.
++    """
++    create = _sample_create_model(name="Book", managers=[("objects", models.Manager())])
++    alter_managers_other = _sample_alter_managers(
++        name="Author", managers=[("custom", models.Manager())]
++    )
++
++    optimizer = MigrationOptimizer()
++    optimized = optimizer.optimize([create, alter_managers_other], app_label="tests")
++
++    # No merging should occur because the AlterModelManagers targets another model.
++    assert optimized == [create, alter_managers_other]
++
++
++def test_create_model_plus_alter_model_options_still_merges_to_single_createmodel():
++    """
++    Smoke test to ensure existing CreateModel + AlterModelOptions optimization still works.
++    This is a control test: it should pass with and without the new fix and verifies
++    that adding the AlterModelManagers handling does not regress the AlterModelOptions case.
++    """
++    create = _sample_create_model(name="Project", managers=[("objects", models.Manager())])
++    alter_options = _sample_alter_options(name="Project", options={"verbose_name": "Proj"})
++
++    optimizer = MigrationOptimizer()
++    optimized = optimizer.optimize([create, alter_options], app_label="tests")
++
++    # Existing behavior: these should be merged into a single CreateModel combining options.
++    assert len(optimized) == 1
++    result = optimized[0]
++    assert isinstance(result, CreateModel)
++    # The options should include the altered option.
++    assert result.options.get("verbose_name") == "Proj"
++    # Managers should be preserved from the original CreateModel.
++    assert result.managers == create.managers

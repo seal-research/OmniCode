@@ -1,0 +1,184 @@
+--- a/tests/test_ordering_meta_expressions.py
++++ b/tests/test_ordering_meta_expressions.py
++import pytest
++
++# We will import the relevant classes/functions directly from the Django code
++# under test. These tests are intended to exercise the behavior described in
++# the issue: when a model's Meta.ordering contains expressions (OrderBy /
++# BaseExpression), code paths that consume Meta.ordering must handle these
++# expression objects correctly and not attempt to treat them like strings.
++#
++# The tests create minimal stand-ins for a model and its _meta to avoid needing
++# a full Django ORM environment. We construct a Query instance with the fake
++# model and then exercise clear_ordering/get_meta_ordering and the SQL
++# compilation path that consumes ordering. The failing-test demonstrates the
++# crash (pre-fix) when Meta.ordering includes an OrderBy expression. The
++# succeeding test verifies the expected behavior (post-fix) where the system
++# handles expression-based Meta.ordering without raising TypeError/AttributeError.
++#
++# NOTE: These tests operate at the unit level using the Query and SQLCompiler
++# internals (imported from the project's django/db path). They do not require a
++# working database; instead, they validate the in-memory handling of ordering
++# entries. If the project under test changes the exact class locations, the
++# import paths in these tests will need to be adjusted accordingly.
++
++from django.db.models.expressions import OrderBy, F, BaseExpression
++from django.db.models.sql.query import Query, get_order_dir
++from django.db.models.sql import compiler as sql_compiler_module
++
++
++class DummyOptions:
++    """
++    Minimal fake of Django's Options object used as model._meta in Query.
++    We need:
++      - ordering attribute (iterable)
++      - get_field(name) method used by _get_meta_ordering (if strings are used)
++      - fields_map attribute referenced by get_order_by_field in some flows
++    """
++    def __init__(self, ordering):
++        # ordering can be a string, tuple, OrderBy, or expression
++        self.ordering = ordering
++        self.fields_map = {}
++        self.model = None  # not used in these tests
++
++    def get_field(self, name):
++        # Emulate behaviour for fields; raise FieldDoesNotExist to indicate
++        # the name can't be resolved to a concrete field, so _get_meta_ordering
++        # yields the original value (this keeps our tests focused on ordering
++        # normalization behavior).
++        from django.core.exceptions import FieldDoesNotExist
++        raise FieldDoesNotExist()
++
++
++class DummyModel:
++    """Minimal fake model that holds the DummyOptions as _meta."""
++    def __init__(self, ordering):
++        self._meta = DummyOptions(ordering)
++        self._meta.model = self
++
++
++class DummyCompiler(sql_compiler_module.SQLCompiler):
++    """
++    Subclass SQLCompiler to avoid needing a full Query -> Compiler setup.
++    We only want to call as_sql() to exercise ORDER BY compilation logic.
++    The base SQLCompiler constructor takes (query, connection, using), so we
++    provide minimal fakes where appropriate.
++    """
++    def __init__(self, query):
++        # Provide a minimal fake connection object which exposes the ops attribute
++        # used by SQLCompiler in as_sql(). We implement only what's necessary for
++        # our ordering-related code paths.
++        class Ops:
++            def quote_name(self, name):
++                return name
++
++            def force_no_ordering(self):
++                return None
++
++            # For ORDER BY generation we don't need more here.
++        class Conn:
++            ops = Ops()
++            features = type('F', (), {'for_update_after_from': False})
++        # SQLCompiler.__init__ signature: (self, query, connection, using)
++        super().__init__(query, Conn(), using=None)
++
++
++def test_get_order_dir_raises_on_non_string_orderby():
++    """
++    Sanity check: get_order_dir expects a string-like ordering spec. Passing an
++    OrderBy instance will attempt to index into the object (field[0]) and raise
++    an exception. This mirrors the core cause reported in the issue: code
++    treating an OrderBy object as a string will crash.
++    This test documents the current behavior: it should raise TypeError or
++    IndexError when a non-string is passed. This test is expected to pass on
++    the pre-fix codebase (i.e., demonstrate the problem).
++    """
++    order_expr = OrderBy(F('pk'))
++    with pytest.raises(Exception):
++        # Either TypeError (object not subscriptable) or similar will be raised
++        # by the current get_order_dir implementation.
++        get_order_dir(order_expr)  # this is intentionally incorrect use
++
++
++def test_query_clear_ordering_with_meta_ordering_expression_does_not_crash():
++    """
++    Reproduction test for the bug described:
++    - Create a Query for a fake model whose Meta.ordering contains an OrderBy
++      expression.
++    - Call clear_ordering() in the situation where Meta.ordering should be
++      picked up and assigned into the query.
++    - Then attempt to compile the query SQL (SQLCompiler.as_sql), which will
++      iterate ordering items and compile expressions if they are OrderBy.
++    The expected behavior (post-fix) is that this flow does not raise an
++    exception. Before the fix, this flow raised due to get_order_dir or other
++    code treating an OrderBy like a string.
++    """
++    # Meta.ordering contains an OrderBy expression; this is the exact shape
++    # reported to cause trouble with multi-table inheritance + Meta.ordering.
++    order_expr = OrderBy(F('pk'))
++    model = DummyModel(ordering=(order_expr,))
++
++    # Construct a Query bound to our dummy model. Query expects a model class
++    # (or similar object); stub one in. The Query internals will read model._meta.
++    q = Query(model)
++
++    # Simulate the condition in clear_ordering where existing ordering is empty
++    # and model._meta.ordering should be loaded into the query.
++    # The clear_ordering path should result in the Query having an ordering that
++    # the SQLCompiler can consume without treating expressions like strings.
++    # If the bug is present, the subsequent compilation will raise.
++    q.clear_ordering(force_empty=False)
++
++    # The Query may still be incomplete for full SQL generation, but we only
++    # need to exercise ORDER BY handling. Build a minimal SQLCompiler and call
++    # into the ORDER BY generation path. If ordering contains an OrderBy
++    # expression, the compiler should compile the expression rather than trying
++    # to treat it as a string.
++    compiler = DummyCompiler(q)
++
++    # The compilation may require some fields to be present; ensure minimal
++    # attributes used by the ordering loop exist (the ORDER BY handling in
++    # SQLCompiler.as_sql iterates over order_by which is expected to be in
++    # compiler.query.order_by or similar). The critical assertion is that the
++    # call completes without raising.
++    try:
++        # We don't care about the full SQL output here; we're validating that
++        # no exception is raised when ordering contains an expression.
++        compiler.as_sql()
++    except Exception as exc:
++        pytest.fail(
++            "Compilation raised an exception when Meta.ordering contained an "
++            "expression: %r" % (exc,)
++        )
++
++
++def test_meta_ordering_edge_cases_with_mixed_types():
++    """
++    Edge case tests:
++      - Meta.ordering containing strings and expression OrderBy should be
++        handled together without crashing.
++      - An empty Meta.ordering should result in no ordering and not raise.
++    These tests exercise the normalization/robustness of the codepath.
++    """
++    # Mixed ordering: string and expression
++    order_expr = OrderBy(F('pk'))
++    model = DummyModel(ordering=('-nonexistent_field', order_expr))
++
++    q = Query(model)
++    # ensure that clearing ordering and compiling does not raise for mixed entries
++    q.clear_ordering(force_empty=False)
++    compiler = DummyCompiler(q)
++    try:
++        compiler.as_sql()
++    except Exception as exc:
++        pytest.fail("Mixed Meta.ordering raised during compilation: %r" % (exc,))
++
++    # Empty ordering should be handled gracefully
++    model_empty = DummyModel(ordering=())
++    q_empty = Query(model_empty)
++    q_empty.clear_ordering(force_empty=False)
++    compiler_empty = DummyCompiler(q_empty)
++    try:
++        compiler_empty.as_sql()
++    except Exception as exc:
++        pytest.fail("Empty Meta.ordering raised during compilation: %r" % (exc,))

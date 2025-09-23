@@ -1,0 +1,105 @@
+--- a/tests/test_field_equality.py
++++ b/tests/test_field_equality.py
++import pytest
++
++# Import the Field base and a concrete field class
++from django.db.models.fields import Field
++from django.db.models import IntegerField
++
++
++class DummyModelA:
++    """Simple stand-in for a model class/owner."""
++    pass
++
++
++class DummyModelB:
++    """Simple stand-in for a different model class/owner."""
++    pass
++
++
++def make_field(creation_counter, model):
++    """
++    Create an IntegerField instance and force its creation_counter and model.
++
++    We avoid relying on Django model class construction (contribute_to_class)
++    so tests are self-contained: __eq__/__hash__/__lt__ only use these
++    attributes for comparisons in the Field implementation.
++    """
++    f = IntegerField()
++    # Overwrite instance attributes to simulate the scenarios described in the issue.
++    f.creation_counter = creation_counter
++    f.model = model
++    return f
++
++
++def test_fields_with_same_creation_counter_and_same_model_are_equal_and_hash_equal():
++    """
++    Control case: two fields that have the same creation_counter and belong to
++    the same model should compare equal and have equal hashes.
++    This currently passes and should continue to pass after the fix.
++    """
++    f1 = make_field(1000, DummyModelA)
++    f2 = make_field(1000, DummyModelA)
++
++    # They should be considered equal (same model and same creation_counter).
++    assert f1 == f2
++    # Hash must be consistent with equality.
++    assert hash(f1) == hash(f2)
++    # When put into a set, they should be de-duplicated.
++    assert len({f1, f2}) == 1
++
++
++def test_fields_with_same_creation_counter_but_different_models_are_not_equal_and_hash_differ():
++    """
++    Bug reproduction + expected behavior after fix:
++    Two fields that accidentally have the same creation_counter but belong to
++    different models should NOT be equal. They should produce different hashes
++    so they are distinct in sets and dicts.
++
++    NOTE: This test is expected to fail on the current (pre-fix) code where
++    Field.__eq__ and Field.__hash__ only consider creation_counter.
++    After the fix (including model in equality/hash), this test should pass.
++    """
++    f1 = make_field(2000, DummyModelA)
++    f2 = make_field(2000, DummyModelB)
++
++    # They should NOT be equal once the fix is applied.
++    assert f1 != f2
++
++    # Their hashes should differ so they don't collide in hashed collections.
++    assert hash(f1) != hash(f2)
++
++    # Both should be present when placed into a set.
++    assert len({f1, f2}) == 2
++
++
++def test_fields_with_creation_counter_tie_have_deterministic_ordering_by_model():
++    """
++    When creation_counter is equal, __lt__ should provide a deterministic
++    tie-breaker based on the owning model so that sorting/bisect works
++    sensibly. The expected property is that exactly one of (a < b) or (b < a)
++    is True (i.e. a strict ordering exists).
++
++    NOTE: Prior to the fix, __lt__ compares only creation_counter and both
++    comparisons can be False, so this test will fail. After the fix this test
++    should pass.
++    """
++    f1 = make_field(3000, DummyModelA)
++    f2 = make_field(3000, DummyModelB)
++
++    # Exactly one of these should be True; not both, not none.
++    assert (f1 < f2) != (f2 < f1)
++
++
++def test_fields_with_no_model_and_same_creation_counter_are_equal():
++    """
++    Edge case: if both fields have model set to None and same creation_counter,
++    they should compare equal (consistent with comparing model attribute).
++    This ensures behavior is well-defined for unbound fields.
++    """
++    f1 = make_field(4000, None)
++    f2 = make_field(4000, None)
++
++    assert f1 == f2
++    assert hash(f1) == hash(f2)
++    assert len({f1, f2}) == 1

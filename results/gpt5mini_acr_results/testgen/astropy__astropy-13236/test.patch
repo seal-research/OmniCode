@@ -1,0 +1,104 @@
+--- a/tests/table/test_structured_ndarray_mixin.py
++++ b/tests/table/test_structured_ndarray_mixin.py
++import warnings
++
++import numpy as np
++import pytest
++
++from astropy.table import Table, Column
++from astropy.table.ndarray_mixin import NdarrayMixin
++
++
++def _make_structured_array():
++    """Helper to create a simple structured numpy array for tests."""
++    return np.array([(1, 2.0), (3, 4.0)],
++                    dtype=[('a', 'i4'), ('b', 'f8')])
++
++
++def test_adding_structured_ndarray_emits_futurewarning():
++    """
++    Regression/test for the deprecation: when a structured ndarray is added
++    to a Table it should emit a FutureWarning that the automatic conversion
++    to NdarrayMixin is deprecated and that users should wrap in Column
++    to preserve current behaviour.
++    NOTE: This test intentionally expects a FutureWarning and therefore will
++    fail on the codebase prior to the deprecation being added. After the fix
++    (adding the FutureWarning) this test should pass.
++    """
++    data = _make_structured_array()
++    t = Table()
++
++    # Expect a FutureWarning when adding a raw structured ndarray as a column.
++    with pytest.warns(FutureWarning):
++        t.add_column(data, name="sarr")
++
++
++def test_structured_ndarray_is_viewed_as_ndarraymixin_when_not_column():
++    """
++    Ensure current behaviour (for the 5.1 deprecation period) still views a
++    bare structured ndarray as an NdarrayMixin. This should pass both before
++    and after adding the FutureWarning (since the conversion was preserved
++    in the deprecation step).
++    """
++    data = _make_structured_array()
++    t = Table()
++    # Add without wrapping in Column -> should be converted to NdarrayMixin
++    t.add_column(data, name="sarr")
++    col = t["sarr"]
++    assert isinstance(col, NdarrayMixin), (
++        "Structured ndarray added to Table should be view-cast to NdarrayMixin "
++        "unless wrapped in Column"
++    )
++
++    # Basic sanity: the underlying fields are accessible via dtype names
++    assert col.dtype.names == data.dtype.names
++    assert col[0]["a"] == data[0]["a"]
++    assert col[1]["b"] == data[1]["b"]
++
++
++def test_wrapping_structured_ndarray_in_column_prevents_warning_and_keeps_column_type():
++    """
++    If the user explicitly wraps the structured array in astropy.table.Column(),
++    the Table should not issue the FutureWarning and the stored column should
++    be an instance of Column (not NdarrayMixin). This verifies the recommended
++    user action avoids the deprecation warning.
++    """
++    data = _make_structured_array()
++    t = Table()
++    col = Column(data, name="sarr_col")
++
++    # Use warnings.catch_warnings to capture any warnings; ensure no FutureWarning.
++    with warnings.catch_warnings(record=True) as rec:
++        warnings.simplefilter("always")
++        t.add_column(col)  # pass Column instance; should not trigger the FutureWarning
++
++    # Assert no FutureWarning recorded
++    assert not any(issubclass(w.category, FutureWarning) for w in rec), (
++        "Wrapping structured ndarray in Column should prevent the FutureWarning"
++    )
++
++    stored = t["sarr_col"]
++    # It should be stored as a Column (not NdarrayMixin)
++    assert isinstance(stored, Column)
++    assert not isinstance(stored, NdarrayMixin)
++    # And content should match
++    assert stored.dtype.names == data.dtype.names
++    assert stored[0]["a"] == data[0]["a"]
++    assert stored[1]["b"] == data[1]["b"]
++
++
++def test_edgecase_empty_structured_array_added_as_column():
++    """
++    Edge case: adding an empty structured array should still trigger the same
++    handling (i.e., emit the FutureWarning) since dtype still has fields.
++    This ensures empty arrays are not a special-case that bypasses the check.
++    """
++    data = np.array([], dtype=[('a', 'i4'), ('b', 'f8')])
++    t = Table()
++    with pytest.warns(FutureWarning):
++        t.add_column(data, name="empty_sarr")
++
++    # Verify the column exists and has the expected dtype
++    col = t["empty_sarr"]
++    assert col.dtype.names == data.dtype.names
++    assert len(col) == 0

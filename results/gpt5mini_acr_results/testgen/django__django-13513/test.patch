@@ -1,0 +1,129 @@
+--- a/tests/test_debug_exception_reporter.py
++++ b/tests/test_debug_exception_reporter.py
++import pytest
++import types
++import warnings
++
++from django.views import debug
++
++
++# Helper to create an exception with an explicit cause (raise ... from other)
++def _make_explicit_cause_chain():
++    try:
++        try:
++            raise RuntimeError("implicit error")
++        except RuntimeError as inner:
++            # explicit cause: outer raised from inner
++            raise ValueError("outer explicit") from inner
++    except ValueError:
++        exc_type, exc_value, tb = debug.sys.exc_info()
++        return exc_type, exc_value, tb
++
++
++# Helper to create an exception that suppresses the implicit context (raise ... from None)
++def _make_suppressed_context_chain():
++    try:
++        try:
++            raise RuntimeError("implicit error to be suppressed")
++        except RuntimeError as inner:
++            # suppress implicit context using "from None"
++            raise ValueError("outer suppressed") from None
++    except ValueError:
++        exc_type, exc_value, tb = debug.sys.exc_info()
++        return exc_type, exc_value, tb
++
++
++def _make_cycle_in_chain():
++    # Create two exceptions referencing each other in context to create a cycle.
++    # We construct them manually to control __context__ links and trigger the cycle detection.
++    a = RuntimeError("a")
++    b = ValueError("b")
++    # Link contexts to create a cycle: a.__context__ = b and b.__context__ = a
++    a.__context__ = b
++    b.__context__ = a
++    # Provide a traceback for one of them (None is acceptable for this test; frames logic
++    # handles absence of tb by returning appropriate frames list content).
++    return type(a), a, None
++
++
++@pytest.mark.django_db
++def test_debug_view_respects_suppress_context():
++    """
++    When an exception is raised 'from None', __suppress_context__ should be true
++    and the debug ExceptionReporter.get_traceback_frames() must not include the
++    implicit context (the inner RuntimeError) in its exception chain.
++
++    This test would have failed on the pre-fix implementation that ignored
++    __suppress_context__ and always returned __context__ when __cause__ was None.
++    """
++    exc_type, exc_value, tb = _make_suppressed_context_chain()
++    reporter = debug.ExceptionReporter(None, exc_type, exc_value, tb)
++    frames = reporter.get_traceback_frames()
++
++    # Collect the exception chain values used by frames (exc_cause and exc_cause_explicit)
++    exc_causes = [f['exc_cause'] for f in frames if f.get('exc_cause') is not None]
++    # None of the frames should report the implicit RuntimeError (the suppressed one).
++    # Instead there should be no implicit cause present.
++    assert all(not isinstance(c, RuntimeError) for c in exc_causes), (
++        "Implicit context RuntimeError was present despite __suppress_context__ == True"
++    )
++
++    # Additionally, ensure the top-most exception value corresponds to our outer ValueError.
++    # The reporter stores 'exception_value' in get_traceback_data(); here we ensure the
++    # exception message is the outer one.
++    data = reporter.get_traceback_data()
++    assert "outer suppressed" in data.get("exception_value", ""), (
++        "Reported exception_value does not match the outer exception"
++    )
++
++
++def test_debug_view_includes_explicit_cause():
++    """
++    When an exception has an explicit __cause__ (raise ... from other), the
++    debug ExceptionReporter must show that explicit cause in the exception chain.
++    """
++    exc_type, exc_value, tb = _make_explicit_cause_chain()
++    reporter = debug.ExceptionReporter(None, exc_type, exc_value, tb)
++    frames = reporter.get_traceback_frames()
++
++    # There should be at least one exc_cause that is a RuntimeError (the explicit cause).
++    exc_causes = [f['exc_cause'] for f in frames if f.get('exc_cause') is not None]
++    assert any(isinstance(c, RuntimeError) for c in exc_causes), (
++        "Explicit cause (RuntimeError) not found in exc_cause chain"
++    )
++
++    # Ensure exc_cause_explicit is truthy where exc_cause is the explicit cause.
++    explicit_flags = [f['exc_cause_explicit'] for f in frames]
++    assert any(explicit_flags), "No frame marked as having an explicit cause"
++
++
++def test_cycle_in_exception_chain_warns_and_breaks(monkeypatch):
++    """
++    Ensure that if there's a cyclic exception chain, a warning is emitted and the
++    reporter stops traversing to avoid infinite loops.
++    """
++    exc_type, exc_value, tb = _make_cycle_in_chain()
++    reporter = debug.ExceptionReporter(None, exc_type, exc_value, tb)
++
++    # Capture warnings emitted during get_traceback_frames
++    with warnings.catch_warnings(record=True) as w:
++        warnings.simplefilter("always")
++        frames = reporter.get_traceback_frames()
++
++    # A warning about a cycle should have been emitted.
++    assert any("Cycle in the exception chain" in str(wi.message) for wi in w), (
++        "Expected an ExceptionCycleWarning about a cycle in the exception chain"
++    )
++
++    # Frames should be returned (might be empty because tb is None), and traversal should not loop forever.
++    assert isinstance(frames, list)
++
++
++def test_get_traceback_frames_edge_case_no_exceptions():
++    """
++    If ExceptionReporter is instantiated with no exception (None values),
++    get_traceback_frames should return an empty list without raising.
++    """
++    reporter = debug.ExceptionReporter(None, None, None, None)
++    frames = reporter.get_traceback_frames()
++    assert frames == [], "Expected empty frames list when no exception info is provided"

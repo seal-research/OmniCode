@@ -1,0 +1,114 @@
+--- a/tests/test_admin_empty_label.py
++++ b/tests/test_admin_empty_label.py
+-# Empty if creating new file
++import pytest
++
++# Import the ModelAdmin class that contains the bug in formfield_for_foreignkey
++from django.contrib.admin.options import ModelAdmin
++
++
++class DummyField:
++    """
++    Minimal stand-in for a ForeignKey-like field used by formfield_for_foreignkey.
++
++    The real method calls db_field.formfield(**kwargs). For testing we simply
++    return the received kwargs so tests can inspect what was passed through.
++    """
++
++    def __init__(self, name, blank):
++        self.name = name
++        self.blank = blank
++        # remote_field isn't used in the radio_fields branch, but keep attribute
++        # to be closer to a real ForeignKey instance if other code accesses it.
++        self.remote_field = None
++
++    def formfield(self, **kwargs):
++        # Return the kwargs so tests can assert the value of 'empty_label'.
++        return kwargs
++
++
++class AdminOverridesEmptyLabel(ModelAdmin):
++    """
++    Simulates a user-defined ModelAdmin that attempts to set a custom empty_label
++    in formfield_for_foreignkey before delegating to super().
++    """
++
++    def formfield_for_foreignkey(self, db_field, request, **kwargs):
++        if db_field.name == "myfield":
++            # User wants to supply their own empty_label
++            kwargs["empty_label"] = "I WANT TO SET MY OWN EMPTY LABEL"
++        return super().formfield_for_foreignkey(db_field, request, **kwargs)
++
++
++def test_default_empty_label_is_set_for_radio_field_when_not_provided():
++    """
++    When no 'empty_label' is provided by the caller and the field is a radio
++    field with blank=True, the ModelAdmin should set the default _("None")
++    (which is 'None' in the default locale).
++    This test should PASS before and after the fix.
++    """
++    admin = ModelAdmin(None, None)
++    # Mark the field name as configured for radio fields so the code path runs.
++    admin.radio_fields = {"myfield": None}
++
++    fld = DummyField(name="myfield", blank=True)
++    result = admin.formfield_for_foreignkey(fld, request=None)
++
++    # The implementation uses _('None') when blank is True; default translation
++    # returns the string 'None'.
++    assert result.get("empty_label") == "None"
++
++
++def test_empty_label_is_none_for_non_blank_radio_field():
++    """
++    If the ForeignKey field is not blank, empty_label should be set to None.
++    This verifies the branch that sets None when not blank. This should PASS
++    before and after the fix.
++    """
++    admin = ModelAdmin(None, None)
++    admin.radio_fields = {"myfield": None}
++
++    fld = DummyField(name="myfield", blank=False)
++    result = admin.formfield_for_foreignkey(fld, request=None)
++
++    assert "empty_label" in result
++    assert result["empty_label"] is None
++
++
++def test_user_provided_empty_label_is_preserved_when_widget_already_present():
++    """
++    If 'widget' is already provided in kwargs, the radio_fields branch that
++    overwrites empty_label is skipped. A user-provided empty_label should be
++    preserved in that case. This test should PASS before and after the fix.
++    """
++    admin = AdminOverridesEmptyLabel(None, None)
++    admin.radio_fields = {"myfield": None}
++
++    fld = DummyField(name="myfield", blank=True)
++    # Provide a widget explicitly to avoid the radio_fields branch executing.
++    result = admin.formfield_for_foreignkey(fld, request=None, widget="already")
++
++    assert result.get("empty_label") == "I WANT TO SET MY OWN EMPTY LABEL"
++
++
++def test_user_provided_empty_label_is_not_overwritten_for_radio_fields():
++    """
++    This test reproduces the reported bug:
++    - A ModelAdmin subclass sets kwargs['empty_label'] and then calls super().
++    - The BaseModelAdmin.formfield_for_foreignkey currently overwrites that value
++      when handling radio_fields, instead of preserving the caller-supplied value.
++
++    Expected behavior (after the bug is fixed):
++    The resulting empty_label should be the user-supplied string.
++
++    Before the fix: this test will FAIL (demonstrates the bug).
++    After applying the fix that preserves kwargs['empty_label'], this test will PASS.
++    """
++    admin = AdminOverridesEmptyLabel(None, None)
++    admin.radio_fields = {"myfield": None}
++
++    fld = DummyField(name="myfield", blank=True)
++    result = admin.formfield_for_foreignkey(fld, request=None)
++
++    # The intended behavior is that the admin's provided empty_label is preserved.
++    assert result.get("empty_label") == "I WANT TO SET MY OWN EMPTY LABEL"

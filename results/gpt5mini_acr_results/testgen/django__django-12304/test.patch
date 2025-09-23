@@ -1,0 +1,105 @@
+--- a/tests/test_enums_in_templates.py
++++ b/tests/test_enums_in_templates.py
++import pytest
++from types import SimpleNamespace
++
++from django.template import Template, Context, Engine
++from django.db.models import enums
++
++
++# Note: These tests exercise the interaction between the Django template
++# variable resolver and the new Choices-based enumeration types defined in
++# django.db.models.enums.
++#
++# The root of the issue is that Enum subclasses (the enum "class" itself) are
++# callable (EnumMeta.__call__), and Django's Variable resolver will call
++# callables it finds unless they expose the attribute
++# do_not_call_in_templates = True. Without that attribute, attempting to
++# reference an enum class (e.g. YearInSchool) in a template will result in a
++# TypeError because EnumMeta.__call__ expects an argument. The intended fix is
++# to add do_not_call_in_templates = True on the Choices base so enums are not
++# auto-invoked by the template system.
++#
++# The tests below include:
++# - A "smoke" test asserting existing str() behavior of enum members (should pass).
++# - A test that will fail prior to the fix (it asserts that the enum class has
++#   do_not_call_in_templates = True).
++# - A test that demonstrates the template rendering use-case: comparing a model
++#   value against an enum member in an {% if %} tag. This test fails before the
++#   fix and should pass after the fix is applied.
++#
++# These tests are self-contained: they define a small TextChoices subclass to
++# exercise the behavior, and use django.template.Engine passed directly to
++# Template to avoid relying on project-wide template engine configuration.
++
++
++def test_enum_member_str_returns_value():
++    """
++    Ensure that converting an enum member to str() yields its value. This is
++    existing behavior (Choices.__str__) and should already pass.
++    """
++    class YearInSchool(enums.TextChoices):
++        FRESHMAN = 'FR', 'Freshman'
++        SOPHOMORE = 'SO', 'Sophomore'
++
++    assert str(YearInSchool.FRESHMAN) == 'FR'
++    assert str(YearInSchool.SOPHOMORE) == 'SO'
++
++
++def test_choices_classes_are_marked_do_not_call_in_templates():
++    """
++    The template system should not attempt to call Choices-based enum classes.
++    The intended fix is to set do_not_call_in_templates = True on the Choices
++    base (or otherwise ensure the attribute is present on enum classes).
++    This test demonstrates the presence of that attribute and will fail before
++    the fix is applied.
++    """
++    class YearInSchool(enums.TextChoices):
++        FRESHMAN = 'FR', 'Freshman'
++
++    # This is the attribute the template resolver checks to avoid calling
++    # callables during variable resolution. The test asserts that it is present
++    # and True on the enum class. Prior to the fix this will be False/absent.
++    assert getattr(YearInSchool, "do_not_call_in_templates", False) is True
++
++
++def test_enum_choices_usable_in_templates_when_comparing_strings():
++    """
++    Render a template comparing a student's raw stored value (string) to an
++    enum member reference (YearInSchool.FRESHMAN). Before the fix, resolving
++    'YearInSchool' inside the template triggers a no-arg call on the enum
++    class and raises TypeError. After the fix (do_not_call_in_templates set),
++    the lookup proceeds to .FRESHMAN and the comparison evaluates correctly.
++    """
++    class YearInSchool(enums.TextChoices):
++        FRESHMAN = 'FR', 'Freshman'
++        SENIOR = 'SR', 'Senior'
++
++    # Simple object with attribute similar to a model instance field value.
++    student = SimpleNamespace(year_in_school='FR')
++
++    tpl_string = "{% if student.year_in_school == YearInSchool.FRESHMAN %}yes{% else %}no{% endif %}"
++    tpl = Template(tpl_string, engine=Engine())
++
++    rendered = tpl.render(Context({"student": student, "YearInSchool": YearInSchool}))
++    assert rendered.strip() == "yes"
++
++
++def test_enum_choices_usable_in_templates_when_comparing_members():
++    """
++    Same as above, but the student's attribute is the enum member itself.
++    This covers the edge case where both sides of the comparison are enum
++    members. The template resolver must still avoid calling the enum class and
++    perform attribute lookup to obtain the member.
++    """
++    class YearInSchool(enums.TextChoices):
++        FRESHMAN = 'FR', 'Freshman'
++        SENIOR = 'SR', 'Senior'
++
++    student = SimpleNamespace(year_in_school=YearInSchool.FRESHMAN)
++
++    tpl_string = "{% if student.year_in_school == YearInSchool.FRESHMAN %}match{% else %}no-match{% endif %}"
++    tpl = Template(tpl_string, engine=Engine())
++
++    rendered = tpl.render(Context({"student": student, "YearInSchool": YearInSchool}))
++    assert rendered.strip() == "match"

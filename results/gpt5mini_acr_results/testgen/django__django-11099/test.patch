@@ -1,0 +1,84 @@
+--- a/django/contrib/auth/tests/test_validators_username.py
++++ b/django/contrib/auth/tests/test_validators_username.py
+-# Empty if creating new file
++import pytest
++
++from django.core.exceptions import ValidationError
++from django.contrib.auth.validators import UnicodeUsernameValidator, ASCIIUsernameValidator
++
++# Tests for Username validators to ensure trailing newlines are rejected.
++# These exercises reproduce the behavior described in the issue:
++# The original regex used ^...$ which allows an input that ends with a newline
++# because $ can match before a trailing newline. The intended behavior is to
++# reject usernames that contain or end with newlines by anchoring with \A and \Z.
++
++@pytest.mark.parametrize(
++    "validator_cls,username",
++    [
++        (UnicodeUsernameValidator, "normaluser"),
++        (UnicodeUsernameValidator, "user.name+tag-123"),
++        (ASCIIUsernameValidator, "ascii_user.1+@-"),
++    ],
++)
++def test_valid_usernames_are_accepted(validator_cls, username):
++    """Valid usernames composed of allowed characters should not raise ValidationError."""
++    validator = validator_cls()
++    # Should not raise
++    validator(username)
++
++
++@pytest.mark.parametrize(
++    "validator_cls,username_with_newline",
++    [
++        (UnicodeUsernameValidator, "alice\n"),
++        (UnicodeUsernameValidator, "bob\r\n"),
++        (ASCIIUsernameValidator, "charlie\n"),
++    ],
++)
++def test_usernames_with_trailing_newline_are_rejected(validator_cls, username_with_newline):
++    """
++    This test demonstrates the bug: before applying the fix (changing ^...$ to \A...\Z),
++    the validators incorrectly accept usernames that end with a newline. The test
++    expects a ValidationError to be raised for such inputs. This test will fail
++    before the fix is applied and should pass after the fix.
++    """
++    validator = validator_cls()
++    with pytest.raises(ValidationError):
++        validator(username_with_newline)
++
++
++@pytest.mark.parametrize(
++    "validator_cls,username",
++    [
++        (UnicodeUsernameValidator, ""),  # empty should be rejected by the regex
++        (ASCIIUsernameValidator, ""),    # empty should be rejected by the regex
++    ],
++)
++def test_empty_username_is_rejected(validator_cls, username):
++    """
++    Edge case: empty usernames should be rejected by the validators because
++    the pattern requires one or more allowed characters.
++    """
++    validator = validator_cls()
++    with pytest.raises(ValidationError):
++        validator(username)
++
++
++@pytest.mark.parametrize(
++    "validator_cls,username",
++    [
++        # Names with internal newlines should also be rejected.
++        (UnicodeUsernameValidator, "in\nvalid"),
++        (UnicodeUsernameValidator, "in\rvalid"),
++        (ASCIIUsernameValidator, "in\nvalid"),
++    ],
++)
++def test_usernames_with_internal_newline_are_rejected(validator_cls, username):
++    """
++    Ensure that usernames containing newlines in the middle are rejected.
++    This is an additional edge case that the stricter anchoring (\A...\Z)
++    will also prevent.
++    """
++    validator = validator_cls()
++    with pytest.raises(ValidationError):
++        validator(username)

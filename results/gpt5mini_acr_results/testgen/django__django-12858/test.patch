@@ -1,0 +1,133 @@
+--- a/tests/test_ordering_lookups.py
++++ b/tests/test_ordering_lookups.py
++import pytest
++from django.db import models
++from django.test.utils import isolate_apps
++
++"""
++Tests for models._check_ordering related to ordering lookups that are not transforms.
++
++Issue:
++Model._check_ordering was raising models.E015 for ordering entries that include
++lookups (for example 'supply__product__parent__isnull'). QuerySet.order_by
++accepts such lookups at runtime, so the system check should also accept them.
++
++These tests:
++- reproduce the failing behavior (one test is expected to fail before the fix),
++  asserting that an ordering using a lookup like "...__isnull" is considered valid
++  by the system check.
++- include tests that verify invalid ordering entries do raise models.E015.
++"""
++
++def _collect_error_ids(errors):
++    """Helper to extract check ids from check error objects."""
++    return {e.id for e in errors}
++
++def test_ordering_with_non_transform_lookup_isnull_is_accepted_by_system_check():
++    """
++    This test asserts that an ordering that ends with a lookup (isnull) on a
++    related field is accepted by Model._check_ordering (no errors).
++
++    Before the fix, this test will fail because Model._check_ordering only
++    considered transforms (get_transform) valid and didn't consider lookups
++    (get_lookup). After applying the intended fix, this test should pass.
++    """
++    with isolate_apps() as apps:
++        # Define models with the relationship chain:
++        # Stock.supply -> Supply.product -> Product.parent (FK to self, null=True)
++        class Product(models.Model):
++            parent = models.ForeignKey('self', models.CASCADE, null=True)
++
++            class Meta:
++                app_label = 'tests'
++
++        class Supply(models.Model):
++            product = models.ForeignKey(Product, models.CASCADE)
++
++            class Meta:
++                app_label = 'tests'
++
++        class Stock(models.Model):
++            supply = models.ForeignKey(Supply, models.CASCADE)
++
++            class Meta:
++                app_label = 'tests'
++                # The ordering uses a lookup 'isnull' at the end of the chain.
++                ordering = ['supply__product__parent__isnull']
++
++        # Call the ordering check directly. Expect no errors for a valid lookup.
++        errors = Stock._check_ordering()
++        # This is the assertion that demonstrates the bug: before the fix, errors
++        # will contain models.E015; after the fix, errors should be empty.
++        assert errors == [], "Expected no system check errors for ordering with '__isnull' lookup, got: %r" % errors
++
++def test_ordering_with_nonexistent_lookup_raises_models_E015():
++    """
++    Ensure that truly nonexistent fields or lookups still trigger models.E015.
++    This verifies that the system check remains strict for invalid ordering values.
++    """
++    with isolate_apps() as apps:
++        class Product(models.Model):
++            parent = models.ForeignKey('self', models.CASCADE, null=True)
++
++            class Meta:
++                app_label = 'tests'
++
++        class Supply(models.Model):
++            product = models.ForeignKey(Product, models.CASCADE)
++
++            class Meta:
++                app_label = 'tests'
++
++        class Stock(models.Model):
++            supply = models.ForeignKey(Supply, models.CASCADE)
++
++            class Meta:
++                app_label = 'tests'
++                # Use a clearly invalid lookup/field at the end of the chain.
++                ordering = ['supply__product__parent__this_does_not_exist']
++
++        errors = Stock._check_ordering()
++        ids = _collect_error_ids(errors)
++        assert 'models.E015' in ids, "Expected models.E015 for invalid ordering field, got: %r" % ids
++
++def test_ordering_with_mixed_entries_and_minus_prefix_and_question_mark_skipped():
++    """
++    Test that ordering entries with '-' prefix are normalized and that '?'
++    (random ordering marker) and non-string expressions are skipped from checks.
++
++    This test covers some edge cases in the _check_ordering logic:
++    - '-field' is converted to 'field' before validation
++    - '?' entries are skipped
++    """
++    with isolate_apps() as apps:
++        class Product(models.Model):
++            name = models.CharField(max_length=100)
++
++            class Meta:
++                app_label = 'tests'
++
++        class Supply(models.Model):
++            product = models.ForeignKey(Product, models.CASCADE)
++
++            class Meta:
++                app_label = 'tests'
++
++        class Stock(models.Model):
++            supply = models.ForeignKey(Supply, models.CASCADE)
++            # ordering contains:
++            # - a valid field with '-' prefix,
++            # - a '?' which should be skipped,
++            # - and an invalid related lookup to assert E015 is raised for it.
++            class Meta:
++                app_label = 'tests'
++                ordering = ['-supply__product__name', '?', 'supply__product__no_such_field']
++
++        errors = Stock._check_ordering()
++        ids = _collect_error_ids(errors)
++        # The invalid related lookup should trigger models.E015.
++        assert 'models.E015' in ids
++        # There should be at least one models.E015, and the check should not
++        # complain about '-supply__product__name' or '?'.
++        # Ensure that only invalid entries are reported.
++        # (We don't assert exact number to keep test robust to multiple messages.)

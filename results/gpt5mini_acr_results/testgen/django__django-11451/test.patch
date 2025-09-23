@@ -1,0 +1,115 @@
+--- a/django/contrib/auth/tests/test_backends_model_authenticate.py
++++ b/django/contrib/auth/tests/test_backends_model_authenticate.py
++import pytest
++from unittest.mock import Mock
++
++from django.contrib.auth import backends
++
++
++@pytest.fixture(autouse=True)
++def backend():
++    """Provide a fresh ModelBackend instance for each test."""
++    return backends.ModelBackend()
++
++
++def test_authenticate_does_not_query_db_when_username_is_none(backend, monkeypatch):
++    """
++    When username is None (and no USERNAME_FIELD provided in kwargs),
++    ModelBackend.authenticate() should not call the user manager's
++    get_by_natural_key (i.e. should not make a DB lookup).
++    This test fails on the pre-fix implementation because a query is made
++    for username IS NULL.
++    """
++    # Replace the manager lookup with a mock that would fail the test if called.
++    get_by_natural_key_mock = Mock(side_effect=AssertionError(
++        "get_by_natural_key should not be called when username is None"))
++    monkeypatch.setattr(
++        backends.UserModel._default_manager,
++        "get_by_natural_key",
++        get_by_natural_key_mock,
++        raising=True,
++    )
++
++    # Call authenticate with username explicitly None and a password.
++    # The correct behavior is to short-circuit and return None without DB calls.
++    result = backend.authenticate(request=None, username=None, password="pw")
++    assert result is None
++    # Ensure the manager lookup was not invoked.
++    get_by_natural_key_mock.assert_not_called()
++
++
++def test_authenticate_does_not_query_db_when_username_in_kwargs_is_none(backend, monkeypatch):
++    """
++    When username is not provided positionally but is present in kwargs as None
++    (i.e. kwargs[USERNAME_FIELD] is None), ModelBackend should still avoid
++    performing a DB lookup or running the password hasher.
++    """
++    get_by_natural_key_mock = Mock(side_effect=AssertionError(
++        "get_by_natural_key should not be called when username is None via kwargs"))
++    monkeypatch.setattr(
++        backends.UserModel._default_manager,
++        "get_by_natural_key",
++        get_by_natural_key_mock,
++        raising=True,
++    )
++
++    # Provide username via kwargs using the USERNAME_FIELD key but set it to None.
++    username_field = backends.UserModel.USERNAME_FIELD
++    result = backend.authenticate(request=None, password="pw", **{username_field: None})
++    assert result is None
++    get_by_natural_key_mock.assert_not_called()
++
++
++def test_authenticate_does_not_query_db_when_password_is_none(backend, monkeypatch):
++    """
++    When password is None, ModelBackend.authenticate() cannot authenticate and
++    should not query the database. This test demonstrates the failing case
++    before the fix (manager lookup is performed despite password being None).
++    """
++    get_by_natural_key_mock = Mock(side_effect=AssertionError(
++        "get_by_natural_key should not be called when password is None"))
++    monkeypatch.setattr(
++        backends.UserModel._default_manager,
++        "get_by_natural_key",
++        get_by_natural_key_mock,
++        raising=True,
++    )
++
++    # Call authenticate with a username but no password; should short-circuit.
++    result = backend.authenticate(request=None, username="someuser", password=None)
++    assert result is None
++    get_by_natural_key_mock.assert_not_called()
++
++
++def test_set_password_called_once_for_nonexistent_user_to_mask_timing(backend, monkeypatch):
++    """
++    Preserve existing behavior: when a username is provided but the user does
++    not exist, ModelBackend should run the default password hasher once via
++    UserModel().set_password(password) to reduce timing differences.
++    This behavior should remain after the fix.
++    """
++    # Make get_by_natural_key raise DoesNotExist to simulate missing user.
++    def raise_does_not_exist(username):
++        raise backends.UserModel.DoesNotExist
++
++    monkeypatch.setattr(
++        backends.UserModel._default_manager,
++        "get_by_natural_key",
++        raise_does_not_exist,
++        raising=True,
++    )
++
++    # Replace UserModel.set_password with a mock to observe calls.
++    set_password_mock = Mock()
++    monkeypatch.setattr(backends.UserModel, "set_password", set_password_mock, raising=True)
++
++    # Authenticate with a username and password. Since the user does not exist,
++    # set_password should be called once with the password argument.
++    pw = "s3cr3t"
++    result = backend.authenticate(request=None, username="nonexistent", password=pw)
++    assert result is None  # No user returned, as expected.
++    # Ensure set_password was invoked exactly once and received the password.
++    assert set_password_mock.call_count == 1
++    # The mock is called as an instance method: (self, password)
++    called_args = set_password_mock.call_args[0]
++    assert called_args[1] == pw

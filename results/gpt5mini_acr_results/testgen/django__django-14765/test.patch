@@ -1,0 +1,52 @@
+--- a/tests/migrations/test_state_real_apps.py
++++ b/tests/migrations/test_state_real_apps.py
++import pytest
++
++from django.db.migrations.state import ProjectState
++
++def test_init_with_none_creates_empty_real_apps():
++    """
++    When real_apps is not provided (None), ProjectState should create an empty set.
++    This should pass both before and after the intended change.
++    """
++    state = ProjectState()
++    assert isinstance(state.real_apps, set)
++    assert state.real_apps == set()
++
++def test_init_with_non_empty_set_preserves_identity():
++    """
++    If a non-empty set is passed as real_apps, the same set object should be used.
++    Current and intended behavior both preserve identity for non-empty sets.
++    """
++    s = {"app_label"}
++    state = ProjectState(real_apps=s)
++    assert state.real_apps is s
++    assert state.real_apps == {"app_label"}
++
++def test_init_with_empty_set_preserves_identity_after_fix():
++    """
++    Edge case: passing an empty set should preserve the exact object (identity).
++    Current (pre-fix) behavior treats an empty set as falsy and replaces it with
++    a new empty set, losing identity. After the intended fix (treating
++    real_apps is not None), the passed empty set should be preserved.
++    This test will FAIL before the fix and PASS after the fix.
++    """
++    empty = set()
++    state = ProjectState(real_apps=empty)
++    # Expect the same object to be used after the fix.
++    assert state.real_apps is empty
++
++@pytest.mark.parametrize("iterable", (["app1"], (), [], dict().keys()))
++def test_init_with_non_set_iterable_raises_assertion_when_non_none(iterable):
++    """
++    The ProjectState.__init__ should assume callers pass a set for real_apps.
++    When a non-set iterable is provided (including empty iterables), the
++    intended behavior is to assert/raise, signaling incorrect internal API usage.
++
++    This test demonstrates that before the fix (where non-set iterables are
++    converted to a set), this test will FAIL (no AssertionError). After the
++    fix (which asserts isinstance(real_apps, set) when real_apps is not None),
++    this test will PASS by raising AssertionError.
++    """
++    with pytest.raises(AssertionError):
++        ProjectState(real_apps=iterable)

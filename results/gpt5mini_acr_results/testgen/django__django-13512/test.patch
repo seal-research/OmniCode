@@ -1,0 +1,87 @@
+--- a/tests/test_jsonfield_unicode.py
++++ b/tests/test_jsonfield_unicode.py
++import pytest
++import json
++
++from django.core.serializers.json import DjangoJSONEncoder
++from django.forms import fields as form_fields
++from django.db.models.fields.json import JSONField as ModelJSONField
++
++
++def _has_escaped_unicode(s):
++    # check for a common escaped sequence pattern like \u4e2d
++    return "\\u" in s
++
++
++def test_model_jsonfield_value_from_object_preserves_unicode_for_chinese():
++    """
++    value_from_object should return a JSON string that preserves Unicode characters
++    (not escaped \uXXXX sequences). This is used to populate admin form initial data.
++    This test fails before the fix (which adds ensure_ascii=False) and passes after.
++    """
++    field = ModelJSONField()
++    # value_from_object expects field.attname to reference the attribute name on the object
++    field.attname = "payload"
++
++    class DummyObj:
++        def __init__(self, payload):
++            self.payload = payload
++
++    obj = DummyObj({"country": "中国"})
++    result = field.value_from_object(obj)
++
++    assert isinstance(result, str)
++    # The JSON string should include the actual Chinese characters
++    assert "中国" in result
++    # And should not include escaped unicode sequences like \u4e2d
++    assert not _has_escaped_unicode(result)
++
++
++def test_model_jsonfield_get_prep_value_preserves_unicode_for_chinese():
++    """
++    get_prep_value serializes Python values for storage/serialization.
++    It should preserve Unicode characters in its JSON output.
++    """
++    field = ModelJSONField(encoder=DjangoJSONEncoder)
++    value = {"city": "北京"}
++    result = field.get_prep_value(value)
++
++    assert isinstance(result, str)
++    assert "北京" in result
++    assert not _has_escaped_unicode(result)
++
++
++def test_form_jsonfield_prepare_value_preserves_unicode_for_chinese():
++    """
++    The form JSONField.prepare_value should produce a JSON string that preserves Unicode.
++    The admin uses form fields to render initial widget content, so this needs to match.
++    """
++    form_field = form_fields.JSONField(encoder=DjangoJSONEncoder)
++    value = {"name": "中国"}
++
++    # prepare_value is used to convert Python value to the widget initial string
++    prepared = form_field.prepare_value(value)
++
++    assert isinstance(prepared, str)
++    assert "中国" in prepared
++    assert not _has_escaped_unicode(prepared)
++
++
++def test_model_jsonfield_returns_none_for_none_input():
++    """
++    Ensure get_prep_value passes through None unchanged (edge case).
++    """
++    field = ModelJSONField()
++    assert field.get_prep_value(None) is None
++
++
++def test_form_jsonfield_prepare_value_handles_none_and_empty_inputs():
++    """
++    prepare_value should handle None and empty input values gracefully.
++    """
++    form_field = form_fields.JSONField(encoder=DjangoJSONEncoder)
++    assert form_field.prepare_value(None) in (None, "null")
++    # An empty dict should serialize to a JSON object; ensure no escaping occurs for unicode in keys/values
++    prepared = form_field.prepare_value({"empty": ""})
++    assert isinstance(prepared, str)
++    assert "empty" in prepared

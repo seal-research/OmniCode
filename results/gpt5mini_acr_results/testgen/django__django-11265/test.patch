@@ -1,0 +1,92 @@
+--- a/django/tests/filtered_relation/test_exclude_filtered_relation.py
++++ b/django/tests/filtered_relation/test_exclude_filtered_relation.py
++import pytest
++from django.db.models import Q, FilteredRelation
++
++# Import models defined for the filtered_relation tests in the same package.
++# Using a relative import keeps this test self-contained within the filtered_relation test app.
++from .models import Author, Book
++
++
++@pytest.fixture
++def authors_and_books(db):
++    """
++    Create two authors and one book for 'Alice'.
++    - author_alice has a book titled 'Poem by Alice'
++    - author_bob has no books
++    This fixture returns (author_alice, author_bob) for use in tests.
++    """
++    author_alice = Author.objects.create(name="Alice")
++    author_bob = Author.objects.create(name="Bob")
++    # Create a book associated with Alice. Use a title that will match iexact
++    Book.objects.create(author=author_alice, title="Poem by Alice")
++    return author_alice, author_bob
++
++
++@pytest.mark.django_db
++def test_filter_with_annotated_filtered_relation_returns_matching_author(authors_and_books):
++    """
++    Verify that annotating with a FilteredRelation and filtering on the
++    annotation's isnull lookup returns the expected author.
++
++    This test ensures the 'filter' case works (it is expected to pass both
++    before and after the bugfix).
++    """
++    author_alice, author_bob = authors_and_books
++
++    qs = Author.objects.annotate(
++        # Annotate a filtered relation referencing the 'book' relation only when
++        # the book's title matches 'poem by alice' (case-insensitive).
++        book_alice=FilteredRelation('book', condition=Q(book__title__iexact='poem by alice')),
++    ).filter(book_alice__isnull=False)
++
++    # Only Alice should be returned by the filter.
++    assert list(qs) == [author_alice]
++
++
++@pytest.mark.django_db
++def test_exclude_with_annotated_filtered_relation_excludes_matching_author(authors_and_books):
++    """
++    Reproduce the bug: using exclude on a queryset with an annotated
++    FilteredRelation previously raised a FieldError because the subquery
++    constructed by split_exclude didn't know about annotation names or
++    filtered relation aliases.
++
++    Expected behavior (after the fix): exclude(book_alice__isnull=False) should
++    exclude the author who has a matching book, resulting in an empty queryset.
++
++    This test demonstrates the bug by asserting the expected behavior. Before
++    the fix, this test will fail with a FieldError (or error out), which is
++    intended to show the regression. After applying the patch that copies the
++    annotation/filtered relation metadata into split_exclude's inner Query,
++    this test should pass.
++    """
++    author_alice, author_bob = authors_and_books
++
++    qs = Author.objects.annotate(
++        book_alice=FilteredRelation('book', condition=Q(book__title__iexact='poem by alice')),
++    ).exclude(book_alice__isnull=False)
++
++    # After excluding authors with the matching filtered relation, no authors
++    # should remain (Alice is excluded; Bob had no matching book).
++    assert list(qs) == []
++
++
++@pytest.mark.django_db
++def test_negated_q_with_annotated_filtered_relation_excludes_matching_author(authors_and_books):
++    """
++    Edge case: exclude can be expressed via filter(~Q(...)). Ensure that using
++    a negated Q object with the annotated FilteredRelation behaves the same as
++    calling exclude(). This covers the code path where build_filter creates
++    an inverted/negated clause that may end up invoking split_exclude.
++
++    Expected result: same as using exclude(...) — the matching author is
++    excluded and the result is empty.
++    """
++    author_alice, author_bob = authors_and_books
++
++    qs = Author.objects.annotate(
++        book_alice=FilteredRelation('book', condition=Q(book__title__iexact='poem by alice')),
++    ).filter(~Q(book_alice__isnull=False))
++
++    assert list(qs) == []

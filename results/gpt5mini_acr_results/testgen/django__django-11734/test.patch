@@ -1,0 +1,67 @@
+--- a/tests/queries/test_outerref_exclude.py
++++ b/tests/queries/test_outerref_exclude.py
++import pytest
++from django.db.models import Exists, OuterRef, Q
++
++# Import the test models from the same package as other query tests.
++# These models are part of the existing test suite for the queries tests.
++from .models import Number, Item
++
++@pytest.mark.django_db
++def test_exists_filter_compiles_without_error():
++    """
++    Sanity check: using OuterRef(...) inside a filter() subquery should
++    compile to SQL without raising an exception. This is the known-working
++    baseline for the scenario described in the issue.
++    """
++    qs = Number.objects.annotate(
++        foo=Exists(
++            Item.objects.filter(tags__category_id=OuterRef('pk'))
++        )
++    ).filter(foo=True)
++
++    # Force SQL compilation of the queryset; this should not raise.
++    sql = str(qs.query)
++    assert 'EXISTS' in sql.upper()
++
++@pytest.mark.django_db
++def test_exists_exclude_should_compile_without_error():
++    """
++    Regression test: previously, using OuterRef(...) inside exclude() (or
++    inside a negated Q) in a subquery caused a ValueError:
++        ValueError: This queryset contains a reference to an outer query and may only be used in a subquery
++    The correct behavior is that building/compiling the outer queryset with
++    an Exists(...) wrapping an inner queryset that contains an exclude(...)
++    using OuterRef('pk') should succeed and produce a valid subquery SQL.
++
++    IMPORTANT:
++    - This test fails on the buggy implementation (showing the original bug).
++    - After the fix is applied, this test should pass.
++    """
++    qs = Number.objects.annotate(
++        foo=Exists(
++            Item.objects.exclude(tags__category_id=OuterRef('pk'))
++        )
++    ).filter(foo=True)
++
++    # On the buggy code this line raises ValueError; after the fix it should not.
++    sql = str(qs.query)
++    # SQL should contain the EXISTS(...) construct (case-insensitive).
++    assert 'EXISTS' in sql.upper()
++
++@pytest.mark.django_db
++def test_exists_with_negated_q_should_compile_without_error():
++    """
++    Additional regression test: using a negated Q(...) that contains an OuterRef
++    inside the subquery's filter() should likewise compile successfully.
++    This mirrors the exclude() case but uses filter(~Q(...)) instead.
++    """
++    qs = Number.objects.annotate(
++        foo=Exists(
++            Item.objects.filter(~Q(tags__category_id=OuterRef('pk')))
++        )
++    ).filter(foo=True)
++
++    # This previously raised the same ValueError as the exclude() case.
++    sql = str(qs.query)
++    assert 'EXISTS' in sql.upper()

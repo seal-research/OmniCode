@@ -1,0 +1,224 @@
+--- a/django/db/migrations/tests/test_rename_model_db_table.py
++++ b/django/db/migrations/tests/test_rename_model_db_table.py
++import pytest
++
++from django.db import connection
++from django.db.migrations.operations.models import RenameModel
++from django.db.migrations.state import ProjectState
++from django.db.migrations.executor import MigrationExecutor
++from django.db.migrations.recorder import MigrationRecorder
++from django.db.migrations.writer import MigrationWriter
++from django.db import migrations, models
++from django.test import override_settings
++
++# We will use Django's in-memory sqlite for these tests by default, but also
++# include a test that uses the current connection to ensure behavior on
++# databases like PostgreSQL is considered. The actual CI may run multiple
++# backends; tests are written to be generic but focused on the behavior
++# described in the issue: when the actual DB table name (db_table) does not
++# change, RenameModel should be a no-op at the database level.
++
++@pytest.fixture
++def app_label():
++    return "testapp"
++
++
++def make_state_with_model(app_label, model_name, db_table=None):
++    """
++    Create a minimal ProjectState with a single model defined.
++
++    Returns (state, model_state_key) where model_state_key is (app_label, model_name_lower).
++    """
++    state = ProjectState()
++    options = {}
++    if db_table is not None:
++        options["db_table"] = db_table
++    fields = [
++        ("id", models.AutoField(primary_key=True)),
++    ]
++    model_state = migrations.state.ModelState(app_label, model_name, fields=fields, options=options)
++    state.models[app_label, model_name.lower()] = model_state
++    # ensure concrete model is loadable if needed by schema_editor (some editors access _meta)
++    state.reload_model(app_label, model_name.lower(), delay=True)
++    return state
++
++
++def test_rename_model_noop_when_db_table_unchanged_sqlite(db_table="custom_table", app_label="testapp"):
++    """
++    When a model has an explicit db_table (so the underlying table name does not
++    change during a RenameModel), the migration's database_forwards should be a
++    noop on sqlite (no table recreation). This reproduces the issue where sqlite
++    was rebuilding the table even though db_table didn't change.
++    """
++    # Create from_state and to_state where only the model name changes, but db_table is identical.
++    from_state = make_state_with_model(app_label, "OldName", db_table=db_table)
++    to_state = make_state_with_model(app_label, "NewName", db_table=db_table)
++
++    operation = RenameModel("OldName", "NewName")
++
++    # Use SQLite schema editor via connection (pytest environment commonly uses sqlite).
++    with connection.schema_editor() as schema_editor:
++        # Ensure the migration is allowed to run for this model
++        assert operation.allow_migrate_model(schema_editor.connection.alias, to_state.apps.get_model(app_label, "NewName"))
++
++        # Capture SQL executed during the operation by using the schema_editor.collect_sql
++        # mode if available, otherwise rely on executing against a savepoint and checking
++        # that no structural changes happened. The BaseDatabaseSchemaEditor supports
++        # collect_sql via the constructor; many backends expose a context manager that
++        # sets collect_sql on the editor instance. We'll use collect_sql where possible.
++        editor_class = type(schema_editor)
++        # Attempt to use a new editor with collect_sql True if constructor supports it.
++        try:
++            editor = editor_class(connection, collect_sql=True)
++        except TypeError:
++            # Fallback: reuse the current schema_editor and rely on no-op detection.
++            editor = schema_editor
++
++        # Run the operation
++        # If db_table is unchanged, the expectation is that no SQL that modifies tables
++        # or constraints will be executed.
++        if getattr(editor, "collected_sql", None) is not None:
++            # Clear any pre-existing collected sql
++            editor.collected_sql.clear()
++            operation.database_forwards(app_label, editor, from_state, to_state)
++            executed_sql = "".join(editor.collected_sql)
++            # For sqlite there should be no CREATE TABLE, DROP TABLE or ALTER TABLE statements.
++            assert "CREATE TABLE" not in executed_sql.upper()
++            assert "DROP TABLE" not in executed_sql.upper()
++            assert "ALTER TABLE" not in executed_sql.upper()
++        else:
++            # As a fallback: perform the operation and ensure no exception and no table rename.
++            # Create the actual table for the "from" model, run the operation and ensure
++            # the underlying sqlite_master does not show a recreated table.
++            # Create table manually
++            with connection.schema_editor() as se:
++                from_model = from_state.apps.get_model(app_label, "OldName")
++                se.create_model(from_model)
++            # Capture sqlite_master before
++            with connection.cursor() as cursor:
++                cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=%s", [db_table])
++                before = cursor.fetchone()
++            # Run operation that should be noop
++            operation.database_forwards(app_label, schema_editor, from_state, to_state)
++            # Capture sqlite_master after
++            with connection.cursor() as cursor:
++                cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=%s", [db_table])
++                after = cursor.fetchone()
++            assert before == after
++
++
++def test_rename_model_noop_when_db_table_unchanged_postgres_like(app_label="testapp"):
++    """
++    This test ensures that when the db_table does not change, we do not drop
++    and recreate foreign key constraints (a Postgres-specific behavior described
++    in the issue). Since running real Postgres is not part of this test, we
++    emulate the schema editor behavior by creating fake related models and
++    ensuring no alter_field calls are made when db_table is unchanged by using
++    an editor with collect_sql enabled where available.
++    """
++    db_table = "custom_table_pk"
++    from_state = make_state_with_model(app_label, "OldModel", db_table=db_table)
++    to_state = make_state_with_model(app_label, "NewModel", db_table=db_table)
++
++    # Add a related model that would normally cause alter_field to be invoked.
++    # Create another model with a ForeignKey to the "old" model in from_state and
++    # to_state snapshots to simulate related_objects. We must mutate the state
++    # to include the related model referencing the appropriate model string.
++    related_fields = [
++        ("id", models.AutoField(primary_key=True)),
++        ("oldmodel_ptr", models.ForeignKey(f"{app_label}.OldModel", on_delete=models.CASCADE)),
++    ]
++    related_from = migrations.state.ModelState(app_label, "Related", fields=related_fields)
++    related_to = migrations.state.ModelState(app_label, "Related", fields=[
++        ("id", models.AutoField(primary_key=True)),
++        ("newmodel_ptr", models.ForeignKey(f"{app_label}.NewModel", on_delete=models.CASCADE)),
++    ])
++    # Register related models in the states
++    from_state.models[app_label, "related"] = related_from
++    to_state.models[app_label, "related"] = related_to
++    from_state.reload_model(app_label, "related", delay=True)
++    to_state.reload_model(app_label, "related", delay=True)
++
++    operation = RenameModel("OldModel", "NewModel")
++
++    with connection.schema_editor() as schema_editor:
++        editor_class = type(schema_editor)
++        try:
++            editor = editor_class(connection, collect_sql=True)
++        except TypeError:
++            editor = schema_editor
++
++        if getattr(editor, "collected_sql", None) is not None:
++            editor.collected_sql.clear()
++            operation.database_forwards(app_label, editor, from_state, to_state)
++            executed_sql = "".join(editor.collected_sql)
++            # There should be no DELETE/ADD CONSTRAINT or FK-related statements.
++            # The Postgres implementation deletes FK constraints (usually ALTER TABLE ... DROP CONSTRAINT)
++            assert "DROP CONSTRAINT" not in executed_sql.upper()
++            assert "ADD CONSTRAINT" not in executed_sql.upper()
++            assert "FOREIGN KEY" not in executed_sql.upper()
++        else:
++            # If we cannot collect SQL, at minimum ensure the operation completes
++            # without raising and does not change the db schema in a way that's
++            # observable via sqlite_master for the main table.
++            with connection.schema_editor() as se:
++                # Create the "from" main table and the related table.
++                from_model = from_state.apps.get_model(app_label, "OldModel")
++                related_model = from_state.apps.get_model(app_label, "Related")
++                se.create_model(from_model)
++                se.create_model(related_model)
++            # capture constraints for the related table before
++            with connection.cursor() as cursor:
++                cursor.execute(
++                    "SELECT sql FROM sqlite_master WHERE type='table' AND name=%s",
++                    [related_model._meta.db_table],
++                )
++                before = cursor.fetchone()
++            operation.database_forwards(app_label, schema_editor, from_state, to_state)
++            with connection.cursor() as cursor:
++                cursor.execute(
++                    "SELECT sql FROM sqlite_master WHERE type='table' AND name=%s",
++                    [related_model._meta.db_table],
++                )
++                after = cursor.fetchone()
++            assert before == after
++
++
++def test_rename_model_edge_case_same_name_different_casing(app_label="testapp"):
++    """
++    Ensure that renaming a model only changes DB structures when the db_table
++    changes; a rename that only changes casing or model class name but results
++    in the same db_table should be a noop.
++    """
++    db_table = "case_table"
++    from_state = make_state_with_model(app_label, "oldname", db_table=db_table)
++    to_state = make_state_with_model(app_label, "OldName", db_table=db_table)
++
++    operation = RenameModel("oldname", "OldName")
++
++    with connection.schema_editor() as schema_editor:
++        editor_class = type(schema_editor)
++        try:
++            editor = editor_class(connection, collect_sql=True)
++        except TypeError:
++            editor = schema_editor
++
++        if getattr(editor, "collected_sql", None) is not None:
++            editor.collected_sql.clear()
++            operation.database_forwards(app_label, editor, from_state, to_state)
++            executed_sql = "".join(editor.collected_sql)
++            # No structural SQL should be executed.
++            assert "ALTER TABLE" not in executed_sql.upper()
++            assert "CREATE TABLE" not in executed_sql.upper()
++        else:
++            # Fallback: ensure no exception and sqlite_master unchanged for the table
++            with connection.schema_editor() as se:
++                se.create_model(from_state.apps.get_model(app_label, "oldname"))
++            with connection.cursor() as cursor:
++                cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=%s", [db_table])
++                before = cursor.fetchone()
++            operation.database_forwards(app_label, schema_editor, from_state, to_state)
++            with connection.cursor() as cursor:
++                cursor.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name=%s", [db_table])
++                after = cursor.fetchone()
++            assert before == after

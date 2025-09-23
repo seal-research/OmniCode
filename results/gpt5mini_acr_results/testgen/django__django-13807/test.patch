@@ -1,0 +1,83 @@
+--- a/tests/backends/test_sqlite_reserved_table_check_constraints.py
++++ b/tests/backends/test_sqlite_reserved_table_check_constraints.py
++import pytest
++from django.db import connection, utils
++
++# These tests exercise sqlite3.DatabaseWrapper.check_constraints and ensure
++# that table names which are SQL keywords (e.g. "order") are handled
++# correctly. The issue being tested reproduced a sqlite3.OperationalError
++# when check_constraints() interpolated table names into PRAGMA statements
++# without quoting them.
++#
++# - test_check_constraints_db_wide_raises_integrityerror:
++#     Verifies that running the PRAGMA foreign_key_check without specifying
++#     table names (table_names=None) detects the foreign-key violation and
++#     raises IntegrityError. This should pass both before and after the fix.
++#
++# - test_check_constraints_with_reserved_table_name_raises_integrityerror:
++#     Verifies that calling check_constraints(table_names=['order']) detects
++#     the foreign-key violation and raises IntegrityError. Prior to the fix,
++#     this raised an OperationalError because the table name (order) was not
++#     quoted in the PRAGMA statement. After the fix (quoting identifiers),
++#     this test should pass.
++#
++# The fixture creates a small referenced table and a table named "order"
++# with a foreign key referencing the referenced table. It inserts a row into
++# "order" that references a non-existent parent to trigger the violation.
++#
++# Cleanup drops the created tables to avoid interfering with other tests.
++
++@pytest.fixture
++def reserved_table_with_violation():
++    with connection.cursor() as cursor:
++        # Ensure foreign key checking is enabled for the session.
++        cursor.execute('PRAGMA foreign_keys = ON')
++
++        # Create a referenced table and a table named "order" (a SQL keyword).
++        cursor.execute('CREATE TABLE IF NOT EXISTS ref_table (id INTEGER PRIMARY KEY)')
++        # Use double quotes in CREATE TABLE to create a table with the exact name order.
++        cursor.execute(
++            'CREATE TABLE IF NOT EXISTS "order" (id INTEGER PRIMARY KEY, ref_id INTEGER, '
++            'FOREIGN KEY(ref_id) REFERENCES ref_table(id))'
++        )
++
++        # Insert a row that references a missing parent to create a foreign-key violation.
++        cursor.execute('INSERT INTO "order" (id, ref_id) VALUES (?, ?)', [1, 9999])
++
++    try:
++        yield
++    finally:
++        # Tear down created tables. Use IF EXISTS to be safe.
++        with connection.cursor() as cursor:
++            cursor.execute('DROP TABLE IF EXISTS "order"')
++            cursor.execute('DROP TABLE IF EXISTS ref_table')
++
++
++@pytest.mark.django_db
++def test_check_constraints_db_wide_raises_integrityerror(reserved_table_with_violation):
++    """
++    When table_names is None, check_constraints should run the PRAGMA
++    foreign_key_check for the whole DB and raise IntegrityError for the
++    created violation. This route (no table_names) did not trigger the bug
++    described in the issue and should already be working.
++    """
++    # check_constraints is a generator/iterator that raises IntegrityError
++    # when iterated if violations are present.
++    with pytest.raises(utils.IntegrityError):
++        list(connection.check_constraints())  # iterate to trigger the checks
++
++
++@pytest.mark.django_db
++def test_check_constraints_with_reserved_table_name_raises_integrityerror(reserved_table_with_violation):
++    """
++    When providing a table name that is a SQL keyword ('order'), check_constraints
++    should quote the identifier and report the foreign-key violation by raising
++    IntegrityError. Prior to the fix, this raised an OperationalError because
++    the table name was interpolated into the PRAGMA without being quoted.
++    This test will therefore fail before the fix is applied and pass after the
++    fix is implemented.
++    """
++    # Provide the table name that previously caused an sqlite syntax error.
++    # The expected behavior is an IntegrityError describing the violated FK.
++    with pytest.raises(utils.IntegrityError):
++        list(connection.check_constraints(table_names=['order']))

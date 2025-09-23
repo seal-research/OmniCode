@@ -1,0 +1,97 @@
+--- a/acr_tmp/acr_django__django-13112_u_django__django-13112/django/apps/tests/test_app_label_normalization.py
++++ b/acr_tmp/acr_django__django-13112_u_django__django-13112/django/apps/tests/test_app_label_normalization.py
++import sys
++import types
++import pytest
++
++from django.apps.registry import Apps
++
++
++@pytest.fixture
++def create_modules(request):
++    """
++    Create dummy modules in sys.modules for a given dotted module name.
++
++    This allows Apps.populate() / AppConfig.create() to import the module
++    without touching the filesystem or real packages. Modules created here
++    are removed from sys.modules on teardown.
++    """
++    created = []
++
++    def _create(name):
++        parts = name.split('.')
++        for i in range(1, len(parts) + 1):
++            mod_name = '.'.join(parts[:i])
++            if mod_name not in sys.modules:
++                m = types.ModuleType(mod_name)
++                # Provide a fake __file__ so AppConfig._path_from_module can
++                # determine a path (it checks __path__ and then __file__).
++                m.__file__ = '/tmp/{}.py'.format(mod_name.replace('.', '_'))
++                sys.modules[mod_name] = m
++                created.append(mod_name)
++        return name
++
++    def fin():
++        for mod_name in created:
++            sys.modules.pop(mod_name, None)
++
++    request.addfinalizer(fin)
++    return _create
++
++
++def test_mixed_case_app_is_installed_by_full_name(create_modules):
++    """
++    Verify that an installed app with a mixed-case module name is recognized
++    by its full module name. This should pass both before and after the fix,
++    because AppConfig.name (the import path) must remain unchanged.
++    """
++    create_modules('DJ_RegLogin')
++    apps = Apps(['DJ_RegLogin'])
++
++    # The registry should report the app as installed when queried with the
++    # full import path (app_config.name).
++    assert apps.is_installed('DJ_RegLogin') is True
++
++    # get_app_config with the full module path should return the AppConfig
++    ac = apps.get_app_config('DJ_RegLogin')
++    assert ac.name == 'DJ_RegLogin'
++
++
++def test_lookup_by_lowercase_label_should_resolve_app_config(create_modules):
++    """
++    This test encodes the desired behavior: for an app module named with
++    mixed-case letters (e.g. 'DJ_RegLogin'), looking up the app by the
++    lowercased label (e.g. 'dj_reglogin') should resolve to the AppConfig.
++
++    This test will FAIL on the buggy code (which leaves the derived label
++    as 'DJ_RegLogin') and will PASS after the fix (which normalizes the
++    derived label to lowercase, e.g. 'dj_reglogin').
++    """
++    create_modules('DJ_RegLogin')
++    apps = Apps(['DJ_RegLogin'])
++
++    # Desired behavior: the lowercase label should resolve to the app config.
++    ac = apps.get_app_config('dj_reglogin')
++    assert ac.name == 'DJ_RegLogin'
++
++
++def test_dotted_mixed_case_app_label_normalization(create_modules):
++    """
++    Edge case: the app is specified as a dotted module path where the final
++    path component is mixed-case (e.g. 'myproj.DJ_RegLogin'). The registry
++    should allow lookups by the normalized (lowercase) label 'dj_reglogin'.
++
++    This will also FAIL on the buggy code and PASS once AppConfig's default
++    label derivation is normalized to lowercase.
++    """
++    create_modules('myproj')
++    create_modules('myproj.DJ_RegLogin')
++    apps = Apps(['myproj.DJ_RegLogin'])
++
++    # Installed by full module name should work.
++    assert apps.is_installed('myproj.DJ_RegLogin') is True
++
++    # Desired behavior: allow lookup by lowercase label of the last component.
++    ac = apps.get_app_config('dj_reglogin')
++    # The returned AppConfig.name should be the full import path provided.
++    assert ac.name == 'myproj.DJ_RegLogin'

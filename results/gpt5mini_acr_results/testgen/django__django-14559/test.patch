@@ -1,0 +1,122 @@
+--- a/tests/test_bulk_update_return_value.py
++++ b/tests/test_bulk_update_return_value.py
++import pytest
++from django.db import connection, models
++from django.db import transaction
++
++@pytest.fixture
++def TempBulkModel():
++    """
++    Dynamically create a simple model for testing bulk_update without relying
++    on an existing app's models. The model table is created before the test
++    and removed after the test finishes.
++    """
++    # Define a minimal model class
++    class TempBulkModel(models.Model):
++        name = models.CharField(max_length=50)
++        num = models.IntegerField(default=0)
++
++        class Meta:
++            # Use the 'tests' app_label which is present in Django's test environment.
++            # This avoids needing to add a real app to INSTALLED_APPS for these tests.
++            app_label = "tests"
++
++    # Create the table for the model
++    with connection.schema_editor() as editor:
++        editor.create_model(TempBulkModel)
++
++    try:
++        yield TempBulkModel
++    finally:
++        # Drop the table after the test to clean up
++        with connection.schema_editor() as editor:
++            editor.delete_model(TempBulkModel)
++
++
++@pytest.mark.django_db
++def test_bulk_update_returns_number_of_rows_updated_single_batch(TempBulkModel):
++    """
++    bulk_update() should return the total number of rows matched/updated.
++    This test fails before the fix because bulk_update() returns None.
++    """
++    # Create 3 instances
++    objs = [
++        TempBulkModel.objects.create(name="a", num=1),
++        TempBulkModel.objects.create(name="b", num=2),
++        TempBulkModel.objects.create(name="c", num=3),
++    ]
++
++    # Modify the in-memory objects
++    for i, obj in enumerate(objs, start=10):
++        obj.num = i
++
++    # Call bulk_update and assert it returns the number of updated rows
++    rows = TempBulkModel.objects.bulk_update(objs, ["num"])
++    assert isinstance(rows, int), "bulk_update() should return an int (number of rows updated)"
++    assert rows == len(objs), "bulk_update() should return the total number of rows updated"
++
++    # Verify that database values were actually updated
++    db_values = list(TempBulkModel.objects.order_by("pk").values_list("num", flat=True))
++    assert db_values == [10, 11, 12]
++
++
++@pytest.mark.django_db
++def test_bulk_update_returns_total_with_multiple_batches(TempBulkModel):
++    """
++    When batch_size forces multiple batches, bulk_update() should sum the
++    rows returned by each per-batch update() call and return the total.
++    This verifies aggregation across batches.
++    """
++    # Create 5 instances
++    objs = [TempBulkModel.objects.create(name=str(i), num=0) for i in range(5)]
++
++    # Change numbers so each object will be updated
++    for i, obj in enumerate(objs, start=100):
++        obj.num = i
++
++    # Use batch_size=2 to force multiple batches (2,2,1)
++    rows = TempBulkModel.objects.bulk_update(objs, ["num"], batch_size=2)
++    assert isinstance(rows, int)
++    assert rows == len(objs)
++
++    # Verify DB updated values
++    db_values = list(TempBulkModel.objects.order_by("pk").values_list("num", flat=True))
++    assert db_values == [100, 101, 102, 103, 104]
++
++
++@pytest.mark.django_db
++def test_bulk_update_returns_zero_for_empty_iterable(TempBulkModel):
++    """
++    bulk_update() should return 0 when given an empty iterable of objects.
++    Before the fix this returned None.
++    """
++    rows = TempBulkModel.objects.bulk_update([], ["num"])
++    assert isinstance(rows, int)
++    assert rows == 0
++
++
++@pytest.mark.django_db
++def test_bulk_update_raises_on_missing_fields_argument(TempBulkModel):
++    """
++    Ensure existing validation is preserved: calling bulk_update without fields
++    should raise a ValueError.
++    """
++    obj = TempBulkModel.objects.create(name="x", num=1)
++    with pytest.raises(ValueError):
++        # fields list is empty -> should raise
++        TempBulkModel.objects.bulk_update([obj], [])
++
++
++@pytest.mark.django_db
++def test_bulk_update_updates_no_primary_key_objs_raises(TempBulkModel):
++    """
++    Verify that bulk_update() enforces that all objects have a primary key.
++    """
++    # Create one persistent object and one "new" object without PK
++    persisted = TempBulkModel.objects.create(name="p", num=1)
++
++    # Create an instance that hasn't been saved (pk is None)
++    unsaved = TempBulkModel(name="unsaved", num=2)
++
++    with pytest.raises(ValueError):
++        TempBulkModel.objects.bulk_update([persisted, unsaved], ["num"])

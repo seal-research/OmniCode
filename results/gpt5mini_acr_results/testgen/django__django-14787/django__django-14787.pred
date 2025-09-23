@@ -1,0 +1,6 @@
+{
+  "instance_id": "django__django-14787",
+  "model": "openrouter/openai/gpt-5-mini",
+  "response": "Searching for _multi_decorate function in codebase to understand how decorator is applied.{\"method\":\"search_code\",\"args\":[\"_multi_decorate\"]}",
+  "patch": "--- a/arch\n+++ b/arch\n+\n\n--- a/or _mu\n+++ b/or _mu\n+\n\n--- a/_d\n+++ b/_d\n- f\n+i_\n\n--- a/\n+++ b/\n- _mu\n+\n\n--- a/on\n+++ b/on\n-_dec\n+\n\n--- a/bas\n+++ b/bas\n+ fun\n\n--- a/rstand how d\n+++ b/rstand how d\n-ct\n+ion in \n\n--- a/s app\n+++ b/s app\n+\n\n--- a/\n+++ b/\n+s\n\n--- a/thod\":\"s\n+++ b/thod\":\"s\n-deb\n+o un\n\n--- a/\",\"args\":[\"_mu\n+++ b/\",\"args\":[\"_mu\n- u\n+rs\n\n--- a/_d\n+++ b/_d\n-st\n+n\n"
+}

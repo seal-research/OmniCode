@@ -1,0 +1,102 @@
+--- a/tests/test_postgres_splitarraywidget.py
++++ b/tests/test_postgres_splitarraywidget.py
++import pytest
++from django import forms
++from django.contrib.postgres.forms.array import SplitArrayWidget, SplitArrayField
++from django.forms.widgets import CheckboxInput
++
++"""
++Tests for SplitArrayWidget / SplitArrayField interaction with CheckboxInput.
++
++These tests reproduce the bug described in the issue:
++"SplitArrayField with BooleanField always has widgets checked after the first True value."
++
++The root cause is that CheckboxInput.get_context mutates the attrs dict passed into it
++(by setting attrs['checked'] = True). SplitArrayWidget previously reused a single
++attrs dict (or progressively mutated copies of it), allowing a mutation by one
++subwidget to leak into subsequent subwidgets.
++
++These tests assert the intended behavior: each subwidget should receive its own
++attrs dict (so mutations do not affect others). At least one test reproduces the
++failing behavior prior to the fix (i.e., it will fail until the SplitArrayWidget
++is changed to pass a per-subwidget copy of attrs).
++"""
++
++
++def _subwidget_checked_flags_from_context(context):
++    """
++    Helper to extract whether each subwidget has the 'checked' attr set.
++    Returns a list of booleans in the same order as context['widget']['subwidgets'].
++    """
++    return [
++        ('checked' in subwidget.get('attrs', {})) and
++        (subwidget['attrs'].get('checked') is True)
++        for subwidget in context['widget']['subwidgets']
++    ]
++
++
++def test_splitarraywidget_checkboxes_do_not_leak_checked_state_with_id():
++    """
++    Reproduce the scenario where the SplitArrayWidget is given an id in attrs and
++    the initial data contains a True followed by False values.
++
++    Expected behavior: only the True element should have 'checked' in its attrs.
++    This test fails with the buggy implementation where the 'checked' mutation
++    leaks to subsequent widgets.
++    """
++    widget = SplitArrayWidget(widget=CheckboxInput, size=4)
++    # value: only the second item is True
++    value = [False, True, False, False]
++    # Pass an id so SplitArrayWidget will attempt to give unique ids to subwidgets.
++    ctx = widget.get_context('field', value, attrs={'id': 'id_field'})
++
++    checked_flags = _subwidget_checked_flags_from_context(ctx)
++    # Only index 1 should be checked
++    assert checked_flags == [False, True, False, False], (
++        "Checked state leaked to later checkboxes; expected only the True item to be checked."
++    )
++
++
++def test_splitarraywidget_checkboxes_do_not_leak_checked_state_without_id():
++    """
++    Similar to the previous test but without providing an id in attrs.
++
++    Expected behavior: no leaking of 'checked' attribute between subwidgets,
++    even when SplitArrayWidget doesn't set unique ids. Each subwidget receives
++    its own attrs dict and mutations by CheckboxInput.get_context should not
++    affect others.
++    """
++    widget = SplitArrayWidget(widget=CheckboxInput, size=4)
++    value = [False, True, False, True]
++    # No id provided
++    ctx = widget.get_context('field', value, attrs=None)
++
++    checked_flags = _subwidget_checked_flags_from_context(ctx)
++    assert checked_flags == [False, True, False, True], (
++        "Checked state leaked between subwidgets when no id was present."
++    )
++
++
++@pytest.mark.parametrize(
++    "value, expected",
++    [
++        ([False, False, False], [False, False, False]),
++        ([True, True, True], [True, True, True]),
++        ([True], [True, False, False]),  # shorter value than size -> rest are None/False
++    ],
++)
++def test_splitarrayfield_integration_booleanfield_values(value, expected):
++    """
++    Integration test using SplitArrayField with a BooleanField (which uses CheckboxInput).
++    Verifies that when using the field (which constructs the SplitArrayWidget internally),
++    the subwidgets reflect the backing boolean data exactly (no leaking).
++    """
++    field = SplitArrayField(base_field=forms.BooleanField(), size=3)
++    widget = field.widget  # SplitArrayWidget created in SplitArrayField.__init__
++    # Provide an id to simulate typical rendering
++    ctx = widget.get_context('myfield', value, attrs={'id': 'myfield_id'})
++
++    checked_flags = _subwidget_checked_flags_from_context(ctx)
++    assert checked_flags == expected, (
++        f"SplitArrayField/Subwidgets did not match expected checked flags for value={value}"
++    )

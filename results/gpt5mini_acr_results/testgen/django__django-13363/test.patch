@@ -1,0 +1,162 @@
+--- a/tests/test_trunc_tzinfo.py
++++ b/tests/test_trunc_tzinfo.py
++import pytest
++import pytz
++
++from django.conf import settings
++from django.utils import timezone
++
++from django.db.models.functions.datetime import TruncDate, TruncTime
++
++# Simple stub expression. The compiler used in the tests will accept this object
++# and return a predetermined SQL/params tuple regardless of the expression.
++class DummyExpression:
++    pass
++
++# Compiler stub that returns a constant SQL fragment for the expression.
++class DummyCompiler:
++    def compile(self, lhs):
++        # Return a dummy SQL column representation and empty params.
++        return ('"app_model"."start_at"', [])
++
++# Ops stub that records the tzname passed into the cast helpers.
++class DummyOps:
++    def __init__(self):
++        self.last_tz = 'UNSET'
++
++    def datetime_cast_date_sql(self, lhs, tzname):
++        # Record the tzname that was passed and return a dummy SQL.
++        self.last_tz = tzname
++        return 'CAST_DATE_SQL'
++
++    def datetime_cast_time_sql(self, lhs, tzname):
++        # Record the tzname that was passed and return a dummy SQL.
++        self.last_tz = tzname
++        return 'CAST_TIME_SQL'
++
++class DummyConnection:
++    def __init__(self):
++        self.ops = DummyOps()
++        # Minimal features object if tests ever need to introspect it.
++        class _Features:
++            has_zoneinfo_database = True
++        self.features = _Features()
++
++@pytest.fixture(autouse=False)
++def activate_utc():
++    """
++    Activate UTC for the duration of the test and deactivate afterwards.
++    Many assertions below compare to timezone.get_current_timezone_name()
++    and expect a deterministic current timezone.
++    """
++    timezone.activate(pytz.UTC)
++    try:
++        yield
++    finally:
++        timezone.deactivate()
++
++def test_truncdate_uses_current_timezone_when_no_tzinfo_provided(activate_utc, monkeypatch):
++    """
++    When no tzinfo is passed to TruncDate, it should use the currently active
++    timezone name (the existing behavior). This test should pass both before
++    and after the fix.
++    """
++    monkeypatch.setattr(settings, 'USE_TZ', True)
++    compiler = DummyCompiler()
++    connection = DummyConnection()
++
++    expr = TruncDate(DummyExpression())  # tzinfo is None
++    sql, params = expr.as_sql(compiler, connection)
++
++    # Ensure SQL was returned as expected.
++    assert sql == 'CAST_DATE_SQL'
++    assert params == []
++
++    # It should have forwarded the current timezone name to the ops helper.
++    expected_tzname = timezone.get_current_timezone_name()
++    assert connection.ops.last_tz == expected_tzname
++
++def test_trunctime_uses_current_timezone_when_no_tzinfo_provided(activate_utc, monkeypatch):
++    """
++    When no tzinfo is passed to TruncTime, it should use the currently active
++    timezone name (the existing behavior). This test should pass both before
++    and after the fix.
++    """
++    monkeypatch.setattr(settings, 'USE_TZ', True)
++    compiler = DummyCompiler()
++    connection = DummyConnection()
++
++    expr = TruncTime(DummyExpression())  # tzinfo is None
++    sql, params = expr.as_sql(compiler, connection)
++
++    assert sql == 'CAST_TIME_SQL'
++    assert params == []
++
++    expected_tzname = timezone.get_current_timezone_name()
++    assert connection.ops.last_tz == expected_tzname
++
++@pytest.mark.xfail(
++    reason="Known bug: TruncDate currently ignores the tzinfo parameter and uses the global timezone",
++)
++def test_truncdate_respects_passed_tzinfo(activate_utc, monkeypatch):
++    """
++    This test asserts the intended behavior: when a tzinfo is passed into
++    TruncDate, that tzinfo's name should be used when generating the SQL.
++    This test will fail against the buggy implementation (which always uses
++    get_current_timezone_name()) and should pass once the bug is fixed.
++    """
++    monkeypatch.setattr(settings, 'USE_TZ', True)
++    compiler = DummyCompiler()
++    connection = DummyConnection()
++
++    # Use a different timezone than the currently active one (UTC) so that
++    # the behavior difference is apparent.
++    tz = pytz.timezone("America/New_York")
++    expr = TruncDate(DummyExpression(), tzinfo=tz)
++    sql, params = expr.as_sql(compiler, connection)
++
++    # The tzname forwarded to the ops helper should be derived from the passed tzinfo.
++    expected_tzname = timezone._get_timezone_name(tz)
++    assert connection.ops.last_tz == expected_tzname
++
++@pytest.mark.xfail(
++    reason="Known bug: TruncTime currently ignores the tzinfo parameter and uses the global timezone",
++)
++def test_trunctime_respects_passed_tzinfo(activate_utc, monkeypatch):
++    """
++    Intended behavior: TruncTime should respect the tzinfo passed to it.
++    Marked xfail because the current implementation ignores tzinfo.
++    """
++    monkeypatch.setattr(settings, 'USE_TZ', True)
++    compiler = DummyCompiler()
++    connection = DummyConnection()
++
++    tz = pytz.timezone("America/Los_Angeles")
++    expr = TruncTime(DummyExpression(), tzinfo=tz)
++    sql, params = expr.as_sql(compiler, connection)
++
++    expected_tzname = timezone._get_timezone_name(tz)
++    assert connection.ops.last_tz == expected_tzname
++
++def test_truncdate_and_trunctime_pass_none_when_USE_TZ_false(monkeypatch):
++    """
++    Edge case: when USE_TZ is False, both TruncDate and TruncTime should pass
++    None as the tzname to the backend operations regardless of any tzinfo
++    argument. This behavior is preserved in both current and fixed code.
++    """
++    monkeypatch.setattr(settings, 'USE_TZ', False)
++    compiler = DummyCompiler()
++    connection = DummyConnection()
++
++    tz = pytz.timezone("America/New_York")
++    expr_date = TruncDate(DummyExpression(), tzinfo=tz)
++    sql_date, params_date = expr_date.as_sql(compiler, connection)
++    assert connection.ops.last_tz is None
++    assert sql_date == 'CAST_DATE_SQL'
++
++    # Reset recorded tz and test TruncTime similarly.
++    connection.ops.last_tz = 'UNSET'
++    expr_time = TruncTime(DummyExpression(), tzinfo=tz)
++    sql_time, params_time = expr_time.as_sql(compiler, connection)
++    assert connection.ops.last_tz is None
++    assert sql_time == 'CAST_TIME_SQL'

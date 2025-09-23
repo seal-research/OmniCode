@@ -1,0 +1,92 @@
+--- a/tests/forms_tests/test_modelformset_can_create.py
++++ b/tests/forms_tests/test_modelformset_can_create.py
+-# Empty if creating new file
++import pytest
++
++from django import forms
++from django.forms.formsets import formset_factory
++from django.forms.models import BaseModelFormSet
++
++
++def test_formset_factory_accepts_can_create_flag_and_sets_attribute():
++    """
++    The formset_factory should accept a can_create flag and set it on the
++    generated FormSet class. Before the fix, formset_factory does not accept
++    this argument (TypeError). After the fix, the generated class should have
++    the can_create attribute set to the provided value.
++    """
++    # Define a trivial form to pass to the factory.
++    class SimpleForm(forms.Form):
++        name = forms.CharField()
++
++    # This call will fail before the fix (TypeError: unexpected keyword arg),
++    # and should succeed after the fix.
++    FormSet = formset_factory(SimpleForm, can_create=False)
++
++    # The generated DefaultFormSet class should have the attribute set.
++    assert hasattr(FormSet, "can_create")
++    assert FormSet.can_create is False
++
++
++def test_base_modelformset_save_new_objects_respects_can_create_when_false():
++    """
++    When can_create is False, save_new_objects should not call form.save()
++    on new forms. To detect an incorrect behavior (creating new objects),
++    the dummy form's save method raises if invoked. Before the fix this test
++    will fail because save_new_objects ignores can_create and attempts to
++    save new forms. After the fix the test should pass.
++    """
++
++    # Create a dummy form whose save() would raise if called, to ensure
++    # that no attempt to save new objects is made when can_create is False.
++    class DangerousForm:
++        def save(self, commit=True):
++            raise RuntimeError("save() should not be called when can_create is False")
++
++    # Subclass BaseModelFormSet so we can create an instance (without invoking __init__).
++    class DummyModelFormSet(BaseModelFormSet):
++        # model is not used by save_new_objects; set to None to be explicit.
++        model = None
++
++    # Instantiate without running __init__ to keep the setup minimal and focused.
++    fs = object.__new__(DummyModelFormSet)
++    # Simulate state expected by save_new_objects:
++    # - new_forms: list of forms representing new instances
++    # - can_delete: False so _should_delete_form is not consulted
++    # - can_create: False to disallow creation
++    fs.new_forms = [DangerousForm()]
++    fs.can_delete = False
++    fs.can_create = False
++
++    # Should return an empty list and not raise.
++    result = fs.save_new_objects(commit=True)
++    assert result == []
++
++
++def test_base_modelformset_save_new_objects_allows_creation_when_true():
++    """
++    When can_create is True (default behavior), save_new_objects should call
++    form.save() and return the created objects. This test verifies the normal
++    path still works.
++    """
++
++    created_marker = object()
++
++    class SafeForm:
++        def __init__(self, marker):
++            self._marker = marker
++
++        def save(self, commit=True):
++            # Simulate creating and returning a model instance.
++            return self._marker
++
++    class DummyModelFormSet(BaseModelFormSet):
++        model = None
++
++    fs = object.__new__(DummyModelFormSet)
++    fs.new_forms = [SafeForm(created_marker)]
++    fs.can_delete = False
++    fs.can_create = True
++
++    result = fs.save_new_objects(commit=True)
++    assert result == [created_marker]

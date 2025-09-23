@@ -1,0 +1,64 @@
+--- a/tests/test_aggregates_distinct.py
++++ b/tests/test_aggregates_distinct.py
++import pytest
++
++from django.db.models import Value
++from django.db.models.aggregates import Avg, Sum, Count, Min, Max
++
++def test_count_allows_distinct_and_sets_flag():
++    """
++    Count has historically allowed DISTINCT. Constructing a Count with
++    distinct=True should not raise and the repr/_get_repr_options should
++    include the distinct flag.
++    """
++    agg = Count(Value(1), distinct=True)
++    assert agg.distinct is True
++    # The repr includes the distinct option via Func._get_repr_options path.
++    assert 'distinct=True' in repr(agg)
++
++
++def test_avg_allows_distinct_after_fix_should_not_raise_and_reflect_flag():
++    """
++    This test demonstrates the desired behavior for Avg: it should allow
++    distinct=True. Before the fix, this test will fail with TypeError as
++    Avg did not allow DISTINCT. After the fix (setting allow_distinct=True
++    on Avg), this test should pass.
++    """
++    agg = Avg(Value(1), distinct=True)
++    assert agg.distinct is True
++    assert 'distinct=True' in repr(agg)
++
++
++def test_sum_allows_distinct_after_fix_should_not_raise_and_reflect_flag():
++    """
++    This test demonstrates the desired behavior for Sum: it should allow
++    distinct=True. Before the fix, this test will fail with TypeError as
++    Sum did not allow DISTINCT. After the fix (setting allow_distinct=True
++    on Sum), this test should pass.
++    """
++    agg = Sum(Value(1), distinct=True)
++    assert agg.distinct is True
++    assert 'distinct=True' in repr(agg)
++
++
++def test_avg_without_distinct_does_not_include_flag_in_repr():
++    """
++    Edge case: when distinct=False (default), Avg should not include the
++    distinct option in its repr/_get_repr_options.
++    """
++    agg = Avg(Value(1))
++    assert agg.distinct is False
++    assert 'distinct=True' not in repr(agg)
++
++
++def test_min_and_max_still_reject_distinct_by_default():
++    """
++    Min and Max did not historically advertise DISTINCT support. This test
++    asserts the current behavior (pre-optional change) that passing
++    distinct=True raises TypeError. If Min/Max are later marked as allowing
++    DISTINCT (optional), this test should be updated/removed.
++    """
++    with pytest.raises(TypeError):
++        Min(Value(1), distinct=True)
++    with pytest.raises(TypeError):
++        Max(Value(1), distinct=True)

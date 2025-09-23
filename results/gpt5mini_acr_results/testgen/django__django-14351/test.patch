@@ -1,0 +1,83 @@
+--- a/tests/test_compiler_get_default_columns.py
++++ b/tests/test_compiler_get_default_columns.py
+-# Empty if creating new file
++import pytest
++from django.db import DEFAULT_DB_ALIAS
++from django.contrib.auth.models import Group, User
++
++# These tests verify SQLCompiler.get_default_columns behavior in subquery vs non-subquery contexts.
++# They directly exercise Query.resolve_expression (which prepares a query to be used as a subquery)
++# and then call the compiler.get_default_columns() to inspect which columns would be selected.
++#
++# The reported bug was that a Query used as an __in RHS (a subquery) incorrectly expanded to all
++# concrete fields instead of a single column (typically the PK), leading to "subquery must return
++# only one column" SQL errors. The tests below assert the conservative, intended behavior:
++#  - For a normal (non-subquery) query, get_default_columns returns all concrete fields.
++#  - For a query prepared as a subquery (via resolve_expression against an outer Query),
++#    get_default_columns returns only a single column (the model PK) when the inner query uses
++#    default columns (no explicit select/values).
++#
++# These tests use Django's built-in User/Group models to avoid adding test models. The tests do not
++# require any persisted data; they only operate on Query objects and compilers.
++
++@pytest.mark.django_db
++def test_get_default_columns_non_subquery_returns_all_concrete_fields():
++    """
++    When compiling default columns for a non-subquery Query (Group.objects.all()),
++    get_default_columns should return one Col per concrete field of the model.
++    """
++    # Build the Query object for the Group model (no DB access required for construction).
++    query = Group.objects.all().query
++
++    # Obtain a compiler for the query. We pass the default DB alias to get a proper compiler instance.
++    compiler = query.get_compiler(using=DEFAULT_DB_ALIAS)
++
++    # Call get_default_columns() directly on the compiler.
++    cols = compiler.get_default_columns()
++
++    # Expect one column per concrete field on the model's opts.
++    expected_count = len(Group._meta.concrete_fields)
++    assert len(cols) == expected_count, (
++        "Non-subquery default columns should include all concrete fields "
++        f"({expected_count} expected, got {len(cols)})"
++    )
++
++@pytest.mark.django_db
++def test_get_default_columns_for_subquery_returns_only_primary_key():
++    """
++    When a Query is prepared as a subquery (resolve_expression against an outer Query),
++    get_default_columns should, in the simple/default case (no explicit select/values),
++    return only a single column (the model's primary key).
++    """
++    # Inner query: groups (to be used as a subquery)
++    inner_query = Group.objects.all().query
++
++    # Outer query: users - we use its Query object to simulate the outer query context
++    outer_query = User.objects.all().query
++
++    # Resolve the inner query against the outer query. This simulates the inner query being
++    # used as a subquery (resolve_expression will bump prefixes and set subquery=True).
++    inner_clone = inner_query.resolve_expression(outer_query)
++    assert getattr(inner_clone, "subquery", False) is True, "Resolved clone should be marked as subquery"
++
++    # Get a compiler for the cloned (subquery) query.
++    compiler = inner_clone.get_compiler(using=DEFAULT_DB_ALIAS)
++
++    # When used as a plain subquery with default columns, the compiler should only request
++    # the single PK column (not all concrete fields).
++    cols = compiler.get_default_columns()
++
++    # Defensive assertions: we must have exactly one selected column, and it should target the model PK.
++    assert len(cols) == 1, (
++        "Subquery default columns should be limited to a single column (the PK) "
++        f"but got {len(cols)} columns: {cols}"
++    )
++
++    # The column objects produced by get_default_columns should have a .target attribute
++    # referencing the Field for the selected column. Verify it's the primary key of Group.
++    col = cols[0]
++    target_field = getattr(col, "target", None)
++    assert target_field is not None, "Returned column should have a 'target' attribute"
++    assert target_field == Group._meta.pk, (
++        "Subquery default column should target the model's primary key"
++    )

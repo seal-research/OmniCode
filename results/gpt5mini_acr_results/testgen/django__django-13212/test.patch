@@ -1,0 +1,84 @@
+--- a/tests/core/test_validators_includes_value.py
++++ b/tests/core/test_validators_includes_value.py
++import pytest
++from types import SimpleNamespace
++
++from django.core.exceptions import ValidationError
++from django.core.validators import (
++    EmailValidator,
++    RegexValidator,
++    FileExtensionValidator,
++    URLValidator,
++)
++
++# These tests assert that validators include the provided value in the
++# ValidationError so that custom error messages containing %(value)s are
++# correctly interpolated. Before the fix, many built-in validators raised
++# ValidationError without passing params containing 'value', which meant
++# messages with %(value)s were left unformatted (or missing the substitution).
++
++
++def test_email_validator_includes_value_in_error_message():
++    """
++    EmailValidator should include the provided value in the ValidationError params
++    so a custom message using %(value)s is interpolated.
++
++    Failing case before the fix: the error message would still contain '%(value)s'
++    instead of the actual value.
++    """
++    validator = EmailValidator(message="%(value)s is not a valid email.")
++
++    with pytest.raises(ValidationError) as excinfo:
++        validator("not-an-email")
++
++    # ValidationError.messages should return the formatted message including the value.
++    assert excinfo.value.messages == ["not-an-email is not a valid email."]
++
++
++def test_regex_validator_includes_value_in_error_message_for_non_match():
++    """
++    RegexValidator should include the input value under 'value' when raising a
++    ValidationError so that messages using %(value)s are formatted.
++    """
++    validator = RegexValidator(r"^\d+$", message="%(value)s is not numeric.")
++
++    with pytest.raises(ValidationError) as excinfo:
++        validator("abc123")  # not purely digits
++
++    assert excinfo.value.messages == ["abc123 is not numeric."]
++
++
++def test_file_extension_validator_merges_value_into_existing_params():
++    """
++    FileExtensionValidator already provides 'extension' and 'allowed_extensions'
++    in params. It should also provide 'value' (the file object) so messages can
++    reference the original value. Verify the combined message is formatted.
++    """
++    # Create a dummy file-like object with a .name attribute.
++    dummy_file = SimpleNamespace(name="image.png")
++    validator = FileExtensionValidator(
++        allowed_extensions=["jpg", "jpeg"],
++        message="%(value)s has invalid extension %(extension)s (allowed: %(allowed_extensions)s).",
++    )
++
++    with pytest.raises(ValidationError) as excinfo:
++        validator(dummy_file)
++
++    # Ensure the extension and value were interpolated into the message.
++    assert excinfo.value.messages == [
++        "image.png has invalid extension png (allowed: jpg, jpeg)."
++    ]
++
++
++def test_url_validator_includes_non_string_value_in_error_message():
++    """
++    URLValidator raises ValidationError early for non-string inputs. The validator
++    should include the provided value so a message with %(value)s is interpolated.
++    This also tests that non-string values (like integers) are stringified properly.
++    """
++    validator = URLValidator(message="%(value)s is not a valid URL.")
++
++    with pytest.raises(ValidationError) as excinfo:
++        validator(12345)  # non-string input triggers a specific code path
++
++    assert excinfo.value.messages == ["12345 is not a valid URL."]

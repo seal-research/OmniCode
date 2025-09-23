@@ -1,0 +1,122 @@
+--- a/tests/utils/test_autoreload_xoptions.py
++++ b/tests/utils/test_autoreload_xoptions.py
++import sys
++import importlib
++from types import SimpleNamespace
++
++import pytest
++
++from django.utils.autoreload import get_child_arguments
++
++
++@pytest.fixture(autouse=True)
++def ensure_clean_warnoptions(monkeypatch):
++    """
++    Ensure sys.warnoptions is predictable for tests so '-W' flags don't
++    interfere with positional checks. Restore after each test via monkeypatch.
++    """
++    monkeypatch.setattr(sys, "warnoptions", [], raising=False)
++    yield
++
++
++def _find_index_or_none(seq, item):
++    try:
++        return seq.index(item)
++    except ValueError:
++        return None
++
++
++def test_get_child_arguments_includes_xoptions_for_script_launch(tmp_path, monkeypatch):
++    """
++    When launching a script (sys.argv[0] points to an existing file) and
++    sys._xoptions contains CPython -X options, get_child_arguments() should
++    include the corresponding "-X" arguments before the script name.
++
++    This test reproduces the bug: before the fix, the returned args do not
++    include any "-X" tokens and therefore will fail this assertion.
++    """
++    # Create a dummy script file to make py_script.exists() True.
++    script = tmp_path / "manage.py"
++    script.write_text("# dummy manage.py\n")
++
++    # Simulate running "python manage.py runserver"
++    monkeypatch.setattr(sys, "argv", [str(script), "runserver", "0.0.0.0:8000"], raising=False)
++
++    # Inject interpreter -X options into sys._xoptions (both boolean and key=value).
++    xoptions = {"utf8": True, "foo": "bar"}
++    monkeypatch.setattr(sys, "_xoptions", xoptions, raising=False)
++
++    args = get_child_arguments()
++
++    # The script path must be present in the args.
++    assert str(script) in args
++
++    # All -X related tokens should appear before the script path (i.e. be passed
++    # to the interpreter rather than the script).
++    script_idx = args.index(str(script))
++    # Ensure the '-X' flag marker is present and placed before the script.
++    assert "-X" in args[:script_idx]
++    # Ensure specific option tokens are present in the interpreter portion of args.
++    # For boolean option utf8 -> presence of the token 'utf8' after a '-X'.
++    assert "utf8" in args[:script_idx]
++    # For key=value option foo=bar -> presence of the token 'foo=bar' before the script.
++    assert "foo=bar" in args[:script_idx]
++
++
++def test_get_child_arguments_includes_xoptions_for_module_launch(monkeypatch):
++    """
++    When the process was started with -m (i.e. __main__.__spec__ is set),
++    get_child_arguments() should place "-X" options after the executable and
++    before the "-m" module argument.
++
++    This test will fail before the fix because -X options are not propagated.
++    """
++    # Ensure sys.argv has some values that would be preserved after '-m' handling.
++    monkeypatch.setattr(sys, "argv", ["-m", "myproj", "arg1"], raising=False)
++
++    # Set up a fake __main__.__spec__ to simulate module (-m) startup.
++    main_mod = importlib.import_module("__main__")
++    fake_spec = SimpleNamespace(name="myproj", parent=None)
++    # Use monkeypatch to set and restore __main__.__spec__.
++    monkeypatch.setattr(main_mod, "__spec__", fake_spec, raising=False)
++
++    # Inject some -X options.
++    xoptions = {"utf8": True, "opt": "val"}
++    monkeypatch.setattr(sys, "_xoptions", xoptions, raising=False)
++
++    args = get_child_arguments()
++
++    # Find where '-m' appears and assert that X options are placed before it.
++    m_idx = _find_index_or_none(args, "-m")
++    assert m_idx is not None, "Expected '-m' to be present in child args"
++    # '-X' token(s) must appear before '-m'
++    assert "-X" in args[:m_idx]
++    assert "utf8" in args[:m_idx]
++    assert "opt=val" in args[:m_idx]
++
++
++def test_get_child_arguments_returns_exe_entrypoint_unchanged_when_exe_exists(tmp_path, monkeypatch):
++    """
++    When the script entrypoint does not exist but an .exe entrypoint does,
++    get_child_arguments() should return a list that directly executes the
++    entrypoint (ignoring sys.executable). In this case, existing behavior is
++    preserved and "-X" options are not injected (can't be passed when directly
++    executing the .exe entrypoint). This is an edge case and should continue
++    to work as before.
++    """
++    # Create an exe entrypoint file but set argv[0] to the name without suffix.
++    exe_file = tmp_path / "manage.exe"
++    exe_file.write_text("binary-placeholder")
++
++    # argv[0] points to the script name without the .exe suffix.
++    argv0 = str(tmp_path / "manage")
++    monkeypatch.setattr(sys, "argv", [argv0, "runserver"], raising=False)
++
++    # Ensure some -X options exist; they should NOT be injected in this branch.
++    monkeypatch.setattr(sys, "_xoptions", {"utf8": True, "opt": "val"}, raising=False)
++
++    args = get_child_arguments()
++
++    # The function should return the exe entrypoint followed by the original args[1:].
++    expected = [str(exe_file), "runserver"]
++    assert args == expected, "Expected direct exe entrypoint execution without injected -X options"
