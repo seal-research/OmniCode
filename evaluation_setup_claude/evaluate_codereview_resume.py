@@ -130,7 +130,8 @@ def main() -> None:
     ap.add_argument("--mem", type=str, default="16G")
     ap.add_argument("--time-limit", type=str, default="02:00:00")
     ap.add_argument("--sbatch-bin", type=str, default="sbatch")
-    ap.add_argument("--direct-submit", action="store_true", help="Submit one sbatch job per instance directly (recommended)")
+    ap.add_argument("--direct-submit", action="store_true", help="Submit one sbatch job per instance (parallel on cluster)")
+    ap.add_argument("--sequential", action="store_true", help="Submit a single sbatch job that evaluates all IDs sequentially")
     ap.add_argument("--wait", action="store_true", help="Wait for all submitted jobs to finish, then summarize")
     ap.add_argument("--summary", action="store_true", help="Write a global summary for Claude CodeReview after completion")
     ap.add_argument("--summary-out", type=Path, default=None, help="Optional summary output JSON path")
@@ -182,6 +183,43 @@ def main() -> None:
     ids_file.write_text("\n".join(todo_ids) + ("\n" if todo_ids else ""), encoding="utf-8")
 
     print(f"Wrote instance IDs: {ids_file}  (count={len(todo_ids)})")
+
+    # Sequential submission: single job iterating through all IDs
+    if args.sequential and todo_ids:
+        log_dir = args.output_dir / "logs"
+        log_dir.mkdir(parents=True, exist_ok=True)
+        job_name = f"{args.run_id}_codereview_seq"
+        # Build a small loop that runs codearena for each ID sequentially
+        loop_lines = [
+            "set -euo pipefail",
+            "while IFS= read -r ID || [[ -n \"$ID\" ]]; do",
+            "  echo Running $ID",
+            "  python codearena.py --CodeReview "
+            f"    --predictions_path {predictions_arg} "
+            f"    --run_id {job_name} "
+            "    --max_workers 1 --mswe_phase all --force_rebuild False --clean True --use_apptainer True "
+            "    --instance_ids $ID --g2 True",
+            "done < \"" + ids_file.as_posix() + "\"",
+        ]
+        loop_script = " && ".join(loop_lines)
+        cmd = [
+            args.sbatch_bin,
+            "--job-name", job_name,
+            "--cpus-per-task", str(args.cpus),
+            "--gres", "gpu:1",
+            "--mem", args.mem,
+            "--time", args.time_limit,
+            "--constraint", "gpu",
+            "--export", "NONE",
+            "--output", str((log_dir / "%x_%j.out").as_posix()),
+            "--error", str((log_dir / "%x_%j.err").as_posix()),
+            "--wrap", f"(cd {Path.cwd()} && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; unset LD_PRELOAD; unset LD_LIBRARY_PATH; {loop_script})",
+        ]
+        print("Submitting sequential job:", " ".join(cmd))
+        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        print(res.stdout)
+        if res.stderr:
+            print(res.stderr)
 
     # If direct-submit, submit individual jobs and optionally wait
     job_ids: list[str] = []
