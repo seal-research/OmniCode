@@ -51,12 +51,24 @@ def count_from_report(path: Path) -> tuple[int, int]:
         except Exception:
             pass
 
-    resolved = data.get('resolved_ids')
-    unresolved = data.get('unresolved_ids')
+    # Case C: Run-level lists of IDs
+    resolved = data.get('resolved_ids') or data.get('successful_ids')
+    unresolved = data.get('unresolved_ids') or data.get('unsuccessful_ids')
     completed = data.get('completed_ids')
 
     r = len(resolved) if isinstance(resolved, list) else 0
     u = len(unresolved) if isinstance(unresolved, list) else 0
+
+    # Case D: Run-level numeric counters
+    if r == 0 and u == 0:
+        for rk, uk in (
+            ('resolved_instances', 'unresolved_instances'),
+            ('pylint_success', 'pylint_failure'),  # not CodeReview, but harmless
+        ):
+            rv = data.get(rk)
+            uv = data.get(uk)
+            if isinstance(rv, int) and isinstance(uv, int):
+                return (rv, uv)
 
     if r == 0 and u == 0 and isinstance(completed, list):
         # If lists are missing, conservatively count all completed as unresolved
