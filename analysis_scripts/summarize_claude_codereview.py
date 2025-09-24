@@ -34,6 +34,22 @@ def count_from_report(path: Path) -> tuple[int, int]:
     if not isinstance(data, dict):
         return (0, 0)
 
+    # Case A: Top-level boolean resolved field
+    if isinstance(data.get('resolved'), bool):
+        return (1, 0) if data['resolved'] else (0, 1)
+
+    # Case B: SWE-bench per-instance report.json shape: { "<instance_id>": { resolved: bool, ... } }
+    if len(data) == 1:
+        try:
+            (k, v), = data.items()
+            if isinstance(v, dict):
+                if isinstance(v.get('resolved'), bool):
+                    return (1, 0) if v['resolved'] else (0, 1)
+                if isinstance(v.get('Test_Accept'), bool):
+                    return (1, 0) if v['Test_Accept'] else (0, 1)
+        except Exception:
+            pass
+
     resolved = data.get('resolved_ids')
     unresolved = data.get('unresolved_ids')
     completed = data.get('completed_ids')
