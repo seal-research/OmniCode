@@ -22,6 +22,11 @@ class Aggregate:
         else:
             self.unresolved += 1
 
+    def add_counts(self, resolved_count: int, unresolved_count: int) -> None:
+        self.total_reports += resolved_count + unresolved_count
+        self.resolved += resolved_count
+        self.unresolved += unresolved_count
+
     def to_dict(self) -> Dict:
         d = asdict(self)
         d["resolve_rate"] = round(self.resolved / self.total_reports, 4) if self.total_reports else 0.0
@@ -200,10 +205,9 @@ def summarize_flat(eval_dir: Path, predictions_path: Path | None, mode_filter: s
     global_agg = Aggregate()
 
     all_models: Set[str] = set()
-    total_files = 0
+    considered_files = 0
 
     for jf in iter_flat_jsons(eval_dir):
-        total_files += 1
         fname = jf.name
         mode = infer_mode_from_filename(fname) or "unknown"
         if mode_filter and mode != mode_filter:
@@ -211,8 +215,34 @@ def summarize_flat(eval_dir: Path, predictions_path: Path | None, mode_filter: s
         model = infer_model_from_filename(fname)
         if model_filter and model_filter not in model:
             continue
+        considered_files += 1
         all_models.add(model)
 
+        # Attempt to parse as aggregated run-level report first
+        is_counted = False
+        try:
+            data = json.loads(jf.read_text(encoding="utf-8", errors="ignore"))
+            if isinstance(data, dict) and (
+                ("resolved_ids" in data and isinstance(data.get("resolved_ids"), list)) or
+                ("unresolved_ids" in data and isinstance(data.get("unresolved_ids"), list))
+            ):
+                r_cnt = len(data.get("resolved_ids", []) or [])
+                u_cnt = len(data.get("unresolved_ids", []) or [])
+                # If neither list exists as non-empty, but there are completed_ids, infer unresolved
+                if r_cnt == 0 and u_cnt == 0:
+                    c_ids = data.get("completed_ids", []) or []
+                    u_cnt = len(c_ids)
+                per_model[model].add_counts(r_cnt, u_cnt)
+                per_mode[mode].add_counts(r_cnt, u_cnt)
+                global_agg.add_counts(r_cnt, u_cnt)
+                is_counted = True
+        except Exception:
+            pass
+
+        if is_counted:
+            continue
+
+        # Fallback: treat as single-instance style report
         _, is_resolved = extract_resolved_from_arbitrary_json(jf)
         per_model[model].add(is_resolved)
         per_mode[mode].add(is_resolved)
@@ -227,7 +257,7 @@ def summarize_flat(eval_dir: Path, predictions_path: Path | None, mode_filter: s
         "mode_filter": mode_filter,
         "model_filter": model_filter,
         "models": sorted(all_models),
-        "files_count": total_files,
+        "files_count": considered_files,
         "global": global_agg.to_dict(),
         "per_model": {m: agg.to_dict() for m, agg in sorted(per_model.items())},
         "per_mode": {m: agg.to_dict() for m, agg in sorted(per_mode.items())},
