@@ -93,7 +93,7 @@ def make_slurm_script(
     script += "mkdir -p \"$LOG_DIR\"\n\n"
     script += "echo \"Starting CLAUDE CodeReview evaluation...\"\n\n"
     script += "while IFS= read -r ID || [[ -n \"$ID\" ]]; do\n"
-    script += "    SAN_ID=\"${ID//\\/\\\\/__}\"\n"
+    script += "    SAN_ID=\"${ID//\\/\\/__}\"\n"
     script += "    SAN_ID=\"${SAN_ID//:/_}\"\n"
     script += "    JOB_NAME=\"${RUN_ID}_codereview_${SAN_ID}\"\n\n"
     script += "    echo \"Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})\"\n\n"
