@@ -85,8 +85,12 @@ def extract_run_id(filename: str, model_token: str) -> Optional[str]:
     return body if body else None
 
 
-def try_get_logs_dir() -> list[Path]:
+def try_get_logs_dir(overrides: Optional[list[str]] = None) -> list[Path]:
     candidates: list[Path] = []
+    if overrides:
+        for p in overrides:
+            if p:
+                candidates.append(Path(p))
     try:
         from swebench.harness.constants import RUN_EVALUATION_LOG_DIR  # type: ignore
         candidates.append(Path(RUN_EVALUATION_LOG_DIR))
@@ -102,9 +106,9 @@ def try_get_logs_dir() -> list[Path]:
     return candidates
 
 
-def count_from_logs(run_id: str, model_token: str) -> tuple[int, int]:
+def count_from_logs(run_id: str, model_token: str, logs_dirs: Optional[list[str]] = None) -> tuple[int, int]:
     # Look in logs dirs for per-instance report.json files
-    for base in try_get_logs_dir():
+    for base in try_get_logs_dir(logs_dirs):
         run_dir = base / run_id / model_token
         if not run_dir.exists():
             continue
@@ -147,6 +151,7 @@ def main() -> None:
     ap.add_argument('--out', type=str, default=None, help='Optional output JSON path')
     ap.add_argument('--model-token', type=str, default='openrouter__anthropic__claude-sonnet-4', help='Model token prefix in filenames')
     ap.add_argument('--run-prefix', type=str, default='claude_sonnet_acr_eval_codereview_', help='Run prefix in filenames')
+    ap.add_argument('--logs-dir', action='append', default=None, help='Explicit logs/run_evaluation directories to search (can be given multiple times)')
     args = ap.parse_args()
 
     eval_dir = Path(args.eval_dir)
@@ -165,7 +170,7 @@ def main() -> None:
             # Fallback to logs: derive run_id and scan per-instance reports
             run_id = extract_run_id(p.name, args.model_token)
             if run_id:
-                r, u = count_from_logs(run_id, args.model_token)
+                r, u = count_from_logs(run_id, args.model_token, args.logs_dir)
         total_resolved += r
         total_unresolved += u
 
