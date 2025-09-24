@@ -6,12 +6,14 @@ import json
 from pathlib import Path
 
 
-def is_target_file(p: Path) -> bool:
+def is_target_file(p: Path, model_token: str, run_prefix: str) -> bool:
     if not p.is_file() or not p.name.endswith('.json'):
         return False
     name = p.name
-    # Only Claude CodeReview run-level reports
-    if not name.startswith('claude_sonnet_acr_eval_codereview_'):
+    # Only Claude CodeReview run-level reports of the form:
+    #   <model_token>.<run_prefix><sanitized_instance>.json
+    # e.g., openrouter__anthropic__claude-sonnet-4.claude_sonnet_acr_eval_codereview_pytest-dev__pytest-10081.json
+    if model_token not in name or run_prefix not in name:
         return False
     # Exclude summaries
     lower = name.lower()
@@ -50,13 +52,15 @@ def main() -> None:
     ap = argparse.ArgumentParser(description='Summarize Claude CodeReview results from swebench_eval')
     ap.add_argument('eval_dir', type=str, help='Path to swebench_eval directory')
     ap.add_argument('--out', type=str, default=None, help='Optional output JSON path')
+    ap.add_argument('--model-token', type=str, default='openrouter__anthropic__claude-sonnet-4', help='Model token prefix in filenames')
+    ap.add_argument('--run-prefix', type=str, default='claude_sonnet_acr_eval_codereview_', help='Run prefix in filenames')
     args = ap.parse_args()
 
     eval_dir = Path(args.eval_dir)
     if not eval_dir.exists():
         raise SystemExit(f'Not found: {eval_dir}')
 
-    files = [p for p in eval_dir.glob('*.json') if is_target_file(p)]
+    files = [p for p in eval_dir.glob('*.json') if is_target_file(p, args.model_token, args.run_prefix)]
 
     total_files = len(files)
     total_resolved = 0
@@ -76,7 +80,7 @@ def main() -> None:
 
     summary = {
         'mode': 'codereview',
-        'model': 'claude',
+        'model': args.model_token,
         'files': total_files,
         'total': total,
         'resolved': total_resolved,
