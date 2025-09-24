@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from typing import Optional
 
 
 def is_target_file(p: Path, model_token: str, run_prefix: str) -> bool:
@@ -64,6 +65,70 @@ def count_from_report(path: Path) -> tuple[int, int]:
     return (r, u)
 
 
+def extract_run_id(filename: str, model_token: str) -> Optional[str]:
+    # filename: <model_token>.<run_id>.json
+    if not filename.startswith(model_token + ".") or not filename.endswith(".json"):
+        return None
+    body = filename[len(model_token) + 1 : -5]
+    return body if body else None
+
+
+def try_get_logs_dir() -> list[Path]:
+    candidates: list[Path] = []
+    try:
+        from swebench.harness.constants import RUN_EVALUATION_LOG_DIR  # type: ignore
+        candidates.append(Path(RUN_EVALUATION_LOG_DIR))
+    except Exception:
+        pass
+    # Fallbacks
+    candidates.append(Path.cwd() / "logs" / "run_evaluation")
+    # Common scratch layout on cluster
+    scratch = Path("/scratch")
+    if scratch.exists():
+        candidates.append(scratch / "cbb89" / "logs" / "run_evaluation")
+        candidates.append(scratch / "logs" / "run_evaluation")
+    return candidates
+
+
+def count_from_logs(run_id: str, model_token: str) -> tuple[int, int]:
+    # Look in logs dirs for per-instance report.json files
+    for base in try_get_logs_dir():
+        run_dir = base / run_id / model_token
+        if not run_dir.exists():
+            continue
+        resolved = 0
+        unresolved = 0
+        for inst_dir in run_dir.iterdir():
+            if not inst_dir.is_dir():
+                continue
+            report = inst_dir / "report.json"
+            if not report.exists():
+                continue
+            try:
+                data = json.loads(report.read_text(encoding="utf-8", errors="ignore"))
+                if isinstance(data, dict) and len(data) == 1:
+                    (iid, payload), = data.items()
+                    if isinstance(payload, dict):
+                        val = payload.get("resolved")
+                        if isinstance(val, bool):
+                            if val:
+                                resolved += 1
+                            else:
+                                unresolved += 1
+                            continue
+                        val = payload.get("Test_Accept")
+                        if isinstance(val, bool):
+                            if val:
+                                resolved += 1
+                            else:
+                                unresolved += 1
+                            continue
+            except Exception:
+                continue
+        return (resolved, unresolved)
+    return (0, 0)
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description='Summarize Claude CodeReview results from swebench_eval')
     ap.add_argument('eval_dir', type=str, help='Path to swebench_eval directory')
@@ -84,6 +149,11 @@ def main() -> None:
 
     for p in files:
         r, u = count_from_report(p)
+        if (r + u) == 0:
+            # Fallback to logs: derive run_id and scan per-instance reports
+            run_id = extract_run_id(p.name, args.model_token)
+            if run_id:
+                r, u = count_from_logs(run_id, args.model_token)
         total_resolved += r
         total_unresolved += u
 
