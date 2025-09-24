@@ -139,8 +139,13 @@ def summarize(eval_dir: Path, predictions_path: Path | None, model_filter: str |
 
 def iter_flat_jsons(root: Path) -> Iterable[Path]:
     for p in root.glob("*.json"):
-        if p.is_file():
-            yield p
+        if not p.is_file():
+            continue
+        name_lower = p.name.lower()
+        # Ignore any summary files to avoid contaminating counts
+        if name_lower.endswith("global_summary.json") or "summary" in name_lower:
+            continue
+        yield p
 
 
 def infer_model_from_filename(name: str) -> str:
