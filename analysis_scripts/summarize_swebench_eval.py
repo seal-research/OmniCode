@@ -94,7 +94,7 @@ def get_instance_from_report(report_path: Path) -> tuple[str, bool]:
         return ("", False)
 
 
-def summarize(eval_dir: Path, predictions_path: Path | None) -> Dict:
+def summarize(eval_dir: Path, predictions_path: Path | None, model_filter: str | None) -> Dict:
     per_model: dict[str, Aggregate] = defaultdict(Aggregate)
     global_agg = Aggregate()
 
@@ -103,6 +103,8 @@ def summarize(eval_dir: Path, predictions_path: Path | None) -> Dict:
 
     for report in iter_reports(eval_dir):
         model = get_model_from_path(report)
+        if model_filter and model_filter not in model:
+            continue
         all_models.add(model)
         instance_id, is_resolved = get_instance_from_report(report)
         if not instance_id:
@@ -117,12 +119,119 @@ def summarize(eval_dir: Path, predictions_path: Path | None) -> Dict:
 
     summary = {
         "eval_dir": str(eval_dir.resolve()),
+        "model_filter": model_filter,
         "models": sorted(m for m in all_models if m != "unknown_model") or sorted(all_models),
         "global": global_agg.to_dict(),
         "per_model": {m: agg.to_dict() for m, agg in sorted(per_model.items())},
         "completed_ids_count": len(completed_ids),
         "submitted_ids_count": len(submitted_ids) if submitted_ids else None,
         "missing_reports_count": int(len(submitted_ids - completed_ids)) if submitted_ids else None,
+    }
+    return summary
+
+
+# ---------------- Flat-file swebench_eval (per-instance JSONs) ---------------- #
+
+def iter_flat_jsons(root: Path) -> Iterable[Path]:
+    for p in root.glob("*.json"):
+        if p.is_file():
+            yield p
+
+
+def infer_model_from_filename(name: str) -> str:
+    # Example: openrouter__anthropic__claude-sonnet-4.claude_sonnet_acr_eval_codereview_pytest-dev__pytest-10081.json
+    # Model token is everything before the first '.'
+    return name.split(".", 1)[0]
+
+
+def infer_mode_from_filename(name: str) -> str | None:
+    if "codereview" in name:
+        return "codereview"
+    if "bugfixing" in name or "bugfix" in name:
+        return "bugfixing"
+    if "stylereview" in name:
+        return "stylereview"
+    if "testgen" in name or "gentests" in name:
+        return "testgen"
+    return None
+
+
+def extract_resolved_from_arbitrary_json(path: Path) -> tuple[str, bool]:
+    """Return (instance_id, resolved) best-effort from loosely structured JSON."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8", errors="ignore"))
+    except Exception:
+        return ("", False)
+
+    # 1) SWE-bench report.json shape: { instance_id: { resolved: bool, ... } }
+    if isinstance(data, dict) and data:
+        if "resolved" in data and isinstance(data["resolved"], bool):
+            # Top-level resolved (rare)
+            inst = data.get("instance_id", "") if isinstance(data.get("instance_id"), str) else ""
+            return (inst, bool(data["resolved"]))
+        if len(data) == 1:
+            (k, v), = data.items()
+            if isinstance(v, dict):
+                if "resolved" in v and isinstance(v["resolved"], bool):
+                    return (str(k), bool(v["resolved"]))
+                if "Test_Accept" in v and isinstance(v["Test_Accept"], bool):
+                    return (str(k), bool(v["Test_Accept"]))
+
+    # 2) ACR per-instance outputs may be arbitrary; try common shapes
+    if isinstance(data, dict):
+        if "result" in data and isinstance(data["result"], dict):
+            res = data["result"].get("resolved")
+            if isinstance(res, bool):
+                return (str(data.get("instance_id", "")), bool(res))
+        if "evaluation" in data and isinstance(data["evaluation"], dict):
+            res = data["evaluation"].get("resolved")
+            if isinstance(res, bool):
+                return (str(data.get("instance_id", "")), bool(res))
+        # test generation acceptance
+        if "Test_Accept" in data and isinstance(data["Test_Accept"], bool):
+            return (str(data.get("instance_id", "")), bool(data["Test_Accept"]))
+
+    return ("", False)
+
+
+def summarize_flat(eval_dir: Path, predictions_path: Path | None, mode_filter: str | None, model_filter: str | None) -> Dict:
+    per_model: dict[str, Aggregate] = defaultdict(Aggregate)
+    per_mode: dict[str, Aggregate] = defaultdict(Aggregate)
+    global_agg = Aggregate()
+
+    all_models: Set[str] = set()
+    total_files = 0
+
+    for jf in iter_flat_jsons(eval_dir):
+        total_files += 1
+        fname = jf.name
+        mode = infer_mode_from_filename(fname) or "unknown"
+        if mode_filter and mode != mode_filter:
+            continue
+        model = infer_model_from_filename(fname)
+        if model_filter and model_filter not in model:
+            continue
+        all_models.add(model)
+
+        _, is_resolved = extract_resolved_from_arbitrary_json(jf)
+        per_model[model].add(is_resolved)
+        per_mode[mode].add(is_resolved)
+        global_agg.add(is_resolved)
+
+    submitted_ids: Set[str] = set()
+    if predictions_path and predictions_path.exists():
+        submitted_ids = load_predictions(predictions_path)
+
+    summary = {
+        "eval_dir": str(eval_dir.resolve()),
+        "mode_filter": mode_filter,
+        "model_filter": model_filter,
+        "models": sorted(all_models),
+        "files_count": total_files,
+        "global": global_agg.to_dict(),
+        "per_model": {m: agg.to_dict() for m, agg in sorted(per_model.items())},
+        "per_mode": {m: agg.to_dict() for m, agg in sorted(per_mode.items())},
+        "submitted_ids_count": len(submitted_ids) if submitted_ids else None,
     }
     return summary
 
@@ -135,6 +244,8 @@ def main() -> None:
     ))
     ap.add_argument("--predictions", type=str, default=None, help="Optional path to predictions JSON/JSONL to compute completeness")
     ap.add_argument("--out", type=str, default=None, help="Optional output JSON path; defaults to <eval_dir>/global_summary.json")
+    ap.add_argument("--mode", type=str, default=None, choices=["codereview", "bugfixing", "stylereview", "testgen"], help="Filter flat swebench_eval files by mode substring")
+    ap.add_argument("--model-substr", type=str, default=None, help="Filter by model substring (works for both flat and nested layouts)")
 
     args = ap.parse_args()
     eval_dir = Path(args.eval_dir)
@@ -142,22 +253,37 @@ def main() -> None:
         raise SystemExit(f"Eval dir not found: {eval_dir}")
 
     predictions_path = Path(args.predictions) if args.predictions else None
-    summary = summarize(eval_dir, predictions_path)
+    # Decide mode: nested report.json vs flat per-instance JSONs
+    has_reports = any(iter_reports(eval_dir))
+    if has_reports:
+        summary = summarize(eval_dir, predictions_path, args.model_substr)
+    else:
+        summary = summarize_flat(eval_dir, predictions_path, args.mode, args.model_substr)
 
     # Print concise human-readable summary
     g = summary["global"]
     print("=== Global Summary ===")
     print(f"Eval dir: {summary['eval_dir']}")
-    print(f"Models: {', '.join(summary['models']) if summary['models'] else 'n/a'}")
-    print(f"Reports: {g['total_reports']}, Resolved: {g['resolved']}, Unresolved: {g['unresolved']}, Resolve@1: {g['resolve_rate']:.3f}")
-    if summary["submitted_ids_count"] is not None:
+    if summary.get("mode_filter"):
+        print(f"Mode filter: {summary['mode_filter']}")
+    if summary.get("model_filter"):
+        print(f"Model filter: {summary['model_filter']}")
+    print(f"Models: {', '.join(summary.get('models', [])) if summary.get('models') else 'n/a'}")
+    if "files_count" in summary:
+        print(f"Files: {summary['files_count']}")
+    print(f"Total: {g['total_reports']}, Resolved: {g['resolved']}, Unresolved: {g['unresolved']}, Resolve@1: {g['resolve_rate']:.3f}")
+    if summary.get("submitted_ids_count") is not None and summary.get("completed_ids_count") is not None:
         print(f"Submitted: {summary['submitted_ids_count']}, Completed: {summary['completed_ids_count']}, Missing reports: {summary['missing_reports_count']}")
 
     # Per-model breakdown
-    if summary["per_model"]:
+    if summary.get("per_model"):
         print("\n=== Per-Model ===")
         for model, agg in summary["per_model"].items():
             print(f"- {model}: total={agg['total_reports']} resolved={agg['resolved']} unresolved={agg['unresolved']} rate={agg['resolve_rate']:.3f}")
+    if summary.get("per_mode"):
+        print("\n=== Per-Mode ===")
+        for mode, agg in summary["per_mode"].items():
+            print(f"- {mode}: total={agg['total_reports']} resolved={agg['resolved']} unresolved={agg['unresolved']} rate={agg['resolve_rate']:.3f}")
 
     out_path = Path(args.out) if args.out else (eval_dir / "global_summary.json")
     out_path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
