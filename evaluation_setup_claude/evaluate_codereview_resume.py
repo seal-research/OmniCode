@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
 import subprocess
 import time
 from typing import Dict, List, Set, Optional
