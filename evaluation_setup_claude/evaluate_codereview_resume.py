@@ -185,7 +185,7 @@ def main() -> None:
 
     # If direct-submit, submit individual jobs and optionally wait
     job_ids: list[str] = []
-    if args.direct-submit and todo_ids:
+    if args.direct_submit and todo_ids:
         log_dir = args.output_dir / "logs"
         log_dir.mkdir(parents=True, exist_ok=True)
         for iid in todo_ids:
