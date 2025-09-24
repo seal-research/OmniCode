@@ -6,10 +6,10 @@ import json
 from pathlib import Path
 import subprocess
 import time
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Optional
 
 
-def load_predictions_jsonl(pred_path: Path) -> Dict[str, dict]:
+def load_predictions_jsonl(pred_path: Path, model_substr: Optional[str] = None) -> Dict[str, dict]:
     preds: Dict[str, dict] = {}
     for line in pred_path.read_text(encoding="utf-8", errors="ignore").splitlines():
         line = line.strip()
@@ -21,6 +21,9 @@ def load_predictions_jsonl(pred_path: Path) -> Dict[str, dict]:
             continue
         iid = obj.get("instance_id")
         if isinstance(iid, str):
+            if model_substr and isinstance(obj.get("model_name_or_path"), str):
+                if model_substr not in obj["model_name_or_path"]:
+                    continue
             preds[iid] = obj
     return preds
 
@@ -45,6 +48,28 @@ def collect_evaluated_ids(swebench_eval_dir: Path, model_substr: str = "claude",
             if iid:
                 done.add(iid)
     return done
+
+
+def find_predictions_path(base_dir: Path) -> Optional[Path]:
+    # Common candidates
+    candidates = [
+        base_dir / "acr_codereview_outputs" / "all_preds.jsonl",
+        base_dir / "codereview" / "all_preds.jsonl",
+        base_dir / "codereview" / "codereview_predictions_converted.jsonl",
+        base_dir / "all_preds.jsonl",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    # Fallback: search shallowly
+    try:
+        for p in base_dir.rglob("all_preds.jsonl"):
+            if any(tok in p.as_posix() for tok in ["codereview", "acr_codereview_outputs"]):
+                return p
+        first = next(base_dir.rglob("all_preds.jsonl"), None)
+        return first
+    except Exception:
+        return None
 
 
 def make_slurm_script(
@@ -109,16 +134,48 @@ def main() -> None:
     ap.add_argument("--wait", action="store_true", help="Wait for all submitted jobs to finish, then summarize")
     ap.add_argument("--summary", action="store_true", help="Write a global summary for Claude CodeReview after completion")
     ap.add_argument("--summary-out", type=Path, default=None, help="Optional summary output JSON path")
+    ap.add_argument("--predictions-path", type=str, default=None, help="Explicit predictions path; use 'gold' for gold patches or path to all_preds.jsonl")
+    ap.add_argument("--model-substr", type=str, default="claude", help="Model substring for filtering preds and eval files")
     args = ap.parse_args()
 
-    pred_path = args.acr_results_dir / "acr_codereview_outputs" / "all_preds.jsonl"
-    if not pred_path.exists():
-        raise SystemExit(f"Predictions not found: {pred_path}")
+    # Determine predictions argument: prefer explicit, else autodetect, else fallback to 'gold'
+    predictions_arg: str
+    if args.predictions_path:
+        predictions_arg = args.predictions_path
+    else:
+        found = find_predictions_path(args.acr_results_dir)
+        predictions_arg = found.as_posix() if found else "gold"
 
-    preds = load_predictions_jsonl(pred_path)
-    all_ids = set(preds.keys())
-    done_ids = collect_evaluated_ids(args.swebench_eval_dir, model_substr="claude", mode_substr="codereview")
-    todo_ids = sorted(all_ids - done_ids)
+    all_ids: Set[str]
+    if predictions_arg == "gold":
+        # With gold predictions we don't have per-instance file; evaluate all Claude IDs not done.
+        # We'll derive IDs solely from evaluated/missing sets relative to swebench_eval names.
+        # To be conservative, require user to rely on evaluated files; without preds we cannot know all IDs.
+        # In this fallback, we do not filter from preds.
+        all_ids = set()
+    else:
+        preds = load_predictions_jsonl(Path(predictions_arg), model_substr=args.model_substr)
+        all_ids = set(preds.keys())
+    done_ids = collect_evaluated_ids(args.swebench_eval_dir, model_substr=args.model_substr, mode_substr="codereview")
+    if all_ids:
+        todo_ids = sorted(all_ids - done_ids)
+    else:
+        # No preds file; try to infer todo by scanning instance ids present in predictions filenames under acr-results-dir
+        # and excluding done_ids. If none found, just exit gracefully.
+        inferred: Set[str] = set()
+        try:
+            for p in args.acr_results_dir.rglob("*.json"):
+                name = p.name
+                if args.model_substr in name and "codereview" in name and "__" in name:
+                    iid = parse_instance_id_from_eval_filename(name)
+                    if iid:
+                        inferred.add(iid)
+        except Exception:
+            pass
+        if not inferred:
+            print("No predictions file and could not infer instance IDs; nothing to submit.")
+            return
+        todo_ids = sorted(inferred - done_ids)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     ids_file = args.output_dir / "codereview_instance_ids.txt"
@@ -137,7 +194,7 @@ def main() -> None:
             wrap = (
                 "(cd " + str(Path.cwd()) +
                 " && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; unset LD_PRELOAD; unset LD_LIBRARY_PATH; "
-                f"python codearena.py --CodeReview --predictions_path {pred_path.as_posix()} --run_id {job_name} "
+                f"python codearena.py --CodeReview --predictions_path {predictions_arg} --run_id {job_name} "
                 "--max_workers 1 --mswe_phase all --force_rebuild False --clean True --use_apptainer True "
                 f"--instance_ids {iid} --g2 True;)"
             )
