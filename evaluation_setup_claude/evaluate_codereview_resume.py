@@ -57,53 +57,42 @@ def make_slurm_script(
     time_limit: str = "02:00:00",
     sbatch_bin: str = "sbatch",
 ) -> str:
-    return f"""#!/usr/bin/env -S bash --noprofile --norc
-
-set -euo pipefail
-
-SBATCH_BIN="{sbatch_bin}"
-INSTANCE_FILE="{ids_file.as_posix()}"
-RUN_ID="{run_id}"
-LOG_DIR="{log_dir.as_posix()}"
-
-CPUS={cpus}
-MEM={mem}
-TIME_LIMIT="{time_limit}"
-
-mkdir -p "$LOG_DIR"
-
-echo "Starting CLAUDE CodeReview evaluation..."
-
-while IFS= read -r ID || [[ -n "$ID" ]]; do
-    SAN_ID="${ID//\//__}"
-    SAN_ID="${SAN_ID//:/_}"
-    JOB_NAME="${RUN_ID}_codereview_${{SAN_ID}}"
-
-    echo "Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})"
-
-    "$SBATCH_BIN" --job-name="${JOB_NAME}" \
-           --cpus-per-task="${CPUS}" \
-           --gres=gpu:1 \
-           --mem="${MEM}" \
-           --time="${TIME_LIMIT}" \
-           --constraint=gpu \
-           --export=NONE \
-           --output="${LOG_DIR}/%x_%j.out" \
-           --error="${LOG_DIR}/%x_%j.err" \
-           --wrap="(cd $(pwd) && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; unset LD_PRELOAD; unset LD_LIBRARY_PATH; python codearena.py --CodeReview \
-                    --predictions_path {predictions_path.as_posix()} \
-                    --run_id ${JOB_NAME} \
-                    --max_workers 1 \
-                    --mswe_phase all \
-                    --force_rebuild False \
-                    --clean True \
-                    --use_apptainer True \
-                    --instance_ids ${ID} \
-                    --g2 True;)"
-done < "{ids_file.as_posix()}"
-
-echo "Completed CLAUDE CodeReview evaluation submission"
-"""
+    # Build script without f-strings to avoid brace parsing issues
+    script = "#!/usr/bin/env -S bash --noprofile --norc\n\n"
+    script += "set -euo pipefail\n\n"
+    script += f"SBATCH_BIN=\"{sbatch_bin}\"\n"
+    script += f"INSTANCE_FILE=\"{ids_file.as_posix()}\"\n"
+    script += f"RUN_ID=\"{run_id}\"\n"
+    script += f"LOG_DIR=\"{log_dir.as_posix()}\"\n\n"
+    script += f"CPUS={cpus}\nMEM={mem}\nTIME_LIMIT=\"{time_limit}\"\n\n"
+    script += "mkdir -p \"$LOG_DIR\"\n\n"
+    script += "echo \"Starting CLAUDE CodeReview evaluation...\"\n\n"
+    script += "while IFS= read -r ID || [[ -n \"$ID\" ]]; do\n"
+    script += "    SAN_ID=\"${ID//\\/\\\\/__}\"\n"
+    script += "    SAN_ID=\"${SAN_ID//:/_}\"\n"
+    script += "    JOB_NAME=\"${RUN_ID}_codereview_${SAN_ID}\"\n\n"
+    script += "    echo \"Submitting job for instance_id=${ID}  (job-name=${JOB_NAME})\"\n\n"
+    script += "    \"$SBATCH_BIN\" --job-name=\"${JOB_NAME}\" \\\n"
+    script += "           --cpus-per-task=\"${CPUS}\" \\\n"
+    script += "           --gres=gpu:1 \\\n"
+    script += "           --mem=\"${MEM}\" \\\n"
+    script += "           --time=\"${TIME_LIMIT}\" \\\n"
+    script += "           --constraint=gpu \\\n"
+    script += "           --export=NONE \\\n"
+    script += "           --output=\"${LOG_DIR}/%x_%j.out\" \\\n"
+    script += "           --error=\"${LOG_DIR}/%x_%j.err\" \\\n"
+    wrap = (
+        "(cd $(pwd) && export PATH=/share/apps/singularity/3.7.0/bin:$PATH; unset LD_PRELOAD; unset LD_LIBRARY_PATH; "
+        "python codearena.py --CodeReview "
+        "--predictions_path " + predictions_path.as_posix() + " "
+        "--run_id ${JOB_NAME} "
+        "--max_workers 1 --mswe_phase all --force_rebuild False --clean True --use_apptainer True "
+        "--instance_ids ${ID} --g2 True;)"
+    )
+    script += "           --wrap=\"" + wrap.replace("\"", "\\\"") + "\"\n"
+    script += "done < \"" + ids_file.as_posix() + "\"\n\n"
+    script += "echo \"Completed CLAUDE CodeReview evaluation submission\"\n"
+    return script
 
 
 def main() -> None:
