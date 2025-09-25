@@ -16,16 +16,18 @@ def main():
     args = parser.parse_args()
 
     data = json.loads(Path(args.input).read_text(encoding="utf-8"))
-
+    totals = 0
     # Count instances by their error totals
     counts = Counter()
     for inst in data:
-        total = inst.get("style_review_summary", {}).get("total_messages", 0)
+        total = inst.get("style_review", {}).get("total_messages", 0)
+        totals += total
         counts[total] += 1
 
     # Prepare summary dictionary
     summary = {
         "total_instances": len(data),
+        "average_instances": totals/len(data),
         "distribution": {str(total): count for total, count in sorted(counts.items())}
     }
 
@@ -35,6 +37,7 @@ def main():
         print(f"  {total_errors:3d} errors: {num_instances} instances")
     print("\nTotal instances:", len(data))
     print(f"\nSaving summary to {args.output}")
+    print(totals/len(data))
 
     # Save JSON summary
     Path(args.output).write_text(json.dumps(summary, indent=2), encoding="utf-8")

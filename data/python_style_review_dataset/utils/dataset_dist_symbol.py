@@ -20,7 +20,7 @@ def main():
     # Count symbols
     symbol_counts = Counter()
     for inst in data:
-        files = inst.get("style_review_summary", {}).get("files", {})
+        files = inst.get("style_review", {}).get("files", {})
         for fdata in files.values():
             for msg in fdata.get("messages", []):
                 sym = msg.get("symbol", "<unknown>")
