@@ -1,0 +1,12 @@
+{
+  "total_patches": 273,
+  "total_files_changed": 386,
+  "total_hunks_changed": 871,
+  "total_lines_added": 4615,
+  "total_lines_removed": 2111,
+  "total_complexity_score": 1929.6000000000017,
+  "num_test_patches": 6,
+  "avg_complexity_score": 7.068,
+  "avg_lines_added_per_patch": 16.905,
+  "avg_lines_removed_per_patch": 7.733
+}
