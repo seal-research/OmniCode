@@ -11,8 +11,9 @@ from pathlib import Path
 from tqdm import tqdm
 import subprocess, shutil, time, os
 
-SHAREDIR = Path("/share/dutta/ejt82")
-SCRATCHDIR = Path("/scratch")
+USER = os.getenv("USER")
+SHAREDIR = Path(f"/share/dutta/{USER}")
+SCRATCHDIR = Path(f"/scratch/{USER}")
 
 INSTANCE_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/instances"
 DEF_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/def"
