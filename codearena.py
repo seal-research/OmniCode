@@ -21,6 +21,9 @@ from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
 CUR_DIR = Path(__file__).parent
 REPO_DATA_PATH = CUR_DIR / "data/codearena_repo_data.py"
 REPO_DATA = eval(REPO_DATA_PATH.read_text())
+USER = os.getenv("USER")
+SHAREDIR = f"/share/dutta/{USER}"
+SCRATCHDIR = f"/scratch/{USER}"
 
 def execute_command(func, **kwargs):
     """Wrapper to execute a function safely."""
@@ -465,6 +468,7 @@ def main():
     # Update constants for CodeArena tasks
     codearena_flags = ["BugFixing", "TestGeneration", "CodeReview", "CodeMigration"]
     if any(flag in active_flags for flag in codearena_flags):
+        user_name = os.getenv("USER")
         for instance_repo in REPO_DATA:
             swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
             swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
@@ -477,7 +481,13 @@ def main():
             else:
                 repo_log_parser = parse_log_pytest
             swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
-
+        if args.g2: 
+            swebench.harness.constants.BASE_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/base"
+            swebench.harness.constants.ENV_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/env"
+            swebench.harness.constants.INSTANCE_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/instances"
+            swebench.harness.constants.DEF_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/def"
+            swebench.harness.constants.RUN_EVALUATION_LOG_DIR = SHAREDIR / "logs/run_evaluation"
+            swebench.harness.constants.RUN_VALIDATION_LOG_DIR = SHAREDIR / "logs/run_validation"
         importlib.reload(swebench)
 
     # Execute tasks based on flags
