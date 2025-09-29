@@ -1,0 +1,6 @@
+Statistics per (org, repo, pr):
+ORG       REPO      PR    FOUND  TOTAL_INST
+-------------------------------------------
+catchorg  Catch2    2849     56          69
+nlohmann  json      4537     39          69
+simdjson  simdjson  2178      0           9
