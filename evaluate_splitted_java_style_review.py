@@ -1,23 +1,5 @@
 #!/usr/bin/env python3
-"""
-sweagent_style_review_runner.py
 
-Usage:
-  Place this script in the directory that contains sweagent_pmd_results.json and codearena.py.
-
-  Process everything in the JSON (default):
-    python3 sweagent_style_review_runner.py
-
-  Process a specific org/repo/pull_number (filters sweagent_pmd_results.json):
-    python3 sweagent_style_review_runner.py --org apache --repo dubbo --pull_number 10638
-
-  Or use combined instance identifier:
-    python3 sweagent_style_review_runner.py --instance "apache/dubbo:10638"
-
-Important:
- - This script will run `python codearena.py ...` **from the same directory the script is run in** (ROOT).
- - Ensure codearena.py is present and runnable from that directory.
-"""
 from __future__ import annotations
 
 import argparse
@@ -33,7 +15,7 @@ from typing import Any, Dict, List, Tuple
 
 ROOT = Path.cwd()
 SWEAGENT_FILE = ROOT / "sweagent_pmd_results_aider.json"
-OUTPUT_FILE = ROOT / "sweagent_style_review_results_mockito.json"
+OUTPUT_FILE = ROOT / "sweagent_style_review_mockito.json"
 
 # --- Helpers -----------------------------------------------------------------
 
@@ -278,26 +260,18 @@ def process_item(item: Dict[str, Any], work_root: Path) -> Dict[str, Any]:
             "exception": str(e),
         }
 
-    # --- RUN codearena.py from ROOT (script dir) as requested -----------------
-    # This is the key change: run from ROOT, not inside the copied repo.
+    
     codearena_cmd = [
         sys.executable,
-        "codearena.py",
-        "--StyleReview",
-        "--predictions_path",
-        "gold",
-        "--run_id",
-        "mswe_java_style_review",
-        "--max_workers",
-        "1",
-        "--instance_ids",
-        f"{org}/{repo}:{pull_number}",
-        "--mswe_phase",
-        "all",
-        "--force_rebuild",
-        "True",
-        "--review_type",
-        "pmd",
+        "multiswebench_local/multi_swe_bench/harness/style_review/pmd_runner.py",
+        "--org",
+        f"{org}",
+        "--repo",
+        f"{repo}",
+        "--pull",
+        f"{pull_number}",
+        "--base-commit",
+        f"{base_commit}",
     ]
     print(f"Running codearena in {ROOT}: {' '.join(codearena_cmd)}")
     codearena_exit_code, codearena_out, codearena_err = run(codearena_cmd, cwd=ROOT)
