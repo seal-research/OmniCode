@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import docker
 import json
-import pandas as pd
 import resource
 import traceback
 
@@ -12,13 +11,18 @@ from pathlib import Path
 from tqdm import tqdm
 import subprocess, shutil, time, os
 
+USER = os.getenv("USER")
+SHAREDIR = Path(f"/share/dutta/{USER}")
+SCRATCHDIR = Path(f"/scratch/{USER}")
+
+INSTANCE_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/instances"
+DEF_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/def"
+RUN_EVALUATION_LOG_DIR = SCRATCHDIR / "logs/run_evaluation"
+
 from swebench.harness.constants import (
     APPLY_PATCH_FAIL,
     APPLY_PATCH_PASS,
-    INSTANCE_IMAGE_BUILD_DIR,
     KEY_INSTANCE_ID,
-    RUN_EVALUATION_LOG_DIR,
-    DEF_IMAGE_BUILD_DIR,
     LOG_REPORT, 
     LOG_INSTANCE,
     APPTAINER_BASH, 
@@ -135,13 +139,10 @@ def get_dataset_from_preds(
     completed_ids = set()
     for _, instance in merged_df.iterrows():
         prediction = merged_df[merged_df['instance_id'] == instance['instance_id']].iloc[0]
-        model_name = prediction["model_name_or_path"]
-        if pd.isna(model_name) or model_name is None:
-            model_name = "openrouter/meta-llama/llama-4-scout"
         report_file = (
             RUN_EVALUATION_LOG_DIR
             / run_id
-            / model_name.replace("/", "__")
+            / prediction["model_name_or_path"].replace("/", "__")
             / (prediction['instance_id']+"_testGeneration")
             / "report.json"
         )
@@ -272,15 +273,16 @@ def make_run_report(
         "unremoved_images": list(sorted(unremoved_images)),
         "schema_version": 2,
     }
-    #report_file = Path(
-    #    list(predictions.values())[0]["model_name_or_path"].replace("/", "__")
-    #    + f".{run_id}"
-    #    + ".json"
-    #)
-    #with open(report_file, "w") as f:
-    #    print(json.dumps(report, indent=4), file=f)
-    #print(f"Report written to {report_file}")
-    return report_file
+    final_output = (
+        SHAREDIR
+        / run_id
+        / prediction["model_name_or_path"].replace("/", "__")
+        / (prediction[KEY_INSTANCE_ID]+"_testGeneration")
+        / "results.json"
+    )
+    with open(final_output, "w") as f:
+       print(json.dumps(report, indent=4), file=f)
+    print(f"Report written to {report_file}")
 
 def main(
         dataset_name: str,
@@ -324,7 +326,6 @@ def main(
         dataset = get_dataset_from_preds(dataset_name, split, instance_ids, run_id=run_id, generated_tests_path=predictions_path)
     else:
         dataset = get_gold_predictions(dataset_name, instance_ids, split)
-    full_dataset = load_swebench_dataset(dataset_name, split, instance_ids, full=True)
     
     print(f"Running {len(dataset)} unevaluated instances...")
     if not dataset:
@@ -743,7 +744,7 @@ def run_instance_apptainer(
         try:
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox && bash gold_eval.sh"],
+                    "cd / && bash gold_eval.sh"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -773,7 +774,7 @@ def run_instance_apptainer(
         # Get initial git diff before applying test patch
         result = subprocess.run(
             [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                "cd apptainer_sandbox/testbed && git diff"],
+                "cd /testbed && git diff"],
             cwd=str(build_dir),
             capture_output=True,
             text=True,
@@ -791,7 +792,7 @@ def run_instance_apptainer(
         # Apply patch
         result = subprocess.run(
             [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                "cd apptainer_sandbox/testbed && git apply --allow-empty -v patch.diff"],
+                "cd /testbed && git apply --allow-empty -v patch.diff"],
             cwd=str(build_dir),
             capture_output=True,
             text=True,
@@ -801,7 +802,7 @@ def run_instance_apptainer(
             logger.info("First patch attempt failed, trying with more permissive options...")
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox/testbed && patch --batch --fuzz=5 -p1 -i patch.diff"],
+                    "cd /testbed && patch --batch --fuzz=5 -p1 -i patch.diff"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -819,7 +820,7 @@ def run_instance_apptainer(
         # Get git diff before running gold eval
         result = subprocess.run(
             [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                "cd apptainer_sandbox/testbed && git diff"],
+                "cd /testbed && git diff"],
             cwd=str(build_dir),
             capture_output=True,
             text=True,
@@ -833,7 +834,7 @@ def run_instance_apptainer(
         try:
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox && bash gold_eval.sh"],
+                    "cd / && bash gold_eval.sh"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -855,7 +856,7 @@ def run_instance_apptainer(
         # Get git diff after running gold eval
         result2 = subprocess.run(
             [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                "cd apptainer_sandbox/testbed && git diff"],
+                "cd /testbed && git diff"],
             cwd=str(build_dir),
             capture_output=True,
             text=True,
@@ -872,7 +873,7 @@ def run_instance_apptainer(
         # Reset to clean state before bad patches
         result = subprocess.run(
             [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                "cd apptainer_sandbox/testbed && git reset --hard HEAD"],
+                "cd /testbed && git reset --hard HEAD"],
             cwd=str(build_dir),
             capture_output=True,
             text=True,
@@ -882,7 +883,7 @@ def run_instance_apptainer(
             logger.warning("Failed to reset before bad patches")
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox/testbed && git checkout -- ."],
+                    "cd /testbed && git checkout -- ."],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -895,7 +896,7 @@ def run_instance_apptainer(
         # Remove untracked files/directories
         result = subprocess.run(
             [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                "cd apptainer_sandbox/testbed && git clean -fd"],
+                "cd /testbed && git clean -fd"],
             cwd=str(build_dir),
             capture_output=True,
             text=True,
@@ -907,7 +908,7 @@ def run_instance_apptainer(
         # Verify clean state after reset
         result = subprocess.run(
             [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                "cd apptainer_sandbox/testbed && git diff"],
+                "cd /testbed && git diff"],
             cwd=str(build_dir),
             capture_output=True,
             text=True,
@@ -942,7 +943,7 @@ def run_instance_apptainer(
             # Get initial git diff before applying test patch
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox/testbed && git diff"],
+                    "cd /testbed && git diff"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -960,7 +961,7 @@ def run_instance_apptainer(
             # Apply patch
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox/testbed && git apply --allow-empty -v patch.diff"],
+                    "cd /testbed && git apply --allow-empty -v patch.diff"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -970,7 +971,7 @@ def run_instance_apptainer(
                 logger.info("First patch attempt failed, trying with more permissive options...")
                 result = subprocess.run(
                     [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                        "cd apptainer_sandbox/testbed && patch --batch --fuzz=5 -p1 -i patch.diff"],
+                        "cd /testbed && patch --batch --fuzz=5 -p1 -i patch.diff"],
                     cwd=str(build_dir),
                     capture_output=True,
                     text=True,
@@ -987,7 +988,7 @@ def run_instance_apptainer(
             # Get git diff after applying test patch
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox/testbed && git diff"],
+                    "cd /testbed && git diff"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -1020,7 +1021,7 @@ def run_instance_apptainer(
             try:
                 result = subprocess.run(
                     [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                        f"cd apptainer_sandbox && bash bad_eval_{i}.sh"],
+                        f"cd / && bash bad_eval_{i}.sh"],
                     cwd=str(build_dir),
                     capture_output=True,
                     text=True,
@@ -1040,7 +1041,7 @@ def run_instance_apptainer(
             # Get git diff after running the evaluation
             result2 = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox/testbed && git diff"],
+                    "cd /testbed && git diff"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -1057,7 +1058,7 @@ def run_instance_apptainer(
             # Reset to clean state for next patch
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox/testbed && git reset --hard HEAD"],
+                    "cd /testbed && git reset --hard HEAD"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -1068,7 +1069,7 @@ def run_instance_apptainer(
                 # Try alternative reset method
                 result = subprocess.run(
                     [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                        "cd apptainer_sandbox/testbed && git checkout -- ."],
+                        "cd /testbed && git checkout -- ."],
                     cwd=str(build_dir),
                     capture_output=True,
                     text=True,
@@ -1081,7 +1082,7 @@ def run_instance_apptainer(
             # Remove untracked files/directories
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox/testbed && git clean -fd"],
+                    "cd /testbed && git clean -fd"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,
@@ -1093,7 +1094,7 @@ def run_instance_apptainer(
             # Verify clean state after reset
             result = subprocess.run(
                 [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    "cd apptainer_sandbox/testbed && git diff"],
+                    "cd /testbed && git diff"],
                 cwd=str(build_dir),
                 capture_output=True,
                 text=True,

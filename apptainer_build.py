@@ -74,7 +74,7 @@ def build_sandbox(dataset):
             
                 result = subprocess.run(
                     [APPTAINER_BASH, "exec", "--writable", "apptainer_sandbox", "bash", "-c", 
-                    f"cd apptainer_sandbox && bash /root/{setup_script_name}"],
+                    f"bash /root/{setup_script_name}"],
                     cwd=str(build_dir),
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
