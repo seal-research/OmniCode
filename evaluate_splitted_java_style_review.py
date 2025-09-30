@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 ROOT = Path.cwd()
-SWEAGENT_FILE = ROOT / "sweagent_pmd_results_aider.json"
-OUTPUT_FILE = ROOT / "sweagent_style_review_mockito.json"
+SWEAGENT_FILE = ROOT / "sweagent_pmd_results.json"
+OUTPUT_FILE = ROOT / "sweagent_style_review.json"
 
 # --- Helpers -----------------------------------------------------------------
 
@@ -307,15 +307,15 @@ def process_item(item: Dict[str, Any], work_root: Path) -> Dict[str, Any]:
 # --- top-level / filtering / CLI --------------------------------------------
 
 
-def load_input_items() -> List[Dict[str, Any]]:
-    if not SWEAGENT_FILE.exists():
-        print(f"ERROR: {SWEAGENT_FILE} not found in {ROOT}")
+def load_input_items(path: Path) -> List[Dict[str, Any]]:
+    if not path.exists():
+        print(f"ERROR: {path} not found in {ROOT}")
         sys.exit(2)
     try:
-        with SWEAGENT_FILE.open("r", encoding="utf-8") as f:
+        with path.open("r", encoding="utf-8") as f:
             data = json.load(f)
     except Exception as e:
-        print(f"Failed to load {SWEAGENT_FILE}: {e}")
+        print(f"Failed to load {path}: {e}")
         sys.exit(2)
     return data
 
@@ -367,6 +367,7 @@ def main() -> None:
     parser.add_argument("--org", type=str, help="Organization (e.g., apache)")
     parser.add_argument("--repo", type=str, help="Repository name (e.g., dubbo)")
     parser.add_argument("--pull_number", type=str, help="Pull request number (e.g., 10638)")
+    parser.add_argument("--swe-file", type=str, default=str(SWEAGENT_FILE), help=f"Input file (default: {SWEAGENT_FILE})")
     parser.add_argument("--instance", type=str, help='Combined instance identifier in form org/repo:pull_number')
     args = parser.parse_args()
 
@@ -382,10 +383,10 @@ def main() -> None:
             print('Invalid --instance format. Expected org/repo:pull_number')
             sys.exit(2)
 
-    data = load_input_items()
+    data = load_input_items(Path(args.swe_file))
     items_to_process = filter_items(data, org=args.org, repo=args.repo, pull_number=args.pull_number)
     if (args.org or args.repo or args.pull_number) and not items_to_process:
-        print(f"No entries found in {SWEAGENT_FILE} matching the provided filters (org={args.org}, repo={args.repo}, pull_number={args.pull_number}).")
+        print(f"No entries found in {args.swe_file} matching the provided filters (org={args.org}, repo={args.repo}, pull_number={args.pull_number}).")
         sys.exit(3)
 
     results = main_filterable(items_to_process)
