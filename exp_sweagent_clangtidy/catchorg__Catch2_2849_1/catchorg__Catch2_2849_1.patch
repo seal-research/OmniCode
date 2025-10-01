@@ -1,0 +1,14 @@
+diff --git a/src/catch2/matchers/catch_matchers_exception.cpp b/src/catch2/matchers/catch_matchers_exception.cpp
+index 8147390..e122ad2 100644
+--- a/src/catch2/matchers/catch_matchers_exception.cpp
++++ b/src/catch2/matchers/catch_matchers_exception.cpp
+@@ -7,6 +7,9 @@
+ // SPDX-License-Identifier: BSL-1.0
+ #include <catch2/matchers/catch_matchers_exception.hpp>
+ 
++#include <exception>
++#include <string>
++
+ namespace Catch {
+ namespace Matchers {
+ 
