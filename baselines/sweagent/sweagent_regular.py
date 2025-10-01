@@ -34,6 +34,9 @@ CONFIG_FILE_MAP = {
     "testgen-cpp": CUR_DIR / "testgen_cpp.yaml",
     "stylereview": CUR_DIR / "stylereview.yaml",
     "reviewfix": CUR_DIR / "reviewfix.yaml",
+    "stylereview-java-checkstyle": CUR_DIR / "jstylereview.yaml",
+    "stylereview-java-pmd": CUR_DIR / "jstylereview_pmd.yaml",
+    "stylereview-cpp-clangtidy": CUR_DIR / "jstylereview_cpp.yaml",
 }
 
 # Add style review config map for Java
