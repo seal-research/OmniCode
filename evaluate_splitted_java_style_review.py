@@ -41,7 +41,6 @@ def safe_mkdir(p: Path) -> None:
 
 # --- Problem statement parsing ----------------------------------------------
 
-
 VIOLATION_LINE_RE = re.compile(
     r"Line\s*(?P<line>\d+)\s*,\s*Column\s*(?P<col>\d+)\s*:\s*(?P<msg>.+?)\s*(?:\[(?P<source>[^\]]+)\])?\s*$"
 )
@@ -111,6 +110,8 @@ def load_original_style_errors(path: Path) -> List[Dict[str, Any]]:
                 col = int(msg.get("column"))
             except Exception:
                 col = None
+            # normalize source to be a stripped string (avoid None)
+            src = (msg.get("source") or "").strip()
             flat.append(
                 {
                     "file_base": base,
@@ -118,7 +119,7 @@ def load_original_style_errors(path: Path) -> List[Dict[str, Any]]:
                     "line": line,
                     "column": col,
                     "message": msg.get("message"),
-                    "source": msg.get("source"),
+                    "source": src,
                 }
             )
     return flat
@@ -142,6 +143,69 @@ def compare_violations(problem_entries: List[Dict[str, Any]], original_msgs: Lis
     return len(missing), missing
 
 
+# --- additional errors computation ------------------------------------------
+
+
+def compute_additional_errors(problem_entries: List[Dict[str, Any]], original_msgs: List[Dict[str, Any]]):
+    """
+    Compute "additional errors" with the following rules:
+      - Consider only original_msgs that belong to the same files (by basename) mentioned in problem_entries.
+      - Exclude any original_msg whose source matches any source present in the problem_entries for that same file.
+        (i.e., additional errors should NOT be the same source as any in the problem statement)
+      - Exclude any original_msg whose source or message contains the substrings 'whitespace' or 'newline' (case-insensitive).
+      - Consider an original_msg "additional" if its (line, column) is different from ALL (line, column) locations present
+        in problem_entries for that same file (regardless of source).
+    Returns (additional_count, additional_entries)
+    """
+    # Build mapping: file_base -> set of (line, column) from problem_entries (all sources)
+    problems_linecols: Dict[str, set] = {}
+    # Build mapping: file_base -> set of sources present in problem_entries
+    problem_sources: Dict[str, set] = {}
+
+    for p in problem_entries:
+        base = os.path.basename(p["file"])
+        line = p.get("line")
+        col = p.get("column")
+        problems_linecols.setdefault(base, set()).add((line, col))
+        src = (p.get("source") or "").strip()
+        if src:
+            problem_sources.setdefault(base, set()).add(src)
+
+    additional: List[Dict[str, Any]] = []
+    seen = set()
+    for m in original_msgs:
+        base = m.get("file_base")
+        if not base:
+            continue
+        # only consider original messages from files mentioned in the problem statement
+        if base not in problems_linecols:
+            continue
+
+        src = (m.get("source") or "").strip()
+        msg_text = (m.get("message") or "")
+        # skip if source matches any source present in problem entries for this file (we WANT different sources)
+        if src and src in problem_sources.get(base, set()):
+            continue
+
+        # skip messages/sources that mention 'whitespace' or 'newline' (case-insensitive)
+        low_src = src.lower()
+        low_msg = msg_text.lower()
+        if "whitespace" in low_src or "newline" in low_src or "whitespace" in low_msg or "newline" in low_msg:
+            continue
+
+        msg_line = m.get("line")
+        msg_col = m.get("column")
+        # If the original message's (line, column) is not one of the problem entries for that file,
+        # it's considered an "additional" error (i.e., same file but different location and different source).
+        if (msg_line, msg_col) not in problems_linecols[base]:
+            uniq = (base, src, msg_line, msg_col)
+            if uniq not in seen:
+                seen.add(uniq)
+                additional.append(m)
+
+    return len(additional), additional
+
+
 # --- per-item processing ----------------------------------------------------
 
 
@@ -154,6 +218,7 @@ def process_item(item: Dict[str, Any], work_root: Path) -> Dict[str, Any]:
     - copy repo to data/java_style_review/{org}/{repo}/style_review/style-review-{pull_number}/repo
     - run codearena.py (from ROOT)
     - load original_style_errors.json and compare violations
+    - compute additional_errors_count and list (same file but different source/location; excludes whitespace/newline)
     """
     repo_field = item.get("repo")
     if not repo_field or "/" not in repo_field:
@@ -212,7 +277,7 @@ def process_item(item: Dict[str, Any], work_root: Path) -> Dict[str, Any]:
             patch_file = Path(tf.name)
         try:
             print(f"Attempting to apply patch via git apply: {patch_file}")
-            code, out, err = run(["git", "apply",  str(patch_file)], cwd=clone_path)
+            code, out, err = run(["git", "apply", str(patch_file)], cwd=clone_path)
             if code == 0:
                 applied_ok = True
                 print("git apply succeeded")
@@ -260,7 +325,6 @@ def process_item(item: Dict[str, Any], work_root: Path) -> Dict[str, Any]:
             "exception": str(e),
         }
 
-    
     codearena_cmd = [
         sys.executable,
         "multiswebench_local/multi_swe_bench/harness/style_review/pmd_runner.py",
@@ -285,6 +349,12 @@ def process_item(item: Dict[str, Any], work_root: Path) -> Dict[str, Any]:
     problem_entries = parse_problem_statement(problem_statement)
     missing_count, missing_entries = compare_violations(problem_entries, original_msgs)
 
+    # compute additional errors (same file as problem entries, different source than problem entries,
+    # exclude messages/sources containing 'whitespace' or 'newline')
+    additional_count, additional_entries = compute_additional_errors(problem_entries, original_msgs)
+    if additional_count:
+        print(f"Found {additional_count} additional error(s) (same file, different source, different location) in original_style_errors.json")
+
     result = {
         "org": org,
         "repo": repo,
@@ -299,6 +369,8 @@ def process_item(item: Dict[str, Any], work_root: Path) -> Dict[str, Any]:
         "problem_violations_count": len(problem_entries),
         "missing_violations_count": missing_count,
         "missing_violations": missing_entries,
+        "additional_errors_count": additional_count,
+        "additional_errors": additional_entries,
     }
 
     return result
