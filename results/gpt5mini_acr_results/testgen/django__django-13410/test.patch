@@ -1,0 +1,107 @@
+--- a/tests/core/files/test_locks_posix.py
++++ b/tests/core/files/test_locks_posix.py
++import errno
++import fcntl
++import tempfile
++import os
++import pytest
++
++import django.core.files.locks as locks
++
++# These tests exercise the posix implementation of django.core.files.locks
++# which uses fcntl.flock. The implementation previously relied on the return
++# value of fcntl.flock (checking ret == 0), but CPython's fcntl.flock returns
++# None on success and raises OSError on failure. The correct behavior is to
++# return True on success and False on failure (catching OSError).
++#
++# The tests below monkeypatch fcntl.flock to simulate both success (returns None)
++# and failure (raises OSError). Before the fix, the "success" cases would return
++# False (because None == 0 is False); the failure cases would raise an OSError
++# instead of returning False. After applying the fix (catching OSError and
++# returning True/False appropriately), all tests should pass.
++
++@pytest.fixture
++def temp_file():
++    # Create a real temporary file so .fileno() works
++    tf = tempfile.NamedTemporaryFile(delete=False)
++    tf.write(b"django lock test")
++    tf.flush()
++    tf.seek(0)
++    try:
++        yield tf
++    finally:
++        try:
++            tf.close()
++        except Exception:
++            pass
++        try:
++            os.unlink(tf.name)
++        except Exception:
++            pass
++
++def _make_success_flock():
++    """Return a flock replacement that simulates success by returning None."""
++    def flock_success(fd, flags):
++        # Simulate the real fcntl.flock behavior on success (returns None)
++        return None
++    return flock_success
++
++def _make_failure_flock():
++    """Return a flock replacement that simulates a non-blocking lock failure
++    by raising OSError with EAGAIN/EWOULDBLOCK."""
++    def flock_failure(fd, flags):
++        raise OSError(errno.EAGAIN, "Resource temporarily unavailable")
++    return flock_failure
++
++def test_lock_returns_true_on_successful_flock(monkeypatch, temp_file):
++    """When fcntl.flock returns None (success), locks.lock() should return True."""
++    monkeypatch.setattr(fcntl, "flock", _make_success_flock())
++    # Use a typical exclusive non-blocking flag combination
++    flags = fcntl.LOCK_EX | fcntl.LOCK_NB
++    assert locks.lock(temp_file, flags) is True
++
++def test_lock_returns_false_on_flock_raising_oserror(monkeypatch, temp_file):
++    """When fcntl.flock raises OSError (e.g. would block), locks.lock() should return False."""
++    monkeypatch.setattr(fcntl, "flock", _make_failure_flock())
++    flags = fcntl.LOCK_EX | fcntl.LOCK_NB
++    # The fixed implementation should catch OSError and return False.
++    # Before the fix, this would propagate the OSError (test would error).
++    assert locks.lock(temp_file, flags) is False
++
++def test_unlock_returns_true_on_successful_flock(monkeypatch, temp_file):
++    """When fcntl.flock returns None (success) for unlock, locks.unlock() should return True."""
++    monkeypatch.setattr(fcntl, "flock", _make_success_flock())
++    assert locks.unlock(temp_file) is True
++
++def test_unlock_returns_false_on_flock_raising_oserror(monkeypatch, temp_file):
++    """When fcntl.flock raises OSError during unlock, locks.unlock() should return False."""
++    monkeypatch.setattr(fcntl, "flock", _make_failure_flock())
++    # The fixed implementation should catch OSError and return False.
++    assert locks.unlock(temp_file) is False
++
++def test_lock_and_unlock_sequence_with_success(monkeypatch, temp_file):
++    """Edge case: sequence of lock then unlock using successful flock calls."""
++    # Both calls succeed (return None). Both lock and unlock should return True.
++    monkeypatch.setattr(fcntl, "flock", _make_success_flock())
++    flags = fcntl.LOCK_EX | fcntl.LOCK_NB
++    assert locks.lock(temp_file, flags) is True
++    assert locks.unlock(temp_file) is True
++
++def test_lock_handles_unexpected_exceptions(monkeypatch, temp_file):
++    """If flock raises a non-OSError exception, it should propagate (not be swallowed)."""
++    class CustomError(Exception):
++        pass
++
++    def flock_raises_custom(fd, flags):
++        raise CustomError("unexpected")
++
++    monkeypatch.setattr(fcntl, "flock", flock_raises_custom)
++    flags = fcntl.LOCK_EX | fcntl.LOCK_NB
++    with pytest.raises(CustomError):
++        # The implementation should not catch non-OSError exceptions masking bugs.
++        locks.lock(temp_file, flags)
++
++    # Same for unlock
++    monkeypatch.setattr(fcntl, "flock", flock_raises_custom)
++    with pytest.raises(CustomError):
++        locks.unlock(temp_file)

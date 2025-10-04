@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/django/utils/dateformat.py b/django/utils/dateformat.py\nindex afd36d79e0..2ca2ba69fe 100644\n--- a/django/utils/dateformat.py\n+++ b/django/utils/dateformat.py\n@@ -326,7 +326,9 @@ class DateFormat(TimeFormat):\n \n     def y(self):\n         \"Year, 2 digits; e.g. '99'\"\n-        return str(self.data.year)[2:]\n+        # Return the last two digits of the year, zero-padded to two characters,\n+        # matching datetime.strftime('%y') semantics (e.g. 123 -> '23', 5 -> '05').\n+        return '%02d' % (self.data.year % 100)\n \n     def Y(self):\n         \"Year, 4 digits; e.g. '1999'\"\n"
-}

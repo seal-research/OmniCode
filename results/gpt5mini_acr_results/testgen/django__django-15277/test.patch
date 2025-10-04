@@ -1,0 +1,74 @@
+--- a/tests/test_charfield_maxlength.py
++++ b/tests/test_charfield_maxlength.py
++import pytest
++
++from django.core import validators
++from django.db import models
++from django.db.models import Value
++from django.core.validators import MaxLengthValidator
++
++
++def has_maxlength_validator(field):
++    """Helper to check if a MaxLengthValidator instance is present on a field."""
++    return any(isinstance(v, MaxLengthValidator) for v in getattr(field, "validators", []))
++
++
++def test_charfield_without_max_length_should_not_add_maxlength_validator():
++    """
++    Regression test for CharField.__init__ micro-optimisation.
++
++    Expected behavior (after the fix):
++    - Instantiating a CharField without specifying max_length must NOT append a
++      MaxLengthValidator with limit_value None to the field.validators list.
++
++    This test will fail before the fix (because CharField currently unconditionally
++    appends MaxLengthValidator(self.max_length) which results in a validator with
++    limit_value==None).
++    """
++    field = models.CharField()
++    assert not has_maxlength_validator(
++        field
++    ), "CharField() must not have a MaxLengthValidator when max_length is None"
++
++
++def test_value_resolve_output_field_for_string_should_not_attach_maxlength_validator():
++    """
++    Ensure that Value('...') resolution to a CharField does not produce a
++    MaxLengthValidator when no max_length is specified.
++
++    This captures the user-reported path where annotate(x=Value('test')) ends up
++    creating a CharField() as an output_field for a string literal. The output
++    field must not carry a MaxLengthValidator with a None limit.
++    """
++    v = Value("test")
++    out_field = v._resolve_output_field()
++    assert isinstance(out_field, models.CharField)
++    assert not has_maxlength_validator(
++        out_field
++    ), "Value(...)._resolve_output_field() must not produce a CharField with a MaxLengthValidator when max_length is None"
++
++
++def test_charfield_with_explicit_max_length_adds_maxlength_validator():
++    """
++    Sanity check: when max_length is provided, CharField must append a
++    MaxLengthValidator with the corresponding integer limit_value.
++    This test should pass both before and after the fix.
++    """
++    max_len = 10
++    field = models.CharField(max_length=max_len)
++    # There must be exactly one MaxLengthValidator with the expected limit value.
++    validators_list = [v for v in field.validators if isinstance(v, MaxLengthValidator)]
++    assert len(validators_list) == 1, "CharField(max_length=...) should have one MaxLengthValidator"
++    assert validators_list[0].limit_value == max_len
++
++
++def test_binaryfield_behaviour_matches_precedent_no_validator_when_no_max_length():
++    """
++    BinaryField already uses the conditional pattern (only add MaxLengthValidator
++    when max_length is not None). Ensure that behaviour remains intact.
++    This also serves as a baseline/precedent test.
++    """
++    b = models.BinaryField()
++    assert not has_maxlength_validator(
++        b
++    ), "BinaryField() should not have a MaxLengthValidator when max_length is None"

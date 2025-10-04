@@ -1,0 +1,94 @@
+--- a/tests/admin/test_search_joins.py
++++ b/tests/admin/test_search_joins.py
++import pytest
++from django.contrib import admin
++from django.contrib.auth.models import User, Group
++from django.db import connection
++
++@pytest.mark.django_db
++def test_get_search_results_single_join_for_multi_word_search_with_related_field():
++    """
++    Regression test for "Unnecessary joins in admin changelist query".
++
++    Before the fix, ModelAdmin.get_search_results chained .filter() calls
++    once per search word, which caused the ORM to create repeated JOINs
++    on related tables (e.g. auth_group) for each word. The intended behavior
++    is that related-table JOINs for a search across related fields should
++    appear only once regardless of the number of words in the search term.
++
++    This test sets up a simple User/Group relationship and asserts that
++    a multi-word search results in only a single occurrence of the
++    related table name (auth_group) in the generated SQL.
++    """
++    ma = admin.ModelAdmin(User, admin.site)
++    # Include a related lookup that requires a JOIN (groups is M2M on User).
++    ma.search_fields = ('username', 'groups__name')
++
++    # Create some data to ensure the query construction will include joins.
++    g1 = Group.objects.create(name='alpha')
++    g2 = Group.objects.create(name='beta')
++    u = User.objects.create(username='user1')
++    u.groups.add(g1, g2)
++
++    # Use a multi-word search term (4 words) to trigger the problematic
++    # repeated-filter behavior in the buggy implementation.
++    qs, may_have_duplicates = ma.get_search_results(None, User.objects.all(), 'alpha beta gamma delta')
++
++    # Get the SQL string produced by the QuerySet without executing it.
++    sql = str(qs.query)
++
++    # Ensure we do have a join to the group table somewhere in the SQL.
++    assert 'auth_group' in sql, "Expected auth_group table to appear in generated SQL"
++
++    # After the fix, auth_group should only appear once (single JOIN),
++    # even though the search term had multiple words. On the buggy code,
++    # auth_group would appear multiple times (one per search word).
++    assert sql.count('auth_group') == 1, (
++        "Unnecessary repeated JOINs detected for related lookup; "
++        "auth_group appears %d times in SQL: %s" % (sql.count('auth_group'), sql)
++    )
++
++@pytest.mark.django_db
++def test_multi_word_and_quoted_search_returns_expected_results():
++    """
++    Ensure that search semantics are preserved: a quoted phrase should be
++    treated as a single token, and multi-word searches should find objects
++    matching any of the configured search fields (OR within a word, AND across words).
++    """
++    ma = admin.ModelAdmin(User, admin.site)
++    ma.search_fields = ('username', 'groups__name')
++
++    # Create group with a space in the name and associate a user with it.
++    group = Group.objects.create(name='big company')
++    user = User.objects.create(username='jsmith')
++    user.groups.add(group)
++
++    # Quoted phrase: should be treated as single token and match the group name.
++    qs_quoted, _ = ma.get_search_results(None, User.objects.all(), '"big company"')
++    pks_quoted = list(qs_quoted.values_list('pk', flat=True))
++    assert user.pk in pks_quoted, "Quoted phrase search did not return expected user"
++
++    # Unquoted multi-word search: should act as (word1 OR word2) per field ANDed across words.
++    qs_unquoted, _ = ma.get_search_results(None, User.objects.all(), 'big company')
++    pks_unquoted = list(qs_unquoted.values_list('pk', flat=True))
++    assert user.pk in pks_unquoted, "Multi-word search did not return expected user"
++
++@pytest.mark.django_db
++def test_get_search_results_may_have_duplicates_flag_for_related_and_simple_fields():
++    """
++    The may_have_duplicates flag indicates whether the queryset may produce
++    duplicate rows (e.g. due to MANY-TO-MANY joins). This test ensures that
++    lookups on related M2M fields set the flag to True, while simple field
++    lookups do not.
++    """
++    ma = admin.ModelAdmin(User, admin.site)
++
++    # Simple field lookup should not spawn duplicates.
++    ma.search_fields = ('username', 'email')
++    _, flag_simple = ma.get_search_results(None, User.objects.all(), 'foo')
++    assert flag_simple is False, "Simple field lookups should not indicate duplicates"
++
++    # Related M2M lookup should indicate possible duplicates.
++    ma.search_fields = ('groups__name',)
++    _, flag_related = ma.get_search_results(None, User.objects.all(), 'foo')
++    assert flag_related is True, "Related M2M lookups should indicate possible duplicates"

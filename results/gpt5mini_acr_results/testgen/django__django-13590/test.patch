@@ -1,0 +1,103 @@
+--- a/tests/test_query_resolve_lookup_value.py
++++ b/tests/test_query_resolve_lookup_value.py
+-# Empty if creating new file
++import pytest
++from collections import namedtuple
++
++# Import the Query.resolve_lookup_value implementation to test its behavior
++from django.db.models.sql.query import Query
++
++
++class DummyExpr:
++    """
++    A minimal expression-like object exposing resolve_expression, which
++    matches the protocol expected by Query.resolve_lookup_value.
++    """
++    def __init__(self, value):
++        self.value = value
++
++    def resolve_expression(self, query, reuse, allow_joins):
++        # Return a deterministic transformed value so tests can assert on it.
++        return f"resolved_{self.value}"
++
++
++def make_fake_query():
++    """
++    Create a lightweight object that has a resolve_lookup_value method
++    bound to it, using the implementation from Query. This avoids the need
++    to fully instantiate a Query (which might require model setup).
++    """
++    class FakeQuery:
++        pass
++
++    fake = FakeQuery()
++    # Bind the Query.resolve_lookup_value function to the fake instance so that
++    # recursive calls to self.resolve_lookup_value work correctly.
++    fake.resolve_lookup_value = Query.resolve_lookup_value.__get__(fake, Query)
++    return fake
++
++
++def test_resolve_lookup_value_returns_same_namedtuple_type_and_resolves_elements():
++    """
++    This test demonstrates the intended (fixed) behavior:
++    Given a namedtuple whose elements are expression-like objects, resolve_lookup_value
++    should return an instance of the same namedtuple type with each element resolved.
++
++    NOTE: This test will FAIL on the pre-fix implementation where the code reconstitutes
++    the tuple by calling type(value)(generator) (which breaks namedtuple constructors).
++    After the fix (expanding the resolved elements into the constructor), this test will PASS.
++    """
++    Point = namedtuple("Point", ["near", "far"])
++    value = Point(DummyExpr("a"), DummyExpr("b"))
++
++    fake_query = make_fake_query()
++    # Expect no exception and correct reconstruction into the namedtuple type
++    result = fake_query.resolve_lookup_value(value, can_reuse=False, allow_joins=True)
++
++    assert isinstance(result, Point), "Result must be the same namedtuple class"
++    assert result == Point("resolved_a", "resolved_b")
++
++
++def test_resolve_lookup_value_resolves_and_returns_builtin_tuple():
++    """
++    Ensure that plain tuples continue to be handled correctly: elements are resolved,
++    and the returned value is a plain tuple of resolved elements.
++    This should pass both before and after the fix.
++    """
++    t = (DummyExpr("x"), DummyExpr("y"))
++    fake_query = make_fake_query()
++    result = fake_query.resolve_lookup_value(t, can_reuse=False, allow_joins=True)
++
++    assert isinstance(result, tuple)
++    assert result == ("resolved_x", "resolved_y")
++
++
++def test_resolve_lookup_value_resolves_and_returns_list():
++    """
++    Ensure that lists continue to be handled correctly: elements are resolved,
++    and the returned value is a list of resolved elements.
++    This should pass both before and after the fix.
++    """
++    lst = [DummyExpr("l1"), DummyExpr("l2")]
++    fake_query = make_fake_query()
++    result = fake_query.resolve_lookup_value(lst, can_reuse=False, allow_joins=True)
++
++    assert isinstance(result, list)
++    assert result == ["resolved_l1", "resolved_l2"]
++
++
++def test_resolve_lookup_value_with_non_expression_values_namedtuple():
++    """
++    Edge case: when the namedtuple elements are plain values (not expression objects),
++    resolve_lookup_value should still return the same namedtuple type containing those values.
++    This test will also fail on the pre-fix implementation (due to the same constructor issue),
++    and should pass after the fix.
++    """
++    Point = namedtuple("Point", ["near", "far"])
++    value = Point(10, 20)
++
++    fake_query = make_fake_query()
++    result = fake_query.resolve_lookup_value(value, can_reuse=False, allow_joins=True)
++
++    assert isinstance(result, Point)
++    assert result == Point(10, 20)

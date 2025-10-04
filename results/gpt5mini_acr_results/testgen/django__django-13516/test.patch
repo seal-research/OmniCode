@@ -1,0 +1,77 @@
+--- a/django/tests/core/management/test_outputwrapper.py
++++ b/django/tests/core/management/test_outputwrapper.py
++import pytest
++
++from django.core.management.base import OutputWrapper
++
++
++class DummyStream:
++    """
++    Simple underlying stream that records writes and whether flush() was called.
++    Used to assert that OutputWrapper.flush() delegates to the underlying stream.
++    """
++    def __init__(self):
++        self.buffer = ""
++        self.flushed = False
++
++    def write(self, msg):
++        self.buffer += msg
++
++    def flush(self):
++        # Mark that flush was called.
++        self.flushed = True
++
++
++class NoFlushStream:
++    """
++    Underlying stream that implements write but has no flush method.
++    OutputWrapper.flush() should not raise when the underlying stream lacks flush.
++    """
++    def __init__(self):
++        self.buffer = ""
++
++    def write(self, msg):
++        self.buffer += msg
++
++
++def test_outputwrapper_flush_delegates_to_underlying_stream_should_flush():
++    """
++    This test reproduces the reported bug: OutputWrapper.flush() is expected to
++    call the underlying stream.flush(). Before the fix, this assertion fails
++    because OutputWrapper doesn't delegate flush() to the wrapped stream.
++    """
++    dummy = DummyStream()
++    wrapper = OutputWrapper(dummy, ending="")
++
++    # Write a progress message without a newline (common pattern in management commands)
++    wrapper.write("  Applying myapp.0002_auto_20200817_1030...", ending="")
++    # Ensure precondition: underlying stream has not been flushed yet.
++    assert not dummy.flushed
++
++    # Calling flush on the wrapper is expected to call DummyStream.flush().
++    wrapper.flush()
++
++    # Expectation: underlying stream.flush() was called. This should fail before the
++    # OutputWrapper.flush() delegation is implemented.
++    assert dummy.flushed, "OutputWrapper.flush() must call the underlying stream.flush()"
++
++
++def test_outputwrapper_flush_with_underlying_without_flush_does_not_error():
++    """
++    Edge case: If the wrapped stream doesn't have a flush() method, calling
++    OutputWrapper.flush() should not raise an exception. This preserves robustness
++    when wrapping objects that only implement write().
++    """
++    noflush = NoFlushStream()
++    wrapper = OutputWrapper(noflush, ending="")
++
++    # Should not raise an exception even though NoFlushStream has no flush method.
++    wrapper.write("Some output...", ending="")
++    try:
++        wrapper.flush()
++    except Exception as exc:
++        pytest.fail(f"Calling flush() on OutputWrapper raised an exception when the "
++                    f"underlying stream had no flush(): {exc}")
++
++    # The write must still have been delegated to the underlying stream.
++    assert "Some output..." in noflush.buffer

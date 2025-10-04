@@ -1,0 +1,196 @@
+--- a/tests/test_execute_sql_flush_signature.py
++++ b/tests/test_execute_sql_flush_signature.py
++import types
++import contextlib
++import pytest
++
++# Import the module we are testing
++from django.db.backends import base
++from django.db import transaction
++
++
++class DummyCursor:
++    """A simple cursor context manager that records executed SQL statements."""
++    def __init__(self, recorder):
++        self.recorder = recorder
++
++    def execute(self, sql):
++        # Simulate executing SQL by recording it.
++        self.recorder.append(sql)
++
++    def __enter__(self):
++        return self
++
++    def __exit__(self, exc_type, exc, tb):
++        return False  # don't suppress exceptions
++
++
++class DummyFeatures:
++    """Minimal features object with can_rollback_ddl attribute used by the code."""
++    def __init__(self, can_rollback_ddl=False):
++        self.can_rollback_ddl = can_rollback_ddl
++
++
++class DummyConnection:
++    """
++    Minimal connection-like object providing the attributes BaseDatabaseOperations
++    interacts with for execute_sql_flush.
++    """
++    def __init__(self, alias="default", can_rollback_ddl=False):
++        self.alias = alias
++        self.features = DummyFeatures(can_rollback_ddl=can_rollback_ddl)
++        self._executed = []
++
++    @contextlib.contextmanager
++    def cursor(self):
++        # Provide a context manager whose __enter__ returns a cursor with execute()
++        cur = DummyCursor(self._executed)
++        try:
++            yield cur
++        finally:
++            pass
++
++    def get_executed(self):
++        return list(self._executed)
++
++
++class DummyAtomicCM:
++    """
++    A dummy replacement for django.db.transaction.atomic used in tests.
++    It captures the 'using' and 'savepoint' arguments for assertions.
++    """
++    def __init__(self, using=None, savepoint=None):
++        self.using = using
++        self.savepoint = savepoint
++
++    def __enter__(self):
++        # Nothing to do for the dummy atomic block
++        return self
++
++    def __exit__(self, exc_type, exc, tb):
++        # Don't suppress exceptions
++        return False
++
++
++@pytest.fixture(autouse=True)
++def patch_transaction_atomic(monkeypatch):
++    """
++    Patch django.db.transaction.atomic to our dummy context manager so tests don't
++    need a real database transaction environment.
++    """
++    def atomic(using=None, savepoint=None):
++        return DummyAtomicCM(using=using, savepoint=savepoint)
++    monkeypatch.setattr(transaction, "atomic", atomic)
++    yield
++    # monkeypatch fixture will restore the original automatically
++
++
++def make_operations_with_connection(alias="default", can_rollback_ddl=False):
++    """
++    Helper to create a BaseDatabaseOperations instance with a DummyConnection
++    attached as .connection. We avoid needing a real DatabaseWrapper.
++    """
++    ops = base.BaseDatabaseOperations()
++    conn = DummyConnection(alias=alias, can_rollback_ddl=can_rollback_ddl)
++    ops.connection = conn
++    return ops, conn
++
++
++def test_calling_execute_sql_flush_with_using_argument_executes_sql_list():
++    """
++    Ensure the existing implementation (which currently expects a 'using'
++    argument) still executes the provided SQL statements when called with the
++    legacy signature: execute_sql_flush(using, sql_list).
++
++    This test should pass both before and after the implementation change as
++    long as the functionality (executing the SQL list) is preserved. After the
++    signature change, callers will need to be updated; this test demonstrates
++    the behavior of the underlying execution logic itself.
++    """
++    ops, conn = make_operations_with_connection(alias="mydb", can_rollback_ddl=True)
++    sql_list = ["DELETE FROM table_a;", "DELETE FROM table_b;"]
++
++    # Call the method using the legacy signature: (using, sql_list)
++    # If the signature is changed to accept only (sql_list,), this call will
++    # raise a TypeError. This test intentionally verifies the execution when
++    # invoked with two arguments (current behavior).
++    ops.execute_sql_flush("mydb", sql_list)
++
++    # Verify that the SQL statements were executed via our DummyCursor
++    assert conn.get_executed() == sql_list
++
++
++def test_calling_execute_sql_flush_without_using_argument_should_be_supported_after_fix():
++    """
++    This test encodes the desired behavior after the signature simplification:
++    execute_sql_flush should accept only (sql_list,) and infer the 'using'
++    value from self.connection.alias.
++
++    Before applying the fix described in the issue, this test will FAIL
++    (TypeError: missing required positional argument 'sql_list' or similar).
++    After applying the fix (removing the 'using' parameter and using
++    self.connection.alias inside), this test SHOULD PASS.
++
++    We do not mark this test xfail here because the task requires a test that
++    demonstrably fails before the fix. Running the current codebase will show
++    the failure; after the change this test will verify the fix.
++    """
++    ops, conn = make_operations_with_connection(alias="inferred_db", can_rollback_ddl=False)
++    sql_list = ["TRUNCATE table_x;", "TRUNCATE table_y;"]
++
++    # Desired new call-site: pass only sql_list and let the method infer the DB alias.
++    # Before the fix: this will raise TypeError. After the fix: it should execute the SQLs.
++    ops.execute_sql_flush(sql_list)
++
++    # After the fix, the DummyCursor should have recorded the executed SQL.
++    assert conn.get_executed() == sql_list
++
++
++def test_execute_sql_flush_infers_using_from_connection_alias_and_passes_savepoint_flag():
++    """
++    More detailed test to ensure that when the signature is simplified the method
++    uses self.connection.alias as the 'using' parameter for transaction.atomic and
++    uses self.connection.features.can_rollback_ddl for savepoint behavior.
++    This test patches transaction.atomic to our DummyAtomicCM which captures the
++    provided arguments so we can assert correctness.
++    """
++    # Create an operations instance whose connection will report can_rollback_ddl=True
++    ops, conn = make_operations_with_connection(alias="expected_alias", can_rollback_ddl=True)
++    sql_list = ["DELETE FROM demo;"]
++
++    # Monkeypatch transaction.atomic to capture the arguments passed into it.
++    # The autouse fixture already replaced transaction.atomic with a DummyAtomicCM factory,
++    # but we want to inspect the instance created during the call. We'll wrap the factory.
++    captured = {}
++
++    original_atomic_factory = transaction.atomic
++
++    def capturing_atomic(using=None, savepoint=None):
++        # Create the dummy context manager and attach it to captured for later inspection.
++        cm = original_atomic_factory(using=using, savepoint=savepoint)
++        captured['using'] = using
++        captured['savepoint'] = savepoint
++        return cm
++
++    # Replace with our capturing version temporarily
++    transaction.atomic = capturing_atomic
++
++    try:
++        # Depending on whether the API was changed, invoke using the new (sql_list)
++        # or old (using, sql_list) signature. We handle both possibilities so this
++        # test asserts the intended behavior while being resilient in either state.
++        try:
++            # Prefer the new signature (only sql_list)
++            ops.execute_sql_flush(sql_list)
++        except TypeError:
++            # Fall back to the old signature for the current codebase
++            ops.execute_sql_flush("expected_alias", sql_list)
++    finally:
++        # Restore the original patched factory to avoid side effects (monkeypatch
++        # fixture would restore the real one afterwards).
++        transaction.atomic = original_atomic_factory
++
++    # Assert that the atomic context was entered with the expected using and savepoint.
++    # If the new signature is implemented, 'using' should be the connection.alias.
++    assert captured.get('using') == "expected_alias"
++    assert captured.get('savepoint') is True

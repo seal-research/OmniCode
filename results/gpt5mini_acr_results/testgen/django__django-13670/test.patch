@@ -1,0 +1,63 @@
+--- a/tests/utils/test_dateformat_y.py
++++ b/tests/utils/test_dateformat_y.py
++import pytest
++from datetime import datetime, date
++from django.utils import dateformat
++
++@pytest.mark.parametrize(
++    "dt, expected",
++    [
++        # This is the core failing case reported in the issue:
++        # Year 123 currently yields '3' with the buggy implementation,
++        # but the expected behaviour (like strftime("%y")) is '23'.
++        (datetime(123, 4, 5, 6, 7), "23"),
++
++        # Single-digit year should be zero-padded to two digits ('09').
++        (datetime(9, 4, 5, 6, 7), "09"),
++
++        # Two-digit year remains unchanged.
++        (datetime(99, 4, 5, 6, 7), "99"),
++
++        # Year 1000 -> last two digits are '00' (1000 % 100 == 0).
++        (datetime(1000, 4, 5, 6, 7), "00"),
++
++        # Year 1 should produce '01'.
++        (datetime(1, 1, 1, 0, 0), "01"),
++    ],
++)
++def test_dateformat_y_zero_padded_two_digit_year(dt, expected):
++    """
++    dateformat.format(..., "y") should return the last two digits of the year,
++    zero-padded to two characters (consistent with datetime.strftime("%y")
++    and PHP's date("y")).
++
++    The first parametrized case (year=123 -> "23") reproduces the reported bug:
++    before the fix, the implementation returned '3' instead of '23'.
++    """
++    assert dateformat.format(dt, "y") == expected
++
++
++def test_dateformat_y_with_date_object_zero_padded():
++    """
++    Ensure date objects (not only datetime) also produce zero-padded 2-digit year.
++    This is an edge-case check for different input types accepted by dateformat.
++    """
++    d = date(9, 12, 31)  # year 9 -> expected '09'
++    assert dateformat.format(d, "y") == "09"
++
++
++def test_dateformat_y_multiple_random_years_edge_cases():
++    """
++    Additional targeted edge cases:
++    - year = 1900 -> '00'
++    - year = 2001 -> '01'
++    - year = 2000 -> '00'
++    These affirm the behaviour across century boundaries.
++    """
++    cases = [
++        (datetime(1900, 1, 1), "00"),
++        (datetime(2001, 6, 15), "01"),
++        (datetime(2000, 12, 31), "00"),
++    ]
++    for dt, expected in cases:
++        assert dateformat.format(dt, "y") == expected

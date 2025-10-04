@@ -1,0 +1,62 @@
+--- a/tests/test_defaultfilters_add_lazy.py
++++ b/tests/test_defaultfilters_add_lazy.py
++import pytest
++from django.template.defaultfilters import add
++from django.utils.functional import lazy
++
++# Tests for the "add" template filter, specifically around interaction with
++# lazy (Promise / __proxy__) string objects. These reproduce the reported
++# behaviour where concatenating a normal str with a lazy string failed.
++#
++# The first test demonstrates the failing scenario (it should fail prior to the
++# fix being applied). The remaining tests cover related working/preserved
++# behaviours and edge cases (they should pass both before and after the fix).
++
++def test_add_concatenates_str_and_lazy_string_right_operand():
++    """
++    When the right operand is a lazy string (a Promise/__proxy__), add()
++    should return the concatenation of the two strings.
++
++    This test reproduces the bug: before the fix, add('foo', lazy('bar')) raised
++    a TypeError internally and the add filter returned an empty string.
++    After the fix, the result should be 'foobar'.
++    """
++    lazy_bar = lazy(lambda: "bar", str)
++    proxy = lazy_bar()
++    # This assertion is expected to fail on the buggy implementation.
++    assert add("foo", proxy) == "foobar"
++
++
++def test_add_concatenates_lazy_string_and_str_left_operand():
++    """
++    When the left operand is a lazy string, the Promise.__add__ implementation
++    should handle concatenation and return the expected result.
++    This behaviour is expected to already work.
++    """
++    lazy_foo = lazy(lambda: "foo", str)
++    proxy = lazy_foo()
++    assert add(proxy, "bar") == "foobar"
++
++
++def test_add_handles_numeric_addition_with_lazy_numeric_operand():
++    """
++    Ensure numeric addition still works when one operand is lazy. The lazy
++    numeric proxy implements __int__/__float__ via the proxy so int()
++    conversion should succeed and numeric addition should occur.
++    """
++    lazy_three = lazy(lambda: 3, int)
++    proxy_num = lazy_three()
++    # int('2') + int(proxy_num) -> 2 + 3 == 5
++    assert add("2", proxy_num) == 5
++
++
++def test_add_preserves_non_string_concatenation_behavior():
++    """
++    Preserve existing behavior for non-string concatenation where normal
++    Python addition should be used (e.g., list + list). If either operand
++    is lazy but wraps a list, concatenation should still succeed by falling
++    back to value + arg when appropriate.
++    """
++    lazy_list = lazy(lambda: [2, 3], list)
++    proxy_list = lazy_list()
++    assert add([0, 1], proxy_list) == [0, 1, 2, 3]

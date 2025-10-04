@@ -1,0 +1,87 @@
+--- a/tests/test_response_delete_cookie.py
++++ b/tests/test_response_delete_cookie.py
++import pytest
++
++from django.conf import settings
++from django.http import HttpResponse
++from django.test.utils import override_settings
++
++
++def test_delete_cookie_preserves_samesite_of_existing_cookie():
++    """
++    When a cookie is explicitly set with a SameSite attribute, deleting the
++    cookie should emit a Set-Cookie header (via HttpResponse.delete_cookie)
++    that preserves the SameSite attribute so browsers treat the deletion
++    consistently with the original cookie.
++
++    This test demonstrates the reported bug: before the fix, delete_cookie
++    did not include the SameSite attribute and this assertion would fail.
++    """
++    resp = HttpResponse()
++    # Set the cookie with an explicit SameSite value.
++    resp.set_cookie("messages", "value", samesite="Lax")
++    assert "messages" in resp.cookies
++    assert resp.cookies["messages"]["samesite"] == "Lax"
++
++    # Now delete the cookie. The deleted/expired cookie should still carry the
++    # SameSite attribute so the browser doesn't warn/ignore it.
++    resp.delete_cookie("messages")
++    assert "messages" in resp.cookies
++    # Expect the delete Set-Cookie to preserve SameSite. This will fail with
++    # the original (buggy) implementation.
++    assert resp.cookies["messages"]["samesite"] == "Lax"
++
++
++@override_settings(
++    SESSION_COOKIE_SAMESITE="Strict",
++    SESSION_COOKIE_SECURE=True,
++    SESSION_COOKIE_HTTPONLY=True,
++    SESSION_COOKIE_DOMAIN="example.com",
++)
++def test_delete_cookie_uses_session_cookie_settings_when_not_explicit():
++    """
++    If delete_cookie is called for a cookie without passing samesite/secure/httponly,
++    it should use the project's cookie defaults (SESSION_COOKIE_*) when present.
++    This ensures deletion headers include the appropriate SameSite/Secure/HttpOnly
++    attributes to avoid browser warnings (e.g. SameSite=None without Secure).
++    """
++    resp = HttpResponse()
++    # Delete a cookie name that does not imply secure-only via prefix.
++    resp.delete_cookie("sessionid", domain=settings.SESSION_COOKIE_DOMAIN)
++
++    assert "sessionid" in resp.cookies
++    morsel = resp.cookies["sessionid"]
++
++    # The session settings should be applied to the deletion cookie.
++    assert "samesite" in morsel and morsel["samesite"] == "Strict"
++    assert "secure" in morsel, "Secure flag from SESSION_COOKIE_SECURE expected"
++    assert "httponly" in morsel, "HttpOnly flag from SESSION_COOKIE_HTTPONLY expected"
++
++
++@override_settings(SESSION_COOKIE_SECURE=False)
++def test_delete_cookie_prefix_enforces_secure_flag_even_if_session_setting_false():
++    """
++    Cookie names starting with __Secure- or __Host- must be marked secure.
++    delete_cookie should keep this special-case behavior even if the
++    SESSION_COOKIE_SECURE setting is False.
++    """
++    resp = HttpResponse()
++    resp.delete_cookie("__Secure-foo")
++
++    assert "__Secure-foo" in resp.cookies
++    morsel = resp.cookies["__Secure-foo"]
++    assert "secure" in morsel, "Cookies with __Secure- prefix must be Secure"
++
++
++@override_settings(SESSION_COOKIE_SAMESITE=None)
++def test_delete_cookie_without_samesite_setting_does_not_set_samesite():
++    """
++    If there is no SESSION_COOKIE_SAMESITE setting (None), delete_cookie should
++    not add a SameSite attribute by default. This is the expected behavior to
++    avoid introducing unintended attributes.
++    """
++    resp = HttpResponse()
++    resp.delete_cookie("nosite")
++    assert "nosite" in resp.cookies
++    morsel = resp.cookies["nosite"]
++    assert "samesite" not in morsel

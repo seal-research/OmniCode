@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/sympy/polys/rings.py b/sympy/polys/rings.py\nindex 12bd2fc920..be6e35d06d 100644\n--- a/sympy/polys/rings.py\n+++ b/sympy/polys/rings.py\n@@ -618,7 +618,7 @@ def set_ring(self, new_ring):\n     def as_expr(self, *symbols):\n         if symbols and len(symbols) != self.ring.ngens:\n             raise ValueError(\"not enough symbols, expected %s got %s\" % (self.ring.ngens, len(symbols)))\n-        else:\n+        elif not symbols:\n             symbols = self.ring.symbols\n \n         return expr_from_dict(self.as_expr_dict(), *symbols)\n"
-}

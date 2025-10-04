@@ -1,0 +1,113 @@
+--- a/tests/test_filefield_storage_deconstruct.py
++++ b/tests/test_filefield_storage_deconstruct.py
++import types
++import pytest
++
++from django.core.files.storage import Storage, default_storage
++from django.db.models.fields.files import FileField
++
++# A simple dummy Storage subclass for testing purposes.
++class DummyStorage(Storage):
++    def __init__(self, *args, **kwargs):
++        super().__init__()
++
++    def _open(self, name, mode='rb'):
++        raise NotImplementedError
++
++    def _save(self, name, content):
++        raise NotImplementedError
++
++    def exists(self, name):
++        return False
++
++    def url(self, name):
++        return name
++
++def storage_factory_function():
++    # Return a new instance to emulate a callable storage factory.
++    return DummyStorage()
++
++class StorageFactory:
++    # Callable class (i.e. a class that can be called to produce an instance).
++    def __call__(self):
++        return DummyStorage()
++
++@pytest.mark.django_db
++def test_deconstruct_preserves_original_callable_storage_reference():
++    """
++    When a callable is provided as the storage argument, FileField.deconstruct()
++    must return the original callable (not the evaluated Storage instance).
++
++    This test demonstrates the bug: before the fix, deconstruct() inlines the
++    evaluated Storage instance instead of returning the callable. This test
++    is expected to fail before the bugfix is applied.
++    """
++    # Use a plain function as the callable storage argument.
++    field = FileField(storage=storage_factory_function)
++    # At runtime, the field.storage should be an instance of DummyStorage.
++    assert isinstance(field.storage, DummyStorage)
++    # When deconstructed, the storage kwarg should be the original callable.
++    name, path, args, kwargs = field.deconstruct()
++    # This is the key assertion that fails before the fix: kwargs['storage']
++    # should be the callable (storage_factory_function), not the evaluated instance.
++    assert 'storage' in kwargs, "storage kwarg should be present for non-default storage"
++    assert kwargs['storage'] is storage_factory_function, (
++        "deconstruct must preserve the original callable storage reference, "
++        "not inline the evaluated Storage instance."
++    )
++
++def test_deconstruct_preserves_callable_class_storage_reference():
++    """
++    Ensure that passing a callable class (a callable that constructs a Storage
++    instance when called) is also preserved by deconstruct() as the original
++    callable (the class), not the evaluated instance.
++    """
++    storage_callable_class = StorageFactory()
++    # StorageFactory() is a callable instance; pass it as storage argument.
++    field = FileField(storage=storage_callable_class)
++    assert isinstance(field.storage, DummyStorage)
++    name, path, args, kwargs = field.deconstruct()
++    assert 'storage' in kwargs
++    assert kwargs['storage'] is storage_callable_class
++
++def test_deconstruct_includes_non_callable_storage_instances():
++    """
++    If a real Storage instance (non-callable) is provided to the field, the
++    deconstruction should include that instance as-is in kwargs['storage'].
++    """
++    storage_instance = DummyStorage()
++    field = FileField(storage=storage_instance)
++    # runtime storage is the same instance we passed in
++    assert field.storage is storage_instance
++    name, path, args, kwargs = field.deconstruct()
++    assert 'storage' in kwargs
++    assert kwargs['storage'] is storage_instance
++
++def test_deconstruct_omits_default_storage():
++    """
++    If the field uses the default_storage (either by passing None or by not
++    supplying storage), deconstruct should not include a 'storage' kwarg.
++    """
++    # Case A: explicitly pass None -> falls back to default_storage
++    field_none = FileField(storage=None)
++    name, path, args, kwargs = field_none.deconstruct()
++    assert 'storage' not in kwargs
++
++    # Case B: do not pass storage argument -> falls back to default_storage
++    field_default = FileField()
++    name, path, args, kwargs = field_default.deconstruct()
++    assert 'storage' not in kwargs
++
++def test_deconstruct_with_callable_upload_to_unaffected():
++    """
++    Ensure existing behavior for callable upload_to remains: callable upload_to
++    objects are preserved in deconstruct(). This serves as a control test to
++    compare with storage callable behavior.
++    """
++    def upload_to_callable(instance, filename):
++        return "uploads/%s" % filename
++
++    field = FileField(upload_to=upload_to_callable, storage=None)
++    name, path, args, kwargs = field.deconstruct()
++    assert 'upload_to' in kwargs
++    assert kwargs['upload_to'] is upload_to_callable

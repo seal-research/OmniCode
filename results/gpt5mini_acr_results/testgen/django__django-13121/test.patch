@@ -1,0 +1,70 @@
+--- a/tests/test_convert_durationfield_value.py
++++ b/tests/test_convert_durationfield_value.py
+-# Empty if creating new file
++import datetime
++from decimal import Decimal
++
++import pytest
++from django.db import connection
++
++
++@pytest.mark.django_db
++def test_convert_durationfield_value_handles_int_microseconds():
++    """
++    When the database returns an integer representing microseconds, the
++    convert_durationfield_value() converter should return a datetime.timedelta
++    with the same number of microseconds.
++    This is the expected/normal path and should already pass.
++    """
++    ops = connection.ops
++    # 1.5 seconds in microseconds
++    micros = 1500000
++    result = ops.convert_durationfield_value(micros, None, connection)
++    assert isinstance(result, datetime.timedelta)
++    assert result == datetime.timedelta(microseconds=micros)
++
++
++@pytest.mark.django_db
++def test_convert_durationfield_value_handles_none():
++    """
++    None values (NULL in the DB) should be left as None by the converter.
++    """
++    ops = connection.ops
++    result = ops.convert_durationfield_value(None, None, connection)
++    assert result is None
++
++
++@pytest.mark.django_db
++def test_convert_durationfield_value_accepts_decimal_numeric_input():
++    """
++    Some backends (or expression evaluation paths) can return Decimal values
++    (or numeric strings) for duration-like expressions. The converter should
++    accept Decimal inputs representing microseconds and return a proper
++    datetime.timedelta.
++
++    NOTE: This test demonstrates the bug: before the fix, passing a Decimal
++    often raises (TypeError or decimal.InvalidOperation) because the base
++    converter assumes an int. After the fix, this test should pass.
++    """
++    ops = connection.ops
++    micros = Decimal('2000000')  # 2 seconds in microseconds as a Decimal
++
++    # The intended behavior: Decimal value is treated as microseconds.
++    # This should produce a timedelta of 2 seconds.
++    result = ops.convert_durationfield_value(micros, None, connection)
++    assert isinstance(result, datetime.timedelta)
++    assert result == datetime.timedelta(microseconds=int(micros))
++
++
++@pytest.mark.django_db
++def test_convert_durationfield_value_accepts_numeric_string_input():
++    """
++    Numeric strings may be returned by some DB expression paths. The converter
++    should accept numeric strings representing microseconds and return a
++    datetime.timedelta. This is an edge case similar to Decimal support.
++    """
++    ops = connection.ops
++    micros_str = '3000000'  # 3 seconds expressed as microseconds in a string
++    result = ops.convert_durationfield_value(micros_str, None, connection)
++    assert isinstance(result, datetime.timedelta)
++    assert result == datetime.timedelta(microseconds=3000000)

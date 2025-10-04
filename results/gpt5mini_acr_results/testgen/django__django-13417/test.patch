@@ -1,0 +1,144 @@
+--- a/tests/test_queryset_ordered.py
++++ b/tests/test_queryset_ordered.py
+-# Empty if creating new file
++import pytest
++from types import SimpleNamespace
++
++# Import the QuerySet and EmptyQuerySet classes from the codebase under test.
++# These live in django.db.models.query in the repository.
++from django.db.models.query import QuerySet, EmptyQuerySet
++
++
++def make_fake_meta(ordering):
++    """
++    Helper: create a tiny object that mimics the _meta Options used by Query.
++    Only provides `.ordering` which is what QuerySet.ordered inspects.
++    """
++    return SimpleNamespace(ordering=ordering)
++
++
++def make_fake_query(
++    *,
++    extra_order_by=(),
++    order_by=(),
++    default_ordering=True,
++    standard_ordering=True,
++    group_by=None,
++    meta_ordering=('name',),
++):
++    """
++    Create a minimal fake Query-like object with the attributes accessed by
++    QuerySet.ordered and the surrounding logic in tests.
++
++    Note: We intentionally keep this minimal to avoid touching any DB or the
++    real Query class internals. The test asserts the semantics of QuerySet.ordered
++    (the property under test) given different query states.
++    """
++    q = SimpleNamespace()
++    q.extra_order_by = extra_order_by
++    q.order_by = order_by
++    q.default_ordering = default_ordering
++    q.standard_ordering = standard_ordering
++    # group_by mirrors Query.group_by; when not None, it indicates grouping is present
++    q.group_by = group_by
++    # Provide get_meta() method returning object with `.ordering`
++    q.get_meta = lambda: make_fake_meta(meta_ordering)
++    return q
++
++
++def test_non_grouped_queryset_with_model_default_ordering_is_ordered():
++    """
++    A normal (non-grouped) queryset for a model with Meta.ordering and
++    default_ordering True should be considered ordered.
++    This is the control case and should pass both before and after the fix.
++    """
++    fake_query = make_fake_query(
++        extra_order_by=(),
++        order_by=(),
++        default_ordering=True,
++        group_by=None,
++        meta_ordering=('name',),
++    )
++    qs = QuerySet(model=object, query=fake_query)
++    assert qs.ordered is True
++
++
++def test_grouped_queryset_with_model_default_ordering_is_unordered():
++    """
++    This test encodes the bug reported:
++    For a grouped/aggregated query (group_by set), the SQL compiler will often
++    omit the model's Meta.ordering (no ORDER BY in the SQL). QuerySet.ordered
++    should reflect that and be False for such queries.
++
++    Before the fix, QuerySet.ordered incorrectly remained True because it only
++    checked query.default_ordering and model Meta.ordering. This test should
++    fail on an unpatched codebase and pass after the fix that takes grouping
++    into account when deciding ordered.
++    """
++    fake_query = make_fake_query(
++        extra_order_by=(),
++        order_by=(),
++        default_ordering=True,
++        group_by=True,  # simulate that GROUP BY / aggregation is present
++        meta_ordering=('name',),
++    )
++    qs = QuerySet(model=object, query=fake_query)
++
++    # Expected: grouped queries that only rely on model default ordering are
++    # unordered because the final SQL will not include the model's ORDER BY.
++    assert qs.ordered is False
++
++
++def test_explicit_order_by_overrides_grouping_and_keeps_ordered():
++    """
++    If an explicit ordering is provided (order_by or extra_order_by), the
++    queryset should be considered ordered even if group_by is present. This
++    verifies that the fix only suppresses default ordering for grouped queries,
++    and does not turn off explicitly-requested ordering.
++    """
++    # Explicit order_by should make the queryset ordered, even if group_by is set.
++    fake_query = make_fake_query(
++        extra_order_by=(),
++        order_by=('name',),  # explicit ordering set
++        default_ordering=True,
++        group_by=True,  # grouping present
++        meta_ordering=('name',),
++    )
++    qs = QuerySet(model=object, query=fake_query)
++    assert qs.ordered is True
++
++    # Similarly, extra_order_by should be respected.
++    fake_query2 = make_fake_query(
++        extra_order_by=('some_table.name',),
++        order_by=(),
++        default_ordering=True,
++        group_by=True,
++        meta_ordering=('name',),
++    )
++    qs2 = QuerySet(model=object, query=fake_query2)
++    assert qs2.ordered is True
++
++
++def test_empty_queryset_is_always_ordered():
++    """
++    EmptyQuerySet is documented to be considered ordered. Ensure that this
++    special-case behavior remains intact.
++    """
++    empty_qs = EmptyQuerySet()
++    assert empty_qs.ordered is True
++
++
++def test_unordered_when_no_default_and_no_explicit_ordering():
++    """
++    If there is no default ordering on the model and no explicit ordering,
++    QuerySet.ordered should be False.
++    """
++    fake_query = make_fake_query(
++        extra_order_by=(),
++        order_by=(),
++        default_ordering=False,
++        group_by=None,
++        meta_ordering=(),
++    )
++    qs = QuerySet(model=object, query=fake_query)
++    assert qs.ordered is False

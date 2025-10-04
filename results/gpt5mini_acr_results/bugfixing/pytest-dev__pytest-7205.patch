@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/src/_pytest/setuponly.py b/src/_pytest/setuponly.py\nindex c9cc589ff..7c99ab557 100644\n--- a/src/_pytest/setuponly.py\n+++ b/src/_pytest/setuponly.py\n@@ -66,7 +66,10 @@ def _show_fixture_action(fixturedef, msg):\n             tw.write(\" (fixtures used: {})\".format(\", \".join(deps)))\n \n     if hasattr(fixturedef, \"cached_param\"):\n-        tw.write(\"[{}]\".format(fixturedef.cached_param))\n+        # Use pytest's saferepr to avoid implicit str() on bytes and to\n+        # guard against objects with broken __repr__/__str__ implementations.\n+        from _pytest._io.saferepr import saferepr\n+        tw.write(\"[{}]\".format(saferepr(fixturedef.cached_param)))\n \n     tw.flush()\n \n"
-}

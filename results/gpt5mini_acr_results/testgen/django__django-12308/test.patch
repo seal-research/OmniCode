@@ -1,0 +1,112 @@
+--- a/tests/test_admin_display_jsonfield.py
++++ b/tests/test_admin_display_jsonfield.py
++import json
++import pytest
++
++from django import forms
++from django.contrib import admin
++from django.contrib.admin.utils import display_for_field
++from django.db import models
++from django.forms.fields import InvalidJSONInput
++from django.forms.fields import JSONField as FormsJSONField
++from django.db.models.fields.json import JSONField as ModelJSONField
++from django.contrib.postgres.fields import JSONField as PostgresJSONField
++
++
++# Helper to mimic admin's empty value display used in templates
++EMPTY_VALUE = '-'
++
++
++@pytest.mark.django_db
++def test_display_for_field_with_model_jsonfield_serializes_dict_to_json():
++    """
++    Ensure that display_for_field renders a Python dict value from a JSONField
++    as a JSON string (double-quoted keys), by delegating to the form field's
++    prepare_value. This covers the common case of a valid Python object.
++    """
++    value = {"foo": "bar"}
++    # Use core JSONField (django.db.models)
++    field = ModelJSONField()
++    # display_for_field should return the JSON serialized representation
++    displayed = display_for_field(value, field, EMPTY_VALUE)
++    # We expect JSON string (double quotes), not Python dict repr (single quotes)
++    assert displayed == json.dumps(value)
++
++
++@pytest.mark.django_db
++def test_display_for_field_with_contrib_postgres_jsonfield_serializes_dict_to_json():
++    """
++    Similar to the core JSONField test, ensure the contrib.postgres JSONField
++    also results in JSON serialization when displayed readonly in the admin.
++    """
++    value = {"num": 1, "list": [1, 2]}
++    field = PostgresJSONField()
++    displayed = display_for_field(value, field, EMPTY_VALUE)
++    assert displayed == json.dumps(value)
++
++
++def test_display_for_field_with_invalid_json_input_is_rendered_verbatim():
++    """
++    When a form-bound InvalidJSONInput value is provided (this occurs when
++    a user typed invalid JSON into a form and the bound_data returns an
++    InvalidJSONInput instance), display_for_field should render the raw
++    user input verbatim (prepare_value returns it unchanged). This ensures
++    we don't try to json.dumps() an already-invalid JSON string.
++    """
++    # Simulate invalid JSON input coming from forms.JSONField.bound_data
++    invalid_raw = '{"foo": "bar" unquoted_value}'  # invalid JSON
++    invalid_wrapper = InvalidJSONInput(invalid_raw)
++    # Use a Model JSONField: the admin display code should consult the
++    # field's formfield/prepare_value behavior and therefore return the
++    # raw invalid input unchanged (not a Python dict repr).
++    field = ModelJSONField()
++    displayed = display_for_field(invalid_wrapper, field, EMPTY_VALUE)
++    # The displayed value should be the raw invalid string, not modified
++    assert displayed == invalid_raw
++
++
++def test_display_for_field_handles_unserializable_dict_values_fallbacks_to_str():
++    """
++    Edge case: if the dict contains values that json.dumps cannot handle
++    (e.g., a Python object), the admin display should fall back to the
++    string representation, rather than raising an exception.
++    This documents and asserts existing fallback behavior.
++    """
++    class Unserializable:
++        def __repr__(self):
++            return "<Unserializable>"
++
++    value = {"ok": Unserializable()}
++    field = ModelJSONField()
++    # display_for_field should not raise; it should either serialize or
++    # fall back to str(value). The expected fallback is Python str(dict).
++    displayed = display_for_field(value, field, EMPTY_VALUE)
++    # If json.dumps fails, display_for_value falls back to str(value)
++    assert displayed in (json.dumps(value, default=str), str(value))
++
++
++def test_display_for_field_uses_field_encoder_and_decoder_from_model_field():
++    """
++    If a JSONField on the model has a custom encoder/decoder configured,
++    the admin display should respect those when preparing the value.
++    We accomplish this by creating a form JSONField with a custom encoder
++    and ensuring prepare_value produces the expected output; display_for_field
++    is expected to mirror that behavior for the model field.
++    """
++    class CustomEncoder(json.JSONEncoder):
++        def default(self, o):
++            # Represent any unknown object as a fixed sentinel
++            return "<SENTINEL>"
++
++    # Create a model JSONField that would carry the encoder attribute
++    field = ModelJSONField(encoder=CustomEncoder)
++    # Value containing an unserializable object so encoder.default is used
++    class Whatever:
++        pass
++
++    value = {"x": Whatever()}
++    # The expected representation is what the corresponding form field would do:
++    form_field = FormsJSONField(encoder=CustomEncoder)
++    expected = form_field.prepare_value(value)
++    displayed = display_for_field(value, field, EMPTY_VALUE)
++    assert displayed == expected

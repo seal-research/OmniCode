@@ -1,0 +1,110 @@
+--- a/tests/test_decimalfield_to_python.py
++++ b/tests/test_decimalfield_to_python.py
++import decimal
++import pytest
++
++from django.core import exceptions
++from django.core.exceptions import ValidationError
++from django.db.models.fields import DecimalField
++
++# Tests for DecimalField.to_python() to ensure invalid types raise ValidationError
++# (regression tests for TypeError/ValueError being raised instead of ValidationError).
++
++
++def test_to_python_with_dict_raises_validation_error():
++    """
++    Passing a dict to DecimalField.to_python() should raise ValidationError,
++    not TypeError. This reproduces the bug where dicts bubbled up as TypeError.
++    """
++    field = DecimalField(max_digits=5, decimal_places=2)
++    value = {"not": "a number"}
++
++    with pytest.raises(ValidationError) as excinfo:
++        field.to_python(value)
++
++    # Ensure the ValidationError carries the expected code and params so callers
++    # can identify which field/value failed.
++    err = excinfo.value
++    assert err.error_list[0].code == "invalid"
++    assert err.error_list[0].params == {"value": value}
++
++
++def test_to_python_with_list_raises_validation_error():
++    """
++    Similar to dict, lists are not valid Decimal inputs and should raise
++    ValidationError instead of TypeError/ValueError.
++    """
++    field = DecimalField(max_digits=5, decimal_places=2)
++    value = [1, 2, 3]
++
++    with pytest.raises(ValidationError) as excinfo:
++        field.to_python(value)
++
++    err = excinfo.value
++    assert err.error_list[0].code == "invalid"
++    assert err.error_list[0].params == {"value": value}
++
++
++def test_to_python_with_none_returns_none():
++    """None should be passed through unchanged."""
++    field = DecimalField(max_digits=5, decimal_places=2)
++    assert field.to_python(None) is None
++
++
++def test_to_python_with_float_returns_decimal_instance():
++    """
++    Floats should be converted via the field's decimal context into a
++    decimal.Decimal instance (not raw float).
++    """
++    field = DecimalField(max_digits=5, decimal_places=2)
++    result = field.to_python(1.23)
++    assert isinstance(result, decimal.Decimal)
++    # The numeric value should be approximately equal to the input float when
++    # converted to Decimal. Use quantize to compare at the expected decimal_places.
++    quant = decimal.Decimal(1).scaleb(-field.decimal_places)
++    # Quantize might raise InvalidOperation in pathological contexts, but for
++    # this simple check it should be fine.
++    assert result.quantize(quant) == decimal.Decimal("1.23")
++
++
++def test_to_python_with_valid_string_returns_decimal():
++    """Valid numeric strings should be converted to Decimal exactly."""
++    field = DecimalField(max_digits=5, decimal_places=2)
++    result = field.to_python("12.34")
++    assert isinstance(result, decimal.Decimal)
++    assert result == decimal.Decimal("12.34")
++
++
++def test_to_python_with_invalid_string_raises_validation_error():
++    """
++    Invalid numeric strings (e.g., 'abc') raise ValidationError via
++    decimal.InvalidOperation handling.
++    """
++    field = DecimalField(max_digits=5, decimal_places=2)
++    value = "not-a-number"
++
++    with pytest.raises(ValidationError) as excinfo:
++        field.to_python(value)
++
++    err = excinfo.value
++    assert err.error_list[0].code == "invalid"
++    assert err.error_list[0].params == {"value": value}
++
++
++def test_get_prep_value_uses_to_python_and_raises_for_dict():
++    """
++    get_prep_value should call to_python internally; therefore passing an
++    invalid type (dict) to get_prep_value should also raise ValidationError.
++    This ensures callers using Field.prepare/clean workflows get consistent exceptions.
++    """
++    field = DecimalField(max_digits=5, decimal_places=2)
++    value = {"bad": "value"}
++
++    with pytest.raises(ValidationError) as excinfo:
++        # get_prep_value delegates to to_python (after Field.get_prep_value),
++        # so this should surface a ValidationError for invalid types.
++        field.get_prep_value(value)
++
++    err = excinfo.value
++    assert err.error_list[0].code == "invalid"
++    assert err.error_list[0].params == {"value": value}

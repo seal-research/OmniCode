@@ -1,0 +1,160 @@
+--- a/tests/test_foreignkey_non_numeric_pk.py
++++ b/tests/test_foreignkey_non_numeric_pk.py
++import pytest
++from django.db import models, connection, transaction
++from django.test.utils import isolate_apps
++
++# These tests reproduce a scenario where assigning an unsaved related
++# instance that later receives a non-numeric primary key value (e.g.
++# a CharField PK) can leave the parent's stored *_id value stale (e.g.
++# an empty string) if the parent's value was set from the child's
++# attribute before the child was saved. The expected (correct)
++# behavior is that saving the parent after saving the child should
++# persist the child's newly-assigned primary key on the parent.
++
++@pytest.mark.django_db
++@isolate_apps('tests')  # create models in an isolated app registry for the test
++def test_parent_save_sees_child_pk_when_child_saved_after_assignment():
++    """
++    Reproduce the reported bug:
++    - Assign an unsaved child to the parent (child initially has no PK).
++    - Set the child's PK, save the child.
++    - Save the parent and expect the parent's FK column to be populated
++      with the child's new PK.
++    This test expects the correct behavior (parent gets child's PK).
++    Before the bugfix this test will fail because the parent retains an
++    empty-string placeholder instead of the child's new PK.
++    """
++    # Define models inside the isolated app registry.
++    class Product(models.Model):
++        sku = models.CharField(primary_key=True, max_length=50)
++
++        class Meta:
++            app_label = 'tests'
++
++    class Order(models.Model):
++        product = models.ForeignKey(Product, on_delete=models.CASCADE)
++
++        class Meta:
++            app_label = 'tests'
++
++    # Create DB tables for these ephemeral models.
++    with connection.schema_editor() as schema_editor:
++        schema_editor.create_model(Product)
++        schema_editor.create_model(Order)
++    try:
++        # Create an Order and assign an unsaved Product instance (no sku yet).
++        order = Order()
++        # Assign an unsaved Product instance to the relation.
++        order.product = Product()
++        # Now set the primary key on the child and save it.
++        order.product.sku = "foo"
++        order.product.save()
++
++        # Now save the parent. The correct behavior is that the parent's
++        # FK column (product_id) gets the value "foo".
++        order.save()
++
++        # Reload from DB to ensure what's persisted.
++        order.refresh_from_db()
++
++        # Expected behavior assertions (these will fail on the buggy code):
++        assert order.product_id == "foo", (
++            "Expected parent's product_id to be populated with the child's "
++            "PK after child.save(); got %r" % (order.product_id,)
++        )
++        # This queryset should find the order by the relation.
++        assert Order.objects.filter(product=order.product).exists()
++    finally:
++        # Tear down DB tables created for the test models.
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(Order)
++            schema_editor.delete_model(Product)
++
++
++@pytest.mark.django_db
++@isolate_apps('tests')
++def test_parent_save_when_child_pk_set_before_assignment_is_ok():
++    """
++    Sanity check / control test: When the related instance is created with
++    its primary key set before assignment to the parent, the FK should be
++    persisted correctly. This is the behaviour that already worked in the
++    issue description and should continue to work.
++    """
++    class Product(models.Model):
++        sku = models.CharField(primary_key=True, max_length=50)
++
++        class Meta:
++            app_label = 'tests'
++
++    class Order(models.Model):
++        product = models.ForeignKey(Product, on_delete=models.CASCADE)
++
++        class Meta:
++            app_label = 'tests'
++
++    with connection.schema_editor() as schema_editor:
++        schema_editor.create_model(Product)
++        schema_editor.create_model(Order)
++    try:
++        # Create and save Product with pk set before assignment.
++        product = Product(sku="foo")
++        product.save()
++
++        order = Order()
++        order.product = product
++        order.save()
++        order.refresh_from_db()
++
++        assert order.product_id == "foo"
++        assert Order.objects.filter(product=product).exists()
++    finally:
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(Order)
++            schema_editor.delete_model(Product)
++
++
++@pytest.mark.django_db
++@isolate_apps('tests')
++def test_assigning_none_clears_underlying_fk_and_cache():
++    """
++    Edge case: assigning None to the relation should clear both the cached
++    related object and the underlying FK attribute on the parent.
++    This ensures the descriptor's 'None' handling remains correct.
++    """
++    class Product(models.Model):
++        sku = models.CharField(primary_key=True, max_length=50)
++
++        class Meta:
++            app_label = 'tests'
++
++    class Order(models.Model):
++        product = models.ForeignKey(Product, on_delete=models.CASCADE)
++
++        class Meta:
++            app_label = 'tests'
++
++    with connection.schema_editor() as schema_editor:
++        schema_editor.create_model(Product)
++        schema_editor.create_model(Order)
++    try:
++        product = Product(sku="foo")
++        product.save()
++
++        order = Order()
++        order.product = product
++        # Sanity: product cached and FK set
++        assert order.product_id == "foo"
++        assert hasattr(order, 'product')  # descriptor accessor exists
++        # Now clear the relation
++        order.product = None
++        # The underlying FK should be None/cleared and the cache removed.
++        assert order.product_id is None
++        # Setting None shouldn't create a spurious DB row; saving should work.
++        order.save()
++        order.refresh_from_db()
++        assert order.product_id is None
++    finally:
++        with connection.schema_editor() as schema_editor:
++            schema_editor.delete_model(Order)
++            schema_editor.delete_model(Product)

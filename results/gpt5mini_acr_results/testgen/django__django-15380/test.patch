@@ -1,0 +1,229 @@
+--- a/acr_tmp/acr_django__django-15380_u_django__django-15380/tests/migrations/test_autodetector_renamed_model_and_field.py
++++ b/acr_tmp/acr_django__django-15380_u_django__django-15380/tests/migrations/test_autodetector_renamed_model_and_field.py
++import pytest
++
++from django.db import models
++from django.db.migrations.autodetector import MigrationAutodetector
++from django.db.migrations.state import ProjectState
++from django.db.migrations import operations
++
++
++class SimpleQuestioner:
++    """
++    A questioner that automatically accepts renames.
++    The real Django questioner would prompt the user, but tests should be
++    deterministic and non-interactive.
++    """
++    def ask_rename_model(self, old_state, new_state):
++        return True
++
++    def ask_rename(self, model_name, old_field_name, new_field_name, field):
++        return True
++
++    def ask_not_null_addition(self, field_name, model_name):
++        # Not used in these tests, but provided for completeness.
++        return models.NOT_PROVIDED
++
++    def ask_auto_now_add_addition(self, field_name, model_name):
++        return None
++
++    def ask_unique_callable_default_addition(self, field_name, model_name):
++        return None
++
++    def ask_not_null_alteration(self, field_name, model_name):
++        return models.NOT_PROVIDED
++
++
++def make_project_state(model_defs):
++    """
++    Helper to create a ProjectState from a mapping of app_label -> models dict,
++    where models dict maps model_name (string) to a tuple (model_class, fields_dict).
++    fields_dict maps field_name to a Field instance (unbound).
++    """
++    state = ProjectState()
++    # Add models into state using ProjectState.add_model via a simple ModelState-like approach.
++    # ProjectState.add_model expects a ModelState; however, constructing a full ModelState
++    # is cumbersome. Instead, we construct via model class creation and use from_apps way.
++    # Simpler approach: use ProjectState and its add_model API which takes a ModelState-like
++    # object. We'll create minimal objects with the attributes ProjectState expects.
++    from types import SimpleNamespace
++
++    for app_label, models_map in model_defs.items():
++        for model_name, (model_cls, fields) in models_map.items():
++            # ModelState minimal attributes
++            name = model_cls.__name__
++            name_lower = model_name.lower()
++            model_state = SimpleNamespace(
++                name=name,
++                name_lower=name_lower,
++                app_label=app_label,
++                fields=fields,
++                options={},
++                bases=(),
++                managers={},
++            )
++            # ProjectState.add_model expects an object with a .name attribute etc.
++            state.add_model(model_state)
++    return state
++
++
++def field(name, field_instance):
++    """
++    Helper to set a field's name attribute as ModelState expects fields dict values
++    to be Field instances with proper attributes. We return the Field instance and
++    set its name to match.
++    """
++    field_instance.name = name
++    return field_instance
++
++
++def test_autodetector_crashes_when_renaming_model_and_field_before_fix():
++    """
++    Reproduce the bug: When a model is renamed and a field is renamed in the same
++    change, the autodetector used to index into to_state with the old model name,
++    raising KeyError. This test constructs from_state and to_state that simulate
++    a rename of model MyModel -> MyModel2 and field old_field -> new_field, and
++    asserts that the MigrationAutodetector.changes() raises KeyError before the fix.
++    This test is expected to fail on the fixed codebase, but demonstrates the bug.
++    """
++    questioner = SimpleQuestioner()
++    # Define original (from_state) model: app 'testapp', model 'MyModel' with field 'old_field'
++    class MyModel(models.Model):
++        class Meta:
++            app_label = "testapp"
++
++    from_fields = {
++        'old_field': field('old_field', models.CharField(max_length=10)),
++    }
++
++    # Define new (to_state) model: renamed to 'MyModel2' and field renamed to 'new_field'
++    class MyModel2(models.Model):
++        class Meta:
++            app_label = "testapp"
++
++    to_fields = {
++        'new_field': field('new_field', models.CharField(max_length=10)),
++    }
++
++    from_state = make_project_state({
++        'testapp': {
++            'MyModel': (MyModel, from_fields),
++        }
++    })
++
++    to_state = make_project_state({
++        'testapp': {
++            'MyModel2': (MyModel2, to_fields),
++        }
++    })
++
++    # Construct autodetector. Provide an empty graph and convert_apps to ensure full detection.
++    autodetector = MigrationAutodetector(from_state, to_state, questioner=questioner)
++
++    # Intentionally call the internal detection to trigger generate_renamed_fields.
++    # The bug used to raise KeyError(('testapp', 'mymodel')) when both model and field
++    # are renamed. We assert that a KeyError is raised to reproduce the bug pre-fix.
++    with pytest.raises(KeyError):
++        autodetector._detect_changes(convert_apps=None, graph=None)
++
++
++def test_autodetector_detects_rename_of_model_and_field_after_fix():
++    """
++    After the fix (indexing into to_state using the new model name), the autodetector
++    should successfully detect both a RenameModel operation and a RenameField operation.
++    This test verifies that the autodetector emits these operations.
++    """
++    questioner = SimpleQuestioner()
++
++    class MyModel(models.Model):
++        class Meta:
++            app_label = "testapp"
++
++    from_fields = {
++        'old_field': field('old_field', models.CharField(max_length=10)),
++    }
++
++    class MyModel2(models.Model):
++        class Meta:
++            app_label = "testapp"
++
++    to_fields = {
++        'new_field': field('new_field', models.CharField(max_length=10)),
++    }
++
++    from_state = make_project_state({
++        'testapp': {
++            'MyModel': (MyModel, from_fields),
++        }
++    })
++
++    to_state = make_project_state({
++        'testapp': {
++            'MyModel2': (MyModel2, to_fields),
++        }
++    })
++
++    autodetector = MigrationAutodetector(from_state, to_state, questioner=questioner)
++
++    # Run the detection
++    changes = autodetector.changes(graph=None, convert_apps=None)
++
++    # changes is a dict mapping app_label -> list of migration operations
++    # We expect one RenameModel and one RenameField operation for the app 'testapp'.
++    ops = []
++    for app_label, app_ops in changes.items():
++        ops.extend(app_ops)
++
++    # Helper to check operation types
++    def has_operation(op_type):
++        return any(isinstance(op, op_type) for op in ops)
++
++    assert has_operation(operations.RenameModel), "Expected a RenameModel operation"
++    assert has_operation(operations.RenameField), "Expected a RenameField operation"
++
++
++def test_autodetector_handles_edge_case_same_db_column_changed():
++    """
++    Edge case: when the field rename also changes db_column, the autodetector should
++    add an AlterField (noop) before the RenameField to preserve DB column mapping.
++    We simulate this by changing db_column on the new field and ensuring both
++    AlterField and RenameField are present.
++    """
++    questioner = SimpleQuestioner()
++
++    class MyModel(models.Model):
++        class Meta:
++            app_label = "testapp"
++
++    from_field = field('old_field', models.CharField(max_length=10, db_column='col1'))
++    from_fields = {'old_field': from_field}
++
++    class MyModel2(models.Model):
++        class Meta:
++            app_label = "testapp"
++
++    # New field with different db_column but same deconstruction otherwise
++    new_field_inst = models.CharField(max_length=10, db_column='col1')
++    to_fields = {'new_field': field('new_field', new_field_inst)}
++
++    from_state = make_project_state({
++        'testapp': {
++            'MyModel': (MyModel, from_fields),
++        }
++    })
++    to_state = make_project_state({
++        'testapp': {
++            'MyModel2': (MyModel2, to_fields),
++        }
++    })
++
++    autodetector = MigrationAutodetector(from_state, to_state, questioner=questioner)
++    changes = autodetector.changes(graph=None, convert_apps=None)
++
++    ops = []
++    for app_label, app_ops in changes.items():
++        ops.extend(app_ops)
++
++    # We expect at least one AlterField and one RenameField
++    assert any(isinstance(op, operations.AlterField) for op in ops), "Expected an AlterField operation for db_column mismatch"
++    assert any(isinstance(op, operations.RenameField) for op in ops), "Expected a RenameField operation"

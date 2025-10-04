@@ -1,0 +1,101 @@
+--- a/tests/forms/test_boundwidget_id.py
++++ b/tests/forms/test_boundwidget_id.py
++import pytest
++from django import forms
++from django.forms.widgets import CheckboxSelectMultiple
++
++
++def _collect_subwidgets(form_class, auto_id):
++    """
++    Helper to instantiate a form with the given auto_id and return the
++    list of BoundWidget subwidgets for the 'choices' field.
++    """
++    form = form_class(auto_id=auto_id)
++    bound_field = form['choices']
++    return list(bound_field.subwidgets)
++
++
++def test_boundwidget_id_for_label_uses_option_attrs_id_when_auto_id_customized():
++    """
++    When a form is created with a custom auto_id format (e.g. 'custom_%s'),
++    ChoiceWidget (CheckboxSelectMultiple) should generate per-option ids
++    that are available on each subwidget's data['attrs']['id'] and
++    BoundWidget.id_for_label should return that same id.
++
++    This test reproduces the bug: before the fix, BoundWidget.id_for_label
++    ignored the id provided in data['attrs'] and returned a generated id
++    based only on the name/index, causing a mismatch. After the fix,
++    id_for_label should match the per-option attrs['id'].
++    """
++    class MyForm(forms.Form):
++        choices = forms.MultipleChoiceField(
++            choices=[('1', 'One'), ('2', 'Two')],
++            widget=CheckboxSelectMultiple,
++        )
++
++    subwidgets = _collect_subwidgets(MyForm, auto_id='custom_%s')
++    assert subwidgets, "Expected subwidgets for the MultipleChoiceField"
++
++    for index, subwidget in enumerate(subwidgets):
++        # The widget/ChoiceWidget should have placed the computed id into the
++        # option attrs. Confirm it exists and matches the expected pattern.
++        option_attrs = subwidget.data.get('attrs', {})
++        assert 'id' in option_attrs, "Expected per-option 'id' in attrs"
++        option_id = option_attrs['id']
++        assert option_id.endswith('_%d' % index), "Unexpected per-option id suffix"
++
++        # Critical assertion: the BoundWidget.id_for_label should use the id
++        # from the option attrs (this failed before the fix).
++        assert subwidget.id_for_label == option_id
++
++
++def test_boundwidget_id_for_label_uses_widget_attrs_id_if_present():
++    """
++    If the widget itself has an explicit 'id' in widget.attrs, the per-option
++    ids should be derived from that base id (usually with an index suffix),
++    and id_for_label should return that per-option id.
++    """
++    class MyForm(forms.Form):
++        choices = forms.MultipleChoiceField(
++            choices=[('1', 'One')],
++            widget=CheckboxSelectMultiple(attrs={'id': 'explicit_base'}),
++        )
++
++    subwidgets = _collect_subwidgets(MyForm, auto_id='id_%s')  # auto_id irrelevant here
++    assert subwidgets, "Expected subwidgets for the MultipleChoiceField"
++
++    subwidget = subwidgets[0]
++    option_attrs = subwidget.data.get('attrs', {})
++    assert 'id' in option_attrs, "Expected per-option 'id' in attrs from widget.attrs"
++    option_id = option_attrs['id']
++
++    # The label 'for' id should be exactly the id assigned to the input element.
++    assert subwidget.id_for_label == option_id
++
++
++def test_boundwidget_id_for_label_falls_back_to_generated_id_when_no_attrs_id():
++    """
++    Edge case: when no id is provided via widget.attrs and the form's auto_id
++    is disabled (auto_id=False), no base id is passed into ChoiceWidget.
++    In that situation the option attrs typically won't have an 'id', and
++    BoundWidget.id_for_label should fall back to the generated id format
++    used historically ('id_{name}_{index}').
++    """
++    class MyForm(forms.Form):
++        choices = forms.MultipleChoiceField(
++            choices=[('1', 'One'), ('2', 'Two')],
++            widget=CheckboxSelectMultiple,
++        )
++
++    # Disable auto_id so no base id is passed in
++    subwidgets = _collect_subwidgets(MyForm, auto_id=False)
++    assert subwidgets, "Expected subwidgets for the MultipleChoiceField"
++
++    for subwidget in subwidgets:
++        # Ensure no per-option id was provided
++        option_attrs = subwidget.data.get('attrs', {})
++        assert 'id' not in option_attrs
++
++        # Fallback expected id (preserve legacy behavior)
++        expected = 'id_%s_%s' % (subwidget.data['name'], subwidget.data['index'])
++        assert subwidget.id_for_label == expected

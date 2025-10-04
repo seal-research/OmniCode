@@ -1,0 +1,90 @@
+--- a/django/contrib/admin/tests/test_catch_all_view_force_script_name.py
++++ b/django/contrib/admin/tests/test_catch_all_view_force_script_name.py
++import pytest
++from types import SimpleNamespace
++
++from django.contrib.admin.sites import AdminSite
++from django.http import HttpRequest, Http404
++from django.urls import Resolver404
++from django.test import override_settings
++
++
++# Helper to create a minimal HttpRequest with both path and path_info set.
++def make_request(path, path_info):
++    request = HttpRequest()
++    request.method = "GET"
++    request.path = path
++    request.path_info = path_info
++    # admin.catch_all_view may look at request.urlconf; leave as None by default.
++    request.urlconf = None
++    return request
++
++
++@override_settings(FORCE_SCRIPT_NAME="/script", APPEND_SLASH=True)
++def test_catch_all_view_respects_force_script_name_redirect(monkeypatch):
++    """
++    When FORCE_SCRIPT_NAME is set, catch_all_view should redirect to a path
++    that includes the script prefix (request.path), not only request.path_info.
++    This demonstrates the bug before it is fixed: earlier implementations used
++    request.path_info and thus dropped the script prefix.
++    """
++    admin_site = AdminSite()
++
++    # Simulate a request that was for '/script/admin' where path_info is '/admin'
++    request = make_request(path="/script/admin", path_info="/admin")
++
++    # The view builds a candidate path with a trailing slash and calls resolve(path, urlconf).
++    # To validate the correct behavior, only return a match when resolve() is called
++    # with the path that includes the FORCE_SCRIPT_NAME prefix.
++    def fake_resolve(path, urlconf=None):
++        # Accept exactly the full path including script prefix and trailing slash.
++        if path == "/script/admin/":
++            # Simulate a resolver match object with a function that allows append-slash.
++            return SimpleNamespace(func=SimpleNamespace(should_append_slash=True))
++        raise Resolver404
++
++    monkeypatch.setattr("django.urls.resolve", fake_resolve)
++
++    # Expect a permanent redirect to the path that includes the script prefix.
++    response = admin_site.catch_all_view(request, "admin")
++    assert response.status_code == 301
++    assert response["Location"] == "/script/admin/"
++
++
++@override_settings(FORCE_SCRIPT_NAME="/script", APPEND_SLASH=True)
++def test_catch_all_view_raises_404_if_resolve_fails(monkeypatch):
++    """
++    If resolving the path with the extra slash raises Resolver404, catch_all_view
++    should not redirect and must raise Http404.
++    """
++    admin_site = AdminSite()
++    request = make_request(path="/script/admin", path_info="/admin")
++
++    # Simulate no URL resolving for either path variant.
++    def fake_resolve(path, urlconf=None):
++        raise Resolver404
++
++    monkeypatch.setattr("django.urls.resolve", fake_resolve)
++
++    with pytest.raises(Http404):
++        admin_site.catch_all_view(request, "admin")
++
++
++@override_settings(FORCE_SCRIPT_NAME="/script", APPEND_SLASH=True)
++def test_catch_all_view_does_not_redirect_when_should_append_slash_false(monkeypatch):
++    """
++    If the resolved view indicates that append-slash should not be applied
++    (should_append_slash is False), catch_all_view must not redirect and should
++    raise Http404.
++    """
++    admin_site = AdminSite()
++    request = make_request(path="/script/admin", path_info="/admin")
++
++    def fake_resolve(path, urlconf=None):
++        # Return a match, but the matched view opts out of append-slash handling.
++        return SimpleNamespace(func=SimpleNamespace(should_append_slash=False))
++
++    monkeypatch.setattr("django.urls.resolve", fake_resolve)
++
++    with pytest.raises(Http404):
++        admin_site.catch_all_view(request, "admin")

@@ -1,0 +1,180 @@
+--- a/tests/test_admin_formfield_for_manytomany.py
++++ b/tests/test_admin_formfield_for_manytomany.py
++import pytest
++
++from django.contrib.admin.options import BaseModelAdmin
++from django.contrib.admin.widgets import AutocompleteSelectMultiple
++from django.forms.widgets import SelectMultiple, CheckboxSelectMultiple
++
++
++# Helper dummy widgets to detect preservation vs replacement
++class CustomWidget:
++    pass
++
++
++class DefaultWidget:
++    pass
++
++
++# A minimal fake form field returned by db_field.formfield(...)
++class FakeFormField:
++    def __init__(self, widget=None, help_text=""):
++        self.widget = widget
++        self.help_text = help_text
++
++
++# A minimal fake remote_field.through._meta structure to simulate ManyToMany through model
++class _Meta:
++    def __init__(self, auto_created=True):
++        self.auto_created = auto_created
++
++
++class Through:
++    def __init__(self, auto_created=True):
++        self._meta = _Meta(auto_created=auto_created)
++
++
++class RemoteField:
++    def __init__(self, model=None, through_auto_created=True):
++        self.model = model
++        self.through = Through(auto_created=through_auto_created)
++
++
++# A fake db_field with the attributes BaseModelAdmin.formfield_for_manytomany expects.
++class FakeManyToManyField:
++    def __init__(self, name='tags', verbose_name='Tags',
++                 through_auto_created=True, remote_model=None):
++        self.name = name
++        self.verbose_name = verbose_name
++        self.remote_field = RemoteField(model=remote_model, through_auto_created=through_auto_created)
++        # store last kwargs passed to formfield for assertions
++        self.last_formfield_kwargs = None
++
++    def formfield(self, **kwargs):
++        # record what kwargs were passed and return a FakeFormField
++        self.last_formfield_kwargs = kwargs
++        widget = kwargs.get('widget', DefaultWidget())
++        help_text = kwargs.get('help_text', '')  # not used by code, but keep for edge tests
++        # The real formfield might return a SelectMultiple by default; emulate minimal behavior
++        return FakeFormField(widget=widget, help_text=help_text)
++
++
++# A minimal "admin-like" object providing methods/attributes used by the method under test.
++class DummyAdmin:
++    def __init__(self, autocomplete_fields=None, raw_id_fields=None,
++                 filter_vertical=None, filter_horizontal=None, field_queryset=None):
++        self._autocomplete_fields = autocomplete_fields or []
++        self.raw_id_fields = raw_id_fields or []
++        self.filter_vertical = filter_vertical or []
++        self.filter_horizontal = filter_horizontal or []
++        self.admin_site = object()
++        # field_queryset can be a value to be returned by get_field_queryset
++        self._field_queryset = field_queryset
++
++    def get_autocomplete_fields(self, request):
++        return self._autocomplete_fields
++
++    def get_field_queryset(self, db, db_field, request):
++        return self._field_queryset
++
++
++# Tests
++
++def test_formfield_for_manytomany_overwrites_provided_widget_when_name_in_autocomplete_fields():
++    """
++    Regression test demonstrating the bug:
++    When a widget is provided in kwargs and the field name is in autocomplete_fields,
++    the current implementation of formfield_for_manytomany overwrites the provided widget.
++    This test asserts that the provided widget is preserved (expected behavior).
++    On the buggy implementation this test will fail (showing the widget was overwritten).
++    """
++    admin = DummyAdmin(autocomplete_fields=['tags'])
++    db_field = FakeManyToManyField(name='tags')
++
++    # Call the unbound method with our dummy admin instance.
++    # We pass a CustomWidget instance in kwargs and expect it to be preserved.
++    custom_widget = CustomWidget()
++    form_field = BaseModelAdmin.formfield_for_manytomany(admin, db_field, request=None, widget=custom_widget)
++
++    # The intended (fixed) behavior: the widget passed in kwargs should be preserved.
++    # If the implementation is still buggy, this assertion will fail because the widget
++    # will have been replaced with an AutocompleteSelectMultiple instance.
++    assert form_field.widget is custom_widget
++
++
++def test_formfield_for_manytomany_assigns_autocomplete_widget_when_no_widget_provided():
++    """
++    Ensure that when no widget is provided and the field name is in autocomplete_fields,
++    formfield_for_manytomany assigns an AutocompleteSelectMultiple widget.
++    This documents the expected default behavior.
++    """
++    admin = DummyAdmin(autocomplete_fields=['tags'])
++    db_field = FakeManyToManyField(name='tags')
++
++    form_field = BaseModelAdmin.formfield_for_manytomany(admin, db_field, request=None)
++
++    # When no widget provided, the method should assign an AutocompleteSelectMultiple instance.
++    assert isinstance(form_field.widget, AutocompleteSelectMultiple)
++
++
++def test_formfield_for_manytomany_respects_explicit_queryset_kwarg_and_sets_it_when_missing():
++    """
++    Test that when 'queryset' is provided in kwargs it is used as-is,
++    and when it's missing the admin's get_field_queryset() result is used.
++    """
++    expected_qs = object()
++    admin_with_qs = DummyAdmin(field_queryset=expected_qs)
++    db_field = FakeManyToManyField(name='tags')
++
++    # Case A: queryset explicitly provided -> should be passed through to db_field.formfield
++    explicit_qs = object()
++    db_field.formfield()  # reset last kwargs
++    BaseModelAdmin.formfield_for_manytomany(admin_with_qs, db_field, request=None, queryset=explicit_qs)
++    assert db_field.last_formfield_kwargs.get('queryset') is explicit_qs
++
++    # Case B: queryset not provided -> admin.get_field_queryset() return value should be used
++    db_field.last_formfield_kwargs = None
++    BaseModelAdmin.formfield_for_manytomany(admin_with_qs, db_field, request=None)
++    assert db_field.last_formfield_kwargs.get('queryset') is expected_qs
++
++
++def test_formfield_for_manytomany_returns_none_for_non_auto_created_through():
++    """
++    Edge case: If the ManyToMany uses an intermediary model that is not auto created,
++    the method should return None (no form field in admin).
++    """
++    admin = DummyAdmin()
++    db_field = FakeManyToManyField(name='roles', through_auto_created=False)
++
++    result = BaseModelAdmin.formfield_for_manytomany(admin, db_field, request=None)
++    assert result is None
++
++
++def test_help_text_appended_for_select_multiple_but_not_for_autocomplete_or_checkbox():
++    """
++    The method appends the "Hold down Control..." help_text only when the widget is a plain
++    SelectMultiple (and not CheckboxSelectMultiple or AutocompleteSelectMultiple).
++    We emulate this by having db_field.formfield return a FakeFormField with a SelectMultiple-like widget.
++    """
++    admin = DummyAdmin()
++    db_field = FakeManyToManyField(name='tags')
++
++    # Emulate default formfield returning a plain SelectMultiple widget by passing it through kwargs
++    # (the code will not override widget if we pass one; to exercise the help_text logic we avoid
++    # the autocomplete/raw_id/filter branches by ensuring the name is not in those lists).
++    db_field_non_autocomplete = FakeManyToManyField(name='plain')
++    # call with a SelectMultiple to trigger the help_text modification branch
++    form_field = BaseModelAdmin.formfield_for_manytomany(admin, db_field_non_autocomplete, request=None, widget=SelectMultiple())
++
++    assert isinstance(form_field.widget, SelectMultiple)
++    # Expect that help_text was set to a non-empty value (the method appends the message)
++    assert form_field.help_text is not None
++    assert form_field.help_text != ""
++
++    # Now verify that CheckboxSelectMultiple does NOT get the appended message.
++    db_field_checkbox = FakeManyToManyField(name='checkbox')
++    form_field_cb = BaseModelAdmin.formfield_for_manytomany(admin, db_field_checkbox, request=None, widget=CheckboxSelectMultiple())
++    assert isinstance(form_field_cb.widget, CheckboxSelectMultiple)
++    # CheckboxSelectMultiple should not receive the appended message from this method,
++    # so help_text should remain empty (FakeManyToManyField returns empty help_text by default).
++    assert form_field_cb.help_text == ""

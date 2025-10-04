@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/src/_pytest/skipping.py b/src/_pytest/skipping.py\nindex 7bd975e5a..d8ffba578 100644\n--- a/src/_pytest/skipping.py\n+++ b/src/_pytest/skipping.py\n@@ -270,8 +270,6 @@ def pytest_runtest_makereport(item: Item, call: CallInfo[None]):\n         else:\n             rep.longrepr = \"Unexpected success\"\n         rep.outcome = \"failed\"\n-    elif item.config.option.runxfail:\n-        pass  # don't interfere\n     elif call.excinfo and isinstance(call.excinfo.value, xfail.Exception):\n         assert call.excinfo.value.msg is not None\n         rep.wasxfail = \"reason: \" + call.excinfo.value.msg\n"
-}

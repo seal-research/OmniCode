@@ -1,0 +1,90 @@
+--- a/tests/test_expression_deconstruct.py
++++ b/tests/test_expression_deconstruct.py
++import pytest
++
++# Tests for simplified deconstruct import paths of expression classes.
++#
++# The deconstructible decorator supports an explicit `path` argument which
++# allows classes to be serialized using a shorter, public import path.
++# This test suite verifies that:
++#  - Expressions re-exported from `django.db.models` deconstruct to
++#    'django.db.models.<ClassName>' (simplified path).
++#  - Expressions that are not re-exported keep their full module path.
++#  - The deconstruct() API returns the expected (path, args, kwargs) tuple.
++#
++# NOTE: At least one of these tests is expected to fail prior to applying
++# the fix described in the issue (demonstrating the bug). After the fix,
++# all tests in this file should pass.
++
++from django.db.models import Expression, F, Value, Func
++from django.db.models.expressions import CombinedExpression
++
++
++def _get_path(deconstruct_result):
++    """
++    Helper to extract the import path from deconstruct() return value.
++
++    deconstruct() is expected to return a 3-tuple:
++      (import_path, args, kwargs)
++    """
++    assert isinstance(deconstruct_result, tuple), "deconstruct() must return a tuple"
++    assert len(deconstruct_result) == 3, "deconstruct() must return (path, args, kwargs)"
++    return deconstruct_result[0], deconstruct_result[1], deconstruct_result[2]
++
++
++def test_f_deconstruct_uses_simplified_path():
++    """
++    F was already simplified to deconstruct to 'django.db.models.F'.
++    This should pass even before other expression classes are fixed.
++    """
++    path, args, kwargs = _get_path(F.deconstruct())
++    assert path == 'django.db.models.F'
++    assert args == ()
++    assert kwargs == {}
++
++
++def test_expression_deconstruct_should_use_simplified_path():
++    """
++    Expression is a public API (re-exported from django.db.models). Prior to
++    the fix it deconstructed to 'django.db.models.expressions.Expression'.
++    After applying the fix it should deconstruct to
++    'django.db.models.Expression'.
++
++    This test demonstrates the bug by asserting the desired (simplified) path.
++    It will fail before the fix is implemented and pass after the fix.
++    """
++    path, args, kwargs = _get_path(Expression.deconstruct())
++    assert path == 'django.db.models.Expression'
++    assert args == ()
++    assert kwargs == {}
++
++
++@pytest.mark.parametrize(
++    "cls, expected_path",
++    [
++        (Value, 'django.db.models.Value'),
++        (Func, 'django.db.models.Func'),
++    ],
++)
++def test_exported_expressions_deconstruct_to_simplified_path(cls, expected_path):
++    """
++    Other expressions that are re-exported from django.db.models should also
++    deconstruct to the simplified 'django.db.models.<ClassName>' path.
++    These tests will pass after the fix is applied.
++    """
++    path, args, kwargs = _get_path(cls.deconstruct())
++    assert path == expected_path
++    assert args == ()
++    assert kwargs == {}
++
++
++def test_non_exported_expression_keeps_full_module_path():
++    """
++    CombinedExpression is not re-exported in django.db.models.__init__ and so
++    it should continue to deconstruct to its full module path.
++    This ensures we only simplify deconstruct paths for public re-exports.
++    """
++    path, args, kwargs = _get_path(CombinedExpression.deconstruct())
++    assert path == 'django.db.models.expressions.CombinedExpression'
++    assert args == ()
++    assert kwargs == {}

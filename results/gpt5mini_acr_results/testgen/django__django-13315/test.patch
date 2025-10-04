@@ -1,0 +1,147 @@
+--- a/tests/test_limit_choices_to_duplicates.py
++++ b/tests/test_limit_choices_to_duplicates.py
++import pytest
++from django.db import models
++from django.db.models import Q
++from django import forms
++
++# We mark the tests to use the database.
++pytestmark = pytest.mark.django_db
++
++# Create minimal models for the test. We define them here to keep the tests
++# self-contained. The models are created on the default app registry via
++# type() and the apps machinery when the test module is imported by pytest.
++#
++# The models:
++# - Publisher: the target of the ForeignKey used in forms.
++# - Book: related to Publisher via ForeignKey. We'll create multiple Book
++#   instances pointing to the same Publisher to force joins that can produce
++#   duplicate Publisher rows when filtering via a reverse lookup (book__...).
++#
++# Defining models dynamically like this works in pytest-django if the tests use
++# the test database (pytest mark above). The registry accepts model
++# classes defined at import time for test purposes.
++#
++# Note: Using a dynamic model avoids requiring a separate test app or modifying
++# INSTALLED_APPS for these tests. These models behave like normal ORM models
++# for the purpose of these unit tests.
++
++class Publisher(models.Model):
++    name = models.CharField(max_length=50)
++
++    class Meta:
++        # Keep a simple, unique table name to avoid clashes.
++        app_label = "tests"
++        # Avoid creating migrations for these test-only models.
++        managed = True
++
++class Book(models.Model):
++    title = models.CharField(max_length=50)
++    publisher = models.ForeignKey(Publisher, related_name='book_set', on_delete=models.CASCADE)
++
++    class Meta:
++        app_label = "tests"
++        managed = True
++
++# Register models with the app registry if not already registered.
++# This is safe to call multiple times in test runs.
++from django.apps import apps
++if not apps.is_installed("tests"):
++    # Some test environments may not have an app config named "tests".
++    # Most pytest-django setups allow defining models with app_label="tests".
++    # No further action required.
++    pass
++
++# Tests
++def _get_choice_pks_from_field(field):
++    """
++    Helper to extract actual primary key values from a ModelChoiceField's
++    choices iterator. The ModelChoiceField.choices yields (pk, label) pairs,
++    and Django's empty choice (if present) is represented as (None, '---------').
++    """
++    return [choice[0] for choice in field.choices if choice[0] is not None]
++
++
++def test_modelchoicefield_without_distinct_can_have_duplicate_options():
++    """
++    This test demonstrates the failing scenario:
++    When limit_choices_to is a Q() expression that references a reverse relation
++    (causing a JOIN), the queryset can return duplicate Publisher rows and the
++    ModelChoiceField will render duplicate options.
++
++    This test will fail on the buggy implementation (before the fix), because
++    duplicate Publisher IDs will be present in the field choices.
++    """
++    # Create publishers
++    p1 = Publisher.objects.create(name="Pub 1")
++    p2 = Publisher.objects.create(name="Pub 2")
++
++    # Create books such that p1 has two books matching the filter and p2 has one.
++    Book.objects.create(title="Awesome A", publisher=p1)
++    Book.objects.create(title="Another A", publisher=p1)
++    Book.objects.create(title="Awesome A", publisher=p2)
++
++    # Build a ModelChoiceField that uses limit_choices_to; this Q uses a reverse
++    # lookup (book__title__startswith) and will cause a JOIN on Book.
++    limit_q = Q(book__title__startswith="A")
++    field = forms.ModelChoiceField(queryset=Publisher.objects.all(), limit_choices_to=limit_q)
++
++    # Extract pk values from choices
++    choice_pks = _get_choice_pks_from_field(field)
++
++    # If duplicates are present, the list length will be greater than the number
++    # of unique pks. Before the fix, this assertion is expected to fail because
++    # p1 appears twice (two matching books -> duplicate rows).
++    assert len(choice_pks) == len(set(choice_pks)), (
++        "Duplicate Publisher options found in ModelChoiceField choices. "
++        "This indicates limit_choices_to with a join produced duplicate rows."
++    )
++
++def test_modelfield_formfield_passes_limit_choices_to_unchanged():
++    """
++    Ensure that the RelatedField.formfield machinery passes the limit_choices_to
++    through to the created ModelChoiceField unchanged.
++
++    This is to assert that the place to fix duplicate elimination is in the
++    form field (ModelChoiceField) rather than in the model field.
++    """
++    # Define a ForeignKey on a temporary model dynamically to get the formfield.
++    class TempModel(models.Model):
++        pub = models.ForeignKey(Publisher, on_delete=models.CASCADE, limit_choices_to=Q(book__title__startswith='A'))
++
++        class Meta:
++            app_label = "tests"
++            managed = True
++
++    # Request the formfield for the 'pub' field.
++    form_field = TempModel._meta.get_field('pub').formfield()
++
++    # The form field should be a ModelChoiceField and have the same limit_choices_to
++    assert isinstance(form_field, forms.ModelChoiceField)
++    assert getattr(form_field, 'limit_choices_to', None) == Q(book__title__startswith='A')
++
++def test_modelmultiplechoicefield_deduplicates_choices_when_joining():
++    """
++    Edge-case test for ModelMultipleChoiceField: similar to ModelChoiceField,
++    the multiple-choice variant should also not produce duplicate options when
++    limit_choices_to introduces joins that cause duplicate rows.
++    """
++    # Create publishers
++    p1 = Publisher.objects.create(name="Pub M1")
++    p2 = Publisher.objects.create(name="Pub M2")
++
++    # Create books to force duplicate rows for p1
++    Book.objects.create(title="Match X", publisher=p1)
++    Book.objects.create(title="Match X", publisher=p1)
++    Book.objects.create(title="Match X", publisher=p2)
++
++    limit_q = Q(book__title__startswith="Match")
++    field = forms.ModelMultipleChoiceField(queryset=Publisher.objects.all(), limit_choices_to=limit_q)
++
++    choice_pks = _get_choice_pks_from_field(field)
++
++    # Expect no duplicates in the choices
++    assert len(choice_pks) == len(set(choice_pks)), (
++        "Duplicate Publisher options found in ModelMultipleChoiceField choices. "
++        "limit_choices_to with a join should not produce duplicates."
++    )

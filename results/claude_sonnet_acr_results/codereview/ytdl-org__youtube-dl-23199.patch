@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/youtube_dl/utils.py b/youtube_dl/utils.py\nindex aed988b88..0d30075aa 100644\n--- a/youtube_dl/utils.py\n+++ b/youtube_dl/utils.py\n@@ -1718,13 +1718,16 @@ DATE_FORMATS = (\n     '%B %d %Y',\n     '%B %dst %Y',\n     '%B %dnd %Y',\n+    '%B %drd %Y',\n     '%B %dth %Y',\n     '%b %d %Y',\n     '%b %dst %Y',\n     '%b %dnd %Y',\n+    '%b %drd %Y',\n     '%b %dth %Y',\n     '%b %dst %Y %I:%M',\n     '%b %dnd %Y %I:%M',\n+    '%b %drd %Y %I:%M',\n     '%b %dth %Y %I:%M',\n     '%Y %m %d',\n     '%Y-%m-%d',\n"
-}

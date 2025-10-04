@@ -1,0 +1,188 @@
+--- a/django/db/migrations/tests/test_loader_namespace_packages.py
++++ b/django/db/migrations/tests/test_loader_namespace_packages.py
++import sys
++import types
++import pkgutil
++from types import SimpleNamespace
++
++import pytest
++
++from django.conf import settings
++from django.db.migrations.loader import MigrationLoader
++from django import apps
++
++
++# Helper migration class used by fake migration modules.
++class DummyMigration:
++    def __init__(self, name, app_label):
++        self.name = name
++        self.app_label = app_label
++        # Minimal attributes used elsewhere by the loader/graph code.
++        self.dependencies = []
++        self.run_before = []
++        self.operations = []
++
++
++@pytest.fixture(autouse=True)
++def ensure_original_settings(monkeypatch):
++    """
++    Ensure we don't accidentally rely on real project settings.
++    Provide a MIGRATION_MODULES mapping that tests will override.
++    """
++    # Keep a copy of original MIGRATION_MODULES to restore afterwards.
++    orig = getattr(settings, "MIGRATION_MODULES", None)
++    monkeypatch.setattr(settings, "MIGRATION_MODULES", {}, raising=False)
++    yield
++    # monkeypatch will restore settings attribute automatically.
++
++
++def make_app_config(label, name):
++    """
++    Create a minimal app_config-like object with required attributes.
++    MigrationLoader only uses .label and .name.
++    """
++    return SimpleNamespace(label=label, name=name)
++
++
++def register_fake_module(monkeypatch, module_name, module_obj):
++    """
++    Insert module_obj into sys.modules under module_name using monkeypatch so it's
++    cleaned up automatically.
++    """
++    monkeypatch.setitem(sys.modules, module_name, module_obj)
++
++
++def make_fake_migration_module(monkeypatch, full_name):
++    """
++    Create a simple module with a Migration attribute (class) and register it.
++    """
++    mod = types.ModuleType(full_name)
++    # Attach a Migration class that matches the expected constructor signature.
++    mod.Migration = DummyMigration
++    register_fake_module(monkeypatch, full_name, mod)
++    return mod
++
++
++def test_namespace_package_migrations_are_discovered(monkeypatch):
++    """
++    Simulate an implicit namespace package (no __init__.py, thus no __file__)
++    that exposes a __path__ and contains migration modules.
++
++    Expected behavior AFTER the fix:
++    - MigrationLoader should discover migration modules under the namespace
++      package (using pkgutil.iter_modules on module.__path__).
++    This test demonstrates the bug by expecting discovery (it will FAIL before
++    the fix where the code wrongly skips modules with no __file__).
++    """
++    app_label = "testapp"
++    migrations_module_name = "fakepkg.migrations"
++
++    # Configure settings to point this app_label to our fake migrations module.
++    monkeypatch.setattr(settings, "MIGRATION_MODULES", {app_label: migrations_module_name})
++
++    # Provide a fake app config list used by MigrationLoader.load_disk().
++    monkeypatch.setattr(apps, "get_app_configs", lambda: [make_app_config(app_label, "fakepkg")])
++
++    # Create a module object that simulates a namespace package:
++    # - It has a __path__ attribute (so pkgutil.iter_modules can operate on it)
++    # - It intentionally has NO __file__ attribute to mimic PEP 420 implicit namespace
++    ns_module = types.ModuleType(migrations_module_name)
++    ns_module.__path__ = ["<fake-namespace-path>"]
++    # Do NOT set ns_module.__file__ (simulate namespace package)
++
++    # Register the namespace package module so import_module will find it.
++    register_fake_module(monkeypatch, migrations_module_name, ns_module)
++
++    # Create a fake migration module that would be discovered.
++    migration_name = "0001_initial"
++    migration_full_name = f"{migrations_module_name}.{migration_name}"
++    make_fake_migration_module(monkeypatch, migration_full_name)
++
++    # Monkeypatch pkgutil.iter_modules so it reports our fake migration
++    # when called with the namespace package __path__.
++    orig_iter = pkgutil.iter_modules
++
++    def fake_iter_modules(path_list):
++        # Only intercept the specific __path__ for our namespace module.
++        if path_list == ns_module.__path__:
++            return [(None, migration_name, False)]
++        return orig_iter(path_list)
++
++    monkeypatch.setattr(pkgutil, "iter_modules", fake_iter_modules)
++
++    # Instantiate the loader and run load_disk. Use load=False to avoid any DB/graph side-effects.
++    loader = MigrationLoader(connection=None, load=False)
++    loader.load_disk()
++
++    # After the fix, the loader should have discovered the migration in disk_migrations.
++    # This is the assertion that demonstrates the bug pre-fix (it will fail before the fix).
++    assert (app_label, migration_name) in loader.disk_migrations
++    assert app_label in loader.migrated_apps
++    assert app_label not in loader.unmigrated_apps
++
++
++def test_regular_package_with_file_attribute_is_discovered(monkeypatch):
++    """
++    Verify that for a regular package (has __file__), migrations are discovered.
++    This should pass both before and after the fix.
++    """
++    app_label = "normalapp"
++    migrations_module_name = "normalpkg.migrations"
++
++    monkeypatch.setattr(settings, "MIGRATION_MODULES", {app_label: migrations_module_name})
++    monkeypatch.setattr(apps, "get_app_configs", lambda: [make_app_config(app_label, "normalpkg")])
++
++    # Create a regular package module with __file__ and __path__
++    pkg_module = types.ModuleType(migrations_module_name)
++    pkg_module.__file__ = "/some/path/normalpkg/migrations/__init__.py"
++    pkg_module.__path__ = ["/some/path/normalpkg/migrations"]
++    register_fake_module(monkeypatch, migrations_module_name, pkg_module)
++
++    migration_name = "0001_initial"
++    migration_full_name = f"{migrations_module_name}.{migration_name}"
++    make_fake_migration_module(monkeypatch, migration_full_name)
++
++    # Monkeypatch pkgutil.iter_modules to list our migration for the package path.
++    orig_iter = pkgutil.iter_modules
++
++    def fake_iter_modules(path_list):
++        if path_list == pkg_module.__path__:
++            return [(None, migration_name, False)]
++        return orig_iter(path_list)
++
++    monkeypatch.setattr(pkgutil, "iter_modules", fake_iter_modules)
++
++    loader = MigrationLoader(connection=None, load=False)
++    loader.load_disk()
++
++    assert (app_label, migration_name) in loader.disk_migrations
++    assert app_label in loader.migrated_apps
++    assert app_label not in loader.unmigrated_apps
++
++
++def test_single_file_migrations_module_is_skipped(monkeypatch):
++    """
++    If migrations are provided as a single file (e.g. migrations.py), the module
++    will not have __path__ and should be treated as having no migrations.
++    This preserves existing behavior.
++    """
++    app_label = "singlefileapp"
++    migrations_module_name = "singlefilepkg.migrations"
++
++    monkeypatch.setattr(settings, "MIGRATION_MODULES", {app_label: migrations_module_name})
++    monkeypatch.setattr(apps, "get_app_configs", lambda: [make_app_config(app_label, "singlefilepkg")])
++
++    # Create a module that simulates a single-file migrations module:
++    # - It has __file__ but no __path__ attribute.
++    single_mod = types.ModuleType(migrations_module_name)
++    single_mod.__file__ = "/some/path/singlefilepkg/migrations.py"
++    # Intentionally do not set __path__ to simulate single-file module.
++    register_fake_module(monkeypatch, migrations_module_name, single_mod)
++
++    loader = MigrationLoader(connection=None, load=False)
++    loader.load_disk()
++
++    # The loader should mark this app as unmigrated (no migrations package to scan).
++    assert app_label in loader.unmigrated_apps
++    assert app_label not in loader.migrated_apps
++    assert not any(k[0] == app_label for k in loader.disk_migrations)
