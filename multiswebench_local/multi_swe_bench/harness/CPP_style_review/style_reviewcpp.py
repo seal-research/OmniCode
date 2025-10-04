@@ -231,7 +231,7 @@ def main():
     ap.add_argument("--work-dir", default=None, help="Optional working dir (defaults to tempdir)")
     ap.add_argument("--jobs", type=int, default=None, help="Parallel jobs for clang-tidy (default: cpu count)")
     ap.add_argument("--instance-id", required=False, help="Optional instance_id to pick a patch from swe results and apply after checkout")
-    ap.add_argument("--swe-results", required=False, default="sweagent_clang-tidy_results.json", help="Path to sweagent results JSON (defaults to sweagent_clang-tidy_results.json)")
+    ap.add_argument("--swe-results", required=False, default="sweagent_clang-tidy_results_aider.json", help="Path to sweagent results JSON (defaults to sweagent_clang-tidy_results.json)")
     args = ap.parse_args()
 
     # --- FIX: make work_base absolute so build_dir passed to run-clang-tidy is absolute ---

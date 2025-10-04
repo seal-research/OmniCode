@@ -28,9 +28,6 @@ agent:
       4. Ensure your changes follow Java best practices and coding standards
       5. Test that your fixes don't introduce new style errors
       6. Do not introduce any new files to fix the style errors
-      7. Do not delete or create any files, only modify existing ones
-      8. Do not rename any public classes or files
-      9. Do not rename any global variables, classes, or methods
       
       Common Checkstyle violations you may encounter:
       - Naming violations (ConstantName, LocalVariableName, MethodName, etc.)

@@ -13,7 +13,6 @@ from tqdm import tqdm
 from multi_swe_bench.harness.pull_request import PullRequest, Base
 from multi_swe_bench.harness.image import Config
 from multi_swe_bench.utils import docker_util
-#import docker_util
 from multi_swe_bench.utils.logger import setup_logger
 from swebench.harness.utils import str2bool
 
