@@ -20,11 +20,12 @@ import json
 import argparse
 from pathlib import Path
 import time
-import google.generativeai as genai
+# import google.generativeai as genai
+import litellm
 import math
 import copy # Import copy for deep copying
 
-def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_example: str, model_name: str = "gemini-2.5-flash-preview-04-17") -> str:
+def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_example: str, model_name: str = "openrouter/google/gemini-2.5-flash") -> str:
     """
     Queries the LLM to get a detailed review of the provided patch using Google's Generative AI.
     The prompt now includes the problem statement and a correct patch example so the LLM knows the intended changes.
@@ -38,7 +39,7 @@ def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_e
     Returns:
         str: The generated detailed review.
     """
-    model = genai.GenerativeModel(model_name)
+    # model = genai.GenerativeModel(model_name)
 
     prompt = (
         "You are an experienced software engineer tasked with reviewing code patches. "
@@ -58,38 +59,57 @@ def query_llm_for_review(bad_patch: str, problem_statement: str, correct_patch_e
         f"{bad_patch}\n\n"
         "Detailed Review:"
     )
+    messages = [{"role": "user", "content": prompt}]
 
     review_text = "[Review not generated]" # Default value
     api_response = None # Initialize api_response to None
+
     try:
-        api_response = model.generate_content(
-            prompt,
-            # Adjust generation config as needed, ensure compatibility with the chosen model
-            # Example generation config (adjust temperature, top_p, etc. as needed)
-            generation_config={"temperature": 0.7, "top_p": 0.9}
+        api_response = litellm.completion(
+            model=model_name,
+            messages=messages,
+            temperature=0.7,
+            top_p=0.9
         )
-        # Accessing response.text might raise an exception if the response is blocked
-        # or doesn't contain valid text. Use response.parts to check first.
-        if api_response.parts:
-             review_text = api_response.text.strip()
+        # Access the content from the response object
+        if api_response.choices and api_response.choices[0].message.content:
+            review_text = api_response.choices[0].message.content.strip()
         else:
-            # Handle cases where the response might be blocked or empty
-            # Check for prompt feedback if available
-            if hasattr(api_response, 'prompt_feedback') and api_response.prompt_feedback:
-                review_text = f"[Review generation failed due to safety settings or other issues: {api_response.prompt_feedback}]"
-            else:
-                review_text = "[Review generation failed: Empty response]"
+            review_text = "[Review generation failed: Empty or invalid response]"
 
     except Exception as e:
-        # Handle exceptions during the API call or response processing
+        # litellm will raise exceptions for API errors, connection issues, etc.
         review_text = f"[Error generating review: {e}]"
-        # Optionally log more details about the error or the response if it exists
-        # (but be careful as 'api_response' might still be None if the exception
-        # happened before or during the generate_content call)
-        # if api_response and hasattr(api_response, 'prompt_feedback') and api_response.prompt_feedback:
-        #     pass # Log api_response.prompt_feedback if needed
-        # else:
-        #     pass # Log basic error 'e'
+
+    # try:
+    #     api_response = model.generate_content(
+    #         prompt,
+    #         # Adjust generation config as needed, ensure compatibility with the chosen model
+    #         # Example generation config (adjust temperature, top_p, etc. as needed)
+    #         generation_config={"temperature": 0.7, "top_p": 0.9}
+    #     )
+    #     # Accessing response.text might raise an exception if the response is blocked
+    #     # or doesn't contain valid text. Use response.parts to check first.
+    #     if api_response.parts:
+    #          review_text = api_response.text.strip()
+    #     else:
+    #         # Handle cases where the response might be blocked or empty
+    #         # Check for prompt feedback if available
+    #         if hasattr(api_response, 'prompt_feedback') and api_response.prompt_feedback:
+    #             review_text = f"[Review generation failed due to safety settings or other issues: {api_response.prompt_feedback}]"
+    #         else:
+    #             review_text = "[Review generation failed: Empty response]"
+
+    # except Exception as e:
+    #     # Handle exceptions during the API call or response processing
+    #     review_text = f"[Error generating review: {e}]"
+    #     # Optionally log more details about the error or the response if it exists
+    #     # (but be careful as 'api_response' might still be None if the exception
+    #     # happened before or during the generate_content call)
+    #     # if api_response and hasattr(api_response, 'prompt_feedback') and api_response.prompt_feedback:
+    #     #     pass # Log api_response.prompt_feedback if needed
+    #     # else:
+    #     #     pass # Log basic error 'e'
 
     return review_text
 
@@ -141,7 +161,8 @@ def main(
     with open(f'{output_dir}/results.txt', 'w') as f:
         f.write('\n'.join(instance_ids))
 
-    genai.configure(api_key=secret_key)
+    # genai.configure(api_key=secret_key)
+    os.environ["OPENROUTER_API_KEY"] = secret_key
 
     all_instances = load_instances(json_file_path)
     if not all_instances:
@@ -238,7 +259,7 @@ if __name__ == "__main__":
     # Changed argument name and help text
     parser.add_argument("--input_tasks", required=True, help="Path to the codearena_instances.json file (will be read and updated).")
     # Removed output_dir argument
-    parser.add_argument("--model_name", default="gemini-2.5-flash", help="Model name to use for review generation (e.g., gemini-2.5-flash).")
+    parser.add_argument("--model_name", default="openrouter/google/gemini-2.5-flash", help="Model name to use for review generation (e.g., gemini-2.5-flash).")
     parser.add_argument("--api_key", required=True, help="Secret key for accessing the Google Generative AI API.")
     # Kept this argument but clarified its behavior in the help text
     parser.add_argument("--num_reviews_per_patch", type=int, default=1, help="Number of reviews to attempt generating per bad patch (currently only the first successful review for the first valid patch per instance is saved).")
