@@ -9,14 +9,16 @@ import glob
 import time
 import select
 
-from run_evaluation_GenTests import main as GenTestMain
-from runevaluation_StyleReview import main as PythonStyleReviewMain
-from mswebench_run_evaluation_GenTests import main as MSWEGenTestMain
-# imports and monkey patches swebench
-from monkeypatched_swebench import swebench
+# # from run_evaluation_GenTests import main as GenTestMain
+# # from runevaluation_StyleReview import main as PythonStyleReviewMain
+# # from mswebench_run_evaluation_GenTests import main as MSWEGenTestMain
+# # imports and monkey patches swebench
+# from monkeypatched_swebench import swebench
 from swebench.harness.utils import str2bool
 from swebench.harness.run_evaluation import main as RegularEval
-from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
+# from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
+
+from src import GenTestMain, PythonStyleReviewMain, MSWEGenTestMain, swebench, test_passed_prefix_match, test_failed_prefix_match
 
 CUR_DIR = Path(__file__).parent
 REPO_DATA_PATH = CUR_DIR / "data/codearena_repo_data.py"
@@ -428,6 +430,8 @@ def main():
 
     args = parser.parse_args()
 
+    local = False if args.g2 else True
+
     # Collect active flags
     active_flags = []
     for flag in ["BugFixing", "TestGeneration", "CodeReview", "CodeMigration",
@@ -477,7 +481,6 @@ def main():
             else:
                 repo_log_parser = parse_log_pytest
             swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
-
         importlib.reload(swebench)
 
     # Execute tasks based on flags
@@ -501,7 +504,8 @@ def main():
             # modal=,
             # instance_image_tag=,
             # report_dir=,
-            use_apptainer=args.use_apptainer
+            use_apptainer=args.use_apptainer,
+            local=local
         )
 
     if "TestGeneration" in active_flags:
@@ -542,7 +546,8 @@ def main():
             # modal=,
             # instance_image_tag=,
             # report_dir=,
-            use_apptainer=args.use_apptainer
+            use_apptainer=args.use_apptainer,
+            local=local
         )
 
     if "CodeMigration" in active_flags:
