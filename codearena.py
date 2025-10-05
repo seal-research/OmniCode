@@ -428,6 +428,8 @@ def main():
 
     args = parser.parse_args()
 
+    local = False if args.g2 else True
+
     # Collect active flags
     active_flags = []
     for flag in ["BugFixing", "TestGeneration", "CodeReview", "CodeMigration",
@@ -477,7 +479,6 @@ def main():
             else:
                 repo_log_parser = parse_log_pytest
             swebench.harness.log_parsers.MAP_REPO_TO_PARSER[instance_repo] = repo_log_parser
-
         importlib.reload(swebench)
 
     # Execute tasks based on flags
@@ -501,7 +502,8 @@ def main():
             # modal=,
             # instance_image_tag=,
             # report_dir=,
-            use_apptainer=args.use_apptainer
+            use_apptainer=args.use_apptainer,
+            local=local
         )
 
     if "TestGeneration" in active_flags:
@@ -542,7 +544,8 @@ def main():
             # modal=,
             # instance_image_tag=,
             # report_dir=,
-            use_apptainer=args.use_apptainer
+            use_apptainer=args.use_apptainer,
+            local=local
         )
 
     if "CodeMigration" in active_flags:
