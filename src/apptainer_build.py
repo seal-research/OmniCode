@@ -3,7 +3,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 
-from swebench.harness.constants import DEF_IMAGE_BUILD_DIR, APPTAINER_BASH
+from swebench.harness.constants import SCRATCH_DEF_IMAGE_BUILD_DIR, APPTAINER_BASH
 
 from swebench.harness.docker_build import (
     close_logger,
@@ -23,7 +23,7 @@ def build_sandbox(dataset):
                     "setup_repo.sh": test_spec.install_repo_script,
                 }
         
-        build_dir = DEF_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
+        build_dir = SCRATCH_DEF_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
         logger = setup_logger("def", build_dir / "build_image.log")
         logger.info("Building image def\n")
 
