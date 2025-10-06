@@ -175,7 +175,7 @@ def run_sweagent_single(
     if mode not in CONFIG_FILE_MAP:
         raise RuntimeError(f"Unknown mode: {mode}")
     
-    if 'java' or 'cpp' in mode:
+    if 'java' in mode or 'cpp' in mode:
         image = f"omnicodeorg/omnicode:{instance['repo'].replace('/', '_')}_base"
     else:
         image = f"omnicodeorg/omnicode:{instance['instance_id']}"
