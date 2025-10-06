@@ -11,14 +11,6 @@ from pathlib import Path
 from tqdm import tqdm
 import subprocess, shutil, time, os
 
-USER = os.getenv("USER")
-SHAREDIR = Path(f"/share/dutta/{USER}")
-SCRATCHDIR = Path(f"/scratch/{USER}")
-
-INSTANCE_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/instances"
-DEF_IMAGE_BUILD_DIR = SCRATCHDIR / "logs/build_images/def"
-RUN_EVALUATION_LOG_DIR = SCRATCHDIR / "logs/run_evaluation"
-
 from swebench.harness.constants import (
     APPLY_PATCH_FAIL,
     APPLY_PATCH_PASS,
@@ -26,6 +18,10 @@ from swebench.harness.constants import (
     LOG_REPORT, 
     LOG_INSTANCE,
     APPTAINER_BASH, 
+    SCRATCH_DEF_IMAGE_BUILD_DIR,
+    SCRATCH_INSTANCE_IMAGE_BUILD_DIR,
+    SCRATCH_RUN_EVALUATION_LOG_DIR,
+    SHAREDIR,
 )
 from swebench.harness.docker_utils import (
     remove_image,
@@ -140,7 +136,7 @@ def get_dataset_from_preds(
     for _, instance in merged_df.iterrows():
         prediction = merged_df[merged_df['instance_id'] == instance['instance_id']].iloc[0]
         report_file = (
-            RUN_EVALUATION_LOG_DIR
+            SHAREDIR
             / run_id
             / prediction["model_name_or_path"].replace("/", "__")
             / (prediction['instance_id']+"_testGeneration")
@@ -207,7 +203,7 @@ def make_run_report(
             empty_patch_ids.add(instance_id)
             continue
         report_file = (
-            RUN_EVALUATION_LOG_DIR
+            SCRATCH_RUN_EVALUATION_LOG_DIR
             / run_id
             / prediction["model_name_or_path"].replace("/", "__")
             / (prediction[KEY_INSTANCE_ID]+"_testGeneration")
@@ -273,16 +269,23 @@ def make_run_report(
         "unremoved_images": list(sorted(unremoved_images)),
         "schema_version": 2,
     }
-    final_output = (
-        SHAREDIR
+    logs_dir = (
+        SCRATCH_RUN_EVALUATION_LOG_DIR
         / run_id
         / prediction["model_name_or_path"].replace("/", "__")
         / (prediction[KEY_INSTANCE_ID]+"_testGeneration")
-        / "results.json"
     )
-    with open(final_output, "w") as f:
-       print(json.dumps(report, indent=4), file=f)
-    print(f"Report written to {report_file}")
+    image_link = logs_dir / "image_build_dir"
+    if image_link.exists():
+        if image_link.is_symlink():
+            image_link.unlink()
+        elif image_link.is_dir():
+            shutil.rmtree(image_link, ignore_errors=True)
+    dst = SHAREDIR / f"logs/{run_id}/{prediction["model_name_or_path"].replace("/", "__")}/{instance_id}_testGeneration"
+    dst.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(logs_dir, dst, dirs_exist_ok=True)
+    print(f"Removing logdir: {logs_dir} from scratch. ")
+    shutil.rmtree(logs_dir)
 
 def main(
         dataset_name: str,
@@ -371,11 +374,11 @@ def run_instance(
     # Set up logging directory
     instance_id = test_spec.instance_id
     model_name_or_path = pred.get("model_name_or_path", "None").replace("/", "__")
-    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / (instance_id+"_testGeneration")
+    log_dir = SCRATCH_RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / (instance_id+"_testGeneration")
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # Link the image build dir in the log dir
-    build_dir = INSTANCE_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
+    build_dir = SCRATCH_INSTANCE_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
     image_build_link = log_dir / "image_build_dir"
     if not image_build_link.exists():
         try:
@@ -709,11 +712,11 @@ def run_instance_apptainer(
     # Set up logging directory
     instance_id = test_spec.instance_id
     model_name_or_path = pred.get("model_name_or_path", "None").replace("/", "__")
-    log_dir = RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / (instance_id+"_testGeneration")
+    log_dir = SCRATCH_RUN_EVALUATION_LOG_DIR / run_id / model_name_or_path / (instance_id+"_testGeneration")
     log_dir.mkdir(parents=True, exist_ok=True)
 
     # Link the image build dir in the log dir
-    build_dir = DEF_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
+    build_dir = SCRATCH_DEF_IMAGE_BUILD_DIR / test_spec.instance_image_key.replace(":", "__")
     image_build_link = log_dir / "image_build_dir"
     if not image_build_link.exists():
         try:
@@ -1165,6 +1168,11 @@ def run_instance_apptainer(
                     logger.info(f"Apptainer base image file not found: {apptainer_base_file}")
             except Exception as e:
                 logger.error(f"Failed to remove Apptainer sandbox or base image file: {e}")
+            dst = SHAREDIR / f"logs/{run_id}/{model_name_or_path}/{instance_id}"
+            dst.mkdir(parents=True, exist_ok=True)
+            shutil.copy(build_dir / "build_image.log", dst)
+            print(f"Removing workdir: {build_dir} from scratch. ")
+            shutil.rmtree(build_dir)
         # close the logger
         close_logger(logger)
     return
