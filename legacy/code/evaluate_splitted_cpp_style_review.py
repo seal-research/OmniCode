@@ -10,7 +10,7 @@ Usage example:
     --clang-config multiswebench_local/multi_swe_bench/harness/CPP_style_review/.clang-tidy
 
 What changed:
- - Additional errors (present in results2.json but not in problem_statement)
+ - Additional errors (present in results1.json but not in problem_statement)
    are counted ONLY if their filename basename (after last '/') matches
    a basename present in the parsed problem_statement for that instance.
  - Final CSV includes raw missing, additional (filtered by basename), and updated missing.
@@ -29,7 +29,7 @@ def parse_args():
     p.add_argument("--org", required=True)
     p.add_argument("--repo", required=True)
     p.add_argument("--pr", required=True, type=int, help="Pull request number")
-    p.add_argument("--swe-file", default="sweagent_clang-tidy_results_aider.json")
+    p.add_argument("--swe-file", default="sweagent_clang-tidy_results.json")
     p.add_argument("--style-script", default="multiswebench_local/multi_swe_bench/harness/CPP_style_review/style_reviewcpp.py", help="Path to style_reviewcpp.py")
     p.add_argument("--clang-config", default="multiswebench_local/multi_swe_bench/harness/CPP_style_review/.clang-tidy", help="Path to .clang-tidy")
     p.add_argument("--workdir-prefix", default="tempcpp", help="Prefix for per-run workdir")
@@ -135,7 +135,7 @@ def parse_problem_statement(ps_text):
     return dedup, reported_total
 
 def parse_results_json(path):
-    """Return set of (basename,line,col) from results2.json messages."""
+    """Return set of (basename,line,col) from results1.json messages."""
     if not os.path.exists(path):
         return set()
     try:
@@ -159,7 +159,7 @@ def parse_results_json(path):
                 continue
     return out
 
-def run_style_script(style_script, org, repo, pr, clang_config, workdir, instance_id):
+def run_style_script(style_script, org, repo, pr, clang_config, workdir, instance_id,swefile):
     repo_url = f"https://github.com/{org}/{repo}.git"
     cmd = [
         sys.executable, style_script,
@@ -167,8 +167,9 @@ def run_style_script(style_script, org, repo, pr, clang_config, workdir, instanc
         "--pr", str(pr),
         "--clang-tidy-config", clang_config,
         "--work-dir", workdir,
-        "--out", "results2.json",
-        "--instance-id", instance_id
+        "--out", "results1.json",
+        "--instance-id", instance_id,
+        "--swe-results",swefile
     ]
     print("Running:", " ".join(shlex.quote(x) for x in cmd))
     proc = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -226,7 +227,7 @@ def main():
         # run style script
         workdir = f"{args.workdir_prefix}_{instance_id}"
         os.makedirs(workdir, exist_ok=True)
-        rc, out, err = run_style_script(args.style_script, args.org, args.repo, args.pr, args.clang_config, workdir, instance_id)
+        rc, out, err = run_style_script(args.style_script, args.org, args.repo, args.pr, args.clang_config, workdir, instance_id,args.swe_file)
         print(f"style script exit code={rc}, stdout len={len(out)}, stderr len={len(err)}")
         if out.strip():
             print("stdout (truncated):")
@@ -235,10 +236,10 @@ def main():
             print("stderr (truncated):")
             print(err[:800])
 
-        # parse results2.json
-        results_json = "results2.json"
+        # parse results1.json
+        results_json = "results1.json"
         results_set = parse_results_json(results_json)
-        print("messages found in results2.json:", len(results_set))
+        print("messages found in results1.json:", len(results_set))
 
         # missing: parsed_set - results_set (unknown_file entries treated as missing)
         missing_set = set()
@@ -271,7 +272,7 @@ def main():
             for a in list(additional_set_filtered)[:50]:
                 print("  ", a)
 
-        # archive results2.json
+        # archive results1.json
         if os.path.exists(results_json):
             dest = f"results_{instance_id}.json"
             try:
@@ -280,7 +281,7 @@ def main():
                 os.rename(results_json, dest)
                 print(f"archived {results_json} -> {dest}")
             except Exception as e:
-                print("WARN: failed to archive results2.json:", e, file=sys.stderr)
+                print("WARN: failed to archive results1.json:", e, file=sys.stderr)
 
         csv_rows.append({
             "org": args.org,
