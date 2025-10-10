@@ -240,5 +240,12 @@ server_new/
 slurm_logs/
 sweagent_results/
 workspace/
+swebench_eval/
+
+
+# python style review intermediate files during dataset collection
+data/python_style_review_dataset/pylint_results/*
+data/python_style_review_dataset/python_style_review_dataset/*
+
 *.json
 *.csv

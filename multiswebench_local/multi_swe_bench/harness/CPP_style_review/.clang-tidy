@@ -1,0 +1,28 @@
+Checks: >
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  cppcoreguidelines-*,
+  misc-*,
+  portability-*
+
+WarningsAsErrors: '*'
+
+CheckOptions:
+  - key: cppcoreguidelines-pro-type-cstyle-cast.IgnoreCppCasts
+    value: 'false'
+
+  - key: cppcoreguidelines-owning-memory
+    value: 'true'
+
+  - key: readability-identifier-naming.VariableCase
+    value: lower_case
+
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+
+  - key: readability-identifier-naming.ClassCase
+    value: PascalCase
+
+  - key: readability-identifier-naming.ConstantCase
+    value: UPPER_CASE

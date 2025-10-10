@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/scrapy/settings/__init__.py b/scrapy/settings/__init__.py\nindex bc82cc098..fd0d26067 100644\n--- a/scrapy/settings/__init__.py\n+++ b/scrapy/settings/__init__.py\n@@ -271,7 +271,9 @@ class BaseSettings(MutableMapping[_SettingsKeyT, Any]):\n                 return value_loaded\n             except ValueError:\n                 return value.split(\",\")\n-        assert isinstance(value, (dict, list))\n+        assert isinstance(value, (dict, list, tuple))\n+        if isinstance(value, tuple):\n+            value = list(value)\n         return copy.deepcopy(value)\n \n     def getwithbase(self, name: _SettingsKeyT) -> \"BaseSettings\":\n"
-}

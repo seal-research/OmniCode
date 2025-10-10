@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/sphinx/ext/autodoc/__init__.py b/sphinx/ext/autodoc/__init__.py\nindex e16ab8ce5..68f33577a 100644\n--- a/sphinx/ext/autodoc/__init__.py\n+++ b/sphinx/ext/autodoc/__init__.py\n@@ -1578,6 +1578,10 @@ class ClassDocumenter(DocstringSignatureMixin, ModuleLevelDocumenter):  # type:\n         if self.config.autodoc_typehints_format == \"short\":\n             kwargs.setdefault('unqualified_typehints', True)\n \n+        # Never show a return annotation on class directive headers.\n+        # Class signatures should not appear function-like with '-> ...'.\n+        kwargs.setdefault('show_return_annotation', False)\n+\n         sig = super().format_signature()\n         sigs = []\n \n"
-}

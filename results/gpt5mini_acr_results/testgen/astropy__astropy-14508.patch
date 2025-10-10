@@ -1,6 +1,0 @@
-{
-  "instance_id": "astropy__astropy-14508",
-  "status": "success",
-  "patch_file": "../../results/gpt5mini_acr_results/testgen/astropy__astropy-14508/test.patch",
-  "pred_file": "../../results/gpt5mini_acr_results/testgen/astropy__astropy-14508/astropy__astropy-14508.pred"
-}

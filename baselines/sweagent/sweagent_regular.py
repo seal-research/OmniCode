@@ -128,10 +128,10 @@ def str2bool(v):
         raise ArgumentTypeError("Boolean value expected.")
 
 def get_reviewfix_faux_problem_statement(instance: dict) -> str:
-    if 'bad_patches' not in instance or len(instance['bad_patches']) == 0:
-        logger.warning(f"Instance {instance['instance_id']} does not have any bad patches, cannot generate faux problem statement.")
+    if 'bad_patches' not in instance or not any("agentless" in each["source"] for each in instance['bad_patches']):
+        logger.warning(f"Instance {instance['instance_id']} does not have any agentless bad patches, cannot generate faux problem statement.")
         return None
-    bad_patch = instance['bad_patches'][0]    
+    bad_patch = [bad_patch for bad_patch in instance['bad_patches'] if "agentless" in bad_patch["source"]][0]
     # bad_patch = [bp for bp in instance['bad_patches'] if bp['source'] == 'badpatchllm'][0]
     problem_statement = instance['problem_statement']
     bad_patch_text = bad_patch['patch']
@@ -454,7 +454,7 @@ def main(
             f.flush(); os.fsync(f.fileno())
             fcntl.flock(f, fcntl.LOCK_UN)
 
-        if g2:
+        if g2 and full_output != "" and model_patch != "":
             user_name = os.getenv("USER")
             shutil.copytree(str(output_dir_path/instance_id), f"/share/dutta/{user_name}/baselines/logs/{instance_id}", dirs_exist_ok=True)
             shutil.rmtree(str(output_dir_path/instance_id))

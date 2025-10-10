@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/youtube_dl/utils.py b/youtube_dl/utils.py\nindex aed988b88..7ef0c04d8 100644\n--- a/youtube_dl/utils.py\n+++ b/youtube_dl/utils.py\n@@ -2844,6 +2844,10 @@ def unified_strdate(date_str, day_first=True):\n     date_str = re.sub(r'(?i)\\s*(?:AM|PM)(?:\\s+[A-Z]+)?', '', date_str)\n     _, date_str = extract_timezone(date_str)\n \n+    # Normalize/remove ordinal suffixes from day numbers (e.g. \"1st\", \"2nd\", \"3rd\", \"23rd\", \"4th\")\n+    # so datetime.strptime and parsedate_tz can parse them.\n+    date_str = re.sub(r'(?i)\\b([0-9]{1,2})(st|nd|rd|th)\\b', r'\\1', date_str)\n+\n     for expression in date_formats(day_first):\n         try:\n             upload_date = datetime.datetime.strptime(date_str, expression).strftime('%Y%m%d')\n"
-}

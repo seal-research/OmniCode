@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/scrapy/middleware.py b/scrapy/middleware.py\nindex 03e92b565..eb21daf61 100644\n--- a/scrapy/middleware.py\n+++ b/scrapy/middleware.py\n@@ -46,7 +46,7 @@ class MiddlewareManager:\n                 enabled.append(clspath)\n             except NotConfigured as e:\n                 if e.args:\n-                    clsname = clspath.split(\".\")[-1]\n+                    clsname = clspath.split(\".\")[-1] if isinstance(clspath, str) else clspath.__name__\n                     logger.warning(\n                         \"Disabled %(clsname)s: %(eargs)s\",\n                         {\"clsname\": clsname, \"eargs\": e.args[0]},\n"
-}

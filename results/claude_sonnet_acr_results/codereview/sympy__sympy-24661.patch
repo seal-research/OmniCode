@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/sympy/parsing/sympy_parser.py b/sympy/parsing/sympy_parser.py\nindex 52711d1324..e4cb9fbea6 100644\n--- a/sympy/parsing/sympy_parser.py\n+++ b/sympy/parsing/sympy_parser.py\n@@ -1110,6 +1110,14 @@ class EvaluateFalseTransformer(ast.NodeTransformer):\n         ast.BitAnd: 'And',\n         ast.BitXor: 'Not',\n     }\n+    comparisons = {\n+        ast.Eq: 'Eq',\n+        ast.NotEq: 'Ne',\n+        ast.Lt: 'Lt',\n+        ast.LtE: 'Le',\n+        ast.Gt: 'Gt',\n+        ast.GtE: 'Ge',\n+    }\n     functions = (\n         'Abs', 'im', 're', 'sign', 'arg', 'conjugate',\n         'acos', 'acot', 'acsc', 'asec', 'asin', 'atan',\n"
-}

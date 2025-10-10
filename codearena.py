@@ -9,14 +9,16 @@ import glob
 import time
 import select
 
-from run_evaluation_GenTests import main as GenTestMain
-from runevaluation_StyleReview import main as PythonStyleReviewMain
-from mswebench_run_evaluation_GenTests import main as MSWEGenTestMain
-# imports and monkey patches swebench
-from monkeypatched_swebench import swebench
+# # from run_evaluation_GenTests import main as GenTestMain
+# # from runevaluation_StyleReview import main as PythonStyleReviewMain
+# # from mswebench_run_evaluation_GenTests import main as MSWEGenTestMain
+# # imports and monkey patches swebench
+# from monkeypatched_swebench import swebench
 from swebench.harness.utils import str2bool
 from swebench.harness.run_evaluation import main as RegularEval
-from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
+# from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
+
+from src import GenTestMain, PythonStyleReviewMain, MSWEGenTestMain, swebench, test_passed_prefix_match, test_failed_prefix_match
 
 CUR_DIR = Path(__file__).parent
 REPO_DATA_PATH = CUR_DIR / "data/codearena_repo_data.py"

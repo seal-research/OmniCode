@@ -1,3 +1,0 @@
-{
-  "patch": "diff --git a/django/db/models/enums.py b/django/db/models/enums.py\nindex f48143ddaf..09af9eaad2 100644\n--- a/django/db/models/enums.py\n+++ b/django/db/models/enums.py\n@@ -60,6 +60,10 @@ class ChoicesMeta(enum.EnumMeta):\n \n class Choices(enum.Enum, metaclass=ChoicesMeta):\n     \"\"\"Class for creating enumerated choices.\"\"\"\n+    # Prevent the Django template engine from calling the enum class when\n+    # resolving variables. The template Variable resolution checks this\n+    # attribute before attempting to call callables.\n+    do_not_call_in_templates = True\n \n     def __str__(self):\n         \"\"\"\n"
-}
