@@ -32,7 +32,7 @@ CONFIG_FILE_MAP = {
     "bugfixing-cpp": CUR_DIR / "bugfixing_cpp.yaml",
     "testgen-java": CUR_DIR / "testgen_java.yaml",
     "testgen-cpp": CUR_DIR / "testgen_cpp.yaml",
-    "stylereview": CUR_DIR / "stylereview.yaml",
+    "stylereview": CUR_DIR / "stylereview_python.yaml",
     "reviewfix": CUR_DIR / "reviewfix.yaml",
     "stylereview-java-checkstyle": CUR_DIR / "jstylereview.yaml",
     "stylereview-java-pmd": CUR_DIR / "jstylereview_pmd.yaml",
