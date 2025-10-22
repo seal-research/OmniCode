@@ -7,7 +7,7 @@ agent:
       <uploaded_files>
       {{working_dir}}
       </uploaded_files>
-      I've uploaded a python code repository in the directory {{working_dir}}. Consider the following PR description:
+      I've uploaded a java code repository in the directory {{working_dir}}. Consider the following PR description:
 
       <pr_description>
       {{problem_statement}}
@@ -18,9 +18,9 @@ agent:
       Your task is to make the minimal changes to non-tests files in the {{working_dir}} directory to ensure the <pr_description> is satisfied.
       Follow these steps to resolve the issue:
       1. As a first step, it might be a good idea to find and read code relevant to the <pr_description>
-      2. Create a script to reproduce the error and execute it with `python <filename.py>` using the bash tool, to confirm the error
+      2. Create a test to reproduce the error and execute it to confirm the error
       3. Edit the sourcecode of the repo to resolve the issue
-      4. Rerun your reproduce script and confirm that the error is fixed!
+      4. Rerun your reproduce test and confirm that the error is fixed!
       5. Think about edgecases and make sure your fix handles them as well
       Your thinking should be thorough and so it's fine if it's very long.
     next_step_template: |-
@@ -44,7 +44,7 @@ agent:
             If you have already removed your reproduction script, please ignore this step.
           2. Remove your reproduction script (if you haven't done so already).
           3. If you have modified any TEST files, please revert them to the state they had before you started fixing the issue.
-            You can do this with `git checkout -- /path/to/test/file.py`. Use below <diff> to find the files you need to revert.
+            You can do this with `git checkout -- /path/to/test/file.java`. Use below <diff> to find the files you need to revert.
           4. Run the submit command again to confirm.
 
           Here is a list of all of your changes:
