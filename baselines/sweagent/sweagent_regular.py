@@ -22,22 +22,22 @@ from sweagent.agent.agents import AgentConfig
 from sweagent.agent.models import GenericAPIModelConfig
 from sweagent.agent.problem_statement import TextProblemStatement, FileProblemStatement
 
-from litellm import register_model
+# from litellm import register_model
 
-register_model(
-    {
-        "openrouter/qwen/qwen3-32b": {
-            "max_tokens": 40960,
-            "max_input_tokens": 40960,
-            "max_output_tokens": 40960,
-            "input_cost_per_token": 1e-07,
-            "output_cost_per_token": 2.8e-07,
-            "litellm_provider": "openrouter",
-            "mode": "chat",
-            "supports_tool_choice": True
-        }
-    }
-)
+# register_model(
+#     {
+#         "openrouter/qwen/qwen3-32b": {
+#             "max_tokens": 40960,
+#             "max_input_tokens": 40960,
+#             "max_output_tokens": 40960,
+#             "input_cost_per_token": 1e-07,
+#             "output_cost_per_token": 2.8e-07,
+#             "litellm_provider": "openrouter",
+#             "mode": "chat",
+#             "supports_tool_choice": True
+#         }
+#     }
+# )
 
 CUR_DIR = Path(__file__).parent
 DOTENV_PATH = CUR_DIR / '.env'
