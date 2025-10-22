@@ -22,21 +22,38 @@ from sweagent.agent.agents import AgentConfig
 from sweagent.agent.models import GenericAPIModelConfig
 from sweagent.agent.problem_statement import TextProblemStatement, FileProblemStatement
 
+from litellm import register_model
+
+register_model(
+    {
+        "openrouter/qwen/qwen3-32b": {
+            "max_tokens": 40960,
+            "max_input_tokens": 40960,
+            "max_output_tokens": 40960,
+            "input_cost_per_token": 1e-07,
+            "output_cost_per_token": 2.8e-07,
+            "litellm_provider": "openrouter",
+            "mode": "chat",
+            "supports_tool_choice": True
+        }
+    }
+)
+
 CUR_DIR = Path(__file__).parent
 DOTENV_PATH = CUR_DIR / '.env'
 
 CONFIG_FILE_MAP = {
-    "bugfixing": CUR_DIR / "bugfixing.yaml",
-    "testgen": CUR_DIR / "testgen.yaml",
-    "bugfixing-java": CUR_DIR / "bugfixing_java.yaml",
-    "bugfixing-cpp": CUR_DIR / "bugfixing_cpp.yaml",
-    "testgen-java": CUR_DIR / "testgen_java.yaml",
-    "testgen-cpp": CUR_DIR / "testgen_cpp.yaml",
-    "stylereview-python": CUR_DIR / "stylereview_python.yaml",
-    "reviewfix": CUR_DIR / "reviewfix.yaml",
-    "stylereview-java-checkstyle": CUR_DIR / "jstylereview.yaml",
-    "stylereview-java-pmd": CUR_DIR / "jstylereview_pmd.yaml",
-    "stylereview-cpp-clangtidy": CUR_DIR / "jstylereview_cpp.yaml",
+    "bugfixing": CUR_DIR / "configs" / "bugfixing.yaml",
+    "testgen": CUR_DIR / "configs" / "testgen.yaml",
+    "bugfixing-java": CUR_DIR / "configs" / "bugfixing_java.yaml",
+    "bugfixing-cpp": CUR_DIR / "configs" / "bugfixing_cpp.yaml",
+    "testgen-java": CUR_DIR / "configs" / "testgen_java.yaml",
+    "testgen-cpp": CUR_DIR / "configs" / "testgen_cpp.yaml",
+    "stylereview-python": CUR_DIR / "configs" / "stylereview_python.yaml",
+    "reviewfix": CUR_DIR / "configs" / "reviewfix.yaml",
+    "stylereview-java-checkstyle": CUR_DIR / "configs" / "jstylereview.yaml",
+    "stylereview-java-pmd": CUR_DIR / "configs" / "jstylereview_pmd.yaml",
+    "stylereview-cpp-clangtidy": CUR_DIR / "configs" / "jstylereview_cpp.yaml",
 }
 
 # Add style review config map for Java
@@ -48,67 +65,6 @@ STYLE_REVIEW_CONFIG_MAP = {
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
-
-# def run_sweagent_single(
-#     instance: dict,
-#     model_name: str,
-#     output_dir: Path,
-# ):
-
-#     agent = AgentConfig(
-#         model=GenericAPIModelConfig(
-#             name=model_name,
-#         ),
-#     )
-
-#     url = f"https://github.com/{instance['repo']}"
-
-#     env = EnvironmentConfig(
-#         deployment=DockerDeploymentConfig(image="python:3.12"),
-#         repo=GithubRepoConfig(
-#             github_url=url,
-#             base_commit=instance['base_commit'],
-#         ),
-#         post_startup_commands=[],
-#     )
-
-
-#     # problem_statement = TextProblemStatement(
-#     #     text=PROMPT_TEMPLATE.render(
-#     #         issue=instance['problem_statement']
-#     #     ),
-#     #     id=instance['instance_id'],
-#     # )
-
-#     with tempfile.NamedTemporaryFile(delete_on_close=False, mode="w") as fp:
-#         fp.write(
-#             PROMPT_TEMPLATE.render(
-#                 issue=instance['problem_statement']
-#             )
-#         )
-#         fp.close()
-
-
-#         problem_statement = FileProblemStatement(
-#             path=Path(fp.name),
-#             id=instance['instance_id'],
-#         )
-
-#         config = RunSingleConfig(
-#             env=env,
-#             agent=agent,
-#             problem_statement=problem_statement,
-#             output_dir=output_dir,
-#             env_var_path=DOTENV_PATH,
-#         )
-
-#         RunSingle.from_config(config).run()
-
-
-#     output_file_path = output_dir / problem_statement.id / (problem_statement.id + ".pred")
-#     output = json.loads(output_file_path.read_text())
-
-#     return None, output
 
 class ArgumentTypeError(Exception):
     """An error from trying to convert a command line string to a type."""
@@ -179,6 +135,7 @@ def run_sweagent_single(
         image = f"omnicodeorg/omnicode:{instance['repo'].replace('/', '_')}_base"
     else:
         image = f"omnicodeorg/omnicode:{instance['instance_id']}"
+    image = f"omnicodeorg/omnicode:{instance['instance_id']}"
 
     config_file = CONFIG_FILE_MAP[mode]
 
@@ -198,7 +155,12 @@ def run_sweagent_single(
         args = ["run"]
 
         if config_file is not None:
-            args.extend([f"--config",  str(config_file)])
+            if "gpt-5-mini" in model_name:
+                # use modified config for gpt-5-mini
+                config_file = CUR_DIR / str(config_file).split("/")[-1].replace(".yaml", "_gpt-5-mini.yaml")
+                args.extend([f"--config",  config_file])
+            else:
+                args.extend([f"--config",  str(config_file)])
 
         args += [
             f"--agent.model.name={model_name}",
