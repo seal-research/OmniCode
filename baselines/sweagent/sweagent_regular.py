@@ -156,8 +156,8 @@ def run_sweagent_single(
         if config_file is not None:
             if "gpt-5-mini" in model_name:
                 # use modified config for gpt-5-mini
-                config_file = CUR_DIR / str(config_file).split("/")[-1].replace(".yaml", "_gpt-5-mini.yaml")
-                args.extend([f"--config",  config_file])
+                config_file = CUR_DIR / "configs" / str(config_file).split("/")[-1].replace(".yaml", "_gpt-5-mini.yaml")
+                args.extend([f"--config",  str(config_file)])
             else:
                 args.extend([f"--config",  str(config_file)])
 
