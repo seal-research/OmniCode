@@ -135,7 +135,6 @@ def run_sweagent_single(
         image = f"omnicodeorg/omnicode:{instance['repo'].replace('/', '_')}_base"
     else:
         image = f"omnicodeorg/omnicode:{instance['instance_id']}"
-    image = f"omnicodeorg/omnicode:{instance['instance_id']}"
 
     config_file = CONFIG_FILE_MAP[mode]
 
@@ -430,7 +429,7 @@ if __name__ == '__main__':
     parser.add_argument("-o", "--output_dir", type=str, required=True)
     parser.add_argument("-m", "--model_name", type=str, default="gemini/gemini-2.5-flash")
     parser.add_argument("-k", "--api_key", type=str, default=None)
-    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "bugfixing-cpp", "testgen-cpp", "stylereview-python", "reviewfix", "reviewfix-java","stylereview-java-checkstyle","stylereview-java-pmd","stylereview-cpp-clangtidy"])
+    parser.add_argument("--mode", type=str, default="bugfixing", choices=["bugfixing", "testgen", "bugfixing-java", "testgen-java", "bugfixing-cpp", "testgen-cpp", "stylereview-python", "reviewfix","stylereview-java-checkstyle","stylereview-java-pmd","stylereview-cpp-clangtidy"])
     parser.add_argument("--thinking_budget", type=int, default=0)
     parser.add_argument("--style_tool", type=str, default=None, choices=["checkstyle", "pmd"], help="Style review tool to use (Java)")
     parser.add_argument("--use_apptainer", type=str2bool, default=False, help="run with docker or apptainer")
