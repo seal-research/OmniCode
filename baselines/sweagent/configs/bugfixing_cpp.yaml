@@ -1,4 +1,5 @@
 # This template is heavily inspired by anthropic's computer use demo
+# This template is adapted for C++ code repositories
 agent:
   templates:
     system_template: |-
@@ -7,7 +8,7 @@ agent:
       <uploaded_files>
       {{working_dir}}
       </uploaded_files>
-      I've uploaded a java code repository in the directory {{working_dir}}. Consider the following PR description:
+      I've uploaded a C++ code repository in the directory {{working_dir}}. Consider the following PR description:
 
       <pr_description>
       {{problem_statement}}
@@ -18,10 +19,11 @@ agent:
       Your task is to make the minimal changes to non-tests files in the {{working_dir}} directory to ensure the <pr_description> is satisfied.
       Follow these steps to resolve the issue:
       1. As a first step, it might be a good idea to find and read code relevant to the <pr_description>
-      2. Create a test to reproduce the error and execute it to confirm the error
-      3. Edit the sourcecode of the repo to resolve the issue
-      4. Rerun your reproduce test and confirm that the error is fixed!
-      5. Think about edgecases and make sure your fix handles them as well
+      2. Create a script (e.g., `reproduce.sh`) to compile and run the relevant program or test binary to confirm the issue
+         For example, you might use `g++ -std=c++17 -o reproduce main.cpp` and then run `./reproduce`
+      3. Edit the source code of the repo to resolve the issue
+      4. Rerun your reproduce script and confirm that the issue is fixed!
+      5. Think about edge cases and make sure your fix handles them as well
       Your thinking should be thorough and so it's fine if it's very long.
     next_step_template: |-
       OBSERVATION:
@@ -40,11 +42,11 @@ agent:
           Thank you for your work on this issue. Please carefully follow the steps below to help review your changes.
 
           1. If you made any changes to your code after running the reproduction script, please run the reproduction script again.
-            If the reproduction script is failing, please revisit your changes and make sure they are correct.
-            If you have already removed your reproduction script, please ignore this step.
+             If the reproduction script fails to compile or run, please revisit your changes and make sure they are correct.
+             If you have already removed your reproduction script, please ignore this step.
           2. Remove your reproduction script (if you haven't done so already).
-          3. If you have modified any TEST files, please revert them to the state they had before you started fixing the issue.
-            You can do this with `git checkout -- /path/to/test/file.java`. Use below <diff> to find the files you need to revert.
+          3. If you have modified any TEST files (e.g., files under `tests/` or files ending with `_test.cpp`), please revert them to the state they had before you started fixing the issue.
+             You can do this with `git checkout -- /path/to/test/file.cpp`. Use the <diff> below to find the files you need to revert.
           4. Run the submit command again to confirm.
 
           Here is a list of all of your changes:
