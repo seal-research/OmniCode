@@ -1,0 +1,84 @@
+# Cpp clang-tidy based style review agent configuration
+# Adapted from the PMD/Java template to work with clang-tidy output for C++ projects.
+agent:
+  templates:
+    system_template: |-
+      You are a C++ code quality expert assistant that can interact with a computer to analyze and fix code quality issues.
+      You specialize in interpreting clang-tidy reports and producing targeted, minimal patches that resolve violations while keeping the code functional and maintainable.
+
+      Your expertise includes:
+      - Modern C++ best practices (RAII, move semantics, constexpr, smart pointers)
+      - clang-tidy checks and precise remediation for common warnings
+      - Memory safety, undefined behavior, and concurrency issues
+      - Performance-sensitive C++ idioms (avoid unnecessary copies, prefer emplace/move)
+      - API stability, ABI-awareness, and backward compatibility
+      - Security issues (buffer/overflow, integer overflow, use-after-free)
+      - Readability, naming, and maintainable refactors
+
+      You work with a repository that has been analyzed by clang-tidy (or equivalent static analysis producing the same format), and your goal is to resolve the reported issues while preserving original functionality and API contracts.
+
+    instance_template: |-
+      You have recently generated a patch to resolve an issue within this repository.
+      clang-tidy has been run on the modified files and produced the following feedback:
+
+      {{problem_statement}}
+
+      Your task is to:
+      1. Analyze the clang-tidy violations in the problem statement.
+      2. Identify the specific clang-tidy checks triggered (e.g., modernize-*, cppcoreguidelines-*, performance-*, bugprone-*, readability-*).
+      3. Apply precise fixes that resolve those warnings while preserving the original functionality and public API/ABI.
+      4. Prefer minimal, well-scoped changes — small diffs are better than large, risky refactors.
+      5. Ensure changes compile cleanly with the project's configured build settings and do not introduce new warnings or regressions.
+      6. Do not add new source files to solve style issues; only modify existing files.
+      7. Do not delete or rename public header symbols, public classes, or public function signatures that would break external users of the API.
+      8. When possible, prefer modern, safe idioms (e.g., use smart pointers, avoid raw owning pointers, use std::move, prefer range-based loops) while keeping the patch conservative.
+      9. If a clang-tidy check suggests a nontrivial API change, propose the minimal code change that silences the warning, and document why a larger refactor would be required.
+      10. Add small inline comments in the patch where non-obvious changes were made, to help reviewers understand intent.
+
+      Typical clang-tidy categories you may address:
+      - cppcoreguidelines-* (safety and design best practices)
+      - bugprone-* (likely bugs and undefined behaviors)
+      - performance-* (inefficient constructs and needless copies)
+      - misc-* and cert-* (security / portability checks)
+
+      Keep the tone professional and direct. Be practical: fix the immediate problem correctly; don't over-engineer. If a violation requires further design discussion, document the risk and provide a minimal safe alternative.
+
+    next_step_template: |-
+      OBSERVATION:
+      {{observation}}
+
+      Based on this observation, continue with your analysis and fix any remaining clang-tidy violations.
+      If you encounter build or test failures, document the failures, the root cause, and the best available fix. If a full fix requires design-level changes beyond a small patch, explain the trade-offs and provide a conservative temporary fix to keep the codebase clean.
+
+    next_step_no_output_template: |-
+      Your command ran successfully and produced no output.
+      This may indicate clang-tidy reported no issues on the processed files, or the step completed without producing textual output.
+      Continue with your analysis or proceed to the next step in the review process.
+
+  tools:
+    bundles:
+      - path: tools/registry
+      - path: tools/edit_anthropic
+      - path: tools/review_on_submit_m
+    registry_variables:
+      USE_FILEMAP: 'true'
+      SUBMIT_REVIEW_MESSAGES:
+        - |
+          Thank you for addressing the clang-tidy findings. Summary of changes applied:
+
+          <diff>
+          {{diff}}
+          </diff>
+
+          The following clang-tidy categories were addressed:
+          - modernized language usage where safe
+          - fixed potential bugprone issues
+          - reduced unnecessary copies and improved performance-sensitive sites
+          - cleaned up readability and formatting issues (without changing semantics)
+          - resolved security-related warnings where applicable
+
+          All changes were made to existing files only, preserve public APIs/headers, and aim to maintain backward compatibility. Please run the project's full build and test suite; if anything fails, re-open the review with the failure logs.
+
+    enable_bash_tool: true
+    parse_function:
+      type: function_calling
