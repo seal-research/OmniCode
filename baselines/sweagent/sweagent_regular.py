@@ -133,6 +133,9 @@ def run_sweagent_single(
     
     if 'java' in mode or 'cpp' in mode:
         image = f"omnicodeorg/omnicode:{instance['repo'].replace('/', '_')}_base"
+    elif mode == "stylereview-python": 
+        # org__repo-instanceid_styleid (python style review instance id) => org__repo-instanceid (image name)
+        image = f"omnicodeorg/omnicode:{'_'.join(instance['instance_id'].rsplit('_')[0:-1])}"
     else:
         image = f"omnicodeorg/omnicode:{instance['instance_id']}"
 
