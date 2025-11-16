@@ -29,7 +29,7 @@ cd <submodule_path>
 pip install .
 ```
 
-> NOTE: Running `pip install .` in multi-swe-bench installs multi=swe-bench as package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local CodeArena.
+> NOTE: Running `pip install .` in multi-swe-bench installs multi-swe-bench as package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local CodeArena.
 
 ## CodeArena Evaluation
 
