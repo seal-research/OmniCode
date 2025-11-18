@@ -9,9 +9,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -262,9 +260,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -532,9 +528,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -699,9 +693,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -1001,9 +993,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -1394,9 +1384,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -1542,9 +1530,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -1723,9 +1709,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -2016,9 +2000,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -2169,10 +2151,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -2484,9 +2463,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -2780,9 +2757,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -2928,9 +2903,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -3125,9 +3098,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -3371,9 +3342,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -3510,10 +3479,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -3878,9 +3844,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -3975,10 +3939,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -4039,9 +4000,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -4143,9 +4102,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -4403,9 +4360,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -4789,9 +4744,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -4944,9 +4897,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -5029,9 +4980,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -5182,10 +5131,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -5693,9 +5639,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -5960,9 +5904,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -6332,9 +6274,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -6627,9 +6567,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -6852,9 +6790,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -7091,9 +7027,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -7393,9 +7327,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -7483,9 +7415,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -7706,9 +7636,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -7964,9 +7892,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -8054,9 +7980,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -8193,9 +8117,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -8353,9 +8275,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -8457,9 +8377,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -8582,9 +8500,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -8672,9 +8588,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -8832,9 +8746,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -8929,9 +8841,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -9138,9 +9048,7 @@
     "hints_text": null,
     "created_at": "2023-07-17T20:28:41Z",
     "version": "5.0",
-    "FAIL_TO_PASS": [
-      "test_serialize_nested_class_method (migrations.test_writer.WriterTests.test_serialize_nested_class_method)"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_args_kwargs_signature (migrations.test_writer.OperationWriterTests.test_args_kwargs_signature)",
       "test_args_signature (migrations.test_writer.OperationWriterTests.test_args_signature)",
@@ -9228,10 +9136,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -9292,9 +9197,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -9331,9 +9234,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -9372,10 +9273,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -9596,10 +9494,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -9862,10 +9757,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -10128,10 +10020,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -10422,9 +10311,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -10543,9 +10430,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -10671,9 +10556,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -10896,9 +10779,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -11142,9 +11023,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -11444,9 +11323,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -11683,9 +11560,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -11915,9 +11790,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -12042,9 +11915,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -12267,9 +12138,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -12450,9 +12319,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -12535,9 +12402,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -12669,9 +12534,7 @@
     "hints_text": null,
     "created_at": "2023-02-05T19:15:22Z",
     "version": "1.12",
-    "FAIL_TO_PASS": [
-      "test_issue_24288"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_sympy_parser",
       "test_rationalize",
@@ -12740,10 +12603,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -13117,9 +12977,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",
@@ -13355,9 +13213,7 @@
     "created_at": "2024-11-14T03:19:30Z",
     "version": "2.11",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_contracts.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -13401,9 +13257,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -13526,9 +13380,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -13800,9 +13652,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -14032,9 +13882,7 @@
     "hints_text": null,
     "created_at": "2023-02-26T11:18:40Z",
     "version": "3.7",
-    "FAIL_TO_PASS": [
-      "lib/matplotlib/tests/test_pickle.py::test_complete[png]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "lib/matplotlib/tests/test_pickle.py::test_simple",
       "lib/matplotlib/tests/test_pickle.py::test_gcf",
@@ -14250,10 +14098,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -14323,10 +14168,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -14368,10 +14210,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -14539,10 +14378,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -14584,10 +14420,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -14685,10 +14518,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -14772,10 +14602,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -14824,10 +14651,7 @@
     "hints_text": null,
     "created_at": "2023-07-24T22:46:12Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "tests/test_directive_other.py::test_include_source_read_event",
-      "tests/test_directive_other.py::test_include_source_read_event_nested_includes"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/test_directive_other.py::test_toctree",
       "tests/test_directive_other.py::test_relative_toctree",
@@ -14869,9 +14693,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -15136,9 +14958,7 @@
     "hints_text": null,
     "created_at": "2023-03-09T11:08:51Z",
     "version": "5.1",
-    "FAIL_TO_PASS": [
-      "astropy/io/fits/tests/test_header.py::TestHeaderFunctions::test_floating_point_string_representation_card"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "astropy/io/fits/tests/test_header.py::test_shallow_copy",
       "astropy/io/fits/tests/test_header.py::test_init_with_header",
@@ -15380,9 +15200,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15489,9 +15307,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15535,9 +15351,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15588,9 +15402,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15634,9 +15446,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15701,9 +15511,7 @@
     "created_at": "2025-02-19T14:12:12Z",
     "version": "0.2",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/datagen/self_instruct/filter/instruction_filter_tests.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15747,10 +15555,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15801,10 +15606,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15869,10 +15671,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15944,10 +15743,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -15998,10 +15794,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -16052,10 +15845,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -16113,10 +15903,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -16167,10 +15954,7 @@
     "created_at": "2024-12-07T10:37:05Z",
     "version": "2021.12",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "test/test_jsinterp.py",
-      "test/test_youtube_signature.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -16216,10 +16000,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -16544,10 +16325,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -16837,10 +16615,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -17305,10 +17080,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -17612,10 +17384,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -18052,10 +17821,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -18352,10 +18118,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -18645,10 +18408,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -18966,10 +18726,7 @@
     "hints_text": null,
     "created_at": "2022-12-18T00:04:22Z",
     "version": "0.12",
-    "FAIL_TO_PASS": [
-      "tests/_core/test_plot.py::TestLegend::test_legend_has_no_offset",
-      "tests/test_relational.py::TestRelationalPlotter::test_legend_has_no_offset"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "tests/_core/test_plot.py::TestInit::test_empty",
       "tests/_core/test_plot.py::TestInit::test_data_only",
@@ -19257,9 +19014,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -19317,9 +19072,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -19356,9 +19109,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -19395,9 +19146,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -19448,9 +19197,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -19487,9 +19234,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -19526,9 +19271,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -19593,9 +19336,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -19632,9 +19373,7 @@
     "created_at": "2020-06-06T03:48:18Z",
     "version": "0.55",
     "PASS_TO_PASS": [],
-    "FAIL_TO_PASS": [
-      "tests/test_jsonable_encoder.py"
-    ],
+    "FAIL_TO_PASS": [],
     "bad_patches": [],
     "style_review": {
       "total_files": 1,
@@ -19673,9 +19412,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -19927,9 +19664,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -20083,9 +19818,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -20344,9 +20077,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -20626,9 +20357,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -20754,9 +20483,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -20875,9 +20602,7 @@
     "hints_text": null,
     "created_at": "2015-12-16T14:57:00Z",
     "version": "2.9",
-    "FAIL_TO_PASS": [
-      "test_requests.py::TestRequests::test_binary_put"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "test_requests.py::TestRequests::test_entry_points",
       "test_requests.py::TestRequests::test_invalid_url",
@@ -21145,10 +20870,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -21439,10 +21161,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -21705,10 +21424,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -22020,10 +21736,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -22251,10 +21964,7 @@
     "hints_text": null,
     "created_at": "2023-04-17T16:33:08Z",
     "version": "1.3",
-    "FAIL_TO_PASS": [
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_drop_intermediate",
-      "sklearn/metrics/tests/test_ranking.py::test_roc_curve_with_probablity_estimates[42]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[True]",
       "sklearn/metrics/tests/test_ranking.py::test_roc_curve[False]",
@@ -22510,9 +22220,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",
@@ -22645,9 +22353,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",
@@ -22934,9 +22640,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",
@@ -23062,9 +22766,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",
@@ -23246,9 +22948,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",
@@ -23360,9 +23060,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",
@@ -23467,9 +23165,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",
@@ -23707,9 +23403,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",
@@ -23919,9 +23613,7 @@
     "hints_text": null,
     "created_at": "2022-06-26T13:53:24Z",
     "version": "7.2",
-    "FAIL_TO_PASS": [
-      "testing/test_unittest.py::test_pdb_teardown_skipped_for_classes[@unittest.skip]"
-    ],
+    "FAIL_TO_PASS": [],
     "PASS_TO_PASS": [
       "testing/test_unittest.py::test_simple_unittest",
       "testing/test_unittest.py::test_runTest_method",

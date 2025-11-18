@@ -414,6 +414,8 @@ def main():
                         help="Run the Multi-SWE-Bench TestGeneration benchmark")
     parser.add_argument("--StyleReview", action="store_true",
                         help="Run the StyleReview benchmark")
+    parser.add_argument("--PythonStyleReview", action="store_true",
+                        help="Run the PythonStyleReview benchmark")
 
     # Style review specific parameters
     parser.add_argument("--min_score", type=float, default=None,
@@ -534,6 +536,30 @@ def main():
             split="test",
             instance_ids=args.instance_ids,
             predictions_path=predictions_map["CodeReview"],
+            max_workers=args.max_workers,
+            force_rebuild=args.force_rebuild,
+            cache_level=args.cache_level,
+            clean=args.clean,
+            open_file_limit=args.open_file_limit,
+            run_id=args.run_id,
+            timeout=args.timeout,
+            # namespace=,
+            # rewrite_reports=,
+            # modal=,
+            # instance_image_tag=,
+            # report_dir=,
+            use_apptainer=args.use_apptainer,
+            local=local
+        )
+
+    if "PythonStyleReview" in active_flags:
+        print("Executing Python Style Review...")
+        execute_command(
+            RegularEval,
+            dataset_name=args.dataset_name,
+            split="test",
+            instance_ids=args.instance_ids,
+            predictions_path=predictions_map["PythonStyleReview"],
             max_workers=args.max_workers,
             force_rebuild=args.force_rebuild,
             cache_level=args.cache_level,
