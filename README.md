@@ -9,14 +9,12 @@ CodeArena requires `Python 3.13` and its dependecies can be installed via `pip i
 CodeArena is currently set up to work with a specific swebench and multiswebench version which can be installed using:
 
 ```bash
-git clone git@github.com:seal-research/SWE-bench.git
 cd SWE-bench
 pip install .
 cd ..
 ```
 
 ```bash
-git clone https://github.com/seal-research/multi-swe-bench.git
 cd multi-swe-bench
 pip install .
 ```
@@ -35,7 +33,7 @@ pip install .
 
 To run the full CodeArena benchmark you can pass the corresponding flags to the evaluation command line tool.
 
-The `codearena` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `CodeReview`. We further support CodeReview, which exposes the model to an inital bad patch and requires to incorporate external review feedback to correct this. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
+The `codearena` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `ReviewResponse`. We further support ReviewResponse, which exposes the model to an inital bad patch and requires to incorporate external review feedback to correct this. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
 
 ### Example 1: Running `BugFixing` for a single instance
 
@@ -53,12 +51,12 @@ python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --ins
 The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path`
 
 ```bash
-   python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995
+   python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995 --g2 False
 ```
 
 ## Supported Tasks
 
-In this section you will find instructions on the different specifications of our tasks **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Fixing**!
+In this section you will find instructions on the different specifications of our tasks **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Response**!
 
 ---
 
@@ -86,7 +84,7 @@ In this section you will find instructions on the different specifications of ou
 
 ---
 
-### Review Fixing (`--BugFixing`)
+### Review Response (`--BugFixing`)
 
 - **Description**: The agent receives a problem description, a failed patch, and a review explaining the failure. It uses this context to avoid repeating mistakes and implements an improved fix. The evaluation is the same as BugFixing since we check whether the predicted patch passes the final tests.
 - **Evaluation**: Success is measured by whether the improved patch resolves the issue while avoiding pitfalls highlighted in the review.
@@ -103,7 +101,7 @@ In this section you will find instructions on the different specifications of ou
 
 1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench_local/prepare_eval`
 2. From the multiswebench_local directory, `run python prepare_eval.py`
-3. From the codearena directory, run `python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids "INSERT YOUR INSTANCE HERE EX: elastic/logstash:17021" --mswe_phase all --force_rebuild True --clean True`
+3. From the codearena directory, run `python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids elastic__logstash_17021 --mswe_phase all --force_rebuild True --clean True --use_apptainer False --g2 False`
 
 For now, you should stick with the original three java repos (elastic/logstash, alibaba/fastjson, mockito/mockito), since there may be some issues with the new ones that were just added very recently.
 
@@ -136,10 +134,7 @@ Prerequisites:
 Example Command:
 
 ```bash
-# run without /scratch and apptainer
-python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids mockito__mockito_3173 --mswe_phase all --force_rebuild True --clean True --use_apptainer False --g2 False
-# run with /scratch and apptainer
-python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids mockito__mockito_3173 --mswe_phase all --force_rebuild True --clean True --use_apptainer True --g2 True
+python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids google__gson_1093 --mswe_phase all --force_rebuild True --clean True --use_apptainer False --g2 False
 ```
 
 ### Java Test Generation
@@ -153,13 +148,13 @@ Use the `--MSWETestGeneration` flag to run test generation for Java repos suppor
 You can run test generation testing as follows. The tags work how they work for python test generation.
 
 ```bash
-python codearena.py --MSWETestGeneration --dataset_name data/multiswebench_data/mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775
+python codearena.py --MSWETestGeneration --dataset_name data/multiswebench_data/mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775 --use_apptainer False --g2 False
 ```
 
 #### Example Command to run MSWETestGeneration on newly onboarded instances:
 
 ```bash
-python codearena.py --MSWETestGeneration --dataset_name data/codearena_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586
+python codearena.py --MSWETestGeneration --dataset_name data/codearena_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586 --use_apptainer False --g2 False
 ```
 
 ### Java Style Review
@@ -169,7 +164,7 @@ Java style review has been configured to work using two different types of tools
 #### Example Command to run Java Style Review:
 
 ```bash
-python codearena.py --StyleReview --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache/dubbo:10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle]
+python codearena.py --StyleReview --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache__dubbo_10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle] --use_apptainer False --g2 False
 ```
 
 #### File Formats
@@ -209,7 +204,7 @@ An example for a java instance in the same codearena format as the python exampl
 
 Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each patch in the codearena instance (gold, and each bad patch in the bad patches list). Each of these folders has the files from a multi-swe-bench run, as generated by multi-swe-bench. Additionally, outside of the folders is a `report.json` file. This gives an overall report on which test cases passed and failed for each instance, all in one place.
 
-#### Overall Status and Notes for Future Work
+<!-- #### Overall Status and Notes for Future Work
 
 1. Multiple Instance at once
 
@@ -227,7 +222,7 @@ Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each 
 
 4. Language Expansion
 
-   - Theoretically, the pipeline should not need to be changed to work for other languages supported by Multi-SWE-Bench. However, this remains untested.
+   - Theoretically, the pipeline should not need to be changed to work for other languages supported by Multi-SWE-Bench. However, this remains untested. -->
 
 ## LLM API Key
 
@@ -240,21 +235,19 @@ We have configured a basic swe-agent implementation to test on our repository.
 Install SWE-agent with the following command -
 
 ```bash
-git clone git@github.com:seal-research/SWE-agent.git
-cd SWE-agent
+cd SWE-ReX
 pip install -e .
 cd ..
-git clone git@github.com:seal-research/SWE-ReX.git
-cd SWE-ReX
+cd SWE-agent
 pip install -e .
 cd ..
 ```
 
 ```bash
 # run without /scratch and apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 # run with /scratch and apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, testgen-java, stylereview, reviewfix] --g2 True --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, , bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 True --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 ```
 
 ### Running SWE-Agent for Java Instances
@@ -328,7 +321,7 @@ At this point, the dataset will include bad patch entries but they are not yet c
 ```bash
 python baselines/badpatchllm/generate_review.py \
 --output_dir {your chosen output directory} \
---api_key {your api key (at this time must be a gemini api key)} \
+--api_key {your api key} \
 --input_tasks {data/multiswebench_data/mswebench_instances.json or data/codearena_instances.json}\
 --num_reviews_per_patch 1 \
 --instance_ids {instance ids that you added bad patches for}
@@ -384,12 +377,12 @@ python gc/multivm.py \
 
 <div align="center">
 
-|                 | Python (Tasks) | Java (Tasks) |
-| --------------- | -------------- | ------------ |
-| Base Instances  | Complete       | Complete     |
-| Test Generation | Complete       | In progress  |
-| Code Review     | Complete       | In progress  |
-| Style Review    | Complete       | In progress  |
+|                 | Python (Tasks) | Java (Tasks) | Cpp (Tasks)  |
+| --------------- | -------------- | ------------ | ------------ |
+| Base Instances  | Complete       | Complete     | Complete     |
+| Test Generation | Complete       | Complete     | Complete     |
+| Code Review     | Complete       | Complete     | Complete     |
+| Style Review    | Complete       | Complete     | Complete     |
 
 </div>
 
@@ -397,16 +390,16 @@ python gc/multivm.py \
 
 <div align="center">
 
-|                 | Python (Tasks) | Java (Tasks) |
-| --------------- | -------------- | ------------ |
-| Base Instances  | 716            | 128/128      |
-| Test Generation | 300/716        | 0/128        |
-| Review Response | 300/716        | 0/128        |
-| Style Review    | 716/716        | 0/128        |
+|                 | Python (Tasks) | Java (Tasks) | Cpp (Tasks)  |
+| --------------- | -------------- | ------------ | ------------ |
+| Base Instances  | 273            | 109          | 112          |
+| Test Generation | 164            | 44           | 79           |
+| Review Response | 164            | 44           | 79           |
+| Style Review    | 144            | 124          | 147          |
 
 </div>
 
-#### Python Instances Breakdown
+<!-- #### Python Instances Breakdown
 
 <div align="center">
 
@@ -432,4 +425,4 @@ python gc/multivm.py \
 | fastapi/fastapi           | 26    |
 | statsmodels/statsmodels   | 23    |
 
-</div>
+</div> -->
