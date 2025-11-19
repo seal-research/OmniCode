@@ -556,7 +556,7 @@ def main():
         print("Executing Python Style Review...")
         execute_command(
             RegularEval,
-            dataset_name=args.dataset_name,
+            dataset_name="data/codearena_style_instances_python.json",
             split="test",
             instance_ids=args.instance_ids,
             predictions_path=predictions_map["PythonStyleReview"],
