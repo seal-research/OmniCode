@@ -7,3 +7,4 @@ fire
 google-generativeai
 tree-sitter
 tree-sitter-python
+scipy
