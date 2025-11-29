@@ -249,3 +249,4 @@ data/python_style_review_dataset/python_style_review_dataset/*
 
 *.json
 *.csv
+*.jsonl
