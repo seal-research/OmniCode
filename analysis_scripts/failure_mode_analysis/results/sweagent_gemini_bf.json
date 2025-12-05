@@ -127,7 +127,7 @@
     "sympy__sympy-24661",
     "ytdl-org__youtube-dl-28801"
   ],
-  "failed_localisation": [
+  "failed_localization": [
     "astropy__astropy-13453",
     "django__django-11551",
     "django__django-11734",
@@ -182,7 +182,7 @@
   ],
   "INCORRECT_FIX_COUNT": 97,
   "PREMATURE_SUBMIT_COUNT": 27,
-  "FAILED_LOCALISATION_COUNT": 31,
+  "FAILED_LOCALIZATION_COUNT": 31,
   "INVALID_PATCH_COUNT": 3,
   "NO_PATCH_GENERATED_COUNT": 9,
   "EMPTY_PATCH_COUNT": 2,

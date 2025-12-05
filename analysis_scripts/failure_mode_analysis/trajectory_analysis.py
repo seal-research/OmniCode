@@ -15,8 +15,8 @@ Failure Modes
 │   │      → Category: Invalid Patch
 │   │
 │   ├── Patch in Wrong File
-|   |      → Reason: Localisation Error
-|   |      → Category: Failed Localisation
+|   |      → Reason: Localization Error
+|   |      → Category: Failed Localization
 │   │
 │   └── Patch in Correct File
 │       │
@@ -117,24 +117,6 @@ def detect_auto_submit(traj: dict) -> bool:
     return False
 
 
-def detect_failed_build(traj: dict) -> bool:
-    for step in traj.get("trajectory", []):
-        s = step.get("state", {})
-        if s.get("build_failed") is True:
-            return True
-        obs = step.get("observation", "") or ""
-        if isinstance(obs, str) and "build failed" in obs.lower():
-            return True
-    return False
-
-
-def detect_max_cost(traj: dict) -> bool:
-    for step in traj.get("trajectory", []):
-        if step.get("state", {}).get("max_cost") is True:
-            return True
-    return False
-
-
 def detect_submit_without_patch(traj: dict) -> bool:
     for step in traj.get("trajectory", []):
         if isinstance(step.get("action"), str) and "submit" in step["action"].lower():
@@ -150,15 +132,13 @@ def analyze_unresolved_traj(traj: dict, gold_diff: str) -> str:
     patch_generated = detect_patch_generated(traj)
     correct_file = detect_correct_file(traj, gold_diff)
     auto_submit = detect_auto_submit(traj)
-    build_failed = detect_failed_build(traj)
-    max_cost = detect_max_cost(traj)
     submit_without_patch = detect_submit_without_patch(traj)
 
     if patch_generated:
         if auto_submit:
             return "premature_submit"
         elif not correct_file:
-            return "failed_localisation"
+            return "failed_localization"
         else:
             return "incorrect_fix"
 
