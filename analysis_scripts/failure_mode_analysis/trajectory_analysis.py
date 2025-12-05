@@ -191,7 +191,7 @@ def categorize_with_ref(ref_json_path: str, traj_folder: str):
             # Not resolved & not unresolved
             if patch_generated:
                 if detect_auto_submit(traj):
-                    reason = "premature_submit"
+                    reason = "failed_tool_call_submission"
                 else:
                     reason = "invalid_patch"
             else:
