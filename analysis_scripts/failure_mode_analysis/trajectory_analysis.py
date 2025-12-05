@@ -36,8 +36,12 @@ Failure Modes
            → Category: No Patch Generated
 
 Example Command: 
-
 python trajectory_analysis.py --traj_dir baselines/logs --ref ref_results.json 
+
+Arguments:
+--traj_dir: Path to directory containing sweagent run logs
+--ref: Path to file that contains resolved/unresolved results
+--output: Output file path
 
 """
 
