@@ -4,8 +4,27 @@ Welcome to **OmniCode[CodeArena]**! This repository allows you to evaluate perfo
 
 ## Setup
 
+### Environment
 CodeArena requires `Python 3.13` and its dependecies can be installed via `pip install -r requirements.txt`
 
+### Dataset
+Our dataset is currently located on HuggingFace at ([seal-research/OmniCode](https://huggingface.co/datasets/seal-research/OmniCode/tree/main)). 
+To use OmniCode, you will have to pull/download the data from our hugging face repo to the `./data` directory. 
+
+```
+OmniCode/   
+└── data/
+   ├── codearena_instances_python.json
+   ├── codearena_instances_java.json
+   ├── codearena_instances_cpp.json
+   ├── codearena_style_instances_python.json
+   ├── codearena_style_instances_java.json
+   └── codearena_style_instances_cpp.json
+```
+
+
+
+### Submodules
 CodeArena is currently set up to work with a specific swebench and multiswebench version which can be installed using:
 
 ```bash
@@ -28,6 +47,8 @@ pip install .
 ```
 
 > NOTE: Running `pip install .` in multi-swe-bench installs multi-swe-bench as package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local CodeArena.
+
+
 
 ## CodeArena Evaluation
 
