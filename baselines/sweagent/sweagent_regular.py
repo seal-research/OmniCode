@@ -117,6 +117,7 @@ def get_reviewfix_faux_problem_statement(instance: dict) -> str:
 
 def run_sweagent_single(
     instance: dict,
+    programming_languages: str,
     model_name: str,
     api_key: str | None,
     output_dir: Path,
@@ -130,8 +131,8 @@ def run_sweagent_single(
 
     if mode not in CONFIG_FILE_MAP:
         raise RuntimeError(f"Unknown mode: {mode}")
-    
-    if 'java' in mode or 'cpp' in mode:
+
+    if programming_languages in ["java", "cpp"]:
         image = f"omnicodeorg/omnicode:{instance['repo'].replace('/', '_')}_base"
     elif mode == "stylereview-python": 
         # org__repo-instanceid_styleid (python style review instance id) => org__repo-instanceid (image name)
@@ -366,6 +367,7 @@ def main(
             raise RuntimeError(f"Unsupported data file type: {input_tasks_path.suffix}")
     else:
         dataset = load_dataset(str(input_tasks_path))
+    programming_languages = input_tasks_path.stem.split("_")[-1]
 
     if isinstance(dataset, dict):
         dataset = dataset.get('test', dataset)
@@ -408,7 +410,7 @@ def main(
             continue
         output_dict = {"instance_id": instance_id}
         output_dict.update(basic_args)
-        full_output, model_patch = run_sweagent_single(datum, model_name=model_name, output_dir=output_dir_path, api_key=api_key, mode=mode, thinking_budget=thinking_budget, use_apptainer=use_apptainer, g2=g2)
+        full_output, model_patch = run_sweagent_single(datum, programming_languages=programming_languages, model_name=model_name, output_dir=output_dir_path, api_key=api_key, mode=mode, thinking_budget=thinking_budget, use_apptainer=use_apptainer, g2=g2)
         output_dict["full_output"] = full_output
         output_dict["model_patch"] = model_patch
         output_json = json.dumps(output_dict) + '\n'
