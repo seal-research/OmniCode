@@ -371,7 +371,7 @@ def main():
     parser = argparse.ArgumentParser(description="Run CodeArena Benchmarks")
 
     # Common parameters
-    parser.add_argument("--dataset_name", default="data/codearena_instances.json",
+    parser.add_argument("--dataset_name", default="data/codearena_instances_python.json",
                         help="Name of the dataset")
     parser.add_argument("--predictions_path", nargs="+", required=True,
                         help="Paths to predictions files. Use 'gold' for gold patches.")
@@ -433,6 +433,7 @@ def main():
     args = parser.parse_args()
 
     local = False if args.g2 else True
+    print(args.g2, local)
 
     # Collect active flags
     active_flags = []

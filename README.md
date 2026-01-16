@@ -36,6 +36,7 @@ cd ..
 ```bash
 cd multi-swe-bench
 pip install .
+cd ..
 ```
 
 or if you are comfortable using git submodules you can use:
@@ -64,7 +65,7 @@ Passing in the path to actual predictions here will enable evaluating on generat
 This command with build the docker image and run the evaluation on the instance `astropy__astropy-13033` (which is a bug in the astropy library).
 
 ```bash
-python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13033 --use_apptainer False --g2 False
+python codearena.py --BugFixing --dataset_name data/codearena_instances_python.json --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13236 --use_apptainer False --g2 False
 ```
 
 ### Example 2: Running `TestGeneration` for single instance
