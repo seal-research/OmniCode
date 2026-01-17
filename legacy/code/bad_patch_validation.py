@@ -1,4 +1,4 @@
-import codearena
+import omnicode
 import os
 import argparse
 import json

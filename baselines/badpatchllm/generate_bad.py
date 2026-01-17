@@ -23,7 +23,7 @@ from swebench.harness.utils import str2bool
 import difflib
 import re
 
-from codearena import clean_docker_images, setup_multiswebench_config, run_multiswebench_phase
+from omnicode import clean_docker_images, setup_multiswebench_config, run_multiswebench_phase
 # from google import genai
 
 
