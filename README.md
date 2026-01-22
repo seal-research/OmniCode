@@ -1,6 +1,6 @@
 # OmniCode
 
-Welcome to **OmniCode[OmniCode]**! This repository allows you to evaluate performance on various Software Development Activities for different models and datasets. Below, you'll find the commands to test your setup and evaluate the results. OmniCode requires you to have docker set up and running prior to executing Evaluation.
+Welcome to **OmniCode**! This is benchmark for evaluating various LLM powered agents on various Software Developemnt activities . Below, you'll find the commands to test your setup and evaluate the results.
 
 ## Setup
 
