@@ -14,12 +14,12 @@ To use OmniCode, you will have to pull/download the data from our hugging face r
 ```
 OmniCode/   
 └── data/
-   ├── codearena_instances_python.json
-   ├── codearena_instances_java.json
-   ├── codearena_instances_cpp.json
-   ├── codearena_style_instances_python.json
-   ├── codearena_style_instances_java.json
-   └── codearena_style_instances_cpp.json
+   ├── omnicode_instances_python.json
+   ├── omnicode_instances_java.json
+   ├── omnicode_instances_cpp.json
+   ├── omnicode_style_instances_python.json
+   ├── omnicode_style_instances_java.json
+   └── omnicode_style_instances_cpp.json
 ```
 
 
@@ -65,7 +65,7 @@ Passing in the path to actual predictions here will enable evaluating on generat
 This command with build the docker image and run the evaluation on the instance `astropy__astropy-13033` (which is a bug in the astropy library).
 
 ```bash
-python omnicode.py --BugFixing --dataset_name data/codearena_instances_python.json --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13236 --use_apptainer False --g2 False
+python omnicode.py --BugFixing --dataset_name data/omnicode_instances_python.json --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13236 --use_apptainer False --g2 False
 ```
 
 ### Example 2: Running `TestGeneration` for single instance
@@ -176,7 +176,7 @@ python omnicode.py --MSWETestGeneration --dataset_name data/multiswebench_data/m
 #### Example Command to run MSWETestGeneration on newly onboarded instances:
 
 ```bash
-python omnicode.py --MSWETestGeneration --dataset_name data/codearena_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586 --use_apptainer False --g2 False
+python omnicode.py --MSWETestGeneration --dataset_name data/omnicode_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586 --use_apptainer False --g2 False
 ```
 
 ### Java Style Review
@@ -247,22 +247,22 @@ cd ..
 
 ```bash
 # run without /scratch and apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_python.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 # run with /scratch and apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_python.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, , bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 True --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, , bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 True --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 ```
 
 ### Running SWE-Agent for Java Instances
 
 Prerequisites:
 
-- Instance should be present in `data/codearena_instances_java.json`
+- Instance should be present in `data/omnicode_instances_java.json`
 - Base image should already built in your local docker (e.g. MSWEBugFixing)
 
 Example command:
 
 ```bash
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 ```
 
 ### Running SWE-Agent for Java Style Review
@@ -294,7 +294,7 @@ python baselines/sweagent/sweagent_regular.py -i sweagent_input.json -o sweagent
 
 #### General Setup:
 
-There is a omnicode_local dataset used by agentless. This dataset does not automatically update when there are changes to `mswebench_instances.json` or `codearena_instances_python.json`. If you change these files, you must make a trivial change to `synthetic_datagen/Agentless/codearena_local/codearena_local.py` in order for them to be reflected in Agentless.
+There is a codearena_local dataset used by agentless. This dataset does not automatically update when there are changes to `mswebench_instances.json` or `omnicode_instances_python.json`. If you change these files, you must make a trivial change to `synthetic_datagen/Agentless/codearena_local/codearena_local.py` in order for them to be reflected in Agentless.
 
 #### Usage:
 
@@ -324,7 +324,7 @@ At this point, the dataset will include bad patch entries but they are not yet c
 python synthetic_datagen/badpatchllm/generate_review.py \
 --output_dir {your chosen output directory} \
 --api_key {your api key} \
---input_tasks {data/multiswebench_data/mswebench_instances.json or data/codearena_instances_python.json}\
+--input_tasks {data/multiswebench_data/mswebench_instances.json or data/omnicode_instances_python.json}\
 --num_reviews_per_patch 1 \
 --instance_ids {instance ids that you added bad patches for}
 ```
@@ -339,7 +339,7 @@ python synthetic_datagen/badpatchllm/generate_bad.py \
     -k [KEY] \
     --run_id test \
     -n 3 \
-    -d data/codearena_instances_python.json \
+    -d data/omnicode_instances_python.json \
 ```
 
 Note: Raw diff files will also be outputted and found under the user specified output directory for ease of use.
@@ -348,9 +348,9 @@ Note: Raw diff files will also be outputted and found under the user specified o
 
 ```bash
 python synthetic_datagen/badpatchllm/generate_review.py \
-    --input_tasks data/codearena_instances_python.json \
+    --input_tasks data/omnicode_instances_python.json \
     --api_key [KEY] \
-    --output_dir baselines/badpatchllm/logs/gemini_outputs \
+    --output_dir synthetic_datagen/badpatchllm/logs/gemini_outputs \
     --instance_ids astropy__astropy-13033
 ```
 
