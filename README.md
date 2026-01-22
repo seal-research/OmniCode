@@ -294,11 +294,11 @@ python baselines/sweagent/sweagent_regular.py -i sweagent_input.json -o sweagent
 
 #### General Setup:
 
-There is a omnicode_local dataset used by agentless. This dataset does not automatically update when there are changes to `mswebench_instances.json` or `codearena_instances_python.json`. If you change these files, you must make a trivial change to `baselines/Agentless/codearena_local/codearena_local.py` in order for them to be reflected in Agentless.
+There is a omnicode_local dataset used by agentless. This dataset does not automatically update when there are changes to `mswebench_instances.json` or `codearena_instances_python.json`. If you change these files, you must make a trivial change to `synthetic_datagen/Agentless/codearena_local/codearena_local.py` in order for them to be reflected in Agentless.
 
 #### Usage:
 
-In the submodule folder under `baselines/Agentless` you can modify the values inside `run.sh`. There are existing examples in this file for openrouter. The general structure is as follows:
+In the submodule folder under `synthetic_datagen/Agentless` you can modify the values inside `run.sh`. There are existing examples in this file for openrouter. The general structure is as follows:
 
 ```bash
 run_id=$1
@@ -321,7 +321,7 @@ Wherever you have chosen to put your bad patches, they should be in one .jsonl f
 At this point, the dataset will include bad patch entries but they are not yet complete. You should add reviews for each of the bad patches as well. You can accomplish this by running:
 
 ```bash
-python baselines/badpatchllm/generate_review.py \
+python synthetic_datagen/badpatchllm/generate_review.py \
 --output_dir {your chosen output directory} \
 --api_key {your api key} \
 --input_tasks {data/multiswebench_data/mswebench_instances.json or data/codearena_instances_python.json}\
@@ -332,8 +332,8 @@ python baselines/badpatchllm/generate_review.py \
 ### Option 2: LLM Sourced Generation
 
 ```bash
-python baselines/badpatchllm/generate_bad.py \
-    -o baselines/badpatchllm/logs/gemini_outputs \
+python synthetic_datagen/badpatchllm/generate_bad.py \
+    -o synthetic_datagen/badpatchllm/logs/gemini_outputs \
     --instance_ids astropy__astropy-13033 \
     -m [gemini-2.5-flash-preview-4-17]  (recommended] \
     -k [KEY] \
@@ -347,7 +347,7 @@ Note: Raw diff files will also be outputted and found under the user specified o
 ### Generating Reviews
 
 ```bash
-python baselines/badpatchllm/generate_review.py \
+python synthetic_datagen/badpatchllm/generate_review.py \
     --input_tasks data/codearena_instances_python.json \
     --api_key [KEY] \
     --output_dir baselines/badpatchllm/logs/gemini_outputs \
