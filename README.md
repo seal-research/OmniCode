@@ -83,7 +83,7 @@ Passing in the path to actual predictions here will enable evaluating on generat
 This command with build the docker image and run the evaluation on the instance `astropy__astropy-13033` (which is a bug in the astropy library).
 
 ```bash
-python omnicode.py --BugFixing --dataset_name data/omnicode_instances_python.json --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13236 --use_apptainer False --g2 False
+python omnicode.py --BugFixing --dataset_name data/omnicode_instances_python.json --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13236 --use_apptainer False
 ```
 
 ### Example 2: Running `TestGeneration` for single instance
@@ -91,7 +91,7 @@ python omnicode.py --BugFixing --dataset_name data/omnicode_instances_python.jso
 The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path`
 
 ```bash
-   python omnicode.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995 --g2 False
+   python omnicode.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995
 ```
 
 ## Supported Tasks
@@ -141,7 +141,7 @@ In this section you will find instructions on the different specifications of ou
 
 1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench_local/prepare_eval`
 2. From the multiswebench_local directory, `run python prepare_eval.py`
-3. From the omnicode directory, run `python omnicode.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids elastic__logstash_17021 --mswe_phase all --force_rebuild True --clean True --use_apptainer False --g2 False`
+3. From the omnicode directory, run `python omnicode.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids elastic__logstash_17021 --mswe_phase all --force_rebuild True --clean True --use_apptainer False`
 
 For now, you should stick with the original three java repos (elastic/logstash, alibaba/fastjson, mockito/mockito), since there may be some issues with the new ones that were just added very recently.
 
@@ -174,7 +174,7 @@ Prerequisites:
 Example Command:
 
 ```bash
-python omnicode.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids google__gson_1093 --mswe_phase all --force_rebuild True --clean True --use_apptainer False --g2 False
+python omnicode.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids google__gson_1093 --mswe_phase all --force_rebuild True --clean True --use_apptainer False
 ```
 
 ### Java Test Generation
@@ -188,13 +188,13 @@ Use the `--MSWETestGeneration` flag to run test generation for Java repos suppor
 You can run test generation testing as follows. The tags work how they work for python test generation.
 
 ```bash
-python omnicode.py --MSWETestGeneration --dataset_name data/multiswebench_data/mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775 --use_apptainer False --g2 False
+python omnicode.py --MSWETestGeneration --dataset_name data/multiswebench_data/mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775 --use_apptainer False
 ```
 
 #### Example Command to run MSWETestGeneration on newly onboarded instances:
 
 ```bash
-python omnicode.py --MSWETestGeneration --dataset_name data/omnicode_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586 --use_apptainer False --g2 False
+python omnicode.py --MSWETestGeneration --dataset_name data/omnicode_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586 --use_apptainer False
 ```
 
 ### Java Style Review
@@ -204,7 +204,7 @@ Java style review has been configured to work using two different types of tools
 #### Example Command to run Java Style Review:
 
 ```bash
-python omnicode.py --StyleReview --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache__dubbo_10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle] --use_apptainer False --g2 False
+python omnicode.py --StyleReview --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache__dubbo_10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle] --use_apptainer False
 ```
 
 #### File Formats
@@ -264,10 +264,10 @@ cd ..
 ```
 
 ```bash
-# run without /scratch and apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
-# run with /scratch and apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, , bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 True --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+# run without apptainer
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, bugfixing-cpp, testgen-java, stylereview, reviewfix] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+# run with apptainer
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, , bugfixing-cpp, testgen-java, stylereview, reviewfix] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 ```
 
 ### Running SWE-Agent for Java Instances
@@ -280,7 +280,7 @@ Prerequisites:
 Example command:
 
 ```bash
-python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 ```
 
 ### Running SWE-Agent for Java Style Review
