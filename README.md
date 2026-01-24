@@ -18,7 +18,7 @@ cd OmniCode
 Our dataset is currently located on HuggingFace at ([seal-research/OmniCode](https://huggingface.co/datasets/seal-research/OmniCode/tree/main)). 
 To use OmniCode, you will have to pull/download the data from our hugging face repo to the `./data` directory. 
 
-```
+```bash
 pip install -U hf
 hf download seal-research/OmniCode \
   --repo-type dataset \
