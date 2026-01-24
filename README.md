@@ -22,7 +22,11 @@ OmniCode/
    └── omnicode_style_instances_cpp.json
 ```
 
-
+### Clone
+We have some submodules have to be clone as well. You can clone our repo by: 
+```bash
+git clone --recursive git@github.com:seal-research/OmniCode.git
+```
 
 ### Submodules
 OmniCode is currently set up to work with a specific swebench and multiswebench version which can be installed using:
