@@ -53,7 +53,9 @@ pip install .
 
 > NOTE: Running `pip install .` in multi-swe-bench installs multi-swe-bench as package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local OmniCode.
 
+### Apptainer
 
+We do support Apptainer mode in every one of our functions, which you can run without root permission. Follow the [official instruction](https://apptainer.org/docs/admin/main/installation.html#install-from-pre-built-packages) to install Apptainer first. When you want to use apptainer mode, turn --use_apptainer parameter into True in your command. If --use_apptainer is False, OmniCode would use Docker automatically. 
 
 ## OmniCode Evaluation
 
@@ -308,7 +310,7 @@ In the submodule folder under `synthetic_datagen/Agentless` you can modify the v
 run_id=$1
 instance=$2
 dataset=$3
-use_apptainer=true
+use_apptainer=false
 runs=25
 
 bash full_bad_patch_gen.sh "$instance" "$runs" "$run_id" {model name here (e.g. gemma-2-9b-it, llama-3-8b-instruct)} {provider name here (e.g. google, openrouter)} 'codearena_local' {coding language here (e.g. python, java, cpp)} "$dataset" "$use_apptainer"
