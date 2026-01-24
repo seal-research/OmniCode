@@ -55,7 +55,11 @@ pip install .
 
 ### Apptainer
 
-We do support Apptainer mode in every one of our functions, which you can run without root permission. Follow the [official instruction](https://apptainer.org/docs/admin/main/installation.html#install-from-pre-built-packages) to install Apptainer first. When you want to use apptainer mode, turn --use_apptainer parameter into True in your command. If --use_apptainer is False, OmniCode would use Docker automatically. 
+Compared to Docker, Apptainer is designed to run containers without requiring root privileges, making it more suitable for shared or restricted environments (e.g., HPC clusters).
+Docker is commonly used in service and cloud deployments but usually relies on root or privileged daemons.
+By supporting Apptainer, OmniCode enables containerized workflows for users who cannot use Docker due to permission or security constraints.
+
+Follow the [official instruction](https://apptainer.org/docs/admin/main/installation.html#install-from-pre-built-packages) to install Apptainer first. When you want to use apptainer mode, turn --use_apptainer parameter into True in your command. If --use_apptainer is False, OmniCode would use Docker automatically. 
 
 ## OmniCode Evaluation
 
