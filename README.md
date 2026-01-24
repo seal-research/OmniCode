@@ -7,9 +7,23 @@ Welcome to **OmniCode**! This is benchmark for evaluating various LLM powered ag
 ### Environment
 OmniCode requires `Python 3.13` and its dependecies can be installed via `pip install -r requirements.txt`
 
+### Clone
+We have some submodules have to be clone as well. You can clone our repo by: 
+```bash
+git clone --recursive git@github.com:seal-research/OmniCode.git
+cd OmniCode
+```
+
 ### Dataset
 Our dataset is currently located on HuggingFace at ([seal-research/OmniCode](https://huggingface.co/datasets/seal-research/OmniCode/tree/main)). 
 To use OmniCode, you will have to pull/download the data from our hugging face repo to the `./data` directory. 
+
+```
+pip install -U hf
+hf download seal-research/OmniCode \
+  --repo-type dataset \
+  --local-dir data
+```
 
 ```
 OmniCode/   
@@ -20,12 +34,6 @@ OmniCode/
    ├── omnicode_style_instances_python.json
    ├── omnicode_style_instances_java.json
    └── omnicode_style_instances_cpp.json
-```
-
-### Clone
-We have some submodules have to be clone as well. You can clone our repo by: 
-```bash
-git clone --recursive git@github.com:seal-research/OmniCode.git
 ```
 
 ### Submodules
