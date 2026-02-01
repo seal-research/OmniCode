@@ -15,7 +15,7 @@ from swebench.harness.constants import (
     INSTANCE_IMAGE_BUILD_DIR,
     MAP_REPO_VERSION_TO_SPECS,
 )
-from .CodeArena_test_spec import (
+from .OmniCode_test_spec import (
     get_test_specs_from_dataset,
     make_test_spec,
     TestSpec

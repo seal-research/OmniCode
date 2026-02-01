@@ -16,12 +16,12 @@ import select
 # from monkeypatched_swebench import swebench
 from swebench.harness.utils import str2bool
 from swebench.harness.run_evaluation import main as RegularEval
-# from CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
+# from OmniCode_grading import test_passed_prefix_match, test_failed_prefix_match
 
 from src import GenTestMain, PythonStyleReviewMain, MSWEGenTestMain, swebench, test_passed_prefix_match, test_failed_prefix_match
 
 CUR_DIR = Path(__file__).parent
-REPO_DATA_PATH = CUR_DIR / "data/codearena_repo_data.py"
+REPO_DATA_PATH = CUR_DIR / "data/omnicode_repo_data.py"
 REPO_DATA = eval(REPO_DATA_PATH.read_text())
 
 def execute_command(func, **kwargs):
@@ -368,10 +368,10 @@ def clean_docker_images(image_prefix, use_apptainer=False):
         print(f"Error cleaning Docker images: {e}")
 
 def main():
-    parser = argparse.ArgumentParser(description="Run CodeArena Benchmarks")
+    parser = argparse.ArgumentParser(description="Run Omnicode Benchmarks")
 
     # Common parameters
-    parser.add_argument("--dataset_name", default="data/codearena_instances_python.json",
+    parser.add_argument("--dataset_name", default="data/omnicode_instances_python.json",
                         help="Name of the dataset")
     parser.add_argument("--predictions_path", nargs="+", required=True,
                         help="Paths to predictions files. Use 'gold' for gold patches.")
@@ -433,7 +433,6 @@ def main():
     args = parser.parse_args()
 
     local = False if args.g2 else True
-    print(args.g2, local)
 
     # Collect active flags
     active_flags = []
@@ -469,9 +468,9 @@ def main():
         generate_gold_patch_predictions(dataset_files, max_instances=0)
         return
 
-    # Update constants for CodeArena tasks
-    codearena_flags = ["BugFixing", "TestGeneration", "CodeReview", "CodeMigration"]
-    if any(flag in active_flags for flag in codearena_flags):
+    # Update constants for Omni tasks
+    omnicode_flags = ["BugFixing", "TestGeneration", "CodeReview", "CodeMigration"]
+    if any(flag in active_flags for flag in omnicode_flags):
         for instance_repo in REPO_DATA:
             swebench.versioning.constants.MAP_REPO_TO_VERSION_PATHS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATHS"]
             swebench.versioning.constants.MAP_REPO_TO_VERSION_PATTERNS[instance_repo] = REPO_DATA[instance_repo]["MAP_REPO_TO_VERSION_PATTERNS"]
@@ -557,7 +556,7 @@ def main():
         print("Executing Python Style Review...")
         execute_command(
             RegularEval,
-            dataset_name="data/codearena_style_instances_python.json",
+            dataset_name="data/omnicode_style_instances_python.json",
             split="test",
             instance_ids=args.instance_ids,
             predictions_path=predictions_map["PythonStyleReview"],

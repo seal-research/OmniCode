@@ -19,10 +19,10 @@ from tqdm import tqdm
 from subprocess import Popen, PIPE, TimeoutExpired
 
 
-from .CodeArena_grading import get_eval_report_test_generation, get_fail_to_fail
-from .CodeArena_test_spec import make_test_spec, TestSpec
+from .OmniCode_grading import get_eval_report_test_generation, get_fail_to_fail
+from .OmniCode_test_spec import make_test_spec, TestSpec
 from swebench.harness.utils import str2bool
-from .utils import load_swebench_dataset, load_CodeArena_prediction_dataset, update_test_spec_with_specific_test_names
+from .utils import load_swebench_dataset, load_OmniCode_prediction_dataset, update_test_spec_with_specific_test_names
 from .run_evaluation_GenTests import get_dataset_from_preds
 
 from swebench.harness.constants import (
@@ -497,7 +497,7 @@ def main(
             instance_ids, 
             run_id=run_id, 
             generated_tests_path=predictions_path, 
-            codearena_instances=dataset_name # necessary because of current function structure
+            omnicode_instances=dataset_name # necessary because of current function structure
         )
     else:
         dataset = get_gold_predictions(dataset_name, instance_ids, split)

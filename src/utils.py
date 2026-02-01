@@ -1,4 +1,4 @@
-from .CodeArenaInstance import CodeArenaInstance
+from .OmniCodeInstance import OmniCodeInstance
 from datasets import Dataset, load_dataset
 from typing import cast
 import json
@@ -58,7 +58,7 @@ def copy_from_container(container, src_path: Path, dest_path: Path):
     except Exception as e:
         raise RuntimeError(f"Failed to copy {src_path} from container: {e}")
 
-def load_swebench_dataset(name="data/codearena_instances.json", split="test", instance_ids=None, full: bool = False) -> list[CodeArenaInstance]:
+def load_swebench_dataset(name="data/omnicode_instances.json", split="test", instance_ids=None, full: bool = False) -> list[OmniCodeInstance]:
     """
     Load dataset from local JSON file
     """
@@ -92,7 +92,7 @@ def load_swebench_dataset(name="data/codearena_instances.json", split="test", in
             if "gold_patch" not in instance:
                 instance["gold_patch"] = instance.get("patch", "")
 
-        return [cast(CodeArenaInstance, instance) for instance in dataset]
+        return [cast(OmniCodeInstance, instance) for instance in dataset]
     except Exception as e:
         print(f"Error loading {name}: {e}")
         raise
@@ -115,9 +115,9 @@ def merge_and_unpack(expected):
     merged = {key: list(set(value)) for key, value in merged.items()}  # Remove duplicates if needed
     return merged
 
-def load_CodeArena_prediction_dataset(
+def load_OmniCode_prediction_dataset(
     generated_tests_path: str,
-    codearena_instances: str,
+    omnicode_instances: str,
     instance_ids: list,
     save: bool = False
 ):
@@ -146,34 +146,34 @@ def load_CodeArena_prediction_dataset(
 
     generated_tests_df = pd.DataFrame(generated_tests)
 
-    # Load the CodeArena Instances file
-    with open(codearena_instances, 'r') as f:
-        codearena_instances_data = json.load(f)  # Load entire file as JSON
+    # Load the OmniCode Instances file
+    with open(omnicode_instances, 'r') as f:
+        omnicode_instances_data = json.load(f)  # Load entire file as JSON
 
-    codearena_instances_df = pd.DataFrame(codearena_instances_data)
+    omnicode_instances_df = pd.DataFrame(omnicode_instances_data)
 
     # Filter rows where `bad_patch` is not empty
 
-    codearena_instances_filtered = codearena_instances_df[
-    codearena_instances_df['bad_patches'].notna()
+    omnicode_instances_filtered = omnicode_instances_df[
+    omnicode_instances_df['bad_patches'].notna()
     ].copy()
-    # codearena_instances_filtered = codearena_instances_df.copy()
+    # omnicode_instances_filtered = omnicode_instances_df.copy()
 
     # Check for missing predictions
-    # codeArena_ids = set(codearena_instances_filtered['instance_id'])
+    # omnicode_ids = set(omnicode_instances_filtered['instance_id'])
     # generated_tests_ids = set(generated_tests_df['instance_id'])
 
-    # missing_preds = codeArena_ids - generated_tests_ids
+    # missing_preds = omnicode_ids - generated_tests_ids
     # if missing_preds:
     #     print(f"Warning: Missing predictions for {len(missing_preds)} instance IDs: {missing_preds}")
 
     # Rename `patch` column to `gold_patch` if needed
-    if 'patch' in codearena_instances_filtered.columns:
-        codearena_instances_filtered.rename(columns={'patch': 'gold_patch'}, inplace=True)
+    if 'patch' in omnicode_instances_filtered.columns:
+        omnicode_instances_filtered.rename(columns={'patch': 'gold_patch'}, inplace=True)
 
-    # Merge CodeArena Instances with Generated Tests
+    # Merge OmniCode Instances with Generated Tests
     merged_df = pd.merge(
-        codearena_instances_filtered,
+        omnicode_instances_filtered,
         generated_tests_df[['instance_id', 'model_patch', 'model_name_or_path']],
         on='instance_id',
         how='left'
@@ -248,7 +248,7 @@ def get_modified_added_files(patch_string):
 
 
 
-def get_test_directives(instance: CodeArenaInstance) -> list:
+def get_test_directives(instance: OmniCodeInstance) -> list:
     """
     Get test directives from the test_patch of a task instance
 

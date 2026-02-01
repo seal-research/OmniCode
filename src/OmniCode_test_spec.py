@@ -11,7 +11,7 @@ import os
 from dataclasses import dataclass
 from typing import Any, Union, cast
 
-from .CodeArenaInstance import CodeArenaInstance
+from .OmniCodeInstance import OmniCodeInstance
 
 from swebench.harness.constants import (
     DEFAULT_DOCKER_SPECS,
@@ -48,7 +48,7 @@ DIFF_MODIFIED_FILE_REGEX = r"--- a/(.*)"
 @dataclass
 class TestSpec:
     """
-    A test specification for a CodeArena instance.
+    A test specification for a OmniCode instance.
     """
     instance_id: str
     repo: str
@@ -182,13 +182,13 @@ class TestSpec:
             raise ValueError(f"Invalid architecture: {self.arch}")
 
 
-def get_test_specs_from_dataset(dataset: Union[list[CodeArenaInstance], list[TestSpec]]) -> list[TestSpec]:
+def get_test_specs_from_dataset(dataset: Union[list[OmniCodeInstance], list[TestSpec]]) -> list[TestSpec]:
     """
     Idempotent function that converts a list of SWEbenchInstance objects to a list of TestSpec objects.
     """
     if isinstance(dataset[0], TestSpec):
         return cast(list[TestSpec], dataset)
-    return list(map(make_test_spec, cast(list[CodeArenaInstance], dataset)))
+    return list(map(make_test_spec, cast(list[OmniCodeInstance], dataset)))
 
 
 def make_repo_script_list(specs, repo, repo_directory, base_commit, env_name):
@@ -242,7 +242,7 @@ def replace_uninstallable_packages_requirements_txt(requirement_str: str) -> str
     return "\n".join(requirements_replaced) + "\n"
 
 
-def make_env_script_list(instance: CodeArenaInstance,
+def make_env_script_list(instance: OmniCodeInstance,
                          specs: dict,
                          env_name: str) -> list[str]:
     """
@@ -653,9 +653,9 @@ def generate_patch_lint_script(repo_directory, base_commit, patch, pylint_output
 
 
 
-def make_test_spec(instance: CodeArenaInstance) -> TestSpec:
+def make_test_spec(instance: OmniCodeInstance) -> TestSpec:
     """
-    Create a TestSpec from a CodeArena instance.
+    Create a TestSpec from a OmniCode instance.
     """
 
     # Extract necessary information

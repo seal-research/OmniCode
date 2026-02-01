@@ -4,11 +4,11 @@ from pathlib import Path
 import os
 
 # CUR_DIR = Path(__file__).parent
-# REPO_DATA_PATH = CUR_DIR / "data/codearena_repo_data.py"
+# REPO_DATA_PATH = CUR_DIR / "data/omnicode_repo_data.py"
 CUR_DIR = os.getcwd()
-REPO_DATA_PATH = Path(CUR_DIR) / "data/codearena_repo_data.py"
+REPO_DATA_PATH = Path(CUR_DIR) / "data/omnicode_repo_data.py"
 REPO_DATA = eval(REPO_DATA_PATH.read_text())
-from .CodeArena_grading import test_passed_prefix_match, test_failed_prefix_match
+from .OmniCode_grading import test_passed_prefix_match, test_failed_prefix_match
 
 def monkey_patch_swebench():
     # Update constants in swebench

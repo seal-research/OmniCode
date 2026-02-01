@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-class CodeArenaInstance(TypedDict):
+class OmniCodeInstance(TypedDict):
     repo: str
     instance_id: str
     base_commit: str

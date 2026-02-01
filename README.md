@@ -91,7 +91,7 @@ python omnicode.py --BugFixing --dataset_name data/omnicode_instances_python.jso
 The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path`
 
 ```bash
-   python omnicode.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995
+   python omnicode.py --TestGeneration --dataset_name data/omnicode_instances_python.json --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995
 ```
 
 ## Supported Tasks

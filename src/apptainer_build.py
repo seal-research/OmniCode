@@ -10,7 +10,7 @@ from swebench.harness.docker_build import (
     setup_logger,
 )
 
-from .CodeArena_test_spec import get_test_specs_from_dataset
+from .OmniCode_test_spec import get_test_specs_from_dataset
 
 from swebench.harness.docker_build import BuildImageError
 
