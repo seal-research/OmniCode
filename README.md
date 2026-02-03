@@ -2,10 +2,59 @@
 
 Welcome to **OmniCode**! This is benchmark for evaluating various LLM powered agents on various Software Developemnt activities . Below, you'll find the commands to test your setup and evaluate the results.
 
+OmniCode synthetically builds multiple tasks out of a base dataset to holistically evaluate software
+engineering agents. Four different types of tasks that we consider: Bug fixing, test generation, responding to
+code review, and enforcing style guidelines.
+
+<img width="800" height="400" alt="image" src="https://github.com/user-attachments/assets/46a4e55c-d8fd-4940-a7ad-26ea746f6c54" />
+
+## Supported Tasks
+
+In this section, you will find details of the different specifications of our tasks: **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Response**!
+
+---
+
+### Bug Fixing Evaluation (`--BugFixing`)
+
+- **Description**: The agent receives a repository and PR description, identifies and applies minimal source code changes (excluding tests) to meet the specified requirements. It verifies the fix by reproducing the issue, applying the fix, re-running the relevant test, and ensuring completeness.
+- **Evaluation**: Success is measured by the fix passing all relevant tests without introducing unintended changes.
+- **Use Case**: Ideal for evaluating a model’s ability to make minimal, correct, and test-verified code changes.
+
+---
+
+### Test Generation Evaluation (`--TestGeneration`)
+
+- **Description**: The agent receives a repository and a problem description, then writes a new test in the repository’s test suite that reproduces the reported issue using the existing testing framework (e.g., pytest).
+- **Evaluation**: Success is measured by the test failing on incorrect implementations and passing on correct ones.
+- **Use Case**: Useful for assessing a model's ability to generate meaningful, differentiating test cases.
+
+<img width="500" height="210" alt="image" src="https://github.com/user-attachments/assets/6a59e91d-a824-4fb7-a18c-74b2cf0ecd7e" />
+
+---
+
+### Style Review Evaluation (`--StyleReview`)
+
+- **Description**: The agent runs a style check on a given instance, applies fixes for detected issues, and verifies functionality remains unaffected by re-running relevant tests.
+- **Evaluation**: Success is measured by the reduction of style violations without breaking functionality.
+- **Use Case**: Designed for scenarios where code quality and adherence to style guidelines are important.
+
+<img width="500" height="210" alt="image" src="https://github.com/user-attachments/assets/5eb69bcd-8266-4f06-bedd-b3b0aaf3886e" />
+
+---
+
+### Review Response Evaluation (`--BugFixing`)
+
+- **Description**: The agent receives a problem description, a failed patch, and a review explaining the failure. It uses this context to avoid repeating mistakes and implements an improved fix. The evaluation is the same as BugFixing since we check whether the predicted patch passes the final tests.
+- **Evaluation**: Success is measured by whether the improved patch resolves the issue while avoiding pitfalls highlighted in the review.
+- **Use Case**: Especially relevant for testing a model’s ability to apply reviewer feedback to refine implementations.
+
+<img width="300" height="550" alt="image" src="https://github.com/user-attachments/assets/485f47ac-7d40-4421-bd70-2b684689322e" />
+
+
 ## Setup
 
 ### Environment
-OmniCode requires `Python 3.13` and its dependecies can be installed via `pip install -r requirements.txt`
+OmniCode requires `Python 3.13` and its dependencies can be installed via `pip install -r requirements.txt`
 
 ### Clone
 We have some submodules have to be clone as well. You can clone our repo by: 
@@ -37,7 +86,7 @@ OmniCode/
 ```
 
 ### Submodules
-OmniCode is currently set up to work with a specific swebench and multiswebench version which can be installed using:
+OmniCode is currently set up to work with a specific swebench and multiswebench version, which can be installed using:
 
 ```bash
 cd SWE-bench
@@ -51,7 +100,7 @@ pip install .
 cd ..
 ```
 
-or if you are comfortable using git submodules you can use:
+Or if you are comfortable using git submodules, you can use:
 
 ```bash
 git submodule update --init --recursive
@@ -59,7 +108,7 @@ cd <submodule_path>
 pip install .
 ```
 
-> NOTE: Running `pip install .` in multi-swe-bench installs multi-swe-bench as package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local OmniCode.
+> NOTE: Running `pip install .` in multi-swe-bench installs multi-swe-bench as a package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local OmniCode.
 
 ### Apptainer
 
@@ -71,7 +120,7 @@ Follow the [official instruction](https://apptainer.org/docs/admin/main/installa
 
 ## OmniCode Evaluation
 
-To run the full OmniCode benchmark you can pass the corresponding flags to the evaluation command line tool.
+To run the full OmniCode benchmark, you can pass the corresponding flags to the evaluation command line tool.
 
 The `omnicode` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `ReviewResponse`. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
 
@@ -86,49 +135,13 @@ This command with build the docker image and run the evaluation on the instance 
 python omnicode.py --BugFixing --dataset_name data/omnicode_instances_python.json --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13236 --use_apptainer False
 ```
 
-### Example 2: Running `TestGeneration` for single instance
+### Example 2: Running `TestGeneration` for a single instance
 
 The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path`
 
 ```bash
    python omnicode.py --TestGeneration --dataset_name data/omnicode_instances_python.json --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995
 ```
-
-## Supported Tasks
-
-In this section you will find instructions on the different specifications of our tasks **Bug Fixing**, **Test Generation**, **Style Review**, and **Review Response**!
-
----
-
-### Bug Fixing (`--BugFixing`)
-
-- **Description**: The agent receives a repository and PR description, identifies and applies minimal source code changes (excluding tests) to meet the specified requirements. It verifies the fix by reproducing the issue, applying the fix, re-running the relevant test, and ensuring completeness.
-- **Evaluation**: Success is measured by the fix passing all relevant tests without introducing unintended changes.
-- **Use Case**: Ideal for evaluating a model’s ability to make minimal, correct, and test-verified code changes.
-
----
-
-### Test Generation (`--TestGeneration`)
-
-- **Description**: The agent receives a repository and a problem description, then writes a new test in the repository’s test suite that reproduces the reported issue using the existing testing framework (e.g., pytest).
-- **Evaluation**: Success is measured by the test failing on incorrect implementations and passing on correct ones.
-- **Use Case**: Useful for assessing a model's ability to generate meaningful, differentiating test cases.
-
----
-
-### Style Review (`--StyleReview`)
-
-- **Description**: The agent runs a style check on a given instance, applies fixes for detected issues, and verifies functionality remains unaffected by re-running relevant tests.
-- **Evaluation**: Success is measured by the reduction of style violations without breaking functionality.
-- **Use Case**: Designed for scenarios where code quality and adherence to style guidelines are important.
-
----
-
-### Review Response (`--BugFixing`)
-
-- **Description**: The agent receives a problem description, a failed patch, and a review explaining the failure. It uses this context to avoid repeating mistakes and implements an improved fix. The evaluation is the same as BugFixing since we check whether the predicted patch passes the final tests.
-- **Evaluation**: Success is measured by whether the improved patch resolves the issue while avoiding pitfalls highlighted in the review.
-- **Use Case**: Especially relevant for testing a model’s ability to apply reviewer feedback to refine implementations.
 
 ---
 
@@ -137,7 +150,7 @@ In this section you will find instructions on the different specifications of ou
 - **Note**: Bug Fixing and Test Generation agents also support Java repositories, including Java-specific build and test tooling. Please note that this is an experimental feature and may not always function correctly. In order to set up Java support, a few additional steps are needed:
 
 <!-- Datasets are currently included in repo -->
-<!-- 0. Download data from huggingface (it is expected to be placed under multiswebench_local/mswebench_dataset) -->
+<!-- 0. Download data from HuggingFace (it is expected to be placed under multiswebench_local/mswebench_dataset) -->
 
 1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench_local/prepare_eval`
 2. From the multiswebench_local directory, `run python prepare_eval.py`
@@ -147,7 +160,7 @@ For now, you should stick with the original three java repos (elastic/logstash, 
 
 The process often takes a while. The logging is a bit different than the normal swebench btw, it instead writes to a dedicated location under multiswebench_runs.
 
-Custom preds file can look like this for example:
+Custom preds file can look like this, for example:
 
 ```json
 [
@@ -161,7 +174,7 @@ Custom preds file can look like this for example:
 ]
 ```
 
-Should be saved in a json format and can replace gold in the example call above.
+Should be saved in a JSON format and can replace gold in the example call above.
 
 ### MSWEBugFixing for newly onboarded Java Tasks
 
@@ -179,7 +192,7 @@ python omnicode.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bu
 
 ### Java Test Generation
 
-Test Generation for Java follows mostly the same format as Test Generation for python. However, the output files are in a different format and all instances must also exist in Multi-SWE-Bench's dataset.
+Test Generation for Java follows mostly the same format as Test Generation for Python. However, the output files are in a different format, and all instances must also exist in Multi-SWE-Bench's dataset.
 
 Use the `--MSWETestGeneration` flag to run test generation for Java repos supported by multi-swe-bench.
 
@@ -218,7 +231,7 @@ The format for any prediction path other than `gold` should be as follows.
 "model_patch": ...}
 ```
 
-An example for a java instance in the same omnicode format as the python example would be as follows. While the format is shared with the python instances, most of the fields are unused for the Multi-SWE-Bench instances. Additionally, all instances must also exist inside the Multi-SWE-Bench dataset.
+An example for a Java instance in the same Omnicode format as the Python example would be as follows. While the format is shared with the Python instances, most of the fields are unused for the Multi-SWE-Bench instances. Additionally, all instances must also exist inside the Multi-SWE-Bench dataset.
 
 ```Java
 [
@@ -242,7 +255,7 @@ An example for a java instance in the same omnicode format as the python example
 
 #### Result Breakdown
 
-Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each patch in the omnicode instance (gold, and each bad patch in the bad patches list). Each of these folders has the files from a multi-swe-bench run, as generated by multi-swe-bench. Additionally, outside of the folders is a `report.json` file. This gives an overall report on which test cases passed and failed for each instance, all in one place.
+Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each patch in the omnicode instance (gold) and each bad patch in the bad patches list. Each of these folders has the files from a multi-swe-bench run, as generated by multi-swe-bench. Additionally, outside of the folders is a `report.json` file. This gives an overall report on which test cases passed and failed for each instance, all in one place.
 
 ## LLM API Key
 
@@ -316,7 +329,7 @@ There is a codearena_local dataset used by agentless. This dataset does not auto
 
 #### Usage:
 
-In the submodule folder under `synthetic_datagen/Agentless` you can modify the values inside `run.sh`. There are existing examples in this file for openrouter. The general structure is as follows:
+In the submodule folder under `synthetic_datagen/Agentless`, you can modify the values inside `run.sh`. There are existing examples in this file for OpenRouter. The general structure is as follows:
 
 ```bash
 run_id=$1
@@ -330,13 +343,13 @@ bash full_bad_patch_gen.sh "$instance" "$runs" "$run_id" {model name here (e.g. 
 
 `run_id`, `instance`, and `dataset` are taken as arguments when running `bash run.sh`. The `run_id` is the name of the run. `instance` is one of the instance_ids from the omnicode dataset. `dataset` is the location where you want successfully generated bad patches to be placed. This should include the file name, not just the directory.
 
-#### Adding bad patches back to dataset:
+#### Adding bad patches back to the dataset:
 
-Wherever you have chosen to put your bad patches, they should be in one .jsonl file. You may chose to add these back to the dataset however you chose, but note that the entries in the .jsonl have several key values. The extra keys include a reason for the bad patch having failed a test and the instance id for the bad patch. Both of this values can be omitted when adding back to the dataset.
+Wherever you have chosen to put your bad patches, they should be in one .jsonl file. You may chose to add these back to the dataset however you chose, but note that the entries in the .jsonl have several key values. The extra keys include a reason for the bad patch having failed a test and the instance id for the bad patch. Both of these values can be omitted when adding back to the dataset.
 
 #### Adding reviews:
 
-At this point, the dataset will include bad patch entries but they are not yet complete. You should add reviews for each of the bad patches as well. You can accomplish this by running:
+At this point, the dataset will include bad patch entries, but they are not yet complete. You should add reviews for each of the bad patches as well. You can accomplish this by running:
 
 ```bash
 python synthetic_datagen/badpatchllm/generate_review.py \
@@ -376,7 +389,7 @@ You will need to move the data back to the original dataset. The reviews will no
 
 ## Deploying experiments on Google Cloud
 
-To enable more reproducable and parallel evaluation, we also provide experimental support for launching jobs in Google Cloud via `gc/multivm.py`. For example the following command will run SWE-agent on instances specified in the `instances_to_run.txt` file. Details about available modes can be found at the end of `gc/utils.py`
+To enable more reproducible and parallel evaluation, we also provide experimental support for launching jobs in Google Cloud via `gc/multivm.py`. For example the following command will run SWE-agent on instances specified in the `instances_to_run.txt` file. Details about available modes can be found at the end of `gc/utils.py`
 
 Note that this requires a base vm to be set up with the OmniCode and SWE-agent dependencies in your Google Cloud project.
 
