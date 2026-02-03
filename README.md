@@ -393,20 +393,7 @@ python gc/multivm.py \
 
 ## Status
 
-### Benchmark Construction Infrastructure
-
-<div align="center">
-
-|                 | Python (Tasks) | Java (Tasks) | Cpp (Tasks)  |
-| --------------- | -------------- | ------------ | ------------ |
-| Base Instances  | Complete       | Complete     | Complete     |
-| Test Generation | Complete       | Complete     | Complete     |
-| Code Review     | Complete       | Complete     | Complete     |
-| Style Review    | Complete       | Complete     | Complete     |
-
-</div>
-
-### Instances Onboarded
+### Available Instances
 
 <div align="center">
 
