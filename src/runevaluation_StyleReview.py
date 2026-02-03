@@ -39,11 +39,11 @@ from .docker_build import (
     setup_logger,
 )
 from .apptainer_build import build_sandbox
-from .CodeArena_grading import get_eval_report_test_generation, get_fail_to_fail
+from .OmniCode_grading import get_eval_report_test_generation, get_fail_to_fail
 #from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
-from .CodeArena_test_spec import make_test_spec, TestSpec, generate_patch_lint_script
+from .OmniCode_test_spec import make_test_spec, TestSpec, generate_patch_lint_script
 from swebench.harness.utils import str2bool, run_threadpool
-from .utils import load_swebench_dataset, load_CodeArena_prediction_dataset, copy_from_container
+from .utils import load_swebench_dataset, load_OmniCode_prediction_dataset, copy_from_container
 
 import os
 os.environ["STYLE_REVIEW"] = "1"
@@ -103,7 +103,7 @@ def get_dataset_from_preds(
     instance_ids: list,
     run_id: str,
     exclude_completed: bool = True,
-    codearena_instances: str = "data/codearena_instances.jsonl",
+    omnicode_instances: str = "data/omnicode_instances.jsonl",
     generated_tests_path: str = "generated_tests.jsonl"
 ):
     """
@@ -112,7 +112,7 @@ def get_dataset_from_preds(
     If exclude_completed is True, only return instances that have not been run yet.
     """
     # Process the SWE-Bench dataset and merge with generated tests and bad patches
-    merged_df = load_CodeArena_prediction_dataset(generated_tests_path, codearena_instances, instance_ids)
+    merged_df = load_OmniCode_prediction_dataset(generated_tests_path, omnicode_instances, instance_ids)
 
     # Now extract the merged instances from the DataFrame into the dataset
     dataset_ids = set(merged_df['instance_id'])
@@ -297,7 +297,7 @@ def make_run_report(
     return report_file
 
 def main(
-        dataset_name: str = "data/codearena_instances.json",
+        dataset_name: str = "data/omnicode_instances.json",
         split: str = "test",
         instance_ids: list = None,
         predictions_path: str = None,
@@ -832,7 +832,7 @@ def run_instance_apptainers(
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--dataset_name", default="data/codearena_instances.json", type=str, help="Name of dataset or path to JSON file.")
+    parser.add_argument("--dataset_name", default="data/omnicode_style_instances_python.json", type=str, help="Name of dataset or path to JSON file.")
     parser.add_argument("--split", type=str, default="test", help="Split of the dataset")
     parser.add_argument("--instance_ids", nargs="+", type=str, help="Instance IDs to run (space separated)")
     parser.add_argument("--predictions_path", type=str, help="Path to predictions file - if 'gold', uses gold predictions", required=True)

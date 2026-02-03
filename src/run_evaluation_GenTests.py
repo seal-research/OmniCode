@@ -41,11 +41,11 @@ from .docker_build import (
     setup_logger,
 )
 from .apptainer_build import build_sandbox
-from .CodeArena_grading import get_eval_report_test_generation, get_fail_to_fail
+from .OmniCode_grading import get_eval_report_test_generation, get_fail_to_fail
 #from swebench.swebench.harness.test_spec import make_test_spec, TestSpec
-from .CodeArena_test_spec import make_test_spec, TestSpec
+from .OmniCode_test_spec import make_test_spec, TestSpec
 from swebench.harness.utils import str2bool, run_threadpool
-from .utils import load_swebench_dataset, load_CodeArena_prediction_dataset, update_test_spec_with_specific_test_names
+from .utils import load_swebench_dataset, load_OmniCode_prediction_dataset, update_test_spec_with_specific_test_names
 
 class EvaluationError(Exception):
     def __init__(self, instance_id, message, logger):
@@ -108,7 +108,7 @@ def get_dataset_from_preds(
     instance_ids: list,
     run_id: str,
     exclude_completed: bool = True,
-    codearena_instances: str = "data/codearena_instances.json",
+    omnicode_instances: str = "data/omnicode_instances_python.json",
     generated_tests_path: str = "generated_tests.jsonl"
 ):
     """
@@ -117,7 +117,7 @@ def get_dataset_from_preds(
     If exclude_completed is True, only return instances that have not been run yet.
     """
     # Process the SWE-Bench dataset and merge with generated tests and bad patches
-    merged_df = load_CodeArena_prediction_dataset(generated_tests_path, codearena_instances, instance_ids)
+    merged_df = load_OmniCode_prediction_dataset(generated_tests_path, omnicode_instances, instance_ids)
 
     # Now extract the merged instances from the DataFrame into the dataset
     dataset_ids = set(merged_df['instance_id'])

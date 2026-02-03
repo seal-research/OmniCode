@@ -1,11 +1,42 @@
 # OmniCode
 
-Welcome to **OmniCode**, formerly CodeArena! This repository allows you to evaluate performance on various Software Development Activities for different models and datasets. Below, you'll find the commands to test your setup and evaluate the results. OmniCode requires you to have docker set up and running prior to executing Evaluation.
+Welcome to **OmniCode**! This is benchmark for evaluating various LLM powered agents on various Software Developemnt activities . Below, you'll find the commands to test your setup and evaluate the results.
 
 ## Setup
 
+### Environment
 OmniCode requires `Python 3.13` and its dependecies can be installed via `pip install -r requirements.txt`
 
+### Clone
+We have some submodules have to be clone as well. You can clone our repo by: 
+```bash
+git clone --recursive git@github.com:seal-research/OmniCode.git
+cd OmniCode
+```
+
+### Dataset
+Our dataset is currently located on HuggingFace at ([seal-research/OmniCode](https://huggingface.co/datasets/seal-research/OmniCode/tree/main)). 
+To use OmniCode, you will have to pull/download the data from our hugging face repo to the `./data` directory. 
+
+```bash
+pip install -U hf
+hf download seal-research/OmniCode \
+  --repo-type dataset \
+  --local-dir data
+```
+
+```
+OmniCode/   
+└── data/
+   ├── omnicode_instances_python.json
+   ├── omnicode_instances_java.json
+   ├── omnicode_instances_cpp.json
+   ├── omnicode_style_instances_python.json
+   ├── omnicode_style_instances_java.json
+   └── omnicode_style_instances_cpp.json
+```
+
+### Submodules
 OmniCode is currently set up to work with a specific swebench and multiswebench version which can be installed using:
 
 ```bash
@@ -17,6 +48,7 @@ cd ..
 ```bash
 cd multi-swe-bench
 pip install .
+cd ..
 ```
 
 or if you are comfortable using git submodules you can use:
@@ -29,11 +61,19 @@ pip install .
 
 > NOTE: Running `pip install .` in multi-swe-bench installs multi-swe-bench as package. If you make changes to multi-swe-bench and wish to run/test the changes locally, you can re-run `pip install .` in the multi-sweb-bench folder to update the package for your local OmniCode.
 
+### Apptainer
+
+Compared to Docker, Apptainer is designed to run containers without requiring root privileges, making it more suitable for shared or restricted environments (e.g., HPC clusters).
+Docker is commonly used in service and cloud deployments but usually relies on root or privileged daemons.
+By supporting Apptainer, OmniCode enables containerized workflows for users who cannot use Docker due to permission or security constraints.
+
+Follow the [official instruction](https://apptainer.org/docs/admin/main/installation.html#install-from-pre-built-packages) to install Apptainer first. When you want to use apptainer mode, turn --use_apptainer parameter into True in your command. If --use_apptainer is False, OmniCode would use Docker automatically. 
+
 ## OmniCode Evaluation
 
 To run the full OmniCode benchmark you can pass the corresponding flags to the evaluation command line tool.
 
-The `codearena` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `ReviewResponse`. We further support ReviewResponse, which exposes the model to an inital bad patch and requires to incorporate external review feedback to correct this. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
+The `omnicode` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `ReviewResponse`. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
 
 ### Example 1: Running `BugFixing` for a single instance
 
@@ -43,7 +83,7 @@ Passing in the path to actual predictions here will enable evaluating on generat
 This command with build the docker image and run the evaluation on the instance `astropy__astropy-13033` (which is a bug in the astropy library).
 
 ```bash
-python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13033 --use_apptainer False --g2 False
+python omnicode.py --BugFixing --dataset_name data/omnicode_instances_python.json --predictions_path gold --run_id BugFixing --instance_ids astropy__astropy-13236 --use_apptainer False
 ```
 
 ### Example 2: Running `TestGeneration` for single instance
@@ -51,7 +91,7 @@ python codearena.py --BugFixing --predictions_path gold --run_id BugFixing --ins
 The following command with the `--TestGeneration` flag can be used to evaluate generated tests. The path to generated tests can be specified with `--predictions_path`
 
 ```bash
-   python codearena.py --TestGeneration --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995 --g2 False
+   python omnicode.py --TestGeneration --dataset_name data/omnicode_instances_python.json --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995
 ```
 
 ## Supported Tasks
@@ -101,7 +141,7 @@ In this section you will find instructions on the different specifications of ou
 
 1. Add desired repo into `target_repos` and `repo_file_map` in `multiswebench_local/prepare_eval`
 2. From the multiswebench_local directory, `run python prepare_eval.py`
-3. From the codearena directory, run `python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids elastic__logstash_17021 --mswe_phase all --force_rebuild True --clean True --use_apptainer False --g2 False`
+3. From the omnicode directory, run `python omnicode.py --MSWEBugFixing --predictions_path gold --run_id mswebench_test --max_workers 1 --instance_ids elastic__logstash_17021 --mswe_phase all --force_rebuild True --clean True --use_apptainer False`
 
 For now, you should stick with the original three java repos (elastic/logstash, alibaba/fastjson, mockito/mockito), since there may be some issues with the new ones that were just added very recently.
 
@@ -134,7 +174,7 @@ Prerequisites:
 Example Command:
 
 ```bash
-python codearena.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids google__gson_1093 --mswe_phase all --force_rebuild True --clean True --use_apptainer False --g2 False
+python omnicode.py --MSWEBugFixing --predictions_path gold --run_id mswebench_bugfixing_test --max_workers 1 --instance_ids google__gson_1093 --mswe_phase all --force_rebuild True --clean True --use_apptainer False
 ```
 
 ### Java Test Generation
@@ -148,13 +188,13 @@ Use the `--MSWETestGeneration` flag to run test generation for Java repos suppor
 You can run test generation testing as follows. The tags work how they work for python test generation.
 
 ```bash
-python codearena.py --MSWETestGeneration --dataset_name data/multiswebench_data/mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775 --use_apptainer False --g2 False
+python omnicode.py --MSWETestGeneration --dataset_name data/multiswebench_data/mswebench_instances.json --predictions_path gold --run_id MSWE_TestGen --instance_ids alibaba__fastjson2_2775 --use_apptainer False
 ```
 
 #### Example Command to run MSWETestGeneration on newly onboarded instances:
 
 ```bash
-python codearena.py --MSWETestGeneration --dataset_name data/codearena_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586 --use_apptainer False --g2 False
+python omnicode.py --MSWETestGeneration --dataset_name data/omnicode_instances_java.json --predictions_path gold --run_id MSWE_TestGenGuava --instance_ids google__guava_6586 --use_apptainer False
 ```
 
 ### Java Style Review
@@ -164,7 +204,7 @@ Java style review has been configured to work using two different types of tools
 #### Example Command to run Java Style Review:
 
 ```bash
-python codearena.py --StyleReview --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache__dubbo_10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle] --use_apptainer False --g2 False
+python omnicode.py --StyleReview --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache__dubbo_10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle] --use_apptainer False
 ```
 
 #### File Formats
@@ -178,7 +218,7 @@ The format for any prediction path other than `gold` should be as follows.
 "model_patch": ...}
 ```
 
-An example for a java instance in the same OmniCode format as the python example would be as follows. While the format is shared with the python instances, most of the fields are unused for the Multi-SWE-Bench instances. Additionally, all instances must also exist inside the Multi-SWE-Bench dataset.
+An example for a java instance in the same omnicode format as the python example would be as follows. While the format is shared with the python instances, most of the fields are unused for the Multi-SWE-Bench instances. Additionally, all instances must also exist inside the Multi-SWE-Bench dataset.
 
 ```Java
 [
@@ -202,27 +242,7 @@ An example for a java instance in the same OmniCode format as the python example
 
 #### Result Breakdown
 
-Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each patch in the OmniCode instance (gold, and each bad patch in the bad patches list). Each of these folders has the files from a multi-swe-bench run, as generated by multi-swe-bench. Additionally, outside of the folders is a `report.json` file. This gives an overall report on which test cases passed and failed for each instance, all in one place.
-
-<!-- #### Overall Status and Notes for Future Work
-
-1. Multiple Instance at once
-
-   - The current pipeline hasn't been tested with multiple instances being passed at the same time. It is not clear that this will work as intended with the current format.
-   - Additionally, the `report.json` is not setup to work well in that case either.
-
-2. Create `codearena.json` file for Multi_SWE instances.
-
-   - In the current pipeline, you need a `codearena.json`-like file with all the instances you want to run. However, these instance are limited to existing ones inside multi-SWE-Bench. Thus, it would make sense to transfer all existing instance ids to a `.json` file to be used.
-
-3. Ensuring generalizability inside Multi-SWE-Bench
-
-   - The system hasn't been tested on a variety of instances. It is not clear that it will work on repositories other than `alibaba/fastjson2` or even with instance ids other than `alibaba__fastjson2_2775`.
-   - This is largely due to the difficulty in creating generated test cases in Java.
-
-4. Language Expansion
-
-   - Theoretically, the pipeline should not need to be changed to work for other languages supported by Multi-SWE-Bench. However, this remains untested. -->
+Results will be in `mswebench_runs/TestGeneration/`. There is a folder for each patch in the omnicode instance (gold, and each bad patch in the bad patches list). Each of these folders has the files from a multi-swe-bench run, as generated by multi-swe-bench. Additionally, outside of the folders is a `report.json` file. This gives an overall report on which test cases passed and failed for each instance, all in one place.
 
 ## LLM API Key
 
@@ -244,23 +264,23 @@ cd ..
 ```
 
 ```bash
-# run without /scratch and apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
-# run with /scratch and apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13033 --mode [bugfixing, testgen, bugfixing-java, , bugfixing-cpp, testgen-java, stylereview, reviewfix] --g2 True --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+# run without apptainer
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, bugfixing-cpp, testgen-java, stylereview, reviewfix] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+# run with apptainer
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, , bugfixing-cpp, testgen-java, stylereview, reviewfix] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 ```
 
 ### Running SWE-Agent for Java Instances
 
 Prerequisites:
 
-- Instance should be present in `data/codearena_instances_java.json`
+- Instance should be present in `data/omnicode_instances_java.json`
 - Base image should already built in your local docker (e.g. MSWEBugFixing)
 
 Example command:
 
 ```bash
-python baselines/sweagent/sweagent_regular.py --input_tasks data/codearena_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java] --g2 False --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 ```
 
 ### Running SWE-Agent for Java Style Review
@@ -292,23 +312,23 @@ python baselines/sweagent/sweagent_regular.py -i sweagent_input.json -o sweagent
 
 #### General Setup:
 
-There is a codearena_local dataset used by agentless. This dataset does not automatically update when there are changes to `mswebench_instances.json` or `codearena_instances.json`. If you change these files, you must make a trivial change to `baselines/Agentless/codearena_local/codearena_local.py` in order for them to be reflected in Agentless.
+There is a codearena_local dataset used by agentless. This dataset does not automatically update when there are changes to `mswebench_instances.json` or `omnicode_instances_python.json`. If you change these files, you must make a trivial change to `synthetic_datagen/Agentless/codearena_local/codearena_local.py` in order for them to be reflected in Agentless.
 
 #### Usage:
 
-In the submodule folder under `baselines/Agentless` you can modify the values inside `run.sh`. There are existing examples in this file for openrouter. The general structure is as follows:
+In the submodule folder under `synthetic_datagen/Agentless` you can modify the values inside `run.sh`. There are existing examples in this file for openrouter. The general structure is as follows:
 
 ```bash
 run_id=$1
 instance=$2
 dataset=$3
-use_apptainer=true
+use_apptainer=false
 runs=25
 
 bash full_bad_patch_gen.sh "$instance" "$runs" "$run_id" {model name here (e.g. gemma-2-9b-it, llama-3-8b-instruct)} {provider name here (e.g. google, openrouter)} 'codearena_local' {coding language here (e.g. python, java, cpp)} "$dataset" "$use_apptainer"
 ```
 
-`run_id`, `instance`, and `dataset` are taken as arguments when running `bash run.sh`. The `run_id` is the name of the run. `instance` is one of the instance_ids from the codearena dataset. `dataset` is the location where you want successfully generated bad patches to be placed. This should include the file name, not just the directory.
+`run_id`, `instance`, and `dataset` are taken as arguments when running `bash run.sh`. The `run_id` is the name of the run. `instance` is one of the instance_ids from the omnicode dataset. `dataset` is the location where you want successfully generated bad patches to be placed. This should include the file name, not just the directory.
 
 #### Adding bad patches back to dataset:
 
@@ -319,10 +339,10 @@ Wherever you have chosen to put your bad patches, they should be in one .jsonl f
 At this point, the dataset will include bad patch entries but they are not yet complete. You should add reviews for each of the bad patches as well. You can accomplish this by running:
 
 ```bash
-python baselines/badpatchllm/generate_review.py \
+python synthetic_datagen/badpatchllm/generate_review.py \
 --output_dir {your chosen output directory} \
 --api_key {your api key} \
---input_tasks {data/multiswebench_data/mswebench_instances.json or data/codearena_instances.json}\
+--input_tasks {data/multiswebench_data/mswebench_instances.json or data/omnicode_instances_python.json}\
 --num_reviews_per_patch 1 \
 --instance_ids {instance ids that you added bad patches for}
 ```
@@ -330,14 +350,14 @@ python baselines/badpatchllm/generate_review.py \
 ### Option 2: LLM Sourced Generation
 
 ```bash
-python baselines/badpatchllm/generate_bad.py \
-    -o baselines/badpatchllm/logs/gemini_outputs \
+python synthetic_datagen/badpatchllm/generate_bad.py \
+    -o synthetic_datagen/badpatchllm/logs/gemini_outputs \
     --instance_ids astropy__astropy-13033 \
     -m [gemini-2.5-flash-preview-4-17]  (recommended] \
     -k [KEY] \
     --run_id test \
     -n 3 \
-    -d data/codearena_instances.json \
+    -d data/omnicode_instances_python.json \
 ```
 
 Note: Raw diff files will also be outputted and found under the user specified output directory for ease of use.
@@ -345,10 +365,10 @@ Note: Raw diff files will also be outputted and found under the user specified o
 ### Generating Reviews
 
 ```bash
-python baselines/badpatchllm/generate_review.py \
-    --input_tasks data/codearena_instances.json \
+python synthetic_datagen/badpatchllm/generate_review.py \
+    --input_tasks data/omnicode_instances_python.json \
     --api_key [KEY] \
-    --output_dir baselines/badpatchllm/logs/gemini_outputs \
+    --output_dir synthetic_datagen/badpatchllm/logs/gemini_outputs \
     --instance_ids astropy__astropy-13033
 ```
 

@@ -15,7 +15,7 @@
 	url = git@github.com:seal-research/multi-swe-bench.git
 
 [submodule "Agentless"]
-	path = baselines/Agentless
-	url = git@github.com:simonalford42/Agentless.git
+	path = synthetic_datagen/Agentless
+	url = git@github.com:seal-research/Agentless
 
 
