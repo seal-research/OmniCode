@@ -73,7 +73,7 @@ Follow the [official instruction](https://apptainer.org/docs/admin/main/installa
 
 To run the full OmniCode benchmark you can pass the corresponding flags to the evaluation command line tool.
 
-The `omnicode` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `ReviewResponse`. We further support ReviewResponse, which exposes the model to an inital bad patch and requires to incorporate external review feedback to correct this. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
+The `omnicode` command allows you to run multiple code evaluation benchmarks, such as `TestGeneration`, `StyleReview` and `ReviewResponse`. You can specify flags to choose which benchmarks to execute. The command also supports running multiple benchmarks in one go.
 
 ### Example 1: Running `BugFixing` for a single instance
 
