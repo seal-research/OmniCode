@@ -28,7 +28,9 @@ In this section, you will find details of the different specifications of our ta
 - **Evaluation**: Success is measured by the test failing on incorrect implementations and passing on correct ones.
 - **Use Case**: Useful for assessing a model's ability to generate meaningful, differentiating test cases.
 
+<p align="center">
 <img width="500" height="210" alt="image" src="https://github.com/user-attachments/assets/6a59e91d-a824-4fb7-a18c-74b2cf0ecd7e" />
+</p>
 
 ---
 
@@ -38,7 +40,9 @@ In this section, you will find details of the different specifications of our ta
 - **Evaluation**: Success is measured by the reduction of style violations without breaking functionality.
 - **Use Case**: Designed for scenarios where code quality and adherence to style guidelines are important.
 
+<p align="center">
 <img width="500" height="210" alt="image" src="https://github.com/user-attachments/assets/5eb69bcd-8266-4f06-bedd-b3b0aaf3886e" />
+</p>
 
 ---
 
@@ -48,8 +52,9 @@ In this section, you will find details of the different specifications of our ta
 - **Evaluation**: Success is measured by whether the improved patch resolves the issue while avoiding pitfalls highlighted in the review.
 - **Use Case**: Especially relevant for testing a model’s ability to apply reviewer feedback to refine implementations.
 
+<p align="center">
 <img width="300" height="550" alt="image" src="https://github.com/user-attachments/assets/485f47ac-7d40-4421-bd70-2b684689322e" />
-
+</p>
 
 ## Setup
 
