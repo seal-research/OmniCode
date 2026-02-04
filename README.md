@@ -29,7 +29,7 @@ In this section, you will find details of the different specifications of our ta
 - **Use Case**: Useful for assessing a model's ability to generate meaningful, differentiating test cases.
 
 <p align="center">
-<img width="500" height="210" alt="image" src="https://github.com/user-attachments/assets/6a59e91d-a824-4fb7-a18c-74b2cf0ecd7e" />
+<img width="500" alt="image" src="https://github.com/user-attachments/assets/6a59e91d-a824-4fb7-a18c-74b2cf0ecd7e" />
 </p>
 
 ---
