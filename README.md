@@ -224,6 +224,34 @@ Java style review has been configured to work using two different types of tools
 ```bash
 python omnicode.py --StyleReview --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache__dubbo_10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle] --use_apptainer False
 ```
+The above call will not work for environments which do not support Docker, hence the following is preferred:
+
+```bash
+python multiswebench_local/multi_swe_bench/harness/style_review/pmd_runner.py --org [org] --repo [repo] --pull [pull_number] --base-commit [base_commit]
+```
+
+For Evaluating Patches (Style Violation Reduction Evaluation):
+
+```bash
+python legacy/code/evaluate_splitted_java_style_review.py --org [org] --repo [repo] --pull_number [pr] --swe-file [json file containing patches]
+```
+
+### CPP Style Review
+
+CPP style review has been configured to work using clang tidy
+
+#### Example Command to run CPP Style Review:
+
+```bash
+python multiswebench_local/multi_swe_bench/harness/CPP_style_review/style_reviewcpp.py --repo-url [url] --pr [pr] --clang-tidy-config multiswebench_local/multi_swe_bench/harness/CPP_style_review/.clang-tidy --work-dir [dir] --out results1.json --instance-id [id] --swe-results [file]
+```
+
+For Evaluating Patches (Style Violation Reduction Evaluation):
+
+```bash
+python legacy/code/evaluate_splitted_cpp_style_review.py --org [org] --repo repo --pr --swe-file [json file containing patches]
+```
+
 
 #### File Formats
 
@@ -299,29 +327,6 @@ Example command:
 
 ```bash
 python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_java.json --api_key [key] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids google__guava_6586 --mode [bugfixing-java, testgen-java] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
-```
-
-### Running SWE-Agent for Java Style Review
-
-Prerequisites:
-
-- Dataset should be downloaded from
-  https://drive.google.com/file/d/1ZVg-rVXU9hPN0iO1qsxm-Ru7a5AUmwJU/view?usp=drive_link (PMD)
-  https://drive.google.com/file/d/15yDXDq9S-mOOYoNT0na7MqiodvJ8Rf4g/view?usp=drive_link (Checkstyle)
-- Base image should already built in your local docker (e.g. MSWEBugFixing)
-
-```bash
-python baselines/sweagent/convert_style_errors_to_sweagent_from_dataset.py --org apache --repo dubbo --pr_number 10638 --style_tool pmd --output sweagent_input.json
-```
-
-OR (to use only errors of files modified in gold patch)
-
-```bash
-python baselines/sweagent/convert_filtered_style_errors_to_sweagent_from_dataset.py --org apache --repo dubbo --pr_number 10638 --style_tool pmd --output sweagent_input.json
-```
-
-```bash
-python baselines/sweagent/sweagent_regular.py -i sweagent_input.json -o sweagent_pmd_apache_dubbo_10638_results --mode stylereview --style_tool pmd --model_name "gemini/gemini-2.5-flash" --api_key $GEMINI_API_KEY
 ```
 
 ## Adding Bad Patches
