@@ -222,7 +222,7 @@ Java style review has been configured to work using two different types of tools
 #### Example Command to run Java Style Review:
 
 ```bash
-python omnicode.py --StyleReview --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache__dubbo_10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle] --use_apptainer False
+python omnicode.py --stylereview-java-pmd --predictions_path gold --run_id mswe_java_style_review --max_workers 1 --instance_ids "apache__dubbo_10638" --mswe_phase all --force_rebuild True --review_type [pmd,checkstyle] --use_apptainer False
 ```
 The above call will not work for environments which do not support Docker, hence the following is preferred:
 
@@ -311,9 +311,9 @@ cd ..
 
 ```bash
 # run without apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, bugfixing-cpp, testgen-java, stylereview, reviewfix] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir baselines/sweagent/logs/sweagent_outputs --use_apptainer False --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, bugfixing-cpp, testgen-java, stylereview-python,stylereview-java-checkstyle,stylereview-java-pmd,stylereview-cpp-clangtidy, reviewfix] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 # run with apptainer
-python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, , bugfixing-cpp, testgen-java, stylereview, reviewfix] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
+python baselines/sweagent/sweagent_regular.py --input_tasks data/omnicode_instances_python.json --api_key [KEY] --output_dir /scratch/$USER/baselines/sweagent/logs/sweagent_outputs --use_apptainer True --instance_ids astropy__astropy-13236 --mode [bugfixing, testgen, bugfixing-java, , bugfixing-cpp, testgen-java, stylereview-python,stylereview-java-checkstyle,stylereview-java-pmd,stylereview-cpp-clangtidy, reviewfix] --output_file baselines/sweagent/logs/sweagent_outputs/all_preds.jsonl --model_name openrouter/google/gemini-2.5-flash 
 ```
 
 ### Running SWE-Agent for Java Instances
