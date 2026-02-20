@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OmniCode Annotation Tool</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --accent: #e94560;
+    --text: #eee;
+    --text-muted: #999;
+    --green: #4ecca3;
+    --red: #e94560;
+    --yellow: #f0c040;
+    --border: #2a2a4a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+  /* Header */
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 24px; background: var(--surface); border-radius: 12px;
+    margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+  }
+  .header h1 { font-size: 1.4em; }
+  .header-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .progress-bar {
+    width: 200px; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden;
+  }
+  .progress-fill { height: 100%; background: var(--green); transition: width 0.3s; }
+  .progress-text { font-size: 0.85em; color: var(--text-muted); }
+
+  /* Buttons */
+  button {
+    padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer;
+    font-size: 0.9em; font-weight: 600; transition: all 0.2s;
+  }
+  button:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-secondary { background: var(--surface2); color: var(--text); }
+  .btn-success { background: var(--green); color: #111; }
+  .btn-small { padding: 4px 10px; font-size: 0.8em; }
+
+  /* Navigation */
+  .nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 24px; background: var(--surface); border-radius: 12px;
+    margin-bottom: 20px;
+  }
+  .nav-center { display: flex; align-items: center; gap: 12px; }
+  .instance-select { background: var(--surface2); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 0.9em; }
+  .lang-filter { display: flex; gap: 6px; }
+  .lang-btn { padding: 4px 12px; border-radius: 16px; font-size: 0.8em; }
+  .lang-btn.active { background: var(--accent); color: white; }
+  .lang-btn:not(.active) { background: var(--surface2); color: var(--text-muted); }
+
+  /* Landing */
+  .landing {
+    text-align: center; padding: 80px 20px;
+    background: var(--surface); border-radius: 12px;
+  }
+  .landing h2 { margin-bottom: 20px; }
+  .landing p { color: var(--text-muted); margin-bottom: 30px; }
+  .file-input-wrapper {
+    display: inline-block; position: relative;
+    padding: 16px 32px; background: var(--accent); color: white;
+    border-radius: 12px; font-weight: 600; cursor: pointer;
+  }
+  .file-input-wrapper input { position: absolute; opacity: 0; width: 100%; height: 100%; top: 0; left: 0; cursor: pointer; }
+
+  /* Content grid */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .full-width { grid-column: 1 / -1; }
+
+  /* Cards */
+  .card {
+    background: var(--surface); border-radius: 12px; overflow: hidden;
+  }
+  .card-header {
+    padding: 12px 20px; background: var(--surface2);
+    font-weight: 600; font-size: 0.9em;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-body { padding: 16px 20px; }
+  .card-body.scrollable { max-height: 500px; overflow-y: auto; }
+
+  /* Tags */
+  .tag {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-size: 0.75em; font-weight: 600;
+  }
+  .tag-python { background: #306998; color: #ffd43b; }
+  .tag-java { background: #f89820; color: #5382a1; }
+  .tag-cpp { background: #659ad2; color: #004482; }
+  .tag-source { background: var(--surface2); color: var(--text-muted); }
+
+  /* Diff rendering */
+  .diff-view { font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace; font-size: 0.82em; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
+  .diff-header { color: var(--yellow); font-weight: bold; }
+  .diff-hunk { color: #8be9fd; }
+  .diff-add { background: rgba(78, 204, 163, 0.15); color: var(--green); }
+  .diff-del { background: rgba(233, 69, 96, 0.15); color: var(--red); }
+  .diff-ctx { color: var(--text-muted); }
+
+  /* Problem statement */
+  .problem-text {
+    font-size: 0.9em; white-space: pre-wrap; word-wrap: break-word;
+  }
+  .problem-text code {
+    background: var(--surface2); padding: 1px 5px; border-radius: 4px;
+    font-family: 'Fira Code', monospace; font-size: 0.9em;
+  }
+
+  /* Review text */
+  .review-text {
+    font-size: 0.95em; line-height: 1.7; padding: 8px 0;
+    border-left: 3px solid var(--accent); padding-left: 16px;
+  }
+
+  /* Annotation form */
+  .annotation-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .form-group { margin-bottom: 4px; }
+  .form-group label {
+    display: block; font-weight: 600; margin-bottom: 8px;
+    font-size: 0.85em; color: var(--text-muted);
+  }
+  .form-group .description {
+    font-size: 0.75em; color: var(--text-muted); margin-bottom: 8px; font-style: italic;
+  }
+  .radio-group { display: flex; flex-wrap: wrap; gap: 6px; }
+  .radio-option {
+    display: inline-block; cursor: pointer;
+  }
+  .radio-option input { display: none; }
+  .radio-option span {
+    display: inline-block; padding: 5px 12px; border-radius: 8px;
+    background: var(--surface2); font-size: 0.82em; transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+  .radio-option input:checked + span {
+    background: var(--accent); color: white; border-color: var(--accent);
+  }
+  .radio-option:hover span { border-color: var(--accent); }
+
+  .notes-input {
+    width: 100%; min-height: 80px; background: var(--surface2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+    font-family: inherit; font-size: 0.9em; resize: vertical;
+  }
+  .notes-input:focus { outline: none; border-color: var(--accent); }
+  .form-full { grid-column: 1 / -1; }
+
+  /* Instance dots */
+  .instance-dots { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .dot {
+    width: 10px; height: 10px; border-radius: 50%; cursor: pointer;
+    border: 1px solid var(--border); transition: all 0.2s;
+  }
+  .dot.current { border-color: white; transform: scale(1.4); }
+  .dot.unannotated { background: var(--surface2); }
+  .dot.annotated { background: var(--green); }
+  .dot.partial { background: var(--yellow); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+  .hidden { display: none; }
+
+  @media (max-width: 900px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .annotation-form { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>OmniCode Annotation Tool</h1>
+    <div class="header-controls">
+      <div class="progress-text" id="progressText">0 / 0 annotated</div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <button class="btn-success" id="exportBtn" onclick="exportAnnotations()">Export JSON</button>
+      <button class="btn-secondary btn-small" id="clearBtn" onclick="clearAllAnnotations()">Clear All</button>
+    </div>
+  </div>
+
+  <!-- Landing -->
+  <div id="landing" class="landing">
+    <h2>Load Annotation Data</h2>
+    <p>Load a sampled_instances.json file generated by the sampling script.</p>
+    <div class="file-input-wrapper">
+      Choose JSON File
+      <input type="file" id="fileInput" accept=".json" onchange="loadFile(event)">
+    </div>
+  </div>
+
+  <!-- Main content (hidden until data loaded) -->
+  <div id="mainContent" class="hidden">
+    <!-- Navigation -->
+    <div class="nav">
+      <button class="btn-secondary" onclick="navigate(-1)">&larr; Prev</button>
+      <div class="nav-center">
+        <div class="lang-filter">
+          <button class="lang-btn active" data-lang="all" onclick="setFilter('all')">All</button>
+          <button class="lang-btn" data-lang="python" onclick="setFilter('python')">Python</button>
+          <button class="lang-btn" data-lang="java" onclick="setFilter('java')">Java</button>
+          <button class="lang-btn" data-lang="cpp" onclick="setFilter('cpp')">C++</button>
+        </div>
+        <select class="instance-select" id="instanceSelect" onchange="goToInstance(parseInt(this.value))"></select>
+      </div>
+      <button class="btn-secondary" onclick="navigate(1)">Next &rarr;</button>
+    </div>
+
+    <!-- Instance dots -->
+    <div class="instance-dots" id="instanceDots"></div>
+
+    <!-- Content -->
+    <div style="margin-top: 20px;">
+      <!-- Meta info -->
+      <div class="card full-width" style="margin-bottom: 20px;">
+        <div class="card-header">
+          <span id="instanceTitle">Instance</span>
+          <div>
+            <span class="tag" id="langTag"></span>
+            <span class="tag tag-source" id="sourceTag"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Problem statement -->
+      <div class="card full-width" style="margin-bottom: 20px;">
+        <div class="card-header">
+          <span>Problem Statement</span>
+          <button class="btn-small btn-secondary" onclick="toggleCard('problemBody')">Toggle</button>
+        </div>
+        <div class="card-body scrollable" id="problemBody">
+          <div class="problem-text" id="problemText"></div>
+        </div>
+      </div>
+
+      <!-- Patches side by side -->
+      <div class="content-grid">
+        <div class="card">
+          <div class="card-header">
+            <span>Gold Patch (Correct)</span>
+            <span style="color: var(--green); font-size: 0.8em;">CORRECT</span>
+          </div>
+          <div class="card-body scrollable">
+            <div class="diff-view" id="goldPatch"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <span>Bad Patch (Under Review)</span>
+            <span style="color: var(--red); font-size: 0.8em;">INCORRECT</span>
+          </div>
+          <div class="card-body scrollable">
+            <div class="diff-view" id="badPatch"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Review -->
+      <div class="card full-width" style="margin-bottom: 20px;">
+        <div class="card-header">Review</div>
+        <div class="card-body">
+          <div class="review-text" id="reviewText"></div>
+        </div>
+      </div>
+
+      <!-- Annotation form -->
+      <div class="card full-width" style="margin-bottom: 40px;">
+        <div class="card-header">Annotations</div>
+        <div class="card-body">
+          <div class="annotation-form" id="annotationForm">
+            <!-- Bad Patch Quality -->
+            <div class="form-group">
+              <label>Patch Incorrectness Type</label>
+              <div class="description">Why is the bad patch incorrect?</div>
+              <div class="radio-group" data-field="patch_incorrectness_type">
+                <label class="radio-option"><input type="radio" name="patch_incorrectness_type" value="trivially_wrong"><span>Trivially Wrong</span></label>
+                <label class="radio-option"><input type="radio" name="patch_incorrectness_type" value="wrong_approach"><span>Wrong Approach</span></label>
+                <label class="radio-option"><input type="radio" name="patch_incorrectness_type" value="gold_plus_bugs"><span>Gold + Bugs</span></label>
+                <label class="radio-option"><input type="radio" name="patch_incorrectness_type" value="incomplete_fix"><span>Incomplete Fix</span></label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Patch Plausibility</label>
+              <div class="description">How convincing does the bad patch look?</div>
+              <div class="radio-group" data-field="patch_plausibility">
+                <label class="radio-option"><input type="radio" name="patch_plausibility" value="1"><span>1 - Obviously Wrong</span></label>
+                <label class="radio-option"><input type="radio" name="patch_plausibility" value="2"><span>2 - Somewhat Plausible</span></label>
+                <label class="radio-option"><input type="radio" name="patch_plausibility" value="3"><span>3 - Very Convincing</span></label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Review Information Leakage</label>
+              <div class="description">Does the review reveal the correct fix?</div>
+              <div class="radio-group" data-field="review_info_leakage">
+                <label class="radio-option"><input type="radio" name="review_info_leakage" value="none"><span>None</span></label>
+                <label class="radio-option"><input type="radio" name="review_info_leakage" value="moderate"><span>Moderate</span></label>
+                <label class="radio-option"><input type="radio" name="review_info_leakage" value="severe"><span>Severe</span></label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Review Correctness</label>
+              <div class="description">Does the review accurately identify what's wrong?</div>
+              <div class="radio-group" data-field="review_correctness">
+                <label class="radio-option"><input type="radio" name="review_correctness" value="correct"><span>Correct</span></label>
+                <label class="radio-option"><input type="radio" name="review_correctness" value="partially_correct"><span>Partially Correct</span></label>
+                <label class="radio-option"><input type="radio" name="review_correctness" value="incorrect"><span>Incorrect</span></label>
+              </div>
+            </div>
+
+            <div class="form-group form-full">
+              <label>Notes</label>
+              <textarea class="notes-input" id="notesInput" placeholder="Any additional observations..." oninput="saveAnnotation('notes', this.value)"></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let data = null;
+let currentIndex = 0;
+let filterLang = 'all';
+let filteredIndices = [];
+
+const STORAGE_KEY = 'omnicode_annotations';
+const ANNOTATION_FIELDS = [
+  'patch_incorrectness_type', 'patch_plausibility',
+  'review_info_leakage', 'review_correctness'
+];
+
+function loadFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      data = JSON.parse(e.target.result);
+      restoreAnnotations();
+      initUI();
+    } catch (err) {
+      alert('Invalid JSON file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function restoreAnnotations() {
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (!saved) return;
+  try {
+    const savedAnnotations = JSON.parse(saved);
+    for (const inst of data.instances) {
+      if (savedAnnotations[inst.instance_id]) {
+        inst.annotations = { ...inst.annotations, ...savedAnnotations[inst.instance_id] };
+      }
+    }
+  } catch (e) { /* ignore */ }
+}
+
+function persistAnnotations() {
+  const annotations = {};
+  for (const inst of data.instances) {
+    const a = inst.annotations;
+    const hasAny = ANNOTATION_FIELDS.some(f => a[f] !== null) || (a.notes && a.notes.trim());
+    if (hasAny) {
+      annotations[inst.instance_id] = a;
+    }
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(annotations));
+}
+
+function initUI() {
+  document.getElementById('landing').classList.add('hidden');
+  document.getElementById('mainContent').classList.remove('hidden');
+  updateFilter();
+  renderInstance();
+}
+
+function updateFilter() {
+  if (filterLang === 'all') {
+    filteredIndices = data.instances.map((_, i) => i);
+  } else {
+    filteredIndices = data.instances.map((inst, i) => inst.language === filterLang ? i : -1).filter(i => i >= 0);
+  }
+
+  // Update select
+  const select = document.getElementById('instanceSelect');
+  select.innerHTML = '';
+  filteredIndices.forEach((idx, pos) => {
+    const inst = data.instances[idx];
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = `${pos + 1}. [${inst.language}] ${inst.instance_id}`;
+    select.appendChild(opt);
+  });
+
+  // Update dots
+  const dotsContainer = document.getElementById('instanceDots');
+  dotsContainer.innerHTML = '';
+  filteredIndices.forEach((idx) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.dataset.idx = idx;
+    dot.onclick = () => goToInstance(idx);
+    dotsContainer.appendChild(dot);
+  });
+
+  // Ensure currentIndex is valid
+  if (!filteredIndices.includes(currentIndex) && filteredIndices.length > 0) {
+    currentIndex = filteredIndices[0];
+  }
+
+  updateDots();
+}
+
+function setFilter(lang) {
+  filterLang = lang;
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === lang);
+  });
+  updateFilter();
+  renderInstance();
+}
+
+function getAnnotationStatus(idx) {
+  const a = data.instances[idx].annotations;
+  const filled = ANNOTATION_FIELDS.filter(f => a[f] !== null).length;
+  if (filled === 0 && (!a.notes || !a.notes.trim())) return 'unannotated';
+  if (filled === ANNOTATION_FIELDS.length) return 'annotated';
+  return 'partial';
+}
+
+function updateDots() {
+  document.querySelectorAll('.dot').forEach(dot => {
+    const idx = parseInt(dot.dataset.idx);
+    dot.className = 'dot ' + getAnnotationStatus(idx);
+    if (idx === currentIndex) dot.classList.add('current');
+  });
+}
+
+function updateProgress() {
+  const total = data.instances.length;
+  const annotated = data.instances.filter((_, i) => getAnnotationStatus(i) === 'annotated').length;
+  document.getElementById('progressText').textContent = `${annotated} / ${total} annotated`;
+  document.getElementById('progressFill').style.width = (total > 0 ? (annotated / total * 100) : 0) + '%';
+}
+
+function navigate(dir) {
+  const pos = filteredIndices.indexOf(currentIndex);
+  const newPos = pos + dir;
+  if (newPos >= 0 && newPos < filteredIndices.length) {
+    currentIndex = filteredIndices[newPos];
+    renderInstance();
+  }
+}
+
+function goToInstance(idx) {
+  currentIndex = idx;
+  renderInstance();
+}
+
+function renderDiff(diffStr) {
+  if (!diffStr) return '<span class="diff-ctx">(empty)</span>';
+  return diffStr.split('\n').map(line => {
+    const escaped = escapeHtml(line);
+    if (line.startsWith('diff --git') || line.startsWith('---') || line.startsWith('+++') || line.startsWith('index ')) {
+      return `<span class="diff-header">${escaped}</span>`;
+    } else if (line.startsWith('@@')) {
+      return `<span class="diff-hunk">${escaped}</span>`;
+    } else if (line.startsWith('+')) {
+      return `<span class="diff-add">${escaped}</span>`;
+    } else if (line.startsWith('-')) {
+      return `<span class="diff-del">${escaped}</span>`;
+    }
+    return `<span class="diff-ctx">${escaped}</span>`;
+  }).join('\n');
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function renderInstance() {
+  if (!data || filteredIndices.length === 0) return;
+  const inst = data.instances[currentIndex];
+
+  // Update select
+  document.getElementById('instanceSelect').value = currentIndex;
+
+  // Meta
+  document.getElementById('instanceTitle').textContent = `${inst.repo} - ${inst.instance_id}`;
+  const langTag = document.getElementById('langTag');
+  langTag.textContent = inst.language;
+  langTag.className = `tag tag-${inst.language}`;
+  document.getElementById('sourceTag').textContent = inst.bad_patch.source;
+
+  // Problem statement
+  document.getElementById('problemText').textContent = inst.problem_statement;
+
+  // Patches
+  document.getElementById('goldPatch').innerHTML = renderDiff(inst.gold_patch);
+  document.getElementById('badPatch').innerHTML = renderDiff(inst.bad_patch.patch);
+
+  // Review
+  document.getElementById('reviewText').textContent = inst.review;
+
+  // Annotations
+  ANNOTATION_FIELDS.forEach(field => {
+    const val = inst.annotations[field];
+    document.querySelectorAll(`input[name="${field}"]`).forEach(input => {
+      input.checked = (input.value === String(val));
+    });
+  });
+  document.getElementById('notesInput').value = inst.annotations.notes || '';
+
+  updateDots();
+  updateProgress();
+}
+
+// Wire up radio buttons
+document.querySelectorAll('.radio-group input[type="radio"]').forEach(input => {
+  input.addEventListener('change', function() {
+    let val = this.value;
+    // Convert numeric values
+    if (/^\d+$/.test(val)) val = parseInt(val);
+    saveAnnotation(this.name, val);
+  });
+});
+
+function saveAnnotation(field, value) {
+  if (!data) return;
+  data.instances[currentIndex].annotations[field] = value;
+  persistAnnotations();
+  updateDots();
+  updateProgress();
+}
+
+function exportAnnotations() {
+  if (!data) return;
+  const exportData = JSON.parse(JSON.stringify(data));
+  const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `annotated_instances_${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearAllAnnotations() {
+  if (!data) return;
+  if (!confirm('Clear ALL annotations? This cannot be undone.')) return;
+  data.instances.forEach(inst => {
+    inst.annotations = {
+      patch_incorrectness_type: null,
+      patch_plausibility: null,
+      overlaps_gold_patch: null,
+      review_info_leakage: null,
+      review_correctness: null,
+      notes: '',
+    };
+  });
+  localStorage.removeItem(STORAGE_KEY);
+  renderInstance();
+}
+
+function toggleCard(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowLeft') navigate(-1);
+  if (e.key === 'ArrowRight') navigate(1);
+});
+</script>
+</body>
+</html>
