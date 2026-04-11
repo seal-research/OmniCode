@@ -407,8 +407,8 @@ You will need to move the data back to the original dataset. The reviews will no
 |                 | Python (Tasks) | Java (Tasks) | Cpp (Tasks)  |
 | --------------- | -------------- | ------------ | ------------ |
 | Base Instances  | 273            | 109          | 112          |
-| Test Generation | 164            | 44           | 79           |
-| Review Response | 164            | 44           | 79           |
+| Test Generation | 164            | 79           | 44           |
+| Review Response | 164            | 79           | 44           |
 | Style Review    | 144            | 124          | 147          |
 
 </div>
