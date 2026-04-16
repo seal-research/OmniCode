@@ -7,13 +7,19 @@ python src/python_style_eval.py \
   --dataset-json data/python_style_review_dataset/chosen_python_style_review_subset.json \
   --instances-file data/python_style_review_dataset/chosen_python_style_review_instances.txt \
   --patches-jsonl path-to-output-model-patches.jsonl \
+  --bf-results-json omnicode-bugfixing-results-of-patches.json \ 
   --work-base /scratch/$USER/style_eval \
   --out style_review_results.json \
-  
+
 Workflow:
  - Read dataset JSON (list of instances with "repo", "instance_id", "base_commit", "style_review", etc.)
  - Read instance_ids from a text file (each line is one id to evaluate)
  - Read patches from a JSONL file (one per line, with instance_id + model_patch.diff)
+ - Read tests passed/failed from omnicode bugfixing results in a JSON file: 
+    {
+        "resolved_ids": [instance ids that pass bugfixing],
+        "unresolved_ids": [instance ids that fail bugfixing]
+    }
  - For each instance:
      - Clone repo once into work-base/shared_repos/<repo>/repo (cached)
      - Checkout base_commit (reset --hard + clean -fdx)
@@ -228,6 +234,72 @@ def evaluate_instance(instance, patch_text, work_base):
         "newly_created_symbol_counts": dict(Counter(newly_created_symbols)),
     }
 
+def calculate_final_stats(file_path, bf_path):
+    try:
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return "Error: File not found."
+    except json.JSONDecodeError:
+        return "Error: Failed to decode JSON."
+
+    try:
+        with open(bf_path, 'r') as f:
+            bf_results = json.load(f)
+    except FileNotFoundError:
+        return "Error: File not found."
+    except json.JSONDecodeError:
+        return "Error: Failed to decode JSON."
+
+    total_error_ratios = 0
+    total_fix_rates = 0
+    total_style_score = 0
+    count = len(data)
+    print(len(data), " instances")
+
+    if count == 0:
+        return "Dataset is empty."
+
+    resolved_ids = bf_results.get("resolved_ids", [])
+
+    for entry in data:
+        instance_id = entry.get("instance_id", "n/a")
+        # Extract values with 0 as default to avoid KeyErrors
+        original = entry.get("dataset_total_errors", 0)
+        resolved = entry.get("solved_errors", 0)
+        new_errors = entry.get("newly_created_errors", 0)
+        
+        # Unresolved errors = Original - Resolved
+        unresolved = original - resolved
+        
+        # Avoid division by zero if original errors is 0
+        if original > 0 and instance_id in resolved_ids:
+            # Error Ratio: (unresolved + new errors) / original
+            error_ratio = (unresolved + new_errors) / original
+            # Fix Rate: resolved / original
+            fix_rate = resolved / original
+            # Style Fixing Final Score: max((resolved - new errors) / original, 0)
+            style_fix_score = max((resolved - new_errors)/original, 0)
+        else:
+            error_ratio = 0.0
+            fix_rate = 0.0
+            style_fix_score = 0.0
+
+        total_error_ratios += error_ratio
+        total_fix_rates += fix_rate
+        total_style_score += style_fix_score
+
+    # Calculate averages across the entire dataset
+    avg_error_ratio = total_error_ratios / count
+    avg_fix_rate = total_fix_rates / count
+    avg_style_score = total_style_score / count
+
+    print(f"--- Dataset Summary ({count} instances) ---")
+    print(f"Average Error Ratio:        {avg_error_ratio:.4f}")
+    print(f"Average Fix Rate:           {avg_fix_rate:.4f}")
+    print(f"Average Style Fixing Score: {avg_style_score:.4f}")
+
+    return avg_fix_rate, avg_error_ratio, avg_style_score
 
 
 # ---------- Main ----------
@@ -236,6 +308,7 @@ def main():
     ap.add_argument("--dataset-json", required=True)
     ap.add_argument("--instances-file", required=True)
     ap.add_argument("--patches-jsonl", required=True)
+    ap.add_argument("--bf-results-json", required=True)
     ap.add_argument("--work-base", required=True, help="Base directory for repos + workdirs")
     ap.add_argument("--out", default="batch_eval_results.json")
     args = ap.parse_args()
@@ -285,7 +358,6 @@ def main():
     print(f"[+] Wrote {len(results)} results to {args.out}")
 
     if results:
-        avg_solve_rate = sum(r["solve_rate"] for r in results) / len(results)
         avg_newly_created = sum(r["newly_created_errors"] for r in results) / len(results)
 
         solved_counter = Counter()
@@ -297,9 +369,13 @@ def main():
             unsolved_counter.update(r.get("unsolved_symbol_counts", {}))
             newly_created_counter.update(r.get("newly_created_symbol_counts", {}))
 
+        fix_rate, error_ratio, style_score = calculate_final_stats(args.out, args.bf_results_json)
+
         global_summary = {
             "total_instances": len(results),
-            "average_solve_rate": round(avg_solve_rate, 3),
+            "fix_rate": fix_rate,
+            "error_ratio": error_ratio,
+            "final_style_fixing_score": style_score,
             "average_newly_created_errors": round(avg_newly_created, 3),
             "solved_symbol_counts": dict(solved_counter),
             "unsolved_symbol_counts": dict(unsolved_counter),
