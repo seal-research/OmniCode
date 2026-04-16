@@ -148,6 +148,22 @@ The following command with the `--TestGeneration` flag can be used to evaluate g
    python omnicode.py --TestGeneration --dataset_name data/omnicode_instances_python.json --predictions_path gold --language python --max_workers 1 --run_id BadPatchTest --use_apptainer False --instance_ids astropy__astropy-14995
 ```
 
+### Example 3: Running `StyleReview` for a single instance
+
+For StyleReview tasks, we have to first evaluate whether the style fixes break existing functionality. For this, we can simply use the BugFixing example above for each style review instance for Python. 
+
+After getting the bugfixing results, you can then aggregate the bugfixing results into a single json file and run the following command to get the final style review score: 
+
+```bash
+python src/python_style_eval.py \
+  --dataset-json data/omnicode_style_instances_python.json \
+  --instances-file legacy/data/python_style_review_dataset/chosen_python_style_review_instances.txt \
+  --patches-jsonl path-to-output-model-patches.jsonl \
+  --bf-results-json omnicode-bugfixing-results-of-patches.json \ 
+  --work-base workspace-path-for-evaluation \
+  --out style_review_results.json \
+```
+
 ---
 
 ## Java Support
