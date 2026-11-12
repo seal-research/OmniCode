@@ -185,7 +185,6 @@ multiswebench_local/.github/
 multiswebench_local/docs/
 # Exclude specific files in multiswebench
 multiswebench_local/.vscode/
-multiswebench_local/LICENSE
 multiswebench_local/README.md
 multiswebench_local/clean_config.json
 logs/

@@ -1,5 +1,16 @@
 # AutoCodeRover for CodeArena
 
+> **Note:** AutoCodeRover itself is no longer vendored in this repository, because it is
+> distributed under the SONAR Source-Available License v1.0 rather than MIT. Before using
+> these scripts, clone it into this directory:
+>
+> ```bash
+> git clone https://github.com/AutoCodeRoverSG/auto-code-rover.git legacy/AutoCodeRover/auto-code-rover
+> ```
+>
+> The copy previously vendored here (which may differ from current upstream) remains
+> available in the git history at commit `0ef3079`.
+
 This directory contains the AutoCodeRover (ACR) integration for processing CodeArena instances. ACR is an automated code repair system that can perform multiple tasks: bug fixing, test generation, style review, and code review.
 
 ## Overview
