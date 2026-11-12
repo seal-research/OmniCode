@@ -456,3 +456,7 @@ You will need to move the data back to the original dataset. The reviews will no
 | statsmodels/statsmodels   | 23    |
 
 </div> -->
+
+## License
+
+The code and annotations written by the OmniCode authors are released under the [MIT License](LICENSE). Vendored third-party code and benchmark data taken from other open-source projects remain under their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
